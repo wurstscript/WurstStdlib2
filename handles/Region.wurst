@@ -1,0 +1,13 @@
+package Region
+import NoWurst
+import Vectors
+
+public function vec2.isInRegion(region r) returns boolean
+	return IsPointInRegion(r, this.x, this.y)
+	
+public function region.addRect(rect r)
+	RegionAddRect(this, r)
+	
+public function region.destr()
+	RemoveRegion(this)
+

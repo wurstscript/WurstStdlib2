@@ -1,0 +1,46 @@
+package ErrorHandling
+import NoWurst
+import Printing
+import MagicFunctions
+import GameTimer
+import Real
+import Hashtable
+import String
+
+constant MUTE_ERROR_DURATION = 30
+constant PRIMARY_ERROR_KEY = -1
+constant HT = InitHashtable()
+
+/** error handing function.
+This function is used by libraries and for internal Wurst errors like 
+accessing a null-pointer. Overwrite this function to customize error handling.
+
+Outputs an error message and terminates the current thread.
+There is a compiler flag to augment the error messages with stack traces.
+Error messages can also be disabled.
+
+Errors are only displayed once every MUTE_ERROR_DURATION seconds.
+To achieve this, the hash of the string is saved in a hashtable together with a timestamp.
+*/
+@configurable public function error(string msg)
+	let hash = msg.getHash()
+	if HT.hasInt(PRIMARY_ERROR_KEY, hash)
+		// Error has been printed before
+		if HT.loadInt(PRIMARY_ERROR_KEY, hash) + MUTE_ERROR_DURATION < currentTime
+			// Time to print the error again
+			printLog(msg + getStackTraceString(), Loglevel.ERROR)
+			HT.saveInt(PRIMARY_ERROR_KEY, hash, currentTime.toInt())
+			HT.saveBoolean(PRIMARY_ERROR_KEY, hash, false)
+		else if HT.hasBoolean(PRIMARY_ERROR_KEY, hash)
+			if not HT.loadBoolean(PRIMARY_ERROR_KEY, hash)
+				printLog("|cffFF3A29Excessive repeating errors are being omitted", Loglevel.INFO)
+				HT.saveBoolean(PRIMARY_ERROR_KEY, hash, true)	
+		else
+			printLog("|cffFF3A29Excessive repeating errors are being omitted", Loglevel.INFO)
+			HT.saveBoolean(PRIMARY_ERROR_KEY, hash, true)	
+	else
+		HT.saveInt(PRIMARY_ERROR_KEY, hash, currentTime.toInt())
+		printLog("|cffFF3A29Error:|r " + msg + getStackTraceString(), Loglevel.ERROR)
+	// crash the thread:
+	I2S(1 div 0)
+

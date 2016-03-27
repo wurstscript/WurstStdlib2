@@ -1,0 +1,80 @@
+package Real
+import NoWurst
+
+/**	Returns the abolsute value of the given real.
+	This means, negative values will be return positive. */
+public function real.abs() returns real
+	if this >= 0
+		return this
+	else
+		return -this
+
+/** Returns the result of this*this, i.e. the square */
+public function real.squared() returns real
+	return this*this
+
+/** Returns the sign of this real */
+public function real.sign() returns real
+	if this > 0.0
+		return 1.0
+	else if this < 0.0
+		return -1.0
+	else
+		return 0.0
+		
+/** Rounds the input real to the nearest int */
+public function real.round() returns int
+	if this > 0
+		return (this+.5).toInt()
+	return (this-.5).toInt()
+
+/** Converts the input real to an int. This cuts off
+	the decimal digits. (1.9->1) */
+public function real.toInt() returns int
+	return R2I(this)
+
+/** Returns the string representation of this real */
+public function real.toString() returns string
+	return R2S(this)
+	
+/** Returns the string representation of this real with the given amount if digits precision */	
+public function real.toString(int precision) returns string
+	return R2SW(this, precision, precision)
+	
+/** The inverse trigonometric function of cosine */
+public function real.acos() returns real
+	return Acos(this)
+
+/** The inverse trigonometric function of sine */
+public function real.asin() returns real
+	return Asin(this)
+
+/** The inverse trigonometric function of tangent */
+public function real.atan() returns real
+	return Atan(this)
+
+/** The trigonometric function of cosine */	
+public function real.cos() returns real
+	return Cos(this)
+
+/** The trigonometric function of sine */
+public function real.sin() returns real
+	return Sin(this)
+	
+/** The trigonometric function of tangent */
+public function real.tan() returns real
+	return Tan(this)
+	
+/** The arctangent function with two arguments.
+	The second argument is needed to determine the appropriate 
+	quadrant of the computed angle. */
+public function real.atan2(real y) returns real
+	return Atan2(y, this)
+		
+/** Returns this real to the power of the argument real */
+public function real.pow(real x) returns real
+	return Pow(this, x)
+	
+/** Linear Interpolation with alphafactor(smoothness) */
+public function real.lerp(real target, real alpha) returns real
+	return (this * (1.0-alpha)) + (target * alpha)

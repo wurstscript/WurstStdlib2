@@ -1,0 +1,64 @@
+package Angle
+import NoWurst
+
+/** Converts Degrees to Radians */
+public constant real DEGTORAD  	=  0.017453293
+/** Converts Radians to Degrees */
+public constant real RADTODEG  	= 57.295779513
+
+/** an angle is just a wrapper around a real which allows for
+typesafe APIs without the confusion between radians and degrees*/
+public tuple angle(real radians)
+
+/** get the real representation of this angle in degrees */
+public function angle.degrees() returns real
+	return this.radians*RADTODEG
+	
+/** get the real representation of this angle in radians */
+public function angle.radians() returns real
+	return this.radians
+
+/** interpret this real as an angle given in degrees */
+public function real.asAngleDegrees() returns angle
+	return angle(this*DEGTORAD)
+
+/** interpret this int as an angle given in radians */
+public function int.asAngleRadians() returns angle
+	return angle(this * .0)
+
+/** interpret this real as an angle given in radians*/
+public function real.asAngleRadians() returns angle
+	return angle(this)
+/** get the sinus of this angle */
+
+public function angle.sin() returns real
+	return Sin(this.radians)
+
+/** get the cosinus of this angle */
+public function angle.cos() returns real
+	return Cos(this.radians)
+
+/** get the tangens of this angle */
+public function angle.tan() returns real
+	return Tan(this.radians)	
+
+/** adds two angles */
+public function angle.op_plus(angle other) returns angle
+	return angle(this.radians + other.radians)
+
+/** substracts two angles */
+public function angle.op_minus(angle other) returns angle
+	return angle(this.radians - other.radians)
+
+/** multiplies the angle with the given scalar */
+public function angle.op_mult(real scalar) returns angle
+	return angle(this.radians*scalar)
+
+/** multiplies with the given angle */
+public function real.op_mult(angle ang) returns angle
+	return angle(ang.radians*this)
+
+/** divides the angle by the given scalar */
+public function angle.op_divReal(real scalar) returns angle
+	return angle(this.radians/scalar)
+

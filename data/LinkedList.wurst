@@ -1,0 +1,222 @@
+package LinkedList
+import NoWurst
+import Wurstunit
+
+public class LinkedList<ELEM_TYPE>
+	private ListEntry<ELEM_TYPE> dummy
+	private int size = 0
+
+	/** Create a new empty list */
+	construct()
+		dummy = new ListEntry<ELEM_TYPE>(null, null, null)
+		dummy.next = dummy
+		dummy.prev = dummy
+
+	/** Add an element to the end of the list (top of stack, beginning of queue) */
+	function add(ELEM_TYPE elem)
+		let entry = new ListEntry<ELEM_TYPE>(elem, dummy.prev, dummy)
+		dummy.prev.next = entry
+		dummy.prev = entry
+		size++
+
+	/** Add all elements from elems to the end of this list */
+	function addAll(LinkedList<ELEM_TYPE> elems)
+		for ELEM_TYPE elem in elems
+			add(elem)
+			
+	/** Get the element at the specified index */
+	function get(int index) returns ELEM_TYPE
+		return getEntry(index).elem
+		
+	/** Returns and removes the lastly added Element */
+	function pop() returns ELEM_TYPE
+		let top = dummy.prev
+		let elem = top.elem
+		removeEntry(top)
+		return elem
+	
+	/** Returns whether the lists contains the specified element */
+	function contains(ELEM_TYPE elem) returns boolean
+		var entry = dummy.next
+		while entry != dummy
+			if entry.elem == elem
+				return true
+			entry = entry.next
+		return false
+		
+	/** Removes the element and it's entry at the given index */
+	function removeAt(int index)
+		let entry = getEntry(index)
+		entry.prev.next = entry.next
+		entry.next.prev = entry.prev
+		destroy entry	
+		size--
+		
+	/** Removes the first occurence of t from this list */
+	function remove(ELEM_TYPE elem)
+		ListEntry<ELEM_TYPE> entry = dummy.next
+		while entry != dummy
+			if entry.elem == elem
+				removeEntry(entry)
+				return
+			entry = entry.next
+	
+	/** gets the size of the list */
+	function getSize() returns int
+		return size
+		
+	/** get an iterator for this list */
+	function iterator() returns ListIterator<ELEM_TYPE>
+		return new ListIterator(dummy)	
+	
+	/** get a backiterator for this list */
+	function backiterator() returns ListBackIterator<ELEM_TYPE>
+		return new ListBackIterator(dummy)	
+		
+	/** adds an element to the beginning of the list */	
+	function addtoStart(ELEM_TYPE elem)
+		let entry = new ListEntry<ELEM_TYPE>(elem, dummy, dummy.next)
+		dummy.next.prev = entry
+		dummy.next = entry
+		size++
+		
+	/** replaces the first occurence of 'whichElement' with 'newElement' 
+		returns true when an element has been replaced, 
+		false if 'whichelement' is not contained in the list
+	*/
+	function replace(ELEM_TYPE whichElement, ELEM_TYPE newElement) returns boolean
+		ListEntry<ELEM_TYPE> current = dummy.next
+		while current != dummy
+			if current.elem == whichElement
+				current.elem = newElement
+				return true
+			current = current.next
+		return false
+
+	/** Removes the element if the predicates returns true */
+	function removeWhen(LinkedListPredicate<ELEM_TYPE> predicate) 
+		ListEntry<ELEM_TYPE> r = dummy.next
+		while r != dummy
+			if predicate.isTrueFor(r.elem)
+				r.prev.next = r.next
+				r.next.prev = r.prev
+				destroy r
+				size--
+			r = r.next
+		destroy predicate
+		
+	/** Updates all elements */	
+	function updateAll(LinkedListUpdater<ELEM_TYPE> f)
+		ListEntry<ELEM_TYPE> r = dummy.next
+		while r != dummy
+			r.elem = f.update(r.elem) 
+			r = r.next
+		destroy f
+		
+	function toString() returns string
+		string s="["
+		var first = true
+		for e in this
+			if not first
+				s += ", "
+			s += I2S(e castTo int)
+			first = false
+		return s + "]"
+		
+	/** Returns the entry at the given index */
+	private function getEntry(int index) returns ListEntry<ELEM_TYPE>
+		var entry = dummy
+		for int i = 0 to index
+			entry = entry.next
+		return entry
+		
+	/** Removes an entry */
+	private function removeEntry(ListEntry<ELEM_TYPE> entry)
+		entry.prev.next = entry.next
+		entry.next.prev = entry.prev
+		destroy entry
+		size--
+		
+	ondestroy
+		ListEntry<ELEM_TYPE> current = dummy.next
+		while current != dummy
+			current = current.next
+			destroy current.prev
+		destroy dummy
+
+class ListEntry<ELEM_TYPE>
+	ELEM_TYPE elem
+	ListEntry<ELEM_TYPE> prev
+	ListEntry<ELEM_TYPE> next
+	
+	construct(ELEM_TYPE elem, ListEntry<ELEM_TYPE> prev, ListEntry<ELEM_TYPE> next)
+		this.elem = elem
+		this.prev = prev
+		this.next = next
+
+public class ListIterator<ELEM_TYPE>
+	ListEntry<ELEM_TYPE> dummy
+	ListEntry<ELEM_TYPE> current
+
+	construct(ListEntry<ELEM_TYPE> dummy)
+		this.dummy = dummy
+		this.current = dummy
+
+	/** remove the current element from the list */
+	function remove()
+		if current != dummy
+			current.next.prev = current.prev
+			current.prev.next = current.next
+			destroy current
+			current = current.prev
+			
+	function hasNext() returns boolean
+		return current.next != dummy
+
+	function next() returns ELEM_TYPE
+		current = current.next 
+		return current.elem 
+ 		
+	function close() 
+		destroy this
+		
+public class ListBackIterator<ELEM_TYPE>
+	ListEntry<ELEM_TYPE> dummy
+	ListEntry<ELEM_TYPE> current
+
+	construct(ListEntry<ELEM_TYPE> dummy)
+		this.dummy = dummy
+		this.current = dummy
+			
+	function hasNext() returns boolean
+		return current.prev != dummy
+
+	function next() returns ELEM_TYPE
+		current = current.prev 
+		return current.elem 
+ 		
+	function close() 
+		destroy this
+
+public interface LinkedListPredicate<ELEM_TYPE>
+	function isTrueFor(ELEM_TYPE t) returns boolean
+
+public interface LinkedListUpdater<ELEM_TYPE>
+	function update(ELEM_TYPE t) returns ELEM_TYPE
+		
+@test public function testAll()
+	let list = new LinkedList<int>()
+	assertTrue(list.getSize() == 0)
+	
+	list.add(1)
+	list.add(2)
+	list.add(3)
+	list.add(4)
+	assertTrue(list.getSize() == 4)
+	
+	for i in list
+		if i == 2
+	
+	
+	
+	

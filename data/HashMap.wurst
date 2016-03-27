@@ -1,0 +1,24 @@
+package HashMap
+import NoWurst
+import public TypeCasting
+import Table
+
+/** Generic Table Wrapper */
+public class HashMap<K,V> extends Table
+	
+	/** Whether a value exists under the given key or not */
+	function has(K key) returns boolean
+		return get(key) != null
+	
+	/** Saves the given value under the given key */
+	function put(K key, V value)
+		saveInt(key castTo int, value castTo int)
+		
+	/** Retrieves the value saved under the given key */
+	function get(K key) returns V
+		return loadInt(key castTo int) castTo V
+	
+	/** Removes the value saved under the given key */
+	function remove(K key)
+		removeInt(key castTo int)
+
