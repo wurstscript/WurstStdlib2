@@ -67,7 +67,7 @@ public function vec2.toVec3() returns vec3
 public function vec2.setLength( real length ) returns vec2
 	real l = SquareRoot(this.x*this.x + this.y*this.y)
 	if l == 0.0
-		printLog("vector.setLength error: The length of the vector is 0.0!", Loglevel.WARNING)
+		printLog(Loglevel.WARNING, "vector.setLength error: The length of the vector is 0.0!")
 		return vec2(0.,0.)
 	l = length/l
 	return vec2(this.x*l, this.y*l)
@@ -196,7 +196,7 @@ public function vec3.rotate( vec3 axis, real radians ) returns vec3 //angle is t
 	var c = Cos(radians)
 	var s = Sin(radians)
 	if al == 0.0
-		printLog("vector.rotate error: The length of the axis vector is 0.0!", Loglevel.WARNING)
+		printLog(Loglevel.WARNING, "vector.rotate error: The length of the axis vector is 0.0!")
 		return vec3(0,0,0)
 
 	var f = (this.x*axis.x+this.y*axis.y+this.z*axis.z) / al
@@ -216,7 +216,7 @@ public function vec3.rotate( vec3 axis, real radians ) returns vec3 //angle is t
 public function vec3.setLength( real length ) returns vec3
 	real l = SquareRoot(this.x*this.x + this.y*this.y + this.z*this.z)
 	if l == 0.0
-		printLog("vector.setLength error: The length of the vector is 0.0!", Loglevel.WARNING)
+		printLog(Loglevel.WARNING, "vector.setLength error: The length of the vector is 0.0!")
 		return vec3(0.,0.,0.)
 	l = length/l
 	return vec3(this.x*l, this.y*l, this.z*l)
@@ -237,7 +237,7 @@ public function vec3.cross( vec3 v ) returns vec3
 public function vec3.project( vec3 direction ) returns vec3
 	real l = direction.lengthSquared()
 	if l == 0.0
-		printLog("vector.projectVector error: The length of the direction vector is 0.0!", Loglevel.WARNING)
+		printLog(Loglevel.WARNING, "vector.projectVector error: The length of the direction vector is 0.0!")
 		return vec3(0.,0.,0.)
 		
 	l = (this.x*direction.x+this.y*direction.y+this.z*direction.z) / l
@@ -252,23 +252,23 @@ public function vec3.inRange( vec3 v2, real radius ) returns boolean
 	return (this.x-v2.x).squared() + (this.y-v2.y).squared() <= radius*radius
 	
 /** Get the distance to another Vector */
-public function vec3.distTo( vec3 v ) returns real
+public function vec3.distanceTo( vec3 v ) returns real
 	return SquareRoot((v.x - this.x).squared() + (v.y - this.y).squared() + (v.z - this.z).squared())
 	
 /** Get the distance to another Vector */
-public function vec3.distTo2d( vec3 v ) returns real
+public function vec3.distanceTo2d( vec3 v ) returns real
 	return SquareRoot((v.x - this.x).squared() + (v.y - this.y).squared())
 	
 /** Get the distance to another Vector */
-public function vec3.distTo2d( vec2 v ) returns real
+public function vec3.distanceTo2d( vec2 v ) returns real
 	return SquareRoot((v.x - this.x).squared() + (v.y - this.y).squared())
 	
 /** Get the squared distance to another Vector */
-public function vec3.distTo2dSq( vec2 v ) returns real
+public function vec3.distanceTo2dSq( vec2 v ) returns real
 	return (v.x - this.x).squared() + (v.y - this.y).squared()
 
 /** Get the squared distance to another Vector */
-public function vec3.distToSq( vec3 v ) returns real
+public function vec3.distanceToSq( vec3 v ) returns real
 	return (v.x - this.x).squared() + (v.y - this.y).squared() + (v.z - this.z).squared()
 	
 /** Get a String-represantation of the vector (for debugging) */

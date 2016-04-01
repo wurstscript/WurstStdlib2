@@ -4,7 +4,7 @@ import DummyRecycler
 import Effect
 import Colors
 import Vectors
-import Terrain
+import TerrainUtils
 
 /********************************************************
  * * * * * * * * * * Fx * * * * * * * * * * * * * * * * *
@@ -186,13 +186,13 @@ public class Fx
 	
 	/** Set the position to the given xyz vector tuple */
 	function setXYZ(vec3 pos)
-		dummy.setXY(pos.x, pos.y)
+		dummy.setXY(pos)
 		setZ(pos.z-getTerrainZ(pos.x, pos.y))
 		
 	/** Set the position to the given xyz vector tuple
 	 * this function ignores the terrain height and only sets the fly-height to the z-coordinate */
 	function setXYheight(vec3 pos)
-		dummy.setXY(pos.x, pos.y)
+		dummy.setXY(pos)
 		setZ(pos.z)
 
 	/** Set the position to the given xyz vector tuple. 
@@ -200,7 +200,7 @@ public class Fx
 	 * Use setXYheight when you never need terrain height. 
 	 * */
  	function setXYZ(vec3 pos, boolean ignoreTerrainHeight)
-		dummy.setXY(pos.x, pos.y)
+		dummy.setXY(pos)
 		if ignoreTerrainHeight
 			setZ(pos.z)
 		else

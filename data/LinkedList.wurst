@@ -28,6 +28,14 @@ public class LinkedList<ELEM_TYPE>
 	function get(int index) returns ELEM_TYPE
 		return getEntry(index).elem
 		
+	/** Sets the element at the specified index */
+	function set(int index, ELEM_TYPE elem)
+		getEntry(index).elem = elem
+		
+	/** Add an element to the end of the list (top of stack, beginning of queue) */
+	function push(ELEM_TYPE elem)
+		add(elem)
+		
 	/** Returns and removes the lastly added Element */
 	function pop() returns ELEM_TYPE
 		let top = dummy.prev

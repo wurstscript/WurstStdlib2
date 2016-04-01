@@ -1,0 +1,52 @@
+package Preloader
+import NoWurst
+import Printing
+import ErrorHandling
+import Group
+import DummyRecycler
+import Unit
+import Timer
+import ObjectIds
+import Basics
+
+/*
+ * * * * * * * * PreloadHandler * * * * * * * * * * * * *
+ * The PreloadHandler helps you to preload resources  	*
+ * at mapstart, to avoid first-laggs.					*
+ * Use the corresponding function to preload the data	*
+ * you want.											*
+ *														*
+														*/
+boolean autoFinish = false
+
+/** use this function to preload an ability */
+public function preloadAbility(int abilid)
+	dum.addAbility(abilid)
+	if dum == null 
+		error("Do not load abilities after map init when autoFinish = true")
+	else if GetUnitAbilityLevel(dum, abilid) == 0
+		printLog(Loglevel.WARNING, "PreloadAbility: Ability " + int2fourchar(abilid) + " does not exist.")
+
+public function preloadUnit(int unitId)
+	if dumg == null 
+		error("PreloadUnit: Group dumg does not exist")
+		return
+	dumg.addUnit(createUnit(DUMMY_PLAYER, unitId, vec2(0,0), angle(0)))
+
+group dumg
+unit dum
+
+public function finishPreload()
+	dum.remove()
+	for u in dumg
+		u.remove()
+	dumg.destr()
+	if GetExpiredTimer() != null
+		GetExpiredTimer().destr()
+
+init
+	dum = createUnit(DUMMY_PLAYER, DUMMY_UNIT_ID, vec2(0,0), angle(0))
+	if dum == null
+		error("DUMMY_UNITID (" + int2fourchar(DUMMY_UNIT_ID) + ") not added correctly to the map.")
+	if autoFinish
+		CreateTimer().start(0.0, function finishPreload )

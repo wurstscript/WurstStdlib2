@@ -1,0 +1,65 @@
+package EventHelper
+import NoWurst
+import Vectors
+import HashMap
+
+HashMap<trigger, rect> rectMap = new HashMap<trigger, rect>()
+HashMap<region, int> regionMap = new HashMap<region, int>()
+HashMap<trigger, unit> triggerData = new HashMap<trigger, unit>()
+
+public function trigger.registerUnitInRangeSource( unit whichUnit, real range, boolexpr filter ) returns event
+	int h = GetHandleId(this)
+	int u = GetHandleId(whichUnit)
+	triggerData.saveUnit(h,whichUnit)
+	triggerData.saveTrigger(u,this)
+	return TriggerRegisterUnitInRange(this, whichUnit, range, filter)
+
+public function trigger.registerUnitInRangeSource( unit whichUnit, real range ) returns event
+	return this.registerUnitInRangeSource(whichUnit, range, null)
+
+public function trigger.getSource() returns unit
+	return triggerData.loadUnit(GetHandleId(this))
+
+public function unit.clearRegister()
+	int h = GetHandleId(this)
+	trigger t = triggerData.loadTrigger(h)
+	integer th = GetHandleId(t)
+	DestroyTrigger(t)
+	triggerData.removeHandle(h)
+	triggerData.removeHandle(th)
+	
+public function getSpellTargetPos() returns vec2
+	return vec2(GetSpellTargetX(), GetSpellTargetY())
+	
+public function getOrderPos() returns vec2
+	return vec2(GetOrderPointX(), GetOrderPointY())
+	
+public function trigger.registerRectEnterEventSource( rect r )
+	TriggerRegisterEnterRectSimple(this, r)
+	rectMap.put(this, r)
+	
+public function trigger.registerRectLeaveEventSource( rect r )
+	TriggerRegisterLeaveRectSimple(this, r)
+	rectMap.put(this, r)
+
+public function trigger.getSourceRect() returns rect
+	return rectMap.get(this)
+	
+public function trigger.unregisterRectEvent()
+	rectMap.remove(this)
+	
+public function vec2.isInRegion(region r) returns boolean
+	return IsPointInRegion(r, this.x, this.y)
+	
+public function region.addRect(rect r)
+	RegionAddRect(this, r)
+	
+public function region.setRegionData(int data)
+	regionMap.put(this, data)
+
+public function region.loadRegionData() returns int
+	return regionMap.get(this)
+	
+public function region.removeRegionData()
+	regionMap.remove(this)
+

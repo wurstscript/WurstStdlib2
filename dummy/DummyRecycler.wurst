@@ -9,7 +9,6 @@ import MapBounds
 import GameTimer
 import UnitObjEditing
 
-
 /** Id of the dummy unit */
 public constant DUMMY_UNIT_ID 	   		= 'xdum'
 
@@ -122,12 +121,11 @@ class DelayNode
 		let tmp = first
 		if first.next == null
 			first = null
-		if first.next != null
+		else
 			first = first.next
 			first.prev = null
 			t.start(first.delayTime - getElapsedGameTime(), function DelayNode.recycle)
-		else
-			first = null
+
 		destroy tmp
 			
 function createDummy(vec2 pos, player owner, angle facing) returns unit

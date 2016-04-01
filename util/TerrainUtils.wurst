@@ -1,7 +1,10 @@
-package Terrain
+package TerrainUtils
 import NoWurst
 import Vectors
 import Item
+
+public function vec2.setTerrainType(int ttype, int variation, int area, int shape)
+	SetTerrainType(this.x, this.y, ttype, variation, area, shape)
 
 constant		MAX_RANGE	 	= 10.
 constant 		DUMMY_ITEM_ID 	= 'wolg'

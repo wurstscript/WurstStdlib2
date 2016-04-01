@@ -1,8 +1,8 @@
 package Printing
 import NoWurst
 
-@configurable var DEBUG_LEVEL = Loglevel.INFO
-@configurable var DEBUG_MSG_DURATION = 45.
+@configurable public var DEBUG_LEVEL = Loglevel.INFO
+@configurable public var DEBUG_MSG_DURATION = 45.
 
 public enum Loglevel
 	TRACE
@@ -30,9 +30,12 @@ public function print(string msg)
 	DisplayTimedTextToPlayer(GetLocalPlayer(), 0., 0., DEBUG_MSG_DURATION, msg)
 
 /** Prints a special Notification-Message */
-public function printLog(string msg, Loglevel loglvl)
+public function printLog(Loglevel loglvl, string msg)
+	printLog(GetLocalPlayer(), loglvl, msg)
+		
+public function printLog(player showTo, Loglevel loglvl, string msg)
 	if (DEBUG_LEVEL castTo int) <= (loglvl castTo int)
-		DisplayTimedTextToPlayer(GetLocalPlayer(), 0., 0., DEBUG_MSG_DURATION, loglvl.getTag() + " - " + msg)
+		DisplayTimedTextToPlayer(showTo, 0., 0., DEBUG_MSG_DURATION, loglvl.getTag() + " - " + msg)
 	
 /** Prints a simple message that is shown for the given duration */
 public function printTimed(string msg, real duration)
