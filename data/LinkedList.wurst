@@ -42,6 +42,10 @@ public class LinkedList<ELEM_TYPE>
 		let elem = top.elem
 		removeEntry(top)
 		return elem
+		
+	/** Returns and removes the lastly added Element */
+	function peek() returns ELEM_TYPE
+		return dummy.prev.elem
 	
 	/** Returns whether the lists contains the specified element */
 	function contains(ELEM_TYPE elem) returns boolean
