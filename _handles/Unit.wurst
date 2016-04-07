@@ -220,8 +220,8 @@ public function createUnitZ(player p, int unitId, vec3 pos, angle facing) return
 		..setFlyHeight(pos.z - getTerrainZ(pos.x, pos.y), 0)
 
 	
-public function unit.issuePointOrder(string order, vec2 target)
-	IssuePointOrder(this, order, target.x, target.y)
+public function unit.issuePointOrder(string order, vec2 target) returns boolean
+	return IssuePointOrder(this, order, target.x, target.y)
 	
 public function unit.hasAbility(int id) returns boolean
 	return (GetUnitAbilityLevel(this, id) > 0)

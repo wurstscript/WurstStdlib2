@@ -1,6 +1,6 @@
 package Sync
 import Thread
-import LinkedList
+import HashList
 
 public function boolean.sync(player source) returns boolean
 	var i = 0
@@ -48,7 +48,7 @@ public function int.sync(player source) returns int
 	synced message
 */
 public function string.sync(player source) returns string
-	LinkedList<int> ints = new LinkedList<int>()
+	HashList<int> ints = new HashList<int>()
 	int slen = 0
 	string result = ""
 	if GetLocalPlayer() == source
@@ -69,7 +69,7 @@ gamecache gc
 var messageCount = 0
 
 /** Used internally for stringsyncing */
-function LinkedList<int>.sync(player source)
+function HashList<int>.sync(player source)
 	Thread t = new Thread()
 	let localKey = "message" + GetLocalPlayer().getId().toString()
 	let sourceKey = "message" + source.getId().toString()

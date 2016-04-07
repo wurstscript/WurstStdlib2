@@ -2,15 +2,15 @@ package TypeCasting
 import NoWurst
 import Table
 import Unit
+import Player
 
 Table typecastdata = new Table()
 
 public function playerFromIndex(int index) returns player
-	typecastdata.saveFogState(0,ConvertFogState(index))
-	return typecastdata.loadPlayer(0)
+	return players[index]
 
 public function playerToIndex(player object) returns int
-	return object.getHandleId()
+	return object.getId()
 
 public function widgetFromIndex(int index) returns widget
 	typecastdata.saveFogState(0,ConvertFogState(index))

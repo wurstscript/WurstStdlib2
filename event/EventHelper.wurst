@@ -5,7 +5,7 @@ import HashMap
 
 HashMap<trigger, rect> rectMap = new HashMap<trigger, rect>()
 HashMap<region, int> regionMap = new HashMap<region, int>()
-HashMap<trigger, unit> triggerData = new HashMap<trigger, unit>()
+Table triggerData = new Table()
 
 public function trigger.registerUnitInRangeSource( unit whichUnit, real range, boolexpr filter ) returns event
 	int h = GetHandleId(this)
@@ -22,6 +22,8 @@ public function trigger.getSource() returns unit
 
 public function unit.clearRegister()
 	int h = GetHandleId(this)
+	if triggerData.loadTrigger(h) == null
+		return
 	trigger t = triggerData.loadTrigger(h)
 	integer th = GetHandleId(t)
 	DestroyTrigger(t)
