@@ -6,6 +6,8 @@ public class OrderStringFactory
 	int counter = -1
 		
 	function getOrderString(boolean recycle) returns string
+		if orderStrings[0] == null
+			initS()
 		counter++
 		if counter > 347
 			if recycle

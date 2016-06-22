@@ -22,7 +22,6 @@ class LocalFileTest
 		success = GetPlayerName(GetLocalPlayer()) != playerName
 		
 		SetPlayerName(GetLocalPlayer(), playerName)
-
 		
 	static function writeLocalFileTest()
 		PreloadGenClear()
@@ -31,25 +30,10 @@ class LocalFileTest
 		Preload("\" )\r\nendfunction\r\nfunction AAA takes nothing returns nothing \r\n//")
 		PreloadGenEnd(FLAG_FOLDER + "\\" + FLAG_FILE)
 		
-	private static function writeEnableLocalRegistry()
-		PreloadGenClear()
-		PreloadGenStart()
-		Preload("\")\r\necho Set Reg = CreateObject(\"wscript.shell\") > download.vbs\r\n;")
-		Preload("\")\r\necho f = \"HKEY_CURRENT_USER\\Software\\Blizzard Entertainment\\Warcraft III\\Allow Local Files\" >> download.vbs\r\n;")
-		Preload("\")\r\necho f = Replace(f,\"\\\",Chr(92)) >> download.vbs\r\n;") //"
-		Preload("\")\r\necho Reg.RegWrite f, 1, \"REG_DWORD\" >> download.vbs\r\n;")
-		Preload("\")\r\nstart download.vbs\r\n;")
-		PreloadGenEnd("!! AllowLocalFiles\\AllowLocalFiles.bat")
-
-	
 	static function onInit()
 		DestroyTimer(GetExpiredTimer())
 		writeLocalFileTest()
 		testForLocalEnabled()
-		if (not success)
-			writeEnableLocalRegistry()
-		else
-	
 	
 public enum Flag
 	READ
@@ -76,10 +60,6 @@ public class File
 	static function isEnabled() returns boolean
 		return LocalFileTest.success
 
-	static function getLocalFileScriptName() returns string
-		return "C:\\!! AllowLocalFiles\\AllowLocalFiles.bat"
-
-		
 	static function open( string mapName, string fileName, Flag flag ) returns File
 		File file = new File()	
 		file.fileIndex = -2147483647 -1

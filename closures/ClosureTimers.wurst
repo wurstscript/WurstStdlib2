@@ -57,19 +57,22 @@ public function doPeriodicallyTimed(real interval, real timerDuration, CallbackC
 
 //Timer Stuff	
 public abstract class CallbackSingle
-	
+	private timer t
 	abstract function call()
 	
 	function start(real time)
-		getTimer()
+		t = getTimer()
 			..setData(this castTo int)
 			..start(time, () -> staticCallback())
+			
 			
 	private static function staticCallback()
 		timer t = GetExpiredTimer()
 		thistype cb = t.getData() castTo thistype
 		cb.call()
 		destroy cb
+		
+	ondestroy
 		t.release()
 		
 
