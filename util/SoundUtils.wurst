@@ -5,6 +5,7 @@ import Simulate3dSound
 import TimerUtils
 import Sound
 import Basics
+import Vectors
 
 constant boolean DEFAULT_SOUND_STOPS_ON_LEAVE_RANGE = true
 constant int DEFAULT_SOUND_FADE_IN_RATE = 10
@@ -19,10 +20,11 @@ constant real SOUND_MAX_DIST = 8000
 constant real SOUND_DIST_CUT = 1500
 
 class SoundInstance
+	vec3 pos = vec3(0,0,0)
 	sound snd
 	SoundDefinition soundDef
-	unit onUnit
-	player p
+	unit onUnit = null
+	player p = null
 	Sim3DSound s3s = null
 	
 public class SoundDefinition
@@ -36,7 +38,7 @@ public class SoundDefinition
 	int fadeIn
 	int fadeOut
 	string eaxSetting
-	
+
 	construct(string file, int duration, boolean looping )
 		this.file = file
 		this.duration = duration
@@ -100,13 +102,21 @@ public class SoundDefinition
 		getTimer()
 			..setData(s castTo int)
 			..start(0., function SoundDefinition.playSound)	
-			
+
+	function playOnPoint(vec3 target)
+		var s = getSound()
+		s.pos = target
+		getTimer()
+			..setData(s castTo int)
+			..start(0., function SoundDefinition.playSound)	
+
 	private static function playSound()
 		var tm = GetExpiredTimer()
 		var sdata = tm.getData() castTo SoundInstance
 		if sdata.onUnit != null
 			AttachSoundToUnit(sdata.snd, sdata.onUnit)
-			
+		if sdata.pos.x != 0 and sdata.pos.y != 0
+			SetSoundPosition(sdata.snd, sdata.pos.x, sdata.pos.y, sdata.pos.z)
 		SetSoundVolume(sdata.snd, 100)
 		SetSoundPitch(sdata.snd, 1)
 		if sdata.p != null

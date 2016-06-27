@@ -36,7 +36,7 @@ public class DummyRecycler
 			u.remove()
 		else
 			angleQueues[smallestQueue].enqueue(u)
-			u..setXY(boundMax)..pause()..setFacing(smallestQueue*ANGLE_DEGREE)
+			u..setXY(boundMax)..pause()..setFacing(smallestQueue*ANGLE_DEGREE)..setScale(1)
 		
 		
 	static function recycle(unit u, real delay)
