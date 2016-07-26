@@ -14,13 +14,13 @@ public function real.squared() returns real
 	return this*this
 
 /** Returns the sign of this real */
-public function real.sign() returns real
+public function real.sign() returns int
 	if this > 0.0
-		return 1.0
+		return 1
 	else if this < 0.0
-		return -1.0
+		return -1
 	else
-		return 0.0
+		return 0
 		
 /** Rounds the input real to the nearest int */
 public function real.round() returns int
