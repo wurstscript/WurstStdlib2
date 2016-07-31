@@ -179,8 +179,9 @@ public class ListIterator<ELEM_TYPE>
 		if current != dummy
 			current.next.prev = current.prev
 			current.prev.next = current.next
-			destroy current
+			let temp = current
 			current = current.prev
+			destroy temp
 			
 	function hasNext() returns boolean
 		return current.next != dummy

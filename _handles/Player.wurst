@@ -108,3 +108,6 @@ public function player.getColor() returns playercolor
 	
 public function player.getStartLocation() returns vec2
 	return vec2(GetPlayerStartLocationX(this), GetPlayerStartLocationY(this))
+
+public function player.setName(string name)
+	SetPlayerName(this, name)
