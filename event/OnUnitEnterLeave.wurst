@@ -32,7 +32,7 @@ init
 	
 	registerPlayerUnitEvent(EVENT_PLAYER_UNIT_ISSUED_ORDER, () -> begin
 		let leavingUnit = GetTriggerUnit()
-		if leavingUnit.getAbilityLevel(ABILITY_ID) == 0
+		if not leavingUnit.hasAbility(ABILITY_ID)
 			tempUnit = leavingUnit
 			eventTrigger.execute()
 			tempUnit = null
@@ -40,7 +40,7 @@ init
 	ABILITY_ID = '!e@$'
 	for i = 0 to bj_MAX_PLAYER_SLOTS-1
 		players[i].setAbilityAvailable(ABILITY_ID, false)
-    
+	 
 	nullTimer(() -> GroupEnumUnitsInRect(ENUM_GROUP, boundRect, Filter(() -> begin
 		tempUnit = GetFilterUnit()..addAbility(ABILITY_ID)..makeAbilityPermanent(ABILITY_ID, true)
 		eventTrigger.evaluate()

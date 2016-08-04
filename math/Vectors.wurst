@@ -4,10 +4,17 @@ import public Real
 import public Angle
 import Printing
 
+/** A vector is a geometric object that has magnitude (or length) and direction. 
+	Vectors can be added to other vectors according to vector algebra.
+	The most common use in wc3 is as a point in space. For example a unit's position
+	can be represented as a vector as well as a knockback force acting on it.
+*/
+
+public constant ZERO = vec2(0,0)
+public constant RIGHT = vec2(1,0)
 public constant UP = vec2(0,1)
 public constant LEFT = vec2(-1,0)
 public constant DOWN = vec2(0,-1)
-public constant RIGHT = vec2(1,0)
 
 /** 2d Vector tuple */
 public tuple vec2( real x, real y )
@@ -72,7 +79,6 @@ public function vec2.toVec3() returns vec3
 public function vec2.setLength( real length ) returns vec2
 	real l = SquareRoot(this.x*this.x + this.y*this.y)
 	if l == 0.0
-		printLog(Loglevel.WARNING, "vector.setLength error: The length of the vector is 0.0!")
 		return vec2(0.,0.)
 	l = length/l
 	return vec2(this.x*l, this.y*l)
@@ -93,7 +99,7 @@ public function vec2.inRange( vec2 v2, real radius ) returns boolean
 public function vec2.toString() returns string
 	return "Vector2 [" + this.x.toString() + ", " + this.y.toString() + "]"
 	
-/** Get this vetor's angleto another one */	
+/** Get this vetor's angle to another one */	
 public function vec2.angleTo(vec2 v) returns angle
 	return Atan2(v.y - this.y, v.x - this.x).asAngleRadians()
 
@@ -242,7 +248,6 @@ public function vec3.cross( vec3 v ) returns vec3
 public function vec3.project( vec3 direction ) returns vec3
 	real l = direction.lengthSquared()
 	if l == 0.0
-		printLog(Loglevel.WARNING, "vector.projectVector error: The length of the direction vector is 0.0!")
 		return vec3(0.,0.,0.)
 		
 	l = (this.x*direction.x+this.y*direction.y+this.z*direction.z) / l
