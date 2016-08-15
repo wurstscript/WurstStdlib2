@@ -6,18 +6,20 @@ import TimerUtils
 import Sound
 import Basics
 import Vectors
+import ErrorHandling
+import Printing
 
-constant boolean DEFAULT_SOUND_STOPS_ON_LEAVE_RANGE = true
-constant int DEFAULT_SOUND_FADE_IN_RATE = 10
-constant int DEFAULT_SOUND_FADE_OUT_RATE = 10
-constant string  DEFAULT_SOUND_EAX_SETTINGS = "CombatSoundsEAX"
-constant int DEFAULT_SOUND_VOLUME = 127
-constant real DEFAULT_SOUND_PITCH = 1
+constant DEFAULT_SOUND_STOPS_ON_LEAVE_RANGE = true
+constant DEFAULT_SOUND_FADE_IN_RATE = 10
+constant DEFAULT_SOUND_FADE_OUT_RATE = 10
+constant DEFAULT_SOUND_EAX_SETTINGS = "CombatSoundsEAX"
+constant DEFAULT_SOUND_VOLUME = 127
+constant DEFAULT_SOUND_PITCH = 1.
 
-constant int SOUND_CHANNEL = 5
-constant real SOUND_MIN_DIST = 600
-constant real SOUND_MAX_DIST = 8000
-constant real SOUND_DIST_CUT = 1500
+constant SOUND_CHANNEL = 5
+constant SOUND_MIN_DIST = 600.
+constant SOUND_MAX_DIST = 8000.
+constant SOUND_DIST_CUT = 1500.
 
 class SoundInstance
 	vec3 pos = vec3(0,0,0)
@@ -47,17 +49,22 @@ public class SoundDefinition
 		this.fadeIn = DEFAULT_SOUND_FADE_IN_RATE
 		this.fadeOut = DEFAULT_SOUND_FADE_OUT_RATE
 		this.eaxSetting = DEFAULT_SOUND_EAX_SETTINGS
-		
-	construct(string file, int duration, boolean looping, boolean is3D )
+		checkDuration()
+				
+	construct(string file, boolean looping, boolean is3D )
 		this.file = file
-		this.duration = duration
 		this.looping = looping
 		this.is3D = is3D
 		this.stopOnLeaveRange = true
 		this.fadeIn = DEFAULT_SOUND_FADE_IN_RATE
 		this.fadeOut = DEFAULT_SOUND_FADE_OUT_RATE
 		this.eaxSetting = DEFAULT_SOUND_EAX_SETTINGS
-	
+		checkDuration()
+
+	private void checkDuration()
+		duration = GetSoundFileDuration(file)
+		if duration <= 0 
+			duration = 1000
 
 	private function getSound() returns SoundInstance
 		// If there is a handle on the stack
@@ -71,10 +78,10 @@ public class SoundDefinition
 			/*
 			*   Configure sound
 			*/
-			SetSoundDuration(sdata.snd, this.duration)
-			SetSoundChannel(sdata.snd, SOUND_CHANNEL)
-			SetSoundVolume(sdata.snd, DEFAULT_SOUND_VOLUME)
-			SetSoundPitch(sdata.snd, DEFAULT_SOUND_PITCH)
+			sdata.snd..setDuration(this.duration)
+			..setChannel(SOUND_CHANNEL)
+			..setVolume(DEFAULT_SOUND_VOLUME)
+			..setPitch(DEFAULT_SOUND_PITCH)
 			
 			/*
 			*   Proper 3D sound configuration
@@ -117,7 +124,6 @@ public class SoundDefinition
 		if sdata.pos.x != 0 and sdata.pos.y != 0
 			SetSoundPosition(sdata.snd, sdata.pos.x, sdata.pos.y, sdata.pos.z)
 		SetSoundVolume(sdata.snd, 100)
-		SetSoundPitch(sdata.snd, 1)
 		if sdata.p != null
 			if GetLocalPlayer() == sdata.p
 				StartSound(sdata.snd)
@@ -149,21 +155,24 @@ public class DynamicSound
 	real smoothness = 0.015
 	real minimumLength = 0.5
 	
-	SoundInstance soundData
+	SoundInstance soundData = null
 	SoundDefinition soundHandle
 	
 	construct(SoundDefinition soundHandle)
 		this.soundHandle = soundHandle
 		this.minimumLength = soundHandle.duration * 0.001
-		
+
 	function setTargetPitch(real pitch)
 		targetPitch = pitch
 		
 	function play()
 		soundData = soundHandle.play()
+		setAbsolutePitch(currentPitch)
 		startTimedLoop()
 		
 	function setAbsolutePitch(real pitch)
+		if soundData == null
+			error("Must play sound before setting pitch")
 		if not soundData.snd.isPlaying()
 			if pitch == 1
 				soundData.snd.setPitch(1.0001)
@@ -180,5 +189,10 @@ public class DynamicSound
 			minimumLength -= ANIMATION_PERIOD
 			if not soundData.snd.isPlaying() and minimumLength <= 0
 				stopTimedLoopAndDestroy()
+
+	ondestroy
+		setAbsolutePitch(1)
+		soundData.snd.stop(false, false)
+		setAbsolutePitch(1)
 		
 	

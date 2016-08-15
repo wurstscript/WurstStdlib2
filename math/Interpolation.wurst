@@ -5,10 +5,6 @@ import Wurstunit
 /**Look at linear*/
 public function linear(vec2 start, vec2 stop, real p) returns vec2
 	return vec2(linear(start.x, stop.x, p), linear(start.y, stop.y, p))
-	
-public function bezier_3(vec2 start, vec2 mid, vec2 stop, real p) returns vec2
-	return vec2(bezier_3(start.x, mid.x, stop.x, p), bezier_3(start.y, mid.y, stop.y, p))
-
 /** 
 	Linear Interpolation
 	Sample Usage:
@@ -16,6 +12,9 @@ public function bezier_3(vec2 start, vec2 mid, vec2 stop, real p) returns vec2
 */
 public function linear( real start, real stop, real p ) returns real
 	return start + (stop-start)*p
+
+public function vec2.bezier(vec2 mid, vec2 stop, real p) returns vec2
+	return vec2(bezier_3(this.x, mid.x, stop.x, p), bezier_3(this.y, mid.y, stop.y, p))
 
 /**
 	3-Point-Bezier Interpolation

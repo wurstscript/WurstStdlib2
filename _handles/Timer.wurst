@@ -3,12 +3,15 @@ import NoWurst
 
 public function timer.destr()
 	DestroyTimer(this)
-	
+
 public function timer.getElapsed() returns real
 	return TimerGetElapsed(this)
 
 public function timer.getHandleId() returns int
 	return GetHandleId(this)
+
+public function timer.pause()
+	PauseTimer(this)
 
 public function timer.getRemaining() returns real
 	return TimerGetRemaining(this)

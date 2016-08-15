@@ -3,7 +3,6 @@ import NoWurst
 import public Unit
 import public Timer
 import Basics
-import Vectors
 import ErrorHandling
 import MapBounds
 import GameTimer
@@ -36,7 +35,7 @@ public class DummyRecycler
 			u.remove()
 		else
 			angleQueues[smallestQueue].enqueue(u)
-			u..setXY(boundMax)..pause()..setFacing(smallestQueue*ANGLE_DEGREE)..setScale(1)
+			u..setXY(boundMax)..pause()..setFacing((smallestQueue*ANGLE_DEGREE).asAngleDegrees())..setScale(1)
 		
 		
 	static function recycle(unit u, real delay)

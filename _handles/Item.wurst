@@ -3,6 +3,9 @@ import NoWurst
 import public Vectors
 
 public function createItem(int itemId, vec2 pos) returns item
+	return createItem(itemId, pos.toVec3())
+
+public function createItem(int itemId, vec3 pos) returns item
 	return CreateItem(itemId, pos.x, pos.y)
 
 public function item.getName() returns string

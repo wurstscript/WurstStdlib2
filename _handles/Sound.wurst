@@ -7,6 +7,9 @@ public function sound.setDuration(int dur)
 
 public function sound.play(string soundname)
 	PlaySound(soundname)
+
+public function sound.stop(boolean killWhenDone, boolean fadeOut)
+	StopSound(this, killWhenDone, fadeOut)
 	
 public function sound.setChannel(int channel)
 	SetSoundChannel(this, channel)

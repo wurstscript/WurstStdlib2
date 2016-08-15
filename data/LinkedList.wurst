@@ -35,8 +35,15 @@ public class LinkedList<ELEM_TYPE>
 	/** Add an element to the end of the list (top of stack, beginning of queue) */
 	function push(ELEM_TYPE elem)
 		add(elem)
+
+	/** Returns and removes the first added Element (FIFO) */
+	function dequeue() returns ELEM_TYPE
+		let top = dummy.next
+		let elem = top.elem
+		removeEntry(top)
+		return elem
 		
-	/** Returns and removes the lastly added Element */
+	/** Returns and removes the last added Element (LIFO) */
 	function pop() returns ELEM_TYPE
 		let top = dummy.prev
 		let elem = top.elem
