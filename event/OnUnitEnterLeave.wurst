@@ -2,18 +2,19 @@ package OnUnitEnterLeave
 import MapBounds
 import NoWurst
 import Unit
-import Group
 import Trigger
+import Integer
+import Group
 import Player
-import AbilityObjEditing
 import ClosureTimers
+import AbilityObjEditing
 import RegisterEvents
 
 constant eventTrigger = CreateTrigger()
 
 public function getEnterLeaveUnit() returns unit
 	return tempUnit
-	
+
 public function onEnter(code c)
 	eventTrigger.addCondition(Condition(c))
 
@@ -21,18 +22,17 @@ public function onLeave(code c)
 	eventTrigger.addAction(c)
 
 unit tempUnit = null
-	
+
 init
-	CreateTrigger()..registerEnterRegion(boundRegion, null)
-	..addCondition(Condition(() -> begin
-		tempUnit = GetEnteringUnit()..addAbility(ABILITY_ID)..makeAbilityPermanent(ABILITY_ID, true)
+	CreateTrigger()..registerEnterRegion(boundRegion, Filter(() -> begin
+		tempUnit = GetFilterUnit()..addAbility(ABILITY_ID)..makeAbilityPermanent(ABILITY_ID, true)
 		eventTrigger.evaluate()
 		tempUnit = null
 	end))
-	
+
 	registerPlayerUnitEvent(EVENT_PLAYER_UNIT_ISSUED_ORDER, () -> begin
 		let leavingUnit = GetTriggerUnit()
-		if not leavingUnit.hasAbility(ABILITY_ID)
+		if leavingUnit.getAbilityLevel(ABILITY_ID) == 0
 			tempUnit = leavingUnit
 			eventTrigger.execute()
 			tempUnit = null
@@ -40,12 +40,20 @@ init
 	ABILITY_ID = '!e@$'
 	for i = 0 to bj_MAX_PLAYER_SLOTS-1
 		players[i].setAbilityAvailable(ABILITY_ID, false)
-	 
-	nullTimer(() -> GroupEnumUnitsInRect(ENUM_GROUP, boundRect, Filter(() -> begin
-		tempUnit = GetFilterUnit()..addAbility(ABILITY_ID)..makeAbilityPermanent(ABILITY_ID, true)
-		eventTrigger.evaluate()
-		tempUnit = null
-	end)))
+
+	let g = CreateGroup()
+	GroupEnumUnitsInRect(g, boundRect, null)
+	nullTimer(() -> begin
+		while true
+			tempUnit = FirstOfGroup(g)
+			if tempUnit==null
+				break
+			tempUnit.addAbility(ABILITY_ID)
+			tempUnit.makeAbilityPermanent(ABILITY_ID, true)
+			g.removeUnit(tempUnit)
+			eventTrigger.evaluate()
+		g.destr()
+	end)
 
 int ABILITY_ID = '!e@$'
 
@@ -53,4 +61,3 @@ int ABILITY_ID = '!e@$'
 	new AbilityDefinitionDefend(ABILITY_ID)
 	..setName("Leave Detect")..setEditorSuffix("(OnUnitEnterLeave)")
 	..setArtCaster("")..setIconNormal("")..setRace(Race.Unknown)
-	
