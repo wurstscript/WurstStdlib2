@@ -1,6 +1,8 @@
 package Interpolation
 import Wurstunit
 
+
+
 // Credits to BlinkyBoy
 /**Look at linear*/
 public function linear(vec2 start, vec2 stop, real p) returns vec2
@@ -13,8 +15,17 @@ public function linear(vec2 start, vec2 stop, real p) returns vec2
 public function linear( real start, real stop, real p ) returns real
 	return start + (stop-start)*p
 
+public function vec3.bezier(vec3 mid, vec3 stop, real p) returns vec3
+	return vec3(bezier_3(this.x, mid.x, stop.x, p), bezier_3(this.y, mid.y, stop.y, p), bezier_3(this.z, mid.z, stop.z, p))
+
 public function vec2.bezier(vec2 mid, vec2 stop, real p) returns vec2
 	return vec2(bezier_3(this.x, mid.x, stop.x, p), bezier_3(this.y, mid.y, stop.y, p))
+
+public function vec3.lerp(vec3 target, real alpha) returns vec3
+	return vec3(this.x.lerp(target.x, alpha), this.y.lerp(target.y, alpha), this.z.lerp(target.z, alpha))
+
+public function vec2.lerp(vec2 target, real alpha) returns vec2
+	return vec2(this.x.lerp(target.x, alpha), this.y.lerp(target.y, alpha))
 
 /**
 	3-Point-Bezier Interpolation

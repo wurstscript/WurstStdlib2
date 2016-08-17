@@ -41,6 +41,9 @@ public function unit.addXp(int toAdd, boolean showEyeCandy)
 public function unit.damageTarget(unit target, real amount)
 	UnitDamageTarget(this, target, amount, false, false, ATTACK_TYPE_NORMAL, DAMAGE_TYPE_UNIVERSAL, WEAPON_TYPE_WHOKNOWS)
 
+public function unit.damageTarget(unit target, real amount, attacktype attacktyp)
+	UnitDamageTarget(this, target, amount, false, false, attacktyp, DAMAGE_TYPE_UNIVERSAL, WEAPON_TYPE_WHOKNOWS)
+
 public function unit.getAbilityLevel(int id) returns int
 	return GetUnitAbilityLevel(this, id)
 

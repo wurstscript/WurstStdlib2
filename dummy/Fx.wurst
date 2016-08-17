@@ -20,34 +20,38 @@ import TerrainUtils
 public class Fx
 	private unit 	dummy	= null
 	private effect 	fx 		= null
-	private real 	zAngle  = 0.
-	private string 	sfxPath 
+	private angle 	zAngle  = angle(0)
+	private string 	sfxPath = ""
 	
 	private colorA col = colorA(255,255,255,255)
 	
 	construct(real x, real y, angle facing)
-		dummy = DummyRecycler.get( vec2(x, y), facing)
+		dummy = DummyRecycler.get(vec2(x, y), facing)
 	
 	construct(vec2 pos, angle facing)
-		dummy = DummyRecycler.get( pos, facing)
+		dummy = DummyRecycler.get(pos, facing)
+
+	construct(vec2 pos, string fxpath)
+		dummy = DummyRecycler.get(pos, angle(0))
+		setFx(fxpath)
 	
 	construct(vec2 pos, angle facing, string fxpath)
-		dummy = DummyRecycler.get( pos, facing)
-		setFx( fxpath )
+		dummy = DummyRecycler.get(pos, facing)
+		setFx(fxpath)
 	
 	construct(vec3 pos, angle facing)
-		dummy = DummyRecycler.get( pos.toVec2(), facing)
+		dummy = DummyRecycler.get(pos.toVec2(), facing)
 		setZ(pos.z)	
 	
-	construct(vec3 pos, angle facing, string fxpath)
-		dummy = DummyRecycler.get( pos.toVec2(), facing)
-		setZ(pos.z)
-		setFx( fxpath )	
+	construct(vec3 pos, string fxpath)
+		dummy = DummyRecycler.get(pos.toVec2(), angle(0))
+		setFx(fxpath)
 	
-	construct(real x, real y, angle facing, string fxpath)
-		dummy = DummyRecycler.get( vec2(x,y), facing)
-		setFx( fxpath )
-			
+	construct(vec3 pos, angle facing, string fxpath)
+		dummy = DummyRecycler.get(pos.toVec2(), facing)
+		setZ(pos.z)
+		setFx(fxpath)	
+	
 	/** Get the owner of this Fx Object */
 	function getOwner() returns player
 		return dummy.getOwner()
@@ -56,30 +60,14 @@ public class Fx
 	function setOwner(player p, boolean changeColor)
 		dummy.setOwner(p, changeColor)
 		
-	/** Set the teamcolor of this Fx Object */
-	function setTeamcolor(playercolor c)
+	/** Set the playercolor of this Fx Object */
+	function setPlayercolor(playercolor c)
 		SetUnitColor(dummy, c)
 	
 	/** Set the scale of this Fx Object */
 	function setScale(real value)
 		dummy.setScale(value)
 
-	/** Get the green color value (rgba) */
-	function getGreen() returns int
-		return col.green
-	
-	/** Get the blue color value (rgba) */
-	function getBlue() returns int
-		return col.blue
-	
-	/** Get the red color value (rgba) */
-	function getRed() returns int
-		return col.red
-	
-	/** Get the alpha color value (rgba) */
-	function getAlpha() returns int
-		return col.alpha
-		
 	/** Get the color (rgba) */
 	function getColor() returns colorA
 		return col
@@ -88,10 +76,6 @@ public class Fx
 	function getDummy() returns unit
 		return dummy
 		
-	/** Backwards-compatability */
-	function recolor(colorA newColor)
-		setColor(newColor)
-		
 	/** Sets the color of the Fx object to the given color 
 	Color: 0 = no color - 255 = full color
 	Alpha: 0 = transparent - 255 = visible */
@@ -99,16 +83,16 @@ public class Fx
 		col = newColor
 		dummy.setVertexColor(newColor)
 
-	/** "flashs" the given effect.
-	Flashing plays the death animation of the effect at the fx' position. */
+	/** "flashes" the given effect.
+		Flashing plays the death animation of the effect at the fx's position. */
 	function flash(string fx)
 		dummy.addEffect(fx, "origin").destr()
 		
-	/** Get the xy angle in radians */
+	/** Get the xy angle */
 	function getXYAngle() returns angle
 		return dummy.getFacing().asAngleDegrees()
  
-	/** Set the angle in degrees */
+	/** Set the xy angle */
 	function setXYAngle(angle value)
 		dummy.setFacing(value)
 		
@@ -116,68 +100,34 @@ public class Fx
 	function setXYAngleInstant(angle value)
 		fx.destr()
 		DummyRecycler.recycle(dummy)
-		dummy = DummyRecycler.get(vec2(getX(), getY()), value)
+		dummy = DummyRecycler.get(vec2(dummy.getX(), dummy.getY()), value)
 		setFx(sfxPath)
 		
-	/** Get the z angle in radians */
-	function getZAngle() returns real
+	/** Get the z angle */
+	function getZAngle() returns angle
 		return zAngle
 		
 	/** Set the z angle in radians */
-	function setZAngle(real value)
-		int i = (value * DEGTORAD + 90.5).toInt()
-		zAngle = value
+	function setZAngle(angle zangle)
+		int i = (zangle.degrees() + 90.5).toInt()
+		this.zAngle = zangle
 		if i >= 180
 			i = 179
 		else if i < 0
 			i = 0
 		dummy.setAnimation(i)
 		
-	/** Set the z angle with an angle tuple */
-	function setZAngle(angle value)
-		setZAngle(value.radians())
-		
-	/** Get the x coordinate */
-	function getX() returns real
-		return dummy.getX()
-	
-	/** Get the y coordinate */
-	function getY() returns real
-		return dummy.getY()
-	
 	/** Get the z coordinate (fly height) */
 	function getZ() returns real
 		return dummy.getFlyHeight()
 		
-	/** Get the xy position as vector tuple */			
+	/** Get the 2d position */			
 	function getPos2() returns vec2
-		return vec2(getX(), getY())
+		return vec2(dummy.getX(), dummy.getY())
 	
-	/** Get the xy position as vector tuple */			
-	function getPos3d() returns vec3
-		return vec3(getX(), getY(), getZ())
-		
-	/** Get the xy position as vector tuple */			
-	function getPos3(real tZ) returns vec3
-		return vec3(getX(), getY(), getZ() + tZ)
-	
-	/** Set the x coordinate */
-	function setX(real x)
-		dummy.setX(x)
-		
-	/** Set the y coordinate */
-	function setY(real y)
-		dummy.setY(y)
-		
-	/** Set the position to the given xy coordinates */
-	function setPos(real x, real y)
-		dummy.setPos(x, y)
-	
-	/** Set the position to the given xyz coordinates
-	z = flyHeight */
-	function setPos(real x, real y, real z)
-		dummy.setPos(x, y)
-		dummy.setFlyHeight(z, 0.)
+	/** Get the 3d position */			
+	function getPos3() returns vec3
+		return vec3(dummy.getX(), dummy.getY(), getZ())
 		
 	/** Set the position to the given xy vector tuple */
 	function setXY(vec2 pos)
@@ -188,12 +138,6 @@ public class Fx
 		dummy.setXY(pos)
 		setZ(pos.z-getTerrainZ(pos.x, pos.y))
 		
-	/** Set the position to the given xyz vector tuple
-	 * this function ignores the terrain height and only sets the fly-height to the z-coordinate */
-	function setXYheight(vec3 pos)
-		dummy.setXY(pos)
-		setZ(pos.z)
-
 	/** Set the position to the given xyz vector tuple. 
 	 * It is possible to ignore the terrain height when desired.
 	 * Use setXYheight when you never need terrain height. 
@@ -204,7 +148,6 @@ public class Fx
 			setZ(pos.z)
 		else
 			setZ(pos.z-getTerrainZ(pos.x, pos.y))
-	
 	
 	/** Set the z coordinate (flyHeight) */
 	function setZ(real z)
@@ -230,6 +173,6 @@ public class Fx
 	/** Destroys the Fx object without showing the effect's death animation 
 		Sort of a workaround by setting the position to the top right corner, hopefully not visible.*/
 	function hiddenDestroy()
-		dummy.setPos( 2147483647, 2147483647)
+		dummy.setPos(2147483647, 2147483647)
 		destroy this
 

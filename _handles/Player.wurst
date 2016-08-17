@@ -9,8 +9,14 @@ init
 	for i = 0 to bj_MAX_PLAYER_SLOTS-1
 		players[i] = Player(i)
 
+public function player.setGold(int val)
+	this.setState(PLAYER_STATE_RESOURCE_GOLD, val)
+
 public function player.addGold(int val)
 	this.addState(PLAYER_STATE_RESOURCE_GOLD, val)
+
+public function player.setLumber(int val)
+	this.setState(PLAYER_STATE_RESOURCE_LUMBER, val)
 
 public function player.addLumber(int val)
 	this.addState(PLAYER_STATE_RESOURCE_LUMBER, val)
