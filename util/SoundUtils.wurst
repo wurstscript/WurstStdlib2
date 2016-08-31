@@ -15,6 +15,7 @@ constant DEFAULT_SOUND_FADE_OUT_RATE = 10
 constant DEFAULT_SOUND_EAX_SETTINGS = "CombatSoundsEAX"
 constant DEFAULT_SOUND_VOLUME = 127
 constant DEFAULT_SOUND_PITCH = 1.
+constant DEFAULT_SOUND_DURATION = 10000
 
 constant SOUND_CHANNEL = 5
 constant SOUND_MIN_DIST = 600.
@@ -33,7 +34,7 @@ public class SoundDefinition
 	LinkedList<SoundInstance> soundStack = new LinkedList<SoundInstance>()
 	
 	string file
-	int duration
+	int duration = 10000
 	boolean looping
 	boolean is3D
 	boolean stopOnLeaveRange
@@ -49,7 +50,6 @@ public class SoundDefinition
 		this.fadeIn = DEFAULT_SOUND_FADE_IN_RATE
 		this.fadeOut = DEFAULT_SOUND_FADE_OUT_RATE
 		this.eaxSetting = DEFAULT_SOUND_EAX_SETTINGS
-		checkDuration()
 				
 	construct(string file, boolean looping, boolean is3D )
 		this.file = file
@@ -59,12 +59,6 @@ public class SoundDefinition
 		this.fadeIn = DEFAULT_SOUND_FADE_IN_RATE
 		this.fadeOut = DEFAULT_SOUND_FADE_OUT_RATE
 		this.eaxSetting = DEFAULT_SOUND_EAX_SETTINGS
-		checkDuration()
-
-	private void checkDuration()
-		duration = GetSoundFileDuration(file)
-		if duration <= 0 
-			duration = 1000
 
 	private function getSound() returns SoundInstance
 		// If there is a handle on the stack
@@ -94,27 +88,51 @@ public class SoundDefinition
 				
 			
 			return sdata
-			
+
+	/** Plays this sound for all Players with a default duration.
+		Use this if you don't care when the SoundHandle gets recycled.	*/
 	function play() returns SoundInstance
+		return play(DEFAULT_SOUND_DURATION)
+			
+	/** Plays this sound for all Players with the given duration.
+		The duration should be close to the length of the soundfile.
+		Use this to recycle soundhandles immeditely when they finish,
+		allowing for rapid succession of sounds.	*/
+	function play(int duration) returns SoundInstance
+		this.duration = duration
 		let snd = getSound()
 		getTimer()
 			..setData(snd castTo int)
 			..start(0., function SoundDefinition.playSound)
 		return snd
-			
-	function playForPlayer(player p)
-		var s = getSound()
-		s.p = p
-		getTimer()
-			..setData(s castTo int)
-			..start(0., function SoundDefinition.playSound)	
 
-	function playOnPoint(vec3 target)
-		var s = getSound()
-		s.pos = target
+	/** Plays this sound for the given Player with a default duration.
+		See play() for more info */
+	function playForPlayer(player p) returns SoundInstance
+		return playForPlayer(p, DEFAULT_SOUND_DURATION)
+
+	/** Plays this sound for the given Player with the given duration.
+		See play() for more info */
+	function playForPlayer(player p, int duration) returns SoundInstance
+		this.duration = duration
+		var snd = getSound()
+		snd.p = p
 		getTimer()
-			..setData(s castTo int)
+			..setData(snd castTo int)
 			..start(0., function SoundDefinition.playSound)	
+		return snd
+
+	function playOnPoint(vec3 target)  returns SoundInstance
+		return playOnPoint(target, DEFAULT_SOUND_DURATION)
+
+	function playOnPoint(vec3 target, int duration)  returns SoundInstance
+		this.duration = duration
+		var snd = getSound()
+		snd.pos = target
+		getTimer()
+			..setData(snd castTo int)
+			..start(0., function SoundDefinition.playSound)	
+		return snd
 
 	private static function playSound()
 		var tm = GetExpiredTimer()
@@ -143,11 +161,11 @@ public class SoundDefinition
 		if sdata.soundDef.soundStack.getSize() < 4
 			sdata.soundDef.soundStack.push(sdata)
 		else
-			StopSound(sdata.snd, true, true)
 			destroy sdata
 			
 		tm.release()
 
+// WIP
 public class DynamicSound
 	use TimedLoop
 	real targetPitch = 1.0
