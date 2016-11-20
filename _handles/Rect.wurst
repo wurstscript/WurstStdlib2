@@ -1,6 +1,10 @@
 package Rect
 import NoWurst
+import Real
 import Vectors
+
+public function rect.randomPoint() returns vec2
+	return vec2(GetRandomReal(this.getMinX(), this.getMaxX()), GetRandomReal(this.getMinY(), this.getMaxY()))
 
 public function vec2.isInRect(rect r)returns boolean
 	return this.x > r.getMinX() and this.x < r.getMaxX() and this.y > r.getMinY() and this.y < r.getMaxY()
