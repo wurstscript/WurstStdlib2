@@ -250,7 +250,7 @@ public function vec3.project( vec3 direction ) returns vec3
 	if l == 0.0
 		return vec3(0.,0.,0.)
 		
-	l = (this.x*direction.x+this.y*direction.y+this.z*direction.z) / l
+	l = this.dot(direction) / l
 	return vec3( direction.x*l, direction.y*l, direction.z*l )
 	
 /** Convert a vec3 to a vec2 (z-coordinate gets removed) */
