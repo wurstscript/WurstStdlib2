@@ -3,7 +3,7 @@ constant FONT_SIZE  =  0.024 / 0.0023
 constant OFFSET     = vec2(16., 0.)
 
 
-function standardTextTag(vec2 pos, string text) returns texttag
+public function standardTextTag(vec2 pos, string text) returns texttag
     let tag = CreateTextTag()..setText(text, FONT_SIZE)
                              ..setPos(pos.x, pos.y, 0.)
                              ..setFadepoint(2.)
