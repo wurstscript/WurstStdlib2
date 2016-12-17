@@ -135,8 +135,7 @@ public class Fx
 	
 	/** Set the position to the given xyz vector tuple */
 	function setXYZ(vec3 pos)
-		dummy.setXY(pos)
-		setZ(pos.z-getTerrainZ(pos.x, pos.y))
+		dummy.setXYZReal(pos)
 		
 	/** Set the position to the given xyz vector tuple. 
 	 * It is possible to ignore the terrain height when desired.
