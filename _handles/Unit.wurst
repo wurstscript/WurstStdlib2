@@ -92,7 +92,7 @@ public function unit.getPos() returns vec2
 	return vec2(this.getX(), this.getY())
 
 public function unit.getPos3Real() returns vec3
-	return vec3(this.getX(), this.getY(), getTerrainZ(this.getX(), this.getY() + this.getFlyHeight()))
+	return vec3(this.getX(), this.getY(), getTerrainZ(this.getX(), this.getY()) + this.getFlyHeight())
 
 public function unit.getPos3Zero() returns vec3
 	return vec3(this.getX(), this.getY(), 0.)
