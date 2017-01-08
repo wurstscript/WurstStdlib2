@@ -1,5 +1,12 @@
 package Destructable
 import NoWurst
+import Vectors
+
+public function createDestructable(int id, vec3 pos, angle direction, real scale, int variation) returns destructable
+	return createDestructable(id, pos.toVec2(), direction, scale, variation)
+
+public function createDestructable(int id, vec2 pos, angle direction, real scale, int variation) returns destructable
+	return CreateDestructable(id, pos.x, pos.y, direction.degrees(), scale, variation)
 
 public function destructable.getX() returns real
 	return GetDestructableX(this)
@@ -15,3 +22,6 @@ public function destructable.getTypeId() returns int
 	
 public function destructable.setAnimation(string anim)
 	SetDestructableAnimation(this, anim)
+
+public function destructable.remove()
+	RemoveDestructable(this)

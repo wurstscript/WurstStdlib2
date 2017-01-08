@@ -42,14 +42,13 @@ public function texttag.setVisibility( boolean flag )
 public function texttag.destr()
 	DestroyTextTag(this)
 	
-public function createTTEx(vec3 pos, string message, real size, colorA col ) returns texttag
+public function createTTEx(vec3 pos, string message, real size) returns texttag
 	return CreateTextTag()
-		..setText( message, size )
-		..setPos(pos.toVec2().withZ(20.))
-		..setColor( col )
-		..setLifespan(2000) 
-		..setPermanent(false)
-	
+		..setPermanent(true)
+		..setText(message, size)
+		..setPos(pos)
+		..setVisibility(true)
+
 public function createTTEx(vec3 pos, string message, real size, colorA col, player p ) returns texttag
 	return CreateTextTag()
 		..setPos(pos.toVec2().withZ(20.))
@@ -63,7 +62,7 @@ public function createTTEx(vec3 pos, vec2 vel, string message, real size, real d
 		..setText( message, size )
 		..setColor( col )
 		..setVelocity( vel.x, vel.y)
-		..setLifespan( duration) 
+		..setLifespan(duration) 
 		..setFadepoint(.1) 
 		..setPermanent(false)
 	

@@ -27,7 +27,7 @@ public class Fx
 	
 	construct(real x, real y, angle facing)
 		dummy = DummyRecycler.get(vec2(x, y), facing)
-	
+
 	construct(vec2 pos, angle facing)
 		dummy = DummyRecycler.get(pos, facing)
 
@@ -50,14 +50,27 @@ public class Fx
 	construct(vec3 pos, angle facing, string fxpath)
 		dummy = DummyRecycler.get(pos.toVec2(), facing)
 		setZ(pos.z)
-		setFx(fxpath)	
+		setFx(fxpath)
+
+	construct(playercolor pc, vec3 pos, angle facing, string fxpath)
+		dummy = DummyRecycler.get(pos.toVec2(), facing)
+		setFx(fxpath)
+		setZ(pos.z)
+		setPlayerColor(pc)
 	
 	/** Get the owner of this Fx Object */
 	function getOwner() returns player
 		return dummy.getOwner()
+
+	function setPlayerColor(playercolor pc)
+		getDummy().setColor(pc)
 		
 	/** Set the owner of this Fx Object */
 	function setOwner(player p, boolean changeColor)
+		if fx != null
+			fx.destr()
+			fx = null
+		setFx(sfxPath)
 		dummy.setOwner(p, changeColor)
 		
 	/** Set the playercolor of this Fx Object */

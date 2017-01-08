@@ -11,7 +11,9 @@ public function createUnit(player p, int unitId, vec2 pos, angle facing) returns
 	return CreateUnit(p, unitId, pos.x, pos.y, facing.degrees())
 	
 public function createUnit(player p, int unitId, vec3 pos, angle facing) returns unit
-	return CreateUnit(p, unitId, pos.x, pos.y, facing.degrees())
+	let u = CreateUnit(p, unitId, pos.x, pos.y, facing.degrees())
+	u.setFlyHeight(pos.z, 0)
+	return u
 	
 public function createUnitZ(player p, int unitId, vec3 pos, angle facing) returns unit
 	return CreateUnit(p, unitId, pos.x, pos.y, facing.degrees())
@@ -93,6 +95,9 @@ public function unit.getPos() returns vec2
 
 public function unit.getPos3Real() returns vec3
 	return vec3(this.getX(), this.getY(), getTerrainZ(this.getX(), this.getY()) + this.getFlyHeight())
+
+public function unit.getPos3Fly() returns vec3
+	return vec3(this.getX(), this.getY(), this.getFlyHeight())
 
 public function unit.getPos3Zero() returns vec3
 	return vec3(this.getX(), this.getY(), 0.)
@@ -222,6 +227,14 @@ public function unit.setPathing(boolean value)
 public function unit.setPos(vec2 pos)
 	SetUnitPosition(this, pos.x, pos.y)
 
+public function unit.setPosFly(vec3 pos)
+	this.setPos(pos.x, pos.y)
+	this.setFlyHeight(pos.z, 0)
+
+public function unit.setPosReal(vec3 pos)
+	this.setPos(pos.x, pos.y)
+	this.setFlyHeight(pos.z-getTerrainZ(pos.x, pos.y), 0)
+
 public function unit.setPos(real x, real y)
 	SetUnitPosition(this, x, y)
 	
@@ -297,3 +310,16 @@ public function unit.unpause()
 public function vec2.withRealZ(unit u) returns vec3
 	return vec3(this.x, this.y, getTerrainZ(this.x, this.y)+u.getFlyHeight())
 
+/** Cancels the current order */
+public function unit.abortOrder() returns boolean
+	if IsUnitPaused(this)
+		return false
+	else
+		PauseUnit(this, true)
+		IssueImmediateOrder(this, "stop")
+		PauseUnit(this, false)
+	return true
+
+public function unit.resetAbilityCooldown(int abilId)
+	let lvl = this.getAbilityLevel(abilId)
+	this..removeAbility(abilId)..addAbility(abilId)..setAbilityLevel(abilId, lvl)

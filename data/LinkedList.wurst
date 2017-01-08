@@ -1,9 +1,11 @@
 package LinkedList
 import NoWurst
 import Wurstunit
+import ErrorHandling
 
 public class LinkedList<T>
 	private LLEntry<T> dummy
+	private LLStaticIterator<T> staticItr = new LLStaticIterator<T>(this)
 	protected int size = 0
 
 	/** Create a new empty list */
@@ -85,8 +87,12 @@ public class LinkedList<T>
 		return size
 		
 	/** get an iterator for this list */
+	function staticItr() returns LLStaticIterator<T>
+		return staticItr
+
+	/** get an iterator for this list */
 	function iterator() returns LLIterator<T>
-		return new LLIterator(this)	
+		return new LLIterator(this)
 	
 	/** get a backiterator for this list */
 	function backiterator() returns ListBackIterator<T>
@@ -160,6 +166,7 @@ public class LinkedList<T>
 		size--
 		
 	ondestroy
+		destroy staticItr
 		LLEntry<T> current = dummy.next
 		while current != dummy
 			current = current.next
@@ -175,6 +182,42 @@ class LLEntry<T>
 		this.elem = elem
 		this.prev = prev
 		this.next = next
+
+public class LLStaticIterator<T>
+	LLEntry<T>    dummy
+	LLEntry<T>    current
+	LinkedList<T> parent
+
+	construct(LinkedList<T> parent)
+		this.parent  = parent
+		reset()
+
+	function reset()
+		this.dummy   = parent.getDummy()
+		this.current = dummy
+
+	/** remove the current element from the list */
+	function remove()
+		if current != dummy
+			parent.size--
+			current.next.prev = current.prev
+			current.prev.next = current.next
+			let removedNode   = current
+			current           = current.prev
+			destroy removedNode
+
+
+	function hasNext() returns boolean
+		return current.next != dummy
+
+	function next() returns T
+		current = current.next
+		return current.elem
+
+	function close()
+
+	ondestroy
+		
 
 public class LLIterator<T>
 	LLEntry<T>    dummy

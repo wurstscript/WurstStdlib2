@@ -54,11 +54,16 @@ public function string.toAbilityId() returns int
 	
 /**	Returns if the given string ends with the specified string.	*/
 public function string.endsWith(string s) returns boolean
-	int l = this.length()
-	return this.substring(l-s.length(), l) == s
+	let len = this.length()
+	if s.length() > len
+		return false
+	return this.substring(len-s.length(), len) == s
 		
 /**	Returns if the given string starts with the specified string.	*/
 public function string.startsWith(string s) returns boolean
+	let len = this.length()
+	if s.length() > len
+		return false
 	return this.substring(0, s.length()) == s
 
 /** Returns the string in lowercase letters */

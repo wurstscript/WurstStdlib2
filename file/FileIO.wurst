@@ -1,12 +1,10 @@
 package FileIO
 import NoWurst
 import ErrorHandling
+import ClosureTimers
 
 /* Credits Nestharus */
 	//Tests if the player can read files
-
-init
-	TimerStart(CreateTimer(),0,false,function LocalFileTest.onInit)
 
 class LocalFileTest
 	private static constant string FLAG_FOLDER = "Flag"
@@ -20,7 +18,6 @@ class LocalFileTest
 		Preloader(FLAG_FOLDER + "\\" + FLAG_FILE)
 		
 		success = GetPlayerName(GetLocalPlayer()) != playerName
-		
 		SetPlayerName(GetLocalPlayer(), playerName)
 		
 	static function writeLocalFileTest()
@@ -42,7 +39,7 @@ public enum Flag
 public class File
 	private static constant string SAVE_GAME_FOLDER = "GameData"	//don't change this for the player's convenience
 	private static constant int MAX_LINE_LENGTH = 209		   //max amount of data per line
-	private static hashtable stringTable							//stores lines from file, 16 lines per file
+	static hashtable stringTable							//stores lines from file, 16 lines per file
 		
 	private string mapName
 	private string fileName
@@ -54,7 +51,7 @@ public class File
 		
 	private Flag flag											//read/write flag
 		
-	private static string array extra0							  //extra 0s on string lengths to make digits = 4
+	static string array extra0							  //extra 0s on string lengths to make digits = 4
 
 	
 	static function isEnabled() returns boolean
@@ -221,15 +218,12 @@ public class File
 		dataIndex = 0
 		data = ""
 		
-	static function doInit()
-		extra0[1] = "000"
-		extra0[2] = "00"
-		extra0[3] = "0"
-		extra0[4] = ""
-		stringTable = InitHashtable()
-
 
 init
-	File.doInit()
-
+	File.extra0[1] = "000"
+	File.extra0[2] = "00"
+	File.extra0[3] = "0"
+	File.extra0[4] = ""
+	File.stringTable = InitHashtable()
+	nullTimer(() -> LocalFileTest.onInit())
 

@@ -2,6 +2,7 @@ package EventHelper
 import NoWurst
 import Vectors
 import HashMap
+import _Handles
 
 HashMap<trigger, rect> rectMap = new HashMap<trigger, rect>()
 HashMap<region, int> regionMap = new HashMap<region, int>()
@@ -65,3 +66,6 @@ public function region.loadRegionData() returns int
 public function region.removeRegionData()
 	regionMap.remove(this)
 
+public function eventid.isPlayerunitEvent() returns boolean
+	let eventId = this.getHandleId()
+	return (eventId >= 18 and eventId <= 51) or (eventId >= 269 and eventId <= 277)

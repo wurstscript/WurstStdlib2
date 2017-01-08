@@ -20,7 +20,9 @@ public class BuffDefinition
 		def.setLvlDataString("fart",  level, 0,  value)
 	
 	function setIcon(string name)
-		string s = "ReplaceableTextures\\CommandButtons\\" + name
+		string s = name
+		if name.length() < 20 or not name.startsWith("ReplaceableTextures")
+			 s = "ReplaceableTextures\\CommandButtons\\" + s
 		if not name.endsWith(".blp")
 			s += ".blp"
 
