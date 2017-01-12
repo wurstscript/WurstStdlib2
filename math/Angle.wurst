@@ -22,6 +22,14 @@ public function angle.radians() returns real
 public function real.asAngleDegrees() returns angle
 	return angle(this*DEGTORAD)
 
+/** interpret this real as an angle given in degrees */
+public function real.fromDeg() returns angle
+	return angle(this*DEGTORAD)
+
+/** interpret this real as an angle given in degrees */
+public function real.fromRad() returns angle
+	return angle(this*.0)
+
 /** interpret this int as an angle given in radians */
 public function int.asAngleRadians() returns angle
 	return angle(this * .0)
