@@ -36,6 +36,10 @@ public function vec2.op_minus( vec2 v )	returns vec2
 /** * Operator */
 public function vec2.op_mult(real factor) returns vec2
 	return vec2(this.x*factor, this.y*factor) 
+
+/** * Operator */
+public function real.op_mult(vec2 vec) returns vec2
+	return vec2(vec.x*this, vec.y*this) 
 	
 /** dot product Operator */
 public function vec2.op_mult(vec2 v) returns vec2
@@ -223,10 +227,19 @@ public function vec3.rotate( vec3 axis, real radians ) returns vec3 //angle is t
 	var yy = (axis.z*xx - axis.x*xz)/al //y same length as x by using cross product and dividing with axis length
 	var yz = (axis.x*xy - axis.y*xx)/al //x,y - coordinate system in which we rotate
 	return vec3(xx*c+yx*s+zx, xy*c+yy*s+zy, xz*c+yz*s+zz )
+
+/** Sets the length of the given Vector */
+public function vec3.setLengthSq( real lengthSq ) returns vec3
+	real l = this.lengthSquared()
+	if l == 0.0
+		printLog(Loglevel.WARNING, "vector.setLength error: The length of the vector is 0.0!")
+		return vec3(0.,0.,0.)
+	l = lengthSq/l
+	return vec3(this.x*l, this.y*l, this.z*l)
 	
 /** Sets the length of the given Vector */
 public function vec3.setLength( real length ) returns vec3
-	real l = SquareRoot(this.x*this.x + this.y*this.y + this.z*this.z)
+	real l = this.length()
 	if l == 0.0
 		printLog(Loglevel.WARNING, "vector.setLength error: The length of the vector is 0.0!")
 		return vec3(0.,0.,0.)

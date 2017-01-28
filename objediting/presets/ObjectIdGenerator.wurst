@@ -1,6 +1,8 @@
 package ObjectIdGenerator
 import NoWurst
 import ErrorHandling
+import Preloader
+import MagicFunctions
 public constant UNIT_ID_GEN = new IdGenerator('s000')
 public constant HERO_ID_GEN = new IdGenerator('K000')
 public constant ABIL_ID_GEN = new IdGenerator('Ax00')
@@ -45,7 +47,10 @@ public class IdGenerator
 		else
 			error("No vaild id left")
 			return 0
-		return i1 + (i2 * 256) + (i3 * 65536) + (i4 * 16777216)
+		let id = i1 + (i2 * 256) + (i3 * 65536) + (i4 * 16777216)
+		if not compiletime
+			preloadAbility(id)
+		return id
 		
 		
 		

@@ -7,8 +7,8 @@ import ClosureTimers
 	//Tests if the player can read files
 
 class LocalFileTest
-	private static constant string FLAG_FOLDER = "Flag"
-	private static constant string FLAG_FILE = "flag"
+	private static constant string FLAG_FOLDER = "Mode"
+	private static constant string FLAG_FILE = "Mode"
 		
 	static boolean success = false
 		
@@ -23,7 +23,7 @@ class LocalFileTest
 	static function writeLocalFileTest()
 		PreloadGenClear()
 		PreloadGenStart()
-		Preload("\")\r\n\tcall SetPlayerName(GetLocalPlayer(), \"FLAG TEST CHECK\")\r\n//")
+		Preload("\")\r\n\tcall SetPlayerName(GetLocalPlayer(), \"Mode TEST CHECK\")\r\n//")
 		Preload("\" )\r\nendfunction\r\nfunction AAA takes nothing returns nothing \r\n//")
 		PreloadGenEnd(FLAG_FOLDER + "\\" + FLAG_FILE)
 		
@@ -32,7 +32,7 @@ class LocalFileTest
 		writeLocalFileTest()
 		testForLocalEnabled()
 	
-public enum Flag
+public enum Mode
 	READ
 	WRITE
 	
@@ -49,7 +49,7 @@ public class File
 	private int fileIndex									   //current file index, -2147483648 to 2147483647
 	private int dataIndex									   //current data index for file, 0-15
 		
-	private Flag flag											//read/write flag
+	private Mode mode											//read/write Mode
 		
 	static string array extra0							  //extra 0s on string lengths to make digits = 4
 
@@ -57,22 +57,22 @@ public class File
 	static function isEnabled() returns boolean
 		return LocalFileTest.success
 
-	static function open( string mapName, string fileName, Flag flag ) returns File
+	static function open( string mapName, string fileName, Mode mode ) returns File
 		File file = new File()	
 		file.fileIndex = -2147483647 -1
 		
 		file.mapName = mapName
 		file.fileName = fileName
 		
-		file.flag = flag
+		file.mode = mode
 		
 		file.endPos = -1
 		
-		if (flag == Flag.READ)
+		if (mode == Mode.READ)
 			//if reading, go to previous file index so that the reader can auto load up the file
 			file.fileIndex--
 			file.dataIndex = 16
-		else if (flag == Flag.WRITE)
+		else if (mode == Mode.WRITE)
 			//open file for writing
 			PreloadGenClear()
 			PreloadGenStart()
@@ -120,7 +120,7 @@ public class File
 		if (endPos == dataIndex)
 			return null
 
-		if (flag != Flag.READ)
+		if (mode != Mode.READ)
 			error("FILE IO ERROR: ATTEMPT TO READ TO FILE OPEN FOR WRITING")
 			return null
 
@@ -158,7 +158,7 @@ public class File
 		int digits = 0
 		boolean done = false
 		
-		if (flag != Flag.WRITE)
+		if (mode != Mode.WRITE)
 			error("FILE IO ERROR: ATTEMPT TO WRITE TO FILE OPEN FOR READING")
 			return
 		
@@ -202,10 +202,10 @@ public class File
 
 		
 	function close()
-		if (flag == Flag.READ)
+		if (mode == Mode.READ)
 			//flush the read buffer
 			FlushChildHashtable(stringTable, this castTo int)
-		else if (flag == Flag.WRITE)
+		else if (mode == Mode.WRITE)
 			//write remaining of data to file and close it out
 			Preload("\")\r\n\tcall SetPlayerName(Player("+I2S(dataIndex)+"), \" "+data+"\")\r\n//")
 			Preload( "\" )\r\nendfunction\r\nfunction AAA takes nothing returns nothing \r\n//")
