@@ -19,7 +19,6 @@ public module LinkedListModule
 			prev = last
 			last.next = this
 			first.prev = this
-		next = first
 		last = this
 
 	static function getFirst() returns thistype
@@ -53,13 +52,17 @@ public module LinkedListModule
 		
 	static class Iterator
 		LinkedListModule.thistype current = first
+
 		function hasNext() returns boolean
-			return current != last
+			return current != null
 	
 		function next() returns LinkedListModule.thistype
 			let res = current
 			current = current.next
 			return res
+
+		function reset()
+			current = first
 	 		
 		function close() 
 			destroy this

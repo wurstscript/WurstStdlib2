@@ -88,6 +88,7 @@ public class LinkedList<T>
 		
 	/** get an iterator for this list */
 	function staticItr() returns LLStaticIterator<T>
+		staticItr.reset()
 		return staticItr
 
 	/** get an iterator for this list */
