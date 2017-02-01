@@ -1,6 +1,5 @@
 package EventHelper
 import NoWurst
-import Vectors
 import HashMap
 import _Handles
 
@@ -69,3 +68,7 @@ public function region.removeRegionData()
 public function eventid.isPlayerunitEvent() returns boolean
 	let eventId = this.getHandleId()
 	return (eventId >= 18 and eventId <= 51) or (eventId >= 269 and eventId <= 277)
+
+public function eventid.isKeyboardEvent() returns boolean
+	let eventId = this.getHandleId()
+	return (eventId >= 261 and eventId <= 268) or (eventId == 17)
