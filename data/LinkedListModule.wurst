@@ -25,9 +25,13 @@ public module LinkedListModule
 		return first
 		
 	function getNext() returns thistype
+		if next == null
+			return first
 		return next
 
 	function getPrev() returns thistype
+		if prev == null
+			return last
 		return prev
 		
 		

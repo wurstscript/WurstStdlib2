@@ -28,7 +28,6 @@ class LocalFileTest
 		PreloadGenEnd(FLAG_FOLDER + "\\" + FLAG_FILE)
 		
 	static function onInit()
-		DestroyTimer(GetExpiredTimer())
 		writeLocalFileTest()
 		testForLocalEnabled()
 	
@@ -42,7 +41,7 @@ public class File
 	static hashtable stringTable							//stores lines from file, 16 lines per file
 		
 	private string mapName
-	private string fileName
+	string fileName
 		
 	private string data											 //data buffer
 		
@@ -112,7 +111,6 @@ public class File
 		this.data = this.data + LoadStr(stringTable, this castTo int, dataIndex)
 		dataIndex++
 
-		
 	function read() returns string
 		int length
 		string data = ""

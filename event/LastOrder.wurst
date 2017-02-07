@@ -3,38 +3,6 @@ import RegisterEvents
 import OnUnitEnterLeave
 import ErrorHandling
 
-class OrderQueue
-	private Order array[ORDERS_TO_HOLD] orders
-	private int fp = 0
-	private int rp = 0
-	int size = 0
-
-	function get(int index) returns Order
-		return orders[fp + index]
-
-	function enqueue(Order o)
-		if size < ORDERS_TO_HOLD
-			size++
-			rp = (rp + 1) mod ORDERS_TO_HOLD
-			orders[rp] = o
-		else
-			destroy dequeue()
-			enqueue(o)
-
-	function dequeue() returns Order
-		if size > 0
-			size--
-			fp = (fp + 1) mod ORDERS_TO_HOLD
-			return orders[fp]
-		else
-			return null
-
-	ondestroy
-		var e = dequeue()
-		while e != null
-			destroy e
-			e = dequeue()
-
 
 /** How many bast orders to hold.
 	Should be at least 2 */
@@ -45,57 +13,76 @@ public enum OrderType
 	POINT
 	IMMEDIATE
 
-OrderQueue array orderQueues
+Order array lastOrder
 
 public class Order
-	unit u
-	int id
-	OrderType otype
-	boolean fin
-	widget  tar
-	real	x
-	real	y
+	Order 		prev = null
 
-	construct( unit ordered, int ordid, OrderType ordtype, widget target, real ordx, real ordy )
-		printLog(Loglevel.DEBUG, "Allocated instance of Order with : " + OrderId2String(ordid))
+	unit 		orderedUnit
+	vec2 		orderPosition
+	int 		orderId
+	OrderType 	orderType
 
-		u   = ordered
-		id  = ordid
-		otype = ordtype
-		fin = false
-		tar = target
-		x   = ordx
-		y   = ordy
-		//Handle stored orders in the hashtable
+	widget  	target
+	vec2		targetPos
+
+	boolean fin = false
+
+	construct(unit ordered, int orderId, OrderType ordtype, widget target, vec2 targetPos)
+		this.orderedUnit   = ordered
+		this.orderPosition = ordered.getPos()
+		this.orderId  = orderId
+		this.orderType = ordtype
+		this.target = target
+		this.targetPos = targetPos
+		
 		let index = ordered.getUserData()
-		if orderQueues[index] == null
-			orderQueues[index] = new OrderQueue()
-		orderQueues[index].enqueue(this)
+		if lastOrder[index] != null
+			if lastOrder[index].orderedUnit == orderedUnit
+				prev = lastOrder[index]
+			else
+				destroy lastOrder[index]
+		var i = 0
+		var e = this
+		while e.prev != null
+			i++
+			if i > ORDERS_TO_HOLD
+				destroy e.prev
+				e.prev = null
+			e = e.prev
+
+		lastOrder[index] = this
+
+	ondestroy
+		if prev != null
+			destroy prev
+			prev = null
 
 	function issue() returns boolean
-		if GetUnitTypeId(u) != 0 and not IsUnitType(u, UNIT_TYPE_DEAD) and otype != OrderType.IMMEDIATE and not fin
-			if otype == OrderType.TARGET
-				return IssueTargetOrderById(u, id, tar)
-			else if otype == OrderType.POINT
-				if id == 851971
+		if GetUnitTypeId(orderedUnit) != 0 and not IsUnitType(orderedUnit, UNIT_TYPE_DEAD) and not fin
+			if orderType == OrderType.TARGET
+				return orderedUnit.issueTargetOrderById(orderId, target)
+			else if orderType == OrderType.POINT
+				if orderId == 851971
 					//This adjusts for a bug in the point order's boolean return
 					//when issuing a smart order
-					IssuePointOrderById(u, id, x, y)
+					orderedUnit.issuePointOrderById(orderId, targetPos)
 					return true
 				else
-					return IssuePointOrderById(u, id, x, y)
-			else if otype == OrderType.IMMEDIATE
-				return IssueImmediateOrderById(u, id)
+					return orderedUnit.issuePointOrderById(orderId, targetPos)
+			else if orderType == OrderType.IMMEDIATE
+				return orderedUnit.issueImmediateOrderById(orderId)
 		return false
 
 
 public function unit.clearLastOrders()
 	let index = this.getUserData()
-	if orderQueues[index] != null
-		destroy orderQueues[index]
+	if lastOrder[index] != null
+		destroy lastOrder[index]
+		lastOrder[index] = null
 
-public function unit.getPastOrders() returns OrderQueue
-	return orderQueues[this.getUserData()]
+public function unit.getLastOrder() returns Order
+	return lastOrder[this.getUserData()]
 
 function badOrderList( int id ) returns boolean
 	return ( id==852055 or id==852056 or id==852064 or id==852065 or id==852067 or
@@ -137,25 +124,24 @@ function conditions() returns boolean
 
 
 function actions()
-//	if conditions()
-		unit	u   = GetTriggerUnit()
-		widget  t   = GetOrderTarget()
-		int oid = GetIssuedOrderId()
-		if GetTriggerEventId() == EVENT_PLAYER_UNIT_ISSUED_TARGET_ORDER
-			new Order(u, oid, OrderType.TARGET, t, GetWidgetX(t), GetWidgetY(t))
-		else if GetTriggerEventId() == EVENT_PLAYER_UNIT_ISSUED_POINT_ORDER
-			new Order(u, oid, OrderType.POINT, null, GetOrderPointX(), GetOrderPointY())
-		else if GetTriggerEventId() == EVENT_PLAYER_UNIT_ISSUED_ORDER
-			new Order(u, oid, OrderType.IMMEDIATE, null, GetUnitX(u), GetUnitY(u))
-		else
-			error("invalid Ordertype")
+	let	u   = GetTriggerUnit()
+	let t   = GetOrderTarget()
+	let oid = GetIssuedOrderId()
+	if GetTriggerEventId() == EVENT_PLAYER_UNIT_ISSUED_TARGET_ORDER
+		new Order(u, oid, OrderType.TARGET, t, vec2(GetWidgetX(t), GetWidgetY(t)))
+	else if GetTriggerEventId() == EVENT_PLAYER_UNIT_ISSUED_POINT_ORDER
+		new Order(u, oid, OrderType.POINT, null, vec2(GetOrderPointX(), GetOrderPointY()))
+	else if GetTriggerEventId() == EVENT_PLAYER_UNIT_ISSUED_ORDER
+		new Order(u, oid, OrderType.IMMEDIATE, null, u.getPos())
+	else
+		error("invalid Ordertype")
 
 
 function spellActions()
 	let index = GetTriggerUnit().getUserData()
-	if orderQueues[index] != null
+	if lastOrder[index] != null
 		//Only do this if the last order actually exists
-		orderQueues[index].get(0).fin = true
+		lastOrder[index].fin = true
 
 init
 	registerPlayerUnitEvent(EVENT_PLAYER_UNIT_ISSUED_TARGET_ORDER, function actions)
@@ -164,8 +150,5 @@ init
 	registerPlayerUnitEvent(EVENT_PLAYER_UNIT_SPELL_EFFECT, function spellActions)
 
 	onLeave(() -> begin
-		let index = getEnterLeaveUnit().getUserData()
-		if orderQueues[index] != null
-			destroy orderQueues[index]
-			orderQueues[index] = null
+		getEnterLeaveUnit().clearLastOrders()
 	end)

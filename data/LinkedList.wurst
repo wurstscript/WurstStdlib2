@@ -198,7 +198,7 @@ public class LLStaticIterator<T>
 		this.current = dummy
 
 	/** remove the current element from the list */
-	function remove()
+	function remove() returns T
 		if current != dummy
 			parent.size--
 			current.next.prev = current.prev
@@ -206,6 +206,8 @@ public class LLStaticIterator<T>
 			let removedNode   = current
 			current           = current.prev
 			destroy removedNode
+			return removedNode.elem
+		return null
 
 
 	function hasNext() returns boolean

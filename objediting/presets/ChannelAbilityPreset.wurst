@@ -19,21 +19,21 @@ public enum Option
 	UNIQUECAST
 
 public enum Targettype
-	NOTARGET
-	UTARGET
-	PTARGET
-	PUTARGET
+	NONE
+	UNIT
+	POINT
+	POINTUNIT
 	PASSIVE
 	
 public function Targettype.toString() returns string
 	switch this
-		case NOTARGET
+		case NONE
 			return "Instant Cast"
-		case Targettype.PTARGET
+		case Targettype.POINT
 			return "Point Target"
-		case Targettype.UTARGET
+		case Targettype.UNIT
 			return "Unit Target"
-		case Targettype.PUTARGET
+		case Targettype.POINTUNIT
 			return "Point & Unit Target"
 		case PASSIVE
 			return "Passive"
