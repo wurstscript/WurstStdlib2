@@ -19,7 +19,7 @@ public function string.toCharsetInt() returns int
 				return i
 		return -1
 		
-/** Creates an int from a string that only contains numbers (0-9) */
+/** Creates an int from a string that only contains numbers (0-9) and a sign */
 public function string.toInt() returns int
 	int result = 0
 	int len = this.length()
@@ -28,7 +28,8 @@ public function string.toInt() returns int
 			if numberset.substring(j, j+1) == this.substring(i-1, i)
 				result += j * (Pow(10, (len - i)*1.).toInt())
 				break
-		
+	if this.startsWith("-")
+		result = -result
 			
 	return result
 
@@ -39,6 +40,10 @@ public function int.toCharsetString() returns string
 /** returns a substring specified by end and start position. */
 public function string.substring(int start, int stop) returns string
 	return SubString(this, start, stop)
+
+/** returns a substring specified by end and start position. */
+public function string.substring(int start) returns string
+	return SubString(this, start, this.length())
 
 /** Length of the string */
 public function string.length() returns int
