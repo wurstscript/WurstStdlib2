@@ -2,13 +2,16 @@ package FileIO
 import NoWurst
 import ErrorHandling
 import ClosureTimers
+import HashMap
+import TypeCasting
+import Player
 
 /* Credits Nestharus */
 	//Tests if the player can read files
 
 class LocalFileTest
-	private static constant string FLAG_FOLDER = "Mode"
-	private static constant string FLAG_FILE = "Mode"
+	private static constant FLAG_FOLDER = "LocalFileTest"
+	private static constant FLAG_FILE 	= "TestFile"
 		
 	static boolean success = false
 		
@@ -23,11 +26,11 @@ class LocalFileTest
 	static function writeLocalFileTest()
 		PreloadGenClear()
 		PreloadGenStart()
-		Preload("\")\r\n\tcall SetPlayerName(GetLocalPlayer(), \"Mode TEST CHECK\")\r\n//")
+		Preload("\")\r\n\tcall SetPlayerName(GetLocalPlayer(), \"LocalFileTest\")\r\n//")
 		Preload("\" )\r\nendfunction\r\nfunction AAA takes nothing returns nothing \r\n//")
 		PreloadGenEnd(FLAG_FOLDER + "\\" + FLAG_FILE)
 		
-	static function onInit()
+	static function doTest()
 		writeLocalFileTest()
 		testForLocalEnabled()
 	
@@ -35,32 +38,29 @@ public enum Mode
 	READ
 	WRITE
 	
+public constant MAX_LINE_LENGTH = 209//max amount of data per line
+
 public class File
-	private static constant string SAVE_GAME_FOLDER = "GameData"	//don't change this for the player's convenience
-	private static constant int MAX_LINE_LENGTH = 209		   //max amount of data per line
-	static hashtable stringTable							//stores lines from file, 16 lines per file
+	private HashMap<int, string> stringMap = new HashMap<int, string>() //stores lines from file, 16 lines per file
 		
-	private string mapName
-	string fileName
+	private string folderName
+	private string fileName
 		
-	private string data											 //data buffer
+	private string data	= ""									 //data buffer
 		
 	private int fileIndex									   //current file index, -2147483648 to 2147483647
 	private int dataIndex									   //current data index for file, 0-15
 		
 	private Mode mode											//read/write Mode
 		
-	static string array extra0							  //extra 0s on string lengths to make digits = 4
-
-	
 	static function isEnabled() returns boolean
 		return LocalFileTest.success
 
-	static function open( string mapName, string fileName, Mode mode ) returns File
-		File file = new File()	
+	static function open(string folderName, string fileName, Mode mode ) returns File
+		let file = new File()	
 		file.fileIndex = -2147483647 -1
 		
-		file.mapName = mapName
+		file.folderName = folderName
 		file.fileName = fileName
 		
 		file.mode = mode
@@ -80,7 +80,7 @@ public class File
 
 		
 	//loads file and returns lines out of file
-	private static string array pname
+	private static string array playerNames
 	private int endPos
 	
 	private function loadLine()
@@ -91,36 +91,35 @@ public class File
 			
 			//store current player names
 			for i = 15 downto 0
-				pname[i] = GetPlayerName(Player(i))
+				playerNames[i] = players[i].getName()
 
 			//load file (sets the player names to lines in file)
-			
-			Preloader(SAVE_GAME_FOLDER + "\\" + mapName + "\\" + fileName + I2S(fileIndex))
-			
+			Preloader(folderName + "\\" + fileName + I2S(fileIndex))
 			//flush file buffer
-			FlushChildHashtable(stringTable, this castTo int)
+			stringMap.flush()
 			//load lines from file to file buffer and return player names to normal
 			for i = 15 downto 0
-				if (pname[i] != GetPlayerName(Player(i)))
-					SaveStr(stringTable, this castTo int, i, SubString(GetPlayerName(Player(i)), 1, StringLength(GetPlayerName(Player(i)))))
-					SetPlayerName(Player(i), pname[i])
+				if (playerNames[i] != players[i].getName())
+					let str = players[i].getName().substring(1, players[i].getName().length())
+					stringMap.put(i, str)
+					// Restore name
+					players[i].setName(playerNames[i])
 				else if (endPos == -1)
 					endPos = i
 		
 		//add next line of file to data
-		this.data = this.data + LoadStr(stringTable, this castTo int, dataIndex)
+		this.data = this.data + stringMap.get(dataIndex)
 		dataIndex++
 
+	/** Returns the next chunk of data from the file.
+		Returns null when the end of file is reached. */
 	function read() returns string
 		int length
 		string data = ""
-		
 		if (endPos == dataIndex)
 			return null
-
 		if (mode != Mode.READ)
 			error("FILE IO ERROR: ATTEMPT TO READ TO FILE OPEN FOR WRITING")
-			return null
 
 		//if there is no data at the moment, get next line from file
 		if (StringLength(this.data) < 4)
@@ -130,7 +129,6 @@ public class File
 			if (StringLength(this.data) < 4)
 				return null
 
-		
 		//get the length of the data (# of characters that make it up)
 		length = S2I(SubString(this.data, 0, 4))
 		this.data = SubString(this.data, 4, StringLength(this.data))
@@ -158,7 +156,6 @@ public class File
 		
 		if (mode != Mode.WRITE)
 			error("FILE IO ERROR: ATTEMPT TO WRITE TO FILE OPEN FOR READING")
-			return
 		
 		//first, retrieve the # of digits for the length
 		while length > 0
@@ -182,7 +179,7 @@ public class File
 			while StringLength(this.data) >= MAX_LINE_LENGTH
 				//throw the data into file in sets of MAX_LINE_LENGTH chars until there is not
 				//enough data in the buffer to completely fill a line
-				Preload("\")\r\n\tSetPlayerName(Player("+I2S(dataIndex)+"), \" "+SubString(this.data, 0, MAX_LINE_LENGTH)+"\")\r\n//")
+				Preload("\")\r\n\tcall SetPlayerName(Player("+I2S(dataIndex)+"), \" "+SubString(this.data, 0, MAX_LINE_LENGTH)+"\")\r\n//")
 				this.data = SubString(this.data, MAX_LINE_LENGTH, StringLength(this.data))
 				
 				dataIndex = dataIndex + 1
@@ -192,7 +189,7 @@ public class File
 					dataIndex = 0
 					
 					Preload( "\" )\r\nendfunction\r\nfunction AAA takes nothing returns nothing \r\n//")
-					PreloadGenEnd(SAVE_GAME_FOLDER + "\\" + mapName + "\\" + fileName + I2S(fileIndex))
+					PreloadGenEnd(folderName + "\\" + fileName + I2S(fileIndex))
 					
 					fileIndex = fileIndex + 1
 					PreloadGenClear()
@@ -202,12 +199,12 @@ public class File
 	function close()
 		if (mode == Mode.READ)
 			//flush the read buffer
-			FlushChildHashtable(stringTable, this castTo int)
+			destroy stringMap
 		else if (mode == Mode.WRITE)
 			//write remaining of data to file and close it out
 			Preload("\")\r\n\tcall SetPlayerName(Player("+I2S(dataIndex)+"), \" "+data+"\")\r\n//")
 			Preload( "\" )\r\nendfunction\r\nfunction AAA takes nothing returns nothing \r\n//")
-			PreloadGenEnd(SAVE_GAME_FOLDER + "\\" + mapName + "\\" + fileName + I2S(fileIndex))
+			PreloadGenEnd(folderName + "\\" + fileName + I2S(fileIndex))
 
 		
 		//deallocate and reset
@@ -216,12 +213,11 @@ public class File
 		dataIndex = 0
 		data = ""
 		
-
+string array extra0	
 init
-	File.extra0[1] = "000"
-	File.extra0[2] = "00"
-	File.extra0[3] = "0"
-	File.extra0[4] = ""
-	File.stringTable = InitHashtable()
-	nullTimer(() -> LocalFileTest.onInit())
+	extra0[1] = "000"
+	extra0[2] = "00"
+	extra0[3] = "0"
+	extra0[4] = ""
+	nullTimer(() -> LocalFileTest.doTest())
 

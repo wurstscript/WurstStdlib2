@@ -23,7 +23,7 @@ public function preloadAbility(int abilid)
 	if dum == null 
 		error("Do not load abilities after map init when autoFinish = true")
 	else if GetUnitAbilityLevel(dum, abilid) == 0
-		printLog(Loglevel.DEBUG, "PreloadAbility: Ability " + int2fourchar(abilid) + " does not exist.")
+		printLog(Loglevel.TRACE, "PreloadAbility: Ability " + int2fourchar(abilid) + " does not exist.")
 
 public function preloadUnit(int unitId)
 	if dumg == null 

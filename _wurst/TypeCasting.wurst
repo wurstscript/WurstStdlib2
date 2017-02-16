@@ -17,14 +17,10 @@ public function stringToIndex(string s) returns int
 	let hash = s.getHash()
 	if typecastdata.loadString(hash) == null
 		typecastdata.saveString(hash, s)
-		print("saved: " + s + "for hash: " + hash.toString())
 	return hash
 
 public function stringFromIndex(int index) returns string
 	let str = typecastdata.loadString(index)
-	print("load for index " + index.toString() + " str: " + str)
-	if str == null
-		error("apparently no workey")
 	return str
 
 public function playerFromIndex(int index) returns player

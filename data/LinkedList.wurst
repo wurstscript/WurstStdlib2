@@ -29,7 +29,17 @@ public class LinkedList<T>
 	/** Get the element at the specified index */
 	function get(int index) returns T
 		return getEntry(index).elem
-		
+
+	function indexOf(T t) returns int
+		var entry = dummy.next
+		int idx = 0
+		while entry != dummy
+			if entry.elem == t
+				return idx
+			entry = entry.next
+			idx++
+		return -1
+
 	/** Sets the element at the specified index */
 	function set(int index, T elem)
 		getEntry(index).elem = elem
