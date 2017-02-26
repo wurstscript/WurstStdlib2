@@ -227,6 +227,11 @@ public class LLStaticIterator<T>
 		current = current.next
 		return current.elem
 
+	function lookahead() returns T
+		if hasNext()
+			return current.next.elem
+		return null
+
 	function close()
 
 	ondestroy

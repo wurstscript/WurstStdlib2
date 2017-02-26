@@ -1,5 +1,5 @@
 package BigNum
-
+// Credits: Pipedream
 //prefer algebraic approach because of real subtraction issues
 public function log( real py, real pbase ) returns real
 	real y = py
@@ -128,13 +128,10 @@ public class BigNum
 				cur.next = new BigNum_l()
 			
 			cur = cur.next
-
 	
 	//Returns remainder
 	function divSmall( int denom ) returns int
-//		print("in divSmall : base=" + base.toString() + " denom=" + denom.toString()) 
 		return list.divSmall(base,denom)
-
 	
 	function lastDigit() returns int
 		BigNum_l cur = list
@@ -154,66 +151,3 @@ public class BigNum
 		return s
 
 		
-function closeto(real x, real y) returns boolean
-	return RAbsBJ(x - y) <= 0.001
-
-function prop_Closeto() returns boolean
-	return closeto(1,1) and closeto(1,1.0005) and not closeto(0,1)
-
-function debugMsg( string s )
-	BJDebugMsg(s)
-	Cheat("DebugMsg: "+s)
-
-	
-function prop_Log() returns boolean
-	if not closeto(log(10,10),1)
-		return false
-	else if not closeto(log(10,2.7182818),2.302585)
-		return false
-	else if not closeto(log(0.5,10),-0.30103)
-		return false
-	return true
-
-function prop_Allocator1() returns boolean
-	BigNum b1
-	BigNum b2
-	b1 = new BigNum(37)
-	destroy b1
-	b2 = new BigNum(37)
-	destroy b2
-	return b1 == b2
-
-function prop_Allocator2() returns boolean
-	BigNum b1
-	b1 = new BigNum(37)
-	b1.addSmall(17)
-	b1.mulSmall(19)
-	if BigNum_l.count < 1
-		return false
-
-	destroy b1
-	return BigNum_l.count == 0
-
-
-function prop_Arith() returns boolean
-	BigNum b1
-	b1 = new BigNum(37)
-	b1.addSmall(73)
-	b1.mulSmall(39)
-	b1.addSmall(17)
-
-	if b1.divSmall(100) != 64
-		return false
-	else if b1.divSmall(7) != 0
-		return false
-	else if b1.isZero()
-		return false
-	else if b1.divSmall(3) != 1
-		return false
-	else if b1.divSmall(3) != 1
-		return false
-	else if not b1.isZero()
-		return false
-
-	return true
-
