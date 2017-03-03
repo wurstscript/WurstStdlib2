@@ -21,7 +21,8 @@ public function texttag.center(vec3 pos, string message, real size) returns text
 	while str.contains("|cff")
 		let idx = str.indexOf("|cff")
 		str = str.substring(0, idx) + str.substring(idx + 10, str.length())
-	this.setPos(pos - vec2(message.getWidth() / 1000. * bezier_3(3.0, 8.0, 11.5, size/25)  * 5.5, 0))
+	this..setPos(pos - vec2(str.getWidth() / 1000. * bezier_3(3.0, 8.0, 11.5, size/25)  * 6.5, 0))
+	..setText(message, size)
 	return this
 
 public function createCenteredTexttag(vec3 pos, string message, real size) returns texttag
