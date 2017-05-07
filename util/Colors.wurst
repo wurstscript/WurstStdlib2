@@ -3,7 +3,6 @@ import NoWurst
 import Table
 import String
 import Integer
-import ErrorHandling
 
 public constant COLOR_WHITE = colorA(255,255,255,255)
 public constant COLOR_BLACK = colorA(0,0,0,0)
@@ -132,7 +131,7 @@ public function toHex( int number ) returns string
 /** Converts a twochar string to an integer */
 public function toDec( string twochar ) returns int
 	if twochar.length() > 2
-		error("todec is not made for this")
+		return -1
 	
 	var first = twochar.substring(0,1)
 	var second = twochar.substring(1,2)
