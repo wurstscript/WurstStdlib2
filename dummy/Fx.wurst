@@ -46,6 +46,7 @@ public class Fx
 	construct(vec3 pos, string fxpath)
 		dummy = DummyRecycler.get(pos.toVec2(), angle(0))
 		setFx(fxpath)
+		setZ(pos.z)
 	
 	construct(vec3 pos, angle facing, string fxpath)
 		dummy = DummyRecycler.get(pos.toVec2(), facing)
