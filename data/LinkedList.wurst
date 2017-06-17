@@ -161,7 +161,16 @@ public class LinkedList<T>
 			s += I2S(e castTo int)
 			first = false
 		return s + "]"
-
+		
+	function empty()
+		LLEntry<T> current = dummy.next
+		while current != dummy
+			current = current.next
+			destroy current.prev
+		dummy.next = dummy
+		dummy.prev = dummy
+		size = 0
+		
 	protected function getDummy() returns LLEntry<T>
 		return dummy
 		
