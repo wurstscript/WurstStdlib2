@@ -48,6 +48,10 @@ public class LinkedList<T>
 	function push(T elem)
 		add(elem)
 
+	/** Returns the first element in the list */
+	function getFirst() returns T
+		return dummy.next.elem
+
 	/** Returns and removes the first added Element (FIFO) */
 	function dequeue() returns T
 		let top = dummy.next
@@ -158,7 +162,17 @@ public class LinkedList<T>
 			s += I2S(e castTo int)
 			first = false
 		return s + "]"
-
+	
+	/** Removes all elements from the list */
+	function clear()
+		LLEntry<T> current = dummy.next
+		while current != dummy
+			current = current.next
+			destroy current.prev
+		dummy.next = dummy
+		dummy.prev = dummy
+		size = 0
+		
 	protected function getDummy() returns LLEntry<T>
 		return dummy
 		
@@ -307,7 +321,3 @@ public interface LinkedListUpdater<T>
 	
 	for i in list
 		if i == 2
-	
-	
-	
-	
