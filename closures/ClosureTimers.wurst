@@ -9,14 +9,16 @@ import Real
 	| doAfter(10.0, () -> begin
 	|     print("10 seconds later")		
 	| end) */			
-public function doAfter(real timeToWait, CallbackSingle cb)
+public function doAfter(real timeToWait, CallbackSingle cb) returns CallbackSingle
 	cb.start(timeToWait)
+	return cb
 	
 /** Execute an action with a 0-second timer delay.
 	The callback object is destroyed afterwards.
 */
-public function nullTimer(CallbackSingle cb)
+public function nullTimer(CallbackSingle cb) returns CallbackSingle
 	doAfter(0, cb)
+	return cb
 	
 /** Execute an action periodically.
 	The callback has to be destroyed manually.
@@ -27,8 +29,9 @@ public function nullTimer(CallbackSingle cb)
 			destroy cb
 	| end)
 */
-public function doPeriodically(real time, CallbackPeriodic cb)
+public function doPeriodically(real time, CallbackPeriodic cb) returns CallbackPeriodic
 	cb.start(time)
+	return cb
 	
 /** execute an action periodically, with a limited amount of calls 
 	The callback object is destroyed after the action has been executed callAmount times.
@@ -39,9 +42,9 @@ public function doPeriodically(real time, CallbackPeriodic cb)
 	| end)
 	
 */
-public function doPeriodicallyCounted(real time, int callAmount, CallbackCounted cb) 
+public function doPeriodicallyCounted(real time, int callAmount, CallbackCounted cb) returns CallbackCounted
 	cb.start(time, callAmount)
-	
+	return cb
 /** execute an action periodically, with a limited duration 
 	The callback object is destroyed afterwards.
 	
@@ -51,9 +54,9 @@ public function doPeriodicallyCounted(real time, int callAmount, CallbackCounted
 	| end)
 	
 */	
-public function doPeriodicallyTimed(real interval, real timerDuration, CallbackCounted cb)
+public function doPeriodicallyTimed(real interval, real timerDuration, CallbackCounted cb) returns CallbackCounted
 	doPeriodicallyCounted(interval, (timerDuration / interval + 0.5).toInt(), cb)
-	
+	return cb
 
 //Timer Stuff	
 public abstract class CallbackSingle
