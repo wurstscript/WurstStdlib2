@@ -48,6 +48,7 @@ public class LinkedList<T>
 	function push(T elem)
 		add(elem)
 
+	/** Returns the first element of the list */
 	function getFirst() returns T
 		return dummy.next.elem
 
@@ -161,8 +162,9 @@ public class LinkedList<T>
 			s += I2S(e castTo int)
 			first = false
 		return s + "]"
-		
-	function empty()
+	
+	/** Removes all elements from the list */
+	function clear()
 		LLEntry<T> current = dummy.next
 		while current != dummy
 			current = current.next
