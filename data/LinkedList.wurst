@@ -48,6 +48,9 @@ public class LinkedList<T>
 	function push(T elem)
 		add(elem)
 
+	function getFirst() returns T
+		return dummy.next.elem
+
 	/** Returns and removes the first added Element (FIFO) */
 	function dequeue() returns T
 		let top = dummy.next
