@@ -92,7 +92,7 @@ public function string.trim() returns string
 	while (this.charAt(i) == " ")
 		i++
 	int j = this.length()
-	while (this.charAt(j) == " ")
+	while (this.charAt(j - 1) == " ")
 		j--
 	return this.substring(i, j)
 
