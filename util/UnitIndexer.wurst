@@ -1,9 +1,34 @@
 package UnitIndexer
 import OnUnitEnterLeave
 
+trigger onIndexTrigger = CreateTrigger()
+trigger onDeindexTrigger = CreateTrigger()
+unit indexedUnit = null
+unit deindexedUnit = null
+
+/*  Returns the unit about to be deindexed. */
+public function getDeindexedUnit() returns unit
+	return deindexedUnit 
+
+/*  Returns the last indexed unit. */
+public function getIndexedUnit() returns unit
+	return indexedUnit
+
+/*  Adds a function to be called before an unit is deindexed.
+    Use the getDeindexedUnit() function to refer to the deindexing unit. */
+public function onUnitDeindex(code func)
+	onDeindexTrigger.addCondition(Condition(func))
+
+/*  Adds a function to be called after an unit is indexed.
+	Use the getIndexedUnit() function to refer to the indexed unit. */
+public function onUnitIndex(code func)
+	onIndexTrigger.addCondition(Condition(func))
+
+/*  Returns the integer index of this unit. */
 public function unit.getIndex() returns integer
 	return this.getUserData()
 
+/*  Returns the UnitIndex associated with this unit, creating a new one if necessary. */
 public function unit.toUnitIndex() returns UnitIndex
 	UnitIndex instance = this.getUserData() castTo UnitIndex
 
@@ -11,6 +36,15 @@ public function unit.toUnitIndex() returns UnitIndex
 		instance = new UnitIndex(this)
 
 	return instance
+
+/*  Deindexes an unit.
+	Returns whether the unit was originally indexed. */
+public function unit.deindex() returns bool
+	if this.getUserData() == 0
+		return false
+	else
+		destroy this.toUnitIndex()
+		return true
 
 public class UnitIndex
 	protected unit _unit
@@ -24,10 +58,13 @@ public class UnitIndex
 	construct(unit whichUnit)
 		this._unit = whichUnit
 		this._unit.setUserData(this castTo int)
+		indexedUnit = this._unit
+		onIndexTrigger.evaluate()
 
 	ondestroy
+		deindexedUnit = this._unit
+		onDeindexTrigger.evaluate()
 		this._unit.setUserData(0)
-
 
 // Auto instanciation/destruction
 init
