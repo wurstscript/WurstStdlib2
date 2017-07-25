@@ -11,6 +11,8 @@ import OnUnitEnterLeave
 	BREAK THIS SYSTEM since it depends on being the only system to use it.
 	Conversely, it is very likely that this system is going to break them, too.
 	Always make sure you only have one system using SetUnitUserData.
+	The maximum number of indexed units at any time is 8190, so if you have more
+	units than that at any time, the system will not be able to index them.
 
 	----------------------------------------------------------------------------
 			
@@ -39,7 +41,7 @@ import OnUnitEnterLeave
 		a unit with that object directly, whereas it is necessary to cast into
 		UnitIndex if we're using the int:
 
-			var id = someunit.getIndex()
+			let id = someunit.getIndex()
 
 			var u = id.getUnit() // Doesn't work!
 			var u = id castTo UnitIndex.getUnit() // Works!
@@ -73,14 +75,17 @@ import OnUnitEnterLeave
 
 		As can be seen from the code, it is possible to refer to the unit that
 		is being indexed/deindexed using calls
-		
+
 			getIndexedUnit() and
 			getDeindexedUnit(), respectively
+
+		It should also be noted that this is not the only use for handlers, but
+		merely the most often utilized one.
 
 	4) Control over indexing/deindexing
 		For safety and consistency reasons, the system will always attempt to:
 			a) Index the unit when it enters the map (is created)
-			2) Deindex the unit when it leaves the map (is removed or decays)
+			b) Deindex the unit when it leaves the map (is removed or decays)
 
 		However, that doesn't stop the user from (de)indexing the unit at any
 		time. For example, if you are using a general unit recycling system,
