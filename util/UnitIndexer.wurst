@@ -1,25 +1,119 @@
 package UnitIndexer
 import OnUnitEnterLeave
 
+/*  UnitIndexer
+
+	The goal of this system is to give every unit an array-indexable unique ID
+	as well as to standardize handling of class instances when units are created
+	and destroyed.
+
+	WARNING: Other systems that use SetUnitUserData functionality are going to
+	BREAK THIS SYSTEM since it depends on being the only system to use it.
+	Conversely, it is very likely that this system is going to break them, too.
+	Always make sure you only have one system using SetUnitUserData.
+
+	----------------------------------------------------------------------------
+			
+	1) System initialization
+		In order to initialize the system, the user needs to import UnitIndexer
+		into one of his scripts.
+
+			import UnitIndexer
+
+	2) Getting the index of a unit and getting the unit with an index
+		To get a unit's unique index as an integer:
+			unit.getIndex()
+			
+		To get a unit's unique index as an UnitIndex object (this will also
+		give the unit an index if the unit doesn't already have it): 
+			unit.toUnitIndex()
+
+		Remember, it is possible to cast between their return types:
+			unit.toUnitIndex() castTo int 
+			unit.getIndex() castTo UnitIndex
+
+		However, if you save a UnitIndex to a variable, it's possible to get
+		a unit with that object directly, whereas it is necessary to cast into
+		UnitIndex if we're using the int:
+			int id = someunit.getIndex()
+
+			unit u = id.getUnit() // Doesn't work!
+			unit u = id castTo UnitIndex.getUnit() // Works!
+
+			UnitIndex unitIndex = someunit.toUnitIndex()
+			unit u = unitIndex.getUnit() // Works
+
+	3) Handlers for indexing and deindexing events
+		Handlers are useful because they allow us quickly write code that
+		destroys instances of classes that refer to some unit.
+
+			init
+				onUnitDeindex(destroy Class.getInstanceThatBelongsTo(getDeindexedUnit()))
+
+		Conversely, if we want to create a class instance that belongs to
+		a unit that had just been indexed, we can do the same:
+
+			init 
+				onUnitIndex(new Class(GetIndexedUnit()))
+
+		If you have never worked with lambda functions, the above code might
+		look like black magic, but it essentially translates to this:
+
+			function someFunction()
+				new Class(GetIndexedUnit())
+
+			init
+				onUnitIndex(function someFunction())
+
+		You can call onUnitDeindex and onUnitIndex as many times as you want,
+		accross your code, and every time a unit gets indexed/deindexed the
+		function will be ran.
+
+		As can be seen from the code, it is possible to refer to the unit that
+		is being indexed/deindexed using calls
+			getIndexedUnit() and
+			getDeindexedUnit(), respectively
+
+	4) Control over indexing/deindexing
+		For safety and consistency reasons, the system will always attempt to:
+			a) Index the unit when it enters the map (is created)
+			2) Deindex the unit when it leaves the map (is removed or decays)
+
+		However, that doesn't stop the user from (de)indexing the unit at any
+		time. For example, if you are using a general unit recycling system,
+		the units will never decay, so they will remain indexed. However, this
+		is also going to cause bugs with systems that keep data that refers to
+		the unit, since they are never going to die and/or be removed.
+
+		For this reason, it's possible to index/deindex units at your leisure.
+		You can use
+			a) unit.toUnitIndex() to index the unit whenever you want
+			b) unit.deindex() to deindex it whenever you want
+
+		The system prevents you from indexing/deindexing the unit if it already
+		has/doesn't have the index, so no double indexing or double deindexing
+		of the same unit is possible.
+*/
+
 trigger onIndexTrigger = CreateTrigger()
 trigger onDeindexTrigger = CreateTrigger()
 unit indexedUnit = null
 unit deindexedUnit = null
 
-/*  Returns the unit about to be deindexed. */
-public function getDeindexedUnit() returns unit
-	return deindexedUnit 
-
 /*  Returns the last indexed unit. */
 public function getIndexedUnit() returns unit
 	return indexedUnit
 
-/*  Adds a function to be called before an unit is deindexed.
+/*  Returns the unit about to be deindexed. */
+public function getDeindexedUnit() returns unit
+	return deindexedUnit 
+
+/*  Adds a function to be called before a unit is deindexed.
     Use the getDeindexedUnit() function to refer to the deindexing unit. */
 public function onUnitDeindex(code func)
 	onDeindexTrigger.addCondition(Condition(func))
 
-/*  Adds a function to be called after an unit is indexed.
+/*  Adds a function to be called after a unit is indexed.
 	Use the getIndexedUnit() function to refer to the indexed unit. */
 public function onUnitIndex(code func)
 	onIndexTrigger.addCondition(Condition(func))
@@ -37,7 +131,7 @@ public function unit.toUnitIndex() returns UnitIndex
 
 	return instance
 
-/*  Deindexes an unit.
+/*  Deindexes a unit.
 	Returns whether the unit was originally indexed. */
 public function unit.deindex() returns bool
 	if this.getUserData() == 0
@@ -69,4 +163,4 @@ public class UnitIndex
 // Auto instanciation/destruction
 init
 	onEnter(() -> getEnterLeaveUnit().toUnitIndex())
-	onLeave(() -> destroy getEnterLeaveUnit().toUnitIndex())
+	onLeave(() -> getEnterLeaveUnit().deindex())
