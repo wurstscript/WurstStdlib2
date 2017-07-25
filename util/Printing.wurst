@@ -25,9 +25,26 @@ public function Loglevel.getTag() returns string
 			return "|cffFB2700error|r"
 	return "?"
 
-/** Prints a simple message */
+/** Prints a simple message. */
 public function print(string msg)		
 	DisplayTimedTextToPlayer(GetLocalPlayer(), 0., 0., DEBUG_MSG_DURATION, msg)
+
+/** Prints a simple message. */
+public function print(int msg)
+	// Using JASS' original converter function
+	// in order not to mess up the structure of wurst's basic code
+	print(I2S(msg))
+ 
+ /** Prints a simple message. */
+public function print(real msg)
+	print(R2S(msg))
+
+ /** Prints a simple message. */
+public function print(bool msg)
+	var msgString = "False"
+	if msg 
+		msgString = "True"
+	print(msgString)
 
 /** Prints a special Notification-Message */
 public function printLog(Loglevel loglvl, string msg)
