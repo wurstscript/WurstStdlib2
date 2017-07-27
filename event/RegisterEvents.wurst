@@ -1,5 +1,6 @@
 package RegisterEvents
 import NoWurst
+import _Handles
 import HashMap
 
 /*****PlayerUnitEvent*****/
@@ -7,20 +8,20 @@ import HashMap
 trigger array t
 
 public function registerPlayerUnitEvent(playerunitevent p, code c)
-	int hid = GetHandleId(p)
+	int hid = p.getHandleId()
 	if t[hid] == null
 		t[hid] = CreateTrigger()
 		for k = 15 downto 0
-			TriggerRegisterPlayerUnitEvent(t[hid], Player(k), p, null)
-
-	TriggerAddCondition(t[hid], Filter(c))
+			t[hid].registerPlayerUnitEvent(players[k], p, null)
+	
+	t[hid].addCondition(Filter(c))
 
 public function registerPlayerUnitEventForPlayer(playerunitevent p, code c, player pl)
-	int i = 16 * GetHandleId(p) + GetPlayerId(pl)
+	int i = 16 * p.getHandleId() + pl.getId()
 	if t[i] == null
 		t[i] = CreateTrigger()
-		TriggerRegisterPlayerUnitEvent(t[i], pl, p, null)
-	TriggerAddCondition(t[i], Filter(c))
+		t[i].registerPlayerUnitEvent(pl, p, null)
+	t[i].addCondition(Filter(c))
 
 public function getPlayerUnitEventTrigger(playerunitevent p) returns trigger
 	return t[GetHandleId(p)]
@@ -30,9 +31,9 @@ public function getPlayerUnitEventTrigger(playerunitevent p) returns trigger
 HashMap<int, trigger> onCastMap = new HashMap<int, trigger>()
  
 init
-	registerPlayerUnitEvent(EVENT_PLAYER_UNIT_SPELL_EFFECT, () -> TriggerEvaluate(onCastMap.get(GetSpellAbilityId())))
+	registerPlayerUnitEvent(EVENT_PLAYER_UNIT_SPELL_EFFECT, () -> (onCastMap.get(GetSpellAbilityId())).evaluate())
  
 public function registerSpellEffectEvent(int abil, code onCast)
 	if not onCastMap.has(abil)
 		onCastMap.put(abil, CreateTrigger())
-	TriggerAddCondition(onCastMap.get(abil), Filter(onCast))
+	onCastMap.get(abil).addCondition(Filter(onCast))
