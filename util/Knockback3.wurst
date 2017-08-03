@@ -227,10 +227,10 @@ public class Knockback3
         while iter.hasNext()
             let knockback = iter.next()
 
-            let pos3         = knockback.u.getPos3(0.)
+            let pos3         = knockback.u.getPos3Zero()
             let newPos3      = pos3 + knockback.del
             let newInMap     = newPos3.inPlayable()
-            let velXySquared = knockback.del.toVec2().lengthSquared()
+            let velXySquared = knockback.del.toVec2().lengthSq()
 
             if pos3.z < isAirborneThreshold
                 tickNearGround(knockback, newPos3, pos3, newInMap, velXySquared)
