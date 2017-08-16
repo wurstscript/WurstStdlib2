@@ -79,12 +79,13 @@ public class LinkedList<T>
 		return false
 		
 	/** Removes the element and it's entry at the given index */
-	function removeAt(int index)
+	function removeAt(int index) returns T
 		let entry = getEntry(index)
 		entry.prev.next = entry.next
 		entry.next.prev = entry.prev
 		destroy entry	
 		size--
+		return entry.elem
 		
 	/** Removes the first occurence of t from this list */
 	function remove(T elem)
@@ -151,6 +152,10 @@ public class LinkedList<T>
 			r.elem = f.update(r.elem) 
 			r = r.next
 		destroy f
+
+	function shuffle()
+		for i = 0 to size
+			add(removeAt(GetRandomInt(0, size-1)))
 		
 	function toString() returns string
 		string s="["
