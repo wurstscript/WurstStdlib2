@@ -62,4 +62,31 @@ public function forUnitsSelected(player p, ForGroupCallback c)
 	GroupEnumUnitsSelected(ENUM_GROUP, p, filter)
 	popCallback()
 
+// Destructables
+
+public interface ForGroupCallbackD
+	function callback(destructable d)
+	
+function filterD() returns boolean
+	currentCallbackD().callback(GetEnumDestructable())
+	return false
+	
+ForGroupCallbackD array tempCallbacksD
+int tempCallbacksDCount = 0
+
+function pushCallbackD(ForGroupCallbackD c)
+	tempCallbacksD[tempCallbacksDCount] = c
+	tempCallbacksDCount++
+
+function popCallbackD()
+	tempCallbacksDCount--
+	destroy tempCallbacksD[tempCallbacksDCount]
+
+function currentCallbackD() returns ForGroupCallbackD
+	return tempCallbacksD[tempCallbacksDCount - 1]
+
+public function forDestructablesInRect(rect r, ForGroupCallbackD cb)
+	pushCallbackD(cb)
+	EnumDestructablesInRect(r, null, () -> filterD())
+	popCallbackD()
 

@@ -26,7 +26,7 @@ public class AbilityDefinition
 		setLevels(lvls)
 		
 	function addTooltipProperty(string pName, StringLevelClosure lc)
-		if tooltipGen != null
+		if tooltipGen != null and listen
 			tooltipGen.addProperty(pName, lc)
 			
 	function addTooltipProperty(string pName, IntLevelClosure lc)
@@ -41,10 +41,10 @@ public class AbilityDefinition
 	function registerTooltipGegenrator(TooltipGenerator tgen)
 		tooltipGen = tgen
 		
-	function tgenStartListen()
+	function tooltipStartListen()
 		listen = true
 		
-	function tgenStopListen()
+	function tooltipStopListen()
 		listen = false
 		tooltipGen.applyToDef(this)
 		
@@ -209,8 +209,16 @@ public class AbilityDefinition
 	function setTooltipLearn(string value)
 		def.setLvlDataString("aret", 0, 0, value)
 
+	function presetTooltipLearn(StringLevelClosure lc)
+		def.setLevelsDataString("aret", lvls, 0, lc)
+		addTooltipProperty("TooltipLearn", lc)
+
 	function setTooltipLearnExtended(string value)
 		def.setLvlDataString("arut", 0, 0, value)
+
+	function presetTooltipLearnExtended(StringLevelClosure lc)
+		def.setLevelsDataString("arut", lvls, 0, lc)
+		addTooltipProperty("TooltipLearnExtended", lc)
 
 	function setHotkeyLearn(string value)
 		def.setLvlDataString("arhk", 0, 0, value)
