@@ -10,15 +10,14 @@ import Player
 	//Tests if the player can read files
 
 class LocalFileTest
-	private static constant FLAG_FOLDER = "LocalFileTest"
-	private static constant FLAG_FILE 	= "TestFile"
+	private static constant FLAG_FILE = "flag.pld"
 		
 	static boolean success = false
 		
 	private static function testForLocalEnabled()
 		string playerName = GetPlayerName(GetLocalPlayer())
 		
-		Preloader(FLAG_FOLDER + "\\" + FLAG_FILE)
+		Preloader(FLAG_FILE)
 		
 		success = GetPlayerName(GetLocalPlayer()) != playerName
 		SetPlayerName(GetLocalPlayer(), playerName)
@@ -28,7 +27,7 @@ class LocalFileTest
 		PreloadGenStart()
 		Preload("\")\r\n\tcall SetPlayerName(GetLocalPlayer(), \"LocalFileTest\")\r\n//")
 		Preload("\" )\r\nendfunction\r\nfunction AAA takes nothing returns nothing \r\n//")
-		PreloadGenEnd(FLAG_FOLDER + "\\" + FLAG_FILE)
+		PreloadGenEnd(FLAG_FILE)
 		
 	static function doTest()
 		writeLocalFileTest()
@@ -43,12 +42,10 @@ public constant MAX_LINE_LENGTH = 209//max amount of data per line
 public class File
 	private HashMap<int, string> stringMap = new HashMap<int, string>() //stores lines from file, 16 lines per file
 		
-	private string folderName
 	private string fileName
 		
 	private string data	= ""									 //data buffer
 		
-	private int fileIndex									   //current file index, -2147483648 to 2147483647
 	private int dataIndex									   //current data index for file, 0-15
 		
 	private Mode mode											//read/write Mode
@@ -58,9 +55,7 @@ public class File
 
 	static function open(string folderName, string fileName, Mode mode ) returns File
 		let file = new File()	
-		file.fileIndex = -2147483647 -1
 		
-		file.folderName = folderName
 		file.fileName = fileName
 		
 		file.mode = mode
@@ -69,7 +64,6 @@ public class File
 		
 		if (mode == Mode.READ)
 			//if reading, go to previous file index so that the reader can auto load up the file
-			file.fileIndex--
 			file.dataIndex = 16
 		else if (mode == Mode.WRITE)
 			//open file for writing
@@ -87,14 +81,13 @@ public class File
 		//if there are no more lines in the file, load next file
 		if (16 == dataIndex)
 			dataIndex = 0
-			fileIndex++
 			
 			//store current player names
 			for i = 15 downto 0
 				playerNames[i] = players[i].getName()
 
 			//load file (sets the player names to lines in file)
-			Preloader(folderName + "\\" + fileName + I2S(fileIndex))
+			Preloader(fileName)
 			//flush file buffer
 			stringMap.flush()
 			//load lines from file to file buffer and return player names to normal
@@ -189,9 +182,8 @@ public class File
 					dataIndex = 0
 					
 					Preload( "\" )\r\nendfunction\r\nfunction AAA takes nothing returns nothing \r\n//")
-					PreloadGenEnd(folderName + "\\" + fileName + I2S(fileIndex))
+					PreloadGenEnd(fileName)
 					
-					fileIndex = fileIndex + 1
 					PreloadGenClear()
 					PreloadGenStart()
 
@@ -204,7 +196,7 @@ public class File
 			//write remaining of data to file and close it out
 			Preload("\")\r\n\tcall SetPlayerName(Player("+I2S(dataIndex)+"), \" "+data+"\")\r\n//")
 			Preload( "\" )\r\nendfunction\r\nfunction AAA takes nothing returns nothing \r\n//")
-			PreloadGenEnd(folderName + "\\" + fileName + I2S(fileIndex))
+			PreloadGenEnd(fileName)
 
 		
 		//deallocate and reset
