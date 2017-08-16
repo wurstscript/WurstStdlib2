@@ -8,7 +8,7 @@ public class HashMap<K,V> extends Table
 	
 	/** Whether a value exists under the given key or not */
 	function has(K key) returns boolean
-		return get(key) != null
+		return hasInt(key castTo int)
 	
 	/** Saves the given value under the given key */
 	function put(K key, V value)
