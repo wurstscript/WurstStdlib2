@@ -21,3 +21,22 @@ public function callFunctionsWithAnnotation(string _annotation)
 It is always false at runtime and true during compiletime.
 */
 public constant compiletime = false
+
+/** This is a builtin magic function.
+ * It evaluates it's argument at compiletime and replaces the call with the result.
+ */
+public function compiletime(int expr) returns int
+	return expr
+
+
+/** This is a builtin magic function.
+ * It evaluates it's argument at compiletime and replaces the call with the result.
+ */
+ public function compiletime(string expr) returns string
+	 return expr
+
+/** This is a builtin magic function.
+ * It evaluates it's argument at compiletime and replaces the call with the result.
+ */
+ public function compiletime(boolean expr) returns boolean
+ 	return expr
