@@ -14,10 +14,10 @@ class LocalFileTest
 		
 	static boolean success = false
 		
-	private static function testForLocalEnabled()
+	private static function testForLocalEnabled(string prepend)
 		string playerName = GetPlayerName(GetLocalPlayer())
 		
-		Preloader(FLAG_FILE)
+		Preloader(prepend+FLAG_FILE)
 		
 		success = GetPlayerName(GetLocalPlayer()) != playerName
 		SetPlayerName(GetLocalPlayer(), playerName)
@@ -31,7 +31,10 @@ class LocalFileTest
 		
 	static function doTest()
 		writeLocalFileTest()
-		testForLocalEnabled()
+		testForLocalEnabled("")
+		if not success
+			testForLocalEnabled("Logs\\")
+
 	
 public enum Mode
 	READ

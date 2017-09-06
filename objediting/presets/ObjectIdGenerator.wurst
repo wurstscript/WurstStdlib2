@@ -23,7 +23,7 @@ public class IdGenerator
 		i4 = start div 16777216
 
 	function isInvalid(int char) returns boolean
-		return (char == '_' or (char > 64 and char <91))
+		return (char < 48 or (char > 57 and char < 97))
 		
 	function next() returns int
 		if i1 < '~'
