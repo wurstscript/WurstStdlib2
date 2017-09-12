@@ -277,6 +277,9 @@ public class UnitOrBuildingOrHeroDefinition extends W3UDefinition
 
 	construct(int newUnitId, int origUnitId)
 		super(newUnitId, origUnitId)
+		
+	function setHideMinimapDisplay(boolean flag)
+		def.setBoolean("uhom", flag) 
 	
 	function setUseExtendedLineofSight(boolean data)
 		def.setBoolean("ulos", data)
