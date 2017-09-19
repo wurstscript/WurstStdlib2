@@ -7,9 +7,9 @@ import Integer
 public constant COLOR_WHITE = colorA(255,255,255,255)
 public constant COLOR_BLACK = colorA(0,0,0,0)
 
-/** Tuple for your RGB color needs */
+/** Tuple for your RGB color needs. 0 = black, 255 = full color */
 public tuple color(int red, int green, int blue)
-/** Tuple for your RGBA color needs (with Alpha) */
+/** Tuple for your RGBA color needs. 0 = black/transparent, 255 = full color/opaque */
 public tuple colorA(int red, int green, int blue, int alpha)
 
 /** Add an alpha value to a simple color tuple */

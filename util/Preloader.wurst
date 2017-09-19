@@ -14,21 +14,26 @@ import Basics
  * you want.											*
  *														*
 														*/
-boolean autoFinish = false
+boolean autoFinish = true
 
-/** use this function to preload an ability */
-public function preloadAbility(int abilid)
+/** use this function to preload an ability at runtime
+	returns true if the ability exists and was therefore preloaded. */
+public function preloadAbility(int abilid) returns boolean
 	dum.addAbility(abilid)
+	var result = true
 	if dum == null 
 		error("Do not load abilities after map init when autoFinish = true")
 	else if GetUnitAbilityLevel(dum, abilid) == 0
 		printLog(Loglevel.TRACE, "PreloadAbility: Ability " + int2fourchar(abilid) + " does not exist.")
+		result = false
+	return result
 
-public function preloadUnit(int unitId)
+public function preloadUnit(int unitId) returns boolean
 	if dumg == null 
 		error("PreloadUnit: Group dumg does not exist")
-		return
-	dumg.addUnit(createUnit(DUMMY_PLAYER, unitId, vec2(0,0), angle(0)))
+	let u = createUnit(DUMMY_PLAYER, unitId, vec2(0,0), angle(0))
+	dumg.addUnit(u)
+	return u.isAlive()
 
 group dumg
 unit dum
@@ -42,6 +47,7 @@ public function finishPreload()
 		GetExpiredTimer().destr()
 
 init
+	dumg = CreateGroup()
 	dum = createUnit(DUMMY_PLAYER, DUMMY_UNIT_ID, vec2(0,0), angle(0))
 	if dum == null
 		error("DUMMY_UNITID (" + int2fourchar(DUMMY_UNIT_ID) + ") not added correctly to the map.")
