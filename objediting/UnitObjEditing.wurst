@@ -822,6 +822,14 @@ public class HeroDefinition extends UnitOrHeroDefinition
 	construct(int newId, int origId)
 		super(newId, origId)
 	
+	function hideHeroDeathMsg(boolean flag)
+		def.setBoolean("uhhd", flag)
+
+	function hideHeroInterfaceIcon(boolean flag)
+		def.setBoolean("uhhb", flag)
+
+	function hideHeroMinimapDisplay(boolean flag)
+		def.setBoolean("uhhm", flag)
 	
 	function setTooltipRevive(string data)
 		def.setString("utpr", data)
