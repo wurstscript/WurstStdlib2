@@ -26,7 +26,7 @@ public function Loglevel.getTag() returns string
 	return "?"
 
 // Wrapper for nice log syntax
-class Log
+public class Log
 	/** Prints a trace logmessage */
 	static function trace(string msg)
 		printLog(GetLocalPlayer(), Loglevel.TRACE, msg)
