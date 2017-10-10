@@ -145,6 +145,10 @@ public class LinkedList<T>
 			r = r.next
 		destroy predicate
 		
+	/** Executes the closure for each element */	
+	function forEach(LinkedListUpdater<T> f)
+		updateAll(f)
+	
 	/** Updates all elements */	
 	function updateAll(LinkedListUpdater<T> f)
 		LLEntry<T> r = dummy.next
