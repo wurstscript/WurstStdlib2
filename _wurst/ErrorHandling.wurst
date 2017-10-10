@@ -24,24 +24,27 @@ Errors are only displayed once every MUTE_ERROR_DURATION seconds.
 To achieve this, the hash of the string is saved in a hashtable together with a timestamp.
 */
 @configurable public function error(string msg)
-	let hash = msg.getHash()
-	if HT.hasInt(PRIMARY_ERROR_KEY, hash)
-		// Error has been printed before
-		if HT.loadInt(PRIMARY_ERROR_KEY, hash) + MUTE_ERROR_DURATION < currentTime
-			// Time to print the error again
-			printLog(Loglevel.ERROR, msg + getStackTraceString())
-			HT.saveInt(PRIMARY_ERROR_KEY, hash, currentTime.toInt())
-			HT.saveBoolean(PRIMARY_ERROR_KEY, hash, false)
-		else if HT.hasBoolean(PRIMARY_ERROR_KEY, hash)
-			if not HT.loadBoolean(PRIMARY_ERROR_KEY, hash)
+	if compiletime
+		print("ERROR: " + msg + "\n" + getStackTraceString())
+	else
+		let hash = msg.getHash()
+		if HT.hasInt(PRIMARY_ERROR_KEY, hash)
+			// Error has been printed before
+			if HT.loadInt(PRIMARY_ERROR_KEY, hash) + MUTE_ERROR_DURATION < currentTime
+				// Time to print the error again
+				printLog(Loglevel.ERROR, msg + getStackTraceString())
+				HT.saveInt(PRIMARY_ERROR_KEY, hash, currentTime.toInt())
+				HT.saveBoolean(PRIMARY_ERROR_KEY, hash, false)
+			else if HT.hasBoolean(PRIMARY_ERROR_KEY, hash)
+				if not HT.loadBoolean(PRIMARY_ERROR_KEY, hash)
+					printLog(Loglevel.ERROR, "|cffFF3A29Excessive repeating errors are being omitted")
+					HT.saveBoolean(PRIMARY_ERROR_KEY, hash, true)	
+			else
 				printLog(Loglevel.ERROR, "|cffFF3A29Excessive repeating errors are being omitted")
 				HT.saveBoolean(PRIMARY_ERROR_KEY, hash, true)	
 		else
-			printLog(Loglevel.ERROR, "|cffFF3A29Excessive repeating errors are being omitted")
-			HT.saveBoolean(PRIMARY_ERROR_KEY, hash, true)	
-	else
-		HT.saveInt(PRIMARY_ERROR_KEY, hash, currentTime.toInt())
-		printLog(Loglevel.ERROR, "|cffFF3A29Error:|r " + msg + getStackTraceString())
-	// crash the thread:
-	I2S(1 div 0)
+			HT.saveInt(PRIMARY_ERROR_KEY, hash, currentTime.toInt())
+			printLog(Loglevel.ERROR, "|cffFF3A29Error:|r " + msg + getStackTraceString())
+		// crash the thread:
+		I2S(1 div 0)
 
