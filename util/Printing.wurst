@@ -42,6 +42,10 @@ public class Log
 	/** Prints a warning logmessage */
 	static function warn(string msg)
 		printLog(GetLocalPlayer(), Loglevel.WARNING, msg)
+	
+	/** Prints a warning logmessage */
+	static function error(string msg)
+		printLog(GetLocalPlayer(), Loglevel.ERROR, msg)
 
 	static function setLevel(Loglevel lvl)
 		DEBUG_LEVEL = lvl
@@ -66,23 +70,6 @@ public function print(bool msg)
 	if msg 
 		msgString = "True"
 	print(msgString)
-
-class Log
-	/** Prints a trace log-message */
-	static function trace(string msg)
-		printLog(GetLocalPlayer(), Loglevel.TRACE, msg)
-
-	/** Prints a special motification-message */
-	static function debug(string msg)
-		printLog(GetLocalPlayer(), Loglevel.DEBUG, msg)
-
-	/** Prints a special motification-message */
-	static function info(string msg)
-		printLog(GetLocalPlayer(), Loglevel.INFO, msg)
-
-	/** Prints a special motification-message */
-	static function warn(string msg)
-		printLog(GetLocalPlayer(), Loglevel.WARNING, msg)
 
 /** Prints a special motification-message */
 public function printLog(Loglevel loglvl, string msg)
