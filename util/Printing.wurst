@@ -25,6 +25,27 @@ public function Loglevel.getTag() returns string
 			return "|cffFB2700error|r"
 	return "?"
 
+// Wrapper for nice log syntax
+class Log
+	/** Prints a trace logmessage */
+	static function trace(string msg)
+		printLog(GetLocalPlayer(), Loglevel.TRACE, msg)
+
+	/** Prints a debug logmessage */
+	static function debug(string msg)
+		printLog(GetLocalPlayer(), Loglevel.DEBUG, msg)
+
+	/** Prints a info logmessage*/
+	static function info(string msg)
+		printLog(GetLocalPlayer(), Loglevel.INFO, msg)
+
+	/** Prints a warning logmessage */
+	static function warn(string msg)
+		printLog(GetLocalPlayer(), Loglevel.WARNING, msg)
+
+	static function setLevel(Loglevel lvl)
+		DEBUG_LEVEL = lvl
+
 /** Prints a simple message. */
 public function print(string msg)		
 	DisplayTimedTextToPlayer(GetLocalPlayer(), 0., 0., DEBUG_MSG_DURATION, msg)
@@ -46,7 +67,24 @@ public function print(bool msg)
 		msgString = "True"
 	print(msgString)
 
-/** Prints a special Notification-Message */
+class Log
+	/** Prints a trace log-message */
+	static function trace(string msg)
+		printLog(GetLocalPlayer(), Loglevel.TRACE, msg)
+
+	/** Prints a special motification-message */
+	static function debug(string msg)
+		printLog(GetLocalPlayer(), Loglevel.DEBUG, msg)
+
+	/** Prints a special motification-message */
+	static function info(string msg)
+		printLog(GetLocalPlayer(), Loglevel.INFO, msg)
+
+	/** Prints a special motification-message */
+	static function warn(string msg)
+		printLog(GetLocalPlayer(), Loglevel.WARNING, msg)
+
+/** Prints a special motification-message */
 public function printLog(Loglevel loglvl, string msg)
 	printLog(GetLocalPlayer(), loglvl, msg)
 		
