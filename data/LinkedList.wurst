@@ -146,8 +146,12 @@ public class LinkedList<T>
 		destroy predicate
 		
 	/** Executes the closure for each element */	
-	function forEach(LinkedListUpdater<T> f)
-		updateAll(f)
+	function forEach(LLItrClosure<T> itr)
+		LLEntry<T> r = dummy.next
+		while r != dummy
+			itr.run(r.elem)
+			r = r.next
+		destroy itr
 	
 	/** Updates all elements */	
 	function updateAll(LinkedListUpdater<T> f)
@@ -313,6 +317,9 @@ public class ListBackIterator<T>
 
 public interface LinkedListPredicate<T>
 	function isTrueFor(T t) returns boolean
+	
+public interface LLItrClosure<T>
+	function run(T t)
 
 public interface LinkedListUpdater<T>
 	function update(T t) returns T
