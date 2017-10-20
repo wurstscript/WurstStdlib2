@@ -24,10 +24,11 @@ public class LinkedList<T>
 		for elem in elems
 			add(elem)
 			
-	/** Get the element at the specified index */
+	/** Returns the element at the specified index */
 	function get(int index) returns T
 		return getEntry(index).elem
 
+	/** Returns the index of the specified element or -1 is it doesn't exist */
 	function indexOf(T t) returns int
 		var entry = dummy.next
 		int idx = 0
@@ -160,10 +161,12 @@ public class LinkedList<T>
 			r = r.next
 		destroy f
 
+	/** Pseudo-randomly changes the position of each element */
 	function shuffle()
 		for i = 0 to size
 			add(removeAt(GetRandomInt(0, size-1)))
-		
+	
+	/** Prints the content of the list */
 	function toString() returns string
 		string s="["
 		var first = true
@@ -228,11 +231,13 @@ public class LLStaticIterator<T>
 		this.parent  = parent
 		reset()
 
+	/** Returns the iterator back to it#s initial state */
 	function reset()
 		this.dummy   = parent.getDummy()
 		this.current = dummy
 
-	/** remove the current element from the list */
+	/** Removes from the list the last element that was returned by next() (optional operation).
+	 	This call can only be made once per call to next */
 	function remove()
 		if current != dummy
 			parent.size--
@@ -270,7 +275,8 @@ public class LLIterator<T>
 		this.dummy   = parent.getDummy()
 		this.current = dummy
 
-	/** remove the current element from the list */
+	/** Removes from the list the last element that was returned by next() (optional operation).
+	 	This call can only be made once per call to next */
 	function remove()
 		if current != dummy
 			parent.size--
