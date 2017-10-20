@@ -3,13 +3,12 @@ import NoWurst
 import Wurstunit
 
 public class LinkedList<T>
-	private LLEntry<T> dummy
+	private LLEntry<T> dummy = new LLEntry<T>(null, null, null)
 	private LLStaticIterator<T> staticItr = new LLStaticIterator<T>(this)
 	protected int size = 0
 
 	/** Create a new empty list */
 	construct()
-		dummy = new LLEntry<T>(null, null, null)
 		dummy.next = dummy
 		dummy.prev = dummy
 
@@ -234,17 +233,14 @@ public class LLStaticIterator<T>
 		this.current = dummy
 
 	/** remove the current element from the list */
-	function remove() returns T
+	function remove()
 		if current != dummy
 			parent.size--
-			current.next.prev = current.prev
 			current.prev.next = current.next
+			current.next.prev = current.prev
 			let removedNode   = current
 			current           = current.prev
 			destroy removedNode
-			return removedNode.elem
-		return null
-
 
 	function hasNext() returns boolean
 		return current.next != dummy
@@ -259,9 +255,7 @@ public class LLStaticIterator<T>
 		return null
 
 	function close()
-
-	ondestroy
-		
+	
 
 public class LLIterator<T>
 	LLEntry<T>    dummy
@@ -285,7 +279,6 @@ public class LLIterator<T>
 			let removedNode   = current
 			current           = current.prev
 			destroy removedNode
-
 
 	function hasNext() returns boolean
 		return current.next != dummy
@@ -323,16 +316,47 @@ public interface LLItrClosure<T>
 
 public interface LinkedListUpdater<T>
 	function update(T t) returns T
-		
-@test public function testAll()
+
+// =====TESTS=====
+
+@test public function testAddRemove()
 	let list = new LinkedList<int>()
 	assertTrue(list.getSize() == 0)
 	
-	list.add(1)
-	list.add(2)
-	list.add(3)
-	list.add(4)
+	list..add(1)..add(2)..add(3)..add(4)
 	assertTrue(list.getSize() == 4)
 	
+	let itr = list.staticItr()
+	while itr.hasNext()
+		itr.next()
+		itr.remove()
+
+	assertTrue(list.getSize() == 0)
+
+@test public function testForEach()
+	let list = new LinkedList<int>()
+	
+	list..add(1)..add(2)..add(3)..add(4)
+	
+	list.updateAll((int i) -> i + 1)
+	
+	var result = 0
 	for i in list
-		if i == 2
+		result += i
+
+	assertTrue(result == (5+4+3+2))
+
+@test public function testAddAll()
+	let list = new LinkedList<int>()
+	let list2 = new LinkedList<int>()
+	
+	list..add(1)..add(2)
+	list2..add(3)..add(4)
+	list.addAll(list2)
+
+	var result = 0
+	for i in list
+		result += i
+
+	assertTrue(list.get(2) == 3)
+	assertTrue(list.get(3) == 4)

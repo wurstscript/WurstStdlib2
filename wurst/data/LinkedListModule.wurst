@@ -87,8 +87,7 @@ function allToString() returns string
 		res += x.str
 	return res
 	
-@test
-function test()
+@test function test()
 	let a = new MyClass("a")
 	let b = new MyClass("b")
 	let c = new MyClass("c")
@@ -104,8 +103,7 @@ function test()
  	destroy b
  	assertTrue(allToString() == "")
  	
- @test 
- function testDestroy()
+ @test function testDestroy()
  	new MyClass("a")
 	let b = new MyClass("b")
 	new MyClass("c")
