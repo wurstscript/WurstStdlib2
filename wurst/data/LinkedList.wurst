@@ -238,7 +238,7 @@ public class LLStaticIterator<T>
 
 	/** Removes from the list the last element that was returned by next() (optional operation).
 	 	This call can only be made once per call to next */
-	function remove()
+	function remove() returns T
 		if current != dummy
 			parent.size--
 			current.prev.next = current.next
@@ -246,6 +246,8 @@ public class LLStaticIterator<T>
 			let removedNode   = current
 			current           = current.prev
 			destroy removedNode
+			return removedNode.elem
+		return null
 
 	function hasNext() returns boolean
 		return current.next != dummy
@@ -277,7 +279,7 @@ public class LLIterator<T>
 
 	/** Removes from the list the last element that was returned by next() (optional operation).
 	 	This call can only be made once per call to next */
-	function remove()
+	function remove() returns T
 		if current != dummy
 			parent.size--
 			current.next.prev = current.prev
@@ -285,6 +287,8 @@ public class LLIterator<T>
 			let removedNode   = current
 			current           = current.prev
 			destroy removedNode
+			return removedNode.elem
+		return null
 
 	function hasNext() returns boolean
 		return current.next != dummy
