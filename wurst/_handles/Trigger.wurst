@@ -22,8 +22,8 @@ public function trigger.disable()
 public function trigger.enable()
 	EnableTrigger(this)
 
-public function trigger.evaluate()
-	TriggerEvaluate(this)
+public function trigger.evaluate() returns boolean
+	return TriggerEvaluate(this)
 
 public function trigger.execute()
 	TriggerExecute(this)
