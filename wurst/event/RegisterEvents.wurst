@@ -8,13 +8,21 @@ import HashMap
 trigger array t
 
 public function registerPlayerUnitEvent(playerunitevent p, code c)
+	registerPlayerUnitEvent(p, null, c, null)
+
+public function registerPlayerUnitEvent(playerunitevent p, code filter, code c)
+	registerPlayerUnitEvent(p, filter, c, null)
+
+public function registerPlayerUnitEvent(playerunitevent p, code filter, code condition, code action)
 	int hid = p.getHandleId()
 	if t[hid] == null
 		t[hid] = CreateTrigger()
-		for k = 15 downto 0
-			t[hid].registerPlayerUnitEvent(players[k], p, null)
-	
-	t[hid].addCondition(Filter(c))
+		for k = bj_MAX_PLAYER_SLOTS-1 downto 0
+			t[hid].registerPlayerUnitEvent(players[k], p, filter != null ? Filter(filter) : null)
+	if condition != null
+		t[hid].addCondition(Filter(condition))
+	if action != null
+		t[hid].addAction(action)
 
 public function registerPlayerUnitEventForPlayer(playerunitevent p, code c, player pl)
 	int i = 16 * p.getHandleId() + pl.getId()
