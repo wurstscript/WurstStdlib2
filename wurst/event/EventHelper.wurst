@@ -35,6 +35,9 @@ public function getSpellTargetPos() returns vec2
 	
 public function getOrderPos() returns vec2
 	return vec2(GetOrderPointX(), GetOrderPointY())
+
+public function getOrderTargetPos() returns vec2
+	return GetOrderTarget().getPos()
 	
 public function trigger.registerRectEnterEventSource( rect r )
 	TriggerRegisterEnterRectSimple(this, r)
