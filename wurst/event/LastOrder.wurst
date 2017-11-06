@@ -1,12 +1,11 @@
 package LastOrder
 import RegisterEvents
-import OnUnitEnterLeave
-import ErrorHandling
-
+import UnitIndexer
+import EventHelper
 
 /** How many bast orders to hold.
 	Should be at least 2 */
-constant int ORDERS_TO_HOLD = 3
+@configurable constant ORDERS_TO_HOLD = 3
 
 public enum OrderType
 	TARGET
@@ -16,27 +15,28 @@ public enum OrderType
 Order array lastOrder
 
 public class Order
-	Order 		prev = null
+	Order prev = null
 
-	unit 		orderedUnit
-	vec2 		orderPosition
-	int 		orderId
-	OrderType 	orderType
+	OrderType orderType
+	unit orderedUnit = null
+	int orderId = -1
 
-	widget  	target
-	vec2		targetPos
+	vec2 startPosition
 
-	boolean fin = false
+	widget target
+	vec2 targetPosition
+
+	boolean finished = false
 
 	construct(unit ordered, int orderId, OrderType ordtype, widget target, vec2 targetPos)
 		this.orderedUnit   = ordered
-		this.orderPosition = ordered.getPos()
+		this.startPosition = ordered.getPos()
 		this.orderId  = orderId
 		this.orderType = ordtype
 		this.target = target
-		this.targetPos = targetPos
+		this.targetPosition = targetPos
 		
-		let index = ordered.getUserData()
+		let index = ordered.getIndex()
 		if lastOrder[index] != null
 			if lastOrder[index].orderedUnit == orderedUnit
 				prev = lastOrder[index]
@@ -48,7 +48,7 @@ public class Order
 			i++
 			if i > ORDERS_TO_HOLD
 				destroy e.prev
-				e.prev = null
+				break
 			e = e.prev
 
 		lastOrder[index] = this
@@ -59,33 +59,33 @@ public class Order
 			prev = null
 
 	function issue() returns boolean
-		if GetUnitTypeId(orderedUnit) != 0 and not IsUnitType(orderedUnit, UNIT_TYPE_DEAD) and not fin
-			if orderType == OrderType.TARGET
-				return orderedUnit.issueTargetOrderById(orderId, target)
-			else if orderType == OrderType.POINT
-				if orderId == 851971
-					//This adjusts for a bug in the point order's boolean return
-					//when issuing a smart order
-					orderedUnit.issuePointOrderById(orderId, targetPos)
-					return true
-				else
-					return orderedUnit.issuePointOrderById(orderId, targetPos)
-			else if orderType == OrderType.IMMEDIATE
-				return orderedUnit.issueImmediateOrderById(orderId)
+		if orderedUnit.getTypeId() != 0 and not orderedUnit.isType(UNIT_TYPE_DEAD) and not finished
+			switch orderType
+				case TARGET
+					return orderedUnit.issueTargetOrderById(orderId, target)
+				case POINT
+					if orderId == 851971
+						// This adjusts for a bug in the point order's boolean return when issuing a smart order
+						orderedUnit.issuePointOrderById(orderId, targetPosition)
+						return true
+					else
+						return orderedUnit.issuePointOrderById(orderId, targetPosition)
+				case IMMEDIATE
+					return orderedUnit.issueImmediateOrderById(orderId)
 		return false
 
 
 public function unit.clearLastOrders()
-	let index = this.getUserData()
+	let index = this.getIndex()
 	if lastOrder[index] != null
 		destroy lastOrder[index]
 		lastOrder[index] = null
 
 public function unit.getLastOrder() returns Order
-	return lastOrder[this.getUserData()]
+	return lastOrder[this.getIndex()]
 
 function badOrderList( int id ) returns boolean
-	return ( id==852055 or id==852056 or id==852064 or id==852065 or id==852067 or
+	return (id==852055 or id==852056 or id==852064 or id==852065 or id==852067 or
 			 id==852068 or id==852076 or id==852077 or id==852090 or id==852091 or
 			 id==852100 or id==852102 or id==852103 or id==852107 or id==852108 or
 			 id==852129 or id==852130 or id==852133 or id==852134 or id==852136 or
@@ -100,55 +100,46 @@ function badOrderList( int id ) returns boolean
 			 id==852546 or id==852547 or id==852549 or id==852550 or id==852552 or
 			 id==852553 or id==852562 or id==852563 or id==852571 or id==852578 or
 			 id==852579 or id==852589 or id==852590 or id==852602 or id==852603 or
-			 id==852671 or id==852672 )
+			 id==852671 or id==852672)
 
 
-function unit.orderFilter( int id ) returns boolean
+function unit.orderFilter(int id) returns boolean
 	return (id == 851971 or id == 851986 or id == 851983 or id == 851984 or id == 851990 or
 			id == 851993 or (id >= 852055 and id <= 852762)) and not badOrderList(id)
 
-
-
 public function unit.abortOrder() returns boolean
-	if IsUnitPaused(this)
+	if this.isPaused()
 		return false
 	else
-		PauseUnit(this, true)
-		IssueImmediateOrder(this, "stop")
-		PauseUnit(this, false)
+		this..unpause()..issueImmediateOrder("stop")..pause()
 	return true
-
 
 function conditions() returns boolean
 	return GetTriggerUnit().orderFilter(GetIssuedOrderId())
-
 
 function actions()
 	let	u   = GetTriggerUnit()
 	let t   = GetOrderTarget()
 	let oid = GetIssuedOrderId()
 	if GetTriggerEventId() == EVENT_PLAYER_UNIT_ISSUED_TARGET_ORDER
-		new Order(u, oid, OrderType.TARGET, t, vec2(GetWidgetX(t), GetWidgetY(t)))
+		new Order(u, oid, OrderType.TARGET, t, getOrderTargetPos())
 	else if GetTriggerEventId() == EVENT_PLAYER_UNIT_ISSUED_POINT_ORDER
-		new Order(u, oid, OrderType.POINT, null, vec2(GetOrderPointX(), GetOrderPointY()))
+		new Order(u, oid, OrderType.POINT, null, getOrderPos())
 	else if GetTriggerEventId() == EVENT_PLAYER_UNIT_ISSUED_ORDER
 		new Order(u, oid, OrderType.IMMEDIATE, null, u.getPos())
-	else
-		error("invalid Ordertype")
-
 
 function spellActions()
-	let index = GetTriggerUnit().getUserData()
+	let index = GetTriggerUnit().getIndex()
 	if lastOrder[index] != null
-		//Only do this if the last order actually exists
-		lastOrder[index].fin = true
+		// Only do this if the last order actually exists
+		lastOrder[index].finished = true
 
 init
-	registerPlayerUnitEvent(EVENT_PLAYER_UNIT_ISSUED_TARGET_ORDER, function actions)
-	registerPlayerUnitEvent(EVENT_PLAYER_UNIT_ISSUED_POINT_ORDER, function actions)
-	registerPlayerUnitEvent(EVENT_PLAYER_UNIT_ISSUED_ORDER, function actions)
-	registerPlayerUnitEvent(EVENT_PLAYER_UNIT_SPELL_EFFECT, function spellActions)
+	registerPlayerUnitEvent(EVENT_PLAYER_UNIT_ISSUED_TARGET_ORDER, () -> conditions(), function actions)
+	registerPlayerUnitEvent(EVENT_PLAYER_UNIT_ISSUED_POINT_ORDER, () -> conditions(), function actions)
+	registerPlayerUnitEvent(EVENT_PLAYER_UNIT_ISSUED_ORDER, () -> conditions(), function actions)
+	registerPlayerUnitEvent(EVENT_PLAYER_UNIT_SPELL_EFFECT, () -> conditions(), function spellActions)
 
-	onLeave(() -> begin
-		getEnterLeaveUnit().clearLastOrders()
+	onUnitDeindex(() -> begin
+		getDeindexedUnit().clearLastOrders()
 	end)
