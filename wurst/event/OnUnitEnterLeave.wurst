@@ -8,18 +8,30 @@ import Player
 import ClosureTimers
 import AbilityObjEditing
 import RegisterEvents
+import ObjectIdGenerator
+import MagicFunctions
 
-constant eventTrigger = CreateTrigger()
+/* 	Provides event API for units entering and leaving the map.
+	The event will also fire for preplaced units on the map. */
 
+/* @API */
+
+/** Returns the unit that caused the enter/leave event to happen */
 public function getEnterLeaveUnit() returns unit
 	return tempUnit
 
+/** Adds a callback that is run when a unit enters the map */
 public function onEnter(code c)
-	eventTrigger.addCondition(Condition(c))
+	eventTrigger.addCondition(Filter(c))
 
+/** Adds a callback that is run when a unit leaves the map */
 public function onLeave(code c)
 	eventTrigger.addAction(c)
 
+
+/* === Internals === */
+
+constant eventTrigger = CreateTrigger()
 unit tempUnit = null
 
 init
@@ -36,25 +48,19 @@ init
 			eventTrigger.execute()
 			tempUnit = null
 	end)
-	ABILITY_ID = '!e@$'
 	for i = 0 to bj_MAX_PLAYER_SLOTS-1
 		players[i].setAbilityAvailable(ABILITY_ID, false)
 
-	let g = CreateGroup()
-	GroupEnumUnitsInRect(g, boundRect, null)
+	GroupEnumUnitsInRect(ENUM_GROUP, boundRect, null)
 	nullTimer(() -> begin
-		while true
-			tempUnit = FirstOfGroup(g)
-			if tempUnit==null
+		for u from ENUM_GROUP
+			if u == null
 				break
-			tempUnit.addAbility(ABILITY_ID)
-			tempUnit.makeAbilityPermanent(ABILITY_ID, true)
-			g.removeUnit(tempUnit)
+			u..addAbility(ABILITY_ID)..makeAbilityPermanent(ABILITY_ID, true)
 			eventTrigger.evaluate()
-		g.destr()
 	end)
 
-int ABILITY_ID = '!e@$'
+constant ABILITY_ID = compiletime(ABIL_ID_GEN.next())
 
 @compiletime function generateAbility()
 	new AbilityDefinitionDefend(ABILITY_ID)
