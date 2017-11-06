@@ -5,6 +5,9 @@ import TerrainUtils
 
 native UnitAlive(unit id) returns boolean
 
+public function unit.isType(unittype utype) returns boolean
+	return IsUnitType(this, utype)
+
 /* Helper Functions for use with vectors */
 
 public function createUnit(player p, int unitId, vec2 pos, angle facing) returns unit
@@ -166,6 +169,9 @@ public function unit.kill()
 
 public function unit.makeAbilityPermanent(int abil, boolean flag) returns boolean
 	return UnitMakeAbilityPermanent(this, flag, abil)
+
+public function unit.isPaused() returns boolean
+	return IsUnitPaused(this)
 	
 public function unit.pause()
 	PauseUnit(this, true)
