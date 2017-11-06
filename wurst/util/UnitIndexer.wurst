@@ -108,6 +108,12 @@ trigger onDeindexTrigger = CreateTrigger()
 unit indexedUnit = null
 unit deindexedUnit = null
 
+/*  Returns the integer index of this unit. 
+	Can be configured by the user to supply a custom unit indexer which won't break 
+	other stdlib components. */
+@configurable public function unit.getIndex() returns integer
+	return this.getUserData()
+
 /*  Returns the last indexed unit. */
 public function getIndexedUnit() returns unit
 	return indexedUnit
@@ -125,10 +131,6 @@ public function onUnitDeindex(code func)
 	Use the getIndexedUnit() function to refer to the indexed unit. */
 public function onUnitIndex(code func)
 	onIndexTrigger.addCondition(Condition(func))
-
-/*  Returns the integer index of this unit. */
-public function unit.getIndex() returns integer
-	return this.getUserData()
 
 /*  Returns the UnitIndex associated with this unit, creating a new one if necessary. */
 public function unit.toUnitIndex() returns UnitIndex
