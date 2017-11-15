@@ -1,7 +1,6 @@
 package HeroPreset
 import UnitObjEditing
 import LinkedList
-import ObjectIdGenerator
 import ObjectIds
 
 class StringWrap
@@ -16,10 +15,6 @@ public class HeroPreset extends HeroDefinition
 	
 	construct(int newId, int origId, string name)
 		super(newId, origId)
-		setName(name)
-		
-	construct(int origId, string name)
-		super(HERO_ID_GEN.next(), origId)
 		setName(name)
 		
 	function buildHero()
