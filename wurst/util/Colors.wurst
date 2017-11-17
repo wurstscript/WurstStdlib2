@@ -141,9 +141,9 @@ public function toDec(string twochar) returns int
 	return decs.loadInt(StringHash(first)) * 16 + decs.loadInt(StringHash(second))
 
 /** Hexadecimal numbers */
-constant hexs = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F" ]
+public constant hexs = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F" ]
 /** Playercolor array */
-constant playercolors = [color(255,2,2), color(0,65,255), color(27,229,184), color(83,0,128), 
+public constant playercolors = [color(255,2,2), color(0,65,255), color(27,229,184), color(83,0,128), 
 						color(255,252,0), color(254,137,13), color(31,191,0), color(228,90,175), 
 						color(148,149,150), color(125,190,241),	color(15,97,69), color(77,41,3)]
 constant decs = new Table()
