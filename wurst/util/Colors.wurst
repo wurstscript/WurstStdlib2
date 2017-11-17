@@ -3,6 +3,8 @@ import NoWurst
 import Table
 import String
 import Integer
+import Printing
+import Wurstunit
 
 public constant COLOR_WHITE = colorA(255,255,255,255)
 public constant COLOR_BLACK = colorA(0,0,0,0)
@@ -123,13 +125,13 @@ public function colorA.toString() returns string
 	return "colorA(" + (this.red).toString() + ", " + (this.green).toString() + ", " + (this.blue).toString() + ", " + (this.alpha).toString() + ")"
 
 /** Converts and int to a hexnumber */
-public function toHex( int number ) returns string
+public function toHex(int number) returns string
 	var firstpart = number div 16
 	var secondpart = number - firstpart * 16
 	return hexs[firstpart] + hexs[secondpart]
 	
 /** Converts a twochar string to an integer */
-public function toDec( string twochar ) returns int
+public function toDec(string twochar) returns int
 	if twochar.length() > 2
 		return -1
 	
@@ -138,42 +140,22 @@ public function toDec( string twochar ) returns int
 	
 	return decs.loadInt(StringHash(first)) * 16 + decs.loadInt(StringHash(second))
 
-string array hexs
-Table decs
-
+/** Hexadecimal numbers */
+constant hexs = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F" ]
 /** Playercolor array */
-public color array playercolors
+constant playercolors = [color(255,2,2), color(0,65,255), color(27,229,184), color(83,0,128), 
+						color(255,252,0), color(254,137,13), color(31,191,0), color(228,90,175), 
+						color(148,149,150), color(125,190,241),	color(15,97,69), color(77,41,3)]
+constant decs = new Table()
+
+@compiletime function initializeTable()
+	for i = 0 to 15
+		decs.saveInt(hexs[i].getHash(), i)
 
 init
-	for i = 0 to 9
-		hexs[i] = i.toString()
-	hexs[10] = "A"
-	hexs[11] = "B"
-	hexs[12] = "C"
-	hexs[13] = "D"
-	hexs[14] = "E"
-	hexs[15] = "F"
-	
-	decs = new Table()
-	for i2 = 0 to 9
-		decs.saveInt(i2.toString().getHash(), i2 )
-	
-	decs.saveInt(StringHash("A"), 10 )
-	decs.saveInt(StringHash("B"), 11 )
-	decs.saveInt(StringHash("C"), 12 )
-	decs.saveInt(StringHash("D"), 13 )
-	decs.saveInt(StringHash("E"), 14 )
-	decs.saveInt(StringHash("F"), 15 )
+	initializeTable()
 
-	playercolors[0] = color(255,2,2)
-	playercolors[1] = color(0,65,255)
-	playercolors[2] = color(27,229,184)
-	playercolors[3] = color(83,0,128)
-	playercolors[4] = color(255,252,0)
-	playercolors[5] = color(254,137,13)
-	playercolors[6] = color(31,191,0)
-	playercolors[7] = color(228,90,175)
-	playercolors[8] = color(148,149,150)
-	playercolors[9] = color(125,190,241)
-	playercolors[10] = color(15,97,69)
-	playercolors[11] = color(77,41,3)
+@test
+public function testHex()
+	assertTrue(hexs[10] == "A")
+
