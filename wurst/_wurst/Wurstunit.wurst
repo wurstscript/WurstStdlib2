@@ -65,11 +65,12 @@ public function boolean.assertTrue()
 public function boolean.assertFalse()
 	this.assertEquals(false)
 
-
+/** Asserts that this booleans is true. If it is not, an error is thrown. */
 public function assertTrue(boolean b)
 	if not b
 		testFail("assertion failed")
 
+/** Asserts that this booleans is true. If it is not, an error is thrown with the supplied message. */
 public function assertTrue(boolean b, string msg)
 	if not b
 		testFail("assertion failed: " + msg)
