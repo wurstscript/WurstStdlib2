@@ -37,25 +37,9 @@ constant ABILITY_ID = compiletime(ABIL_ID_GEN.next())
 constant eventTrigger = CreateTrigger()
 unit tempUnit = null
 let preplacedUnits = CreateGroup()
-constant trigger preplacedUnitsCall = CreateTrigger()..addAction(function initPreplacedUnits)
 
 function prepareUnit(unit u)
 	u..addAbility(ABILITY_ID)..makeAbilityPermanent(ABILITY_ID, true)
-
-function initPreplacedUnits()
-	var count = UNITS_PER_CALL
-
-	for u from preplacedUnits
-		prepareUnit(u)
-		eventTrigger.evaluate()
-		count--
-		if count <= 0
-			break
-
-	if preplacedUnits.hasNext()
-		preplacedUnitsCall.execute() // processes at most UNITS_PER_CALL units before resetting the op-limit.
-	else
-		preplacedUnits.destr()
 
 init
 	// Make the ability invisible to the player
@@ -80,8 +64,8 @@ init
 	end)
 
 	GroupEnumUnitsInRect(preplacedUnits, boundRect, null)
-
-	preplacedUnitsCall.execute()
+	ForGroup(preplacedUnits, ()-> prepareUnit(GetEnumUnit()))
+	preplacedUnits..clear()..destr()
 
 @compiletime function generateAbility()
 	new AbilityDefinitionDefend(ABILITY_ID)
