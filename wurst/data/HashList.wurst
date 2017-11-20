@@ -9,6 +9,12 @@ public class HashList<T>
 		ht.saveInt(this castTo int, size, elem castTo int)
 		size++
 	
+	function contains(T elem) returns bool
+		for e in this
+			if e == elem
+				return true
+		return false
+
 	/** Set an existing element at the given positiob to a new value */
 	function set(int index, T elem)
 		ht.saveInt(this castTo int, index, elem castTo int)
