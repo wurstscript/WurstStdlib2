@@ -36,24 +36,24 @@ constant ABILITY_ID = compiletime(ABIL_ID_GEN.next())
 
 constant eventTrigger = CreateTrigger()
 unit tempUnit = null
-group preplacedUnits
+let preplacedUnits = CreateGroup()
 constant trigger preplacedUnitsCall = CreateTrigger()..addAction(function initPreplacedUnits)
 
 function prepareUnit(unit u)
 	u..addAbility(ABILITY_ID)..makeAbilityPermanent(ABILITY_ID, true)
 
 function initPreplacedUnits()
-	for count=1 to UNITS_PER_CALL
-		let u = FirstOfGroup(preplacedUnits)
-		if u == null
-			break
-		else
-			preplacedUnits.removeUnit(u) 
-			prepareUnit(u)
-			eventTrigger.evaluate()
+	var count = UNITS_PER_CALL
 
-	if FirstOfGroup(preplacedUnits) != null
-		preplacedUnitsCall.execute()
+	for u from preplacedUnits
+		prepareUnit(u)
+		eventTrigger.evaluate()
+		count--
+		if count <= 0
+			break
+
+	if preplacedUnits.hasNext()
+		preplacedUnitsCall.execute() // processes at most UNITS_PER_CALL units per thread
 	else
 		preplacedUnits.destr()
 
@@ -79,7 +79,6 @@ init
 			tempUnit = null
 	end)
 
-	preplacedUnits = CreateGroup()
 	GroupEnumUnitsInRect(preplacedUnits, boundRect, null)
 
 	preplacedUnitsCall.execute()
