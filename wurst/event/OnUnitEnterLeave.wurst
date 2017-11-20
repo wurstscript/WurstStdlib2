@@ -53,7 +53,7 @@ function initPreplacedUnits()
 			break
 
 	if preplacedUnits.hasNext()
-		preplacedUnitsCall.execute() // processes at most UNITS_PER_CALL units per thread
+		preplacedUnitsCall.execute() // processes at most UNITS_PER_CALL units before resetting the op-limit.
 	else
 		preplacedUnits.destr()
 
