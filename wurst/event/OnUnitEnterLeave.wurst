@@ -12,6 +12,7 @@ import RegisterEvents
 import ObjectIdGenerator
 
 import MagicFunctions
+import ClosureTimers
 
 /* 	Provides event API for units entering and leaving the map.
 	The event will also fire for preplaced units on the map. */
@@ -31,22 +32,46 @@ public function onLeave(code c)
 	eventTrigger.addAction(c)
 
 /* === Internals === */
+constant UNITS_PER_CALL = 50
+constant ABILITY_ID = compiletime(ABIL_ID_GEN.next())
 
 constant eventTrigger = CreateTrigger()
 unit tempUnit = null
+group preplacedUnits
+constant trigger preplacedUnitsCall = CreateTrigger()..addAction(function initPreplacedUnits)
 
-constant ABILITY_ID = compiletime(ABIL_ID_GEN.next())
+function prepareUnit(unit u)
+	u..addAbility(ABILITY_ID)..makeAbilityPermanent(ABILITY_ID, true)
+
+function initPreplacedUnits()
+	for count=1 to UNITS_PER_CALL
+		let u = FirstOfGroup(preplacedUnits)
+		if u == null
+			break
+		else
+			preplacedUnits.removeUnit(u) 
+			prepareUnit(u)
+			eventTrigger.evaluate()
+
+	if FirstOfGroup(preplacedUnits) != null
+		preplacedUnitsCall.execute()
+	else
+		preplacedUnits.destr()
 
 init
+	// Make the ability invisible to the player
 	for i = 0 to bj_MAX_PLAYER_SLOTS-1
 		players[i].setAbilityAvailable(ABILITY_ID, false)
 
+	// Create the enter event
 	CreateTrigger()..registerEnterRegion(boundRegion, Filter(() -> begin
-		tempUnit = GetFilterUnit()..addAbility(ABILITY_ID)..makeAbilityPermanent(ABILITY_ID, true)
+		tempUnit = GetFilterUnit()
+		prepareUnit(tempUnit)
 		eventTrigger.evaluate()
 		tempUnit = null
 	end))
 
+	// Create the leave event
 	registerPlayerUnitEvent(EVENT_PLAYER_UNIT_ISSUED_ORDER, () -> begin
 		let leavingUnit = GetTriggerUnit()
 		if leavingUnit.getAbilityLevel(ABILITY_ID) == 0
@@ -55,12 +80,10 @@ init
 			tempUnit = null
 	end)
 
-	GroupEnumUnitsInRect(ENUM_GROUP, boundRect, null)
-	for u from ENUM_GROUP
-		if u == null
-			break
-		u..addAbility(ABILITY_ID)..makeAbilityPermanent(ABILITY_ID, true)
-		eventTrigger.evaluate()
+	preplacedUnits = CreateGroup()
+	GroupEnumUnitsInRect(preplacedUnits, boundRect, null)
+
+	preplacedUnitsCall.execute()
 
 @compiletime function generateAbility()
 	new AbilityDefinitionDefend(ABILITY_ID)
