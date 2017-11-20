@@ -1,14 +1,16 @@
 package OnUnitEnterLeave
 import MapBounds
+
 import NoWurst
 import Unit
 import Trigger
 import Group
 import Player
-import ClosureTimers
+
 import AbilityObjEditing
 import RegisterEvents
 import ObjectIdGenerator
+
 import MagicFunctions
 
 /* 	Provides event API for units entering and leaving the map.
@@ -28,13 +30,17 @@ public function onEnter(code c)
 public function onLeave(code c)
 	eventTrigger.addAction(c)
 
-
 /* === Internals === */
 
 constant eventTrigger = CreateTrigger()
 unit tempUnit = null
 
+constant ABILITY_ID = compiletime(ABIL_ID_GEN.next())
+
 init
+	for i = 0 to bj_MAX_PLAYER_SLOTS-1
+		players[i].setAbilityAvailable(ABILITY_ID, false)
+
 	CreateTrigger()..registerEnterRegion(boundRegion, Filter(() -> begin
 		tempUnit = GetFilterUnit()..addAbility(ABILITY_ID)..makeAbilityPermanent(ABILITY_ID, true)
 		eventTrigger.evaluate()
@@ -48,21 +54,18 @@ init
 			eventTrigger.execute()
 			tempUnit = null
 	end)
-	for i = 0 to bj_MAX_PLAYER_SLOTS-1
-		players[i].setAbilityAvailable(ABILITY_ID, false)
 
 	GroupEnumUnitsInRect(ENUM_GROUP, boundRect, null)
-	nullTimer(() -> begin
-		for u from ENUM_GROUP
-			if u == null
-				break
-			u..addAbility(ABILITY_ID)..makeAbilityPermanent(ABILITY_ID, true)
-			eventTrigger.evaluate()
-	end)
-
-constant ABILITY_ID = compiletime(ABIL_ID_GEN.next())
+	for u from ENUM_GROUP
+		if u == null
+			break
+		u..addAbility(ABILITY_ID)..makeAbilityPermanent(ABILITY_ID, true)
+		eventTrigger.evaluate()
 
 @compiletime function generateAbility()
 	new AbilityDefinitionDefend(ABILITY_ID)
-	..setName("Leave Detect")..setEditorSuffix("(OnUnitEnterLeave)")
-	..setArtCaster("")..setIconNormal("")..setRace(Race.Unknown)
+		..setName("Leave Detect")
+		..setEditorSuffix("(OnUnitEnterLeave)")
+		..setArtCaster("")
+		..setIconNormal("")
+		..setRace(Race.Unknown)
