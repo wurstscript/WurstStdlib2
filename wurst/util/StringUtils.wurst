@@ -101,13 +101,17 @@ public function string.split(string splitBy) returns LinkedList<string>
 /** Joins elements from a string list into one string using a separator */
 public function LinkedList<string>.joinBy(string separator) returns string
 	var joined = ""
+	var first = true
 	let iter = this.iterator()
+	
 	for str from iter
-		if iter.hasNext()
+		if iter.hasNext() or not first
 			joined += str + separator
 		else
 			joined += str
-	
+			first = false
+			
+	iter.close()
 	return joined
 
 /** Joins elements from a string list into one string */ 
