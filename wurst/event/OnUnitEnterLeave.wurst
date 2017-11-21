@@ -1,15 +1,15 @@
 package OnUnitEnterLeave
-import MapBounds
 import NoWurst
 import Unit
 import Trigger
 import Group
 import Player
-import ClosureTimers
+import MagicFunctions
+
 import AbilityObjEditing
 import RegisterEvents
 import ObjectIdGenerator
-import MagicFunctions
+import MapBounds
 
 /* 	Provides event API for units entering and leaving the map.
 	The event will also fire for preplaced units on the map. */
@@ -28,19 +28,30 @@ public function onEnter(code c)
 public function onLeave(code c)
 	eventTrigger.addAction(c)
 
-
 /* === Internals === */
+constant ABILITY_ID = compiletime(ABIL_ID_GEN.next())
 
 constant eventTrigger = CreateTrigger()
 unit tempUnit = null
+let preplacedUnits = CreateGroup()
+
+function prepareUnit(unit u)
+	u..addAbility(ABILITY_ID)..makeAbilityPermanent(ABILITY_ID, true)
+	eventTrigger.evaluate()
 
 init
+	// Make the ability invisible to the player
+	for i = 0 to bj_MAX_PLAYER_SLOTS-1
+		players[i].setAbilityAvailable(ABILITY_ID, false)
+
+	// Create the enter event
 	CreateTrigger()..registerEnterRegion(boundRegion, Filter(() -> begin
-		tempUnit = GetFilterUnit()..addAbility(ABILITY_ID)..makeAbilityPermanent(ABILITY_ID, true)
-		eventTrigger.evaluate()
+		tempUnit = GetFilterUnit()
+		prepareUnit(tempUnit)
 		tempUnit = null
 	end))
 
+	// Create the leave event
 	registerPlayerUnitEvent(EVENT_PLAYER_UNIT_ISSUED_ORDER, () -> begin
 		let leavingUnit = GetTriggerUnit()
 		if leavingUnit.getAbilityLevel(ABILITY_ID) == 0
@@ -48,21 +59,16 @@ init
 			eventTrigger.execute()
 			tempUnit = null
 	end)
-	for i = 0 to bj_MAX_PLAYER_SLOTS-1
-		players[i].setAbilityAvailable(ABILITY_ID, false)
 
-	GroupEnumUnitsInRect(ENUM_GROUP, boundRect, null)
-	nullTimer(() -> begin
-		for u from ENUM_GROUP
-			if u == null
-				break
-			u..addAbility(ABILITY_ID)..makeAbilityPermanent(ABILITY_ID, true)
-			eventTrigger.evaluate()
-	end)
-
-constant ABILITY_ID = compiletime(ABIL_ID_GEN.next())
+	// Process preplaced units
+	preplacedUnits.enumUnitsInRect(boundRect)
+	ForGroup(preplacedUnits, () -> prepareUnit(GetEnumUnit()))
+	preplacedUnits..clear()..destr()
 
 @compiletime function generateAbility()
 	new AbilityDefinitionDefend(ABILITY_ID)
-	..setName("Leave Detect")..setEditorSuffix("(OnUnitEnterLeave)")
-	..setArtCaster("")..setIconNormal("")..setRace(Race.Unknown)
+		..setName("Leave Detect")
+		..setEditorSuffix("(OnUnitEnterLeave)")
+		..setArtCaster("")
+		..setIconNormal("")
+		..setRace(Race.Unknown)
