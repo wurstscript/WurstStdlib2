@@ -251,27 +251,6 @@ public function string.format(string par1, string par2, string par3, string par4
 				.replace("{8}", par9)
 				.replace("{9}", par10)
 				
-/** Replaces consecutive repeats of the same string with a single instance 
-	Turns "strstr" into "str" */
-public function string.reduce(string reduced) returns string
-	string toReduce = reduced + reduced 
-	string oldString = this
-	string newString
-
-	while true
-		newString = oldString.replace(toReduce, reduced)
-		if newString.length() == oldString.length()
-			break
-		else
-			oldString = newString
-
-	return newString
-
-/** Replaces consecutive repeats of the whitespace character with a single instance 
-	Turns "  " into " " */
-public function string.reduce() returns string
-	return this.reduce(" ")
-
 /** Removes a string from the beginning of another string */
 public function string.lstrip(string val) returns string
 	if this.startsWith(val)

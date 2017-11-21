@@ -4,6 +4,7 @@ import String
 import LinkedList
 import Texttag
 import Interpolation
+import TypeCasting
 
 /**
  * Credits go here: http://www.hiveworkshop.com/forums/jass-resources-412/snippet-ascii-190746/
@@ -79,6 +80,61 @@ public function charToIndex(char c) returns int
 
 public function charFromIndex(int index) returns char
 	return char(index)
+
+/** Splits the string by another string 
+	"this..is..an..example" split by the string ".." splits into a list containing four strings ["this", "is", "an", "example"] */
+public function string.split(string splitBy) returns LinkedList<string>
+	let list = new LinkedList<string>
+	let offset = splitBy.length()
+	var str = this
+	while true
+		let splitIndex = str.indexOf(splitBy)
+		if splitIndex == -1
+			list.add(str)
+			break
+		let first  = str.substring(0, splitIndex)
+		let second = str.substring(splitIndex + offset, str.length())
+		list.add(first)
+		str = second
+	return list
+
+/** Joins elements from a string list into one string using a separator */
+public function LinkedList<string>.joinBy(string separator) returns string
+	var joined = ""
+	let iter = this.iterator()
+	for str from iter
+		if iter.hasNext()
+			joined += str + separator
+		else
+			joined += str
+	
+	return joined
+
+/** Joins elements from a string list into one string */ 
+public function LinkedList<string>.join() returns string
+	return this.joinBy("")
+
+/** Replaces consecutive repeats of the same string with a single instance 
+	Turns "strstr" into "str" */
+public function string.reduce(string reduced) returns string
+	var toReduce = reduced + reduced 
+	var oldString = this
+	var newString = ""
+
+	while true
+		newString = oldString.replace(toReduce, reduced)
+		if newString.length() == oldString.length()
+			break
+		else
+			oldString = newString
+
+	return newString
+
+/** Replaces consecutive repeats of the whitespace character with a single instance 
+	Turns "  " into " " */
+public function string.reduce() returns string
+	return this.reduce(" ")
+
 
 init
 	c2sInit()

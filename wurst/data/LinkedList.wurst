@@ -1,8 +1,6 @@
 package LinkedList
 import NoWurst
 import Wurstunit
-import TypeCasting
-import String
 
 public class LinkedList<T>
 	private LLEntry<T> dummy = new LLEntry<T>(null, null, null)
@@ -225,8 +223,8 @@ class LLEntry<T>
 		this.next = next
 
 public class LLStaticIterator<T>
-	LLEntry<T>	dummy
-	LLEntry<T>	current
+	LLEntry<T>    dummy
+	LLEntry<T>    current
 	LinkedList<T> parent
 
 	construct(LinkedList<T> parent)
@@ -246,7 +244,7 @@ public class LLStaticIterator<T>
 			current.prev.next = current.next
 			current.next.prev = current.prev
 			let removedNode   = current
-			current		   = current.prev
+			current           = current.prev
 			destroy removedNode
 			return removedNode.elem
 		return null
@@ -267,8 +265,8 @@ public class LLStaticIterator<T>
 	
 
 public class LLIterator<T>
-	LLEntry<T>	dummy
-	LLEntry<T>	current
+	LLEntry<T>    dummy
+	LLEntry<T>    current
 	LinkedList<T> parent
 
 	construct(LinkedList<T> parent)
@@ -287,7 +285,7 @@ public class LLIterator<T>
 			current.next.prev = current.prev
 			current.prev.next = current.next
 			let removedNode   = current
-			current		   = current.prev
+			current           = current.prev
 			destroy removedNode
 			return removedNode.elem
 		return null
@@ -328,43 +326,6 @@ public interface LLItrClosure<T>
 
 public interface LinkedListUpdater<T>
 	function update(T t) returns T
-
-/*  String processing extra functions 
-	The only reason this is here is that it can't be in String.wurst due to dependency problems */
-
-/** Splits the string by another string 
-	"this..is..an..example" split by the string ".." splits into a list containing four strings ["this", "is", "an", "example"] */
-public function string.split(string splitBy) returns LinkedList<string>
-	let list = new LinkedList<string>
-	let offset = splitBy.length()
-	var str = this
-	while true
-		let splitIndex = str.indexOf(splitBy)
-		if splitIndex == -1
-			list.add(str)
-			break
-		let first  = str.substring(0, splitIndex)
-		let second = str.substring(splitIndex + offset, str.length())
-		list.add(first)
-		str = second
-	return list
-
-/** Joins elements from a string list into one string using a separator */
-public function LinkedList<string>.joinBy(string separator) returns string
-	var joined = ""
-	let iter = this.iterator()
-	for str from iter
-		if iter.hasNext()
-			joined += str + separator
-		else
-			joined += str
-	
-	return joined
-
-/** Joins elements from a string list into one string */ 
-public function LinkedList<string>.join() returns string
-	return this.joinBy("")
-
 
 // =====TESTS=====
 
