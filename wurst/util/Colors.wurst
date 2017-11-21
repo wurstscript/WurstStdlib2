@@ -19,12 +19,12 @@ public function color.withAlpha( int a ) returns colorA
 	return colorA(this.red, this.green, this.blue, a)
 	
 /** Get a colorA tuple from a hexstring */
-public function fromHexString( string number ) returns colorA
+public function fromHexString(string number) returns colorA
 	var alpha = number.substring(0,2)
 	var red = number.substring(2,4)
 	var green = number.substring(4,6)
-	var blue = number.substring(6,4)
-	return colorA( toDec(red), toDec(green), toDec(blue), toDec(alpha) )
+	var blue = number.substring(6,8)
+	return colorA(toDec(red), toDec(green), toDec(blue), toDec(alpha))
 	
 public function color.normalize() returns color
 	return color(this.red.abs(), this.green.abs(), this.blue.abs())
@@ -94,8 +94,8 @@ public function fromPlayer( player p ) returns color
 *	c1.mix(c2,1)   = c2
 * 	c1.mix(c2,0.5) = Mixing the colors c1 and c2 in equal proportions.
 */
-public function colorA.mix( colorA c2, real s ) returns colorA
-	return colorA( R2I(c2.red*s+this.red*(1-s)+0.5),
+public function colorA.mix(colorA c2, real s) returns colorA
+	return colorA(R2I(c2.red*s+this.red*(1-s)+0.5),
 					R2I(c2.green*s+this.green*(1-s)+0.5),
 					R2I(c2.blue*s+this.blue*(1-s)+0.5), 						
 					R2I(c2.alpha*s+this.alpha*(1-s)+0.5))
@@ -124,6 +124,14 @@ public function color.toString() returns string
 public function colorA.toString() returns string
 	return "colorA(" + (this.red).toString() + ", " + (this.green).toString() + ", " + (this.blue).toString() + ", " + (this.alpha).toString() + ")"
 
+/** Hexadecimal numbers */
+public constant hexs = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F"]
+/** Playercolor array */
+public constant playercolors = [color(255,2,2), color(0,65,255), color(27,229,184), color(83,0,128), 
+						color(255,252,0), color(254,137,13), color(31,191,0), color(228,90,175), 
+						color(148,149,150), color(125,190,241),	color(15,97,69), color(77,41,3)]
+constant decs = new Table()
+
 /** Converts and int to a hexnumber */
 public function toHex(int number) returns string
 	var firstpart = number div 16
@@ -135,18 +143,10 @@ public function toDec(string twochar) returns int
 	if twochar.length() > 2
 		return -1
 	
-	var first = twochar.substring(0,1)
-	var second = twochar.substring(1,2)
+	var first = twochar.substring(0,1).toUpperCase()
+	var second = twochar.substring(1,2).toUpperCase()
 	
 	return decs.loadInt(StringHash(first)) * 16 + decs.loadInt(StringHash(second))
-
-/** Hexadecimal numbers */
-public constant hexs = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F" ]
-/** Playercolor array */
-public constant playercolors = [color(255,2,2), color(0,65,255), color(27,229,184), color(83,0,128), 
-						color(255,252,0), color(254,137,13), color(31,191,0), color(228,90,175), 
-						color(148,149,150), color(125,190,241),	color(15,97,69), color(77,41,3)]
-constant decs = new Table()
 
 @compiletime function initializeTable()
 	for i = 0 to 15
@@ -155,7 +155,11 @@ constant decs = new Table()
 init
 	initializeTable()
 
-@test
-public function testHex()
+@Test public function testColors()
 	assertTrue(hexs[10] == "A")
+	assertTrue(decs.loadInt(hexs[10].getHash()) == 10)
 
+	let mixed = colorA(0,0,0,0).mix(colorA(255,255,255,255), 0.5)
+	assertTrue(mixed == colorA(128,128,128,128))
+
+	assertTrue(fromHexString("33ccff44") == colorA(204, 255, 68, 51))
