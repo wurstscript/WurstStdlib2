@@ -86,7 +86,7 @@ public function string.isUpper() returns boolean
 public function string.ischar() returns boolean
 	return S2I(this) == 0 and this != "0"
 
-/** Returns the given string with whitespaces removed */
+/** Returns the given string with whitespaces removed from both ends*/
 public function string.trim() returns string
 	int i = 0
 	while (this.charAt(i) == " ")
@@ -95,6 +95,38 @@ public function string.trim() returns string
 	while (this.charAt(j - 1) == " ")
 		j--
 	return this.substring(i, j)
+
+/** Returns the given string with whitespaces removed from the left end */
+public function string.ltrim() returns string
+	int i = 0
+	while (this.charAt(i) == " ")
+		i++
+	return this.substring(i, this.length())
+
+/** Returns the given string with whitespaces removed from the right end */
+public function string.rtrim() returns string
+	int j = this.length()
+	while (this.charAt(j - 1) == " ")
+		j--
+	return this.substring(0, j)
+
+/** Removes a string from the beginning of another string */
+public function string.ltrim(string val) returns string
+	if this.startsWith(val)
+		return this.substring(val.length(), this.length()).ltrim(val)
+	else 
+		return this
+
+/** Removes a string from the end of another string */
+public function string.rtrim(string val) returns string
+	if this.endsWith(val)
+		return this.substring(0, this.length() - val.length()).rtrim(val)
+	else 
+		return this
+
+/** Removes a string from both ends of another string */
+public function string.trim(string val) returns string
+	return this.ltrim(val).rtrim(val)
 
 /**
 	Returns the index of the specified string inside the given string.
@@ -250,36 +282,6 @@ public function string.format(string par1, string par2, string par3, string par4
 				.replace("{7}", par8)
 				.replace("{8}", par9)
 				.replace("{9}", par10)
-				
-/** Removes a string from the beginning of another string */
-public function string.lstrip(string val) returns string
-	if this.startsWith(val)
-		return this.substring(val.length(), this.length()).lstrip(val)
-	else 
-		return this
-
-/** Removes all whitespace from the beginning of another string */
-public function string.lstrip() returns string
-	return this.lstrip(" ")
-
-/** Removes a string from the end of another string */
-public function string.rstrip(string val) returns string
-	if this.endsWith(val)
-		return this.substring(0, this.length() - val.length()).rstrip(val)
-	else 
-		return this
-
-/** Removes all whitespace from the end of a string */
-public function string.rstrip() returns string
-	return this.rstrip(" ")
-
-/** Removes a string from both ends of another string */
-public function string.strip(string val) returns string
-	return this.lstrip(val).rstrip(val)
-
-/** Removes all whitespace from both ends of a string */
-public function string.strip() returns string
-	return this.strip(" ")
 
 
 public function string.iterator() returns StringIterator
