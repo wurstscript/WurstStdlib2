@@ -2,6 +2,8 @@ package String
 import NoWurst
 import Real
 
+import HashMap
+
 constant charset = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 constant numberset = "0123456789"
 constant numbersetlength = numberset.length()
@@ -251,6 +253,58 @@ public function string.format(string par1, string par2, string par3, string par4
 				.replace("{8}", par9)
 				.replace("{9}", par10)
 				
+/** Replaces consecutive repeats of the same string with a single instance 
+	Turns "strstr" into "str" */
+public function string.reduce(string reduced) returns string
+	string toReduce = reduced + reduced 
+	string oldString = this
+	string newString
+
+	while true
+		newString = oldString.replace(toReduce, reduced)
+		if newString.length() == oldString.length()
+			break
+		else
+			oldString = newString
+
+	return newString
+
+/** Replaces consecutive repeats of the whitespace character with a single instance 
+	Turns "  " into " " */
+public function string.reduce() returns string
+	return this.reduce(" ")
+
+/** Removes a string from the beginning of another string */
+public function string.lstrip(string val) returns string
+	if this.startsWith(val)
+		return this.substring(val.length(), this.length()).lstrip(val)
+	else 
+		return this
+
+/** Removes all whitespace from the beginning of another string */
+public function string.lstrip() returns string
+	return this.lstrip(" ")
+
+/** Removes a string from the end of another string */
+public function string.rstrip(string val) returns string
+	if this.endsWith(val)
+		return this.substring(0, this.length() - val.length()).rstrip(val)
+	else 
+		return this
+
+/** Removes all whitespace from the end of a string */
+public function string.rstrip() returns string
+	return this.rstrip(" ")
+
+/** Removes a string from both ends of another string */
+public function string.strip(string val) returns string
+	return this.lstrip(val).rstrip(val)
+
+/** Removes all whitespace from both ends of a string */
+public function string.strip() returns string
+	return this.strip(" ")
+
+
 public function string.iterator() returns StringIterator
 	return new StringIterator(this, 0, this.length())
 	
