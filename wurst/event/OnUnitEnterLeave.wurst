@@ -31,7 +31,6 @@ public function onLeave(code c)
 	eventTrigger.addAction(c)
 
 /* === Internals === */
-constant UNITS_PER_CALL = 50
 constant ABILITY_ID = compiletime(ABIL_ID_GEN.next())
 
 constant eventTrigger = CreateTrigger()
@@ -64,7 +63,7 @@ init
 	end)
 
 	GroupEnumUnitsInRect(preplacedUnits, boundRect, null)
-	ForGroup(preplacedUnits, ()-> prepareUnit(GetEnumUnit()))
+	ForGroup(preplacedUnits, () -> prepareUnit(GetEnumUnit()))
 	preplacedUnits..clear()..destr()
 
 @compiletime function generateAbility()
