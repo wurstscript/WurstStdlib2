@@ -40,6 +40,7 @@ let preplacedUnits = CreateGroup()
 
 function prepareUnit(unit u)
 	u..addAbility(ABILITY_ID)..makeAbilityPermanent(ABILITY_ID, true)
+	eventTrigger.evaluate()
 
 init
 	// Make the ability invisible to the player
@@ -50,7 +51,6 @@ init
 	CreateTrigger()..registerEnterRegion(boundRegion, Filter(() -> begin
 		tempUnit = GetFilterUnit()
 		prepareUnit(tempUnit)
-		eventTrigger.evaluate()
 		tempUnit = null
 	end))
 
