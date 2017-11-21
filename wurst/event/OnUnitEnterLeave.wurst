@@ -60,7 +60,8 @@ init
 			tempUnit = null
 	end)
 
-	GroupEnumUnitsInRect(preplacedUnits, boundRect, null)
+	// Process preplaced units
+	preplacedUnits.enumUnitsInRect(boundRect)
 	ForGroup(preplacedUnits, () -> prepareUnit(GetEnumUnit()))
 	preplacedUnits..clear()..destr()
 
