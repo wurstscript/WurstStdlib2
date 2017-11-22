@@ -3,10 +3,11 @@ import NoWurst
 import _Handles
 import Table
 
-Table typecastdata
+constant Table typecastdata = new Table()
+	
 init
-	typecastdata = new Table()
 	typecastdata.saveString(0, "")
+
 
 public function stringToIndex(string s) returns int
 	let hash = s.getHash()
