@@ -2,6 +2,11 @@ package LinkedList
 import NoWurst
 import Wurstunit
 
+/** 
+Doubly-linked list implementation that implements all common list, stack and queue operations.
+Permits all elements (including null). 
+Use the Typecasting package if you require lists of warcraft handles.
+*/
 public class LinkedList<T>
 	private LLEntry<T> dummy = new LLEntry<T>(null, null, null)
 	private LLStaticIterator<T> staticItr = new LLStaticIterator<T>(this)
@@ -99,8 +104,12 @@ public class LinkedList<T>
 	/** gets the size of the list */
 	function getSize() returns int
 		return size
+
+	/** gets the size of the list (java-compat wrapper) */
+	function size() returns int
+		return size
 		
-	/** get an iterator for this list */
+	/** get the static iterator for this list */
 	function staticItr() returns LLStaticIterator<T>
 		staticItr.reset()
 		return staticItr
@@ -329,7 +338,7 @@ public interface LinkedListUpdater<T>
 
 // =====TESTS=====
 
-@test public function testAddRemove()
+@Test function testAddRemove()
 	let list = new LinkedList<int>()
 	assertTrue(list.getSize() == 0)
 	
@@ -343,7 +352,7 @@ public interface LinkedListUpdater<T>
 
 	assertTrue(list.getSize() == 0)
 
-@test public function testForEach()
+@Test function testForLoop()
 	let list = new LinkedList<int>()
 	
 	list..add(1)..add(2)..add(3)..add(4)
@@ -356,7 +365,7 @@ public interface LinkedListUpdater<T>
 
 	assertTrue(result == (5+4+3+2))
 
-@test public function testAddAll()
+@Test function testAddAll()
 	let list = new LinkedList<int>()
 	let list2 = new LinkedList<int>()
 	
@@ -364,9 +373,21 @@ public interface LinkedListUpdater<T>
 	list2..add(3)..add(4)
 	list.addAll(list2)
 
+	assertTrue(list.get(2) == 3)
+	assertTrue(list.get(3) == 4)
+
 	var result = 0
 	for i in list
 		result += i
+	assertTrue(result == (1+2+3+4))
 
-	assertTrue(list.get(2) == 3)
-	assertTrue(list.get(3) == 4)
+@Test function testClosures()
+	let list = new LinkedList<int>()
+	list..add(1)..add(2)..add(3)..add(4)
+	
+	list.updateAll((int i) -> i * 2)
+	assertTrue(list.get(3) == 4*2)
+
+	list.removeWhen((int i) -> i > 4)
+	assertTrue(list.size == 2)
+	

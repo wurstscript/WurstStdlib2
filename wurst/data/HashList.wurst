@@ -19,9 +19,13 @@ public class HashList<T>
 			add(elem)
 	
 	/** Remove all elements from this list without destroying it */
-	function removeAll()
+	function clear()
 		ht.flushChild(this castTo int)
 		size = 0
+
+	/** Remove all elements from this list without destroying it */
+	function removeAll()
+		clear()
 
 	/** Remove the element at the given index */
 	function removeAt(int index)
@@ -82,3 +86,13 @@ class HLIterator<Q>
 	function close()
 		destroy this
 
+
+@Test function testHashList()
+	let hlist = new HashList<int>()
+	hlist..add(1)..add(2)..add(3)..add(4)
+
+	assertTrue(hlist.get(2) == 3)
+
+	hlist.clear()
+
+	assertTrue(hlist.getSize() == 0)
