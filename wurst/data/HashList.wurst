@@ -13,7 +13,6 @@ public class HashList<T>
 	function set(int index, T elem)
 		ht.saveInt(this castTo int, index, elem castTo int)
 
-
 	/** Add all elements from elems to this list */
 	function addAll(HashList<T> elems)
 		for T elem in elems
@@ -28,27 +27,37 @@ public class HashList<T>
 	function removeAll()
 		clear()
 
-	/** Remov the element at the given index */
+	/** Remove the element at the given index */
 	function removeAt(int index)
 		for i = index to size
 			ht.saveInt(this castTo int, i, ht.loadInt(this castTo int, i+1))
 		size--
 		
-	/* Removes the first occurence of t from this list */
+	/** Remove the first occurence of t from this list */
 	function remove(T t)
 		for i = 0 to size-1
 			if t castTo int == ht.loadInt(this castTo int, i)
 				removeAt(i)
 				break
-	
+
 	/** Get the size of the list */
 	function getSize() returns int
 		return size
+
+	/** Return whether the list is empty */
+	function isEmpty() returns bool
+		return size == 0
 
 	/** Get the element at the given index from this list */
 	function get(int index) returns T
 		return ht.loadInt(this castTo int, index) castTo T
 
+	/** Return whether the element exists in the list */
+	function contains(T elem) returns bool
+		for listElem in this
+			if elem == listElem
+				return true
+		return false
 
 	/** Get an iterator for this list */
 	function iterator() returns HLIterator<T>
