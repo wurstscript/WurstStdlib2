@@ -1,12 +1,9 @@
-package StringUtilsTest
-import Wurstunit
+package StringUtilsTests
 import StringUtils
 import TypeCasting
 import LinkedList
 
 @Test function testSplit()
-    // works in game, doesn't work here, but I am leaving this here in case testing this is viable
-    /*
     var list = "this is a string".split(" ")
     list.get(0).assertEquals("this")
     list.get(1).assertEquals("is")
@@ -24,8 +21,6 @@ import LinkedList
     list = "thisisastring".split(" ")
     (list.getSize() == 0).assertTrue()
     destroy list
-    */
-    assertTrue(true)
 
 @Test function testJoin()
     let list = new LinkedList<string>()
@@ -34,10 +29,9 @@ import LinkedList
         ..add("a")
         ..add("string")
 
-    // works in game, doesn't work here, but I am leaving this here in case testing this is viable
-    // list.join().assertEquals("thisisastring")
-    // list.joinBy(" ").assertEquals("this is a string")
-    assertTrue(true)
+    list.join().assertEquals("thisisastring")
+    list.joinBy(" ").assertEquals("this is a string")
+
     destroy list
 
 @Test function testReduce()
