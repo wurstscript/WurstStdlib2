@@ -3,12 +3,13 @@ import MapBounds
 import OnUnitEnterLeave
 
 constant SWAP_TIMEOUT = 600.
-constant filter = Filter(() -> current.registerUnitEvent(GetFilterUnit(), EVENT_UNIT_DAMAGED))
 
 boolexpr array func
 integer funcNext = 0
 trigger current = null
 trigger toDestroy = null
+
+constant filter = Filter(() -> current.registerUnitEvent(GetFilterUnit(), EVENT_UNIT_DAMAGED))
 
 /** Add a Condition(Action) to the damage Event. */
 public function addOnDamageFunc(boolexpr cf)
