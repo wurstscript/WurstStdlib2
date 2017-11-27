@@ -1,0 +1,39 @@
+package StringUtilsTests
+import StringUtils
+import TypeCasting
+import LinkedList
+
+@Test function testSplit()
+    var list = "this is a string".split(" ")
+    list.get(0).assertEquals("this")
+    list.get(1).assertEquals("is")
+    list.get(2).assertEquals("a")
+    list.get(3).assertEquals("string")
+    destroy list
+
+    list = "this,is,a,string".split(",")
+    list.get(0).assertEquals("this")
+    list.get(1).assertEquals("is")
+    list.get(2).assertEquals("a")
+    list.get(3).assertEquals("string")
+    destroy list
+
+    list = "thisisastring".split(" ")
+    (list.getSize() == 0).assertTrue()
+    destroy list
+
+@Test function testJoin()
+    let list = new LinkedList<string>()
+        ..add("this")
+        ..add("is")
+        ..add("a")
+        ..add("string")
+
+    list.join().assertEquals("thisisastring")
+    list.joinBy(" ").assertEquals("this is a string")
+
+    destroy list
+
+@Test function testReduce()
+    "reee      duu   cee".reduce("e").reduce("u").reduce(" ").assertEquals("re du ce")
+    "redu          ce".reduce().assertEquals("redu ce")
