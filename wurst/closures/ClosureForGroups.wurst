@@ -1,15 +1,11 @@
 package ClosureForGroups
-
+import Integer
 public interface ForGroupCallback
 	function callback(unit u)
 		
-function filter() returns boolean
-	currentCallback().callback(GetFilterUnit())
-	return false
-		
 ForGroupCallback array tempCallbacks
-int tempCallbacksCount = 0
-constant filter = Condition(function filter)
+var tempCallbacksCount = 0
+constant filter = Filter(() -> currentCallback().callback(GetFilterUnit()))
 
 function pushCallback(ForGroupCallback c)
 	tempCallbacks[tempCallbacksCount] = c
@@ -62,6 +58,19 @@ public function forUnitsSelected(player p, ForGroupCallback c)
 	GroupEnumUnitsSelected(ENUM_GROUP, p, filter)
 	popCallback()
 
+public function forNearestUnit(vec2 pos, real range, filterfunc filter, ForGroupCallback c)
+	pushCallback(c)
+	GroupEnumUnitsInRange(ENUM_GROUP, pos.x, pos.y, range, filter)
+	unit nearest = null
+	var bestDist = REAL_MAX
+	for u from ENUM_GROUP
+		let distSq = pos.distanceToSq(u.getPos())
+		if distSq < bestDist
+			nearest = u
+			bestDist = distSq
+	c.callback(nearest)
+	popCallback()
+
 // Destructables
 
 public interface ForGroupCallbackD
@@ -88,5 +97,25 @@ function currentCallbackD() returns ForGroupCallbackD
 public function forDestructablesInRect(rect r, ForGroupCallbackD cb)
 	pushCallbackD(cb)
 	EnumDestructablesInRect(r, null, () -> filterD())
+	popCallbackD()
+
+
+destructable nearestD = null
+real nearestDDist = REAL_MAX
+vec2 gpos = ZERO2
+
+public function forNearestDestructable(vec2 pos, real range, ForGroupCallbackD c)
+	pushCallbackD(c)
+	gpos = pos
+	nearestDDist = REAL_MAX
+	nearestD = null
+	let r = Rect(pos.x - range, pos.y - range, pos.x + range, pos.y + range)
+	EnumDestructablesInRect(r, filterEnumDestructablesInCircleBJ, () -> begin
+		let dist = gpos.distanceToSq(GetFilterDestructable().getPos())
+		if dist < nearestDDist
+			nearestD = GetFilterDestructable()
+			nearestDDist = dist
+	end)
+	c.callback(nearestD)
 	popCallbackD()
 
