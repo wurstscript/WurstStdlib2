@@ -1,6 +1,7 @@
 package LinkedList
 import NoWurst
 import Wurstunit
+import TypeCasting
 
 /** 
 Doubly-linked list implementation that implements all common list, stack and queue operations.
@@ -174,6 +175,14 @@ public class LinkedList<T>
 	function shuffle()
 		for i = 0 to size
 			add(removeAt(GetRandomInt(0, size-1)))
+
+	/** Returns a list containing the results of running the given closure function
+		for each element in the original list */ 
+	function map<Q>(MapClosure<T, Q> itr) returns LinkedList<Q>
+		let output = new LinkedList<Q>()
+		this.forEach((T t) -> output.add(itr.run(t)))
+		return output
+
 	
 	/** Prints the content of the list */
 	function toString() returns string
@@ -336,6 +345,9 @@ public interface LLItrClosure<T>
 public interface LinkedListUpdater<T>
 	function update(T t) returns T
 
+public interface MapClosure<T, Q>
+	function run(T t) returns Q
+
 // =====TESTS=====
 
 @Test function testAddRemove()
@@ -390,4 +402,6 @@ public interface LinkedListUpdater<T>
 
 	list.removeWhen((int i) -> i > 4)
 	assertTrue(list.size == 2)
-	
+
+	let realList = list.map<real>((int i) -> i * 10.)
+	assertTrue(realList.get(1) == 40.)
