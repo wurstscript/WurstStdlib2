@@ -1,5 +1,5 @@
 package ClosureForGroups
-import Integer
+
 public interface ForGroupCallback
 	function callback(unit u)
 		
@@ -17,6 +17,14 @@ function popCallback()
 
 function currentCallback() returns ForGroupCallback
 	return tempCallbacks[tempCallbacksCount - 1]
+
+public function group.forEachFrom(ForGroupCallback cb)
+	for u from this
+		cb.callback(u)
+
+public function group.forEachIn(ForGroupCallback cb)
+	for u in this
+		cb.callback(u)
 		
 public function forUnitsOfType(string unitname, ForGroupCallback c)
 	pushCallback(c)
@@ -72,7 +80,6 @@ public function forNearestUnit(vec2 pos, real range, filterfunc filter, ForGroup
 	popCallback()
 
 // Destructables
-
 public interface ForGroupCallbackD
 	function callback(destructable d)
 	
