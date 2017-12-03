@@ -6,12 +6,20 @@ import LinkedList
 import Wurstunit
 
 constant typecastdata = new Table()
+/** How many decimals to preserve for reals */
+@configurable constant R2I_PRECISION = 1000.
 
 @compiletime function initTypecastData()
 	typecastdata.saveString(0, "")
 
 init
 	initTypecastData()
+
+public function realToIndex(real r) returns int
+	return (r * R2I_PRECISION).toInt()
+
+public function realFromIndex(int index) returns real
+	return (index / R2I_PRECISION)
 
 public function stringToIndex(string s) returns int
 	let hash = s.getHash()
