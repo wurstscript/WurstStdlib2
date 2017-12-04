@@ -1,5 +1,13 @@
 package Trigger
 import NoWurst
+import Player
+
+interface PlayerCallback
+	function run(player p)
+
+function forEachPlayer(PlayerCallback callback)
+	for i = 0 to 15
+		callback.run(players[i])
 
 public function trigger.addAction(code actionFunc)
 	TriggerAddAction(this, actionFunc)
@@ -58,14 +66,26 @@ public function trigger.registerLeaveRegion(region whichRegion, boolexpr filter)
 public function trigger.registerPlayerChatEvent(player whichPlayer, string chatMessageToDetect, boolean exactMatchOnly)
 	TriggerRegisterPlayerChatEvent(this, whichPlayer, chatMessageToDetect, exactMatchOnly)
 
+public function trigger.registerAnyPlayerChatEvent(string chatMessageToDetect, boolean exactMatchOnly)
+	forEachPlayer((player whichPlayer) -> this.registerPlayerChatEvent(whichPlayer, chatMessageToDetect, exactMatchOnly))
+
 public function trigger.registerPlayerEvent(player whichPlayer, playerevent whichPlayerEvent)
 	TriggerRegisterPlayerEvent(this, whichPlayer, whichPlayerEvent)
+
+public function trigger.registerAnyPlayerEvent(playerevent whichPlayerEvent)
+	forEachPlayer((player whichPlayer) -> this.registerPlayerEvent(whichPlayer, whichPlayerEvent))
 
 public function trigger.registerPlayerStateEvent(player whichPlayer, playerstate whichState, limitop opcode, real limitval)
 	TriggerRegisterPlayerStateEvent(this, whichPlayer, whichState, opcode, limitval)
 
+public function trigger.registerAnyPlayerStateEvent(playerstate whichState, limitop opcode, real limitval)
+	forEachPlayer((player whichPlayer) -> this.registerPlayerStateEvent(whichPlayer, whichState, opcode, limitval))
+
 public function trigger.registerPlayerUnitEvent(player whichPlayer, playerunitevent whichPlayerUnitEvent, boolexpr filter)
 	TriggerRegisterPlayerUnitEvent(this, whichPlayer, whichPlayerUnitEvent, filter)
+
+public function trigger.registerAnyPlayerUnitEvent(playerunitevent whichPlayerUnitEvent, boolexpr filter)
+	forEachPlayer((player whichPlayer) -> this.registerPlayerUnitEvent(whichPlayer, whichPlayerUnitEvent, filter))
 
 public function trigger.registerTimerEvent(real timeout, boolean periodic)
 	TriggerRegisterTimerEvent(this, timeout, periodic)
