@@ -14,6 +14,10 @@ import MapBounds
 /* 	Provides event API for units entering and leaving the map.
 	The event will also fire for preplaced units on the map. */
 
+constant eventTrigger = CreateTrigger()
+unit tempUnit = null
+let preplacedUnits = CreateGroup()
+
 /* @API */
 
 /** Returns the unit that caused the enter/leave event to happen */
@@ -30,10 +34,6 @@ public function onLeave(code c)
 
 /* === Internals === */
 constant ABILITY_ID = compiletime(ABIL_ID_GEN.next())
-
-constant eventTrigger = CreateTrigger()
-unit tempUnit = null
-let preplacedUnits = CreateGroup()
 
 function prepareUnit(unit u)
 	u..addAbility(ABILITY_ID)..makeAbilityPermanent(ABILITY_ID, true)
