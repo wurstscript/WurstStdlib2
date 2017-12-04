@@ -13,49 +13,49 @@ import Boolean
 /**
  * Asserts that two ints are equal. If they are not, an error is thrown with a message.
  *
- * int other - the expected value
+ * int expected - the expected value
  */
-public function int.assertEquals(int other)
-	if this != other
-		testFail("expected " + other.toString() + " but was " + this.toString())
+public function int.assertEquals(int expected)
+	if this != expected
+		testFail("Expected <" + expected.toString() + ">, Actual <" + this.toString() + ">")
 
 /**
  * Asserts that two strings are equal. If they are not, an error is thrown with a message.
  *
- * string other - the expected value
+ * string expected - the expected value
  */		
-public function string.assertEquals(string other)
-	if this != other
-		testFail("expected " + other + " but was " + this)
+public function string.assertEquals(string expected)
+	if this != expected
+		testFail("Expected <" + expected + ">, Actual <" + this + ">")
 
 /**
  * Asserts that two reals are equal. If they are not, an error is thrown with a message.
  *
- * real other - the expected value
+ * real expected - the expected value
  */		
-public function real.assertEquals(real other)
-	if this != other
-		testFail("expected " + other.toString() + " but was " + this.toString())
+public function real.assertEquals(real expected)
+	if this != expected
+		testFail("Expected <" + expected.toString() + ">, Actual <" + this.toString() + ">")
 
 /**
  * Asserts that two reals are equal to within a positive delta. If they are not, an error is thrown
  * with a message.
  *
- * real other - the expected value
+ * real expected - the expected value
  * real delta - the maximum delta between this value and the expected value
  */		
-public function real.assertEquals(real other, real delta)
-	if (this - other > delta) or (other - this > delta)
-		testFail("expected " + other.toString() + " but was " + this.toString() + " with delta " + delta.toString())
+public function real.assertEquals(real expected, real delta)
+	if (this - expected > delta) or (expected - this > delta)
+		testFail("Expected <" + expected.toString() + ">, Actual <" + this.toString() + " with delta " + delta.toString() + ">")
 
 /**
  * Asserts that two booleans are equal. If they are not, an error is thrown with a message.
  *
- * boolean other - the expected value
+ * boolean expected - the expected value
  */
-public function boolean.assertEquals(boolean other)
-	if this != other
-		testFail("expected " + other.toString() + " but was " + this.toString())
+public function boolean.assertEquals(boolean expected)
+	if this != expected
+		testFail("Expected <" + expected.toString() + ">, Actual <" + this.toString() + ">")
 
 /** Asserts that this booleans is true. If it is not, an error is thrown with a message. */
 public function boolean.assertTrue()
@@ -68,14 +68,14 @@ public function boolean.assertFalse()
 /** Asserts that this booleans is true. If it is not, an error is thrown. */
 public function assertTrue(boolean b)
 	if not b
-		testFail("assertion failed")
+		testFail("Assertion failed")
 
 /** Asserts that this booleans is true. If it is not, an error is thrown with the supplied message. */
 public function assertTrue(boolean b, string msg)
 	if not b
-		testFail("assertion failed: " + msg)
+		testFail("Assertion failed: " + msg)
 
 /** Asserts that the reference t is not null */		
 public function assertNotNull<T>(T t)
 	if t == null
-		testFail("assertion failed: Reference was null.")
+		testFail("Assertion failed: Reference was null.")
