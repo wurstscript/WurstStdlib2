@@ -48,11 +48,11 @@ init
 			eventTrigger.execute()
 			tempUnit = null
 	end)
-	for i = 0 to bj_MAX_PLAYER_SLOTS-1
-		players[i].setAbilityAvailable(ABILITY_ID, false)
 
 	GroupEnumUnitsInRect(ENUM_GROUP, boundRect, null)
 	nullTimer(() -> begin
+		for i = 0 to bj_MAX_PLAYER_SLOTS-1
+			players[i].setAbilityAvailable(ABILITY_ID, false)
 		for u from ENUM_GROUP
 			if u == null
 				break
