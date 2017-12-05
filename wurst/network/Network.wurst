@@ -1,0 +1,922 @@
+package Network
+
+import SyncSimple
+import Table
+import ErrorHandling
+import MoriUtil
+
+// max amount to be written/read/synced per an execution to avoid hitting the OP limit
+// this value can be higher if Wurst is compiled without stack traces and with all optimizations turned on
+// and even higher with safety checks off
+@configurable constant integer DATA_PER_EXECUTE = 256
+// max length of a GC key
+// you may fine-tune it as you see fit to see what works faster
+@configurable constant integer MAX_CHARACTERS_PER_KEY = 3
+// setting this to false will optimize out all safety checks...
+// only disable this if you are 100% sure your code works correctly
+@configurable constant boolean SAFETY_CHECKS_ENABLED = true
+
+//TODO: I just realized that we can eliminate some delay by sending metadata and the first round together
+// and avoid one round-trip, essentially reducing transmission time for small payloads up to two times
+
+/********************************************************************************
+	Network library v1.0 by MoriMori.
+
+	Based on TriggerHappy's Sync library.
+
+	Rationale:
+		This library can be used to send arbitrary amounts of integer, real, boolean
+		and string data from one player to the rest.
+
+		Like SyncSimple, it abuses the fact that all network actions in WC3 are
+		sequential, and are received by players in the same order that are sent in.
+
+		It uses the SyncStored* natives of the gamecache to send data to other players
+		from the sender, and then uses SyncSimple to send a 'finish' event, that will
+		only be received by other players after they have also received all sync data.
+
+		The Network class provides 4 independent streams of data:
+			integers,
+			reals,
+			booleans,
+			strings
+
+		each of which can be written/read to using the relevant 
+		methods of the DataStream class.
+
+		Before sending the data, the sender populates the DataStream with the data that
+		they want to send, then Network.start() is called, as well as Network.onFinish(callback)
+		and data is received from the same buffer inside the callback when it has all been received.
+
+		Read SyncSimple docs for a slightly more in-depth overview of this particular
+		peculiarity of WC3.
+
+	Usage:
+		1. Create a new Network object using:
+			// sender is the player to receive data from
+			let network = new Network(sender)
+
+		2. Queue some data for sending from the sender. You can write as much as you need, there is no limit:
+			if localPlayer == sender
+				// keep in mind that before you start sending data,
+				// network.getData() is locked in a WRITE-ONLY MODE
+				val stream = network.getData()
+				stream.writeInteger(...)
+				stream.writeReal(...)
+				stream.writeString(...)
+				...
+
+		3. To start sending the data, simply call:
+			network.start()			
+			// this will start the transmission
+			// keep in mind, that after you call this, you MUST NOT write/read to network.getData()
+			// as it is locked while the data is syncing
+		
+		4. To receive the data, specify the callback and read the data inside it:
+			network.onFinish((stream) -> begin
+				// here, network.getData() is locked in a READ-ONLY MODE and
+				// you can only READ from it
+				var int = stream.readInteger()
+				var real = stream.readReal()
+				var string = stream.readString()
+				...
+			end)
+
+			WARNING: Network is a one-time use class, and is automatically
+			destroyed upon finishing. If you need to send another transmission,
+			create a new one.
+			You are also expected to read all data immediately after receiving it,
+			as the DataStream is destroyed together with Network. 
+
+		5. When writing and reading, keep in mind that you MUST read data from
+		the stream in the same order that it was written, for each independent type.
+		That means that integers have to be written/read in the same order, same for
+		booleans, strings and reals.
+		If you need data of non-fixed length, use a static packet structure
+		with length fields, like so:
+			var field1 = stream.readInteger()
+			var field2 = stream.readInteger()
+			var length = stream.readInteger()
+			for i = 0 to length - 1
+				someArray[i] = stream.readInteger()
+
+		6. Alternatively, your classes can implement Serializable, like so:
+			class MyClass implements Serializable
+				integer field1 = ...
+				integer field2 = ...
+				integer field3 = ...
+				string field4 = ...
+
+				// optional stream-constructor
+				construct (DataStream stream)
+					deserialize(stream)
+
+				function serialize(DataStream stream)
+					stream.writeInteger(field1)
+					stream.writeInteger(field2)
+					stream.writeInteger(field3)
+					stream.writeString(field4)
+				
+				function deserialize(DataStream stream)
+					field1 = stream.readInteger()
+					field2 = stream.readInteger()
+					field3 = stream.readInteger()
+					field4 = stream.readString()
+
+		And then use it like so:
+			// writing
+			val myClass = ...
+			stream.write(myClass)
+			// reading (variant 1)
+			val myClass = ...
+			stream.read(myClass)
+			// reading (variant 2 with optional constructor)
+			val myClass = new MyClass(stream)
+
+	Implementation overview:
+		There are 3 core classes here:
+			DataStream
+			GamecacheStream
+			Network
+
+		DataStream is a hashtable-based container with stream semantics for writing
+		integers, reals, booleans, strings and serializables.
+		Because we want to keep gamecache keys below a certain size, we can't store
+		everything immediately in the gamecache without risking exhausting available keys.
+		We also need to know the size of data being sent prior to starting the transmission,
+		so we have to store all of it in an intermediate buffer, which is DataStream.
+		Prior to sending, all strings in the DataStream are 'exploded' into a stream
+		of integers, because SyncStoredString doesn't work.
+		After sending, they are 'compacted' back into strings and written to the DataStream.
+
+		GamecacheStream is a gamecache-based container with stream semantics for writing
+		integers, reals and booleans. There is a GamecacheStream for each primitive type,
+		integer, boolean, real and stringInts.
+
+		Network is the main class that coordinates DataStream and GamecacheStream and does
+		all the heavy lifting.
+
+		Before starting the transmission, the DataStream is locked into a non-writable, non-readable
+		mode to prevent anyone from trying to mess with it while the transmission is going.
+		Strings are also exploded into ints.
+		The maximum amount of data across all primitive stream is calculated, and the amount of 
+		required 'sync rounds' is calculated - that is, the amount of times we need to flush/sync
+		data out of the gamecaches to keep key sizes short.
+		We use a SimpleSynchronizer to know when all metadata has been sent and received.
+
+		Since only the local player has any knowledge about the amount of data needed to be sent,
+		and consequently, the amount of sync rounds required, we first send a pre-fetch "metadata"
+		payload with the amount of data in each stream and the amount of sync rounds, using fixed
+		keys.
+
+		When all players receive the metadata, we can start syncing each round. We flush the caches,
+		load up to gcKeysCount values into each GamecacheStream from the DataStream, and then sync it,
+		and use SimpleSynchronizer to know when all data is available for reading.
+
+		When a round is received, we write data to the DataStream, using the metadata to know when
+		to stop, and start another sync round if necessary. If it is not necessary,
+		we open the DataStream for reading and call the finish callback, and destroy the instance.
+********************************************************************************/
+
+// characters that can be sent over the network
+constant string STRING_ALPHABET = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~"
+// characters that can be used as GC keys
+// their amount also determines the size of a single 'round'
+constant string GC_KEYS  = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`{|}~"
+
+// precomputed set of GC keys
+string array gcKeys
+// count of GC keys
+integer gcKeysCount = 0
+// lookup table for alphabet
+Table alphabetLookup
+
+function precomputeKeys(string prefix, integer depth)
+	if depth == 0
+		for i = 0 to GC_KEYS.length() - 1
+			gcKeys[gcKeysCount] = prefix + GC_KEYS.charAt(i)
+			gcKeysCount++
+	else
+		for i = 0 to GC_KEYS.length() - 1
+			execute(() -> precomputeKeys(prefix + GC_KEYS.charAt(i), depth - 1))
+
+function precomputeKeys(integer length)
+	precomputeKeys("", length - 1)
+
+function precomputeLookup()
+	alphabetLookup = new Table()
+
+	for i = 0 to STRING_ALPHABET.length() - 1
+		let c = STRING_ALPHABET.charAt(i)
+
+		if (c.toUpperCase() == c and c.toLowerCase() != c) or c == "/"
+			alphabetLookup.saveInt(("00" + c).getHash(), i)
+		else
+			alphabetLookup.saveInt(c.getHash(), i)
+
+function testCollisions()
+	for i = 0 to STRING_ALPHABET.length() - 1
+		if getIndexFromChar(getCharFromIndex(i)) != i
+			print("CollisionTest failed for " + i.toString() + " " + getCharFromIndex(i))
+			print("getIndexFromChar() == " + getIndexFromChar(getCharFromIndex(i)).toString())
+			print("getCharFromIndex(getIndexFromChar)) == " + getCharFromIndex(getIndexFromChar(getCharFromIndex(i))))
+
+function getKey(integer i) returns string
+	if i >= gcKeysCount
+		error("Network: trying to get invalid GC key")
+	return gcKeys[i]
+
+function getCharFromIndex(integer i) returns string
+	if i > STRING_ALPHABET.length()
+		error("Network: trying to get invalid character from index '" + i.toString() + "'")
+	return STRING_ALPHABET.charAt(i)
+
+function getIndexFromChar(string c) returns integer
+	integer hash
+	if (c.toUpperCase() == c and c.toLowerCase() != c) or c == "/"
+		hash = ("00" + c).getHash()
+	else
+		hash = c.getHash()
+
+	if SAFETY_CHECKS_ENABLED and not alphabetLookup.hasInt(hash)
+		error("Network: trying to get index from invalid character '" + c + "'")
+
+	return alphabetLookup.loadInt(hash)
+
+init
+	for i = 1 to MAX_CHARACTERS_PER_KEY - 1
+		execute(() -> precomputeKeys(i))
+	execute(() -> precomputeLookup())
+	execute(() -> testCollisions())
+
+// simple box class to allow modifying a single value inside a closure
+class Box<T>
+	T value
+
+	construct(T value)
+		this.value = value
+
+class BoxBoolean
+	boolean value
+
+	construct(boolean value)
+		this.value = value
+
+class BoxString
+	string value
+
+	construct(string value)
+		this.value = value
+
+/**
+	Interface to be implemented by classes that wish to be directly
+	read/written to Network
+*/
+public interface Serializable
+	function serialize(DataStream stream)
+	function deserialize(DataStream stream)
+
+enum StreamType
+	INTEGER
+	REAL
+	BOOLEAN
+
+enum StreamMode
+	WRITING
+	READING
+	LOCKED
+
+/**
+	This class is used as an intermediate buffer to store data before it is synchronized.
+	That way, we can send data through gamecache using multiple bursts, while keeping the
+	gamecache key lengths short.
+**/
+public class DataStream
+	// max characters to store per compacting round
+	private static constant integer CHARS_PER_COMPACT = 512
+
+	private Table buffer = new Table()
+	// stores strings as int-sequences
+	private Table stringBuffer = new Table()
+
+	private StreamMode currentMode
+
+	private integer integerWriteIndex = -1
+	private integer realWriteIndex    = -1
+	private integer booleanWriteIndex = -1
+	private integer stringWriteIndex  = -1
+	private integer stringIntWriteIndex = -1
+
+	private integer integerReadIndex = -1
+	private integer realReadIndex    = -1
+	private integer booleanReadIndex = -1
+	private integer stringReadIndex  = -1
+	private integer stringIntReadIndex = -1
+
+	private integer compactIndex = -1
+	private integer explodeIndex = -1
+
+
+	construct()
+		currentMode = WRITING
+
+	ondestroy
+		destroy buffer
+
+	private function checkMode(StreamMode toCheck)
+		if currentMode != toCheck
+			if currentMode == StreamMode.WRITING
+				error("DataStream: trying to read from a stream that is currently writing")
+			else
+				error("DataStream: trying to write to a stream that is currently reading")
+
+	function writeInteger(integer value)
+		if SAFETY_CHECKS_ENABLED
+			checkMode(StreamMode.WRITING)
+		integerWriteIndex++
+		buffer.saveInt(integerWriteIndex, value)
+
+	function writeReal(real value)
+		if SAFETY_CHECKS_ENABLED
+			checkMode(StreamMode.WRITING)	
+		realWriteIndex++
+		buffer.saveReal(realWriteIndex, value)
+
+	function writeString(string value)
+		if SAFETY_CHECKS_ENABLED
+			checkMode(StreamMode.WRITING)
+		stringWriteIndex++
+		buffer.saveString(stringWriteIndex, value)
+
+	protected function writeStringInt(integer value)
+		if SAFETY_CHECKS_ENABLED
+			checkMode(StreamMode.WRITING)
+		stringIntWriteIndex++
+		stringBuffer.saveInt(stringIntWriteIndex, value)
+
+	// this function 'explodes' all stored strings into a sequence
+	// of ints stored in stringBuffer, so that we can send it as another
+	// integer stream without hassle
+	protected function explodeStrings()
+		execute(() -> begin
+			for i = 0 to stringWriteIndex
+				let value = buffer.loadString(i)
+
+				// prevent OP limit overrun by running this in separate thread
+				execute(() -> begin
+					explodeIndex++
+					stringBuffer.saveInt(explodeIndex, value.length())
+					// wrap loop counter in a box to allow modifying it from inside the closure
+					var j = new Box<integer>(0)
+					while j.value < value.length()
+						// split writes into sequences of no longer than CHARS_PER_COMPACT
+						execute(() -> begin
+							var count = 0
+							while j.value < value.length() and count < CHARS_PER_COMPACT
+								explodeIndex++
+								stringBuffer.saveInt(explodeIndex, getIndexFromChar(value.charAt(j.value)))
+								j.value++
+								count++
+						end)
+					destroy j
+				end)
+		end)
+
+	function writeBoolean(boolean value)
+		if SAFETY_CHECKS_ENABLED
+			checkMode(StreamMode.WRITING)
+		booleanWriteIndex++
+		buffer.saveBoolean(booleanWriteIndex, value)
+
+	function write(Serializable object)
+		if SAFETY_CHECKS_ENABLED
+			checkMode(StreamMode.WRITING)
+		object.serialize(this)
+
+	function readInteger() returns integer
+		if SAFETY_CHECKS_ENABLED
+			checkMode(StreamMode.READING)
+		integerReadIndex++
+		return buffer.loadInt(integerReadIndex)
+
+	function readReal() returns real
+		if SAFETY_CHECKS_ENABLED
+			checkMode(StreamMode.READING)
+		realReadIndex++	
+		return buffer.loadReal(realReadIndex)
+
+	function readString() returns string
+		if SAFETY_CHECKS_ENABLED
+			checkMode(StreamMode.READING)
+		stringReadIndex++	
+		return buffer.loadString(stringReadIndex)
+
+	protected function readStringInt() returns integer
+		if SAFETY_CHECKS_ENABLED
+			checkMode(StreamMode.READING)
+		stringIntReadIndex++
+		return stringBuffer.loadInt(stringIntReadIndex)
+
+	// this function 'compacts' the 'exploded' int stream in stringBuffer
+	// back into actual strings stored in the main buffer
+	protected function compactStrings()
+		execute(() -> begin
+			while true
+				compactIndex++
+				let length = stringBuffer.loadInt(compactIndex)
+
+				if length > 0
+					execute(() -> begin
+						var temp = new BoxString("")
+						var i = new Box<integer>(0)
+						while i.value < length
+							execute(() -> begin
+								var count = 0
+								while i.value < length and count < CHARS_PER_COMPACT
+									compactIndex++
+									temp.value += getCharFromIndex(stringBuffer.loadInt(compactIndex))
+									count++
+									i.value++
+							end)
+						
+						writeString(temp.value)
+						destroy temp
+						destroy i
+					end)
+				else
+					break
+		end)
+
+	function readBoolean() returns boolean
+		if SAFETY_CHECKS_ENABLED
+			checkMode(StreamMode.READING)
+		booleanReadIndex++
+		return buffer.loadBoolean(booleanReadIndex)
+
+	function read(Serializable object)
+		if SAFETY_CHECKS_ENABLED
+			checkMode(StreamMode.READING)
+		object.deserialize(this)
+
+	protected function setMode(StreamMode newMode)
+		currentMode = newMode
+
+	protected function resetRead()
+		integerReadIndex = -1
+		realReadIndex = -1
+		booleanWriteIndex = -1
+		stringReadIndex = -1
+
+	function getIntegerCount() returns integer
+		return integerWriteIndex + 1
+
+	function getRealCount() returns integer
+		return realWriteIndex + 1
+		
+	function getBooleanCount() returns integer
+		return booleanWriteIndex + 1
+		
+	function getStringIntCount() returns integer
+		return compactIndex + 1
+
+interface SynchronizerFunction
+	function sync(string key)
+
+/**
+	This class is used as a buffer for sending data in each round.
+	Each instance is restricted to only writing one type, to save
+	us from keeping a crapton of counter variables at least here.
+**/
+class GamecacheStream
+	private gamecache gc
+	private string parentKey
+	private integer writeIndex = -1
+	private integer readIndex  = -1
+	private StreamType streamType
+	private StreamMode currentMode
+
+	construct(gamecache gc, string parentKey, StreamType streamType)
+		this.gc = gc
+		this.parentKey = parentKey
+		this.streamType = streamType
+
+	// returns the amount of writes available for this stream
+	function getRemainingWrite() returns integer
+		return gcKeysCount - writeIndex - 1
+
+	// returns the amount of reads available for this stream
+	function getRemainingRead() returns integer
+		return gcKeysCount - readIndex - 1
+
+	function getSize() returns integer
+		return writeIndex + 1
+
+	// these functions will inline with uncheckedDispatch on
+	private function checkType(StreamType toCheck)
+		if SAFETY_CHECKS_ENABLED and streamType != toCheck
+			error("GamecacheStream: invalid stream usage - mismatched type")
+
+	private function advanceWriteIndex()
+		if SAFETY_CHECKS_ENABLED and writeIndex + 1 >= gcKeysCount
+			error("GamecacheStream: trying to write out of available keys bounds")
+		writeIndex++
+	
+	private function advanceReadIndex()
+		if SAFETY_CHECKS_ENABLED and readIndex + 1 >= gcKeysCount
+			error("GamecacheStream: trying to read out of available keys bounds")
+		readIndex++
+
+	function writeInteger(integer value)
+		advanceWriteIndex()
+		checkType(StreamType.INTEGER)
+		gc.saveInteger(parentKey, getKey(writeIndex), value)
+
+	function writeReal(real value)
+		advanceWriteIndex()
+		checkType(StreamType.REAL)
+		gc.saveReal(parentKey, getKey(writeIndex), value)
+
+	function writeBoolean(boolean value)
+		advanceWriteIndex()
+		checkType(StreamType.BOOLEAN)
+		gc.saveBoolean(parentKey, getKey(writeIndex), value)
+
+	function readInteger() returns integer
+		advanceReadIndex()
+		checkType(StreamType.INTEGER)
+		if not gc.hasInteger(parentKey, getKey(readIndex))
+			error("GamecacheStream: trying to read non-present integer #" + readIndex.toString())
+		return gc.loadInteger(parentKey, getKey(readIndex))
+
+	function readReal() returns real
+		advanceReadIndex()
+		checkType(StreamType.REAL)
+		if not gc.hasReal(parentKey, getKey(readIndex))
+			error("GamecacheStream: trying to read non-present real #" + readIndex.toString())
+		return gc.loadReal(parentKey, getKey(readIndex))
+		
+	function readBoolean() returns boolean
+		advanceReadIndex()
+		checkType(StreamType.BOOLEAN)
+		if not gc.hasBoolean(parentKey, getKey(readIndex))
+			error("GamecacheStream: trying to read non-present boolean #" + readIndex.toString())
+		return gc.loadBoolean(parentKey, getKey(readIndex))
+
+	function getSynchronizerFunction() returns SynchronizerFunction
+		SynchronizerFunction synchronizer = null
+
+		switch streamType
+			case StreamType.INTEGER
+				synchronizer = (string key) -> begin
+					gc.syncInteger(parentKey, key)
+				end
+			case StreamType.REAL
+				synchronizer = (string key) -> begin
+					gc.syncReal(parentKey, key)
+				end
+			case StreamType.BOOLEAN
+				synchronizer = (string key) -> begin
+					gc.syncBoolean(parentKey, key)
+				end
+
+		return synchronizer
+
+	function sync()
+		let synchronizer = getSynchronizerFunction()
+		// box the counter so that we can modify it inside the closure
+		let counter = new Box<integer>(0)
+
+		while counter.value <= writeIndex
+			execute(() -> begin
+				var i = 0
+				// keep syncing until we hit the limit or finish
+				while counter.value <= writeIndex and i < DATA_PER_EXECUTE
+					synchronizer.sync(getKey(counter.value))
+					counter.value++
+					i++
+			end)
+
+		destroy counter
+
+	protected function reset()
+		writeIndex = 0
+		readIndex = 0
+
+enum NetworkState
+	PREPARING
+	SENDING_META
+	SENDING_ROUND
+	FINISHED
+
+interface NetworkFinishedCallback
+	function onFinish(DataStream stream)
+
+public class Network
+	// gamecache used for syncing integers, reals and booleans
+	private static gamecache dataCache   = InitGameCache("i.w3v")
+	// gamecache used for syncing strings (as integer sequences)
+	private static gamecache stringCache = InitGameCache("s.w3v")
+	// gamecache used for syncing metadata about the transmission
+	private static gamecache metaCache   = InitGameCache("m.w3v")
+
+	// keys used for metadata about the transmission
+	private static constant string META_INTEGER_KEY     = getKey(0)
+	private static constant string META_REAL_KEY        = getKey(1)
+	private static constant string META_BOOLEAN_KEY     = getKey(2)
+	private static constant string META_STRING_KEY      = getKey(3)
+	private static constant string META_SYNC_ROUNDS_KEY = getKey(4)
+	// total amount of metadata keys
+	private static constant integer META_COUNT          = 5
+
+	private NetworkState currentState
+
+	// mission key to be used for this instance in all game caches
+	private string mkey = getKey(this castTo int)
+
+	// data stream to store data before syncing and to read after syncing
+	private DataStream dataStream = new DataStream()
+
+	// gamecache streams to sync data in rounds
+	private GamecacheStream gcIntegerStream
+	private GamecacheStream gcRealStream   
+	private GamecacheStream gcBooleanStream
+	private GamecacheStream gcStringStream 
+
+	// the player that we are receiving data from
+	private player sender
+
+	// metadata about the transmission
+	private integer integerCount = 0
+	private integer realCount    = 0
+	private integer booleanCount = 0
+	private integer stringIntCount  = 0
+	private integer syncRounds   = 0
+
+	// these double as write counters for the sender and read counters for the receivers
+	private integer currentInteger = 0
+	private integer currentReal    = 0
+	private integer currentBoolean = 0
+	private integer currentStringInt  = 0
+	private integer currentRound   = 0
+
+	// finish callback
+	private NetworkFinishedCallback finishCallback
+
+	construct(player sender)
+		this.currentState = NetworkState.PREPARING
+		this.sender = sender
+		this.gcIntegerStream = new GamecacheStream(dataCache, mkey, StreamType.INTEGER)
+		this.gcRealStream    = new GamecacheStream(dataCache, mkey, StreamType.REAL)
+		this.gcBooleanStream = new GamecacheStream(dataCache, mkey, StreamType.BOOLEAN)
+		this.gcStringStream  = new GamecacheStream(stringCache, mkey, StreamType.INTEGER)
+
+	ondestroy
+		destroy gcIntegerStream
+		destroy gcRealStream
+		destroy gcBooleanStream
+		destroy gcStringStream
+		destroy dataStream
+
+	function getData() returns DataStream
+		return dataStream
+
+	// sends info about the amount of data to be expected to each player
+	private function sendMetadata()
+		// we should only send the metadata once
+		if SAFETY_CHECKS_ENABLED and currentState != NetworkState.PREPARING
+			error("Network: trying to send duplicate metadata")
+
+		currentState = NetworkState.SENDING_META
+		let synchronizer = new SimpleSynchronizer
+
+		// explode the strings in the data buffer into an int stream
+		dataStream.explodeStrings()
+
+		// lock the data stream so that no players can read or write to it while
+		// the transmission hasn't finished
+		dataStream.setMode(StreamMode.LOCKED)
+
+		// get the amount of individual entities to be synced for each type
+		let integerCount    = dataStream.getIntegerCount()
+		let realCount       = dataStream.getRealCount()
+		let booleanCount    = dataStream.getBooleanCount()
+		let stringIntCount  = dataStream.getStringIntCount()
+
+		metaCache.flushMission(mkey)
+
+		// save the counts
+		if localPlayer == sender
+			metaCache.saveInteger(mkey, META_INTEGER_KEY, integerCount)
+			metaCache.saveInteger(mkey, META_REAL_KEY, realCount)
+			metaCache.saveInteger(mkey, META_BOOLEAN_KEY, booleanCount)
+			metaCache.saveInteger(mkey, META_STRING_KEY, stringIntCount)
+		
+		// calculate max length in each entity stream
+		let maxLength = max(max(integerCount, realCount), max(booleanCount, stringIntCount))
+
+		// calculate the amount of required sync rounds
+		// we can only send up to gcKeysCount in each sync round, 
+		// so we need to do it multiple times if there's more data than that
+		let syncRounds = maxLength div gcKeysCount + 1
+
+		// save the amount of sync rounds required so that other players know how many times they need to read
+		if localPlayer == sender
+			metaCache.saveInteger(mkey, META_SYNC_ROUNDS_KEY, syncRounds)
+	
+		// start syncing the data
+		if localPlayer == sender
+			for i = 0 to META_COUNT - 1
+				metaCache.syncInteger(mkey, getKey(i))
+
+		// send sync event
+		synchronizer.sync()
+		synchronizer.onSynced(() -> receiveMetadata())
+
+	// receives info about the transmission after it has been sent by the originating player
+	private function receiveMetadata()
+		// check that we are transitioning from the correct state
+		if SAFETY_CHECKS_ENABLED and  currentState != NetworkState.SENDING_META
+			error("Network: trying to receive metadata at a wrong time")
+		
+		// check that we have received all metadata just in case (should never error, though)
+		if SAFETY_CHECKS_ENABLED
+			for i = 0 to META_COUNT - 1
+				if not metaCache.hasInteger(mkey, getKey(i))
+					error("Network: missing metadata, key " + i.toString())
+
+		// save the metadata
+		integerCount = metaCache.loadInteger(mkey, META_INTEGER_KEY)
+		realCount    = metaCache.loadInteger(mkey, META_REAL_KEY)
+		booleanCount = metaCache.loadInteger(mkey, META_BOOLEAN_KEY)
+		stringIntCount  = metaCache.loadInteger(mkey, META_STRING_KEY)
+		syncRounds   = metaCache.loadInteger(mkey, META_SYNC_ROUNDS_KEY)
+
+		currentState = NetworkState.SENDING_ROUND
+
+		sendRound()
+
+	// rudimentary read/write functions for primitives
+	// WARNING: LOTS OF BOILERPLATE BELOW
+	// sorry, but this is needed to avoid hitting the OP limit without too much of a performance hit
+
+	private function writeIntegers()
+		while currentInteger < integerCount and gcIntegerStream.getRemainingWrite() > 0
+			execute(() -> begin
+				var i = 0
+				while currentInteger < integerCount and gcIntegerStream.getRemainingWrite() > 0 and i < DATA_PER_EXECUTE
+					gcIntegerStream.writeInteger(dataStream.readInteger())
+					currentInteger++
+					i++
+			end)
+
+	private function readIntegers()
+		while currentInteger < integerCount and gcIntegerStream.getRemainingRead() > 0
+			execute(() -> begin
+				var i = 0
+				while currentInteger < integerCount and gcIntegerStream.getRemainingRead() > 0 and i < DATA_PER_EXECUTE
+					dataStream.writeInteger(gcIntegerStream.readInteger())
+					currentInteger++
+					i++
+			end)
+
+	private function writeReals()
+		while currentReal < realCount and gcRealStream.getRemainingWrite() > 0
+			execute(() -> begin
+				var i = 0
+				while currentReal < realCount and gcRealStream.getRemainingWrite() > 0 and i < DATA_PER_EXECUTE
+					gcRealStream.writeReal(dataStream.readReal())
+					currentReal++
+					i++
+			end)
+
+	private function readReals()
+		while currentReal < realCount and gcRealStream.getRemainingRead() > 0	
+			execute(() -> begin
+				var i = 0
+				while currentReal < realCount and gcRealStream.getRemainingRead() > 0 and i < DATA_PER_EXECUTE
+					dataStream.writeReal(gcRealStream.readReal())
+					currentReal++
+					i++
+			end)
+
+	private function writeBooleans()
+		while currentBoolean < booleanCount and gcBooleanStream.getRemainingWrite() > 0
+			execute(() -> begin
+				var i = 0
+				while currentBoolean < booleanCount and gcBooleanStream.getRemainingWrite() > 0 and i < DATA_PER_EXECUTE
+					gcBooleanStream.writeBoolean(dataStream.readBoolean())
+					currentBoolean++
+					i++
+			end)
+
+	private function readBooleans()
+		while currentBoolean < booleanCount and gcBooleanStream.getRemainingRead() > 0
+			execute(() -> begin
+				var i = 0
+				while currentBoolean < booleanCount and gcBooleanStream.getRemainingRead() > 0 and i < DATA_PER_EXECUTE
+					dataStream.writeBoolean(gcBooleanStream.readBoolean())
+					currentBoolean++
+					i++
+			end)
+
+	private function writeStrings()
+		while currentStringInt < stringIntCount and gcStringStream.getRemainingWrite() > 0
+			execute(() -> begin
+				var i = 0
+				while currentStringInt < stringIntCount and gcStringStream.getRemainingWrite() > 0 and i < DATA_PER_EXECUTE
+					gcStringStream.writeInteger(dataStream.readStringInt())
+					currentStringInt++
+					i++
+			end)
+
+	private function readStrings()
+		while currentStringInt < stringIntCount and gcStringStream.getRemainingRead() > 0
+			execute(() -> begin
+				var i = 0
+				while currentStringInt < stringIntCount and gcStringStream.getRemainingRead() > 0 and i < DATA_PER_EXECUTE
+					dataStream.writeStringInt(gcStringStream.readInteger())
+					currentStringInt++
+					i++
+			end)
+
+	private function sendRound()
+		if SAFETY_CHECKS_ENABLED and currentState != NetworkState.SENDING_ROUND
+			error("Network: trying to send round at the wrong time")
+
+		let synchronizer = new SimpleSynchronizer()
+
+		// prepare the gamecaches for a new transmission
+		gcIntegerStream.reset()
+		gcRealStream.reset()
+		gcBooleanStream.reset()
+		gcStringStream.reset()
+
+		// make sure there is nothing left-over in the gamecaches
+		dataCache.flushMission(mkey)
+		stringCache.flushMission(mkey)
+
+		if localPlayer == sender
+			// unlock the data stream for reading
+			dataStream.setMode(StreamMode.READING)
+		
+			// write as much queued data as we can
+			// each in an execute() block because these are very expensive operations
+			execute(() -> writeIntegers())
+			execute(() -> writeBooleans())
+			execute(() -> writeReals())
+			execute(() -> writeStrings())
+
+			// lock the data stream again
+			dataStream.setMode(StreamMode.LOCKED)
+
+			// send all data
+			gcIntegerStream.sync()
+			gcBooleanStream.sync()
+			gcRealStream.sync()
+			gcStringStream.sync()
+		
+		// sync to receive data
+		synchronizer.sync()
+		synchronizer.onSynced(() -> receiveRound())
+
+	private function receiveRound()
+		if SAFETY_CHECKS_ENABLED and currentState != NetworkState.SENDING_ROUND
+			error("Network: trying to receive round at the wrong time")
+
+		// receive for all non-senders, since sender already has the data
+		if localPlayer != sender
+			// unlock the data stream for writing
+			dataStream.setMode(StreamMode.WRITING)
+
+			// use execute to avoid hitting the op limit
+			execute(() -> readIntegers())
+			execute(() -> readReals())
+			execute(() -> readBooleans())
+			execute(() -> readStrings())
+
+			// lock the stream again
+			dataStream.setMode(StreamMode.LOCKED)
+
+		// advance to next round and send it if necessary
+		currentRound++
+		
+		if currentRound < syncRounds
+			execute(() -> sendRound())
+		else
+			// if this is the last round, finalize and call the callback
+			if localPlayer != sender
+				dataStream.compactStrings()
+			dataStream.setMode(StreamMode.READING)
+			dataStream.resetRead()
+			currentState = NetworkState.FINISHED
+			finishCallback.onFinish(dataStream)
+			// destroy this instance
+			destroy this
+
+	// this is the function to start sending all data in the intermediate dataStream buffer
+	function start()
+		sendMetadata()
+
+	// this is the function to specify a callback to be called when the transmission has finished
+	function onFinish(NetworkFinishedCallback callback)
+		finishCallback = callback

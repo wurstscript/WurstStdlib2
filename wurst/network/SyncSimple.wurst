@@ -1,0 +1,170 @@
+package SyncSimple
+
+import MapBounds
+import UnitIndexer
+import ErrorHandling
+import BitSet
+import LinkedListModule
+
+/********************************************************************************
+	SyncSimple library v1.0 by MoriMori.
+
+	Based on TriggerHappy's SyncInteger library.
+
+	Rationale:
+		This library can be used to 'synchronize' players after some async network
+		action has been performed by one or more players.
+
+		It abuses the fact that all network events in WC3 are fired sequentially,
+		meaning that they arrrive for other players in the order that they were
+		sent in.
+		It also abuses the fact that the EVENT_PLAYER_UNIT_SELECTED fires
+		synchronously for all players at the same time, allowing us to know for
+		certain when other players have acknowledged our unit selection, as well
+		as all network events that have been fired before it.
+		This is due to the fact that the WC3 game protocol is built on top of TCP,
+		which is a sequential stream protocol - meaning that sent data is always
+		received in the same order that it was sent, allowing us to do what we do.
+
+		By calling the .sync() method, we queue a network action (specifically,
+		a unit selection event) that will only be delivered after all previously 
+		queued network actions have also been delivered.
+		The primary use of this library is in conjunction with gamecache's Sync
+		natives, because they also fire sequential network events. When we call
+		.sync() after a series of Sync natives, we ensure that the .onSynced()
+		callback will only be called after all players have received the data.
+
+		This way, we can send local data from one player to the rest, such as
+		camera position, data from files, and so on.
+
+		There may be other usages related to async network events as well.
+
+	Usage:
+		1. Create a new SimpleSynchronizer using:
+			let synchronizer = new SimpleSynchronizer()
+
+		2. Send some network events on one (or more) player using the Sync natives (or something else)
+			if sender == localPlayer
+				// value1 and value2 are some local values only known to localPlayer
+				SyncInteger(gc, mkey, vkey1, value1)
+				SyncInteger(gc, mkey, vkey1, value1)
+		
+		3. Call .sync() on all players after calling the Sync natives
+			synchronizer.sync()
+
+		4. Set a callback to be called after all players have synchronized and read the data (or do something else)
+			synchronizer.onSynced(() -> begin
+				let value1 = LoadInteger(gc, mkey, vkey1)
+				let value2 = LoadInteger(gc, mkey, vkey2)
+
+				// here, value1 and value2 are integers received from sender
+				...
+			end)
+
+		5. A SimpleSynchronizer can only be used once, and gets destroyed automatically after all players have synced.
+		To synchronize again, create a new SimpleSynchronizer
+			
+********************************************************************************/
+
+// briefly selects the specified unit by the player
+function player.onceSelect(unit what)
+	let temp = CreateGroup()
+
+	temp.enumUnitsSelected(this, null)
+	unit last = null
+	var count = 0
+	for selected in temp
+		count++
+		last = selected
+
+	if count >= 12
+		this.unselect(last)
+
+	if localPlayer == this
+		this.select(what)
+		this.unselect(what)
+
+	if count >= 12
+		this.select(last)
+
+	temp.destr()
+	
+public interface SynchronizationCallback
+	function onSynchronized()
+
+public class SimpleSynchronizer
+	use LinkedListModule
+
+	private static constant player  DUMMY_PLAYER = players[PLAYER_NEUTRAL_PASSIVE]
+	private static constant integer DUMMY_ID     = 'hfoo'
+	private static constant integer DUMMY_GHOST  = 'Aeth'
+	private static thistype array reverseLookup
+
+	private unit dummy
+	private bitset syncedPlayers = emptyBitset()
+	private static bitset allPlayers = bitset(4095)
+	private SynchronizationCallback callback = null
+
+	construct()
+		dummy = CreateUnit(DUMMY_PLAYER, DUMMY_ID, 0, 0, 0)
+		dummy.addAbility(DUMMY_GHOST)
+		dummy.pause()
+		dummy.setScale(0)
+		reverseLookup[dummy.getIndex()] = this
+
+	ondestroy
+		reverseLookup[dummy.getIndex()] = null
+		dummy.remove()
+
+	// signals that the local player is ready to continue
+	function sync()
+		addOfflinePlayers()
+		localPlayer.onceSelect(dummy)
+
+	// calls the callback when all players have called sync()
+	function onSynced(SynchronizationCallback callback)
+		this.callback = callback
+
+	private function addOfflinePlayers()
+		for i = 0 to 11
+			if not players[i].isIngame()
+				syncedPlayers = syncedPlayers.add(i)
+
+	private function areAllPlayersSynced() returns boolean
+		return syncedPlayers == allPlayers
+
+	private function onPlayerFinishedSync(player who)
+		syncedPlayers = syncedPlayers.add(who.getId())
+
+		if areAllPlayersSynced()
+			callback.onSynchronized()
+
+			destroy this
+
+	private function onPlayerLeave(player who)
+		onPlayerFinishedSync(who)
+
+	private static function getSynchronizer(unit what) returns thistype
+		return reverseLookup[what.getIndex()]
+
+	protected static function onInit()
+		CreateTrigger()
+		..registerAnyUnitEvent(EVENT_PLAYER_UNIT_SELECTED)
+		..addAction(() -> begin
+			let synchronizer = getSynchronizer(GetTriggerUnit())
+
+			if synchronizer != null
+				synchronizer.onPlayerFinishedSync(GetTriggerPlayer())
+		end)
+
+		CreateTrigger()
+		..registerAnyPlayerEvent(EVENT_PLAYER_LEAVE)
+		..addAction(() -> begin
+			let who = GetTriggerPlayer()
+
+			for synchronizer in SimpleSynchronizer
+				synchronizer.onPlayerLeave(who)
+		end)
+		
+init
+	SimpleSynchronizer.onInit()

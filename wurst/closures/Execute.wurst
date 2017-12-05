@@ -1,0 +1,32 @@
+package Execute
+
+public interface ForForceCallback
+	function callback()
+
+force dummy = CreateForce()
+
+init
+	ForceAddPlayer(dummy, GetLocalPlayer())
+
+function callback() returns boolean
+	currentCallback().callback()
+	return false
+	
+ForForceCallback array tempCallbacks
+int tempCallbacksCount = 0
+
+function pushCallback(ForForceCallback c)
+	tempCallbacks[tempCallbacksCount] = c
+	tempCallbacksCount++
+	
+function popCallback()
+	tempCallbacksCount--
+	destroy tempCallbacks[tempCallbacksCount]
+
+function currentCallback() returns ForForceCallback
+	return tempCallbacks[tempCallbacksCount - 1]
+
+public function execute(ForForceCallback c)
+	pushCallback(c)
+	ForForce(dummy, function callback)
+	popCallback()
