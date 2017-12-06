@@ -2,16 +2,22 @@ package TypeCasting
 import NoWurst
 import _Handles
 import Table
-import LinkedList
-import Wurstunit
 
 constant typecastdata = new Table()
+/** How many decimals to preserve for reals */
+@configurable constant R2I_PRECISION = 1000.
 
 @compiletime function initTypecastData()
 	typecastdata.saveString(0, "")
 
 init
 	initTypecastData()
+
+public function realToIndex(real r) returns int
+	return (r * R2I_PRECISION).toInt()
+
+public function realFromIndex(int index) returns real
+	return (index / R2I_PRECISION)
 
 public function stringToIndex(string s) returns int
 	let hash = s.getHash()
@@ -205,8 +211,3 @@ public function booleanToIndex(boolean u) returns int
 public function booleanFromIndex(int index) returns boolean
 	return index > 0
 
-
-@Test function testGenerics()
-	let list = new LinkedList<string>()
-	list..add("a")..add("b")..add("c")
-	assertTrue(list.get(1) == "b")

@@ -15,7 +15,8 @@ import Basics
  *														*
 														*/
 boolean autoFinish = true
-
+group dumg
+unit dum
 /** use this function to preload an ability at runtime
 	returns true if the ability exists and was therefore preloaded. */
 public function preloadAbility(int abilid) returns boolean
@@ -34,9 +35,6 @@ public function preloadUnit(int unitId) returns boolean
 	let u = createUnit(DUMMY_PLAYER, unitId, vec2(0,0), angle(0))
 	dumg.addUnit(u)
 	return u.isAlive()
-
-group dumg
-unit dum
 
 public function finishPreload()
 	dum.remove()
