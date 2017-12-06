@@ -31,6 +31,10 @@ public function group.destr()
 public function group.contains(unit u) returns boolean
 	return IsUnitInGroup(u, this)
 
+public function group.size() returns int
+	return CountUnitsInGroup(this)
+	SyncStoredInteger(cache, missionKey, key)
+
 // group iterator
 public function group.iterator() returns group
 	bj_groupAddGroupDest = CreateGroup()
