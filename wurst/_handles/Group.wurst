@@ -31,8 +31,13 @@ public function group.destr()
 public function group.contains(unit u) returns boolean
 	return IsUnitInGroup(u, this)
 
+var unitCounter = 0
 public function group.size() returns int
-	return CountUnitsInGroup(this)
+	unitCounter = 0
+	ForGroup(this, () -> begin
+		unitCounter++
+	end)
+	return unitCounter
 
 // group iterator
 public function group.iterator() returns group
