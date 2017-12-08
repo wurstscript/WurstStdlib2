@@ -33,7 +33,7 @@ public function onLeave(code c)
 	eventTrigger.addAction(c)
 
 /* === Internals === */
-constant ABILITY_ID = compiletime(ABIL_ID_GEN.next())
+constant ABILITY_ID = ABIL_ID_GEN.next()
 
 function prepareUnit(unit u)
 	u..addAbility(ABILITY_ID)..makeAbilityPermanent(ABILITY_ID, true)
