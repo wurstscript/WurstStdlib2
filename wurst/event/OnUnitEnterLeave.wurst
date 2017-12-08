@@ -49,9 +49,7 @@ init
 		players[i].setAbilityAvailable(ABILITY_ID, false)
 
 	// Create the enter event
-	CreateTrigger()..registerEnterRegion(boundRegion, Filter(() -> begin
-		prepareUnit(GetFilterUnit())
-	end))
+	CreateTrigger()..registerEnterRegion(boundRegion, Filter(() -> prepareUnit(GetFilterUnit())))
 
 	// Create the leave event
 	registerPlayerUnitEvent(EVENT_PLAYER_UNIT_ISSUED_ORDER, () -> begin
