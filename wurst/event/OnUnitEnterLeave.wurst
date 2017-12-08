@@ -11,18 +11,20 @@ import RegisterEvents
 import ObjectIdGenerator
 import MapBounds
 
+import ClosureTimers
+
 /* 	Provides event API for units entering and leaving the map.
 	The event will also fire for preplaced units on the map. */
 
-constant eventTrigger = CreateTrigger()
-unit tempUnit = null
+let eventTrigger = CreateTrigger()
 let preplacedUnits = CreateGroup()
+unit eventUnit = null
 
 /* @API */
 
 /** Returns the unit that caused the enter/leave event to happen */
 public function getEnterLeaveUnit() returns unit
-	return tempUnit
+	return eventUnit
 
 /** Adds a callback that is run when a unit enters the map */
 public function onEnter(code c)
@@ -33,11 +35,13 @@ public function onLeave(code c)
 	eventTrigger.addAction(c)
 
 /* === Internals === */
-constant ABILITY_ID = ABIL_ID_GEN.next()
+constant ABILITY_ID = compiletime(ABIL_ID_GEN.next())
 
 function prepareUnit(unit u)
+	eventUnit = u
 	u..addAbility(ABILITY_ID)..makeAbilityPermanent(ABILITY_ID, true)
 	eventTrigger.evaluate()
+	eventUnit = null
 
 init
 	// Make the ability invisible to the player
@@ -46,24 +50,24 @@ init
 
 	// Create the enter event
 	CreateTrigger()..registerEnterRegion(boundRegion, Filter(() -> begin
-		tempUnit = GetFilterUnit()
-		prepareUnit(tempUnit)
-		tempUnit = null
+		prepareUnit(GetFilterUnit())
 	end))
 
 	// Create the leave event
 	registerPlayerUnitEvent(EVENT_PLAYER_UNIT_ISSUED_ORDER, () -> begin
 		let leavingUnit = GetTriggerUnit()
 		if leavingUnit.getAbilityLevel(ABILITY_ID) == 0
-			tempUnit = leavingUnit
+			eventUnit = leavingUnit
 			eventTrigger.execute()
-			tempUnit = null
+			eventUnit = null
 	end)
 
 	// Process preplaced units
 	preplacedUnits.enumUnitsInRect(boundRect)
-	ForGroup(preplacedUnits, () -> prepareUnit(GetEnumUnit()))
-	preplacedUnits..clear()..destr()
+	nullTimer(()-> begin
+		ForGroup(preplacedUnits, () -> prepareUnit(GetEnumUnit()))
+		preplacedUnits..clear()..destr()
+	end)
 
 @compiletime function generateAbility()
 	new AbilityDefinitionDefend(ABILITY_ID)
