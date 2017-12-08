@@ -5,11 +5,10 @@ import Unit
 
 /** Use this array instead of Player() to avoid leaks */
 public player array players
-public player localPlayer
+public constant localPlayer = GetLocalPlayer()
 init
 	for i = 0 to bj_MAX_PLAYER_SLOTS-1
 		players[i] = Player(i)
-	localPlayer = GetLocalPlayer()
 
 public function player.setGold(int val)
 	this.setState(PLAYER_STATE_RESOURCE_GOLD, val)
