@@ -1,0 +1,36 @@
+package Force
+
+import NoWurst
+
+public function force.destr()
+	DestroyForce(this)
+
+public function force.addPlayer(player whichPlayer)
+	ForceAddPlayer(this, whichPlayer)
+
+public function force.removePlayer(player whichPlayer)
+	ForceRemovePlayer(this, whichPlayer)
+
+public function force.clear()
+	ForceClear(this)
+
+public function force.enumPlayers(boolexpr filter)
+	ForceEnumPlayers(this, filter)
+
+public function force.enumPlayersCounted(boolexpr filter, int countLimit)
+	ForceEnumPlayersCounted(this, filter, countLimit)
+
+public function force.enumAllies(player whichPlayer, boolexpr filter)
+	ForceEnumAllies(this, whichPlayer, filter)
+
+public function force.enumEnemies(player whichPlayer, boolexpr filter)
+	ForceEnumEnemies(this, whichPlayer, filter)
+
+public function force.forEach(code callback)
+	ForForce(this, callback)
+
+public function force.containsUnit(unit whichUnit) returns boolean
+	return IsUnitInForce(whichUnit, this)
+
+public function force.containsPlayer(player whichPlayer) returns boolean
+	return IsPlayerInForce(whichPlayer, this)
