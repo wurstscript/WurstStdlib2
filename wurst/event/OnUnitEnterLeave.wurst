@@ -10,19 +10,20 @@ import AbilityObjEditing
 import RegisterEvents
 import ObjectIdGenerator
 import MapBounds
+import ClosureTimers
 
 /* 	Provides event API for units entering and leaving the map.
 	The event will also fire for preplaced units on the map. */
 
-constant eventTrigger = CreateTrigger()
-unit tempUnit = null
+let eventTrigger = CreateTrigger()
 let preplacedUnits = CreateGroup()
+unit eventUnit = null
 
 /* @API */
 
 /** Returns the unit that caused the enter/leave event to happen */
 public function getEnterLeaveUnit() returns unit
-	return tempUnit
+	return eventUnit
 
 /** Adds a callback that is run when a unit enters the map */
 public function onEnter(code c)
@@ -36,34 +37,34 @@ public function onLeave(code c)
 constant ABILITY_ID = compiletime(ABIL_ID_GEN.next())
 
 function prepareUnit(unit u)
+	eventUnit = u
 	u..addAbility(ABILITY_ID)..makeAbilityPermanent(ABILITY_ID, true)
 	eventTrigger.evaluate()
+	eventUnit = null
 
 init
 	// Make the ability invisible to the player
 	for i = 0 to bj_MAX_PLAYER_SLOTS-1
 		players[i].setAbilityAvailable(ABILITY_ID, false)
 
-	// Create the enter event
-	CreateTrigger()..registerEnterRegion(boundRegion, Filter(() -> begin
-		tempUnit = GetFilterUnit()
-		prepareUnit(tempUnit)
-		tempUnit = null
-	end))
+	nullTimer(() -> begin
+		// Process preplaced units
+		preplacedUnits.enumUnitsInRect(boundRect)
+		ForGroup(preplacedUnits, () -> prepareUnit(GetEnumUnit()))
+		preplacedUnits..clear()..destr()
 
-	// Create the leave event
-	registerPlayerUnitEvent(EVENT_PLAYER_UNIT_ISSUED_ORDER, () -> begin
-		let leavingUnit = GetTriggerUnit()
-		if leavingUnit.getAbilityLevel(ABILITY_ID) == 0
-			tempUnit = leavingUnit
-			eventTrigger.execute()
-			tempUnit = null
+		// Create the enter event
+		CreateTrigger()..registerEnterRegion(boundRegion, Filter(() -> prepareUnit(GetFilterUnit())))
+
+		// Create the leave event
+		registerPlayerUnitEvent(EVENT_PLAYER_UNIT_ISSUED_ORDER, () -> begin
+			let leavingUnit = GetTriggerUnit()
+			if leavingUnit.getAbilityLevel(ABILITY_ID) == 0
+				eventUnit = leavingUnit
+				eventTrigger.execute()
+				eventUnit = null
+		end)
 	end)
-
-	// Process preplaced units
-	preplacedUnits.enumUnitsInRect(boundRect)
-	ForGroup(preplacedUnits, () -> prepareUnit(GetEnumUnit()))
-	preplacedUnits..clear()..destr()
 
 @compiletime function generateAbility()
 	new AbilityDefinitionDefend(ABILITY_ID)
