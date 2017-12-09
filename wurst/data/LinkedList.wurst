@@ -1,7 +1,13 @@
 package LinkedList
 import NoWurst
 import Wurstunit
+import TypeCasting
 
+/** 
+Doubly-linked list implementation that implements all common list, stack and queue operations.
+Permits all elements (including null). 
+Use the Typecasting package if you require lists of warcraft handles.
+*/
 public class LinkedList<T>
 	private LLEntry<T> dummy = new LLEntry<T>(null, null, null)
 	private LLStaticIterator<T> staticItr = new LLStaticIterator<T>(this)
@@ -99,8 +105,12 @@ public class LinkedList<T>
 	/** gets the size of the list */
 	function getSize() returns int
 		return size
+
+	/** gets the size of the list (java-compat wrapper) */
+	function size() returns int
+		return size
 		
-	/** get an iterator for this list */
+	/** get the static iterator for this list */
 	function staticItr() returns LLStaticIterator<T>
 		staticItr.reset()
 		return staticItr
@@ -165,6 +175,14 @@ public class LinkedList<T>
 	function shuffle()
 		for i = 0 to size
 			add(removeAt(GetRandomInt(0, size-1)))
+
+	/** Returns a list containing the results of running the given closure function
+		for each element in the original list */ 
+	function map<Q>(MapClosure<T, Q> itr) returns LinkedList<Q>
+		let output = new LinkedList<Q>()
+		this.forEach((T t) -> output.add(itr.run(t)))
+		return output
+
 	
 	/** Prints the content of the list */
 	function toString() returns string
@@ -327,9 +345,12 @@ public interface LLItrClosure<T>
 public interface LinkedListUpdater<T>
 	function update(T t) returns T
 
+public interface MapClosure<T, Q>
+	function run(T t) returns Q
+
 // =====TESTS=====
 
-@test public function testAddRemove()
+@Test function testAddRemove()
 	let list = new LinkedList<int>()
 	assertTrue(list.getSize() == 0)
 	
@@ -343,7 +364,7 @@ public interface LinkedListUpdater<T>
 
 	assertTrue(list.getSize() == 0)
 
-@test public function testForEach()
+@Test function testForLoop()
 	let list = new LinkedList<int>()
 	
 	list..add(1)..add(2)..add(3)..add(4)
@@ -356,7 +377,7 @@ public interface LinkedListUpdater<T>
 
 	assertTrue(result == (5+4+3+2))
 
-@test public function testAddAll()
+@Test function testAddAll()
 	let list = new LinkedList<int>()
 	let list2 = new LinkedList<int>()
 	
@@ -364,9 +385,34 @@ public interface LinkedListUpdater<T>
 	list2..add(3)..add(4)
 	list.addAll(list2)
 
+	assertTrue(list.get(2) == 3)
+	assertTrue(list.get(3) == 4)
+
 	var result = 0
 	for i in list
 		result += i
+	assertTrue(result == (1+2+3+4))
 
-	assertTrue(list.get(2) == 3)
-	assertTrue(list.get(3) == 4)
+@Test function testClosures()
+	let list = new LinkedList<int>()
+	list..add(1)..add(2)..add(3)..add(4)
+	
+	list.updateAll((int i) -> i * 2)
+	assertTrue(list.get(3) == 4*2)
+
+	list.removeWhen((int i) -> i > 4)
+	assertTrue(list.size == 2)
+
+	let realList = list.map<real>((int i) -> i * 10.)
+	assertTrue(realList.get(1) == 40.)
+
+@Test function testGenerics()
+	let list = new LinkedList<string>()
+	list..add("a")..add("b")..add("c")
+	assertTrue(list.get(1) == "b")
+
+	let list2 = new LinkedList<real>()
+	list2..add(1.230)..add(2.563)..add(1213143.)
+	assertTrue(list2.get(0) == 1.230)
+	assertTrue(list2.get(1) == 2.563)
+	assertTrue(list2.get(2) == 1213143.)

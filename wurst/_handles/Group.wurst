@@ -2,6 +2,9 @@ package Group
 import NoWurst
 import Vectors
 
+/** Use this group for your non-nested group enum calls
+	and then iterate through the group via **for from** or
+	clear the group after use */
 public constant ENUM_GROUP = CreateGroup()
 
 public function group.enumUnitsInRange(vec2 pos, real range)
@@ -9,6 +12,12 @@ public function group.enumUnitsInRange(vec2 pos, real range)
 	
 public function group.enumUnitsInRange(vec2 pos, real range, boolexpr filter)
 	GroupEnumUnitsInRange(this, pos.x, pos.y, range, filter)
+
+public function group.enumUnitsInRect(rect rec) 
+	this.enumUnitsInRect(rec, null) 
+	
+public function group.enumUnitsInRect(rect rec, boolexpr filter) 
+	GroupEnumUnitsInRect(this, rec, filter) 
 
 public function group.clear()
 	GroupClear(this)
@@ -25,6 +34,17 @@ public function group.destr()
 public function group.contains(unit u) returns boolean
 	return IsUnitInGroup(u, this)
 
+var unitCounter = 0
+public function group.size() returns int
+	unitCounter = 0
+	ForGroup(this, () -> begin
+		unitCounter++
+	end)
+	return unitCounter
+
+public function group.isEmpty() returns boolean
+	return not this.hasNext()
+	
 // group iterator
 public function group.iterator() returns group
 	bj_groupAddGroupDest = CreateGroup()
@@ -41,4 +61,3 @@ public function group.next() returns unit
 	
 public function group.close()
 	DestroyGroup(this)
-

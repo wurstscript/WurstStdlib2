@@ -108,31 +108,31 @@ trigger onDeindexTrigger = CreateTrigger()
 unit indexedUnit = null
 unit deindexedUnit = null
 
-/*  Returns the integer index of this unit. 
+/**  Returns the integer index of this unit. 
 	Can be configured by the user to supply a custom unit indexer which won't break 
 	other stdlib components. */
 @configurable public function unit.getIndex() returns integer
 	return this.getUserData()
 
-/*  Returns the last indexed unit. */
+/**  Returns the last indexed unit. */
 public function getIndexedUnit() returns unit
 	return indexedUnit
 
-/*  Returns the unit about to be deindexed. */
+/**  Returns the unit about to be deindexed. */
 public function getDeindexedUnit() returns unit
 	return deindexedUnit 
 
-/*  Adds a function to be called before a unit is deindexed.
+/**  Adds a function to be called before a unit is deindexed.
     Use the getDeindexedUnit() function to refer to the deindexing unit. */
 public function onUnitDeindex(code func)
 	onDeindexTrigger.addCondition(Condition(func))
 
-/*  Adds a function to be called after a unit is indexed.
+/**  Adds a function to be called after a unit is indexed.
 	Use the getIndexedUnit() function to refer to the indexed unit. */
 public function onUnitIndex(code func)
 	onIndexTrigger.addCondition(Condition(func))
 
-/*  Returns the UnitIndex associated with this unit, creating a new one if necessary. */
+/**  Returns the UnitIndex associated with this unit, creating a new one if necessary. */
 public function unit.toUnitIndex() returns UnitIndex
 	UnitIndex instance = this.getUserData() castTo UnitIndex
 
@@ -141,7 +141,7 @@ public function unit.toUnitIndex() returns UnitIndex
 
 	return instance
 
-/*  Deindexes a unit.
+/**  Deindexes a unit.
 	Returns whether the unit was originally indexed. */
 public function unit.deindex() returns bool
 	if this.getUserData() == 0

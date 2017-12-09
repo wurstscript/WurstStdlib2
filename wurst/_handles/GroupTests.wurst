@@ -1,0 +1,21 @@
+package GroupTests
+
+@Test
+function testGroupBasic()
+	let g = CreateGroup()
+	assertTrue(g != null)
+	assertTrue(g.size() == 0)
+
+	let u = CreateUnit(Player(0), 'hfoo', 0, 0, 0)
+	assertTrue(u != null)
+	g.addUnit(u)
+
+	assertTrue(g.size() == 1)
+	for i = 1 to 10
+		g.addUnit(CreateUnit(Player(0), 'hfoo', 0, 0, 0))
+
+	assertTrue(g.size() == 11)
+
+	g.clear()
+	assertTrue(g.size() == 0)
+	
