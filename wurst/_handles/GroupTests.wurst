@@ -4,18 +4,28 @@ package GroupTests
 function testGroupBasic()
 	let g = CreateGroup()
 	assertTrue(g != null)
-	assertTrue(g.size() == 0)
+	assertTrue(g.isEmpty())
 
-	let u = CreateUnit(Player(0), 'hfoo', 0, 0, 0)
+	let u = createUnit(Player(0), 'hfoo', vec2(0, 0), 0 .fromDeg())
 	assertTrue(u != null)
 	g.addUnit(u)
 
 	assertTrue(g.size() == 1)
 	for i = 1 to 10
-		g.addUnit(CreateUnit(Player(0), 'hfoo', 0, 0, 0))
+		g.addUnit(createUnit(Player(0), 'hfoo', vec2(0, 0), 0 .fromDeg()))
 
 	assertTrue(g.size() == 11)
 
 	g.clear()
-	assertTrue(g.size() == 0)
-	
+	assertTrue(g.isEmpty())
+
+@Test
+function testGroupForLoops()
+	let g = CreateGroup()
+	assertTrue(g != null)
+	assertTrue(g.isEmpty())
+	for i = 0 to 10
+		g.addUnit(createUnit(Player(0), 'hfoo', vec2(0, 0), 0 .fromDeg()))
+
+	for u in g
+		assertTrue(u != null)
