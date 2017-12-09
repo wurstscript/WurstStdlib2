@@ -16,51 +16,55 @@ public class InstantDummyCaster
 	
 	private construct()
 	
-	private static function prepare(player owner, integer lvl)
+	private static function prepare(player owner, integer abilityId, integer lvl, vec2 pos)
+		id = abilityId
 		caster.addAbility(id)
+		caster.setXY(pos)
 		if lvl > 1
 			caster.setAbilityLevel(id, lvl)
 		if owner != null
 			caster.setOwner(owner, false)
 			
 	private static function finish()
-		caster..setOwner(DUMMY_PLAYER, false)..removeAbility(id)
-			
-	static function castImmediate(player owner, int abilityId, int lvl, string order, vec2 pos) returns boolean
-		boolean b
-		id = abilityId
-		caster.setXY(pos)
-		prepare(owner, lvl)
-		b = caster.issueImmediateOrderById(OrderId(order))
-		finish()
+		caster.setOwner(DUMMY_PLAYER, false)
+		caster.removeAbility(id)
 		caster.setPos(32256, 32256)
-		return b
-		
-	static function castTarget(player owner, int abilityId, int lvl, string order, widget target) returns boolean
-		boolean b
-		id = abilityId
-		prepare(owner, lvl)
-		caster.setXY(vec2(GetWidgetX(target), GetWidgetY(target)))
-		b = caster.issueTargetOrderById(OrderId(order), target)
+			
+	static function castImmediate(player owner, int abilityId, int lvl, int orderId, vec2 pos) returns boolean
+		prepare(owner, abilityId, lvl, pos)
+		boolean b = caster.issueImmediateOrderById(orderId)
 		finish()
 		return b
 		
+	static function castTarget(player owner, int abilityId, int lvl, int orderId, widget target, vec2 casterPos) returns boolean
+		prepare(owner, abilityId, lvl, casterPos)
+		boolean b = caster.issueTargetOrderById(orderId, target)
+		finish()
+		return b
+	
+	static function castPoint(player owner, int abilityId, int lvl, int orderId, vec2 targetPos, vec2 casterPos) returns boolean
+		prepare(owner, abilityId, lvl, casterPos)
+		boolean b = caster.issuePointOrderById(orderId, targetPos)
+		finish()
+		return b
+
+	// shorters
+	static function castTarget(player owner, int abilityId, int lvl, int orderId, widget target) returns boolean
+		return castTarget(owner, abilityId, lvl, orderId, target, vec2(GetWidgetX(target), GetWidgetY(target)))
+	static function castPoint(player owner, int abilityId, int lvl, int orderId, vec2 targetPos) returns boolean
+		return castPoint(owner, abilityId, lvl, orderId, targetPos, targetPos)
+
+	// string order wrappers
+	static function castImmediate(player owner, int abilityId, int lvl, string order, vec2 pos) returns boolean
+		return castImmediate(owner, abilityId, lvl, OrderId(order), pos)
 	static function castTarget(player owner, int abilityId, int lvl, string order, widget target, vec2 casterPos) returns boolean
-		boolean b
-		id = abilityId
-		prepare(owner, lvl)
-		caster.setXY(casterPos)
-		b = caster.issueTargetOrderById(OrderId(order), target)
-		finish()
-		return b
-		
+		return castTarget(owner, abilityId, lvl, OrderId(order), target, casterPos)
+	static function castTarget(player owner, int abilityId, int lvl, string order, widget target) returns boolean
+		return castTarget(owner, abilityId, lvl, OrderId(order), target)
+	static function castPoint(player owner, int abilityId, int lvl, string order, vec2 targetPos, vec2 casterPos) returns boolean
+		return castPoint(owner, abilityId, lvl, OrderId(order), targetPos, casterPos)
 	static function castPoint(player owner, int abilityId, int lvl, string order, vec2 targetPos) returns boolean
-		boolean b
-		id = abilityId
-		prepare(owner, lvl)
-		b = caster.issuePointOrderById(OrderId(order), targetPos)
-		finish()
-		return b
+		return castPoint(owner, abilityId, lvl, OrderId(order), targetPos)
 		
 constant DUMMY_CASTER_UNIT_ID = 'xcas'
 
