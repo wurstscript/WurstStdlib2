@@ -23,9 +23,15 @@ function testGroupBasic()
 function testGroupForLoops()
 	let g = CreateGroup()
 	assertTrue(g != null)
-	assertTrue(g.isEmpty())
+	assertTrue(not g.hasNext())
 	for i = 0 to 10
 		g.addUnit(createUnit(Player(0), 'hfoo', vec2(0, 0), 0 .fromDeg()))
-
+		
+	assertTrue(g.hasNext())
+	
 	for u in g
 		assertTrue(u != null)
+
+	for u from g
+
+	assertTrue(not g.hasNext())
