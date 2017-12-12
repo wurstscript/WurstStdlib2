@@ -1,6 +1,5 @@
 package StringTests
 import TypeCasting
-import LinkedList
 
 @Test function testToCharsetInt()
     "a".toCharsetInt().assertEquals(10)
@@ -40,7 +39,7 @@ import LinkedList
 
 @Test function testIsUpper()
     "tEsT".isUpper().assertEquals(false)
-	"TEST".isUpper().assertEquals(true)
+    "TEST".isUpper().assertEquals(true)
 
 @Test function testTrim()
     " te st ".trim().assertEquals("te st")
@@ -77,12 +76,12 @@ import LinkedList
     "test".lastIndexOf("t").assertEquals(3)
     "test".lastIndexOf("st").assertEquals(2)
     "test".lastIndexOf("rest").assertEquals(-1)
-	
+
 @Test function testCountOccurences()
     "testing test".countOccurences("test").assertEquals(2)
     "testing test".countOccurences("testi").assertEquals(1)
     "testing test".countOccurences("testings").assertEquals(0)
-	
+
 @Test function testContains()
     "testing test".contains("test").assertEquals(true)
     "testing test".contains("tasty").assertEquals(false)
