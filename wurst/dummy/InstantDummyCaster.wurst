@@ -3,6 +3,7 @@ import NoWurst
 import Basics
 import Unit
 import UnitObjEditing
+import MapBounds
 /*
  *   Dummy caster for casting spells
  *
@@ -28,7 +29,7 @@ public class InstantDummyCaster
 	private static function finish()
 		caster.setOwner(DUMMY_PLAYER, false)
 		caster.removeAbility(id)
-		caster.setPos(32256, 32256)
+		caster.setPos(boundMax)
 			
 	static function castImmediate(player owner, int abilityId, int lvl, int orderId, vec2 pos) returns boolean
 		prepare(owner, abilityId, lvl, pos)
@@ -70,7 +71,7 @@ constant DUMMY_CASTER_UNIT_ID = 'xcas'
 
 init
 	InstantDummyCaster.caster = createUnit(DUMMY_PLAYER, DUMMY_CASTER_UNIT_ID, vec2(0,0), angle(0))
-	InstantDummyCaster.caster.setPos(32256,32256)
+	InstantDummyCaster.caster.setPos(boundMax)
 		
 @compiletime function generateObject()
 		let u = new BuildingDefinition(DUMMY_CASTER_UNIT_ID, 'nfr2')
