@@ -212,7 +212,7 @@ public function vec3.rotate( vec3 axis, real radians ) returns vec3 //angle is t
 	var c = Cos(radians)
 	var s = Sin(radians)
 	if al == 0.0
-		printLog(Loglevel.WARNING, "vector.rotate error: The length of the axis vector is 0.0!")
+		Log.warn("vector.rotate error: The length of the axis vector is 0.0!")
 		return vec3(0,0,0)
 
 	var f = (this.x*axis.x+this.y*axis.y+this.z*axis.z) / al
@@ -232,7 +232,7 @@ public function vec3.rotate( vec3 axis, real radians ) returns vec3 //angle is t
 public function vec3.setLengthSq( real lengthSq ) returns vec3
 	real l = this.lengthSquared()
 	if l == 0.0
-		printLog(Loglevel.WARNING, "vector.setLength error: The length of the vector is 0.0!")
+		Log.warn("vector.setLength error: The length of the vector is 0.0!")
 		return vec3(0.,0.,0.)
 	l = lengthSq/l
 	return vec3(this.x*l, this.y*l, this.z*l)
@@ -241,7 +241,7 @@ public function vec3.setLengthSq( real lengthSq ) returns vec3
 public function vec3.setLength( real length ) returns vec3
 	real l = this.length()
 	if l == 0.0
-		printLog(Loglevel.WARNING, "vector.setLength error: The length of the vector is 0.0!")
+		Log.warn("vector.setLength error: The length of the vector is 0.0!")
 		return vec3(0.,0.,0.)
 	l = length/l
 	return vec3(this.x*l, this.y*l, this.z*l)

@@ -111,5 +111,5 @@ public module TimedLoop
 	ondestroy
 		if mode != Mode.PAUSED
 			stopTimedLoop()
-			printLog(Loglevel.WARNING, "Destroyed Instance using TimedLoop before stopping the Loop")
+			Log.warn("Destroyed Instance using TimedLoop before stopping the Loop")
 			

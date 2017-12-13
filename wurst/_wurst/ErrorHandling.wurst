@@ -32,19 +32,19 @@ To achieve this, the hash of the string is saved in a hashtable together with a 
 			// Error has been printed before
 			if HT.loadInt(PRIMARY_ERROR_KEY, hash) + MUTE_ERROR_DURATION < currentTime
 				// Time to print the error again
-				printLog(Loglevel.ERROR, msg + getStackTraceString())
+				Log.error(msg + getStackTraceString())
 				HT.saveInt(PRIMARY_ERROR_KEY, hash, currentTime.toInt())
 				HT.saveBoolean(PRIMARY_ERROR_KEY, hash, false)
 			else if HT.hasBoolean(PRIMARY_ERROR_KEY, hash)
 				if not HT.loadBoolean(PRIMARY_ERROR_KEY, hash)
-					printLog(Loglevel.ERROR, "|cffFF3A29Excessive repeating errors are being omitted")
+					Log.error("|cffFF3A29Excessive repeating errors are being omitted")
 					HT.saveBoolean(PRIMARY_ERROR_KEY, hash, true)	
 			else
-				printLog(Loglevel.ERROR, "|cffFF3A29Excessive repeating errors are being omitted")
+				Log.error("|cffFF3A29Excessive repeating errors are being omitted")
 				HT.saveBoolean(PRIMARY_ERROR_KEY, hash, true)	
 		else
 			HT.saveInt(PRIMARY_ERROR_KEY, hash, currentTime.toInt())
-			printLog(Loglevel.ERROR, "|cffFF3A29Error:|r " + msg + getStackTraceString())
+			Log.error("|cffFF3A29Error:|r " + msg + getStackTraceString())
 		// crash the thread:
 		I2S(1 div 0)
 
