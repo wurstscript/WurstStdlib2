@@ -2,30 +2,48 @@ package Orders
 // Credits Shadow Daemon for cj_order.j from cJass
 import NoWurst
 
+/* Has its uses:
+	* with GetIssuedOrderId() check, which (as far as I know) has no string counterpart
+	* with unit.issue###OrderById(...) to make no mistakes when spelling string orders
+	* when you need to use some unique orders you could knew from internet, but in the right way. */
+
 /** Class that contains every known order in game that has no string counterpart */
 public class SpecialOrders
 	/** This is an order with no target that opens up the build menu of a unit that can build structures. */
 	static constant buildmenu			 = 851994
 	/** 851976 (cancel): This is an order with no target that is like a click on a cancel button. We used to be able to catch cancel clicks with this id back then but this id doesn't seem to work any more. */
 	static constant cancel				 = 851976
+	/** An item targeted order that move the target item to a certain inventory slot of the ordered hero. */
 	static constant itemdrag00			 = 852002
+	/** An item targeted order that move the target item to a certain inventory slot of the ordered hero. */
 	static constant itemdrag01			 = 852003
+	/** An item targeted order that move the target item to a certain inventory slot of the ordered hero. */
 	static constant itemdrag02			 = 852004
+	/** An item targeted order that move the target item to a certain inventory slot of the ordered hero. */
 	static constant itemdrag03			 = 852005
+	/** An item targeted order that move the target item to a certain inventory slot of the ordered hero. */
 	static constant itemdrag04			 = 852006
+	/** An item targeted order that move the target item to a certain inventory slot of the ordered hero. */
 	static constant itemdrag05			 = 852007
+	/** An order that will make the ordered hero use the item in a certain inventory slot. If it's an order with no target or object or point targeted depends on the type of item. */
 	static constant itemuse00			 = 852008
+	/** An order that will make the ordered hero use the item in a certain inventory slot. If it's an order with no target or object or point targeted depends on the type of item. */
 	static constant itemuse01			 = 852009
+	/** An order that will make the ordered hero use the item in a certain inventory slot. If it's an order with no target or object or point targeted depends on the type of item. */
 	static constant itemuse02			 = 852010
+	/** An order that will make the ordered hero use the item in a certain inventory slot. If it's an order with no target or object or point targeted depends on the type of item. */
 	static constant itemuse03			 = 852011
+	/** An order that will make the ordered hero use the item in a certain inventory slot. If it's an order with no target or object or point targeted depends on the type of item. */
 	static constant itemuse04			 = 852012
+	/** An order that will make the ordered hero use the item in a certain inventory slot. If it's an order with no target or object or point targeted depends on the type of item. */
 	static constant itemuse05			 = 852013
+	/** Order for AIaa ability, which blizzard made for tome of attack, but never used it. But it can actually change caster's base attack! */
 	static constant tomeOfAttack			 = 852259
 	/** This is a point or object targeted order that is like a right click. */
 	static constant smart				 = 851971
 	/**This is an order with no target that opens the skill menu of heroes. If it is issued for a normal unit with triggers it will black out the command card for this unit, the command card will revert to normal after reselecting the unit. */
 	static constant skillmenu			 = 852000
-	/** This order is issued to units that get stunned by a spell, for example War Stomp (AOws). This is probably a hold position + hold fire order. The ordered uni*t will be unable to move and attack.*/
+	/** This order is issued to units that get stunned by a spell, for example War Stomp (AOws). This is probably a hold position + hold fire order. The ordered unit will be unable to move and attack.*/
 	static constant stunned				 = 851973
 	static constant wandOfIllusion			 = 852274
 
