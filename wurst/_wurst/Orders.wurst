@@ -4,7 +4,29 @@ import NoWurst
 
 /** Class that contains every known order in game that has no string counterpart */
 public class SpecialOrders
+	/** This is an order with no target that opens up the build menu of a unit that can build structures. */
+	static constant buildmenu			 = 851994
+	/** 851976 (cancel): This is an order with no target that is like a click on a cancel button. We used to be able to catch cancel clicks with this id back then but this id doesn't seem to work any more. */
+	static constant cancel				 = 851976
+	static constant itemdrag00			 = 852002
+	static constant itemdrag01			 = 852003
+	static constant itemdrag02			 = 852004
+	static constant itemdrag03			 = 852005
+	static constant itemdrag04			 = 852006
+	static constant itemdrag05			 = 852007
+	static constant itemuse00			 = 852008
+	static constant itemuse01			 = 852009
+	static constant itemuse02			 = 852010
+	static constant itemuse03			 = 852011
+	static constant itemuse04			 = 852012
+	static constant itemuse05			 = 852013
 	static constant tomeOfAttack			 = 852259
+	/** This is a point or object targeted order that is like a right click. */
+	static constant smart				 = 851971
+	/**This is an order with no target that opens the skill menu of heroes. If it is issued for a normal unit with triggers it will black out the command card for this unit, the command card will revert to normal after reselecting the unit. */
+	static constant skillmenu			 = 852000
+	/** This order is issued to units that get stunned by a spell, for example War Stomp (AOws). This is probably a hold position + hold fire order. The ordered uni*t will be unable to move and attack.*/
+	static constant stunned				 = 851973
 	static constant wandOfIllusion			 = 852274
 
 /** Class that contains every known order in game. */
@@ -170,18 +192,6 @@ public class Orders extends SpecialOrders
 	static constant innerfireon			 = 852067
 	static constant instant				 = 852200
 	static constant invisibility			 = 852069
-	static constant itemdrag00			 = 852002
-	static constant itemdrag01			 = 852003
-	static constant itemdrag02			 = 852004
-	static constant itemdrag03			 = 852005
-	static constant itemdrag04			 = 852006
-	static constant itemdrag05			 = 852007
-	static constant itemuse00			 = 852008
-	static constant itemuse01			 = 852009
-	static constant itemuse02			 = 852010
-	static constant itemuse03			 = 852011
-	static constant itemuse04			 = 852012
-	static constant itemuse05			 = 852013
 	static constant lavamonster			 = 852667
 	static constant lightningshield			 = 852110
 	static constant load				 = 852046
@@ -289,7 +299,6 @@ public class Orders extends SpecialOrders
 	static constant slow				 = 852075
 	static constant slowoff				 = 852077
 	static constant slowon				 = 852076
-	static constant smart				 = 851971
 	static constant soulburn			 = 852668
 	static constant soulpreservation		 = 852242
 	static constant spellshield			 = 852571
