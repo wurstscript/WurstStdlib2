@@ -1,0 +1,51 @@
+package HashtableTests
+
+@Test
+function testBasicDatatypes()
+	let ht = InitHashtable()
+	ht.saveBoolean(0, 0, true)
+	ht.saveInt(0, 0, 1)
+	ht.saveReal(0, 0, 2.)
+	ht.saveString(0, 0, "1")
+
+	assertTrue(ht.hasBoolean(0,0))
+	assertTrue(ht.hasInt(0,0))
+	assertTrue(ht.hasReal(0,0))
+	assertTrue(ht.hasString(0,0))
+
+	assertTrue(ht.loadInt(0,0) == 1)
+	assertTrue(ht.loadString(0,0) == "1")
+	assertTrue(ht.loadBoolean(0,0))
+	assertTrue(ht.loadReal(0,0) == 2.) 
+
+@Test
+function testFlushing()
+	let ht = InitHashtable()
+	ht.saveReal(0, 0, 2.)
+	ht.saveReal(1, 0, 4.)
+	ht.flushChild(0)
+
+	assertTrue(not ht.hasReal(0,0))
+	assertTrue(ht.hasReal(1,0))
+
+	ht.flush()
+
+	assertTrue(not ht.hasReal(1,0))
+
+@Test
+function testOverwrite()
+	let ht = InitHashtable()
+	ht.saveReal(0, 0, 2.)
+	ht.saveReal(0, 0, 4.)
+
+	assertTrue(ht.hasReal(0,0))
+	assertTrue(ht.loadReal(0,0) == 4.)
+
+@Test
+function testRemove()
+	let ht = InitHashtable()
+	ht.saveReal(0, 0, 2.)
+	assertTrue(ht.hasReal(0,0))
+
+	ht.removeReal(0, 0)
+	assertTrue(not ht.hasReal(0,0))

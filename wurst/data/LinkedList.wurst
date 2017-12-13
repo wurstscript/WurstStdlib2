@@ -183,6 +183,13 @@ public class LinkedList<T>
 		this.forEach((T t) -> output.add(itr.run(t)))
 		return output
 
+	/** Adds the given element directly behind the element at the given index */
+	function addAt(T elem, int index)
+		let entry = new LLEntry<T>(elem, dummy.prev, dummy)
+		let entryAtIndex = getEntry(index)
+		entryAtIndex.prev.next = entry
+		entryAtIndex.prev = entry
+		size++
 	
 	/** Prints the content of the list */
 	function toString() returns string
