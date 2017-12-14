@@ -1,15 +1,16 @@
 package Boolean
 import NoWurst
 
-/** Converts a boolean into a string */
+/** Converts this boolean into a string */
 public function boolean.toString() returns string
+	var result = "false"
 	if this
-		return "true"
-	return "false"
+		result = "true"
+	return result
 	
-
+/** Converts this boolean into an int */
 public function boolean.toInt() returns int
+	var result = 0
 	if this
-		return 1
-	else
-		return 0
+		result = 1
+	return result
