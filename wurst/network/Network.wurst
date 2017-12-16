@@ -226,7 +226,7 @@ public class Network
 	private var currentState = NetworkState.PREPARING
 
 	// mission key to be used for this instance in all game caches
-	private var mkey = GamecacheKeys.getKey(this castTo int)
+	private var mkey = GamecacheKeys.get(this castTo int)
 
 	// data buffer to store data before syncing and to read after syncing
 	private var dataBuffer = new HashBuffer

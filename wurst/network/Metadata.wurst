@@ -25,15 +25,15 @@ public class MetadataStore
 	private static constant META_CACHE = InitGameCache("m.w3v")
 
 	// keys used for metadata about the transmission
-	private static constant META_INTEGER_KEY     = GamecacheKeys.getKey(0)
-	private static constant META_REAL_KEY        = GamecacheKeys.getKey(1)
-	private static constant META_BOOLEAN_KEY     = GamecacheKeys.getKey(2)
-	private static constant META_STRING_KEY      = GamecacheKeys.getKey(3)
-	private static constant META_SYNC_ROUNDS_KEY = GamecacheKeys.getKey(4)
+	private static constant META_INTEGER_KEY     = GamecacheKeys.get(0)
+	private static constant META_REAL_KEY        = GamecacheKeys.get(1)
+	private static constant META_BOOLEAN_KEY     = GamecacheKeys.get(2)
+	private static constant META_STRING_KEY      = GamecacheKeys.get(3)
+	private static constant META_SYNC_ROUNDS_KEY = GamecacheKeys.get(4)
 	// total amount of metadata keys
 	private static constant META_COUNT = 5
 
-	private var mkey = GamecacheKeys.getKey(this castTo int)
+	private var mkey = GamecacheKeys.get(this castTo int)
 
 	construct()
 		META_CACHE.flushMission(mkey)
@@ -62,4 +62,4 @@ public class MetadataStore
 	function sync(player sender)
 		if localPlayer == sender
 			for i = 0 to META_COUNT - 1
-				META_CACHE.syncInt(mkey, GamecacheKeys.getKey(i))
+				META_CACHE.syncInt(mkey, GamecacheKeys.get(i))

@@ -12,7 +12,7 @@ public class GamecacheKeys
 	static string array keys
 	static var count = 0
 
-	static function getKey(int i) returns string
+	static function get(int i) returns string
 		if i >= count
 			error("Network: trying to get invalid GC key")
 		return keys[i]
