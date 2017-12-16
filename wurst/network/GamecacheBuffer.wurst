@@ -61,38 +61,38 @@ public class GamecacheBuffer
 	function writeInt(int value)
 		advanceWriteIndex()
 		checkType(BufferType.INTEGER)
-		gc.saveInt(parentKey, GamecacheKeys.getKey(writeIndex), value)
+		gc.saveInt(parentKey, GamecacheKeys.get(writeIndex), value)
 
 	function writeReal(real value)
 		advanceWriteIndex()
 		checkType(BufferType.REAL)
-		gc.saveReal(parentKey, GamecacheKeys.getKey(writeIndex), value)
+		gc.saveReal(parentKey, GamecacheKeys.get(writeIndex), value)
 
 	function writeBoolean(bool value)
 		advanceWriteIndex()
 		checkType(BufferType.BOOLEAN)
-		gc.saveBoolean(parentKey, GamecacheKeys.getKey(writeIndex), value)
+		gc.saveBoolean(parentKey, GamecacheKeys.get(writeIndex), value)
 
 	function readInt() returns int
 		advanceReadIndex()
 		checkType(BufferType.INTEGER)
-		if not gc.hasInt(parentKey, GamecacheKeys.getKey(readIndex))
+		if not gc.hasInt(parentKey, GamecacheKeys.get(readIndex))
 			error("GamecacheBuffer: trying to read non-present int #" + readIndex.toString())
-		return gc.loadInt(parentKey, GamecacheKeys.getKey(readIndex))
+		return gc.loadInt(parentKey, GamecacheKeys.get(readIndex))
 
 	function readReal() returns real
 		advanceReadIndex()
 		checkType(BufferType.REAL)
-		if not gc.hasReal(parentKey, GamecacheKeys.getKey(readIndex))
+		if not gc.hasReal(parentKey, GamecacheKeys.get(readIndex))
 			error("GamecacheBuffer: trying to read non-present real #" + readIndex.toString())
-		return gc.loadReal(parentKey, GamecacheKeys.getKey(readIndex))
+		return gc.loadReal(parentKey, GamecacheKeys.get(readIndex))
 		
 	function readBoolean() returns bool
 		advanceReadIndex()
 		checkType(BufferType.BOOLEAN)
-		if not gc.hasBoolean(parentKey, GamecacheKeys.getKey(readIndex))
+		if not gc.hasBoolean(parentKey, GamecacheKeys.get(readIndex))
 			error("GamecacheBuffer: trying to read non-present bool #" + readIndex.toString())
-		return gc.loadBoolean(parentKey, GamecacheKeys.getKey(readIndex))
+		return gc.loadBoolean(parentKey, GamecacheKeys.get(readIndex))
 
 	function getSynchronizerFunction() returns SynchronizerFunction
 		SynchronizerFunction synchronizer = null
@@ -123,7 +123,7 @@ public class GamecacheBuffer
 				var i = 0
 				// keep syncing until we hit the limit or finish
 				while syncCounter <= writeIndex and i < DATA_PER_EXECUTE
-					synchronizer.sync(GamecacheKeys.getKey(syncCounter))
+					synchronizer.sync(GamecacheKeys.get(syncCounter))
 					syncCounter++
 					i++
 			end)
