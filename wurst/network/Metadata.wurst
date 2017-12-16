@@ -19,7 +19,8 @@ public function metadata.setSyncCount(int value) returns metadata
 	return metadata(this.intCount, this.realCount, this.booleanCount, this.asciiIntCount, value)
 
 /**
-	Simple wrapper class for metadata.
+	Simple wrapper class for Network-related metadata about the transmission.
+	Necessary to let other clients know about the amount of data being sent.
 **/
 public class MetadataStore
 	private static constant META_CACHE = InitGameCache("m.w3v")
