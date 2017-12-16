@@ -1,9 +1,9 @@
 package Network
 
-import SyncSimple
+import public SyncSimple
 import ErrorHandling
-import Execute
-import Buffer
+import public Execute
+import public Buffer
 
 import NetworkConfig
 import Metadata
@@ -295,6 +295,7 @@ public class Network
 			metadataStore.setCounts(metadata(intCount, realCount, booleanCount, asciiIntCount, syncRounds))
 
 		// start sending the first round
+		currentState = NetworkState.SENDING_ROUND
 		sendRound()
 
 	/** receives info about the transmission after it has been sent by the originating player **/
