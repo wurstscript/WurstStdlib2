@@ -176,20 +176,6 @@ public abstract class AbstractBuffer implements Buffer
 		checkRead()
 		object.deserialize(this)
 
-	/*
-		Temporary fix to force-generate dispatch methods for these functions
-		workaround for: https://github.com/wurstscript/WurstScript/issues/601
-	*/
-	override abstract function writeInt(int value)
-	override abstract function writeReal(real value)
-	override abstract function writeBoolean(boolean value)
-	override abstract function writeString(string value)
-
-	override abstract function readInt() returns int
-	override abstract function readReal() returns real
-	override abstract function readBoolean() returns boolean
-	override abstract function readString() returns string
-
 /**
 	Implementation of Buffer backed by a hashtable. Primarily used in Network.
 **/
