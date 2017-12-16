@@ -1,22 +1,9 @@
 package Metadata
 import GamecacheKeys
 
-public tuple metadata(int intCount, int realCount, int booleanCount, int asciiIntCount, int syncCount)
+public tuple metadata(int ints, int reals, int booleans, int asciiInts, int syncs)
 
-public function metadata.setIntCount(int value) returns metadata
-	return metadata(value, this.realCount, this.booleanCount, this.asciiIntCount, this.syncCount)
-
-public function metadata.setRealCount(int value) returns metadata
-	return metadata(this.intCount, value, this.booleanCount, this.asciiIntCount, this.syncCount)
-
-public function metadata.setBooleanCount(int value) returns metadata
-	return metadata(this.intCount, this.realCount, value, this.asciiIntCount, this.syncCount)
-
-public function metadata.setAsciiIntCount(int value) returns metadata
-	return metadata(this.intCount, this.realCount, this.booleanCount, value, this.syncCount)
-
-public function metadata.setSyncCount(int value) returns metadata
-	return metadata(this.intCount, this.realCount, this.booleanCount, this.asciiIntCount, value)
+public constant EMPTY_META = metadata(0, 0, 0, 0, 0)
 
 /**
 	Simple wrapper class for Network-related metadata about the transmission.
@@ -46,11 +33,11 @@ public class MetadataStore
 		return META_CACHE.loadInt(mkey, key)
 
 	function setCounts(metadata data)
-		saveValue(META_INTEGER_KEY,     data.intCount)
-		saveValue(META_REAL_KEY,        data.realCount)
-		saveValue(META_BOOLEAN_KEY,     data.booleanCount)
-		saveValue(META_STRING_KEY,      data.asciiIntCount)
-		saveValue(META_SYNC_ROUNDS_KEY, data.syncCount)
+		saveValue(META_INTEGER_KEY,     data.ints)
+		saveValue(META_REAL_KEY,        data.reals)
+		saveValue(META_BOOLEAN_KEY,     data.booleans)
+		saveValue(META_STRING_KEY,      data.asciiInts)
+		saveValue(META_SYNC_ROUNDS_KEY, data.syncs)
 
 	function getCounts() returns metadata
 		return metadata(
