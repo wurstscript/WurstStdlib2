@@ -89,30 +89,29 @@ function stringBufferLongSerializationTest()
 		buffer.readBoolean().assertEquals(i div 2 == 0)
 		buffer.readString().assertEquals(i.toString())
 
-// disabled while there are some bugs preventing it from working correctly (related to the compiler)
-// @test
-// function stringBufferSerializableTest()
-// 	let original = new TestSerializable()
+@test
+function stringBufferSerializableTest()
+	let original = new TestSerializable()
 
-// 	original.name = "NewName"
-// 	original.id = 100
-// 	original.facing = 1.125
+	original.name = "NewName"
+	original.id = 100
+	original.facing = 1.125
 	
-// 	for i = 0 to 5
-// 		let element = new SerializableElement()
-// 		element.id = i
-// 		element.value = i
-// 		original.elements.add(element)
+	for i = 0 to 5
+		let element = new SerializableElement()
+		element.id = i
+		element.value = i
+		original.elements.add(element)
 
-// 	let buffer = new StringBuffer(16)
-// 	buffer.write(original)
-// 	buffer.flush()
+	let buffer = new StringBuffer(16)
+	buffer.write(original)
+	buffer.flush()
 
-// 	let copy = new TestSerializable(buffer)
+	let copy = new TestSerializable(buffer)
 
-// 	copy.id.assertEquals(original.id)
-// 	copy.name.assertEquals(original.name)
-// 	copy.elements.get(2).value.assertEquals(original.elements.get(2).value)
+	copy.id.assertEquals(original.id)
+	copy.name.assertEquals(original.name)
+	copy.elements.get(2).value.assertEquals(original.elements.get(2).value)
 
 @test
 function hashBufferTestSerialization()
