@@ -4,6 +4,8 @@ import UnitIndexer
 import BitSet
 import LinkedListModule
 import RegisterEvents
+import MapBounds
+import OnUnitEnterLeave
 
 /********************************************************************************
 	SyncSimple library by MoriMori.
@@ -113,7 +115,7 @@ public class SimpleSynchronizer
 	private SynchronizationCallback callback = null
 
 	construct()
-		dummy = CreateUnit(DUMMY_PLAYER, DUMMY_ID, 0, 0, 0)
+		dummy = createUnit(DUMMY_PLAYER, DUMMY_ID, boundMax, 0 .fromDeg())
 		..addAbility(DUMMY_GHOST)
 		..pause()
 		..setScale(0)
@@ -137,7 +139,7 @@ public class SimpleSynchronizer
 			if not players[i].isIngame()
 				syncedPlayers = syncedPlayers.add(i)
 
-	private function areAllPlayersSynced() returns boolean
+	protected function areAllPlayersSynced() returns boolean
 		return syncedPlayers == allPlayers
 
 	protected function onPlayerFinishedSync(player who)
@@ -167,4 +169,11 @@ init
 
 		for synchronizer in SimpleSynchronizer
 			synchronizer.onPlayerLeave(who)
+	end)
+
+	onLeave(() -> begin
+		let synchronizer = SimpleSynchronizer.getSynchronizer(getEnterLeaveUnit())
+
+		if synchronizer != null and not synchronizer.areAllPlayersSynced()
+			Log.warn("SimpleSynchronizer: dummy unit was removed before all players synced, make sure your map doesn't remove neutral dummy units")
 	end)
