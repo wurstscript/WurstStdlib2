@@ -27,10 +27,6 @@ public function string.toReal() returns real
 public function string.toInt() returns int
 	return S2I(this)
 
-/** Converts the string to a real using the S2R native **/
-public function string.toReal() returns real
-	return S2R(this)
-
 /** Converts an int to the representative char */
 public function int.toCharsetString() returns string
 	return charset.substring(this, this+1)
