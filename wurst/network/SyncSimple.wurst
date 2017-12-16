@@ -51,11 +51,11 @@ import RegisterEvents
 		1. Create a new SimpleSynchronizer using:
 			let synchronizer = new SimpleSynchronizer()
 
-		2. Send some network events on one (or more) player using the Sync natives (or something else)
+		2. Send some network events on one (or more) player using the gamecache Sync natives
 			if sender == localPlayer
 				// value1 and value2 are some local values only known to localPlayer
-				SyncStoredInteger(gc, mkey, vkey1, value1)
-				SyncStoredInteger(gc, mkey, vkey1, value1)
+				gc.syncInteger(mkey, vkey1, value1)
+				gc.syncInteger(mkey, vkey1, value1)
 		
 		3. Set a callback to be called after all players have synchronized and read the data
 			synchronizer.onSynced(() -> begin
@@ -103,7 +103,7 @@ public class SimpleSynchronizer
 
 	private static constant DUMMY_PLAYER = players[PLAYER_NEUTRAL_PASSIVE]
 	private static constant DUMMY_ID     = 'hfoo'
-	private static constant DUMMY_GHOST  = 'Aeth'
+	private static constant DUMMY_GHOST  = GHOST_VIS_ID
 	private static thistype array reverseLookup
 
 	private unit dummy
@@ -123,16 +123,12 @@ public class SimpleSynchronizer
 		reverseLookup[dummy.getIndex()] = null
 		dummy.remove()
 
-	/**
-		Signals that the local player is ready to continue.
-	**/
+	/** Signals that the local player is ready to continue. **/
 	function sync()
 		addOfflinePlayers()
 		localPlayer.onceSelect(dummy)
 
-	/**
-		Calls the callback when all players have called sync()
-	**/
+	/**	Specifies the callback to be called when all players have called .sync() **/
 	function onSynced(SynchronizationCallback callback)
 		this.callback = callback
 
@@ -144,7 +140,7 @@ public class SimpleSynchronizer
 	private function areAllPlayersSynced() returns boolean
 		return syncedPlayers == allPlayers
 
-	private function onPlayerFinishedSync(player who)
+	protected function onPlayerFinishedSync(player who)
 		syncedPlayers = syncedPlayers.add(who.getId())
 
 		if areAllPlayersSynced()
@@ -152,26 +148,23 @@ public class SimpleSynchronizer
 
 			destroy this
 
-	private function onPlayerLeave(player who)
+	protected function onPlayerLeave(player who)
 		onPlayerFinishedSync(who)
 
-	private static function getSynchronizer(unit what) returns thistype
+	protected static function getSynchronizer(unit what) returns thistype
 		return reverseLookup[what.getIndex()]
 
-	protected static function onInit()
-		registerPlayerUnitEvent(EVENT_PLAYER_UNIT_SELECTED, null, null, () -> begin
-			let synchronizer = getSynchronizer(GetTriggerUnit())
-
-			if synchronizer != null
-				synchronizer.onPlayerFinishedSync(GetTriggerPlayer())
-		end)
-
-		registerPlayerEvent(EVENT_PLAYER_LEAVE, () -> begin
-			let who = GetTriggerPlayer()
-
-			for synchronizer in SimpleSynchronizer
-				synchronizer.onPlayerLeave(who)
-		end)
-		
 init
-	SimpleSynchronizer.onInit()
+	registerPlayerUnitEvent(EVENT_PLAYER_UNIT_SELECTED, null, null, () -> begin
+		let synchronizer = SimpleSynchronizer.getSynchronizer(GetTriggerUnit())
+
+		if synchronizer != null
+			synchronizer.onPlayerFinishedSync(GetTriggerPlayer())
+	end)
+
+	registerPlayerEvent(EVENT_PLAYER_LEAVE, () -> begin
+		let who = GetTriggerPlayer()
+
+		for synchronizer in SimpleSynchronizer
+			synchronizer.onPlayerLeave(who)
+	end)
