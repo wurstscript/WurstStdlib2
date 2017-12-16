@@ -42,7 +42,23 @@ public function max(int x, int y) returns int
 	else
 		r = y
 	return r
-		
+
+/** returns the bigger number of the three parameters */
+public function max(int a, int b, int c) returns int
+	return max(max(a, b), c)
+
+/** returns the bigger number of the four parameters */
+public function max(int a, int b, int c, int d) returns int
+	return max(max(a, b, c), d)
+
+/** returns the bigger number of the five parameters */
+public function max(int a, int b, int c, int d, int e) returns int
+	return max(max(a, b, c, d), e)
+
+/** returns the bigger number of the six parameters */
+public function max(int a, int b, int c, int d, int e, int f) returns int
+	return max(max(a, b, c, d, e), f)
+
 /** returns the bigger number of the two parameters */
 public function max(real x, real y) returns real
 	real r
@@ -52,6 +68,21 @@ public function max(real x, real y) returns real
 		r = y
 	return r
 
+/** returns the bigger number of the three parameters */
+public function max(real a, real b, real c) returns real
+	return max(max(a, b), c)
+
+/** returns the bigger number of the four parameters */
+public function max(real a, real b, real c, real d) returns real
+	return max(max(a, b, c), d)
+
+/** returns the bigger number of the five parameters */
+public function max(real a, real b, real c, real d, real e) returns real
+	return max(max(a, b, c, d), e)
+
+/** returns the bigger number of the six parameters */
+public function max(real a, real b, real c, real d, real e, real f) returns real
+	return max(max(a, b, c, d, e), f)
 
 /** returns the smaller number of the two parameters */
 public function min(int x, int y) returns int
@@ -62,6 +93,22 @@ public function min(int x, int y) returns int
 		r = y
 	return r
 
+/** returns the smaller number of the three parameters */
+public function min(int a, int b, int c) returns int
+	return min(min(a, b), c)
+
+/** returns the smaller number of the four parameters */
+public function min(int a, int b, int c, int d) returns int
+	return min(min(a, b, c), d)
+
+/** returns the smaller number of the five parameters */
+public function min(int a, int b, int c, int d, int e) returns int
+	return min(min(a, b, c, d), e)
+
+/** returns the smaller number of the six parameters */
+public function min(int a, int b, int c, int d, int e, int f) returns int
+	return min(min(a, b, c, d, e), f)
+
 /** returns the smaller number of the two parameters */		
 public function min(real x, real y) returns real
 	real r
@@ -71,6 +118,22 @@ public function min(real x, real y) returns real
 		r = y
 	return r
 	
+/** returns the smaller number of the three parameters */
+public function min(real a, real b, real c) returns real
+	return min(min(a, b), c)
+
+/** returns the smaller number of the four parameters */
+public function min(real a, real b, real c, real d) returns real
+	return min(min(a, b, c), d)
+
+/** returns the smaller number of the five parameters */
+public function min(real a, real b, real c, real d, real e) returns real
+	return min(min(a, b, c, d), e)
+
+/** returns the smaller number of the six parameters */
+public function min(real a, real b, real c, real d, real e, real f) returns real
+	return min(min(a, b, c, d, e), f)
+
 
 @test function minmax()
 	// better test min and max, they are difficult to implement M;D
