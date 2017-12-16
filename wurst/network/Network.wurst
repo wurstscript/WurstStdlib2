@@ -69,9 +69,9 @@ import StringEncoder
 			4. Start the transmission:
 				network.start()
 
-		Sending objects implementing Serializable:
+		Sending objects implementing BufferSerializable:
 			You may find yourself sending not simply raw data, but some
-			class objects. In this case, your class can implement Serializable
+			class objects. In this case, your class can implement BufferSerializable
 			to make your life easier.
 
 			The serialize method takes a buffer and should write the representation
@@ -82,8 +82,8 @@ import StringEncoder
 
 			0. Everything else is the same as previous example, only writing/reading is different.
 
-			1. Make your class implement Serializable:
-				class MyClass implements Serializable
+			1. Make your class implement BufferSerializable:
+				class MyClass implements BufferSerializable
 					var field1 = 0
 					var field2 = 1
 					var field3 = true

@@ -3,7 +3,7 @@ package BufferTests
 import Buffer
 import LinkedList
 
-class SerializableElement implements Serializable
+class SerializableElement implements BufferSerializable
     int id
 	int value
 	
@@ -20,7 +20,7 @@ class SerializableElement implements Serializable
 		id = buffer.readInt()
 		value = buffer.readInt()
 
-class TestSerializable implements Serializable
+class TestSerializable implements BufferSerializable
     var name = "SomeName"
     var id = 0
     var facing = 3.14

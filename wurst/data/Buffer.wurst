@@ -13,7 +13,7 @@ import LinkedList
 	Interface to be implemented by classes that wish to be directly
 	written to classes implementing Buffer.
 */
-public interface Serializable
+public interface BufferSerializable
 	function serialize(Buffer buffer)
 	function deserialize(Buffer buffer)
 
@@ -80,14 +80,14 @@ public interface Buffer
 	/** Writes a string to the buffer **/
 	function writeString(string value)
 
-	/** Writes an object implementing Serializable to the buffer. **/
-	function write(Serializable value)
+	/** Writes an object implementing BufferSerializable to the buffer. **/
+	function write(BufferSerializable value)
 	/**
-		Reads an object implementing Serializable from the buffer.
+		Reads an object implementing BufferSerializable from the buffer.
 		It mutates the object passed to the method instead of
 		returning a new instance.
 	**/
-	function read(Serializable value)
+	function read(BufferSerializable value)
 
 	/** Returns the current buffer mode. **/
 	function getMode() returns BufferMode
@@ -168,11 +168,11 @@ public abstract class AbstractBuffer implements Buffer
 		if SAFETY_CHECKS_ENABLED and not isReadable()
 			error("Buffer: cannot read from buffer with mode " + mode.toString())
 
-	override function write(Serializable object)
+	override function write(BufferSerializable object)
 		checkWrite()
 		object.serialize(this)
 
-	override function read(Serializable object)
+	override function read(BufferSerializable object)
 		checkRead()
 		object.deserialize(this)
 
