@@ -175,5 +175,5 @@ init
 		let synchronizer = SimpleSynchronizer.getSynchronizer(getEnterLeaveUnit())
 
 		if synchronizer != null and not synchronizer.areAllPlayersSynced()
-			Log.warn("SimpleSynchronizer: dummy unit was removed before all players synced, make sure your map doesn't remove neutral dummy units")
+			Log.error("SimpleSynchronizer: dummy unit was removed before all players synced, make sure your map doesn't remove neutral dummy units")
 	end)
