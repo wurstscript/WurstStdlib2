@@ -369,6 +369,11 @@ public class StringBuffer extends AbstractBuffer
 
 		maxBufferSize = min(maxSize, MAX_BACKBUFFER_SIZE)
 
+	ondestroy
+		for chunk in chunks
+			destroy chunk
+		destroy chunks
+
 	/*
 		Write auxiliary methods.
 	*/
@@ -424,7 +429,7 @@ public class StringBuffer extends AbstractBuffer
 
 	// loads the next chunk into the buffer
 	private function nextChunk()
-		if chunks.size() == 0
+		if chunks.isEmpty()
 			fail(BufferFailureMode.EOF, "reached EOF")
 			return
 
@@ -531,44 +536,34 @@ public class StringBuffer extends AbstractBuffer
 	override function writeBoolean(bool value)
 		checkWrite()
 		pushTypeIdentifier(ValueType.BOOLEAN)
-		if value
-			pushString("1")
-		else
-			pushString("0")
+		pushString(value.toInt().toString())
 
 	private function readIntInternal() returns int
-		return S2I(popUntilTerminator())
+		return popUntilTerminator().toInt()
 
 	override function readInt() returns int
 		checkRead()
-		if checkType(ValueType.INTEGER)
-			return readIntInternal()
-		return 0
+		return checkType(ValueType.INTEGER) ? readIntInternal() : 0
 
 	override function readReal() returns real
 		checkRead()
-		if checkType(ValueType.REAL)
-			return S2R(popUntilTerminator())
-		return 0
+		return checkType(ValueType.REAL) ? popUntilTerminator().toReal() : 0
 
 	override function readString() returns string
 		checkRead()
+		string value = null
 		if checkType(ValueType.STRING)
 			let length = readIntInternal()
 			if length < 0 or length > MAX_BUFFER_SIZE
 				fail(BufferFailureMode.MALFORMED_INPUT, "tried to read string of length " + length.toString() +
 					", but max is " + MAX_BUFFER_SIZE.toString())
-				return null
-			return popString(length)
-		return null
+			else
+				value = popString(length)
+		return value
 
 	override function readBoolean() returns bool
 		checkRead()
-		if checkType(ValueType.BOOLEAN)
-			let value = popString(1)
-			if value == "1"
-				return true
-		return false
+		return checkType(ValueType.BOOLEAN) ? (popString(1) == "1") : false
 
 	/*
 		Methods to directly manipulate the underlying chunk storage
