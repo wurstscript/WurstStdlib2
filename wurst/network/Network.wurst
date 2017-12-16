@@ -292,7 +292,10 @@ public class Network
 
 		// save the amount of sync rounds required so that other players know how many times they need to read
 		if localPlayer == sender
-			metadataStore.setCounts(metadata(intCount, realCount, booleanCount, asciiIntCount, syncRounds))
+			meta = metadata(intCount, realCount, booleanCount, asciiIntCount, syncRounds)
+			metaReceived = true
+			metadataStore.setCounts(meta)
+			metadataStore.sync()
 
 		// start sending the first round
 		currentState = NetworkState.SENDING_ROUND
@@ -300,6 +303,9 @@ public class Network
 
 	/** receives info about the transmission after it has been sent by the originating player **/
 	private function receiveMetadata()
+		if localPlayer == sender
+			return
+		
 		// check that we are transitioning from the correct state
 		if SAFETY_CHECKS_ENABLED and currentState != NetworkState.SENDING_ROUND
 			error("Network: trying to receive metadata at a wrong time")

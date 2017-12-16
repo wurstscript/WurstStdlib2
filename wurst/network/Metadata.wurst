@@ -47,7 +47,6 @@ public class MetadataStore
 			loadValue(META_STRING_KEY),
 			loadValue(META_SYNC_ROUNDS_KEY))
 
-	function sync(player sender)
-		if localPlayer == sender
-			for i = 0 to META_COUNT - 1
-				META_CACHE.syncInt(mkey, GamecacheKeys.get(i))
+	function sync()
+		for i = 0 to META_COUNT - 1
+			META_CACHE.syncInt(mkey, GamecacheKeys.get(i))

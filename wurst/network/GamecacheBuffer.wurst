@@ -92,6 +92,7 @@ public class GamecacheBuffer
 		checkType(BufferType.BOOLEAN)
 		if not gc.hasBoolean(parentKey, GamecacheKeys.get(readIndex))
 			error("GamecacheBuffer: trying to read non-present bool #" + readIndex.toString())
+			
 		return gc.loadBoolean(parentKey, GamecacheKeys.get(readIndex))
 
 	function getSynchronizerFunction() returns SynchronizerFunction
@@ -115,7 +116,6 @@ public class GamecacheBuffer
 
 	function sync()
 		let synchronizer = getSynchronizerFunction()
-		// box the counter so that we can modify it inside the closure
 		syncCounter = 0
 
 		while syncCounter <= writeIndex
