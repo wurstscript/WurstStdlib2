@@ -5,26 +5,11 @@ import ErrorHandling
 import Execute
 import Buffer
 
-import initlater Metadata
-import initlater GamecacheKeys
-import initlater GamecacheBuffer
-import initlater StringEncoder
-
-/** 
-	Max amount to be written/read/synced per an execution, to avoid hitting the op-limit.
-	Beware of changes in maximum value as compiler settings are adjusted.
-**/
-@configurable public constant DATA_PER_EXECUTE = 256
-/**
-	Max length of a gamecache key.
-	You may fine-tune it as you see fit to see what works faster.
-**/
-@configurable public constant MAX_CHARACTERS_PER_KEY = 3
-/**
-	Enables or disables various runtime safety checks in the library.
-	Do not disable this unless you are 100% sure your code works correctly.
-**/
-@configurable public constant SAFETY_CHECKS_ENABLED = true
+import NetworkConfig
+import Metadata
+import GamecacheKeys
+import GamecacheBuffer
+import StringEncoder
 
 /********************************************************************************
 	Network library by MoriMori.
@@ -241,21 +226,17 @@ public class Network
 	private var gcStringBuffer  = new GamecacheBuffer(STRING_CACHE, mkey, BufferType.INTEGER)
 
 	// metadata container
-	private var metadataStore = new MetadataStore
+	private var metadataStore = new MetadataStore()
 
 	// the player that we are receiving data from
 	private player sender
 
 	// metadata about the transmission
-	private var meta = metadata(0, 0, 0, 0, 0)
+	private var meta = EMPTY_META
 	private var metaReceived = false
 
-	// these double as write counters for the sender and read counters for the receivers
-	private var currentInt       = 0
-	private var currentReal      = 0
-	private var currentBoolean   = 0
-	private var currentStringInt = 0
-	private var currentRound     = 0
+	// we can reuse the metadata tuple for counters since they share a similar purpose
+	private var counters = EMPTY_META
 
 	// finish callback
 	private NetworkFinishedCallback finishCallback = (Buffer _buffer) -> error("Network: did not specify any callback function")
@@ -275,7 +256,7 @@ public class Network
 	function getData() returns HashBuffer
 		return dataBuffer
 
-	// sends info about the amount of data to be expected to each player
+	/** sends info about the amount of data to be expected to each player **/
 	private function sendMetadata()
 		// we should only send the metadata once
 		if SAFETY_CHECKS_ENABLED and currentState != NetworkState.PREPARING
@@ -289,9 +270,7 @@ public class Network
 			end)
 
 			// encode all strings into ints
-			execute(() -> begin
-				stringEncoder.encode()
-			end)
+			execute(() -> stringEncoder.encode())
 
 		// lock the data buffer so that no players can read or write to it while
 		// the transmission hasn't finished
@@ -304,7 +283,7 @@ public class Network
 		let asciiIntCount = stringEncoder.getIntCount()
 		
 		// calculate max length in each entity buffer
-		let maxLength = max(max(intCount, realCount), max(booleanCount, asciiIntCount))
+		let maxLength = max(intCount, realCount, booleanCount, asciiIntCount)
 
 		// calculate the amount of required sync rounds
 		// we can only send up to GamecacheKeys.count in each sync round, 
@@ -318,7 +297,7 @@ public class Network
 		// start sending the first round
 		sendRound()
 
-	// receives info about the transmission after it has been sent by the originating player
+	/** receives info about the transmission after it has been sent by the originating player **/
 	private function receiveMetadata()
 		// check that we are transitioning from the correct state
 		if SAFETY_CHECKS_ENABLED and currentState != NetworkState.SENDING_ROUND
@@ -333,82 +312,82 @@ public class Network
 	// sorry, but this is needed to avoid hitting the OP limit without too much of a performance hit
 
 	private function writeInts()
-		while currentInt < meta.intCount and gcIntBuffer.getRemainingWrite() > 0
+		while counters.ints < meta.ints and gcIntBuffer.getRemainingWrite() > 0
 			execute(() -> begin
 				var i = 0
-				while currentInt < meta.intCount and gcIntBuffer.getRemainingWrite() > 0 and i < DATA_PER_EXECUTE
+				while counters.ints < meta.ints and gcIntBuffer.getRemainingWrite() > 0 and i < DATA_PER_EXECUTE
 					gcIntBuffer.writeInt(dataBuffer.readInt())
-					currentInt++
+					counters.ints++
 					i++
 			end)
 
 	private function readInts()
-		while currentInt < meta.intCount and gcIntBuffer.getRemainingRead() > 0
+		while counters.ints < meta.ints and gcIntBuffer.getRemainingRead() > 0
 			execute(() -> begin
 				var i = 0
-				while currentInt < meta.intCount and gcIntBuffer.getRemainingRead() > 0 and i < DATA_PER_EXECUTE
+				while counters.ints < meta.ints and gcIntBuffer.getRemainingRead() > 0 and i < DATA_PER_EXECUTE
 					dataBuffer.writeInt(gcIntBuffer.readInt())
-					currentInt++
+					counters.ints++
 					i++
 			end)
 
 	private function writeReals()
-		while currentReal < meta.realCount and gcRealBuffer.getRemainingWrite() > 0
+		while counters.reals < meta.reals and gcRealBuffer.getRemainingWrite() > 0
 			execute(() -> begin
 				var i = 0
-				while currentReal < meta.realCount and gcRealBuffer.getRemainingWrite() > 0 and i < DATA_PER_EXECUTE
+				while counters.reals < meta.reals and gcRealBuffer.getRemainingWrite() > 0 and i < DATA_PER_EXECUTE
 					gcRealBuffer.writeReal(dataBuffer.readReal())
-					currentReal++
+					counters.reals++
 					i++
 			end)
 
 	private function readReals()
-		while currentReal < meta.realCount and gcRealBuffer.getRemainingRead() > 0	
+		while counters.reals < meta.reals and gcRealBuffer.getRemainingRead() > 0	
 			execute(() -> begin
 				var i = 0
-				while currentReal < meta.realCount and gcRealBuffer.getRemainingRead() > 0 and i < DATA_PER_EXECUTE
+				while counters.reals < meta.reals and gcRealBuffer.getRemainingRead() > 0 and i < DATA_PER_EXECUTE
 					dataBuffer.writeReal(gcRealBuffer.readReal())
-					currentReal++
+					counters.reals++
 					i++
 			end)
 
 	private function writeBooleans()
-		while currentBoolean < meta.booleanCount and gcBooleanBuffer.getRemainingWrite() > 0
+		while counters.booleans < meta.booleans and gcBooleanBuffer.getRemainingWrite() > 0
 			execute(() -> begin
 				var i = 0
-				while currentBoolean < meta.booleanCount and gcBooleanBuffer.getRemainingWrite() > 0 and i < DATA_PER_EXECUTE
+				while counters.booleans < meta.booleans and gcBooleanBuffer.getRemainingWrite() > 0 and i < DATA_PER_EXECUTE
 					gcBooleanBuffer.writeBoolean(dataBuffer.readBoolean())
-					currentBoolean++
+					counters.booleans++
 					i++
 			end)
 
 	private function readBooleans()
-		while currentBoolean < meta.booleanCount and gcBooleanBuffer.getRemainingRead() > 0
+		while counters.booleans < meta.booleans and gcBooleanBuffer.getRemainingRead() > 0
 			execute(() -> begin
 				var i = 0
-				while currentBoolean < meta.booleanCount and gcBooleanBuffer.getRemainingRead() > 0 and i < DATA_PER_EXECUTE
+				while counters.booleans < meta.booleans and gcBooleanBuffer.getRemainingRead() > 0 and i < DATA_PER_EXECUTE
 					dataBuffer.writeBoolean(gcBooleanBuffer.readBoolean())
-					currentBoolean++
+					counters.booleans++
 					i++
 			end)
 
 	private function writeStrings()
-		while currentStringInt < meta.asciiIntCount and gcStringBuffer.getRemainingWrite() > 0
+		while counters.asciiInts < meta.asciiInts and gcStringBuffer.getRemainingWrite() > 0
 			execute(() -> begin
 				var i = 0
-				while currentStringInt < meta.asciiIntCount and gcStringBuffer.getRemainingWrite() > 0 and i < DATA_PER_EXECUTE
+				while counters.asciiInts < meta.asciiInts and gcStringBuffer.getRemainingWrite() > 0 and i < DATA_PER_EXECUTE
 					gcStringBuffer.writeInt(stringEncoder.popInt())
-					currentStringInt++
+					counters.asciiInts++
 					i++
 			end)
 
 	private function readStrings()
-		while currentStringInt < meta.asciiIntCount and gcStringBuffer.getRemainingRead() > 0
+		while counters.asciiInts < meta.asciiInts and gcStringBuffer.getRemainingRead() > 0
 			execute(() -> begin
 				var i = 0
-				while currentStringInt < meta.asciiIntCount and gcStringBuffer.getRemainingRead() > 0 and i < DATA_PER_EXECUTE
+				while counters.asciiInts < meta.asciiInts and gcStringBuffer.getRemainingRead() > 0 and i < DATA_PER_EXECUTE
 					stringEncoder.pushInt(gcStringBuffer.readInt())
-					currentStringInt++
+					counters.asciiInts++
 					i++
 			end)
 
@@ -475,9 +454,9 @@ public class Network
 			dataBuffer.setMode(BufferMode.LOCKED)
 
 		// advance to next round and send it if necessary
-		currentRound++
+		counters.syncs++
 		
-		if currentRound < meta.syncCount
+		if counters.syncs < meta.syncs
 			execute(() -> sendRound())
 		else
 			// if this is the last round, finalize and call the callback
@@ -497,10 +476,8 @@ public class Network
 			finishCallback.onFinish(dataBuffer)
 			destroy this
 
-	// this is the function to start sending all data in the intermediate dataBuffer buffer
-	function start()
+	/** this is the function to start sending all data in the intermediate dataBuffer buffer, as well as specifying a callback **/
+	function start(NetworkFinishedCallback callback)
+		finishCallback = callback
 		sendMetadata()
 
-	// this is the function to specify a callback to be called when the transmission has finished
-	function onFinish(NetworkFinishedCallback callback)
-		finishCallback = callback
