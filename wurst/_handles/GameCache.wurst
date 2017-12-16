@@ -5,7 +5,7 @@ import Vectors
 public function gamecache.save() returns boolean
 	return SaveGameCache(this)
 
-public function gamecache.saveInteger(string missionKey, string key, integer value)
+public function gamecache.saveInt(string missionKey, string key, integer value)
 	StoreInteger(this, missionKey, key, value)
 
 public function gamecache.saveReal(string missionKey, string key, real value)
@@ -20,7 +20,7 @@ public function gamecache.saveUnit(string missionKey, string key, unit value)
 public function gamecache.saveString(string missionKey, string key, string value)
 	StoreString(this, missionKey, key, value)
 
-public function gamecache.hasInteger(string missionKey, string key) returns boolean
+public function gamecache.hasInt(string missionKey, string key) returns boolean
 	return HaveStoredInteger(this, missionKey, key)
 
 public function gamecache.hasReal(string missionKey, string key) returns boolean
@@ -41,7 +41,7 @@ public function gamecache.flush()
 public function gamecache.flushMission(string missionKey)
 	FlushStoredMission(this, missionKey)
 
-public function gamecache.flushInteger(string missionKey, string key)
+public function gamecache.flushInt(string missionKey, string key)
 	FlushStoredInteger(this, missionKey, key)
 
 public function gamecache.flushReal(string missionKey, string key)
@@ -56,7 +56,7 @@ public function gamecache.flushUnit(string missionKey, string key)
 public function gamecache.flushString(string missionKey, string key)
 	FlushStoredString(this, missionKey, key)
 	
-public function gamecache.loadInteger(string missionKey, string key) returns integer
+public function gamecache.loadInt(string missionKey, string key) returns integer
 	return GetStoredInteger(this, missionKey, key)
 
 public function gamecache.loadReal(string missionKey, string key) returns real
@@ -71,7 +71,7 @@ public function gamecache.restoreUnit(string missionKey, string key, player whic
 public function gamecache.loadString(string missionKey, string key) returns string
 	return GetStoredString(this, missionKey, key)
 
-public function gamecache.syncInteger(string missionKey, string key)
+public function gamecache.syncInt(string missionKey, string key)
 	SyncStoredInteger(this, missionKey, key)
 
 public function gamecache.syncReal(string missionKey, string key)

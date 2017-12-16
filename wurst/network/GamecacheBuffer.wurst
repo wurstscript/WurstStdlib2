@@ -1,0 +1,133 @@
+package GamecacheBuffer
+import GamecacheKeys
+import Execute
+import Buffer
+import Network
+import ErrorHandling
+
+interface SynchronizerFunction
+	function sync(string key)
+
+public enum BufferType
+	INTEGER
+	REAL
+	BOOLEAN
+
+/**
+	This class is used as a buffer for sending data in each round.
+	Each instance is restricted to only writing one type, to save
+	us from keeping a crapton of counter variables at least here.
+**/
+public class GamecacheBuffer
+	private gamecache gc
+	private string parentKey
+	private int writeIndex = -1
+	private int readIndex  = -1
+	private BufferType bufferType
+	private BufferMode currentMode
+	private var syncCounter = 0
+
+	construct(gamecache gc, string parentKey, BufferType bufferType)
+		this.gc = gc
+		this.parentKey = parentKey
+		this.bufferType = bufferType
+
+	// returns the amount of writes available for this buffer
+	function getRemainingWrite() returns int
+		return GamecacheKeys.count - writeIndex - 1
+
+	// returns the amount of reads available for this buffer
+	function getRemainingRead() returns int
+		return GamecacheKeys.count - readIndex - 1
+
+	function getSize() returns int
+		return writeIndex + 1
+
+	// these functions will inline with uncheckedDispatch on
+	private function checkType(BufferType toCheck)
+		if SAFETY_CHECKS_ENABLED and bufferType != toCheck
+			error("GamecacheBuffer: invalid buffer usage - mismatched type")
+
+	private function advanceWriteIndex()
+		if SAFETY_CHECKS_ENABLED and writeIndex + 1 >= GamecacheKeys.count
+			error("GamecacheBuffer: trying to write out of available keys bounds")
+		writeIndex++
+	
+	private function advanceReadIndex()
+		if SAFETY_CHECKS_ENABLED and readIndex + 1 >= GamecacheKeys.count
+			error("GamecacheBuffer: trying to read out of available keys bounds")
+		readIndex++
+
+	function writeInt(int value)
+		advanceWriteIndex()
+		checkType(BufferType.INTEGER)
+		gc.saveInt(parentKey, GamecacheKeys.getKey(writeIndex), value)
+
+	function writeReal(real value)
+		advanceWriteIndex()
+		checkType(BufferType.REAL)
+		gc.saveReal(parentKey, GamecacheKeys.getKey(writeIndex), value)
+
+	function writeBoolean(bool value)
+		advanceWriteIndex()
+		checkType(BufferType.BOOLEAN)
+		gc.saveBoolean(parentKey, GamecacheKeys.getKey(writeIndex), value)
+
+	function readInt() returns int
+		advanceReadIndex()
+		checkType(BufferType.INTEGER)
+		if not gc.hasInt(parentKey, GamecacheKeys.getKey(readIndex))
+			error("GamecacheBuffer: trying to read non-present int #" + readIndex.toString())
+		return gc.loadInt(parentKey, GamecacheKeys.getKey(readIndex))
+
+	function readReal() returns real
+		advanceReadIndex()
+		checkType(BufferType.REAL)
+		if not gc.hasReal(parentKey, GamecacheKeys.getKey(readIndex))
+			error("GamecacheBuffer: trying to read non-present real #" + readIndex.toString())
+		return gc.loadReal(parentKey, GamecacheKeys.getKey(readIndex))
+		
+	function readBoolean() returns bool
+		advanceReadIndex()
+		checkType(BufferType.BOOLEAN)
+		if not gc.hasBoolean(parentKey, GamecacheKeys.getKey(readIndex))
+			error("GamecacheBuffer: trying to read non-present bool #" + readIndex.toString())
+		return gc.loadBoolean(parentKey, GamecacheKeys.getKey(readIndex))
+
+	function getSynchronizerFunction() returns SynchronizerFunction
+		SynchronizerFunction synchronizer = null
+
+		switch bufferType
+			case BufferType.INTEGER
+				synchronizer = (string key) -> begin
+					gc.syncInt(parentKey, key)
+				end
+			case BufferType.REAL
+				synchronizer = (string key) -> begin
+					gc.syncReal(parentKey, key)
+				end
+			case BufferType.BOOLEAN
+				synchronizer = (string key) -> begin
+					gc.syncBoolean(parentKey, key)
+				end
+
+		return synchronizer
+
+	function sync()
+		let synchronizer = getSynchronizerFunction()
+		// box the counter so that we can modify it inside the closure
+		syncCounter = 0
+
+		while syncCounter <= writeIndex
+			execute(() -> begin
+				var i = 0
+				// keep syncing until we hit the limit or finish
+				while syncCounter <= writeIndex and i < DATA_PER_EXECUTE
+					synchronizer.sync(GamecacheKeys.getKey(syncCounter))
+					syncCounter++
+					i++
+			end)
+
+	function reset()
+		writeIndex = 0
+		readIndex = 0

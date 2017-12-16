@@ -1,0 +1,65 @@
+package Metadata
+import GamecacheKeys
+
+public tuple metadata(int intCount, int realCount, int booleanCount, int asciiIntCount, int syncCount)
+
+public function metadata.setIntCount(int value) returns metadata
+	return metadata(value, this.realCount, this.booleanCount, this.asciiIntCount, this.syncCount)
+
+public function metadata.setRealCount(int value) returns metadata
+	return metadata(this.intCount, value, this.booleanCount, this.asciiIntCount, this.syncCount)
+
+public function metadata.setBooleanCount(int value) returns metadata
+	return metadata(this.intCount, this.realCount, value, this.asciiIntCount, this.syncCount)
+
+public function metadata.setAsciiIntCount(int value) returns metadata
+	return metadata(this.intCount, this.realCount, this.booleanCount, value, this.syncCount)
+
+public function metadata.setSyncCount(int value) returns metadata
+	return metadata(this.intCount, this.realCount, this.booleanCount, this.asciiIntCount, value)
+
+/**
+	Simple wrapper class for metadata.
+**/
+public class MetadataStore
+	private static constant META_CACHE = InitGameCache("m.w3v")
+
+	// keys used for metadata about the transmission
+	private static constant META_INTEGER_KEY     = GamecacheKeys.getKey(0)
+	private static constant META_REAL_KEY        = GamecacheKeys.getKey(1)
+	private static constant META_BOOLEAN_KEY     = GamecacheKeys.getKey(2)
+	private static constant META_STRING_KEY      = GamecacheKeys.getKey(3)
+	private static constant META_SYNC_ROUNDS_KEY = GamecacheKeys.getKey(4)
+	// total amount of metadata keys
+	private static constant META_COUNT = 5
+
+	private var mkey = GamecacheKeys.getKey(this castTo int)
+
+	construct()
+		META_CACHE.flushMission(mkey)
+
+	private function saveValue(string key, integer value)
+		META_CACHE.saveInt(mkey, key, value)
+
+	private function loadValue(string key) returns integer
+		return META_CACHE.loadInt(mkey, key)
+
+	function setCounts(metadata data)
+		saveValue(META_INTEGER_KEY,     data.intCount)
+		saveValue(META_REAL_KEY,        data.realCount)
+		saveValue(META_BOOLEAN_KEY,     data.booleanCount)
+		saveValue(META_STRING_KEY,      data.asciiIntCount)
+		saveValue(META_SYNC_ROUNDS_KEY, data.syncCount)
+
+	function getCounts() returns metadata
+		return metadata(
+			loadValue(META_INTEGER_KEY),
+			loadValue(META_REAL_KEY),
+			loadValue(META_BOOLEAN_KEY),
+			loadValue(META_STRING_KEY),
+			loadValue(META_SYNC_ROUNDS_KEY))
+
+	function sync(player sender)
+		if localPlayer == sender
+			for i = 0 to META_COUNT - 1
+				META_CACHE.syncInt(mkey, GamecacheKeys.getKey(i))
