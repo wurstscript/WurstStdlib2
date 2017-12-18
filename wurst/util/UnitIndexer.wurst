@@ -174,5 +174,5 @@ public class UnitIndex
 
 // Auto instanciation/destruction
 init
-	onEnter(() -> getEnterLeaveUnit().toUnitIndex())
-	onLeave(() -> getEnterLeaveUnit().deindex())
+	onEnter(() -> getEnterLeaveUnit().shouldIndex() ? getEnterLeaveUnit().toUnitIndex() : 0)
+	onLeave(() -> getEnterLeaveUnit().shouldIndex() ? getEnterLeaveUnit().deindex() : 0)
