@@ -1,0 +1,33 @@
+package GamecacheKeys
+
+import Execute
+import ErrorHandling
+import NetworkConfig
+
+// characters that can be used as GC keys
+// their amount also determines the size of a single 'round'
+constant string GC_KEYS = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`{|}~"
+
+public class GamecacheKeys
+	static string array keys
+	static var count = 0
+
+	static function get(int i) returns string
+		if i >= count
+			error("Network: trying to get invalid GC key")
+		return keys[i]
+
+	protected static function precompute(string prefix, int depth)
+		if depth == 0
+			for i = 0 to GC_KEYS.length() - 1
+				keys[count] = prefix + GC_KEYS.charAt(i)
+				count++
+		else
+			for i = 0 to GC_KEYS.length() - 1
+				execute(() -> precompute(prefix + GC_KEYS.charAt(i), depth - 1))
+
+	protected static function precompute(int length)
+		precompute("", length - 1)
+init
+	for i = 1 to MAX_CHARACTERS_PER_KEY - 1
+		execute(() -> GamecacheKeys.precompute(i))

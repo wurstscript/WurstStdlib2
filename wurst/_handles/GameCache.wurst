@@ -1,0 +1,87 @@
+package GameCache
+import NoWurst
+import Vectors
+
+public function gamecache.save() returns boolean
+	return SaveGameCache(this)
+
+public function gamecache.saveInt(string missionKey, string key, integer value)
+	StoreInteger(this, missionKey, key, value)
+
+public function gamecache.saveReal(string missionKey, string key, real value)
+	StoreReal(this, missionKey, key, value)
+
+public function gamecache.saveBoolean(string missionKey, string key, boolean value)
+	StoreBoolean(this, missionKey, key, value)
+
+public function gamecache.saveUnit(string missionKey, string key, unit value)
+	StoreUnit(this, missionKey, key, value)
+
+public function gamecache.saveString(string missionKey, string key, string value)
+	StoreString(this, missionKey, key, value)
+
+public function gamecache.hasInt(string missionKey, string key) returns boolean
+	return HaveStoredInteger(this, missionKey, key)
+
+public function gamecache.hasReal(string missionKey, string key) returns boolean
+	return HaveStoredReal(this, missionKey, key)
+
+public function gamecache.hasBoolean(string missionKey, string key) returns boolean
+	return HaveStoredBoolean(this, missionKey, key)
+
+public function gamecache.hasUnit(string missionKey, string key) returns boolean
+	return HaveStoredUnit(this, missionKey, key)
+
+public function gamecache.hasString(string missionKey, string key) returns boolean
+	return HaveStoredString(this, missionKey, key)
+
+public function gamecache.flush()
+	FlushGameCache(this)
+
+public function gamecache.flushMission(string missionKey)
+	FlushStoredMission(this, missionKey)
+
+public function gamecache.flushInt(string missionKey, string key)
+	FlushStoredInteger(this, missionKey, key)
+
+public function gamecache.flushReal(string missionKey, string key)
+	FlushStoredReal(this, missionKey, key)
+
+public function gamecache.flushBoolean(string missionKey, string key)
+	FlushStoredBoolean(this, missionKey, key)
+
+public function gamecache.flushUnit(string missionKey, string key)
+	FlushStoredUnit(this, missionKey, key)
+
+public function gamecache.flushString(string missionKey, string key)
+	FlushStoredString(this, missionKey, key)
+	
+public function gamecache.loadInt(string missionKey, string key) returns integer
+	return GetStoredInteger(this, missionKey, key)
+
+public function gamecache.loadReal(string missionKey, string key) returns real
+	return GetStoredReal(this, missionKey, key)
+
+public function gamecache.loadBoolean(string missionKey, string key) returns boolean
+	return GetStoredBoolean(this, missionKey, key)
+
+public function gamecache.restoreUnit(string missionKey, string key, player whichPlayer, vec2 pos, angle facing) returns unit
+	return RestoreUnit(this, missionKey, key, whichPlayer, pos.x, pos.y, facing.degrees())
+
+public function gamecache.loadString(string missionKey, string key) returns string
+	return GetStoredString(this, missionKey, key)
+
+public function gamecache.syncInt(string missionKey, string key)
+	SyncStoredInteger(this, missionKey, key)
+
+public function gamecache.syncReal(string missionKey, string key)
+	SyncStoredReal(this, missionKey, key)
+
+public function gamecache.syncBoolean(string missionKey, string key)
+	SyncStoredBoolean(this, missionKey, key)
+
+public function gamecache.syncUnit(string missionKey, string key)
+	SyncStoredUnit(this, missionKey, key)
+
+public function gamecache.syncString(string missionKey, string key)
+	SyncStoredString(this, missionKey, key)
