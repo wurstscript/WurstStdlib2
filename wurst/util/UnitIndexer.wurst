@@ -110,11 +110,22 @@ unit deindexedUnit = null
 
 @configurable public function shouldIndex(unit u) returns boolean
 	return true
+
 /**  Returns the integer index of this unit. 
 	Can be configured by the user to supply a custom unit indexer which won't break 
 	other stdlib components. */
 @configurable public function unit.getIndex() returns integer
 	return this.getUserData()
+
+/**  Returns the UnitIndex associated with this unit, creating a new one if necessary. */
+@configurable public function unit.toUnitIndex() returns UnitIndex
+	UnitIndex instance = this.getUserData() castTo UnitIndex
+
+	if (instance == null)
+		instance = new UnitIndex(this)
+
+	return instance
+
 
 /**  Returns the last indexed unit. */
 public function getIndexedUnit() returns unit
@@ -133,15 +144,6 @@ public function onUnitDeindex(code func)
 	Use the getIndexedUnit() function to refer to the indexed unit. */
 public function onUnitIndex(code func)
 	onIndexTrigger.addCondition(Condition(func))
-
-/**  Returns the UnitIndex associated with this unit, creating a new one if necessary. */
-public function unit.toUnitIndex() returns UnitIndex
-	UnitIndex instance = this.getUserData() castTo UnitIndex
-
-	if (instance == null)
-		instance = new UnitIndex(this)
-
-	return instance
 
 /**  Deindexes a unit.
 	Returns whether the unit was originally indexed. */
