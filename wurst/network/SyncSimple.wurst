@@ -9,11 +9,15 @@ import OnUnitEnterLeave
 import ClosureForGroups
 
 /**
-	Configure this function if you need to apply anything to the dummy when it is created.
+	Configure this function if you need to change how the dummy is created.
+	WARNING: The dummy must be selectable and not locusted, or else it will not work.
 **/
 @configurable
-function configureDummy(unit dummy)
-	skip
+function getDummy() returns unit
+	return createUnit(DUMMY_PLAYER, 'hfoo', boundMax, 0 .fromDeg())
+	..addAbility(GHOST_VIS_ID)
+	..pause()
+	..setScale(0)
 
 /********************************************************************************
 	SyncSimple library by MoriMori.
@@ -112,9 +116,6 @@ public interface SynchronizationCallback
 public class SimpleSynchronizer
 	use LinkedListModule
 
-	private static constant DUMMY_PLAYER = players[PLAYER_NEUTRAL_PASSIVE]
-	private static constant DUMMY_ID     = 'hfoo'
-	private static constant DUMMY_GHOST  = GHOST_VIS_ID
 	private static thistype array reverseLookup
 
 	private unit dummy
@@ -124,11 +125,7 @@ public class SimpleSynchronizer
 	private SynchronizationCallback callback = null
 
 	construct()
-		dummy = createUnit(DUMMY_PLAYER, DUMMY_ID, boundMax, 0 .fromDeg())
-		..addAbility(DUMMY_GHOST)
-		..pause()
-		..setScale(0)
-		configureDummy(dummy)
+		dummy = getDummy()
 		reverseLookup[dummy.getIndex()] = this
 
 	ondestroy
