@@ -1,0 +1,27 @@
+package BufferAdapters
+
+import Buffer
+import Execute
+
+function StringBuffer.transferValueTo(HashBuffer sink)
+	let valueType = this.peekType()
+
+	switch valueType
+		case INTEGER
+			sink.writeInt(this.readInt())
+		case REAL
+			sink.writeReal(this.readReal())
+		case STRING
+			sink.writeString(this.readString())
+		case BOOLEAN
+			sink.writeBoolean(this.readBoolean())
+		default
+
+public function StringBuffer.transfer(HashBuffer sink)
+	while this.canRead()
+		execute(() -> begin
+			var counter = 0
+			while this.canRead() and counter < 64
+				this.transferValueTo(sink)
+				counter++
+		end)

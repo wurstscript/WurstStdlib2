@@ -565,6 +565,16 @@ public class StringBuffer extends AbstractBuffer
 		checkRead()
 		return checkType(ValueType.BOOLEAN) ? (popString(1) == "1") : false
 
+	/** Looks at the type of the next value, if any. **/
+	function peekType() returns ValueType
+		let valueType = popTypeIdentifier()
+		// put the identifier back into the buffer
+		readBuffer = valueType.toString() + readBuffer
+		return valueType
+
+	function canRead() returns boolean
+		return isDataAvailable()
+
 	/*
 		Methods to directly manipulate the underlying chunk storage
 	*/
