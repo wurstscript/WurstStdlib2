@@ -8,6 +8,13 @@ import MapBounds
 import OnUnitEnterLeave
 import ClosureForGroups
 
+/**
+	Configure this function if you need to apply anything to the dummy when it is created.
+**/
+@configurable
+function configureDummy(unit dummy)
+	skip
+
 /********************************************************************************
 	SyncSimple library by MoriMori.
 
@@ -121,6 +128,7 @@ public class SimpleSynchronizer
 		..addAbility(DUMMY_GHOST)
 		..pause()
 		..setScale(0)
+		configureDummy(dummy)
 		reverseLookup[dummy.getIndex()] = this
 
 	ondestroy
