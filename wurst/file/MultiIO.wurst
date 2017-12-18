@@ -1,0 +1,372 @@
+package MultiIO
+
+import LinkedList
+import SimpleIO
+import ErrorHandling
+import Execute
+import Buffer
+import LinkedListModule
+import TimerUtils
+import GameTimer
+
+class FilePacket
+	string packet
+
+	construct(string packet)
+		this.packet = packet
+
+function getChunkPath(string path, int id) returns string
+	return path + "/chunk" + id.toString() + ".txt"
+
+/** Simple interface of an IO task */
+interface IOTask
+	function run()
+
+/** 
+	Interface for an IO task executor. Tasks are meant to run in the same
+	order that they are submitted. When there are no more tasks in the queue
+	to process, the callback specified in .onComplete() will be called
+	and .isFinished() will return true.
+*/
+interface IOTaskExecutor
+	function submit(IOTask task)
+
+	function start()
+
+	function onComplete(IOTask task)
+
+	function isFinished() returns boolean
+
+/**
+	Common functionality for executors.
+**/
+abstract class AbstractIOTaskExecutor implements IOTaskExecutor
+	protected var taskQueue = new LinkedList<IOTask>
+	protected IOTask onCompleteTask = null
+	protected var finished = true
+
+	ondestroy
+		for task in taskQueue
+			destroy task
+		destroy taskQueue
+		if onCompleteTask != null
+			destroy onCompleteTask
+
+	override function submit(IOTask task)
+		taskQueue.add(task)
+
+	override function onComplete(IOTask task)
+		onCompleteTask = task
+
+	override function isFinished() returns boolean
+		return finished
+
+	function executeNext()
+		if finished
+			error("AbstractIOTaskExecutor: trying to execute in a finished executor")
+
+		if not taskQueue.isEmpty()
+			execute(() -> begin
+				let task = taskQueue.dequeue()
+				task.run()
+				destroy task
+			end)
+		else
+			execute(() -> onCompleteTask.run())
+			destroy onCompleteTask
+			finished = true
+
+/**
+	A task executor that immediately executes all tasks
+	submitted to it when .start() is called.
+**/
+class InstantIOTaskExecutor extends AbstractIOTaskExecutor
+	override function start()
+		if not finished
+			error("InstantIOTaskExecutor: trying to start an executor that is already running")
+
+		finished = false
+		while not finished
+			executeNext()
+
+/**
+	A task executor that executes tasks over time, with a
+	specifiable delay between each task invocation.
+	In FileWriter and FileReader this is used to spread over
+	the lag from writing/loading to multiple files.
+**/
+class TimedIOTaskExecutor extends AbstractIOTaskExecutor
+	use LinkedListModule
+
+	// timer that periodically checks every executor and updates it as necessary
+	protected static constant updater = getTimer()
+	// amount of currently running executors
+	private static var runningCount = 0
+	// whether the periodic timer has been started already
+	private static var timerStarted = false
+	// delay between each task execution
+	private var delay = 0.0
+	// last time a task was executed
+	private var lastExecution = 0.0
+
+	construct(real delay)
+		this.delay = delay
+			
+	protected static function updateInstances()
+		for executor in TimedIOTaskExecutor
+			executor.update()
+
+	// called when an executor instance has started working
+	private static function onStart()
+		if not timerStarted
+			// if the timer has not started yet, start it
+			//updater.startPeriodic(ANIMATION_PERIOD, function updateInstances)
+			//timerStarted = true
+		else
+			// else just resume it
+			//updater.resume()
+
+	// called when an executor instance has finished it's work
+	private static function onStop()
+		if timerStarted and runningCount == 0
+			//updater.pause()
+
+	// updates this instance if necessary
+	private function update()
+		if not finished and lastExecution + delay <= currentTime
+			executeNext()
+			lastExecution = currentTime
+			if finished
+				runningCount--
+				// stop the timer if necessary
+				onStop()
+				
+	override function start()
+		if not finished
+			error("TimedIOTaskExecutor: trying to start an executor that is already running")
+
+		finished = false
+		runningCount++
+		// make sure the updater timer is running
+		onStart()
+
+init
+	TimedIOTaskExecutor.updater.startPeriodic(ANIMATION_PERIOD, function TimedIOTaskExecutor.updateInstances)
+
+public interface FileCallback
+	function run()
+
+/**
+	Common functionality for file classes.
+**/
+abstract class AbstractFile
+	// this string will be the only packet in the last file, determining the end of a multifile
+	protected constant TERMINATOR = "lastfile"
+	protected var buffer = new HashBuffer()
+	protected var multiMode = true
+	protected var path = ""
+	protected IOTaskExecutor executor = null
+	protected var working = false
+
+	construct(string path, boolean multiMode, real delay)
+		initialize(path, multiMode, delay)		
+
+	construct(string path, boolean multiMode)
+		initialize(path, multiMode, 0)
+
+	construct(string path, real delay)
+		initialize(path, true, delay)
+
+	construct(string path)
+		initialize(path, true, 0)
+
+	private function initialize(string path, boolean multiMode, real delay)
+		if delay > 0
+			executor = new TimedIOTaskExecutor(delay)
+		else
+			executor = new InstantIOTaskExecutor()
+		
+		this.path = path
+		this.multiMode = multiMode
+
+	ondestroy
+		destroy buffer
+		destroy executor
+
+/**
+	This is a file IO class supporting a special 'multifile' mode
+	to circumvent the natural limitation of WC3's Preload API,
+	allowing us to write as much data as we need to be later read
+	with FileReader.
+
+	Writing is line-based, meaning we write line-by-line, and reading
+	also works line-by-line.
+
+	Usage:
+		1. Create a new instance of the class, using the constructor you need
+			let writer = new FileWriter("path/to/folder")
+		
+		2. Queue some data for writing
+			writer.write("abc")
+			writer.write("cba")
+
+		3. Save the file, specifying a callback to be called when all data has been saved
+			writer.save(() -> doStuffAfterSave())
+
+		4. Destroy the instance
+
+		Note: The class can be used again after saving once.
+**/
+public class FileWriter extends AbstractFile
+	/**
+		If multiMode is true, then path should be the path to a folder where the data will be stored.
+		Otherwise, the path should be a file path.
+
+		Delay is the number of seconds to wait between each file write operation. You should use
+		this if you expect to write a lot of data to prevent players from lagging out.
+	**/
+	construct(string path, boolean multiMode, real delay)
+		super(path, multiMode, delay)		
+
+	construct(string path, boolean multiMode)
+		super(path, multiMode)
+
+	construct(string path, real delay)
+		super(path, delay)
+
+	construct(string path)
+		super(path)
+
+	/**
+		Queue a single line to be written to the file when .save() is called.
+	**/
+	function writeLine(string value)
+		if not multiMode and buffer.getStringCount() == PACKETS_PER_FILE
+			error("FileWriter: exceeded max packet count")
+		buffer.writeString(value)
+
+	private function saveTerminator(int chunkId)
+		executor.submit(() -> begin
+			IOWriter.prepareWrite()
+			IOWriter.writePacket(TERMINATOR)
+			IOWriter.flushFile(getChunkPath(path, chunkId))
+		end)
+
+	private function saveSingle(int chunkId)
+		executor.submit(() -> begin
+			IOWriter.prepareWrite()
+			// write out as much data as we can into this file
+			while buffer.hasString() and IOWriter.canWrite()
+				IOWriter.writePacket(buffer.readString())
+
+			if multiMode
+				IOWriter.flushFile(getChunkPath(path, chunkId))
+			else
+				IOWriter.flushFile(path)
+		end)
+
+	/**
+		Starts saving the queue data to disk, and specifies a callback when all data has been saved.
+	**/
+	function save(FileCallback callback)
+		if working
+			error("FileWriter: trying to save the file, but it is already saving")
+
+		if multiMode
+			// count the amount of chunks we need to save
+			let fileCount = (buffer.getStringCount() div PACKETS_PER_FILE) + 1
+			for i = 0 to fileCount
+				saveSingle(i)
+			// last file is a terminator file telling us we should stop
+			saveTerminator(fileCount)
+		else
+			saveSingle(0)
+
+		if callback != null
+			executor.onComplete(() -> begin
+				working = false
+				callback.run()
+			end)
+		working = true
+		executor.start()
+
+/**
+	This is a file IO class supporting a special 'multifile' mode that allows
+	reading back multifiles written by FileWriter.
+
+	Reading is line-based.
+
+	Usage:
+		1. Create a new instance of the class
+			let reader = new FileReader("path/to/folder")
+		
+		2. Load the data, and specify a callback when the file has loaded, and read the data
+			reader.load(() -> begin
+				while reader.canRead()
+					doSomethingWithData(reader.readLine())
+			end)
+		
+		3. Destroy the instance
+			destroy reader
+**/	
+public class FileReader extends AbstractFile
+	/**
+		If multiMode is true, then path should be the path to a folder where the data will be read from.
+		Otherwise, the path should be a file path.
+
+		Delay is the number of seconds to wait between each file read operation. You should use
+		this if you expect to read a lot of data to prevent players from lagging out.
+	**/
+	construct(string path, boolean multiMode, real delay)
+		super(path, multiMode, delay)		
+
+	construct(string path, boolean multiMode)
+		super(path, multiMode)
+
+	construct(string path, real delay)
+		super(path, delay)
+
+	construct(string path)
+		super(path)
+
+	private function readChunk(int chunkId)
+		executor.submit(() -> begin
+			// select proper file depending on multimode
+			if multiMode
+				IOReader.load(getChunkPath(path, chunkId))
+			else
+				IOReader.load(path)
+
+			// if this file is the terminating file, we need to stop
+			// we also need to stop if there is no data available (no file at all or it's empty)
+			if IOReader.getPacket(0) != TERMINATOR and IOReader.canRead()
+				while IOReader.canRead()
+					buffer.writeString(IOReader.readPacket())
+				
+				// start reading the next file if we're in multimode
+				if multiMode
+					readChunk(chunkId + 1)
+		end)
+	
+	/**
+		Starts loading the file and specifies a callback to be called when all data has loaded
+	**/
+	function load(FileCallback callback)
+		if working
+			error("FileReader: trying to load the file, but it is already loading")
+
+		executor.onComplete(() -> begin
+			working = false
+			callback.run()
+		end)
+		readChunk(0)
+		working = true
+		executor.start()
+
+	/** Returns true if there's data to be read still */
+	function canRead() returns boolean
+		return buffer.hasString()
+
+	/** Reads one line as written by FileWriter.writeLine() */
+	function readLine() returns string
+		return buffer.readString()
