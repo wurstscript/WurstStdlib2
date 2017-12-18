@@ -6,6 +6,7 @@ import LinkedListModule
 import RegisterEvents
 import MapBounds
 import OnUnitEnterLeave
+import ClosureForGroups
 
 /********************************************************************************
 	SyncSimple library by MoriMori.
@@ -77,13 +78,16 @@ import OnUnitEnterLeave
 ********************************************************************************/
 
 // briefly selects the specified unit by the player
+unit last = null
+var count = 0
 function player.onceSelect(unit what)
 	ENUM_GROUP.enumUnitsSelected(this, null)
-	unit last = null
-	var count = 0
-	for selected in ENUM_GROUP
+	last = null
+	count = 0
+	forUnitsSelected(this, (unit u) -> begin
 		count++
-		last = selected
+		last = u
+	end)
 
 	if count >= 12
 		this.unselect(last)
@@ -94,8 +98,6 @@ function player.onceSelect(unit what)
 
 	if count >= 12
 		this.select(last)
-
-	ENUM_GROUP.destr()
 	
 public interface SynchronizationCallback
 	function onSynchronized()
