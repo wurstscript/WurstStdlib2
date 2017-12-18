@@ -2,6 +2,7 @@ package BufferAdapters
 
 import Buffer
 import Execute
+import MultiIO
 
 function StringBuffer.transferValueTo(HashBuffer sink)
 	let valueType = this.peekType()
@@ -24,4 +25,22 @@ public function StringBuffer.transfer(HashBuffer sink)
 			while this.canRead() and counter < 64
 				this.transferValueTo(sink)
 				counter++
+		end)
+
+public function StringBuffer.populateFromFile(FileReader reader)
+	while reader.canRead()
+		execute(() -> begin
+			var counter = 0
+			while reader.canRead()and counter < 64
+				this.writeChunk(reader.readLine())
+				counter++
+		end)
+
+public function FileWriter.populateFromBuffer(StringBuffer buffer)
+	while buffer.hasChunk()
+		execute(() -> begin
+			var counter = 0
+			while buffer.hasChunk() and counter < 64
+				this.writeLine(buffer.readChunk())
+				counter++	
 		end)

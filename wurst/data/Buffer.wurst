@@ -578,13 +578,13 @@ public class StringBuffer extends AbstractBuffer
 	/*
 		Methods to directly manipulate the underlying chunk storage
 	*/
-	function pushChunk(string value)
+	function writeChunk(string value)
 		chunks.push(new ChunkElement(value))
 
 	function hasChunk() returns boolean
 		return chunks.size() > 0
 
-	function popChunk() returns string
+	function readChunk() returns string
 		if not hasChunk()
 			error("StringBuffer: trying to pop non-existent chunk")
 		let chunk = chunks.dequeue()
