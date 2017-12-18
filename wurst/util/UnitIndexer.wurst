@@ -108,6 +108,8 @@ trigger onDeindexTrigger = CreateTrigger()
 unit indexedUnit = null
 unit deindexedUnit = null
 
+@configurable public function unit.shouldIndex() returns boolean
+	return true
 /**  Returns the integer index of this unit. 
 	Can be configured by the user to supply a custom unit indexer which won't break 
 	other stdlib components. */
