@@ -108,7 +108,7 @@ trigger onDeindexTrigger = CreateTrigger()
 unit indexedUnit = null
 unit deindexedUnit = null
 
-@configurable public function unit.shouldIndex() returns boolean
+@configurable public function shouldIndex(unit u) returns boolean
 	return true
 /**  Returns the integer index of this unit. 
 	Can be configured by the user to supply a custom unit indexer which won't break 
@@ -174,5 +174,5 @@ public class UnitIndex
 
 // Auto instanciation/destruction
 init
-	onEnter(() -> getEnterLeaveUnit().shouldIndex() ? getEnterLeaveUnit().toUnitIndex() : 0)
-	onLeave(() -> getEnterLeaveUnit().shouldIndex() ? getEnterLeaveUnit().deindex() : 0)
+	onEnter(() -> shouldIndex(getEnterLeaveUnit()) ? getEnterLeaveUnit().toUnitIndex() : 0)
+	onLeave(() -> shouldIndex(getEnterLeaveUnit()) ? getEnterLeaveUnit().deindex() : 0)
