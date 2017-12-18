@@ -1,0 +1,108 @@
+package SimpleIO
+
+import ErrorHandling
+
+// maximum amount of readable packets per file
+public constant PACKETS_PER_FILE = 16 	
+// maximum payload size of a readable packet
+public constant MAX_PACKET_LENGTH = 209
+// maximum payload size of a single file
+public constant MAX_FILE_LENGTH = PACKETS_PER_FILE * MAX_PACKET_LENGTH 
+
+/**
+	Low-level static writer wrapper around the Preload API
+	Supports writing directly to Preload, or can write
+	readable "packets", max PACKETS_PER_FILE for a file, 
+	each up to MAX_PACKET_LENGTH characters. 
+
+	WARNING: Due to the way how WC3 handles file IO, you have to use
+	this class only in one place at once. Avoid using it over time, lest you
+	risk causing conflicts with other clients of the class.
+**/
+public class IOWriter
+	private static constant DATA_PADDING_1 = "\")\r\n\tcall SetPlayerName(Player("
+	private static constant DATA_PADDING_2 = "), \""
+	private static constant DATA_PADDING_3 = "\")\r\n//"
+	private static constant DATA_FOOTER = "\" )\r\nendfunction\r\nfunction AAA takes nothing returns nothing \r\n//"
+
+	private static var packetNumber = 0
+
+	static function prepareWrite()
+		packetNumber = 0
+		PreloadGenClear()
+		PreloadGenStart()
+
+	static function write(string content)
+		Preload(content)
+
+	static function flushFile(string fileName)
+		Preload(DATA_FOOTER)
+		PreloadGenEnd(fileName)
+
+	static function writePacket(string packet)
+		if packetNumber == PACKETS_PER_FILE
+			error("IOWriter: tried to write more packets than allowed")
+
+		if packet.length() > MAX_PACKET_LENGTH
+			error("IOWriter: tried to write more than max packet length")
+
+		write(DATA_PADDING_1 + packetNumber.toString() + DATA_PADDING_2 + packet + DATA_PADDING_3)
+		packetNumber++
+
+	static function getRemainingWrites() returns int
+		return PACKETS_PER_FILE - packetNumber
+
+	static function canWrite() returns boolean
+		return getRemainingWrites() > 0
+/**
+	Low-level static reader wrapper around the Preload API
+	Supports reading packets written by IOWriter, 
+	up to PACKETS_PER_FILE packets per file,
+	up to MAX_PACKET_LENGTH characters per packet.
+**/
+public class IOReader
+	private static string array playerNames
+	private static string array packets
+
+	private static var packetNumber = 0
+	private static var packetCount = 0
+	
+	private static function saveNames()
+		for i = 0 to PACKETS_PER_FILE - 1
+			playerNames[i] = players[i].getName()
+			packets[i] = null
+
+	private static function restoreNames()
+		for i = 0 to PACKETS_PER_FILE - 1
+			players[i].setName(playerNames[i])
+
+	static function load(string fileName)
+		packetNumber = 0
+		packetCount = 0
+		saveNames()
+		Preloader(fileName)
+
+		for i = 0 to PACKETS_PER_FILE - 1
+			if playerNames[i] != players[i].getName()
+				packets[i] = players[i].getName()
+				packetCount++
+			else
+				break
+
+		restoreNames()
+
+	static function readPacket() returns string
+		if packetNumber == packetCount
+			error("IOReader: tried to read more packets than available")
+
+		packetNumber++
+		return packets[packetNumber - 1]
+
+	static function getRemainingReads() returns int
+		return packetCount - packetNumber
+
+	static function canRead() returns boolean
+		return getRemainingReads() > 0
+
+	static function getPacket(int i) returns string
+		return packets[i]
