@@ -1,6 +1,8 @@
 package Group
 import NoWurst
 import Vectors
+import Printing
+import Integer
 
 /** Use this group for your non-nested group enum calls
 	and then iterate through the group via **for from** or
@@ -47,7 +49,23 @@ public function group.size() returns int
 
 public function group.isEmpty() returns boolean
 	return not this.hasNext()
+
+var randomCounter = 0
+unit randomSelected = null
+/** Returns a random unit from this grouo without removing it
+	or null if the group is empty */
+public function group.getRandomUnit() returns unit
+	let size = this.size()
+	randomCounter = 1 + GetRandomInt(0, size-1)
+	randomSelected = null
+	ForGroup(this, () -> begin
+		randomCounter--
+		if randomCounter == 0
+			randomSelected = GetEnumUnit()
+	end)
+	return randomSelected
 	
+
 // group iterator
 public function group.iterator() returns group
 	bj_groupAddGroupDest = CreateGroup()
