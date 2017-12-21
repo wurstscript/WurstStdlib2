@@ -5,6 +5,7 @@ import Unit
 
 /** Use this array instead of Player() to avoid leaks */
 public player array players
+public constant localPlayer = GetLocalPlayer()
 init
 	for i = 0 to bj_MAX_PLAYER_SLOTS-1
 		players[i] = Player(i)
@@ -67,15 +68,15 @@ public function player.isEnemyOf(player p) returns boolean
 	return IsPlayerEnemy(this, p)
 
 public function player.panCamToTimed(unit u, real time)
-	if GetLocalPlayer() == this
+	if localPlayer == this
 		PanCameraToTimed(u.getX(), u.getY(), time)
 
 public function player.select(unit u)
-	if GetLocalPlayer() == this
+	if localPlayer == this
 		SelectUnit(u, true)
 
 public function player.selectSingle(unit u)
-	if GetLocalPlayer() == this
+	if localPlayer == this
 		ClearSelection()
 		SelectUnit(u, true)
 
@@ -95,5 +96,8 @@ public function player.subState(playerstate state, int val)
 	SetPlayerState(this, state, this.getState(state) - val)
 
 public function player.unselect(unit u)
-	if GetLocalPlayer() == this
+	if localPlayer == this
 		SelectUnit(u, false)
+
+public function player.isIngame() returns boolean
+	return this.getSlotState() == PLAYER_SLOT_STATE_PLAYING and this.getController() == MAP_CONTROL_USER

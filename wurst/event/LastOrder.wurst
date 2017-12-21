@@ -118,15 +118,17 @@ function conditions() returns boolean
 	return GetTriggerUnit().orderFilter(GetIssuedOrderId())
 
 function actions()
-	let	u   = GetTriggerUnit()
-	let t   = GetOrderTarget()
-	let oid = GetIssuedOrderId()
-	if GetTriggerEventId() == EVENT_PLAYER_UNIT_ISSUED_TARGET_ORDER
-		new Order(u, oid, OrderType.TARGET, t, getOrderTargetPos())
-	else if GetTriggerEventId() == EVENT_PLAYER_UNIT_ISSUED_POINT_ORDER
-		new Order(u, oid, OrderType.POINT, null, getOrderPos())
-	else if GetTriggerEventId() == EVENT_PLAYER_UNIT_ISSUED_ORDER
-		new Order(u, oid, OrderType.IMMEDIATE, null, u.getPos())
+	if conditions()
+		let	u   = GetTriggerUnit()
+		let t   = GetOrderTarget()
+		let oid = GetIssuedOrderId()
+		Log.trace("ordered: <" + OrderId2StringBJ(oid) + ">")
+		if GetTriggerEventId() == EVENT_PLAYER_UNIT_ISSUED_TARGET_ORDER
+			new Order(u, oid, OrderType.TARGET, t, getOrderTargetPos())
+		else if GetTriggerEventId() == EVENT_PLAYER_UNIT_ISSUED_POINT_ORDER
+			new Order(u, oid, OrderType.POINT, null, getOrderPos())
+		else if GetTriggerEventId() == EVENT_PLAYER_UNIT_ISSUED_ORDER
+			new Order(u, oid, OrderType.IMMEDIATE, null, u.getPos())
 
 function spellActions()
 	let index = GetTriggerUnit().getIndex()
@@ -135,10 +137,10 @@ function spellActions()
 		lastOrder[index].finished = true
 
 init
-	registerPlayerUnitEvent(EVENT_PLAYER_UNIT_ISSUED_TARGET_ORDER, () -> conditions(), function actions)
-	registerPlayerUnitEvent(EVENT_PLAYER_UNIT_ISSUED_POINT_ORDER, () -> conditions(), function actions)
-	registerPlayerUnitEvent(EVENT_PLAYER_UNIT_ISSUED_ORDER, () -> conditions(), function actions)
-	registerPlayerUnitEvent(EVENT_PLAYER_UNIT_SPELL_EFFECT, () -> conditions(), function spellActions)
+	registerPlayerUnitEvent(EVENT_PLAYER_UNIT_ISSUED_TARGET_ORDER, null, function actions)
+	registerPlayerUnitEvent(EVENT_PLAYER_UNIT_ISSUED_POINT_ORDER, null, function actions)
+	registerPlayerUnitEvent(EVENT_PLAYER_UNIT_ISSUED_ORDER, null, function actions)
+	registerPlayerUnitEvent(EVENT_PLAYER_UNIT_SPELL_EFFECT, null, function spellActions)
 
 	onUnitDeindex(() -> begin
 		getDeindexedUnit().clearLastOrders()

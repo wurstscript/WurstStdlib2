@@ -1,0 +1,130 @@
+package StringEncoder
+import Buffer
+import Execute
+import HashMap
+import ErrorHandling
+import NetworkConfig
+
+// characters that can be sent over the network
+constant STRING_ALPHABET = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~"
+// lookup table for alphabet
+let alphabetLookup = new HashMap<int, int>()
+
+function getCharFromIndex(int i) returns string
+	if i > STRING_ALPHABET.length()
+		error("Network: trying to get invalid character from index '" + i.toString() + "'")
+	return STRING_ALPHABET.charAt(i)
+
+function getIndexFromChar(string c) returns int
+	int hash
+	if (c.toUpperCase() == c and c.toLowerCase() != c) or c == "/"
+		hash = ("00" + c).getHash()
+	else
+		hash = c.getHash()
+
+	if SAFETY_CHECKS_ENABLED and not alphabetLookup.has(hash)
+		error("Network: trying to get index from invalid character '" + c + "'")
+
+	return alphabetLookup.get(hash)
+
+// only called in the init block
+function precomputeLookup()
+	for i = 0 to STRING_ALPHABET.length() - 1
+		let c = STRING_ALPHABET.charAt(i)
+
+		if (c.toUpperCase() == c and c.toLowerCase() != c) or c == "/"
+			alphabetLookup.put(("00" + c).getHash(), i)
+		else
+			alphabetLookup.put(c.getHash(), i)
+
+function testCollisions()
+	for i = 0 to STRING_ALPHABET.length() - 1
+		if getIndexFromChar(getCharFromIndex(i)) != i
+			print("CollisionTest failed for " + i.toString() + " " + getCharFromIndex(i))
+			print("getIndexFromChar() == " + getIndexFromChar(getCharFromIndex(i)).toString())
+			print("getCharFromIndex(getIndexFromChar)) == " + getCharFromIndex(getIndexFromChar(getCharFromIndex(i))))
+
+init
+	execute(() -> precomputeLookup())
+	execute(() -> testCollisions())
+/**
+	Utility class to convert a string to/from a series of ints corellating to positions in STRING_ALPHABET.
+**/
+public class StringEncoder
+	// max characters to store per packing round
+	private static constant CHARS_PER_COMPACT = 512
+
+	private var asciiIntCount = 0
+	private var stringCount = 0
+
+	private var currentValue = ""
+	private var counter = 0
+
+	private var buffer = new HashBuffer()
+
+	ondestroy
+		destroy buffer
+
+	private function encodeString(string value)
+		let length = value.length()
+		counter = 0
+		buffer.writeInt(length)
+		asciiIntCount++
+		
+		while counter < length
+			execute(() -> begin
+				var i = 0
+				while counter < length and i < CHARS_PER_COMPACT
+					buffer.writeInt(getIndexFromChar(value.charAt(i)))
+					counter++
+					asciiIntCount++
+					i++
+			end)
+
+	private function decodeString() returns string
+		currentValue = ""
+		let length = buffer.readInt()
+		asciiIntCount--
+		counter = 0
+
+		while counter < length
+			execute(() -> begin
+				var i = 0
+				while counter < length and i < CHARS_PER_COMPACT
+					currentValue += getCharFromIndex(buffer.readInt())
+					counter++
+					asciiIntCount--
+					i++
+			end)
+		
+		return currentValue
+
+	function encode()
+		while stringCount > 0
+			execute(() -> encodeString(popString()))
+
+	function decode()
+		while asciiIntCount > 0
+			execute(() -> pushString(decodeString()))
+
+	function pushString(string value)
+		stringCount++
+		buffer.writeString(value)
+
+	function popString() returns string
+		stringCount--
+		return buffer.readString()
+
+	function pushInt(int value)
+		asciiIntCount++
+		buffer.writeInt(value)
+
+	function popInt() returns int
+		asciiIntCount--
+		return buffer.readInt()
+
+	function getIntCount() returns int
+		return asciiIntCount
+
+	function getStringCount() returns int
+		return stringCount

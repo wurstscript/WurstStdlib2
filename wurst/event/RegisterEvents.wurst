@@ -34,6 +34,22 @@ public function registerPlayerUnitEventForPlayer(playerunitevent p, code c, play
 public function getPlayerUnitEventTrigger(playerunitevent p) returns trigger
 	return t[GetHandleId(p)]
 
+/*****PlayerEvent*****/
+
+public function registerPlayerEvent(playerevent p, code c)
+	registerPlayerEvent(p, c, null)
+
+public function registerPlayerEvent(playerevent p, code condition, code action)
+	int hid = p.getHandleId()
+	if t[hid] == null
+		t[hid] = CreateTrigger()
+		for k = bj_MAX_PLAYER_SLOTS-1 downto 0
+			t[hid].registerPlayerEvent(players[k], p)
+	if condition != null
+		t[hid].addCondition(Filter(condition))
+	if action != null
+		t[hid].addAction(action)
+
 /*****SpellEffectEvent*****/
 
 HashMap<int, trigger> onCastMap = new HashMap<int, trigger>()

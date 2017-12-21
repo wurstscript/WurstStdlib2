@@ -13,10 +13,10 @@ function testBasicDatatypes()
 	assertTrue(ht.hasReal(0,0))
 	assertTrue(ht.hasString(0,0))
 
-	assertTrue(ht.loadInt(0,0) == 1)
-	assertTrue(ht.loadString(0,0) == "1")
+	ht.loadInt(0,0).assertEquals(1)
+	ht.loadString(0,0).assertEquals("1")
 	assertTrue(ht.loadBoolean(0,0))
-	assertTrue(ht.loadReal(0,0) == 2.) 
+	ht.loadReal(0,0).assertEquals(2.) 
 
 @Test
 function testFlushing()
@@ -39,7 +39,7 @@ function testOverwrite()
 	ht.saveReal(0, 0, 4.)
 
 	assertTrue(ht.hasReal(0,0))
-	assertTrue(ht.loadReal(0,0) == 4.)
+	ht.loadReal(0,0).assertEquals(4.)
 
 @Test
 function testRemove()

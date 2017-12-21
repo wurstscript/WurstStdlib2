@@ -1,0 +1,37 @@
+package Execute
+
+/**
+	This package exposes a single function execute(),
+	the primary use of which is to reset the OP limit.
+**/
+
+public interface ForForceCallback
+	function callback()
+
+let executeForce = CreateForce()
+
+init
+	executeForce.addPlayer(localPlayer)
+
+function executeCurrentCallback() returns boolean
+	getCurrentCallback().callback()
+	return false
+	
+ForForceCallback array tempCallbacks
+int tempCallbacksCount = 0
+
+function pushCallback(ForForceCallback c)
+	tempCallbacks[tempCallbacksCount] = c
+	tempCallbacksCount++
+	
+function popCallback()
+	tempCallbacksCount--
+	destroy tempCallbacks[tempCallbacksCount]
+
+function getCurrentCallback() returns ForForceCallback
+	return tempCallbacks[tempCallbacksCount - 1]
+
+public function execute(ForForceCallback c)
+	pushCallback(c)
+	executeForce.forEach(function executeCurrentCallback)
+	popCallback()

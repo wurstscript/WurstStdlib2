@@ -103,12 +103,16 @@ public class LinkedList<T>
 			entry = entry.next
 	
 	/** gets the size of the list */
-	function getSize() returns int
+	@deprecated function getSize() returns int
 		return size
 
 	/** gets the size of the list (java-compat wrapper) */
 	function size() returns int
 		return size
+
+	/** gets the size of the list (java-compat wrapper) */
+	function isEmpty() returns boolean
+		return size == 0
 		
 	/** get the static iterator for this list */
 	function staticItr() returns LLStaticIterator<T>

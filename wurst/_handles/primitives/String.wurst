@@ -19,19 +19,13 @@ public function string.toCharsetInt() returns int
 				return i
 		return -1
 		
+/** Creates a real from a string that only contains numbers (0-9) and a sign */
+public function string.toReal() returns real
+	return S2R(this)
+		
 /** Creates an int from a string that only contains numbers (0-9) and a sign */
 public function string.toInt() returns int
-	int result = 0
-	int len = this.length()
-	for i = len downto 1 
-		for j = 0 to numbersetlength - 1
-			if numberset.substring(j, j+1) == this.substring(i-1, i)
-				result += j * (Pow(10, (len - i)*1.).toInt())
-				break
-	if this.startsWith("-")
-		result = -result
-			
-	return result
+	return S2I(this)
 
 /** Converts an int to the representative char */
 public function int.toCharsetString() returns string

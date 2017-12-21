@@ -1,0 +1,17 @@
+package NetworkConfig
+
+/** 
+	Max amount to be written/read/synced per an execution, to avoid hitting the op-limit.
+	Beware of changes in maximum value as compiler settings are adjusted.
+**/
+@configurable public constant DATA_PER_EXECUTE = 256
+/**
+	Max length of a gamecache key.
+	You may fine-tune it as you see fit to see what works faster.
+**/
+@configurable public constant MAX_CHARACTERS_PER_KEY = 3
+/**
+	Enables or disables various runtime safety checks in the library.
+	Do not disable this unless you are 100% sure your code works correctly.
+**/
+@configurable public constant SAFETY_CHECKS_ENABLED = true

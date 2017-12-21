@@ -5,30 +5,29 @@ import Group
 import DummyRecycler
 import ObjectIds
 import Basics
+import ClosureTimers
+import ClosureForGroups
 
-/*
- * * * * * * * * PreloadHandler * * * * * * * * * * * * *
- * The PreloadHandler helps you to preload resources  	*
- * at mapstart, to avoid first-laggs.					*
- * Use the corresponding function to preload the data	*
- * you want.											*
- *														*
-														*/
-boolean autoFinish = true
-group dumg
+/* Helps you to preload units and abilities during map-load	*
+ * to avoid first-laggs. */
+
+/** Whether to finish preloading automatically */
+@configurable constant autoFinish = true
+var dumg = CreateGroup()
 unit dum
-/** use this function to preload an ability at runtime
-	returns true if the ability exists and was therefore preloaded. */
-public function preloadAbility(int abilid) returns boolean
-	dum.addAbility(abilid)
+
+/** Preloads the given abilitytype */
+public function preloadAbility(int abilId) returns boolean
+	dum.addAbility(abilId)
 	var result = true
 	if dum == null 
 		error("Do not load abilities after map init when autoFinish = true")
-	else if GetUnitAbilityLevel(dum, abilid) == 0
-		printLog(Loglevel.TRACE, "PreloadAbility: Ability " + int2fourchar(abilid) + " does not exist.")
+	else if not dum.hasAbility(abilId)
+		Log.trace("PreloadAbility: Ability " + int2fourchar(abilId) + " does not exist.")
 		result = false
 	return result
 
+/** Preloads the given unittype */
 public function preloadUnit(int unitId) returns boolean
 	if dumg == null 
 		error("PreloadUnit: Group dumg does not exist")
@@ -36,18 +35,16 @@ public function preloadUnit(int unitId) returns boolean
 	dumg.addUnit(u)
 	return u.isAlive()
 
+/** If autoFinish is false you need to call this function manually */
 public function finishPreload()
 	dum.remove()
-	for u in dumg
-		u.remove()
+	dumg.forEachFrom((unit u) -> u.remove())
 	dumg.destr()
-	if GetExpiredTimer() != null
-		GetExpiredTimer().destr()
+	dumg = null
 
 init
-	dumg = CreateGroup()
 	dum = createUnit(DUMMY_PLAYER, DUMMY_UNIT_ID, vec2(0,0), angle(0))
 	if dum == null
 		error("DUMMY_UNITID (" + int2fourchar(DUMMY_UNIT_ID) + ") not added correctly to the map.")
 	if autoFinish
-		CreateTimer().start(0.0, function finishPreload )
+		nullTimer(() -> finishPreload())
