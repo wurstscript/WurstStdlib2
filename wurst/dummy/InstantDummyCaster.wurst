@@ -2,6 +2,7 @@ package InstantDummyCaster
 import NoWurst
 import Basics
 import Unit
+import Widget
 import UnitObjEditing
 import MapBounds
 /*
@@ -39,12 +40,14 @@ public class InstantDummyCaster
 		
 	static function castTarget(player owner, int abilityId, int lvl, int orderId, widget target, vec2 casterPos) returns boolean
 		prepare(owner, abilityId, lvl, casterPos)
+		caster.setFacing(casterPos.angleTo(target.getPos()))
 		boolean b = caster.issueTargetOrderById(orderId, target)
 		finish()
 		return b
 	
 	static function castPoint(player owner, int abilityId, int lvl, int orderId, vec2 targetPos, vec2 casterPos) returns boolean
 		prepare(owner, abilityId, lvl, casterPos)
+		caster.setFacing(casterPos.angleTo(targetPos))
 		boolean b = caster.issuePointOrderById(orderId, targetPos)
 		finish()
 		return b
