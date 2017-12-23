@@ -68,6 +68,7 @@ public abstract class AbstractIOTaskExecutor implements IOTaskExecutor
 		else
 			execute(() -> onCompleteTask.run())
 			destroy onCompleteTask
+			onCompleteTask = null
 			finished = true
 
 /**
