@@ -112,7 +112,6 @@ public class FileWriter extends AbstractFile
 			IOWriter.writePacket(TERMINATOR)
 			IOWriter.flushFile(getChunkPath(path, chunkId))
 		end)
-		print("queued term task")
 
 	private function saveSingle(int chunkId)
 		executor.submit(() -> begin
@@ -126,7 +125,6 @@ public class FileWriter extends AbstractFile
 			else
 				IOWriter.flushFile(path)
 		end)
-		print("queued save task " + chunkId.toString())		
 
 	/**
 		Starts saving the queue data to disk, and specifies a callback when all data has been saved.
