@@ -54,7 +54,6 @@ public class IOWriter
 	static function flushFile(string path)
 		Preload(DATA_FOOTER)
 		PreloadGenEnd(path)
-		print("flushed " + path)
 
 	/** Returns the amount of packets we can write to the current file. */
 	static function getRemainingWrites() returns int
