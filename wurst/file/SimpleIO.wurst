@@ -1,13 +1,12 @@
 package SimpleIO
 
 import ErrorHandling
+import StringUtils
 
-// maximum amount of readable packets per file
+/** Maximum amount of packets per single readable file. */
 public constant PACKETS_PER_FILE = 16 	
-// maximum payload size of a readable packet
+/** Maximum payload size of a single readable packet. */
 public constant MAX_PACKET_LENGTH = 209
-// maximum payload size of a single file
-public constant MAX_FILE_LENGTH = PACKETS_PER_FILE * MAX_PACKET_LENGTH 
 
 /**
 	Low-level static writer wrapper around the Preload API
@@ -15,9 +14,12 @@ public constant MAX_FILE_LENGTH = PACKETS_PER_FILE * MAX_PACKET_LENGTH
 	readable "packets", max PACKETS_PER_FILE for a file, 
 	each up to MAX_PACKET_LENGTH characters. 
 
-	WARNING: Due to the way how WC3 handles file IO, you have to use
+	WARNING 1: Due to the way how WC3 handles file IO, you have to use
 	this class only in one place at once. Avoid using it over time, lest you
 	risk causing conflicts with other clients of the class.
+	WARNING 2: WC3 does not correctly handle recursive folder creation.
+	If you are creating a file that is nested deeper than one folder, e.g.
+	"a/b/c", make sure to use IOWriter.createFolder("a/b/c") before that.
 **/
 public class IOWriter
 	private static constant DATA_PADDING_1 = "\")\r\n\tcall SetPlayerName(Player("
@@ -27,18 +29,17 @@ public class IOWriter
 
 	private static var packetNumber = 0
 
+	/** This function prepares a new file for writing. */
 	static function prepareWrite()
 		packetNumber = 0
 		PreloadGenClear()
 		PreloadGenStart()
 
+	/** Simply writes a string as-is, without the possibility of reading it back. */
 	static function write(string content)
 		Preload(content)
 
-	static function flushFile(string fileName)
-		Preload(DATA_FOOTER)
-		PreloadGenEnd(fileName)
-
+	/** Writes a readable 'packet' using SetPlayerName trick, allowing us to read it out of the file */
 	static function writePacket(string packet)
 		if packetNumber == PACKETS_PER_FILE
 			error("IOWriter: tried to write more packets than allowed")
@@ -49,11 +50,34 @@ public class IOWriter
 		write(DATA_PADDING_1 + packetNumber.toString() + DATA_PADDING_2 + packet + DATA_PADDING_3)
 		packetNumber++
 
+	/** Flushes a file and all written content to disk under the specified path. */
+	static function flushFile(string path)
+		Preload(DATA_FOOTER)
+		PreloadGenEnd(path)
+		print("flushed " + path)
+
+	/** Returns the amount of packets we can write to the current file. */
 	static function getRemainingWrites() returns int
 		return PACKETS_PER_FILE - packetNumber
 
+	/** Returns whether we can write to the current file anymore. */
 	static function canWrite() returns boolean
 		return getRemainingWrites() > 0
+
+	/**
+		Recursively creates the specified folder. 
+		Necessary because WC3 doesn't automatically 
+		creat nested folders and fails silently. 
+	**/
+	static function createFolder(string path)
+		var current = ""
+		for folder in path.split("/")
+			if folder.contains(".")
+				break
+			current += folder + "/"
+			prepareWrite()
+			flushFile(current + "touch.txt")
+
 /**
 	Low-level static reader wrapper around the Preload API
 	Supports reading packets written by IOWriter, 
@@ -76,11 +100,15 @@ public class IOReader
 		for i = 0 to PACKETS_PER_FILE - 1
 			players[i].setName(playerNames[i])
 
-	static function load(string fileName)
+	/** 
+		Loads the content of the specified file into IOReader's buffer,
+		allowing it to be read with IOReader.readPacket() and IOReader.getPacket().
+	**/
+	static function load(string path)
 		packetNumber = 0
 		packetCount = 0
 		saveNames()
-		Preloader(fileName)
+		Preloader(path)
 
 		for i = 0 to PACKETS_PER_FILE - 1
 			if playerNames[i] != players[i].getName()
@@ -91,6 +119,11 @@ public class IOReader
 
 		restoreNames()
 
+	/** Returns the specified packet from the current loaded file. */
+	static function getPacket(int i) returns string
+		return packets[i]
+
+	/** Reads the next packet from the current loaded file. */
 	static function readPacket() returns string
 		if packetNumber == packetCount
 			error("IOReader: tried to read more packets than available")
@@ -98,11 +131,10 @@ public class IOReader
 		packetNumber++
 		return packets[packetNumber - 1]
 
+	/** Returns the amount of packets available for reading from the currently loaded file. */
 	static function getRemainingReads() returns int
 		return packetCount - packetNumber
 
+	/** Returns whether there are any packets left to be read from the currently loaded file. */
 	static function canRead() returns boolean
 		return getRemainingReads() > 0
-
-	static function getPacket(int i) returns string
-		return packets[i]
