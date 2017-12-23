@@ -89,7 +89,7 @@ public class InstantIOTaskExecutor extends AbstractIOTaskExecutor
 	In FileWriter and FileReader this is used to spread over
 	the lag from writing/loading to multiple files.
 **/
-class TimedIOTaskExecutor extends AbstractIOTaskExecutor
+public class TimedIOTaskExecutor extends AbstractIOTaskExecutor
 	use LinkedListModule
 
 	// timer that periodically checks every executor and updates it as necessary
