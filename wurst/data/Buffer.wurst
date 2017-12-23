@@ -89,6 +89,9 @@ public interface Buffer
 	**/
 	function read(BufferSerializable value)
 
+	/** Clears the buffer of any data **/
+	function clear()
+
 	/** Returns the current buffer mode. **/
 	function getMode() returns BufferMode
 
@@ -238,6 +241,9 @@ public class HashBuffer extends AbstractBuffer
 		checkRead()
 		booleanReadIndex++
 		return buffer.loadBoolean(booleanReadIndex)
+
+	override function clear()
+		buffer.flush()
 
 	function resetRead()
 		integerReadIndex = -1
@@ -564,6 +570,13 @@ public class StringBuffer extends AbstractBuffer
 	override function readBoolean() returns bool
 		checkRead()
 		return checkType(ValueType.BOOLEAN) ? (popString(1) == "1") : false
+
+	override function clear()
+		for chunk in chunks
+			destroy chunk
+		chunks.clear()
+		readBuffer = ""
+		writeBuffer = ""
 
 	/** Looks at the type of the next value, if any. **/
 	function peekType() returns ValueType
