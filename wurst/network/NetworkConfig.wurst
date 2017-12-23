@@ -1,5 +1,9 @@
 package NetworkConfig
 
+/**
+	Max amount of characters to be encoded/decoded per an execution inside StringEncoder.
+**/
+@configurable public constant CHARS_PER_ENCODE_DECODE = 256
 /** 
 	Max amount to be written/read/synced per an execution, to avoid hitting the op-limit.
 	Beware of changes in maximum value as compiler settings are adjusted.

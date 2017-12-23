@@ -54,11 +54,6 @@ init
 	Utility class to convert a string to/from a series of ints corellating to positions in STRING_ALPHABET.
 **/
 public class StringEncoder
-	// max characters to store per packing round
-	// this is a relatively safe value that has been tested to work
-	// properly with all optimizations disabled
-	private static constant CHARS_PER_COMPACT = 256
-
 	private var asciiIntCount = 0
 	private var stringCount = 0
 
@@ -76,7 +71,7 @@ public class StringEncoder
 		buffer.writeInt(length)
 		asciiIntCount++
 		
-		limitedExecute(CHARS_PER_COMPACT, () -> counter < length, () -> begin
+		limitedExecute(CHARS_PER_ENCODE_DECODE, () -> counter < length, () -> begin
 			buffer.writeInt(getIndexFromChar(value.charAt(counter)))
 			counter++
 			asciiIntCount++
@@ -88,7 +83,7 @@ public class StringEncoder
 		asciiIntCount--
 		counter = 0
 
-		limitedExecute(CHARS_PER_COMPACT, () -> counter < length, () -> begin
+		limitedExecute(CHARS_PER_ENCODE_DECODE, () -> counter < length, () -> begin
 			currentValue += getCharFromIndex(buffer.readInt())
 			counter++
 			asciiIntCount--
