@@ -3,6 +3,7 @@ import Network
 import MultiIO
 import SimpleIO
 import BufferAdapters
+import public Buffer
 
 /**
 	This is the folder that all your map objects will be serialized in.
@@ -127,6 +128,8 @@ class PersistentStore
 				
 				if success
 					entity.deserialize(buffer)
+				else
+					entity.supplyDefault()
 
 				if callback != null
 					callback.onLoaded(success)
