@@ -1,0 +1,148 @@
+package IOTaskExecutor
+
+import LinkedList
+import LinkedListModule
+import Execute
+import TimerUtils
+import ErrorHandling
+import GameTimer
+
+/** Simple interface of an IO task */
+public interface IOTask
+	function run()
+
+/** 
+	Interface for an IO task executor. Tasks are meant to run in the same
+	order that they are submitted. When there are no more tasks in the queue
+	to process, the callback specified in .onComplete() will be called
+	and .isFinished() will return true.
+*/
+public interface IOTaskExecutor
+	/** Submits the task to this executor. */
+	function submit(IOTask task)
+
+	/** Starts processing the currently queued tasks in this processor according to it's strategy. */
+	function start()
+
+	/** Specifies a callback to be invoked when a task queue has finished processing. */
+	function onComplete(IOTask task)
+
+	/** Returns whether the task executor has finished it's current task queue. */
+	function isFinished() returns boolean
+
+/**
+	Provides common functionality for executors for storing and processing a task queue.
+**/
+public abstract class AbstractIOTaskExecutor implements IOTaskExecutor
+	protected var taskQueue = new LinkedList<IOTask>
+	protected IOTask onCompleteTask = null
+	protected var finished = true
+
+	ondestroy
+		for task in taskQueue
+			destroy task
+		destroy taskQueue
+		if onCompleteTask != null
+			destroy onCompleteTask
+
+	override function submit(IOTask task)
+		taskQueue.add(task)
+
+	override function onComplete(IOTask task)
+		onCompleteTask = task
+
+	override function isFinished() returns boolean
+		return finished
+
+	/** Executes the next task in the executor's queue. */
+	protected function executeNext()
+		if finished
+			error("AbstractIOTaskExecutor: trying to execute in a finished executor")
+
+		if not taskQueue.isEmpty()
+			execute(() -> begin
+				let task = taskQueue.dequeue()
+				task.run()
+				destroy task
+			end)
+		else
+			execute(() -> onCompleteTask.run())
+			destroy onCompleteTask
+			finished = true
+
+/**
+	A task executor that immediately executes all tasks
+	submitted to it when .start() is called.
+**/
+public class InstantIOTaskExecutor extends AbstractIOTaskExecutor
+	override function start()
+		if not finished
+			error("InstantIOTaskExecutor: trying to start an executor that is already running")
+
+		finished = false
+		while not finished
+			executeNext()
+
+/**
+	A task executor that executes tasks over time, with a
+	specifiable delay between each task invocation.
+	In FileWriter and FileReader this is used to spread over
+	the lag from writing/loading to multiple files.
+**/
+class TimedIOTaskExecutor extends AbstractIOTaskExecutor
+	use LinkedListModule
+
+	// timer that periodically checks every executor and updates it as necessary
+	protected static constant updater = getTimer()
+	// amount of currently running executors
+	private static var runningCount = 0
+	// whether the periodic timer has been started already
+	private static var timerStarted = false
+	// delay between each task execution
+	private var delay = 0.0
+	// last time a task was executed
+	private var lastExecution = 0.0
+
+	construct(real delay)
+		this.delay = delay
+			
+	protected static function updateInstances()
+		for executor in TimedIOTaskExecutor
+			executor.update()
+
+	// called when an executor instance has started working
+	private static function onStart()
+		if not timerStarted
+			// if the timer has not started yet, start it
+			//updater.startPeriodic(ANIMATION_PERIOD, function updateInstances)
+			//timerStarted = true
+		else
+			// else just resume it
+			//updater.resume()
+
+	// called when an executor instance has finished it's work
+	private static function onStop()
+		if timerStarted and runningCount == 0
+			//updater.pause()
+
+	// updates this instance if necessary
+	private function update()
+		if not finished and lastExecution + delay <= currentTime
+			executeNext()
+			lastExecution = currentTime
+			if finished
+				runningCount--
+				// stop the timer if necessary
+				onStop()
+				
+	override function start()
+		if not finished
+			error("TimedIOTaskExecutor: trying to start an executor that is already running")
+
+		finished = false
+		runningCount++
+		// make sure the updater timer is running
+		onStart()
+
+init
+	TimedIOTaskExecutor.updater.startPeriodic(ANIMATION_PERIOD, function TimedIOTaskExecutor.updateInstances)
