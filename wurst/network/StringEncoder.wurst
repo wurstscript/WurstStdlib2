@@ -38,11 +38,14 @@ function precomputeLookup()
 			alphabetLookup.put(c.getHash(), i)
 
 function testCollisions()
+	// this test here is mostly to ensure that the StringHash implementation in WC3 never collides
+	// for our use case, especially if it's somehow changed by a patch
 	for i = 0 to STRING_ALPHABET.length() - 1
 		if getIndexFromChar(getCharFromIndex(i)) != i
-			print("CollisionTest failed for " + i.toString() + " " + getCharFromIndex(i))
-			print("getIndexFromChar() == " + getIndexFromChar(getCharFromIndex(i)).toString())
-			print("getCharFromIndex(getIndexFromChar)) == " + getCharFromIndex(getIndexFromChar(getCharFromIndex(i))))
+			Log.error("CollisionTest failed for " + i.toString() + " " + getCharFromIndex(i))
+			Log.error("getIndexFromChar() == " + getIndexFromChar(getCharFromIndex(i)).toString())
+			Log.error("getCharFromIndex(getIndexFromChar)) == " + getCharFromIndex(getIndexFromChar(getCharFromIndex(i))))
+			Log.error("This is a BAD thing and you should report it to wurst devs!")
 
 init
 	execute(() -> precomputeLookup())
@@ -52,7 +55,9 @@ init
 **/
 public class StringEncoder
 	// max characters to store per packing round
-	private static constant CHARS_PER_COMPACT = 512
+	// this is a relatively safe value that has been tested to work
+	// properly with all optimizations disabled
+	private static constant CHARS_PER_COMPACT = 256
 
 	private var asciiIntCount = 0
 	private var stringCount = 0
@@ -71,15 +76,11 @@ public class StringEncoder
 		buffer.writeInt(length)
 		asciiIntCount++
 		
-		while counter < length
-			execute(() -> begin
-				var i = 0
-				while counter < length and i < CHARS_PER_COMPACT
-					buffer.writeInt(getIndexFromChar(value.charAt(i)))
-					counter++
-					asciiIntCount++
-					i++
-			end)
+		limitedExecute(CHARS_PER_COMPACT, () -> counter < length, () -> begin
+			buffer.writeInt(getIndexFromChar(value.charAt(counter)))
+			counter++
+			asciiIntCount++
+		end)
 
 	private function decodeString() returns string
 		currentValue = ""
@@ -87,25 +88,19 @@ public class StringEncoder
 		asciiIntCount--
 		counter = 0
 
-		while counter < length
-			execute(() -> begin
-				var i = 0
-				while counter < length and i < CHARS_PER_COMPACT
-					currentValue += getCharFromIndex(buffer.readInt())
-					counter++
-					asciiIntCount--
-					i++
-			end)
+		limitedExecute(CHARS_PER_COMPACT, () -> counter < length, () -> begin
+			currentValue += getCharFromIndex(buffer.readInt())
+			counter++
+			asciiIntCount--
+		end)
 		
 		return currentValue
 
 	function encode()
-		while stringCount > 0
-			execute(() -> encodeString(popString()))
+		limitedExecute(DATA_PER_EXECUTE, () -> stringCount > 0, () -> encodeString(popString()))
 
 	function decode()
-		while asciiIntCount > 0
-			execute(() -> pushString(decodeString()))
+		limitedExecute(DATA_PER_EXECUTE, () -> asciiIntCount > 0, () -> pushString(decodeString()))
 
 	function pushString(string value)
 		stringCount++
