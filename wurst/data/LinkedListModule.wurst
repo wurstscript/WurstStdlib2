@@ -45,14 +45,29 @@ public module LinkedListModule
 		else
 			last = prev
 			
-			
 	ondestroy
 		remove()
 	
-	/** an iterator which iterates over all instances of this class */
+	/** An iterator which iterates over all instances of this class */
 	static function iterator() returns Iterator
 		return new Iterator()
 		
+	private static let staticItr = new Iterator()
+
+	/** An iterator which iterates over all instances of this class */
+	static function staticItr() returns Iterator
+		return staticItr..reset()
+
+	/** An iterator which iterates over all instances of this class in reverse */
+	static function backIterator() returns BackIterator
+		return new BackIterator()
+
+	private static let staticBackItr = new BackIterator()
+
+	/** An iterator which iterates over all instances of this class in reverse */
+	static function staticBackItr() returns BackIterator
+		return staticBackItr..reset()
+
 	static class Iterator
 		LinkedListModule.thistype current = first
 
@@ -70,6 +85,22 @@ public module LinkedListModule
 		function close() 
 			destroy this
 	
+	static class BackIterator
+		LinkedListModule.thistype current = last
+
+		function hasNext() returns boolean
+			return current != null
+	
+		function next() returns LinkedListModule.thistype
+			let res = current
+			current = current.prev
+			return res
+
+		function reset()
+			current = last
+	 		
+		function close() 
+			destroy this
 
 // -----TESTS------
 
