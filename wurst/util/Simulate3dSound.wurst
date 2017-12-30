@@ -2,6 +2,7 @@ package Simulate3dSound
 import NoWurst
 import TimerUtils
 import Unit
+import Player
 /*
 *********************************************************************
 *
@@ -78,6 +79,7 @@ import Unit
 *	   However, it is realistic and works well. 
 *
 ********************************************************************/
+
  
 		// Determines how often the volume is updated
 constant PERIOD = 0.2
@@ -177,7 +179,7 @@ public function bindSoundToPoint(sound s, real x, real y, real minD, real maxD, 
 
 
 public function bindSoundToUnitForPlayer(player p, sound s, unit u, real minD, real maxD, real distCut) returns Sim3DSound
-	if GetLocalPlayer() == p
+	if localPlayer == p
 		if not GetSoundIsPlaying(s)
 			StartSound(s)
 
@@ -185,7 +187,7 @@ public function bindSoundToUnitForPlayer(player p, sound s, unit u, real minD, r
 
 
 public function bindSoundToPointForPlayer(player p, sound s, real x, real y, real minD, real maxD, real distCut) returns Sim3DSound
-	if GetLocalPlayer() == p
+	if localPlayer == p
 		if not GetSoundIsPlaying(s)
 			StartSound(s)
 

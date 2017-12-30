@@ -2,6 +2,7 @@ package Texttag
 import NoWurst
 import public Vectors
 import public Colors
+import Player
 
 public function texttag.setPos( real x, real y, real z)
 	SetTextTagPos(this, x ,y , z)
@@ -54,7 +55,7 @@ public function createTTEx(vec3 pos, string message, real size, colorA col, play
 		..setPos(pos.toVec2().withZ(20.))
 		..setText( message, size )
 		..setColor( col )
-		..setVisibility(GetLocalPlayer() == p)
+		..setVisibility(localPlayer == p)
 	
 public function createTTEx(vec3 pos, vec2 vel, string message, real size, real duration, colorA col ) returns texttag
 	return CreateTextTag()
@@ -68,5 +69,5 @@ public function createTTEx(vec3 pos, vec2 vel, string message, real size, real d
 	
 public function createTTEx(vec3 pos, vec2 vel, string message, real size, real duration, colorA col, player p ) returns texttag
 	return createTTEx(pos, vel, message,size,duration,col)
-		..setVisibility(GetLocalPlayer() == p)
+		..setVisibility(localPlayer == p)
 
