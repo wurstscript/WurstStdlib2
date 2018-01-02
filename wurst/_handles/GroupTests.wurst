@@ -60,11 +60,9 @@ function testRandom()
 @Test
 function testHandleId()
 	let g = CreateGroup()
-	print(g.getHandleId())
 	assertTrue(g.getHandleId() != 0)
 
 	for i = 0 to 100
 		let g2 = CreateGroup()
-		print(g2.getHandleId())
 		assertTrue(g2.getHandleId() != 0)
 		assertTrue(g2.getHandleId() != g.getHandleId())
