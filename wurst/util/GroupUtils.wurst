@@ -1,0 +1,134 @@
+package GroupUtils
+import NoWurst
+import Group
+import ErrorHandling
+import HashMap
+import Execute
+import MagicFunctions
+import TypeCasting
+
+/*
+    Groups are a necessary evil that exists in warcraft 3, and sometimes their use
+    cannot be easily replicated or avoided, especially with nested enums.
+
+    However, for most purposes, if you want to keep a list of units and iterate over them
+    often, you should use LinkedList<unit> instead of the group, since LinkedList<unit>
+    provides more predictable and consistent functionalities that can be extended more easily.
+*/
+
+/** The max number of recyclable groups. Even if this number is reached, 
+    the system will create new groups on following requests, but they won't be recyclable.
+    The maximum number for this setting is 8191. */
+@configurable constant GROUP_NUMBER_LIMIT = 1024
+
+/** The number of groups created when more are needed */
+@configurable constant NEED_CREATE_GROUPS = 64
+
+/** The number of groups created at start */
+@configurable constant START_CREATE_GROUPS = 64
+
+/* Group instantiation */
+
+/** The total number of recyclable groups created by GroupUtils */
+
+let used = new HashMap<group, bool>
+group array stack
+var numStack = 0
+var numTotal = 0
+
+var shownMaxError = false
+
+function createGroups(int number)
+    let maxCreatePerCycle = 256
+    let actualLimit = IMinBJ(8191, GROUP_NUMBER_LIMIT)
+    let numTarget = numTotal + number 
+    let overflow  = IMaxBJ(0, numTarget - actualLimit)
+    var toCreate  = IMaxBJ(0, numTarget - overflow)
+
+    while toCreate > 0
+        let createNow = IMinBJ(toCreate, maxCreatePerCycle)
+        toCreate -= createNow
+
+        if compiletime 
+            numTotal += createNow
+            for i = 1 to createNow
+                let g = CreateGroup()
+                push(g)
+        else
+            execute(() -> begin 
+                numTotal += createNow
+                for i = 1 to createNow
+                    push(CreateGroup())
+            end)
+        
+    if numTotal >= GROUP_NUMBER_LIMIT and not shownMaxError
+        Log.warn("Maximum number of GroupUtils groups (" + GROUP_NUMBER_LIMIT.toString() + ") created. "
+            + "All newly created groups will be non-recyclable.")
+        shownMaxError = true
+
+init
+    createGroups(START_CREATE_GROUPS)
+
+/** Returns whether this group was created through GroupUtils. */
+function group.isRecyclable() returns bool
+    return used.has(this)
+
+/** Returns whether this group is currently being used */
+function group.isUsed() returns bool
+    return used.get(this)
+
+/* Stack operations */
+
+function push(group g)
+    stack[numStack] = g
+    used.put(stack[numStack], false)
+    numStack++
+
+bool shownDestrWarning = false
+
+function pop() returns group
+    numStack--
+    var retVal = stack[numStack]
+    
+    if stack[numStack] != null
+        used.put(stack[numStack], true)
+    else
+        if not shownDestrWarning
+            Log.warn("Groups on the GroupUtils stack shouldn't be destroyed! Use .release() instead.")
+            shownDestrWarning = true
+        retVal = getGroup()
+    return retVal
+
+function group.recycle()
+    this.clear()
+    push(this)
+
+/** Returns a reusable group from the GroupUtils stack is possible.
+    Creates new groups if none are found on the reusable stack.
+    If that is not possible, returns a non-recyclable group and displays a warning. */
+public function getGroup() returns group
+    group retVal = null
+    if numStack > 0
+        retVal = pop()
+    else if numStack <= 0 and numTotal < GROUP_NUMBER_LIMIT 
+        createGroups(NEED_CREATE_GROUPS)
+        retVal = pop()
+    else
+        retVal = CreateGroup()
+    return retVal
+
+/** Recycles a group if it is created through GroupUtils, otherwise just destroys it. 
+    Doesn't affect ENUM_GROUP. 
+    Called by group.destr() */
+public function group.release()
+    if this == ENUM_GROUP
+        Log.warn("Attemping to release ENUM_GROUP!")
+    else
+        if this.isRecyclable()
+            if this.isUsed()
+                this.recycle()
+            else
+                Log.warn("Attemping to release an already released group!")
+        else
+            this.clear()
+            DestroyGroup(this)
