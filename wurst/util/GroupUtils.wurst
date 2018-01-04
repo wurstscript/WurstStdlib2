@@ -90,8 +90,11 @@ function createGroups(int number)
             + "All newly created groups will be non-recyclable.")
         shownMaxError = true
 
-init
+@compiletime function initialize()
     createGroups(START_CREATE_GROUPS)
+
+init
+    initialize()
 
 /** Returns whether this group was created through GroupUtils. */
 function group.isRecyclable() returns bool
