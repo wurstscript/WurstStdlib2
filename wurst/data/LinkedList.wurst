@@ -10,8 +10,8 @@ Use the Typecasting package if you require lists of warcraft handles.
 */
 public class LinkedList<T>
 	private LLEntry<T> dummy = new LLEntry<T>(null, null, null)
-	private constant staticItr = new LLIterator<T>(this, false)
-	private constant staticBackItr = new LLBackIterator<T>(dummy, false)
+	private LLIterator<T> staticItr = null 
+	private LLBackIterator<T> staticBackItr = null
 	protected int size = 0
 
 	/** Create a new empty list */
@@ -117,11 +117,15 @@ public class LinkedList<T>
 		
 	/** get the static iterator for this list */
 	function staticItr() returns LLIterator<T>
+		if staticItr == null
+			staticItr = new LLIterator<T>(this, false)
 		staticItr.reset()
 		return staticItr
 
 	/** get the static back iterator for this list */
 	function staticBackItr() returns LLBackIterator<T>
+		if staticBackItr == null
+			staticBackItr = new LLBackIterator<T>(dummy, false)
 		staticBackItr.reset()
 		return staticBackItr
 
