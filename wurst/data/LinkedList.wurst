@@ -244,8 +244,10 @@ public class LinkedList<T>
 		size--
 		
 	ondestroy
-		destroy staticItr
-		destroy staticBackItr
+		if staticItr != null
+			destroy staticItr
+		if staticBackItr != null
+			destroy staticBackItr
 		LLEntry<T> current = dummy.next
 		while current != dummy
 			current = current.next
