@@ -33,7 +33,7 @@ public function group.removeUnit(unit u)
 	GroupRemoveUnit(this, u)
 	
 public function group.destr()
-	this.release()
+	DestroyGroup(this)
 	
 public function group.contains(unit u) returns boolean
 	return IsUnitInGroup(u, this)
@@ -66,7 +66,6 @@ public function group.getRandomUnit() returns unit
 	
 /* Group iterator */
 
-unit iterUnit
 group iterGroup
 
 public function group.iterator() returns group
@@ -75,10 +74,10 @@ public function group.iterator() returns group
 	return iterGroup
 
 public function group.hasNext() returns boolean
-	iterUnit = FirstOfGroup(this)
-	return iterUnit != null
+	return FirstOfGroup(this) != null
 	
 public function group.next() returns unit
+	let iterUnit = FirstOfGroup(this)
 	GroupRemoveUnit(this, iterUnit) 
 	return iterUnit
 	

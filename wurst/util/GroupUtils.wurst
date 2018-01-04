@@ -6,6 +6,7 @@ import HashMap
 import Execute
 import MagicFunctions
 import TypeCasting
+import Maths
 
 /*
     Groups are a necessary evil that exists in warcraft 3, and sometimes their use
@@ -27,39 +28,62 @@ import TypeCasting
 /** The number of groups created at start */
 @configurable constant START_CREATE_GROUPS = 64
 
-/* Group instantiation */
-
-/** The total number of recyclable groups created by GroupUtils */
-
 let used = new HashMap<group, bool>
 group array stack
 var numStack = 0
 var numTotal = 0
 
+/* API */
+
+/** Returns a reusable group from the GroupUtils stack is possible.
+    Creates new groups if none are found on the reusable stack.
+    If that is not possible, returns a non-recyclable group and displays a warning. */
+public function getGroup() returns group
+    group retVal
+    if numStack > 0
+        retVal = pop()
+    else if numStack <= 0 and numTotal < GROUP_NUMBER_LIMIT 
+        createGroups(NEED_CREATE_GROUPS)
+        retVal = pop()
+    else
+        retVal = CreateGroup()
+    return retVal
+
+/** Recycles a group if it is created through GroupUtils, otherwise just destroys it. 
+    Doesn't affect ENUM_GROUP. */
+public function group.release()
+    if this == ENUM_GROUP
+        Log.warn("Attemping to release ENUM_GROUP!")
+    else
+        if this.isRecyclable()
+            if this.isUsed()
+                this.recycle()
+            else
+                Log.warn("Attemping to release an already released group!")
+        else
+            this.clear()
+            this.destr()
+
+/* Group instantiation */
+
 var shownMaxError = false
 
 function createGroups(int number)
     let maxCreatePerCycle = 256
-    let actualLimit = IMinBJ(8191, GROUP_NUMBER_LIMIT)
+    let actualLimit = max(8191, GROUP_NUMBER_LIMIT)
     let numTarget = numTotal + number 
-    let overflow  = IMaxBJ(0, numTarget - actualLimit)
-    var toCreate  = IMaxBJ(0, numTarget - overflow)
+    let overflow  = max(0, numTarget - actualLimit)
+    var toCreate  = max(0, numTarget - overflow)
 
     while toCreate > 0
-        let createNow = IMinBJ(toCreate, maxCreatePerCycle)
+        let createNow = min(toCreate, maxCreatePerCycle)
         toCreate -= createNow
 
-        if compiletime 
+        execute(() -> begin 
             numTotal += createNow
             for i = 1 to createNow
-                let g = CreateGroup()
-                push(g)
-        else
-            execute(() -> begin 
-                numTotal += createNow
-                for i = 1 to createNow
-                    push(CreateGroup())
-            end)
+                push(CreateGroup())
+        end)
         
     if numTotal >= GROUP_NUMBER_LIMIT and not shownMaxError
         Log.warn("Maximum number of GroupUtils groups (" + GROUP_NUMBER_LIMIT.toString() + ") created. "
@@ -102,33 +126,3 @@ function pop() returns group
 function group.recycle()
     this.clear()
     push(this)
-
-/** Returns a reusable group from the GroupUtils stack is possible.
-    Creates new groups if none are found on the reusable stack.
-    If that is not possible, returns a non-recyclable group and displays a warning. */
-public function getGroup() returns group
-    group retVal = null
-    if numStack > 0
-        retVal = pop()
-    else if numStack <= 0 and numTotal < GROUP_NUMBER_LIMIT 
-        createGroups(NEED_CREATE_GROUPS)
-        retVal = pop()
-    else
-        retVal = CreateGroup()
-    return retVal
-
-/** Recycles a group if it is created through GroupUtils, otherwise just destroys it. 
-    Doesn't affect ENUM_GROUP. 
-    Called by group.destr() */
-public function group.release()
-    if this == ENUM_GROUP
-        Log.warn("Attemping to release ENUM_GROUP!")
-    else
-        if this.isRecyclable()
-            if this.isUsed()
-                this.recycle()
-            else
-                Log.warn("Attemping to release an already released group!")
-        else
-            this.clear()
-            DestroyGroup(this)
