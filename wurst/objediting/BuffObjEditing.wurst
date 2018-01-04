@@ -4,9 +4,20 @@ import ObjEditingNatives
 public class BuffDefinition
 	ObjectDefinition def
 	
-	construct(int newAbilityId, int origAbilityId)
-		def = createObjectDefinition("w3h", newAbilityId, origAbilityId)
-	
+	protected int newId 
+	protected int baseId
+
+	function getNewId() returns int
+		return newId
+
+	function getBaseId() returns int
+		return baseId
+
+	construct(int newId, int baseId)
+		this.newId = newId
+		this.baseId = baseId
+		def = createObjectDefinition("w3h", newId, baseId)
+
 	function setName(int level, string value)
 		def.setLvlDataString("fnam",  level, 0,  value)
 
