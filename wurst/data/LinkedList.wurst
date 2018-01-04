@@ -325,7 +325,8 @@ public class LLBackIterator<T>
 		return current.elem 
  		
 	function close() 
-		destroy this
+		if destroyOnClose
+			destroy this
 
 public interface LinkedListPredicate<T>
 	function isTrueFor(T t) returns boolean
