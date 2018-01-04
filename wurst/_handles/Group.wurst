@@ -68,18 +68,22 @@ public function group.getRandomUnit() returns unit
 
 group iterGroup
 
+/** Creates a new iterator for this group. */
 public function group.iterator() returns group
 	iterGroup = getGroup()
 	ForGroup(this, () -> iterGroup.addUnit(GetEnumUnit()))
 	return iterGroup
 
+/** Returns whether the iterator has the next item */
 public function group.hasNext() returns boolean
 	return FirstOfGroup(this) != null
-	
+
+/** Returns the next item from the iterator */
 public function group.next() returns unit
 	let iterUnit = FirstOfGroup(this)
 	GroupRemoveUnit(this, iterUnit) 
 	return iterUnit
 	
+/** Closes the iterator, releaseing the group */
 public function group.close()
 	this.release()
