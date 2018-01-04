@@ -7,10 +7,7 @@ public constant REAL_MIN = -340282366920938000000000000000000000000.
 /**	Returns the abolsute value of the given real.
 	This means, negative values will be return positive. */
 public function real.abs() returns real
-	if this >= 0
-		return this
-	else
-		return -this
+	return this < 0 ? -this : this 
 
 /** Returns the result of this*this, i.e. the square */
 public function real.squared() returns real
@@ -18,18 +15,11 @@ public function real.squared() returns real
 
 /** Returns the sign of this real */
 public function real.sign() returns int
-	if this > 0.0
-		return 1
-	else if this < 0.0
-		return -1
-	else
-		return 0
+	return (this > 0 ? 1 : (this < 0 ? -1 : 0))
 		
 /** Rounds the input real to the nearest int */
 public function real.round() returns int
-	if this > 0
-		return (this+.5).toInt()
-	return (this-.5).toInt()
+	return this > 0 ? (this+.5).toInt() : (this-.5).toInt()
 
 /** Converts the input real to an int. This cuts off
 	the decimal digits. (1.9->1) */

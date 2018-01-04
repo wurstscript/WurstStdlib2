@@ -2,6 +2,7 @@ package InstantDummyCaster
 import NoWurst
 import Basics
 import Unit
+import Widget
 import UnitObjEditing
 import MapBounds
 /*
@@ -39,12 +40,14 @@ public class InstantDummyCaster
 		
 	static function castTarget(player owner, int abilityId, int lvl, int orderId, widget target, vec2 casterPos) returns boolean
 		prepare(owner, abilityId, lvl, casterPos)
+		caster.setFacing(caster.getPos().angleTo(target.getPos()))
 		boolean b = caster.issueTargetOrderById(orderId, target)
 		finish()
 		return b
 	
 	static function castPoint(player owner, int abilityId, int lvl, int orderId, vec2 targetPos, vec2 casterPos) returns boolean
 		prepare(owner, abilityId, lvl, casterPos)
+		caster.setFacing(caster.getPos().angleTo(targetPos))
 		boolean b = caster.issuePointOrderById(orderId, targetPos)
 		finish()
 		return b
@@ -91,6 +94,7 @@ init
 		..setAnimationCastBackswing(0.0)
 		..setMaximumPitchAngledegrees(0.0)
 		..setMaximumRollAngledegrees(0.0)
+		..setTurnRate(3)
 		..setSpecial("")
 		..setProjectileImpactZ(0.0)
 		..setProjectileLaunchZ(0.0)
@@ -100,7 +104,7 @@ init
 		..setUnitClassification("_")
 		..setPropulsionWindowdegrees(1.0)
 		..setTooltipBasic("")
-		..setNormalAbilities("Agho")
+		..setNormalAbilities("Aloc,Agho")
 		..setGroundTexture("")
 		..setShadowTextureBuilding("")
 		..setCollisionSize(0)

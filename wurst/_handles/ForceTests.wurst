@@ -1,0 +1,26 @@
+package ForceTests
+import NoWurst
+import Execute
+import Wurstunit
+import Force
+
+@Test
+function testForce()
+	let f = CreateForce()
+
+	assertTrue(f != null)
+
+	f.addPlayer(Player(0))
+
+
+int testInt = 0
+
+@Test
+function testForForce()
+	testInt = 0
+	execute(() -> begin
+		testInt.assertEquals(0)
+		testInt = 10
+	end)
+
+	testInt.assertEquals(10)
