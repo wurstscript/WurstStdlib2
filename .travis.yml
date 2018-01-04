@@ -1,7 +1,9 @@
 sudo: required
 jdk: oraclejdk8
 
-before_install: cd $HOME/.wurst
+before_install: 
+  - mkdir $HOME/.wurst/
+  - cd $HOME/.wurst
 
 install:
   - wget http://peeeq.de/hudson/job/Wurst/lastSuccessfulBuild/artifact/downloads/wurstpack_compiler.zip
