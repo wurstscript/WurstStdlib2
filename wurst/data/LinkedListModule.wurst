@@ -50,9 +50,9 @@ public module LinkedListModule
 	
 	/** An iterator which iterates over all instances of this class */
 	static function iterator() returns Iterator
-		return new Iterator()
+		return new Iterator(true)
 		
-	private static let staticItr = new Iterator()
+	private static let staticItr = new Iterator(false)
 
 	/** An iterator which iterates over all instances of this class */
 	static function staticItr() returns Iterator
@@ -60,9 +60,9 @@ public module LinkedListModule
 
 	/** An iterator which iterates over all instances of this class in reverse */
 	static function backIterator() returns BackIterator
-		return new BackIterator()
+		return new BackIterator(true)
 
-	private static let staticBackItr = new BackIterator()
+	private static let staticBackItr = new BackIterator(false)
 
 	/** An iterator which iterates over all instances of this class in reverse */
 	static function staticBackItr() returns BackIterator
@@ -70,6 +70,10 @@ public module LinkedListModule
 
 	static class Iterator
 		LinkedListModule.thistype current = first
+		protected bool destroyOnClose
+
+		construct(bool destroyOnClose)
+			this.destroyOnClose = destroyOnClose
 
 		function hasNext() returns boolean
 			return current != null
@@ -83,11 +87,16 @@ public module LinkedListModule
 			current = first
 	 		
 		function close() 
-			destroy this
+			if destroyOnClose
+				destroy this
 	
 	static class BackIterator
 		LinkedListModule.thistype current = last
+		protected bool destroyOnClose
 
+		construct(bool destroyOnClose)
+			this.destroyOnClose = destroyOnClose
+			
 		function hasNext() returns boolean
 			return current != null
 	
@@ -100,7 +109,8 @@ public module LinkedListModule
 			current = last
 	 		
 		function close() 
-			destroy this
+			if destroyOnClose
+				destroy this
 
 // -----TESTS------
 
