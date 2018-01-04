@@ -3498,12 +3498,19 @@ public class AbilityDefinitionWindWalk extends AbilityDefinition
 	construct(int newAbilityId)
 		super(newAbilityId, 'ANwk')
 
+	function setBackstabDamage(int level, real value)
+		def.setLvlDataUnreal("Owk3", level, 3, value)
+
+	function presetBackstabDamage(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Owk3", lvls, 3, lc)
+		addTooltipProperty("BackstabDamage", lc)
+
 	function setBackstabDamage(int level, bool value)
 		def.setLvlDataBoolean("Owk4", level, 4, value)
 
 	function presetBackstabDamage(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("Owk4", lvls, 4, lc)
-		addTooltipProperty("BackstabDamage", lc)
+		addTooltipProperty("BackstabDamageEnabled", lc)
 
 
 
