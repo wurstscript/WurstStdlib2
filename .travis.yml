@@ -1,0 +1,11 @@
+sudo: required
+jdk: oraclejdk8
+
+install:
+  - curl http://peeeq.de/hudson/job/Wurst/lastSuccessfulBuild/artifact/downloads/wurstpack_compiler.zip > $HOME/.wurst/compiler.zip
+  - unzip -qq -n $HOME/.wurst/compiler.zip -d $HOME/.wurst
+
+before_script: cd $HOME/.wurst
+
+script:
+  - java -jar wurstscript.jar common.j blizzard.j -runcompiletimefunctions -runtests
