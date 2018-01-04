@@ -20,18 +20,12 @@ public function bitset.contains(int v) returns boolean
 /** adds value v to the bitset */
 public function bitset.add(int v) returns bitset
 	let pow = 2 .pow(v)
-	if not this.containsPow(pow)
-		return bitset(this.val + pow)
-	else
-		return this
+	return this.containsPow(pow) ? bitset(this.val + pow) : this
 
 /** removes value v from the bitset */		
 public function bitset.remove(int v) returns bitset
 	let pow = 2 .pow(v)
-	if this.containsPow(pow)
-		return bitset(this.val - pow)
-	else
-		return this
+	return this.containsPow(pow) ? bitset(this.val - pow) : this
 		
 // Tests:
 @test function testContains()
