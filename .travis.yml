@@ -2,7 +2,7 @@ sudo: required
 jdk: oraclejdk8
 
 install:
-  -- if test ! -e $HOME/.wurst/compiler.zip ; then curl http://peeeq.de/hudson/job/Wurst/lastSuccessfulBuild/artifact/downloads/wurstpack_compiler.zip > $HOME/.wurst/compiler.zip
+  - if test ! -e $HOME/.wurst/compiler.zip ; then curl http://peeeq.de/hudson/job/Wurst/lastSuccessfulBuild/artifact/downloads/wurstpack_compiler.zip > $HOME/.wurst/compiler.zip
   - unzip -qq -n $HOME/.wurst/compiler.zip -d $HOME/.wurst
 
 before_script: cd $HOME/.wurst
