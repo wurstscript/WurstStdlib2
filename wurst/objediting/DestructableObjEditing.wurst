@@ -6,8 +6,19 @@ import NoWurst
 public class W3BDefinition
 	ObjectDefinition def
 	
-	construct(int newDestrID, int origDestrID)
-		def = createObjectDefinition("w3b",newDestrID,origDestrID)
+	protected int newId 
+	protected int baseId
+
+	function getNewId() returns int
+		return newId
+
+	function getBaseId() returns int
+		return baseId
+
+	construct(int newId, int baseId)
+		this.newId = newId
+		this.baseId = baseId
+		def = createObjectDefinition("w3b", newId, baseId)
 		
 public class DestructableDefinition extends W3BDefinition
 	construct(int newID,int origID)
