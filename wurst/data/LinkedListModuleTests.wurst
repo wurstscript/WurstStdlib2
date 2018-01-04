@@ -1,0 +1,48 @@
+package LinkedListModuleTests
+import LinkedListModule
+
+// -----TESTS------
+
+class TestClass
+	use LinkedListModule
+	string str
+	construct(string str)
+		this.str = str
+
+function allToString() returns string
+	string res = ""
+ 	for x in TestClass
+		res += x.str
+	return res
+	
+@test function test()
+	let a = new TestClass("a")
+	let b = new TestClass("b")
+	let c = new TestClass("c")
+	let d = new TestClass("d")
+ 
+ 	assertTrue(allToString() == "abcd")
+ 	destroy c
+ 	assertTrue(allToString() == "abd")
+ 	destroy d
+ 	assertTrue(allToString() == "ab")
+ 	destroy a
+ 	assertTrue(allToString() == "b")
+ 	destroy b
+ 	assertTrue(allToString() == "")
+ 	
+ @test function testDestroy()
+ 	new TestClass("a")
+	let b = new TestClass("b")
+	new TestClass("c")
+	new TestClass("d")
+ 	string s = ""
+ 	for x in TestClass
+		s += x.str
+		if x == b
+			destroy x
+	assertTrue(s == "abcd")
+	assertTrue(allToString() == "acd")
+	for x in TestClass
+		destroy x
+	assertTrue(allToString() == "")

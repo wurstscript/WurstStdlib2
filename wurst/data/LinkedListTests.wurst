@@ -1,0 +1,70 @@
+package LinkedListTests
+import LinkedList
+import TypeCasting
+
+@Test function testAddRemove()
+	let list = new LinkedList<int>()
+	assertTrue(list.getSize() == 0)
+	
+	list..add(1)..add(2)..add(3)..add(4)
+	assertTrue(list.getSize() == 4)
+	
+	let itr = list.staticItr()
+	while itr.hasNext()
+		itr.next()
+		itr.remove()
+
+	assertTrue(list.getSize() == 0)
+
+@Test function testForLoop()
+	let list = new LinkedList<int>()
+	
+	list..add(1)..add(2)..add(3)..add(4)
+	
+	list.updateAll((int i) -> i + 1)
+	
+	var result = 0
+	for i in list
+		result += i
+
+	assertTrue(result == (5+4+3+2))
+
+@Test function testAddAll()
+	let list = new LinkedList<int>()
+	let list2 = new LinkedList<int>()
+	
+	list..add(1)..add(2)
+	list2..add(3)..add(4)
+	list.addAll(list2)
+
+	assertTrue(list.get(2) == 3)
+	assertTrue(list.get(3) == 4)
+
+	var result = 0
+	for i in list
+		result += i
+	assertTrue(result == (1+2+3+4))
+
+@Test function testClosures()
+	let list = new LinkedList<int>()
+	list..add(1)..add(2)..add(3)..add(4)
+	
+	list.updateAll((int i) -> i * 2)
+	assertTrue(list.get(3) == 4*2)
+
+	list.removeWhen((int i) -> i > 4)
+	assertTrue(list.size() == 2)
+
+	let realList = list.map<real>((int i) -> i * 10.)
+	assertTrue(realList.get(1) == 40.)
+
+@Test function testGenerics()
+	let list = new LinkedList<string>()
+	list..add("a")..add("b")..add("c")
+	assertTrue(list.get(1) == "b")
+
+	let list2 = new LinkedList<real>()
+	list2..add(1.230)..add(2.563)..add(1213143.)
+	assertTrue(list2.get(0) == 1.230)
+	assertTrue(list2.get(1) == 2.563)
+	assertTrue(list2.get(2) == 1213143.)
