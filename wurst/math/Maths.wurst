@@ -4,7 +4,7 @@ import public Angle
 import Real
 import Wurstunit
 
-/** PI constant */
+/** Euler's constant */
 public constant real EULER      =  2.718281828
 /** PI constant */
 public constant real PI			=  3.141592654
@@ -18,158 +18,143 @@ public constant real PIHALF		=  1.570796326
  * SquareRoot(x^2 + y^2) does.
  */
 public function hypot(real dx, real dy) returns real
-    real x = dx.abs()
-    real y = dy.abs()
-    real t = 0
-    if x > y
-        t = y / x
-    else if x < y
-        t = x / y
-        x = y
-    return x * SquareRoot(1 + t * t)
+	real x = dx.abs()
+	real y = dy.abs()
+	real t = 0
+	if x > y
+		t = y / x
+	else if x < y
+		t = x / y
+		x = y
+	return x * SquareRoot(1 + t * t)
 
 /** Returns the angle of a height-slope */	
 public function getSlopeAngle( real z1, real z2, real dist ) returns angle
-    return angle(Atan2(z2-z1, dist ))
-    
+	return angle(Atan2(z2-z1, dist ))
+	
 public function int.moduloInt(int divisor) returns int
-    return this - (this div divisor) * divisor
+	return this - (this div divisor) * divisor
 
 
 /** returns the bigger number of the two parameters */
 public function max(int x, int y) returns int
-    int r
-    if x > y
-        r = x
-    else
-        r = y
-    return r
+	int r
+	if x > y
+		r = x
+	else
+		r = y
+	return r
 
 /** returns the bigger number of the three parameters */
 public function max(int a, int b, int c) returns int
-    return max(max(a, b), c)
+	return max(max(a, b), c)
 
 /** returns the bigger number of the four parameters */
 public function max(int a, int b, int c, int d) returns int
-    return max(max(a, b, c), d)
+	return max(max(a, b, c), d)
 
 /** returns the bigger number of the five parameters */
 public function max(int a, int b, int c, int d, int e) returns int
-    return max(max(a, b, c, d), e)
+	return max(max(a, b, c, d), e)
 
 /** returns the bigger number of the six parameters */
 public function max(int a, int b, int c, int d, int e, int f) returns int
-    return max(max(a, b, c, d, e), f)
+	return max(max(a, b, c, d, e), f)
 
 /** returns the bigger number of the two parameters */
 public function max(real x, real y) returns real
-    real r
-    if x > y
-        r = x
-    else
-        r = y
-    return r
+	real r
+	if x > y
+		r = x
+	else
+		r = y
+	return r
 
 /** returns the bigger number of the three parameters */
 public function max(real a, real b, real c) returns real
-    return max(max(a, b), c)
+	return max(max(a, b), c)
 
 /** returns the bigger number of the four parameters */
 public function max(real a, real b, real c, real d) returns real
-    return max(max(a, b, c), d)
+	return max(max(a, b, c), d)
 
 /** returns the bigger number of the five parameters */
 public function max(real a, real b, real c, real d, real e) returns real
-    return max(max(a, b, c, d), e)
+	return max(max(a, b, c, d), e)
 
 /** returns the bigger number of the six parameters */
 public function max(real a, real b, real c, real d, real e, real f) returns real
-    return max(max(a, b, c, d, e), f)
+	return max(max(a, b, c, d, e), f)
 
 /** returns the smaller number of the two parameters */
 public function min(int x, int y) returns int
-    int r
-    if x < y
-        r = x
-    else
-        r = y
-    return r
+	int r
+	if x < y
+		r = x
+	else
+		r = y
+	return r
 
 /** returns the smaller number of the three parameters */
 public function min(int a, int b, int c) returns int
-    return min(min(a, b), c)
+	return min(min(a, b), c)
 
 /** returns the smaller number of the four parameters */
 public function min(int a, int b, int c, int d) returns int
-    return min(min(a, b, c), d)
+	return min(min(a, b, c), d)
 
 /** returns the smaller number of the five parameters */
 public function min(int a, int b, int c, int d, int e) returns int
-    return min(min(a, b, c, d), e)
+	return min(min(a, b, c, d), e)
 
 /** returns the smaller number of the six parameters */
 public function min(int a, int b, int c, int d, int e, int f) returns int
-    return min(min(a, b, c, d, e), f)
+	return min(min(a, b, c, d, e), f)
 
 /** returns the smaller number of the two parameters */		
 public function min(real x, real y) returns real
-    real r
-    if x < y
-        r = x
-    else
-        r = y
-    return r
-    
+	real r
+	if x < y
+		r = x
+	else
+		r = y
+	return r
+	
 /** returns the smaller number of the three parameters */
 public function min(real a, real b, real c) returns real
-    return min(min(a, b), c)
+	return min(min(a, b), c)
 
 /** returns the smaller number of the four parameters */
 public function min(real a, real b, real c, real d) returns real
-    return min(min(a, b, c), d)
+	return min(min(a, b, c), d)
 
 /** returns the smaller number of the five parameters */
 public function min(real a, real b, real c, real d, real e) returns real
-    return min(min(a, b, c, d), e)
+	return min(min(a, b, c, d), e)
 
 /** returns the smaller number of the six parameters */
 public function min(real a, real b, real c, real d, real e, real f) returns real
-    return min(min(a, b, c, d, e), f)
- 
-/** returns the value of base to the power of exp */
-public function pow(int base, int exp) returns int
-    return Pow(I2R(base), I2R(exp)).toInt()
+	return min(min(a, b, c, d, e), f)
 
-/** returns the value of base to the power of exp */
-public function pow(real base, real exp) returns real
-    return Pow(base, exp)
-
-/** returns the value of this number to the power of exp */
-public function int.exp(int exp) returns int
-    return pow(this, exp)
-
-/** returns the value of this number to the power of exp */
-public function real.exp(real exp) returns real
-    return pow(this, exp) 
 
 @test function minmax()
-    // better test min and max, they are difficult to implement M;D
-    int three = 3
-    max(three,4)	.assertEquals(4)	
-    max(4,three)	.assertEquals(4)
-    min(three,4)	.assertEquals(3)
-    max(3.,4.)		.assertEquals(4.)
-    min(3.,4.)		.assertEquals(3.)
-    
+	// better test min and max, they are difficult to implement M;D
+	int three = 3
+	max(three,4)	.assertEquals(4)	
+	max(4,three)	.assertEquals(4)
+	min(three,4)	.assertEquals(3)
+	max(3.,4.)		.assertEquals(4.)
+	min(3.,4.)		.assertEquals(3.)
+	
 @test function test_hypot()
-    test_hypot_help(5,6)
-    test_hypot_help(5000000.,6)
-    test_hypot_help(3.,123456789.)
-    test_hypot_help(543532403425324.,123456789.)
-    test_hypot_help(0.0000001,0.0000000000023)
-    test_hypot_help(0,0)
-    
-    
+	test_hypot_help(5,6)
+	test_hypot_help(5000000.,6)
+	test_hypot_help(3.,123456789.)
+	test_hypot_help(543532403425324.,123456789.)
+	test_hypot_help(0.0000001,0.0000000000023)
+	test_hypot_help(0,0)
+	
+	
 function test_hypot_help(real x, real y)
-    hypot(x,y).assertEquals(SquareRoot(x*x + y*y), 0.0001)
-    
+	hypot(x,y).assertEquals(SquareRoot(x*x + y*y), 0.0001)
+	
