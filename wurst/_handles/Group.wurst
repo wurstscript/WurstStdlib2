@@ -1,6 +1,7 @@
 package Group
 import NoWurst
 import Vectors
+import initlater GroupUtils
 
 /** Use this group for your non-nested group enum calls
 	and then iterate through the group via **for from** or
@@ -63,20 +64,26 @@ public function group.getRandomUnit() returns unit
 	end)
 	return randomSelected
 	
+/* Group iterator */
 
-// group iterator
+group iterGroup
+
+/** Creates a new iterator for this group. */
 public function group.iterator() returns group
-	bj_groupAddGroupDest = CreateGroup()
-	ForGroup(this, function GroupAddGroupEnum)
-	return bj_groupAddGroupDest
+	iterGroup = getGroup()
+	ForGroup(this, () -> iterGroup.addUnit(GetEnumUnit()))
+	return iterGroup
 
+/** Returns whether the iterator has the next item */
 public function group.hasNext() returns boolean
 	return FirstOfGroup(this) != null
-	
+
+/** Returns the next item from the iterator */
 public function group.next() returns unit
-	let u = FirstOfGroup(this)
-	GroupRemoveUnit(this, u) 
-	return u
+	let iterUnit = FirstOfGroup(this)
+	GroupRemoveUnit(this, iterUnit) 
+	return iterUnit
 	
+/** Closes the iterator, releaseing the group */
 public function group.close()
-	DestroyGroup(this)
+	this.release()
