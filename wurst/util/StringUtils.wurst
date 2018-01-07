@@ -123,7 +123,7 @@ public function LinkedList<string>.join() returns string
 public function string.reduce(string reduced) returns string
 	var toReduce = reduced + reduced 
 	var oldString = this
-	var newString = ""
+	string newString
 
 	while true
 		newString = oldString.replace(toReduce, reduced)
@@ -140,11 +140,15 @@ public function string.reduce() returns string
 	return this.reduce(" ")
 
 
-init
+@compiletime function initialize()
 	c2sInit()
 	s2cInit()
 	widthInit()
 
+init
+	initialize()
+	_disableTypeCastingWarning()
+	
 function widthInit()
 	width[0] = 0
 	width[1] = 0
