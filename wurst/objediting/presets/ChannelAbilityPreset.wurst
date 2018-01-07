@@ -5,6 +5,8 @@ import public ObjectIds
 import public ObjectIdGenerator
 import OrderStringFactory
 import BitSet
+import HashMap
+import TypeCasting
 
 OrderStringFactory odf = new OrderStringFactory()
 @compiletime function initOdf()
@@ -41,12 +43,21 @@ public function Targettype.toString() returns string
 
 public class ChannelAbilityPreset extends AbilityDefinitionIllidanChannel
 	private bitset optionSet = bitset(0)
-	
+	private string orderString
+	private int id 
+
+	function getOrderString() returns string
+		return orderString
+
+	function getId() returns int
+		return id
+
 	construct(int newId, int lvls, boolean removeChannelProperties)
 		super(newId)
+		id = newId
 		this.lvls = lvls
 		setLevels(lvls)
-		let orderString = odf.getOrderString(true)
+		orderString = odf.getOrderString(true)
 		presetBaseOrderID((int _lvl) -> orderString)
 		if removeChannelProperties
 			removeChannelProperties(true)
