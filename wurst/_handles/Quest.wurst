@@ -1,5 +1,7 @@
 package Quest
 
+import QuestItem
+
 public function quest.setRequired(boolean req)
     QuestSetRequired(this, req)
 
@@ -34,7 +36,7 @@ public function quest.remove()
     DestroyQuest(this)
 
 
-    public enum QuestState
+public enum QuestState
     FAILED
     COMPLETED
     UNDISCOVERED
@@ -79,8 +81,8 @@ public class Quest
             case state.DISCOVERED
                 q.discovered(true)
 
-    function addObjective(string text) returns QuestObjective
-        return new QuestObjective(q, text)
+    function addObjective(string text) returns QuestItem
+        return new QuestItem(q, text)
         
     ondestroy
         q.remove()

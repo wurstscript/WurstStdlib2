@@ -1,6 +1,6 @@
 package QuestItem
 
-public function questitem.description(string text)
+public function questitem.setDescription(string text)
     QuestItemSetDescription(this, text)
 
 public function questitem.isCompleted() returns boolean
@@ -15,7 +15,7 @@ public class QuestItem
     construct(quest q, string text)
         parent = q
         qi = QuestCreateItem(parent)
-        qi.description(text)
+        qi.setDescription(text)
 
     function isCompleted() returns boolean
         return qi.isCompleted()
