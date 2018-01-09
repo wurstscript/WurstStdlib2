@@ -1,6 +1,7 @@
 package Group
 import NoWurst
 import Vectors
+import initlater GroupUtils
 
 /** Use this group for your non-nested group enum calls
 	and then iterate through the group via **for from** or
@@ -85,5 +86,4 @@ public function group.next() returns unit
 	
 /** Closes the iterator, releaseing the group */
 public function group.close()
-	this.clear()
-	this.destr()
+	this.release()
