@@ -63,6 +63,15 @@ public function group.release()
             this.clear()
             this.destr()
 
+/* Recyclable iterator */
+
+group iterGroup
+
+public function group.recyclableIterator() returns group
+    iterGroup = getGroup()
+    ForGroup(this, () -> iterGroup.addUnit(GetEnumUnit()))
+    return iterGroup
+
 /* Group instantiation */
 
 var shownMaxError = false
