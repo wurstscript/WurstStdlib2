@@ -301,6 +301,12 @@ public class LLIterator<T>
 		current = current.next
 		return current.elem
 
+	function lookahead() returns T
+		T retVal = null
+		if hasNext()
+			retVal = current.next.elem
+		return retVal
+
 	function close()
 		if destroyOnClose
 			destroy this
@@ -328,7 +334,13 @@ public class LLBackIterator<T>
 	function next() returns T
 		current = current.prev 
 		return current.elem 
- 		
+		 
+	function lookahead() returns T
+		T retVal = null
+		if hasNext()
+			retVal = current.prev.elem
+		return retVal
+
 	function close() 
 		if destroyOnClose
 			destroy this
