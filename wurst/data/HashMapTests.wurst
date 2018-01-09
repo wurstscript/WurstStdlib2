@@ -1,0 +1,8 @@
+package HashMapTests
+import HashMap
+
+@Test
+function testBooleanHashmap()
+	let hm = new HashMap<int, boolean>
+	hm.put(1, true)
+	hm.get(1).assertEquals(true)
