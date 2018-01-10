@@ -1,5 +1,6 @@
 package LinkedList
 import NoWurst
+import Printing
 
 /** 
 Doubly-linked list implementation that implements all common list, stack and queue operations.
@@ -220,13 +221,11 @@ public class LinkedList<T>
 	private function sort(Comparator<T> comparator, LLEntry<T> e) returns LLEntry<T>
 		if e == dummy or e.next == dummy
 			return e
-		let mid = getMiddle(e)
-		let next = mid.next
 
-		mid.next = dummy
-		let left = sort(comparator, e)
-		let right = sort(comparator, next)
-		return sortMerge(comparator, left, right)
+		var second = split(e)
+		let first = sort(comparator, e)
+		second = sort(comparator, second)
+		return sortMerge(comparator, first, second)
 	
 	/** internal merge */
 	private function sortMerge(Comparator<T> comparator, LLEntry<T> a, LLEntry<T> b) returns LLEntry<T>
@@ -243,22 +242,20 @@ public class LinkedList<T>
 			else
 				_result = b
 				_result.next = sortMerge(comparator, a, b.next)
+			_result.next.prev = _result
+			_result.prev = dummy
 		return _result 
 
 	/** returns the middle of a fragment list */
-	private function getMiddle(LLEntry<T> e) returns LLEntry<T>
-		LLEntry<T> result = dummy
-		if e != dummy
-			LLEntry<T> normalRef = e.next
-			LLEntry<T> halfRef = e
-			
-			while normalRef != dummy
-				normalRef = normalRef.next
-				if normalRef != dummy
-					halfRef = halfRef.next
-					normalRef = normalRef.next
-			result = halfRef
-		return result
+	private function split(LLEntry<T> e) returns LLEntry<T>
+		LLEntry<T> normalRef = e
+		LLEntry<T> halfRef = e
+		while(normalRef.next != dummy and normalRef.next.next != dummy)
+			normalRef = normalRef.next.next
+			halfRef = halfRef.next
+		let tmp = halfRef.next
+		halfRef.next = dummy
+		return tmp
 
 	/** Prints the content of the list */
 	function toString() returns string
@@ -417,5 +414,6 @@ public interface MapClosure<T, Q>
 public interface Comparator<T>
 	function compare(T o1, T o2) returns int
 
+constant Comparator<int> intComparator = (int i1, int i2) -> i1 - i2
 public function LinkedList<int>.sort()
-	this.sortWith((int i1, int i2) -> i1 - i2)
+	this.sortWith(intComparator)

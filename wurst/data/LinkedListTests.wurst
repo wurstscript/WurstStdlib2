@@ -29,6 +29,18 @@ import LinkedList
 
 	assertTrue(result == (5+4+3+2))
 
+@Test function testBackIter()
+	let list = new LinkedList<int>()
+	let list2 = new LinkedList<int>()
+	
+	list..add(1)..add(2)..add(3)..add(4)
+	list2..add(4)..add(3)..add(2)..add(1)
+	
+	let bi = list.backiterator()
+	let i = list2.iterator()
+	while bi.hasNext() and i.hasNext()
+		bi.next().assertEquals(i.next())	
+
 @Test function testAddAll()
 	let list = new LinkedList<int>()
 	let list2 = new LinkedList<int>()
@@ -75,7 +87,7 @@ import LinkedList
 	for i = 0 to 500
 		list..add(GetRandomInt(-100, 100)*2 + 1)
 	list.sort()
-
+	
 	let itr = list.iterator()
 	int i2 = 0
 	while itr.hasNext()
@@ -84,5 +96,13 @@ import LinkedList
 		let lookahead = itr.lookahead()
 		if lookahead != 0
 			next.assertLessThanOrEqual(lookahead)
-
+	itr.close()
 	i2.assertEquals(list.size())
+
+	let bitr = list.backiterator()
+	int bi2 = 0
+	while bitr.hasNext()
+		bitr.next().toString()
+		bi2++
+
+	bi2.assertEquals(list.size())
