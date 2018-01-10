@@ -59,16 +59,20 @@ public class LinkedList<T>
 	/** Returns and removes the first added Element (FIFO) */
 	function dequeue() returns T
 		let top = dummy.next
-		let elem = top.elem
-		removeEntry(top)
-		return elem
+		T result = null
+		if top != dummy
+			result = top.elem
+			removeEntry(top)
+		return result
 		
 	/** Returns and removes the last added Element (LIFO) */
 	function pop() returns T
 		let top = dummy.prev
-		let elem = top.elem
-		removeEntry(top)
-		return elem
+		T result = null
+		if top != dummy
+			result = top.elem
+			removeEntry(top)
+		return result
 		
 	/** Returns and removes the lastly added Element */
 	function peek() returns T
