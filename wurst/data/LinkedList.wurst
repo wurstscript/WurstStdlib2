@@ -12,6 +12,13 @@ public class LinkedList<T>
 	private LLBackIterator<T> staticBackItr = null
 	protected int size = 0
 
+	/** Create a new list by copying all elements from another list into it */
+	construct(thistype base)
+		dummy.next = dummy
+		dummy.prev = dummy
+		for elem in base
+			add(elem)
+
 	/** Create a new empty list */
 	construct()
 		dummy.next = dummy
@@ -113,6 +120,13 @@ public class LinkedList<T>
 	function isEmpty() returns boolean
 		return size == 0
 		
+	/** Returns a shallow copy of this map */
+	function copy() returns LinkedList<T>
+		let list = new LinkedList<T>
+		for elem in this
+			list.add(elem)
+		return list
+
 	/** get the static iterator for this list */
 	function staticItr() returns LLIterator<T>
 		if staticItr == null
@@ -240,7 +254,7 @@ public class LinkedList<T>
 		entry.next.prev = entry.prev
 		destroy entry
 		size--
-		
+
 	ondestroy
 		if staticItr != null
 			destroy staticItr
@@ -310,7 +324,7 @@ public class LLIterator<T>
 	function close()
 		if destroyOnClose
 			destroy this
-		
+
 public class LLBackIterator<T>
 	LLEntry<T> dummy
 	LLEntry<T> current

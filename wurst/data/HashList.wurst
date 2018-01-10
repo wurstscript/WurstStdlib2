@@ -4,14 +4,25 @@ public class HashList<T>
 	private static hashtable ht = InitHashtable()
 	private int size = 0
 
+	private function incrOccurences(T elem)
+		let occurences = ht.loadReal(this castTo int, elem castTo int)
+		ht.saveReal(this castTo int, elem castTo int, occurences + 1)
+
+	private function decrOccurences(T elem)
+		let occurences = ht.loadReal(this castTo int, elem castTo int)
+		ht.saveReal(this castTo int, elem castTo int, occurences - 1)
+
 	/** Add an element to the end of the list */
 	function add(T elem)
 		ht.saveInt(this castTo int, size, elem castTo int)
+		incrOccurences(elem)
 		size++
 	
-	/** Set an existing element at the given positiob to a new value */
+	/** Set an existing element at the given position to a new value */
 	function set(int index, T elem)
+		decrOccurences(get(index))
 		ht.saveInt(this castTo int, index, elem castTo int)
+		incrOccurences(elem)
 
 	/** Add all elements from elems to this list */
 	function addAll(HashList<T> elems)
@@ -29,8 +40,9 @@ public class HashList<T>
 
 	/** Remove the element at the given index */
 	function removeAt(int index)
+		decrOccurences(ht.loadInt(this castTo int, index) castTo T)
 		for i = index to size
-			ht.saveInt(this castTo int, i, ht.loadInt(this castTo int, i+1))
+			ht.saveInt(this castTo int, i, ht.loadInt(this castTo int, i + 1))
 		size--
 		
 	/** Remove the first occurence of t from this list */
@@ -54,21 +66,32 @@ public class HashList<T>
 
 	/** Return whether the element exists in the list */
 	function contains(T elem) returns bool
-		for listElem in this
-			if elem == listElem
-				return true
-		return false
+		return ht.loadReal(this castTo int, elem castTo int) > 0
 
 	/** Get an iterator for this list */
 	function iterator() returns HLIterator<T>
-		return new HLIterator(this)			
+		return new HLIterator(this)	
+				
+	/** Returns a shallow copy of this map */
+	function copy() returns HashList<T>
+		let list = new HashList<T>
+		for elem in this
+			list.add(elem)
+		return list
+
+	construct()
+	
+	/** Create a new list by copying all elements from another list into it */
+	construct(thistype base)
+		for elem in base
+			add(elem)
 
 	ondestroy
 		ht.flushChild(this castTo int)
 
-class HLIterator<Q>
-	int i = 0
-	HashList<Q> list
+public class HLIterator<Q>
+	protected int i = 0
+	protected HashList<Q> list
 	
 	construct(HashList<Q> list)
 		this.list = list
