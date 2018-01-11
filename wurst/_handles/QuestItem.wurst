@@ -1,0 +1,24 @@
+package QuestItem
+
+public function questitem.setDescription(string text)
+    QuestItemSetDescription(this, text)
+
+public function questitem.isCompleted() returns boolean
+    return IsQuestItemCompleted(this)
+
+public function questitem.complete(boolean b)
+    QuestItemSetCompleted(this, b)
+
+public class QuestItem
+    questitem qi
+    quest parent
+    construct(quest q, string text)
+        parent = q
+        qi = QuestCreateItem(parent)
+        qi.setDescription(text)
+
+    function isCompleted() returns boolean
+        return qi.isCompleted()
+    
+    function complete(boolean b)
+        qi.complete(b)
