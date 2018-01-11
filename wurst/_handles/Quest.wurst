@@ -29,12 +29,11 @@ public function quest.isEnabled() returns boolean
 public function quest.isCompleted() returns boolean
     return IsQuestCompleted(this)
 
-public function quest.flash()
-    FlashQuestDialogButton()
-
 public function quest.remove()
     DestroyQuest(this)
 
+public function flashQuestDialogButton()
+    FlashQuestDialogButton()
 
 public enum QuestState
     FAILED
