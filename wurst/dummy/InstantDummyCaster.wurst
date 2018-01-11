@@ -5,13 +5,13 @@ import Unit
 import Widget
 import UnitObjEditing
 import MapBounds
-/*
+
+/**
  *   Dummy caster for casting spells
  *
  *   Spells must have 0 cooldown, 92083 range, and cost 0 mana. Spells must be instant and
  *   can't share the same order as other spells on the dummy caster.
  */
- 
 public class InstantDummyCaster
 	static unit caster
 	static int id
@@ -52,21 +52,26 @@ public class InstantDummyCaster
 		finish()
 		return b
 
-	// shorters
+	// Use with Orders package
 	static function castTarget(player owner, int abilityId, int lvl, int orderId, widget target) returns boolean
 		return castTarget(owner, abilityId, lvl, orderId, target, vec2(GetWidgetX(target), GetWidgetY(target)))
+
 	static function castPoint(player owner, int abilityId, int lvl, int orderId, vec2 targetPos) returns boolean
 		return castPoint(owner, abilityId, lvl, orderId, targetPos, targetPos)
 
 	// string order wrappers
 	static function castImmediate(player owner, int abilityId, int lvl, string order, vec2 pos) returns boolean
 		return castImmediate(owner, abilityId, lvl, OrderId(order), pos)
+
 	static function castTarget(player owner, int abilityId, int lvl, string order, widget target, vec2 casterPos) returns boolean
 		return castTarget(owner, abilityId, lvl, OrderId(order), target, casterPos)
+
 	static function castTarget(player owner, int abilityId, int lvl, string order, widget target) returns boolean
 		return castTarget(owner, abilityId, lvl, OrderId(order), target)
+		
 	static function castPoint(player owner, int abilityId, int lvl, string order, vec2 targetPos, vec2 casterPos) returns boolean
 		return castPoint(owner, abilityId, lvl, OrderId(order), targetPos, casterPos)
+		
 	static function castPoint(player owner, int abilityId, int lvl, string order, vec2 targetPos) returns boolean
 		return castPoint(owner, abilityId, lvl, OrderId(order), targetPos)
 		

@@ -3,9 +3,9 @@ import NoWurst
 import HashMap
 import _Handles
 
-HashMap<trigger, rect> rectMap = new HashMap<trigger, rect>()
-HashMap<region, int> regionMap = new HashMap<region, int>()
-Table triggerData = new Table()
+constant rectMap = new HashMap<trigger, rect>()
+constant regionMap = new HashMap<region, int>()
+constant triggerData = new Table()
 
 public function trigger.registerUnitInRangeSource( unit whichUnit, real range, boolexpr filter ) returns event
 	int h = GetHandleId(this)
