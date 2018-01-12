@@ -1,32 +1,57 @@
 package HashMapTests
 import HashMap
 
+@Test 
+function testHas()
+    let map = new HashMap<int, int>
+    map.has(5).assertEquals(false)
+    map.put(5, 1)
+    map.has(5).assertEquals(true)
+
+@Test
+function testPutGet()
+    let map = new HashMap<int, int>
+    map.put(3, 1)
+    map.get(3).assertEquals(1)
+    map.get(5).assertEquals(0)
+    map.remove(3)
+    map.get(3).assertEquals(0)
+
+@Test
+function testRemove()
+    let map = new HashMap<int, int>
+        ..put(3, 5)
+    map.has(3).assertEquals(true)
+    map.has(5).assertEquals(false)
+    map.remove(3)
+    map.has(3).assertEquals(false)
+    
 @Test
 function testBooleanHashmap()
-	let hm = new HashMap<int, boolean>
-	hm.put(1, true)
-	hm.get(1).assertEquals(true)
+    let hm = new HashMap<int, boolean>
+    hm.put(1, true)
+    hm.get(1).assertEquals(true)
 
 @Test
 function testIterableMap()
-	let map = new IterableMap<int, string>
-	map.put(3, "senpai is ")
-	map.put(9, "some value")
-	map.put(2, "certainly not ")
-	map.put(8, "some value")
-	map.put(1, "weeb shit")
+    let map = new IterableMap<int, string>
+    map.put(3, "senpai is ")
+    map.put(9, "some value")
+    map.put(2, "certainly not ")
+    map.put(8, "some value")
+    map.put(1, "weeb shit")
 
-	map.remove(2)
-	map.removeValue("some value", true)
-	//map.removeValue("some value")
-	let otherMap = new IterableMap<int, string>(map)
+    map.remove(2)
+    map.removeValue("some value", true)
 
-	string test = ""
-	for key in otherMap
-		test += otherMap.get(key)
+    let otherMap = new IterableMap<int, string>(map)
 
-	//(map.get(3) + map.get(1)).assertEquals("senpai is weeb shit")
+    string test = ""
+    for key in otherMap
+        test += otherMap.get(key)
 
-	test.assertEquals("senpai is weeb shit")
-	otherMap.hasKey(2).assertFalse()
-	otherMap.hasKey(3).assertTrue()
+    //(map.get(3) + map.get(1)).assertEquals("senpai is weeb shit")
+
+    test.assertEquals("senpai is weeb shit")
+    otherMap.hasKey(2).assertFalse()
+    otherMap.hasKey(3).assertTrue()
