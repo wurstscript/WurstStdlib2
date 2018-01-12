@@ -66,16 +66,20 @@ public class LinkedList<T>
 	/** Returns and removes the first added Element (FIFO) */
 	function dequeue() returns T
 		let top = dummy.next
-		let elem = top.elem
-		removeEntry(top)
-		return elem
+		T result = null
+		if top != dummy
+			result = top.elem
+			removeEntry(top)
+		return result
 		
 	/** Returns and removes the last added Element (LIFO) */
 	function pop() returns T
 		let top = dummy.prev
-		let elem = top.elem
-		removeEntry(top)
-		return elem
+		T result = null
+		if top != dummy
+			result = top.elem
+			removeEntry(top)
+		return result
 		
 	/** Returns and removes the lastly added Element */
 	function peek() returns T
@@ -216,7 +220,56 @@ public class LinkedList<T>
 		entryAtIndex.prev.next = entry
 		entryAtIndex.prev = entry
 		size++
+
+	/** Sorts the list according the the comparator using merge sort */
+	function sortWith(Comparator<T> comparator)
+		if comparator != null and size() > 1
+			dummy.next = sort(comparator, dummy.next)
+			var last = dummy.next
+			while last.next != dummy
+				last = last.next
+			dummy.prev = last
+
+	/** internal merge sort */
+	private function sort(Comparator<T> comparator, LLEntry<T> e) returns LLEntry<T>
+		if e == dummy or e.next == dummy
+			return e
+
+		var second = split(e)
+		let first = sort(comparator, e)
+		second = sort(comparator, second)
+		return sortMerge(comparator, first, second)
 	
+	/** internal merge */
+	private function sortMerge(Comparator<T> comparator, LLEntry<T> a, LLEntry<T> b) returns LLEntry<T>
+		var _result = dummy
+		if a == dummy
+			_result = b
+		else if b == dummy
+			_result = a
+		else
+			let cval = comparator.compare(a.elem, b.elem)
+			if cval < 0
+				_result = a
+				_result.next = sortMerge(comparator, a.next, b)
+			else
+				_result = b
+				_result.next = sortMerge(comparator, a, b.next)
+			_result.next.prev = _result
+			_result.prev = dummy
+		return _result 
+
+	/** returns the middle of a fragment list */
+	private function split(LLEntry<T> e) returns LLEntry<T>
+		LLEntry<T> normalRef = e
+		LLEntry<T> halfRef = e
+		while(normalRef.next != dummy and normalRef.next.next != dummy)
+			normalRef = normalRef.next.next
+			halfRef = halfRef.next
+		let tmp = halfRef.next
+		halfRef.next = dummy
+		return tmp
+
 	/** Prints the content of the list */
 	function toString() returns string
 		string s="["
@@ -277,8 +330,8 @@ class LLEntry<T>
 		this.next = next
 
 public class LLIterator<T>
-	LLEntry<T>    dummy
-	LLEntry<T>    current
+	LLEntry<T>	dummy
+	LLEntry<T>	current
 	LinkedList<T> parent
 	protected bool destroyOnClose = true
 
@@ -303,7 +356,7 @@ public class LLIterator<T>
 			current.next.prev = current.prev
 			current.prev.next = current.next
 			let removedNode   = current
-			current           = current.prev
+			current		   = current.prev
 			destroy removedNode
 			return removedNode.elem
 		return null
@@ -370,3 +423,10 @@ public interface LinkedListUpdater<T>
 
 public interface MapClosure<T, Q>
 	function run(T t) returns Q
+
+public interface Comparator<T>
+	function compare(T o1, T o2) returns int
+
+constant Comparator<int> intComparator = (int i1, int i2) -> i1 - i2
+public function LinkedList<int>.sort()
+	this.sortWith(intComparator)
