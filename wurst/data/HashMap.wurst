@@ -25,7 +25,7 @@ public class HashMap<K,V> extends Table
 
 	
 /** Iterable generic Table Wrapper */
-public class IterableMap<K,V> extends HashMap<K, V>
+public class IterableMap<K,V> extends HashMap<K, V> 
 	protected let keys = new HashList<K>
 
 	/** Returns an iterator that iterates over the map's keys */
@@ -40,7 +40,7 @@ public class IterableMap<K,V> extends HashMap<K, V>
 	
 	/** Returns whether this map uses the given key */
 	function hasKey(K key) returns bool
-		return keys.contains(key)
+		return keys.has(key)
 
 	/** Removes the key-value pair saved under the given key */
 	override function remove(K key)
