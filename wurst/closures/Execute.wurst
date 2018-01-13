@@ -16,6 +16,7 @@ init
 	executeForce.addPlayer(localPlayer)
 
 function executeCurrentCallback()
+	lastError = null
 	getCurrentCallback().run()
 	setCurrentCallbackSuccess(true)
 
@@ -36,7 +37,7 @@ function getCurrentCallbackSuccess() returns boolean
 	return tempCallbacksSuccess[tempCallbacksCount - 1]
 
 function setCurrentCallbackSuccess(boolean value)
-	tempCallbacksSuccess[tempCallbacksCount - 1] = true
+	tempCallbacksSuccess[tempCallbacksCount - 1] = value
 
 function getCurrentCallback() returns ForForceCallback
 	return tempCallbacks[tempCallbacksCount - 1]
@@ -47,8 +48,8 @@ function getCurrentCallback() returns ForForceCallback
 	This is extremely useful when you have expensive computations
 	which would otherwise crash the thread.
 
-	This function also checks that the callback it executes finishes correctly
-	and without errors or hitting the OP limit. If it does, it will error out as well.
+	If the callback crashes due to an error or hitting the OP limit, it will
+	error out as well.
 
 	Note: You may use this inside a local clause, like this:
 		if localPlayer == caller
@@ -69,38 +70,51 @@ function getCurrentCallback() returns ForForceCallback
 		end)
 **/
 public function execute(ForForceCallback c)
+	if not try(c)
+		error("execute: thread has crashed. caused by:\n| - " + lastError)
+
+/**
+	This function works exactly the same as execute(), with
+	the only difference that it will allow you to inspect
+	an error if one occured.
+
+	If the error is caused by error(), then you can inspect
+	the error message using lastError from ErrorHandling.
+	If the error is caused by another form of thread crash,
+	such as zero division or OP limit, lastError will be null.
+**/
+public function try(ForForceCallback c) returns boolean
 	pushCallback(c)
 	executeForce.forEach(function executeCurrentCallback)
 	let success = getCurrentCallbackSuccess()
-	if not success
-		error("execute: callback has failed")
 	popCallback()
+	return success
 
-interface LimitedExecuteCondition
-	function check() returns boolean
-
-interface LimitedExecuteAction
-	function run()
-
-public function limitedExecuteInternal(int iterations, LimitedExecuteCondition condition, LimitedExecuteAction action)
-	execute(() -> begin
-		var i = 0
-		// iterate as many times as needed
-		while condition.check() and i < iterations
-			action.run()
+interface LimitedExecuteCondition 
+	function check() returns boolean 
+ 
+interface LimitedExecuteAction 
+	function run() 
+ 
+public function limitedExecuteInternal(int iterations, LimitedExecuteCondition condition, LimitedExecuteAction action) 
+	execute(() -> begin 
+		var i = 0 
+		// iterate as many times as needed 
+		while condition.check() and i < iterations 
+			action.run() 
 			i++
 
-		// restart the execute if necessary
-		if condition.check()
-			limitedExecuteInternal(iterations, condition, action)
-	end)
-
-/**
-	This is an utility function which you can use to process arbitrarily large loops.
-	It functions like a while loop that will run action.run() while condition.check() == true,
-	however it will restart the execute after the specified amount of iterations.
-**/
-public function limitedExecute(int iterations, LimitedExecuteCondition condition, LimitedExecuteAction action)
-	limitedExecuteInternal(iterations, condition, action)
-	destroy condition
+		// restart the execute if necessary 
+		if condition.check() 
+			limitedExecuteInternal(iterations, condition, action) 
+	end) 
+ 
+/** 
+  This is an utility function which you can use to process arbitrarily large loops. 
+  It functions like a while loop that will run action.run() while condition.check() == true, 
+  however it will restart the execute after the specified amount of iterations. 
+**/ 
+public function limitedExecute(int iterations, LimitedExecuteCondition condition, LimitedExecuteAction action) 
+	limitedExecuteInternal(iterations, condition, action) 
+	destroy condition 
 	destroy action

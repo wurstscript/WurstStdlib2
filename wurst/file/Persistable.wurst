@@ -33,10 +33,19 @@ public abstract class Persistable implements BufferSerializable
 		this.owner = owner
 		store = new PersistentStore(this, owner)
 
+	/* You must implement these */
+
+	/** This function should return a unique class id for this class **/
+	abstract function getClassId() returns string
+	/** This function should return a unique object id for this instance **/
+	abstract function getId() returns string
+	/** This function should apply default settings in the event that loading has failed **/
+	abstract function supplyDefault()
+
 	/* Optionally overridable functions */
 
 	/** Override this function if you want to do something on object load **/
-	protected function onLoaded(boolean success)
+	protected function onLoaded(boolean _success)
 	/** Override this function if you want to do something on object save **/
 	protected function onSaved()
 	/** 
@@ -54,14 +63,6 @@ public abstract class Persistable implements BufferSerializable
 	protected function getPath() returns string
 		return PERSISTABLE_MAP_PREFIX + "/" + getClassId() + "/" + getId()
 
-	/* You must implement these */
-
-	/** This function should return a unique class id for this class **/
-	abstract function getClassId() returns string
-	/** This function should return a unique object id for this instance **/
-	abstract function getId() returns string
-	/** This function should apply default settings to the class if the load failed for any reason **/
-	abstract function supplyDefault()
 
 	/* Public interface */
 
@@ -127,7 +128,10 @@ class PersistentStore
 				let success = buffer.readBoolean()
 				
 				if success
-					entity.deserialize(buffer)
+					// if the deserialization has failed for some reason, we need to catch that
+					let deserializeSuccess = try(() -> entity.deserialize(buffer))
+					if not deserializeSuccess
+						entity.supplyDefault()
 				else
 					entity.supplyDefault()
 

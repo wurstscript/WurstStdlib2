@@ -225,21 +225,29 @@ public class HashBuffer extends AbstractBuffer
 	override function readInt() returns int
 		checkRead()
 		integerReadIndex++
+		if SAFETY_CHECKS_ENABLED and not buffer.hasInt(integerReadIndex)
+			error("HashBuffer: trying to read non-present int at pos#" + integerReadIndex.toString())
 		return buffer.loadInt(integerReadIndex)
 
 	override function readReal() returns real
 		checkRead()
 		realReadIndex++
+		if SAFETY_CHECKS_ENABLED and not buffer.hasReal(realReadIndex)
+			error("HashBuffer: trying to read non-present real at pos#" + realReadIndex.toString())
 		return buffer.loadReal(realReadIndex)
 
 	override function readString() returns string
 		checkRead()
 		stringReadIndex++
+		if SAFETY_CHECKS_ENABLED and not buffer.hasString(stringReadIndex)
+			error("HashBuffer: trying to read non-present string at pos#" + stringReadIndex.toString())
 		return buffer.loadString(stringReadIndex)
 
 	override function readBoolean() returns bool
 		checkRead()
 		booleanReadIndex++
+		if SAFETY_CHECKS_ENABLED and not buffer.hasBoolean(booleanReadIndex)
+			error("HashBuffer: trying to read non-present boolean at pos#" + booleanReadIndex.toString())
 		return buffer.loadBoolean(booleanReadIndex)
 
 	override function clear()
