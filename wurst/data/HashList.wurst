@@ -2,15 +2,19 @@ package HashList
 
 public class HashList<T>
 	private static hashtable ht = InitHashtable()
+	private static hashtable occurences = InitHashtable()
+
 	private int size = 0
 
+	/** Returns the number of occurences of an element in this list */
+	function count(T elem) returns int
+		return occurences.loadInt(this castTo int, elem castTo int)
+
 	private function incrOccurences(T elem)
-		let occurences = ht.loadReal(this castTo int, elem castTo int)
-		ht.saveReal(this castTo int, elem castTo int, occurences + 1)
+		occurences.saveInt(this castTo int, elem castTo int, count(elem) + 1)
 
 	private function decrOccurences(T elem)
-		let occurences = ht.loadReal(this castTo int, elem castTo int)
-		ht.saveReal(this castTo int, elem castTo int, occurences - 1)
+		occurences.saveInt(this castTo int, elem castTo int, count(elem) - 1)
 
 	/** Add an element to the end of the list */
 	function add(T elem)
@@ -32,6 +36,7 @@ public class HashList<T>
 	/** Remove all elements from this list without destroying it */
 	function clear()
 		ht.flushChild(this castTo int)
+		occurences.flushChild(this castTo int)
 		size = 0
 
 	/** Remove all elements from this list without destroying it */
@@ -74,7 +79,7 @@ public class HashList<T>
 
 	/** Return whether the element exists in the list */
 	function has(T elem) returns bool
-		return ht.loadReal(this castTo int, elem castTo int) > 0
+		return count(elem) > 0
 
 	/** Get an iterator for this list */
 	function iterator() returns HLIterator<T>
@@ -95,7 +100,7 @@ public class HashList<T>
 			add(elem)
 
 	ondestroy
-		ht.flushChild(this castTo int)
+		removeAll()
 
 public class HLIterator<Q>
 	protected int i = 0
