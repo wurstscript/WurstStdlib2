@@ -77,7 +77,7 @@ public class IterableMap<K,V> extends HashMap<K, V>
 	/** Remove all data from this map */
 	override function flush() 
 		keys.clear()
-		flush()
+		super.flush()
 
 	construct()
 
