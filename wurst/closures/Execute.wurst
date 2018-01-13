@@ -33,8 +33,8 @@ function popCallback()
 	tempCallbacksCount--
 	destroy tempCallbacks[tempCallbacksCount]
 
-function getCurrentCallbackSuccess() returns boolean
-	return tempCallbacksSuccess[tempCallbacksCount - 1]
+function isLastCallbackSuccessful() returns boolean
+	return tempCallbacksSuccess[tempCallbacksCount]
 
 function setCurrentCallbackSuccess(boolean value)
 	tempCallbacksSuccess[tempCallbacksCount - 1] = value
@@ -44,12 +44,18 @@ function getCurrentCallback() returns ForForceCallback
 
 /**
 	This function starts a new 'thread' inside the
-	callback closure, which resets the dreaded OP limit to zero inside.
+	callback closure, where the op limit is at zero, allowing us to bypass it.
 	This is extremely useful when you have expensive computations
 	which would otherwise crash the thread.
 
 	If the callback crashes due to an error or hitting the OP limit, it will
 	error out as well.
+
+	Note: Unlike timers and doAfter(), this method is synchronous, meaning
+	that it will wait for the called method to finish before continuing the in the current thread.
+
+	Note: We use ForForce because it does not require a Trigger to be called, only an empty
+	force which is reusable, unlike TriggerEvaluate.
 
 	Note: You may use this inside a local clause, like this:
 		if localPlayer == caller
@@ -86,9 +92,8 @@ public function execute(ForForceCallback c)
 public function try(ForForceCallback c) returns boolean
 	pushCallback(c)
 	executeForce.forEach(function executeCurrentCallback)
-	let success = getCurrentCallbackSuccess()
 	popCallback()
-	return success
+	return isLastCallbackSuccessful()
 
 interface LimitedExecuteCondition 
 	function check() returns boolean 
@@ -96,25 +101,25 @@ interface LimitedExecuteCondition
 interface LimitedExecuteAction 
 	function run() 
  
-public function limitedExecuteInternal(int iterations, LimitedExecuteCondition condition, LimitedExecuteAction action) 
+function executeWhileInternal(int resetCount, LimitedExecuteCondition condition, LimitedExecuteAction action) 
 	execute(() -> begin 
 		var i = 0 
 		// iterate as many times as needed 
-		while condition.check() and i < iterations 
+		while condition.check() and i < resetCount 
 			action.run() 
 			i++
 
 		// restart the execute if necessary 
 		if condition.check() 
-			limitedExecuteInternal(iterations, condition, action) 
+			executeWhileInternal(resetCount, condition, action) 
 	end) 
  
 /** 
   This is an utility function which you can use to process arbitrarily large loops. 
   It functions like a while loop that will run action.run() while condition.check() == true, 
-  however it will restart the execute after the specified amount of iterations. 
+  however it will reset the OP limit each time after the specified amount of resetCount.
 **/ 
-public function limitedExecute(int iterations, LimitedExecuteCondition condition, LimitedExecuteAction action) 
-	limitedExecuteInternal(iterations, condition, action) 
+public function executeWhile(int resetCount, LimitedExecuteCondition condition, LimitedExecuteAction action) 
+	executeWhileInternal(resetCount, condition, action) 
 	destroy condition 
 	destroy action

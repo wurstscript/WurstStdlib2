@@ -66,9 +66,10 @@ public abstract class AbstractIOTaskExecutor implements IOTaskExecutor
 				destroy task
 			end)
 		else
-			execute(() -> onCompleteTask.run())
-			destroy onCompleteTask
-			onCompleteTask = null
+			if onCompleteTask != null
+				execute(() -> onCompleteTask.run())
+				destroy onCompleteTask
+				onCompleteTask = null
 			finished = true
 
 /**
@@ -111,29 +112,24 @@ public class TimedIOTaskExecutor extends AbstractIOTaskExecutor
 		for executor in TimedIOTaskExecutor
 			executor.update()
 
-	// called when an executor instance has started working
+	/** Called when an executor has started working **/
 	private static function onStart()
-		if not timerStarted
-			// if the timer has not started yet, start it
-			//updater.startPeriodic(ANIMATION_PERIOD, function updateInstances)
-			//timerStarted = true
-		else
-			// else just resume it
-			//updater.resume()
+		// resume the timer
+		updater.resume()
 
-	// called when an executor instance has finished it's work
+	/** Called when an executor has finished working **/
 	private static function onStop()
+		// stop timer if necessary
 		if timerStarted and runningCount == 0
-			//updater.pause()
+			updater.pause()
 
-	// updates this instance if necessary
+	/** Updates this instance **/
 	private function update()
 		if not finished and lastExecution + delay <= currentTime
 			executeNext()
 			lastExecution = currentTime
 			if finished
 				runningCount--
-				// stop the timer if necessary
 				onStop()
 				
 	override function start()
@@ -147,3 +143,4 @@ public class TimedIOTaskExecutor extends AbstractIOTaskExecutor
 
 init
 	TimedIOTaskExecutor.updater.startPeriodic(ANIMATION_PERIOD, function TimedIOTaskExecutor.updateInstances)
+	TimedIOTaskExecutor.updater.pause()

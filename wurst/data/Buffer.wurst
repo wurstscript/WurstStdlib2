@@ -104,8 +104,8 @@ public interface Buffer
 	/** Returns whether the buffer is readable. **/
 	function isReadable() returns boolean
 
-	/** Returns whether the buffer is 'good', and no errors occured **/
-	function isGood() returns boolean
+	/** Returns whether the buffer is in a valid state, and no errors occured **/
+	function isValid() returns boolean
 
 	/** Returns the set failure mode, if any **/
 	function getFailure() returns BufferFailureMode
@@ -123,7 +123,7 @@ public abstract class AbstractBuffer implements Buffer
 	private var failureMessage = ""
 
 	protected function checkFailed()
-		if SAFETY_CHECKS_ENABLED and not isGood()
+		if SAFETY_CHECKS_ENABLED and not isValid()
 			error("Buffer: trying to use a failed buffer")
 
 	protected function fail(BufferFailureMode mode, string message)
@@ -146,7 +146,7 @@ public abstract class AbstractBuffer implements Buffer
 	override function isReadable() returns boolean
 		return mode == BufferMode.READ or mode == BufferMode.READ_WRITE
 
-	override function isGood() returns boolean
+	override function isValid() returns boolean
 		return failureMode == BufferFailureMode.NONE
 
 	override function getFailure() returns BufferFailureMode
@@ -332,7 +332,7 @@ class ChunkElement
 
 	For this reason, the class doesn't instantly error out on attempts
 	to read incorrect data, and the users of the class should call
-	StringBuffer.isGood() during/after reading data to make sure that
+	StringBuffer.isValid() during/after reading data to make sure that
 	it is correct.
 
 	Trying to read from a buffer that has entered an erroneous state
@@ -492,10 +492,10 @@ public class StringBuffer extends AbstractBuffer
 
 		checkDataAvailable()
 		// if there isn't enough data in the readBuffer, load additional chunks
-		while isGood() and readBuffer.length() < length
+		while isValid() and readBuffer.length() < length
 			nextChunk()
 
-		if isGood()
+		if isValid()
 			// if we haven't errored out at this point, it's safe to pop the string
 			let value = readBuffer.substring(0, length)
 			readBuffer = readBuffer.substring(length)
@@ -515,7 +515,7 @@ public class StringBuffer extends AbstractBuffer
 	private function checkType(ValueType toCheck) returns boolean
 		let currentType = popTypeIdentifier()
 		// might have malformed input after popping type identifier, so check that first
-		if not isGood()
+		if not isValid()
 			return false
 		if currentType != toCheck
 			fail(BufferFailureMode.INCORRECT_TYPE, "tried to read " + toCheck.toString() + " but was " + currentType.toString())

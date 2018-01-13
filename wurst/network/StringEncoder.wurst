@@ -71,7 +71,7 @@ public class StringEncoder
 		buffer.writeInt(length)
 		asciiIntCount++
 		
-		limitedExecute(CHARS_PER_ENCODE_DECODE, () -> counter < length, () -> begin
+		executeWhile(CHARS_PER_ENCODE_DECODE, () -> counter < length, () -> begin
 			buffer.writeInt(getIndexFromChar(value.charAt(counter)))
 			counter++
 			asciiIntCount++
@@ -83,7 +83,7 @@ public class StringEncoder
 		asciiIntCount--
 		counter = 0
 
-		limitedExecute(CHARS_PER_ENCODE_DECODE, () -> counter < length, () -> begin
+		executeWhile(CHARS_PER_ENCODE_DECODE, () -> counter < length, () -> begin
 			currentValue += getCharFromIndex(buffer.readInt())
 			counter++
 			asciiIntCount--
@@ -92,10 +92,10 @@ public class StringEncoder
 		return currentValue
 
 	function encode()
-		limitedExecute(DATA_PER_EXECUTE, () -> stringCount > 0, () -> encodeString(popString()))
+		executeWhile(DATA_PER_EXECUTE, () -> stringCount > 0, () -> encodeString(popString()))
 
 	function decode()
-		limitedExecute(DATA_PER_EXECUTE, () -> asciiIntCount > 0, () -> pushString(decodeString()))
+		executeWhile(DATA_PER_EXECUTE, () -> asciiIntCount > 0, () -> pushString(decodeString()))
 
 	function pushString(string value)
 		stringCount++

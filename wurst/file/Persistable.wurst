@@ -33,6 +33,9 @@ public abstract class Persistable implements BufferSerializable
 		this.owner = owner
 		store = new PersistentStore(this, owner)
 
+	ondestroy
+		destroy store
+
 	/* You must implement these */
 
 	/** This function should return a unique class id for this class **/
@@ -108,7 +111,7 @@ class PersistentStore
 				buffer.populateFromFile(reader)
 				buffer.transfer(network.getData())
 				// if there was an error during transfer, we scrap the data...
-				if not buffer.isGood()
+				if not buffer.isValid()
 					network.getData().clear()
 					network.getData().writeBoolean(false)
 				destroy buffer
@@ -144,9 +147,10 @@ class PersistentStore
 	function save(PersistableSaveCallback callback)
 		// used to proceed when the owner has finished saving to disk
 		let synchronizer = new SimpleSynchronizer()
+		FileWriter writer = null
 
 		if localPlayer == owner
-			let writer = new FileWriter(entity.getPath(), entity.getIODelay())
+			writer = new FileWriter(entity.getPath(), entity.getIODelay())
 			let buffer = new StringBuffer(MAX_PACKET_LENGTH)
 
 			// write the entity into the buffer
@@ -163,6 +167,9 @@ class PersistentStore
 
 		// call the callback when everything has finished
 		synchronizer.onSynced(() -> begin
+			if localPlayer == owner
+				destroy writer
+
 			if callback != null
 				callback.onSaved()
 			entity.onSaved()
