@@ -1,22 +1,23 @@
 package LinkedListTests
 import LinkedList
 
-
-@Test function testAddRemove()
+@Test
+function testAddRemove()
 	let list = new LinkedList<int>()
-	assertTrue(list.getSize() == 0)
+	assertTrue(list.size() == 0)
 	
 	list..add(1)..add(2)..add(3)..add(4)
-	assertTrue(list.getSize() == 4)
+	assertTrue(list.size() == 4)
 	
 	let itr = list.staticItr()
 	while itr.hasNext()
 		itr.next()
 		itr.remove()
 
-	assertTrue(list.getSize() == 0)
+	assertTrue(list.size() == 0)
 
-@Test function testForLoop()
+@Test
+function testForLoop()
 	let list = new LinkedList<int>()
 	
 	list..add(1)..add(2)..add(3)..add(4)
@@ -57,7 +58,8 @@ import LinkedList
 		result += i
 	assertTrue(result == (1+2+3+4))
 
-@Test function testClosures()
+@Test
+function testClosures()
 	let list = new LinkedList<int>()
 	list..add(1)..add(2)..add(3)..add(4)
 	
@@ -70,7 +72,8 @@ import LinkedList
 	let realList = list.map<real>((int i) -> i * 10.)
 	assertTrue(realList.get(1) == 40.)
 
-@Test function testGenerics()
+@Test
+function testGenerics()
 	let list = new LinkedList<string>()
 	list..add("a")..add("b")..add("c")
 	assertTrue(list.get(1) == "b")

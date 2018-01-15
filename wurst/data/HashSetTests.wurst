@@ -1,0 +1,31 @@
+package HashSetTests
+import HashSet
+
+@Test
+function testHashSet()
+	let set = new HashSet<int>
+	..add(4)
+	..add(5)
+	..add(6)
+	..add(3)
+	..add(5)
+
+	// Test count
+	set.count(5).assertEquals(1)
+	set.count(6).assertEquals(1)
+	set.count(8).assertEquals(0)
+
+	// Test has
+	set.has(5).assertEquals(true)
+	set.has(9).assertEquals(false)
+	
+	// Test removeAt
+	set.get(0).assertEquals(4)
+	set.has(4).assertEquals(true)
+	set.removeAt(0)
+	set.has(4).assertEquals(false)
+
+	// Test remove
+	set.get(0).assertEquals(5)
+	set.remove(3)
+	set.size().assertEquals(2)

@@ -1,0 +1,26 @@
+package HashSet
+import public HashList
+
+/** Generic set implementation */
+public class HashSet<T> extends HashList<T>
+	private static hashtable position = InitHashtable()
+
+	/** Adds an element to this set */
+	override function add(T elem)
+		if count(elem) <= 0
+			super.add(elem)
+			position.saveInt(this castTo int, elem castTo int, size())
+
+	/** Removes an element from this set if present */
+	override function remove(T elem)
+		if count(elem) > 0
+			let pos = position.loadInt(this castTo int, elem castTo int)
+			removeAt(pos)
+
+	override function clear()
+		super.clear()
+		position.flushChild(this castTo int)
+
+	ondestroy
+		position.flushChild(this castTo int)
+
