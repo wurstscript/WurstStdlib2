@@ -25,7 +25,7 @@ function testRemove()
     map.has(5).assertEquals(false)
     map.remove(3)
     map.has(3).assertEquals(false)
-    
+
 @Test
 function testBooleanHashmap()
     let hm = new HashMap<int, boolean>
@@ -162,3 +162,4 @@ function testIMFlush()
     map.flush()
     map.hasKey(5).assertEquals(false)
     map.get(5).assertEquals(0)
+    destroy map

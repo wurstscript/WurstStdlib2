@@ -4,17 +4,17 @@ import LinkedList
 @Test
 function testAddRemove()
 	let list = new LinkedList<int>()
-	assertTrue(list.getSize() == 0)
+	assertTrue(list.size() == 0)
 	
 	list..add(1)..add(2)..add(3)..add(4)
-	assertTrue(list.getSize() == 4)
+	assertTrue(list.size() == 4)
 	
 	let itr = list.staticItr()
 	while itr.hasNext()
 		itr.next()
 		itr.remove()
 
-	assertTrue(list.getSize() == 0)
+	assertTrue(list.size() == 0)
 
 @Test
 function testForLoop()

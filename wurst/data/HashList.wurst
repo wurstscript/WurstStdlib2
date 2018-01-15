@@ -40,7 +40,7 @@ public class HashList<T>
 		size = 0
 
 	/** Remove all elements from this list without destroying it */
-	@deprecated function removeAll()
+	@deprecated("Use .clear() instead.") function removeAll()
 		clear()
 
 	/** Remove the element at the given index */
@@ -62,7 +62,7 @@ public class HashList<T>
 		return size
 
 	/** Get the size of the list */
-	@deprecated function getSize() returns int
+	@deprecated("Use .size() instead.") function getSize() returns int
 		return size
 
 	/** Return whether the list is empty */
@@ -100,7 +100,7 @@ public class HashList<T>
 			add(elem)
 
 	ondestroy
-		removeAll()
+		clear()
 
 public class HLIterator<Q>
 	protected int i = 0
@@ -110,7 +110,7 @@ public class HLIterator<Q>
 		this.list = list
 		
 	function hasNext() returns boolean
-		return i < list.getSize()
+		return i < list.size()
 		
 	function remove()
 		

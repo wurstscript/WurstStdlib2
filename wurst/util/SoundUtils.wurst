@@ -61,7 +61,7 @@ public class SoundDefinition
 
 	private function getSound() returns SoundInstance
 		// If there is a handle on the stack
-		if soundStack.getSize() > 0
+		if soundStack.size() > 0
 			return soundStack.pop()
 		else
 			// No free handle, create a new one
@@ -157,7 +157,7 @@ public class SoundDefinition
 		sdata.p = null
 		if sdata.s3s != null
 			destroy sdata.s3s
-		if sdata.soundDef.soundStack.getSize() < 4
+		if sdata.soundDef.soundStack.size() < 4
 			sdata.soundDef.soundStack.push(sdata)
 		else
 			destroy sdata

@@ -27,6 +27,7 @@ public class HashMap<K,V> extends Table
 /** Iterable generic Table Wrapper */
 public class IterableMap<K,V> extends HashMap<K, V> 
 	protected let keys = new HashList<K>
+	private bool _destroyed = false
 
 	/** Returns an iterator that iterates over the map's keys */
 	function iterator() returns HLIterator<K>
@@ -75,8 +76,9 @@ public class IterableMap<K,V> extends HashMap<K, V>
 		return map
 
 	/** Remove all data from this map */
-	override function flush() 
-		keys.clear()
+	override function flush()
+		if not _destroyed 
+			keys.clear()
 		super.flush()
 
 	construct()
@@ -88,3 +90,6 @@ public class IterableMap<K,V> extends HashMap<K, V>
 
 	ondestroy
 		destroy keys
+		// Makes sure that no attempts to .clear() a destroyed group are made
+		// since .flush() is called after this destructor
+		_destroyed = true

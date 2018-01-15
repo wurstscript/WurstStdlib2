@@ -30,7 +30,7 @@ public class HeroPreset extends HeroDefinition
 	
 	function buildProperNames()
 		string s = ""
-		if properNames.getSize() > 0
+		if properNames.size() > 0
 			for pn in properNames
 				s += pn.s + ","
 			s = s.substring(0, s.length()-1)
