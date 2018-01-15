@@ -15,7 +15,8 @@ function allToString() returns string
 		res += x.str
 	return res
 	
-@test function test()
+@Test
+function test()
 	let a = new TestClass("a")
 	let b = new TestClass("b")
 	let c = new TestClass("c")
@@ -31,7 +32,8 @@ function allToString() returns string
  	destroy b
  	assertTrue(allToString() == "")
  	
- @test function testDestroy()
+ @Test
+ function testDestroy()
  	new TestClass("a")
 	let b = new TestClass("b")
 	new TestClass("c")
