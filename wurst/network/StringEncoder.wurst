@@ -79,12 +79,12 @@ public class StringEncoder
 
 	private function decodeString() returns string
 		currentValue = ""
-		let length = buffer.readInt()
+		let length = buffer.readIntUnsafe()
 		asciiIntCount--
 		counter = 0
 
 		executeWhile(CHARS_PER_ENCODE_DECODE, () -> counter < length, () -> begin
-			currentValue += getCharFromIndex(buffer.readInt())
+			currentValue += getCharFromIndex(buffer.readIntUnsafe())
 			counter++
 			asciiIntCount--
 		end)
@@ -111,7 +111,7 @@ public class StringEncoder
 
 	function popInt() returns int
 		asciiIntCount--
-		return buffer.readInt()
+		return buffer.readIntUnsafe()
 
 	function getIntCount() returns int
 		return asciiIntCount

@@ -157,6 +157,7 @@ public abstract class AbstractBuffer implements Buffer
 
 	/**
 		Extending classes should call this in write methods.
+		This function will be eliminated with optimizations turned on and when SAFETY_CHECKS_ENABLED == false.
 	**/
 	protected function checkWrite()
 		checkFailed()
@@ -165,6 +166,7 @@ public abstract class AbstractBuffer implements Buffer
 
 	/**
 		Extending classes should call this in read methods.
+		This function will be eliminated with optimizations turned on and when SAFETY_CHECKS_ENABLED == false.
 	**/
 	protected function checkRead()
 		checkFailed()
@@ -222,33 +224,72 @@ public class HashBuffer extends AbstractBuffer
 		booleanWriteIndex++
 		buffer.saveBoolean(booleanWriteIndex, value)
 
+	/* These functions have mandatory safety checks, because they are necessary to
+		detect errors in deserialization code when reading from files. */
+
 	override function readInt() returns int
 		checkRead()
 		integerReadIndex++
-		if SAFETY_CHECKS_ENABLED and not buffer.hasInt(integerReadIndex)
+		if not buffer.hasInt(integerReadIndex)
 			error("HashBuffer: trying to read non-present int at pos#" + integerReadIndex.toString())
 		return buffer.loadInt(integerReadIndex)
 
 	override function readReal() returns real
 		checkRead()
 		realReadIndex++
-		if SAFETY_CHECKS_ENABLED and not buffer.hasReal(realReadIndex)
+		if not buffer.hasReal(realReadIndex)
 			error("HashBuffer: trying to read non-present real at pos#" + realReadIndex.toString())
 		return buffer.loadReal(realReadIndex)
 
 	override function readString() returns string
 		checkRead()
 		stringReadIndex++
-		if SAFETY_CHECKS_ENABLED and not buffer.hasString(stringReadIndex)
+		if not buffer.hasString(stringReadIndex)
 			error("HashBuffer: trying to read non-present string at pos#" + stringReadIndex.toString())
 		return buffer.loadString(stringReadIndex)
 
 	override function readBoolean() returns bool
 		checkRead()
 		booleanReadIndex++
+		if not buffer.hasBoolean(booleanReadIndex)
+			error("HashBuffer: trying to read non-present boolean at pos#" + booleanReadIndex.toString())
+		return buffer.loadBoolean(booleanReadIndex)
+
+	/* 'Unsafe' variants that will have safety checks disabled when the config demands it.
+		These should be used when sending across network because we know we'll never hit
+		a non-existent value.
+		
+		You shoudln't use these in your code unless you absolutely know what you are doing.
+	*/
+
+	function readIntUnsafe() returns int
+		checkRead()
+		integerReadIndex++
+		if not buffer.hasInt(integerReadIndex)
+			error("HashBuffer: trying to read non-present int at pos#" + integerReadIndex.toString())
+		return buffer.loadInt(integerReadIndex)
+
+	function readRealUnsafe() returns real
+		checkRead()
+		realReadIndex++
+		if SAFETY_CHECKS_ENABLED and not buffer.hasReal(realReadIndex)
+			error("HashBuffer: trying to read non-present real at pos#" + realReadIndex.toString())
+		return buffer.loadReal(realReadIndex)
+
+	function readStringUnsafe() returns string
+		checkRead()
+		stringReadIndex++
+		if SAFETY_CHECKS_ENABLED and not buffer.hasString(stringReadIndex)
+			error("HashBuffer: trying to read non-present string at pos#" + stringReadIndex.toString())
+		return buffer.loadString(stringReadIndex)
+
+	function readBooleanUnsafe() returns bool
+		checkRead()
+		booleanReadIndex++
 		if SAFETY_CHECKS_ENABLED and not buffer.hasBoolean(booleanReadIndex)
 			error("HashBuffer: trying to read non-present boolean at pos#" + booleanReadIndex.toString())
 		return buffer.loadBoolean(booleanReadIndex)
+
 
 	override function clear()
 		buffer.flush()

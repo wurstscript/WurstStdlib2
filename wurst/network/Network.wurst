@@ -321,7 +321,7 @@ public class Network
 
 	private function writeInts()
 		executeWhile(DATA_PER_EXECUTE, () -> counters.ints < meta.ints and gcIntBuffer.getRemainingWrite() > 0, () -> begin
-			gcIntBuffer.writeInt(dataBuffer.readInt())
+			gcIntBuffer.writeInt(dataBuffer.readIntUnsafe())
 			counters.ints++
 		end)
 
@@ -333,7 +333,7 @@ public class Network
 
 	private function writeReals()
 		executeWhile(DATA_PER_EXECUTE, () -> counters.reals < meta.reals and gcRealBuffer.getRemainingWrite() > 0, () -> begin
-			gcRealBuffer.writeReal(dataBuffer.readReal())
+			gcRealBuffer.writeReal(dataBuffer.readRealUnsafe())
 			counters.reals++
 		end)
 
@@ -345,7 +345,7 @@ public class Network
 
 	private function writeBooleans()
 		executeWhile(DATA_PER_EXECUTE, () -> counters.booleans < meta.booleans and gcBooleanBuffer.getRemainingWrite() > 0, () -> begin
-			gcBooleanBuffer.writeBoolean(dataBuffer.readBoolean())
+			gcBooleanBuffer.writeBoolean(dataBuffer.readBooleanUnsafe())
 			counters.booleans++
 		end)
 
