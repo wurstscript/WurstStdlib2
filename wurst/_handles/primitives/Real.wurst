@@ -1,5 +1,6 @@
 package Real
 import NoWurst
+import String
 
 public constant REAL_MAX = 340282366920938000000000000000000000000.
 public constant REAL_MIN = -340282366920938000000000000000000000000.
@@ -72,3 +73,25 @@ public function real.pow(real x) returns real
 public function real.lerp(real target, real alpha) returns real
 	return (this * (1.0-alpha)) + (target * alpha)
 
+/** Rounds this real to the specified number of decimals */
+public function real.round(int decimals) returns string
+	var str = this.toString()
+	var rounded = ""
+	var numDecimals = decimals
+	let lastIndex = str.length() - 1
+	for i = 0 to lastIndex
+		if str.charAt(i) == "."
+			if decimals <= 0
+				rounded = str.substring(0, i)
+			else if i != lastIndex
+				for j = i + 1 to lastIndex
+					numDecimals--
+					if numDecimals <= 0
+						rounded = str.substring(0, j + 1)
+						break
+					else if j == lastIndex
+						rounded = str.substring(0, j + 1)
+						for z = 1 to numDecimals
+							rounded += "0"
+						break
+	return rounded
