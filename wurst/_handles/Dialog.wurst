@@ -1,0 +1,23 @@
+package Dialog
+import NoWurst
+
+public function createDialog() returns dialog
+    return DialogCreate()
+
+public function dialog.addButton(string buttonText, integer hotkey) returns button
+    return DialogAddButton(this, buttonText, hotkey)
+
+public function dialog.addQuitButton(boolean doScoreScreen, string buttonText, integer hotkey) returns button
+    return DialogAddQuitButton(this, doScoreScreen, buttonText, hotkey)
+
+public function dialog.clear()
+    DialogClear(this)
+
+public function dialog.destr()
+    DialogDestroy(this)
+
+public function dialog.display(player whichPlayer, boolean flag)
+    DialogDisplay(whichPlayer, this, flag)
+
+public function dialog.setMessage(string messageText)
+    DialogSetMessage(this, messageText)
