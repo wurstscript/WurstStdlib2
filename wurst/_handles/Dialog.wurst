@@ -1,5 +1,8 @@
 package Dialog
 import NoWurst
+import HashMap
+import LinkedList
+import Trigger
 
 public function createDialog() returns dialog
     return DialogCreate()
@@ -21,3 +24,56 @@ public function dialog.display(player whichPlayer, boolean flag)
 
 public function dialog.setMessage(string messageText)
     DialogSetMessage(this, messageText)
+
+
+public class DialogBox
+
+    private static HashMap<button,trigger> buttonTriggers = new HashMap<button,trigger>
+    private static HashMap<dialog,DialogBox> dialogBoxes = new HashMap<dialog,DialogBox>
+    private dialog dialogHandle
+    private trigger clickDialog
+    private string title
+    private LinkedList<button> buttons
+
+    construct(string title)
+        this.title = title
+        this.dialogHandle = createDialog()
+        this.dialogHandle.setMessage(title)
+        this.clickDialog = CreateTrigger()
+        this.clickDialog.registerDialogEvent(this.dialogHandle)
+        this.clickDialog.addAction(function removeClickedDialog)
+        this.buttons = new LinkedList<button>
+        dialogBoxes.put(this.dialogHandle, this)
+
+    static function removeClickedDialog()
+        button b = GetClickedButton()
+        buttonTriggers.get(b).execute()
+        destroy(dialogBoxes.get(GetClickedDialog()))
+
+    function addButton(string buttonText, integer hotkey, code cb)
+        button b = this.dialogHandle.addButton(buttonText, hotkey)
+        this.buttons.add(b)
+        trigger t = CreateTrigger()
+        t.addAction(cb)
+        buttonTriggers.put(b, t)
+
+    function addButton(string buttonText, code cb)
+        this.addButton(buttonText, 0 , cb)
+
+    function display(player whichPlayer, boolean flag)
+        this.dialogHandle.display(whichPlayer, flag)
+
+    ondestroy
+        while(not buttons.isEmpty())
+            button b = buttons.pop()
+            trigger t = buttonTriggers.get(b)
+            buttonTriggers.remove(b)
+            t.clearActions()
+            t.destr()
+        destroy(buttons)
+        dialogBoxes.remove(this.dialogHandle)
+        this.dialogHandle.clear()
+        this.dialogHandle.destr()
+        this.clickDialog.clearActions()
+        this.clickDialog.destr()
+        
