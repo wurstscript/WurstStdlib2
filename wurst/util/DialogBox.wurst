@@ -1,0 +1,84 @@
+package DialogBox
+import HashMap
+import Dialog
+import LinkedList
+
+public interface Callback
+    function run()
+
+/** DialogBox lets you to create dialogs and associate the buttons with code. */
+public class DialogBox
+
+    private static constant buttonClosures = new HashMap<button, Callback>
+    private static constant dialogBoxes = new HashMap<dialog, DialogBox>
+    private constant buttons = new LinkedList<button>
+
+    private constant dialogHandle = createDialog()
+    private constant clickDialog = CreateTrigger()
+
+    private string title    
+
+    construct(string title)
+        this.title = title
+        this.dialogHandle.setMessage(title)
+        dialogBoxes.put(this.dialogHandle, this)
+        this.clickDialog
+            ..registerDialogEvent(this.dialogHandle)
+            ..addAction(function removeClickedDialog)
+
+    private static function removeClickedDialog()
+        let btn = GetClickedButton()
+        let cb = buttonClosures.get(btn)
+        if(cb!=null)
+            cb.run()
+        destroy dialogBoxes.get(GetClickedDialog())
+
+    function addButton(string buttonText, Callback cb)
+        this.addButton(buttonText, 0 , cb)
+
+    /** Hotkey: use ASCII number of the capital letter. */
+    function addButton(string buttonText, integer hotkey, Callback cb)
+        let btn = this.dialogHandle.addButton(buttonText, hotkey)
+        this.buttons.add(btn)
+        buttonClosures.put(btn, cb)
+
+    /** Adds a quit button to this dialog. If it is clicked, it ends the game for that player. */
+    function addQuitButton(boolean doScoreScreen, string buttonText, Callback cb)
+        this.addQuitButton(doScoreScreen, buttonText, 0, cb)
+    
+    /** Adds a quit button to this dialog. If it is clicked, it ends the game for that player.
+    Hotkey: use ASCII numbers of the capital letter. */
+    function addQuitButton(boolean doScoreScreen, string buttonText, integer hotkey, Callback cb)
+        let btn = this.dialogHandle.addQuitButton(doScoreScreen, buttonText, hotkey)
+        this.buttons.add(btn)
+        buttonClosures.put(btn, cb)
+
+    /** Toggles visibility of the DialogBox for a player. Dialogs are invisible by default
+    Dialogs cannot be shown at map initialization */
+    function display(player whichPlayer, boolean flag)
+        this.dialogHandle.display(whichPlayer, flag)
+
+    function setTitle(string title)
+        this.dialogHandle.setMessage(title)
+        this.title = title
+
+    function getTitle() returns string
+        return this.title
+
+    ondestroy
+        buttons.forEach( (button btn) -> begin
+            let cb = buttonClosures.get(btn)
+            buttonClosures.remove(btn)
+            if(cb!=null)
+                destroy cb
+        end )
+
+        destroy buttons
+        dialogBoxes.remove(this.dialogHandle)
+        this.dialogHandle
+            ..clear()
+            ..destr()
+        this.clickDialog
+            ..clearActions()
+            ..destr()
+        
