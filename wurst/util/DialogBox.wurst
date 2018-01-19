@@ -39,7 +39,7 @@ public class DialogBox
     private static function runClickedButton()
         let btn = GetClickedButton()
         let cb = buttonClosures.get(btn)
-        if cb!=null
+        if cb != null
             cb.run()
 
     function addButton(string buttonText)
@@ -95,12 +95,12 @@ public class DialogBox
         return this.title
 
     ondestroy
-        buttons.forEach( (button btn) -> begin
+        buttons.forEach((button btn) -> begin
             let cb = buttonClosures.get(btn)
             buttonClosures.remove(btn)
-            if cb!=null
+            if cb != null
                 destroy cb
-        end )
+        end)
 
         destroy buttons
         this.dialogHandle
