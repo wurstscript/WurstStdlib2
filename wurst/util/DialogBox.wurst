@@ -10,7 +10,6 @@ public interface Callback
 public class DialogBox
 
     private static constant buttonClosures = new HashMap<button, Callback>
-    private static constant dialogBoxes = new HashMap<dialog, DialogBox>
     private constant buttons = new LinkedList<button>
 
     private constant dialogHandle = createDialog()
@@ -21,17 +20,15 @@ public class DialogBox
     construct(string title)
         this.title = title
         this.dialogHandle.setMessage(title)
-        dialogBoxes.put(this.dialogHandle, this)
         this.clickDialog
             ..registerDialogEvent(this.dialogHandle)
-            ..addAction(function removeClickedDialog)
+            ..addAction(function runClickedButton)
 
-    private static function removeClickedDialog()
+    private static function runClickedButton()
         let btn = GetClickedButton()
         let cb = buttonClosures.get(btn)
         if(cb!=null)
             cb.run()
-        destroy dialogBoxes.get(GetClickedDialog())
 
     function addButton(string buttonText, Callback cb)
         this.addButton(buttonText, 0 , cb)
@@ -74,7 +71,6 @@ public class DialogBox
         end )
 
         destroy buttons
-        dialogBoxes.remove(this.dialogHandle)
         this.dialogHandle
             ..clear()
             ..destr()
