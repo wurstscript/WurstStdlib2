@@ -1,0 +1,30 @@
+package Lightning
+import NoWurst
+import Vectors
+import Colors
+
+public function addLightning(string codeName, bool checkVisibility, vec2 start, vec2 finish) returns lightning
+	return AddLightning(codeName, checkVisibility, start.x, start.y, finish.x, finish.y)
+
+public function addLightning(string codeName, bool checkVisibility, vec3 start, vec3 finish) returns lightning
+	return AddLightningEx(codeName, checkVisibility, start.x, start.y, start.z,finish.x, finish.y, finish.z)
+	
+public function lightning.move(bool checkVisibility, vec2 start, vec2 finish) returns bool
+	return MoveLightning(this, checkVisibility, start.x, start.y, finish.x, finish.y)
+
+public function lightning.move(bool checkVisibility, vec3 start, vec3 finish) returns bool
+	return MoveLightningEx(this, checkVisibility, start.x, start.y, start.z,finish.x, finish.y, finish.z)
+
+public function lightning.setColor(colorA c) returns boolean
+	return SetLightningColor(this, c.red / 255, c.green / 255, c.blue / 255, c.alpha / 255)
+	
+public function lightning.setColor(color c) returns boolean
+	return SetLightningColor(this, c.red / 255, c.green / 255, c.blue / 255, 1)
+
+public function lightning.getColor() returns color
+	return color((255 * GetLightningColorR(this) + .5).toInt(), (255 * GetLightningColorG(this) + .5).toInt(), (255 * GetLightningColorB(this) + .5).toInt())
+public function lightning.getColorA() returns colorA
+	return this.getColor().withAlpha((255 * GetLightningColorA(this) + .5).toInt())
+	
+public function lightning.destr() returns bool
+	return DestroyLightning(this)
