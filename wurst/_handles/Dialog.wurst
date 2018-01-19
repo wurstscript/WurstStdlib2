@@ -1,0 +1,43 @@
+package Dialog
+import NoWurst
+
+/**
+Dialogs are big dialog boxes at the center of the screen. The player can choose one button to click.
+Dialogs pause the game in single player mode.
+In multiplayer mode dialogs do not pause the game, but prevent players, who see the dialog from playing the game.
+**/
+
+public function createDialog() returns dialog
+    return DialogCreate()
+
+public function dialog.addButton(string buttonText) returns button
+    return this.addButton(buttonText, 0)
+
+/** Hotkey: use ASCII numbers of the capital letter. */
+public function dialog.addButton(string buttonText, integer hotkey) returns button
+    return DialogAddButton(this, buttonText, hotkey)
+
+/** Adds a quit button to this dialog. If it is clicked, it ends the game for that player. */
+public function dialog.addQuitButton(boolean doScoreScreen, string buttonText) returns button
+    return this.addQuitButton(doScoreScreen, buttonText, 0)
+
+/** Adds a quit button to this dialog. If it is clicked, it ends the game for that player.
+Hotkey: use ASCII numbers of the capital letter. */
+public function dialog.addQuitButton(boolean doScoreScreen, string buttonText, integer hotkey) returns button
+    return DialogAddQuitButton(this, doScoreScreen, buttonText, hotkey)
+
+/** Removes all buttons from a dialog */
+public function dialog.clear()
+    DialogClear(this)
+
+public function dialog.destr()
+    DialogDestroy(this)
+
+/** Toggles visibility of the dialog for a player. Dialogs are invisible by default
+Dialogs cannot be shown at map initialization */
+public function dialog.display(player whichPlayer, boolean flag)
+    DialogDisplay(whichPlayer, this, flag)
+
+public function dialog.setMessage(string messageText)
+    DialogSetMessage(this, messageText)
+
