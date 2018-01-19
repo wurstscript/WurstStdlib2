@@ -13,18 +13,35 @@ public interface TooltipGenerator
 		
 public class AbilityDefinition
 	protected ObjectDefinition def
-	int lvls = 1
+	protected int lvls = 1
 	
 	TooltipGenerator tooltipGen = null
 	boolean listen = false
 	
-	construct(int newAbilityId, int origAbilityId)
-		def = createObjectDefinition("w3a", newAbilityId, origAbilityId)
+	protected int newId 
+	protected int baseId
+
+	function getNewId() returns int
+		return newId
+
+	function getBaseId() returns int
+		return baseId
+
+	function getLevels() returns int
+		return lvls
+
+	construct(int newId, int baseId)
+		this.newId = newId
+		this.baseId = baseId
+		def = createObjectDefinition("w3a", newId, baseId)
 		
-	construct(int newAbilityId, int origAbilityId, int lvls)
-		def = createObjectDefinition("w3a", newAbilityId, origAbilityId)
+	construct(int newId, int baseId, int lvls)
+		this.newId = newId
+		this.baseId = baseId
+		this.lvls = lvls
+		def = createObjectDefinition("w3a", newId, baseId)
 		setLevels(lvls)
-		
+
 	function addTooltipProperty(string pName, StringLevelClosure lc)
 		if tooltipGen != null and listen
 			tooltipGen.addProperty(pName, lc)
@@ -3481,12 +3498,19 @@ public class AbilityDefinitionWindWalk extends AbilityDefinition
 	construct(int newAbilityId)
 		super(newAbilityId, 'ANwk')
 
+	function setBackstabDamage(int level, real value)
+		def.setLvlDataUnreal("Owk3", level, 3, value)
+
+	function presetBackstabDamage(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Owk3", lvls, 3, lc)
+		addTooltipProperty("BackstabDamage", lc)
+
 	function setBackstabDamage(int level, bool value)
 		def.setLvlDataBoolean("Owk4", level, 4, value)
 
 	function presetBackstabDamage(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("Owk4", lvls, 4, lc)
-		addTooltipProperty("BackstabDamage", lc)
+		addTooltipProperty("BackstabDamageEnabled", lc)
 
 
 

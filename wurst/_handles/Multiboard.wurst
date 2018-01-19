@@ -1,5 +1,6 @@
 package Multiboard
 import NoWurst
+import Player
 
 public function multiboard.destr()
 	DestroyMultiboard(this)
@@ -17,7 +18,7 @@ public function multiboard.display(boolean show)
 	MultiboardDisplay(this,show)
 	
 public function multiboard.display(player p, boolean show)
-	if GetLocalPlayer() == p
+	if localPlayer == p
 		MultiboardDisplay(this,show)
 
 public function multiboard.getColumnCount() returns integer

@@ -3,6 +3,7 @@ import NoWurst
 import public Colors
 import Vectors
 import ErrorHandling
+import Player
 
 public enum Layer
 	L1
@@ -29,12 +30,12 @@ public function image.hide()
 	
 /** Shows the image for a specific player  */
 public function image.showForPlayer(player p)
-	if GetLocalPlayer() == p
+	if localPlayer == p
 		SetImageRenderAlways(this, true)
 	
 /** Hides the image for a specific player */
 public function image.hideForPlayer(player p)
-	if GetLocalPlayer() == p
+	if localPlayer == p
 		SetImageRenderAlways(this, true)
 		
 /** Set the image 2D position */

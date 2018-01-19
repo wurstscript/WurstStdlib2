@@ -1,0 +1,165 @@
+package HashMapTests
+import HashMap
+
+@Test 
+function testHas()
+    let map = new HashMap<int, int>
+    map.has(5).assertEquals(false)
+    map.put(5, 1)
+    map.has(5).assertEquals(true)
+
+@Test
+function testPutGet()
+    let map = new HashMap<int, int>
+    map.put(3, 1)
+    map.get(3).assertEquals(1)
+    map.get(5).assertEquals(0)
+    map.remove(3)
+    map.get(3).assertEquals(0)
+
+@Test
+function testRemove()
+    let map = new HashMap<int, int>
+        ..put(3, 5)
+    map.has(3).assertEquals(true)
+    map.has(5).assertEquals(false)
+    map.remove(3)
+    map.has(3).assertEquals(false)
+
+@Test
+function testBooleanHashmap()
+    let hm = new HashMap<int, boolean>
+    hm.put(1, true)
+    hm.get(1).assertEquals(true)
+
+/* IterableMap */
+
+@Test
+function testIterableMap()
+    let map = new IterableMap<int, string>
+    map.put(3, "string1 ")
+    map.put(9, "removed")
+    map.put(2, "string2 ")
+    map.put(8, "removed")
+    map.put(1, "string3")
+
+    map.remove(2)
+    map.removeValue("removed", true)
+
+    let otherMap = new IterableMap<int, string>(map)
+
+    string test = ""
+    for key in otherMap
+        test += otherMap.get(key)
+
+    test.assertEquals("string1 string3")
+    otherMap.hasKey(2).assertFalse()
+    otherMap.hasKey(3).assertTrue()
+
+@Test
+function testIMIterator()
+    let map = new IterableMap<int, int>
+        ..put(5, 1)
+        ..put(8, 3)
+        ..put(9, 5)
+
+    var i = 0
+    int array vals = [1, 3, 5]
+    for key in map
+        map.get(key).assertEquals(vals[i])
+        i++
+
+@Test
+function testIMGetPut()
+    let map = new IterableMap<int, int>
+        ..put(5, 1)
+        ..put(8, 3)
+        ..put(9, 5)
+
+    map.get(8).assertEquals(3)
+    map.get(2).assertEquals(0)
+    map.get(5).assertEquals(1)
+    map.put(5, 2)
+    map.get(5).assertEquals(2)
+    
+@Test
+function testIMHasKeyRemove()
+    let map = new IterableMap<int, int>
+        ..put(5, 1)
+        ..put(8, 3)
+        ..put(9, 5)
+
+    map.hasKey(5).assertEquals(true)
+    map.hasKey(6).assertEquals(false)
+    map.remove(5)
+    map.hasKey(5).assertEquals(false)
+
+@Test
+function testIMRemoveValue()
+    let map = new IterableMap<int, int>
+        ..put(5, 1)
+        ..put(8, 3)
+        ..put(6, 1)
+        ..put(9, 2)
+        ..put(3, 1)
+        ..put(4, 5)
+
+    map.removeValue(1, false)
+    map.get(6).assertEquals(1)
+    map.removeValue(1, true)
+    map.hasKey(3).assertEquals(false)
+
+@Test
+function testIMAddAll()
+    let map = new IterableMap<int, int>
+        ..put(5, 1)
+        ..put(8, 3)
+        ..put(9, 5)
+
+    let map2 = new IterableMap<int, int>
+        ..put(4, 1)
+        ..put(8, 5)
+        ..put(3, 5)
+
+    int array keys = [5, 8, 9, 4, 3]
+    int array vals = [1, 5, 5, 1, 5]
+
+    map.addAll(map2)
+    for i = 0 to 4
+        map.get(keys[i]).assertEquals(vals[i])
+
+@Test
+function testIMCopy()
+    let map = new IterableMap<int, int>
+        ..put(5, 1)
+        ..put(8, 3)
+        ..put(9, 5)
+
+    let map2 = map.copy()
+    
+    for key in map
+        map2.get(key).assertEquals(map.get(key))
+
+@Test
+function testIMCopyConstructor()
+    let map = new IterableMap<int, int>
+        ..put(5, 1)
+        ..put(8, 3)
+        ..put(9, 5)
+
+    let map2 = new IterableMap<int, int>(map)
+    
+    for key in map
+        map2.get(key).assertEquals(map.get(key))
+
+@Test
+function testIMFlush()
+    let map = new IterableMap<int, int>
+        ..put(5, 1)
+        ..put(8, 3)
+        ..put(9, 5)
+
+    map.flush()
+    map.hasKey(5).assertEquals(false)
+    map.get(5).assertEquals(0)
+    destroy map

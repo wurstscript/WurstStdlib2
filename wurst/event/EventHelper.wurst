@@ -3,18 +3,18 @@ import NoWurst
 import HashMap
 import _Handles
 
-HashMap<trigger, rect> rectMap = new HashMap<trigger, rect>()
-HashMap<region, int> regionMap = new HashMap<region, int>()
-Table triggerData = new Table()
+constant rectMap = new HashMap<trigger, rect>()
+constant regionMap = new HashMap<region, int>()
+constant triggerData = new Table()
 
-public function trigger.registerUnitInRangeSource( unit whichUnit, real range, boolexpr filter ) returns event
+public function trigger.registerUnitInRangeSource(unit whichUnit, real range, boolexpr filter) returns event
 	int h = GetHandleId(this)
 	int u = GetHandleId(whichUnit)
 	triggerData.saveUnit(h,whichUnit)
 	triggerData.saveTrigger(u,this)
 	return TriggerRegisterUnitInRange(this, whichUnit, range, filter)
 
-public function trigger.registerUnitInRangeSource( unit whichUnit, real range ) returns event
+public function trigger.registerUnitInRangeSource(unit whichUnit, real range) returns event
 	return this.registerUnitInRangeSource(whichUnit, range, null)
 
 public function trigger.getSource() returns unit

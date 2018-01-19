@@ -1,0 +1,30 @@
+package GameCacheTests
+import NoWurst
+import GameCache
+import Wurstunit
+
+
+@Test
+function testGameCache()
+	let gc = InitGameCache("cool")
+	let u = CreateUnit(Player(0), 0, 0, 0, 0)
+
+	assertTrue(gc != null)
+
+	gc.saveInt("a", "b", 1)
+	gc.saveReal("a", "b", 2.)
+	gc.saveBoolean("a", "b", true)
+	gc.saveUnit("a", "b", u)
+	gc.saveString("a", "b", "yes")
+
+	gc.loadInt("a", "b").assertEquals(1)
+	gc.loadReal("a", "b").assertEquals(2)
+	gc.loadBoolean("a", "b").assertEquals(true)
+	gc.loadString("a", "b").assertEquals("yes")
+
+	assertTrue(u == gc.restoreUnit("a", "b", Player(0), vec2(0,0), (0).asAngleDegrees()))
+
+	gc.flush()
+
+	gc.loadInt("a", "b").assertEquals(0)
+

@@ -1,0 +1,162 @@
+package HashListTests
+import HashList
+
+@Test
+function testAdd()
+	let list = new HashList<int>
+	list.add(5)
+	list.get(0).assertEquals(5)
+
+@Test
+function testSet()
+	let list = new HashList<int>
+	list.add(3)
+	list.add(5)
+	list.set(1, 6)
+	list.get(1).assertEquals(6)
+
+@Test
+function testAddAll()
+	int array vals = [5, 3, 6, 4, 1, 9]
+	let list = new HashList<int>
+		..add(5)
+		..add(3)
+		..add(6)
+
+	let addl = new HashList<int>
+		..add(4)
+		..add(1)
+		..add(9)
+
+	list.addAll(addl)
+	var i = 0
+	for val in list
+		val.assertEquals(vals[i])
+		i++
+
+	list.get(4).assertEquals(1)
+
+@Test
+function testClear()
+	let list = new HashList<int>
+		..add(5)
+		..add(3)
+		..add(4)
+
+	list.clear()
+	list.size().assertEquals(0)
+
+@Test
+function testRemoveAll()
+	let list = new HashList<int>
+		..add(5)
+		..add(3)
+		..add(4)
+	
+	list.clear()
+	list.size().assertEquals(0)
+
+@Test
+function testRemoveAt()
+	let list = new HashList<int>
+		..add(3)
+		..add(5)
+	
+	list.removeAt(1)
+	list.get(0).assertEquals(3)
+	list.get(1).assertEquals(0)
+
+@Test
+function testRemove()
+	let list = new HashList<int>
+		..add(1)
+		..add(3)
+		..add(5)
+
+	list.remove(3)
+	list.get(0).assertEquals(1)
+	list.get(1).assertEquals(5)
+
+@Test
+function testSize()
+	let list = new HashList<int>
+	list.size().assertEquals(0)
+	list
+		..add(5)
+		..add(3)
+		..add(1)
+	list.size().assertEquals(3)
+
+@Test
+function testIsEmpty()
+	let list = new HashList<int>
+	list.isEmpty().assertEquals(true)
+	list..add(1)
+	list.isEmpty().assertEquals(false)
+
+@Test
+function testGet()
+	let list = new HashList<int>
+		..add(5)
+		..add(1)
+		..add(3)
+
+	list.get(1).assertEquals(1)
+
+@Test
+function testHas()
+	let list = new HashList<int>
+		..add(1)
+		..add(3)
+		..add(5)
+
+	list.has(3).assertEquals(true)
+	list.add(3)
+	list.remove(3)
+	list.has(3).assertEquals(true)
+	list.remove(3)
+	list.has(3).assertEquals(false)
+	list.has(9).assertEquals(false)
+
+@Test
+function testIterator()
+	let list = new HashList<int>
+	int array vals = [1, 3, 5]
+	var i = 0
+
+	list
+		..add(1)
+		..add(3)
+		..add(5)
+	
+	for val in list
+		val.assertEquals(vals[i])
+		i++
+
+@Test
+function testCopy()
+	let list = new HashList<int>
+		..add(1)
+		..add(3)
+		..add(5)
+	
+	let copy = list.copy()	
+	var i = 0
+	
+	for val in list
+		val.assertEquals(copy.get(i))
+		i++
+
+@Test
+function testCopyConstructor()
+	let list = new HashList<int>
+		..add(1)
+		..add(3)
+		..add(5)
+	
+	let copy = new HashList<int>(list)
+	var i = 0
+	
+	for val in list
+		val.assertEquals(copy.get(i))
+		i++

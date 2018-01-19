@@ -1,6 +1,6 @@
 package StringUtilsTests
 import StringUtils
-import TypeCasting
+
 import LinkedList
 
 @Test function testSplit()
@@ -19,7 +19,7 @@ import LinkedList
     destroy list
 
     list = "thisisastring".split(" ")
-    (list.getSize() == 1).assertTrue()
+    (list.size() == 1).assertTrue()
     destroy list
 
 @Test function testJoin()

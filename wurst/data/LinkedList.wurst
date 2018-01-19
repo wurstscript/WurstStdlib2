@@ -1,7 +1,5 @@
 package LinkedList
 import NoWurst
-import Wurstunit
-import TypeCasting
 
 /** 
 Doubly-linked list implementation that implements all common list, stack and queue operations.
@@ -10,8 +8,16 @@ Use the Typecasting package if you require lists of warcraft handles.
 */
 public class LinkedList<T>
 	private LLEntry<T> dummy = new LLEntry<T>(null, null, null)
-	private LLStaticIterator<T> staticItr = new LLStaticIterator<T>(this)
+	private LLIterator<T> staticItr = null 
+	private LLBackIterator<T> staticBackItr = null
 	protected int size = 0
+
+	/** Create a new list by copying all elements from another list into it */
+	construct(thistype base)
+		dummy.next = dummy
+		dummy.prev = dummy
+		for elem in base
+			add(elem)
 
 	/** Create a new empty list */
 	construct()
@@ -60,16 +66,20 @@ public class LinkedList<T>
 	/** Returns and removes the first added Element (FIFO) */
 	function dequeue() returns T
 		let top = dummy.next
-		let elem = top.elem
-		removeEntry(top)
-		return elem
+		T result = null
+		if top != dummy
+			result = top.elem
+			removeEntry(top)
+		return result
 		
 	/** Returns and removes the last added Element (LIFO) */
 	function pop() returns T
 		let top = dummy.prev
-		let elem = top.elem
-		removeEntry(top)
-		return elem
+		T result = null
+		if top != dummy
+			result = top.elem
+			removeEntry(top)
+		return result
 		
 	/** Returns and removes the lastly added Element */
 	function peek() returns T
@@ -103,29 +113,45 @@ public class LinkedList<T>
 			entry = entry.next
 	
 	/** gets the size of the list */
-	@deprecated function getSize() returns int
+	@deprecated("Use .size() instead.") function getSize() returns int
 		return size
 
 	/** gets the size of the list (java-compat wrapper) */
 	function size() returns int
 		return size
 
-	/** gets the size of the list (java-compat wrapper) */
+	/** checks whether this list is empty */
 	function isEmpty() returns boolean
 		return size == 0
 		
+	/** Returns a shallow copy of this map */
+	function copy() returns LinkedList<T>
+		let list = new LinkedList<T>
+		for elem in this
+			list.add(elem)
+		return list
+
 	/** get the static iterator for this list */
-	function staticItr() returns LLStaticIterator<T>
+	function staticItr() returns LLIterator<T>
+		if staticItr == null
+			staticItr = new LLIterator<T>(this, false)
 		staticItr.reset()
 		return staticItr
+
+	/** get the static back iterator for this list */
+	function staticBackItr() returns LLBackIterator<T>
+		if staticBackItr == null
+			staticBackItr = new LLBackIterator<T>(dummy, false)
+		staticBackItr.reset()
+		return staticBackItr
 
 	/** get an iterator for this list */
 	function iterator() returns LLIterator<T>
 		return new LLIterator(this)
 	
 	/** get a backiterator for this list */
-	function backiterator() returns ListBackIterator<T>
-		return new ListBackIterator(dummy)	
+	function backiterator() returns LLBackIterator<T>
+		return new LLBackIterator(dummy)	
 		
 	/** adds an element to the beginning of the list */	
 	function addtoStart(T elem)
@@ -194,7 +220,56 @@ public class LinkedList<T>
 		entryAtIndex.prev.next = entry
 		entryAtIndex.prev = entry
 		size++
+
+	/** Sorts the list according the the comparator using merge sort */
+	function sortWith(Comparator<T> comparator)
+		if comparator != null and size() > 1
+			dummy.next = sort(comparator, dummy.next)
+			var last = dummy.next
+			while last.next != dummy
+				last = last.next
+			dummy.prev = last
+
+	/** internal merge sort */
+	private function sort(Comparator<T> comparator, LLEntry<T> e) returns LLEntry<T>
+		if e == dummy or e.next == dummy
+			return e
+
+		var second = split(e)
+		let first = sort(comparator, e)
+		second = sort(comparator, second)
+		return sortMerge(comparator, first, second)
 	
+	/** internal merge */
+	private function sortMerge(Comparator<T> comparator, LLEntry<T> a, LLEntry<T> b) returns LLEntry<T>
+		var _result = dummy
+		if a == dummy
+			_result = b
+		else if b == dummy
+			_result = a
+		else
+			let cval = comparator.compare(a.elem, b.elem)
+			if cval < 0
+				_result = a
+				_result.next = sortMerge(comparator, a.next, b)
+			else
+				_result = b
+				_result.next = sortMerge(comparator, a, b.next)
+			_result.next.prev = _result
+			_result.prev = dummy
+		return _result 
+
+	/** returns the middle of a fragment list */
+	private function split(LLEntry<T> e) returns LLEntry<T>
+		LLEntry<T> normalRef = e
+		LLEntry<T> halfRef = e
+		while(normalRef.next != dummy and normalRef.next.next != dummy)
+			normalRef = normalRef.next.next
+			halfRef = halfRef.next
+		let tmp = halfRef.next
+		halfRef.next = dummy
+		return tmp
+
 	/** Prints the content of the list */
 	function toString() returns string
 		string s="["
@@ -232,9 +307,12 @@ public class LinkedList<T>
 		entry.next.prev = entry.prev
 		destroy entry
 		size--
-		
+
 	ondestroy
-		destroy staticItr
+		if staticItr != null
+			destroy staticItr
+		if staticBackItr != null
+			destroy staticBackItr
 		LLEntry<T> current = dummy.next
 		while current != dummy
 			current = current.next
@@ -251,16 +329,21 @@ class LLEntry<T>
 		this.prev = prev
 		this.next = next
 
-public class LLStaticIterator<T>
-	LLEntry<T>    dummy
-	LLEntry<T>    current
+public class LLIterator<T>
+	LLEntry<T>	dummy
+	LLEntry<T>	current
 	LinkedList<T> parent
+	protected bool destroyOnClose = true
 
 	construct(LinkedList<T> parent)
 		this.parent  = parent
 		reset()
 
-	/** Returns the iterator back to it#s initial state */
+	construct(LinkedList<T> parent, bool destroyOnClose)
+		this.parent  = parent
+		reset()
+		this.destroyOnClose = destroyOnClose
+
 	function reset()
 		this.dummy   = parent.getDummy()
 		this.current = dummy
@@ -270,10 +353,10 @@ public class LLStaticIterator<T>
 	function remove() returns T
 		if current != dummy
 			parent.size--
-			current.prev.next = current.next
 			current.next.prev = current.prev
+			current.prev.next = current.next
 			let removedNode   = current
-			current           = current.prev
+			current		   = current.prev
 			destroy removedNode
 			return removedNode.elem
 		return null
@@ -286,66 +369,48 @@ public class LLStaticIterator<T>
 		return current.elem
 
 	function lookahead() returns T
+		T retVal = null
 		if hasNext()
-			return current.next.elem
-		return null
+			retVal = current.next.elem
+		return retVal
 
 	function close()
-	
+		if destroyOnClose
+			destroy this
 
-public class LLIterator<T>
-	LLEntry<T>    dummy
-	LLEntry<T>    current
-	LinkedList<T> parent
-
-	construct(LinkedList<T> parent)
-		this.parent  = parent
-		reset()
-
-	function reset()
-		this.dummy   = parent.getDummy()
-		this.current = dummy
-
-	/** Removes from the list the last element that was returned by next() (optional operation).
-	 	This call can only be made once per call to next */
-	function remove() returns T
-		if current != dummy
-			parent.size--
-			current.next.prev = current.prev
-			current.prev.next = current.next
-			let removedNode   = current
-			current           = current.prev
-			destroy removedNode
-			return removedNode.elem
-		return null
-
-	function hasNext() returns boolean
-		return current.next != dummy
-
-	function next() returns T
-		current = current.next
-		return current.elem
-
-	function close()
-		destroy this
-		
-public class ListBackIterator<T>
+public class LLBackIterator<T>
 	LLEntry<T> dummy
 	LLEntry<T> current
+	protected bool destroyOnClose = true
+
+	construct(LLEntry<T> dummy, bool destroyOnClose)
+		this.dummy = dummy
+		reset()
+		this.destroyOnClose = destroyOnClose
 
 	construct(LLEntry<T> dummy)
 		this.dummy = dummy
-		this.current = dummy
+		reset()
 			
+	function reset()
+		this.current = dummy
+
 	function hasNext() returns boolean
 		return current.prev != dummy
 
 	function next() returns T
 		current = current.prev 
 		return current.elem 
- 		
+		 
+	function lookahead() returns T
+		T retVal = null
+		if hasNext()
+			retVal = current.prev.elem
+		return retVal
+
 	function close() 
-		destroy this
+		if destroyOnClose
+			destroy this
 
 public interface LinkedListPredicate<T>
 	function isTrueFor(T t) returns boolean
@@ -359,71 +424,9 @@ public interface LinkedListUpdater<T>
 public interface MapClosure<T, Q>
 	function run(T t) returns Q
 
-// =====TESTS=====
+public interface Comparator<T>
+	function compare(T o1, T o2) returns int
 
-@Test function testAddRemove()
-	let list = new LinkedList<int>()
-	assertTrue(list.getSize() == 0)
-	
-	list..add(1)..add(2)..add(3)..add(4)
-	assertTrue(list.getSize() == 4)
-	
-	let itr = list.staticItr()
-	while itr.hasNext()
-		itr.next()
-		itr.remove()
-
-	assertTrue(list.getSize() == 0)
-
-@Test function testForLoop()
-	let list = new LinkedList<int>()
-	
-	list..add(1)..add(2)..add(3)..add(4)
-	
-	list.updateAll((int i) -> i + 1)
-	
-	var result = 0
-	for i in list
-		result += i
-
-	assertTrue(result == (5+4+3+2))
-
-@Test function testAddAll()
-	let list = new LinkedList<int>()
-	let list2 = new LinkedList<int>()
-	
-	list..add(1)..add(2)
-	list2..add(3)..add(4)
-	list.addAll(list2)
-
-	assertTrue(list.get(2) == 3)
-	assertTrue(list.get(3) == 4)
-
-	var result = 0
-	for i in list
-		result += i
-	assertTrue(result == (1+2+3+4))
-
-@Test function testClosures()
-	let list = new LinkedList<int>()
-	list..add(1)..add(2)..add(3)..add(4)
-	
-	list.updateAll((int i) -> i * 2)
-	assertTrue(list.get(3) == 4*2)
-
-	list.removeWhen((int i) -> i > 4)
-	assertTrue(list.size == 2)
-
-	let realList = list.map<real>((int i) -> i * 10.)
-	assertTrue(realList.get(1) == 40.)
-
-@Test function testGenerics()
-	let list = new LinkedList<string>()
-	list..add("a")..add("b")..add("c")
-	assertTrue(list.get(1) == "b")
-
-	let list2 = new LinkedList<real>()
-	list2..add(1.230)..add(2.563)..add(1213143.)
-	assertTrue(list2.get(0) == 1.230)
-	assertTrue(list2.get(1) == 2.563)
-	assertTrue(list2.get(2) == 1213143.)
+constant Comparator<int> intComparator = (int i1, int i2) -> i1 - i2
+public function LinkedList<int>.sort()
+	this.sortWith(intComparator)

@@ -41,12 +41,16 @@ public function Targettype.toString() returns string
 
 public class ChannelAbilityPreset extends AbilityDefinitionIllidanChannel
 	private bitset optionSet = bitset(0)
-	
+	private string orderString
+
+	function getOrderString() returns string
+		return orderString
+
 	construct(int newId, int lvls, boolean removeChannelProperties)
 		super(newId)
 		this.lvls = lvls
 		setLevels(lvls)
-		let orderString = odf.getOrderString(true)
+		orderString = odf.getOrderString(true)
 		presetBaseOrderID((int _lvl) -> orderString)
 		if removeChannelProperties
 			removeChannelProperties(true)

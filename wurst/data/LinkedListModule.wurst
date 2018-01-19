@@ -45,16 +45,35 @@ public module LinkedListModule
 		else
 			last = prev
 			
-			
 	ondestroy
 		remove()
 	
-	/** an iterator which iterates over all instances of this class */
+	/** An iterator which iterates over all instances of this class */
 	static function iterator() returns Iterator
-		return new Iterator()
+		return new Iterator(true)
 		
+	private static let staticItr = new Iterator(false)
+
+	/** An iterator which iterates over all instances of this class */
+	static function staticItr() returns Iterator
+		return staticItr..reset()
+
+	/** An iterator which iterates over all instances of this class in reverse */
+	static function backIterator() returns BackIterator
+		return new BackIterator(true)
+
+	private static let staticBackItr = new BackIterator(false)
+
+	/** An iterator which iterates over all instances of this class in reverse */
+	static function staticBackItr() returns BackIterator
+		return staticBackItr..reset()
+
 	static class Iterator
 		LinkedListModule.thistype current = first
+		protected bool destroyOnClose
+
+		construct(bool destroyOnClose)
+			this.destroyOnClose = destroyOnClose
 
 		function hasNext() returns boolean
 			return current != null
@@ -68,52 +87,28 @@ public module LinkedListModule
 			current = first
 	 		
 		function close() 
-			destroy this
+			if destroyOnClose
+				destroy this
 	
+	static class BackIterator
+		LinkedListModule.thistype current = last
+		protected bool destroyOnClose
 
-// -----TESTS------
-
-class TestClass
-	use LinkedListModule
-	string str
-	construct(string str)
-		this.str = str
-
-function allToString() returns string
-	string res = ""
- 	for x in TestClass
-		res += x.str
-	return res
+		construct(bool destroyOnClose)
+			this.destroyOnClose = destroyOnClose
+			
+		function hasNext() returns boolean
+			return current != null
 	
-@test function test()
-	let a = new TestClass("a")
-	let b = new TestClass("b")
-	let c = new TestClass("c")
-	let d = new TestClass("d")
- 
- 	assertTrue(allToString() == "abcd")
- 	destroy c
- 	assertTrue(allToString() == "abd")
- 	destroy d
- 	assertTrue(allToString() == "ab")
- 	destroy a
- 	assertTrue(allToString() == "b")
- 	destroy b
- 	assertTrue(allToString() == "")
- 	
- @test function testDestroy()
- 	new TestClass("a")
-	let b = new TestClass("b")
-	new TestClass("c")
-	new TestClass("d")
- 	string s = ""
- 	for x in TestClass
-		s += x.str
-		if x == b
-			destroy x
-	assertTrue(s == "abcd")
-	assertTrue(allToString() == "acd")
-	for x in TestClass
-		destroy x
-	assertTrue(allToString() == "")
+		function next() returns LinkedListModule.thistype
+			let res = current
+			current = current.prev
+			return res
+
+		function reset()
+			current = last
+	 		
+		function close() 
+			if destroyOnClose
+				destroy this
 

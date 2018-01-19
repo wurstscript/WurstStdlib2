@@ -1,0 +1,87 @@
+package Quest
+
+import QuestItem
+
+public function quest.setRequired(boolean req)
+    QuestSetRequired(this, req)
+
+public function quest.setTitle(string title)
+    QuestSetTitle(this, title)
+
+public function quest.setDescription(string text)
+    QuestSetDescription(this, text)
+
+public function quest.setIcon(string path)
+    QuestSetIconPath(this, path)
+
+public function quest.completed(boolean b)
+    QuestSetCompleted(this, b)
+
+public function quest.failed(boolean b)
+    QuestSetFailed(this, b)
+
+public function quest.discovered(boolean b)
+    QuestSetDiscovered(this, b)
+
+public function quest.isEnabled() returns boolean
+    return IsQuestEnabled(this)
+
+public function quest.isCompleted() returns boolean
+    return IsQuestCompleted(this)
+
+public function quest.remove()
+    DestroyQuest(this)
+
+public function flashQuestDialogButton()
+    FlashQuestDialogButton()
+
+public enum QuestState
+    FAILED
+    COMPLETED
+    UNDISCOVERED
+    DISCOVERED
+
+public class Quest
+    quest q
+    QuestState qState
+
+    construct(boolean required)
+        q = CreateQuest()
+        q.setRequired(required)
+
+    function setTitle(string title)
+        q.setTitle(title)
+
+    function setDescription(string title)
+        q.setDescription(title)
+
+    function setIcon(string path)
+        q.setIcon(path)
+
+    function isEnabled() returns boolean
+        return q.isEnabled()
+
+    function isCompleted() returns boolean
+        return q.isCompleted()
+
+
+    function getState() returns QuestState
+        return qState
+
+    function setState(QuestState state)
+        qState = state
+        switch state
+            case state.COMPLETED
+                q.completed(true)
+            case state.FAILED
+                q.failed(true)
+            case state.UNDISCOVERED
+                q.discovered(false)
+            case state.DISCOVERED
+                q.discovered(true)
+
+    function addObjective(string text) returns QuestItem
+        return new QuestItem(q, text)
+        
+    ondestroy
+        q.remove()

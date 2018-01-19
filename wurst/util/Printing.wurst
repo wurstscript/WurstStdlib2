@@ -1,5 +1,6 @@
 package Printing
 import NoWurst
+import Player
 
 @configurable public var DEBUG_LEVEL = Loglevel.INFO
 @configurable public var DEBUG_MSG_DURATION = 45.
@@ -29,30 +30,30 @@ public function Loglevel.getTag() returns string
 public class Log
 	/** Prints a trace logmessage */
 	static function trace(string msg)
-		printLog(GetLocalPlayer(), Loglevel.TRACE, msg)
+		printLog(localPlayer, Loglevel.TRACE, msg)
 
 	/** Prints a debug logmessage */
 	static function debug(string msg)
-		printLog(GetLocalPlayer(), Loglevel.DEBUG, msg)
+		printLog(localPlayer, Loglevel.DEBUG, msg)
 
 	/** Prints a info logmessage*/
 	static function info(string msg)
-		printLog(GetLocalPlayer(), Loglevel.INFO, msg)
+		printLog(localPlayer, Loglevel.INFO, msg)
 
 	/** Prints a warning logmessage */
 	static function warn(string msg)
-		printLog(GetLocalPlayer(), Loglevel.WARNING, msg)
+		printLog(localPlayer, Loglevel.WARNING, msg)
 	
 	/** Prints a warning logmessage */
 	static function error(string msg)
-		printLog(GetLocalPlayer(), Loglevel.ERROR, msg)
+		printLog(localPlayer, Loglevel.ERROR, msg)
 
 	static function setLevel(Loglevel lvl)
 		DEBUG_LEVEL = lvl
 
 /** Prints a simple message. */
 public function print(string msg)		
-	DisplayTimedTextToPlayer(GetLocalPlayer(), 0., 0., DEBUG_MSG_DURATION, msg)
+	DisplayTimedTextToPlayer(localPlayer, 0., 0., DEBUG_MSG_DURATION, msg)
 
 /** Prints a simple message. */
 public function print(int msg)
@@ -73,7 +74,7 @@ public function print(bool msg)
 
 /** Prints a special motification-message */
 public function printLog(Loglevel loglvl, string msg)
-	printLog(GetLocalPlayer(), loglvl, msg)
+	printLog(localPlayer, loglvl, msg)
 		
 public function printLog(player showTo, Loglevel loglvl, string msg)
 	if (DEBUG_LEVEL castTo int) <= (loglvl castTo int)
@@ -82,7 +83,7 @@ public function printLog(player showTo, Loglevel loglvl, string msg)
 	
 /** Prints a simple message that is shown for the given duration */
 public function printTimed(string msg, real duration)
-	DisplayTimedTextToPlayer(GetLocalPlayer(), 0., 0., duration, msg)
+	DisplayTimedTextToPlayer(localPlayer, 0., 0., duration, msg)
 	
 /** Prints a simple message that is shown to the player for the given duration */
 public function printTimedToPlayer(string msg, real duration, player p)
@@ -90,7 +91,7 @@ public function printTimedToPlayer(string msg, real duration, player p)
 	
 /** Prints a simple message after clearing all messages that is shown to the player for the given duration */
 public function printTimedToPlayerClear(string msg, real duration, player p)
-	if GetLocalPlayer() == p
+	if localPlayer == p
 		ClearTextMessages()
 	DisplayTimedTextToPlayer(p, 0., 0., duration, msg)
 

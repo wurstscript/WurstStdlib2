@@ -4,7 +4,7 @@ import Buffer
 import LinkedList
 
 class SerializableElement implements BufferSerializable
-    int id
+	int id
 	int value
 	
 	construct()
@@ -21,9 +21,9 @@ class SerializableElement implements BufferSerializable
 		value = buffer.readInt()
 
 class TestSerializable implements BufferSerializable
-    var name = "SomeName"
-    var id = 0
-    var facing = 3.14
+	var name = "SomeName"
+	var id = 0
+	var facing = 3.14
 	var elements = new LinkedList<SerializableElement>
 
 	construct()

@@ -2,16 +2,31 @@ package HashList
 
 public class HashList<T>
 	private static hashtable ht = InitHashtable()
+	private static hashtable occurences = InitHashtable()
+
 	private int size = 0
+
+	/** Returns the number of occurences of an element in this list */
+	function count(T elem) returns int
+		return occurences.loadInt(this castTo int, elem castTo int)
+
+	private function incrOccurences(T elem)
+		occurences.saveInt(this castTo int, elem castTo int, count(elem) + 1)
+
+	private function decrOccurences(T elem)
+		occurences.saveInt(this castTo int, elem castTo int, count(elem) - 1)
 
 	/** Add an element to the end of the list */
 	function add(T elem)
 		ht.saveInt(this castTo int, size, elem castTo int)
+		incrOccurences(elem)
 		size++
 	
-	/** Set an existing element at the given positiob to a new value */
+	/** Set an existing element at the given position to a new value */
 	function set(int index, T elem)
+		decrOccurences(get(index))
 		ht.saveInt(this castTo int, index, elem castTo int)
+		incrOccurences(elem)
 
 	/** Add all elements from elems to this list */
 	function addAll(HashList<T> elems)
@@ -21,16 +36,18 @@ public class HashList<T>
 	/** Remove all elements from this list without destroying it */
 	function clear()
 		ht.flushChild(this castTo int)
+		occurences.flushChild(this castTo int)
 		size = 0
 
 	/** Remove all elements from this list without destroying it */
-	function removeAll()
+	@deprecated("Use .clear() instead.") function removeAll()
 		clear()
 
 	/** Remove the element at the given index */
 	function removeAt(int index)
+		decrOccurences(ht.loadInt(this castTo int, index) castTo T)
 		for i = index to size
-			ht.saveInt(this castTo int, i, ht.loadInt(this castTo int, i+1))
+			ht.saveInt(this castTo int, i, ht.loadInt(this castTo int, i + 1))
 		size--
 		
 	/** Remove the first occurence of t from this list */
@@ -40,8 +57,12 @@ public class HashList<T>
 				removeAt(i)
 				break
 
+	/** Get the size of the list */	
+	function size() returns int
+		return size
+
 	/** Get the size of the list */
-	function getSize() returns int
+	@deprecated("Use .size() instead.") function getSize() returns int
 		return size
 
 	/** Return whether the list is empty */
@@ -53,28 +74,43 @@ public class HashList<T>
 		return ht.loadInt(this castTo int, index) castTo T
 
 	/** Return whether the element exists in the list */
-	function contains(T elem) returns bool
-		for listElem in this
-			if elem == listElem
-				return true
-		return false
+	@deprecated function contains(T elem) returns bool
+		return ht.loadReal(this castTo int, elem castTo int) > 0
+
+	/** Return whether the element exists in the list */
+	function has(T elem) returns bool
+		return count(elem) > 0
 
 	/** Get an iterator for this list */
 	function iterator() returns HLIterator<T>
-		return new HLIterator(this)			
+		return new HLIterator(this)	
+				
+	/** Returns a shallow copy of this map */
+	function copy() returns HashList<T>
+		let list = new HashList<T>
+		for elem in this
+			list.add(elem)
+		return list
+
+	construct()
+	
+	/** Create a new list by copying all elements from another list into it */
+	construct(thistype base)
+		for elem in base
+			add(elem)
 
 	ondestroy
-		ht.flushChild(this castTo int)
+		clear()
 
-class HLIterator<Q>
-	int i = 0
-	HashList<Q> list
+public class HLIterator<Q>
+	protected int i = 0
+	protected HashList<Q> list
 	
 	construct(HashList<Q> list)
 		this.list = list
 		
 	function hasNext() returns boolean
-		return i < list.getSize()
+		return i < list.size()
 		
 	function remove()
 		
@@ -85,14 +121,3 @@ class HLIterator<Q>
 
 	function close()
 		destroy this
-
-
-@Test function testHashList()
-	let hlist = new HashList<int>()
-	hlist..add(1)..add(2)..add(3)..add(4)
-
-	assertTrue(hlist.get(2) == 3)
-
-	hlist.clear()
-
-	assertTrue(hlist.getSize() == 0)

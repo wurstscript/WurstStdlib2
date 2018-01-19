@@ -204,10 +204,8 @@ public function ubersplatToIndex(ubersplat object) returns int
 	return object.getHandleId()
 	
 public function booleanToIndex(boolean u) returns int
-	if u
-		return 1
-	return 0
+	return u ? 1 : 0
 
 public function booleanFromIndex(int index) returns boolean
-	return index > 0
+	return index == 1
 

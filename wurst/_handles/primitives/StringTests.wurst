@@ -1,5 +1,5 @@
 package StringTests
-import TypeCasting
+
 
 @Test function testToCharsetInt()
     "a".toCharsetInt().assertEquals(10)
@@ -128,3 +128,5 @@ import TypeCasting
     "234.25asdad".toReal().assertEquals(234.25)
     
     "invalid".toReal().assertEquals(0)
+
+@Test function complExprs()

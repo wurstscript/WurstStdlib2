@@ -28,7 +28,12 @@ public constant compiletime = false
 public function compiletime(int expr) returns int
 	return expr
 
-
+/** This is a builtin magic function.
+ * It evaluates it's argument at compiletime and replaces the call with the result.
+ */
+public function compiletime(real expr) returns real
+	return expr
+	
 /** This is a builtin magic function.
  * It evaluates it's argument at compiletime and replaces the call with the result.
  */

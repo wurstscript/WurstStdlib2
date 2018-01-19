@@ -1,4 +1,4 @@
-[![Build Status](http://peeeq.de/hudson/job/StdLib2/badge/icon)](http://peeeq.de/hudson/job/StdLib2/) 
+[![Build Status](http://peeeq.de/hudson/job/StdLib2/badge/icon)](http://peeeq.de/hudson/job/StdLib2/) [![Build Status](https://travis-ci.org/wurstscript/WurstStdlib2.svg?branch=master)](https://travis-ci.org/wurstscript/WurstStdlib2)
 # StdLib2
 Revamped version of the WurstScript Standard Library. Provides core packages for basic mapping needs as well as advanced math and system packages for advanced users.
 

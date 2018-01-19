@@ -6,8 +6,19 @@ import NoWurst
 public class W3TDefinition
 	ObjectDefinition def
 	
-	construct(int newUnitId, int origUnitId)
-		def = createObjectDefinition("w3t", newUnitId, origUnitId)
+	protected int newId 
+	protected int baseId
+
+	function getNewId() returns int
+		return newId
+
+	function getBaseId() returns int
+		return baseId
+
+	construct(int newId, int baseId)
+		this.newId = newId
+		this.baseId = baseId
+		def = createObjectDefinition("w3t", newId, baseId)
 				
 	function setTooltipExtended(string data)
 		def.setString("utub", data)
