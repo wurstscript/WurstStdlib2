@@ -110,6 +110,9 @@ public function unit.getMana() returns real
 
 public function unit.getMaxHP() returns real
 	return this.getState( UNIT_STATE_MAX_LIFE )
+
+public function unit.getMaxMana() returns real
+	return this.getState(UNIT_STATE_MAX_MANA)
 	
 public function unit.getMoveSpeed() returns real
 	return GetUnitMoveSpeed(this)
