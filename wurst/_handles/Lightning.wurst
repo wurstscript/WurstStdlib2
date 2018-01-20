@@ -52,15 +52,21 @@ function LightningType.toString() returns string
 			s = "SPLK"
 	return s
 
+/** Acts as with vec3 version but with z equal to terrain height. */
 public function addLightning(LightningType lType, bool checkVisibility, vec2 start, vec2 _end) returns lightning
 	return AddLightning(lType.toString(), checkVisibility, start.x, start.y, _end.x, _end.y)
 
+/** Warning, z value of vec3 should consider terrain height.
+	(usually with z==0 the lightning spawns very low under ground) */
 public function addLightning(LightningType lType, bool checkVisibility, vec3 start, vec3 _end) returns lightning
 	return AddLightningEx(lType.toString(), checkVisibility, start.x, start.y, start.z, _end.x, _end.y, _end.z)
 	
+/** Acts as with vec3 version but with z equal to terrain height. */
 public function lightning.move(bool checkVisibility, vec2 start, vec2 _end) returns bool
 	return MoveLightning(this, checkVisibility, start.x, start.y, _end.x, _end.y)
 
+/** Warning, z value of vec3 should consider terrain height.
+	(usually with z==0 the lightning spawns very low under ground) */
 public function lightning.move(bool checkVisibility, vec3 start, vec3 _end) returns bool
 	return MoveLightningEx(this, checkVisibility, start.x, start.y, start.z, _end.x, _end.y, _end.z)
 
@@ -70,10 +76,27 @@ public function lightning.setColor(colorA c) returns boolean
 public function lightning.setColor(color c) returns boolean
 	return SetLightningColor(this, c.red / 255, c.green / 255, c.blue / 255, 1)
 
+/** Gets given lightning's color.
+	Uses approximation since it's stored in reals. */
 public function lightning.getColor() returns color
-	return color((255 * GetLightningColorR(this) + .5).toInt(), (255 * GetLightningColorG(this) + .5).toInt(), (255 * GetLightningColorB(this) + .5).toInt())
-public function lightning.getColorA() returns colorA
-	return this.getColor().withAlpha((255 * GetLightningColorA(this) + .5).toInt())
+	return color((255 * this.getColorR() + .5).toInt(), (255 * this.getColorG() + .5).toInt(), (255 * this.getColorB() + .5).toInt())
+
+/** Gets given lightning's color with alpha channel.
+	Uses approximation since it's stored in reals. */
+public function lightning.getColorWithA() returns colorA
+	return this.getColor().withAlpha( (255 * this.getColorA() + .5).toInt() )
 	
+public function lightning.getColorR() returns real
+	return GetLightningColorR(this)
+
+public function lightning.getColorG() returns real
+	return GetLightningColorG(this)
+
+public function lightning.getColorB() returns real
+	return GetLightningColorB(this)
+
+public function lightning.getColorA() returns real
+	return GetLightningColorA(this)
+
 public function lightning.destr() returns bool
 	return DestroyLightning(this)
