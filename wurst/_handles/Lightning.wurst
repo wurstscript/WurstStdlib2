@@ -3,63 +3,29 @@ import NoWurst
 import Vectors
 import Colors
 
-enum LightningType
-	ChainLightningPrimary
-	ChainLightningSecondary
-	Drain
-	DrainLife
-	DrainMana
-	FingerofDeath
-	ForkedLightning
-	HealingWavePrimary
-	HealingWaveSecondary
-	LightningAttack
-	MagicLeash
-	ManaBurn
-	ManaFlare
-	SpiritLink
-
-function LightningType.toString() returns string
-	string s = ""
-	switch this
-		case ChainLightningPrimary
-			s = "CLPB"
-		case ChainLightningSecondary
-			s = "CLSB"
-		case Drain
-			s = "DRAB"
-		case DrainLife
-			s = "DRAL"
-		case DrainMana
-			s = "DRAM"
-		case FingerofDeath
-			s = "AFOD"
-		case ForkedLightning
-			s = "FORK"
-		case HealingWavePrimary
-			s = "HWPB"
-		case HealingWaveSecondary
-			s = "HWSB"
-		case LightningAttack
-			s = "CHIM"
-		case MagicLeash
-			s = "LEAS"
-		case ManaBurn
-			s = "MBUR"
-		case ManaFlare
-			s = "MFPB"
-		case SpiritLink
-			s = "SPLK"
-	return s
+public constant string LIGHTNING_CHAIN_LIGHTNING_PRIMARY = "CLPB"
+public constant string LIGHTNING_CHAIN_LIGHTNING_SEECONDARY = "CLSB"
+public constant string LIGHTNING_DRAIN = "DRAB"
+public constant string LIGHTNING_DRAIN_LIFE = "DRAL"
+public constant string LIGHTNING_DRAIN_MANA = "DRAM"
+public constant string LIGHTNING_FINGER_OF_DEATH = "AFOD"
+public constant string LIGHTNING_FORKED_LIGHTNING = "FORK"
+public constant string LIGHTNING_HEALING_WAWE_PRIMARY = "HWPB"
+public constant string LIGHTNING_HEALING_WAWE_SEECONDARY = "HWSB"
+public constant string LIGHTNING_LIGHTNING_ATTACK = "CHIM"
+public constant string LIGHTNING_MAGIC_LEASH = "LEAS"
+public constant string LIGHTNING_MANA_BURN = "MBUR"
+public constant string LIGHTNING_MANA_FLARE = "MFPB"
+public constant string LIGHTNING_SPIRIT_LINK = "SPLK"
 
 /** Acts as with vec3 version but with z equal to terrain height. */
-public function addLightning(LightningType lType, bool checkVisibility, vec2 start, vec2 _end) returns lightning
-	return AddLightning(lType.toString(), checkVisibility, start.x, start.y, _end.x, _end.y)
+public function addLightning(string codeName, bool checkVisibility, vec2 start, vec2 _end) returns lightning
+	return AddLightning(codeName, checkVisibility, start.x, start.y, _end.x, _end.y)
 
 /** Warning, z value of vec3 should consider terrain height.
 	(usually with z==0 the lightning spawns very low under ground) */
-public function addLightning(LightningType lType, bool checkVisibility, vec3 start, vec3 _end) returns lightning
-	return AddLightningEx(lType.toString(), checkVisibility, start.x, start.y, start.z, _end.x, _end.y, _end.z)
+public function addLightning(string codeName, bool checkVisibility, vec3 start, vec3 _end) returns lightning
+	return AddLightningEx(codeName, checkVisibility, start.x, start.y, start.z, _end.x, _end.y, _end.z)
 	
 /** Acts as with vec3 version but with z equal to terrain height. */
 public function lightning.move(bool checkVisibility, vec2 start, vec2 _end) returns bool
