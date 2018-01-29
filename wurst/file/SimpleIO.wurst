@@ -2,6 +2,7 @@ package SimpleIO
 
 import ErrorHandling
 import StringUtils
+import ClosureTimers
 
 /** Maximum amount of packets per single readable file. */
 public constant PACKETS_PER_FILE = 16 	
@@ -175,7 +176,8 @@ public class LocalFiles
 			check()
 			return fallback
 		
-	private static function check()
+	protected static function check()
+		// try regular writing/reading first
 		IOWriter.prepareWrite()
 		IOWriter.writePacket(testString)
 		IOWriter.flushFile(testDestination)
@@ -185,6 +187,7 @@ public class LocalFiles
 			enabled = true
 			return
 	
+		// now try 1.26 fallback
 		IOWriter.prepareWrite()
 		IOWriter.writePacket(testString)
 		IOWriter.flushFile(fallbackDestination)
@@ -194,3 +197,10 @@ public class LocalFiles
 			enabled = true
 			fallback = true
 			return
+		
+		checked = true
+
+init
+	// force a check as soon as possible to trigger 1.26 detection
+	doAfter(0, () -> LocalFiles.check())
+	
