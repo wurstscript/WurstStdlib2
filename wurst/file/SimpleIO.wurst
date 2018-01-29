@@ -53,7 +53,10 @@ public class IOWriter
 	/** Flushes a file and all written content to disk under the specified path. */
 	static function flushFile(string path)
 		Preload(DATA_FOOTER)
-		PreloadGenEnd(path)
+		if LocalFiles.fallback
+			PreloadGenEnd("Logs\\" + path)
+		else
+			PreloadGenEnd(path)
 
 	/** Returns the amount of packets we can write to the current file. */
 	static function getRemainingWrites() returns int
@@ -107,7 +110,10 @@ public class IOReader
 		packetNumber = 0
 		packetCount = 0
 		saveNames()
-		Preloader(path)
+		if LocalFiles.fallback
+			Preloader("Logs\\" + path)
+		else
+			Preloader(path)
 
 		for i = 0 to PACKETS_PER_FILE - 1
 			if playerNames[i] != players[i].getName()
@@ -137,3 +143,54 @@ public class IOReader
 	/** Returns whether there are any packets left to be read from the currently loaded file. */
 	static function canRead() returns boolean
 		return getRemainingReads() > 0
+
+/**
+	Utility class used to check if the LocalFiles registry property of the
+	player is enabled.
+
+	In other words, this checks if the user can reliably write/read files.
+	This also includes a fallback mechanism for the 1.26 patch and before,
+	which uses the Logs\ folder to write files in.
+**/
+public class LocalFiles
+	private static constant testDestination = "localtest.txt"
+	private static constant fallbackDestination = "Logs\\localtest.txt"
+	private static constant testString = "test"
+
+	protected static var checked = false
+	protected static var enabled = false
+	protected static var fallback = false
+
+	static function isEnabled() returns boolean
+		if checked
+			return enabled
+		else
+			check()
+			return enabled
+
+	static function isFallback() returns boolean
+		if checked
+			return fallback
+		else
+			check()
+			return fallback
+		
+	private static function check()
+		IOWriter.prepareWrite()
+		IOWriter.writePacket(testString)
+		IOWriter.flushFile(testDestination)
+		IOReader.load(testDestination)
+		if IOReader.getPacket(0) == testString
+			checked = true
+			enabled = true
+			return
+	
+		IOWriter.prepareWrite()
+		IOWriter.writePacket(testString)
+		IOWriter.flushFile(fallbackDestination)
+		IOReader.load(fallbackDestination)
+		if IOReader.getPacket(0) == testString
+			checked = true
+			enabled = true
+			fallback = true
+			return

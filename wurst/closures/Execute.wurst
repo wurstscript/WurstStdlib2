@@ -104,7 +104,6 @@ interface LimitedExecuteAction
 function executeWhileInternal(int resetCount, LimitedExecuteCondition condition, LimitedExecuteAction action) 
 	execute(() -> begin 
 		var i = 0 
-		// iterate as many times as needed 
 		while condition.check() and i < resetCount 
 			action.run() 
 			i++
