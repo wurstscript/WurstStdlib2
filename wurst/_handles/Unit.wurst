@@ -43,6 +43,33 @@ public function unit.addState( unitstate state, real value )
 public function unit.addXp(int toAdd, boolean showEyeCandy)
 	AddHeroXP(this, toAdd, showEyeCandy)
 
+public function unit.getStr(bool includeBonuses) returns int
+	return GetHeroStr(this, includeBonuses)
+
+public function unit.getAgi(bool includeBonuses) returns int
+	return GetHeroAgi(this, includeBonuses)
+
+public function unit.getInt(bool includeBonuses) returns int
+	return GetHeroInt(this, includeBonuses)
+
+public function unit.setStr(int value)
+	SetHeroStr(this, value, true)
+
+public function unit.setAgi(int value)
+	SetHeroAgi(this, value, true)
+
+public function unit.setInt(int value)
+	SetHeroInt(this, value, true)
+
+public function unit.addStr(int value)
+	SetHeroStr(this, this.getStr(false) + value, true)
+
+public function unit.addAgi(int value)
+	SetHeroAgi(this, this.getAgi(false) + value, true)
+
+public function unit.addInt(int value)
+	SetHeroInt(this, this.getInt(false) + value, true)
+
 public function unit.damageTarget(unit target, real amount)
 	UnitDamageTarget(this, target, amount, false, false, ATTACK_TYPE_CHAOS, DAMAGE_TYPE_UNIVERSAL, WEAPON_TYPE_WHOKNOWS)
 
@@ -83,6 +110,9 @@ public function unit.getMana() returns real
 
 public function unit.getMaxHP() returns real
 	return this.getState( UNIT_STATE_MAX_LIFE )
+
+public function unit.getMaxMana() returns real
+	return this.getState(UNIT_STATE_MAX_MANA)
 	
 public function unit.getMoveSpeed() returns real
 	return GetUnitMoveSpeed(this)

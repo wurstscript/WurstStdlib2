@@ -12,6 +12,12 @@ constant MUTE_ERROR_DURATION = 60
 constant PRIMARY_ERROR_KEY = -1
 constant HT = InitHashtable()
 
+/**
+	Stores the last error thrown by error().
+	This error can be inspected when using try() from package Execute.
+**/
+public string lastError = null
+
 /** error handing function.
 This function is used by libraries and for internal Wurst errors like 
 accessing a null-pointer. Overwrite this function to customize error handling.
@@ -22,6 +28,8 @@ Error messages can also be disabled.
 
 Errors are only displayed once every MUTE_ERROR_DURATION seconds.
 To achieve this, the hash of the string is saved in a hashtable together with a timestamp.
+
+You can also use try() from package Execute to handle an error happening in a callback.
 */
 @configurable public function error(string msg)
 	if compiletime
@@ -46,5 +54,6 @@ To achieve this, the hash of the string is saved in a hashtable together with a 
 			HT.saveInt(PRIMARY_ERROR_KEY, hash, currentTime.toInt())
 			Log.error("|cffFF3A29Error:|r " + msg + getStackTraceString())
 		// crash the thread:
+		lastError = msg
 		I2S(1 div 0)
 
