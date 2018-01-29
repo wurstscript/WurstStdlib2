@@ -8,7 +8,6 @@ import LinkedList
 
 User array USERS
 
-/** Get User from  */
 public function player.toUser() returns User
     return USERS[this.getId()]
 
@@ -20,6 +19,7 @@ public class User
     protected player _player
     protected int id
     protected string originalName
+    protected int index
     protected bool isPlaying
 
     private construct(player pl, int playerId)
@@ -61,6 +61,9 @@ public class User
     
     function toPlayer() returns player
         return this._player
+    
+    function toIndex() returns integer
+        return this.index
 
     function isPlaying() returns bool
         return isPlaying
@@ -80,13 +83,17 @@ public class User
 
     protected static function _initialize()
         let t = CreateTrigger()
+        int indexNum = 0
         User u
+
         for i = 0 to 11
             u = new User(players[i], i)
 
             if GetPlayerController(u._player) == MAP_CONTROL_USER and GetPlayerSlotState(u._player) == PLAYER_SLOT_STATE_PLAYING
                 TriggerRegisterPlayerEvent(t, u._player, EVENT_PLAYER_LEAVE)
                 u.isPlaying = true
+                u.index = indexNum
+                indexNum++
                 activeUsers.add(u)
             
             u.originalName = GetPlayerName(u._player)
