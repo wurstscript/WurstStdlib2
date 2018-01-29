@@ -1,0 +1,176 @@
+package Persistable
+import Network
+import MultiIO
+import SimpleIO
+import BufferAdapters
+import public Buffer
+
+/**
+	This is the folder that all your map objects will be serialized in.
+	You should override this to prevent conflicts with other maps using this class.
+**/
+@configurable
+constant PERSISTABLE_MAP_PREFIX = "persistent"
+
+/** Functional interface for optional lambda callback in Persistable.load() **/
+public interface PersistableLoadCallback
+	function onLoaded(boolean success)
+
+/** Functional interface for optional lambda callback in Persistable.save() **/
+public interface PersistableSaveCallback
+	function onSaved()
+
+/**
+	This class provides you the ability, by extending it, to save and load
+	data in a safe, synchronous manner 
+**/
+public abstract class Persistable implements BufferSerializable
+	private PersistentStore store
+	/** The owner of the object, from whom and to who this object will be saved. **/
+	protected player owner
+
+	construct(player owner)
+		this.owner = owner
+		store = new PersistentStore(this, owner)
+
+	ondestroy
+		destroy store
+
+	/* You must implement these */
+
+	/** This function should return a unique class id for this class **/
+	abstract function getClassId() returns string
+	/** This function should return a unique object id for this instance **/
+	abstract function getId() returns string
+	/** This function should apply default settings in the event that loading has failed **/
+	abstract function supplyDefault()
+
+	/* Optionally overridable functions */
+
+	/** Override this function if you want to do something on object load **/
+	protected function onLoaded(boolean _success)
+	/** Override this function if you want to do something on object save **/
+	protected function onSaved()
+	/** 
+		Override this function if you want to adjust the delay between each file opeation. 
+		This might be necessary if you are saving/loading a lot of data and your players are lagging out.
+		A good value for this can be 0.125 or 0.25.
+	**/
+	protected function getIODelay() returns real
+		return 0
+	/** 
+		Internal function that returns the path that the object should be saved under.
+		You can override this if you feel the need to change the paths under which
+		your objects are saved.
+	**/
+	protected function getPath() returns string
+		return PERSISTABLE_MAP_PREFIX + "/" + getClassId() + "/" + getId()
+
+
+	/* Public interface */
+
+	/** Saves this Persistable to disk **/
+	function save()
+		store.save(null)
+
+	/** Saves this Persistable to disk and calls the callback when it finishes **/
+	function save(PersistableSaveCallback callback)
+		store.save(callback)
+
+	/** Loads and syncs this Persistable from owner's disk **/
+	function load()
+		store.load(null)
+
+	/** Loads and syncs this Persistable from owner's disk and calls the callback when it finishes **/
+	function load(PersistableLoadCallback callback)
+		store.load(callback)
+
+/**
+	Internal class providing the actual save/load mechanics of Persistables.
+**/
+class PersistentStore
+	private player owner
+	private Persistable entity
+
+	construct(Persistable entity, player owner)
+		this.entity = entity
+		this.owner = owner
+
+	function load(PersistableLoadCallback callback)
+		// synchronizer used to proceed when the owner has finished loading data
+		let synchronizer = new SimpleSynchronizer()
+		let network = new Network(owner)
+		let reader = new FileReader(entity.getPath(), entity.getIODelay())
+	
+		if localPlayer == owner
+			reader.load(() -> begin
+				var buffer = new StringBuffer(MAX_PACKET_LENGTH)
+				// a boolean for keeping track of whether the load was succesful or not
+				network.getData().writeBoolean(true)
+				// read the data from the file into the buffer, and then transfer it into the network's buffer
+				buffer.populateFromFile(reader)
+				buffer.transfer(network.getData())
+				// if there was an error during transfer, we scrap the data...
+				if not buffer.isValid()
+					network.getData().clear()
+					network.getData().writeBoolean(false)
+				destroy buffer
+
+				synchronizer.sync()
+			end)
+		else
+			// all other players just need to wait for the owner to tell others he's ready
+			synchronizer.sync()
+		
+		// when the sender has finished loading, we can start the transmission
+		synchronizer.onSynced(() -> begin
+			destroy reader
+
+			network.start((Buffer buffer) -> begin
+				// first boolean in the stream is always an indicator of whether the owner loaded succesfully
+				let success = buffer.readBoolean()
+				
+				if success
+					// if the deserialization has failed for some reason, we need to catch that
+					let deserializeSuccess = try(() -> entity.deserialize(buffer))
+					if not deserializeSuccess
+						entity.supplyDefault()
+				else
+					entity.supplyDefault()
+
+				if callback != null
+					callback.onLoaded(success)
+				entity.onLoaded(success)
+			end)
+		end)
+
+	function save(PersistableSaveCallback callback)
+		// used to proceed when the owner has finished saving to disk
+		let synchronizer = new SimpleSynchronizer()
+		FileWriter writer = null
+
+		if localPlayer == owner
+			writer = new FileWriter(entity.getPath(), entity.getIODelay())
+			let buffer = new StringBuffer(MAX_PACKET_LENGTH)
+
+			// write the entity into the buffer
+			execute(() -> buffer.write(entity))
+			// flush any remaining data into buffer (mandatory for StringBuffer)
+			buffer.flush()
+			// transfer the data into the writer and destroy the buffer
+			writer.populateFromBuffer(buffer)
+			destroy buffer
+			// save it to disk
+			writer.save(() -> synchronizer.sync())
+		else 
+			synchronizer.sync()
+
+		// call the callback when everything has finished
+		synchronizer.onSynced(() -> begin
+			if localPlayer == owner
+				destroy writer
+
+			if callback != null
+				callback.onSaved()
+			entity.onSaved()
+		end)
