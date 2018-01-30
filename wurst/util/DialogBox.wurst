@@ -1,0 +1,112 @@
+/** DialogBox lets you create dialogs more easily and associate its buttons with closures. */
+
+package DialogBox
+import HashMap
+import Dialog
+import LinkedList
+
+public interface DialogBoxButtonClosure
+    function run()
+
+/** DialogBox lets you create dialogs more easily and associate its buttons with closures. 
+The DialogBox should be destroyed after it is no longer needed.
+Example use:
+| let dBox = new DialogBox("Extra starting gold?")
+| dBox.addButton("Yes", () -> begin
+|     players[0].addGold(500)
+|     destroy dBox
+| end)
+| dBox.addButton("No", () -> destroy dBox)
+| dBox.display(players[0], true) */
+public class DialogBox
+
+    private static constant buttonClosures = new HashMap<button, DialogBoxButtonClosure>
+    private constant buttons = new LinkedList<button>
+
+    private constant dialogHandle = createDialog()
+    private constant clickDialog = CreateTrigger()
+
+    private string title    
+
+    /** Creates a new DialogBox with a title. */
+    construct(string title)
+        this.title = title
+        this.dialogHandle.setMessage(title)
+        this.clickDialog
+            ..registerDialogEvent(this.dialogHandle)
+            ..addAction(function runClickedButton)
+
+    private static function runClickedButton()
+        let btn = GetClickedButton()
+        let cb = buttonClosures.get(btn)
+        if cb != null
+            cb.run()
+
+    function addButton(string buttonText)
+        this.addButton(buttonText, 0 , null)
+
+    function addButton(string buttonText, DialogBoxButtonClosure cb)
+        this.addButton(buttonText, 0 , cb)
+
+    /** Hotkey: use ASCII number of the capital letter. */
+    function addButton(string buttonText, integer hotkey)
+        this.addButton(buttonText, hotkey , null)
+
+    /** Hotkey: use ASCII number of the capital letter. */
+    function addButton(string buttonText, integer hotkey, DialogBoxButtonClosure cb)
+        let btn = this.dialogHandle.addButton(buttonText, hotkey)
+        this.buttons.add(btn)
+        buttonClosures.put(btn, cb)
+
+    /** Adds a quit button to this dialog. If it is clicked, it ends the game for that player. */
+    function addQuitButton(boolean doScoreScreen, string buttonText)
+        this.addQuitButton(doScoreScreen, buttonText, 0, null)
+
+    /** Adds a quit button to this dialog. If it is clicked, it ends the game for that player. */
+    function addQuitButton(boolean doScoreScreen, string buttonText, DialogBoxButtonClosure cb)
+        this.addQuitButton(doScoreScreen, buttonText, 0, cb)
+    
+    /** Adds a quit button to this dialog. If it is clicked, it ends the game for that player.
+    Hotkey: use ASCII numbers of the capital letter. */
+    function addQuitButton(boolean doScoreScreen, string buttonText, integer hotkey)
+        let btn = this.dialogHandle.addQuitButton(doScoreScreen, buttonText, hotkey)
+        this.buttons.add(btn)
+        buttonClosures.put(btn, null)
+
+    /** Adds a quit button to this dialog. If it is clicked, it ends the game for that player.
+    Hotkey: use ASCII numbers of the capital letter. */
+    function addQuitButton(boolean doScoreScreen, string buttonText, integer hotkey, DialogBoxButtonClosure cb)
+        let btn = this.dialogHandle.addQuitButton(doScoreScreen, buttonText, hotkey)
+        this.buttons.add(btn)
+        buttonClosures.put(btn, cb)
+
+    /** Toggles visibility of the DialogBox for a player. Dialogs are invisible by default
+    Dialogs cannot be shown at map initialization. */
+    function display(player whichPlayer, boolean flag)
+        this.dialogHandle.display(whichPlayer, flag)
+
+    /** Changes the title of the DialogBox. */
+    function setTitle(string title)
+        this.dialogHandle.setMessage(title)
+        this.title = title
+
+    /** Returns the title of the DialogBox. */
+    function getTitle() returns string
+        return this.title
+
+    ondestroy
+        buttons.forEach((button btn) -> begin
+            let cb = buttonClosures.get(btn)
+            buttonClosures.remove(btn)
+            if cb != null
+                destroy cb
+        end)
+
+        destroy buttons
+        this.dialogHandle
+            ..clear()
+            ..destr()
+        this.clickDialog
+            ..clearActions()
+            ..destr()
+        

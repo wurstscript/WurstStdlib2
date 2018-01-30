@@ -89,6 +89,9 @@ public interface Buffer
 	**/
 	function read(BufferSerializable value)
 
+	/** Clears the buffer of any data **/
+	function clear()
+
 	/** Returns the current buffer mode. **/
 	function getMode() returns BufferMode
 
@@ -101,8 +104,8 @@ public interface Buffer
 	/** Returns whether the buffer is readable. **/
 	function isReadable() returns boolean
 
-	/** Returns whether the buffer is 'good', and no errors occured **/
-	function isGood() returns boolean
+	/** Returns whether the buffer is in a valid state, and no errors occured **/
+	function isValid() returns boolean
 
 	/** Returns the set failure mode, if any **/
 	function getFailure() returns BufferFailureMode
@@ -120,7 +123,7 @@ public abstract class AbstractBuffer implements Buffer
 	private var failureMessage = ""
 
 	protected function checkFailed()
-		if SAFETY_CHECKS_ENABLED and not isGood()
+		if SAFETY_CHECKS_ENABLED and not isValid()
 			error("Buffer: trying to use a failed buffer")
 
 	protected function fail(BufferFailureMode mode, string message)
@@ -143,7 +146,7 @@ public abstract class AbstractBuffer implements Buffer
 	override function isReadable() returns boolean
 		return mode == BufferMode.READ or mode == BufferMode.READ_WRITE
 
-	override function isGood() returns boolean
+	override function isValid() returns boolean
 		return failureMode == BufferFailureMode.NONE
 
 	override function getFailure() returns BufferFailureMode
@@ -154,6 +157,7 @@ public abstract class AbstractBuffer implements Buffer
 
 	/**
 		Extending classes should call this in write methods.
+		This function will be eliminated with optimizations turned on and when SAFETY_CHECKS_ENABLED == false.
 	**/
 	protected function checkWrite()
 		checkFailed()
@@ -162,6 +166,7 @@ public abstract class AbstractBuffer implements Buffer
 
 	/**
 		Extending classes should call this in read methods.
+		This function will be eliminated with optimizations turned on and when SAFETY_CHECKS_ENABLED == false.
 	**/
 	protected function checkRead()
 		checkFailed()
@@ -219,25 +224,75 @@ public class HashBuffer extends AbstractBuffer
 		booleanWriteIndex++
 		buffer.saveBoolean(booleanWriteIndex, value)
 
+	/* These functions have mandatory safety checks, because they are necessary to
+		detect errors in deserialization code when reading from files. */
+
 	override function readInt() returns int
 		checkRead()
 		integerReadIndex++
+		if not buffer.hasInt(integerReadIndex)
+			error("HashBuffer: trying to read non-present int at pos#" + integerReadIndex.toString())
 		return buffer.loadInt(integerReadIndex)
 
 	override function readReal() returns real
 		checkRead()
 		realReadIndex++
+		if not buffer.hasReal(realReadIndex)
+			error("HashBuffer: trying to read non-present real at pos#" + realReadIndex.toString())
 		return buffer.loadReal(realReadIndex)
 
 	override function readString() returns string
 		checkRead()
 		stringReadIndex++
+		if not buffer.hasString(stringReadIndex)
+			error("HashBuffer: trying to read non-present string at pos#" + stringReadIndex.toString())
 		return buffer.loadString(stringReadIndex)
 
 	override function readBoolean() returns bool
 		checkRead()
 		booleanReadIndex++
+		if not buffer.hasBoolean(booleanReadIndex)
+			error("HashBuffer: trying to read non-present boolean at pos#" + booleanReadIndex.toString())
 		return buffer.loadBoolean(booleanReadIndex)
+
+	/* 'Unsafe' variants that will have safety checks disabled when the config demands it.
+		These should be used when sending across network because we know we'll never hit
+		a non-existent value.
+		
+		You shoudln't use these in your code unless you absolutely know what you are doing.
+	*/
+
+	function readIntUnsafe() returns int
+		checkRead()
+		integerReadIndex++
+		if not buffer.hasInt(integerReadIndex)
+			error("HashBuffer: trying to read non-present int at pos#" + integerReadIndex.toString())
+		return buffer.loadInt(integerReadIndex)
+
+	function readRealUnsafe() returns real
+		checkRead()
+		realReadIndex++
+		if SAFETY_CHECKS_ENABLED and not buffer.hasReal(realReadIndex)
+			error("HashBuffer: trying to read non-present real at pos#" + realReadIndex.toString())
+		return buffer.loadReal(realReadIndex)
+
+	function readStringUnsafe() returns string
+		checkRead()
+		stringReadIndex++
+		if SAFETY_CHECKS_ENABLED and not buffer.hasString(stringReadIndex)
+			error("HashBuffer: trying to read non-present string at pos#" + stringReadIndex.toString())
+		return buffer.loadString(stringReadIndex)
+
+	function readBooleanUnsafe() returns bool
+		checkRead()
+		booleanReadIndex++
+		if SAFETY_CHECKS_ENABLED and not buffer.hasBoolean(booleanReadIndex)
+			error("HashBuffer: trying to read non-present boolean at pos#" + booleanReadIndex.toString())
+		return buffer.loadBoolean(booleanReadIndex)
+
+
+	override function clear()
+		buffer.flush()
 
 	function resetRead()
 		integerReadIndex = -1
@@ -318,7 +373,7 @@ class ChunkElement
 
 	For this reason, the class doesn't instantly error out on attempts
 	to read incorrect data, and the users of the class should call
-	StringBuffer.isGood() during/after reading data to make sure that
+	StringBuffer.isValid() during/after reading data to make sure that
 	it is correct.
 
 	Trying to read from a buffer that has entered an erroneous state
@@ -478,10 +533,10 @@ public class StringBuffer extends AbstractBuffer
 
 		checkDataAvailable()
 		// if there isn't enough data in the readBuffer, load additional chunks
-		while isGood() and readBuffer.length() < length
+		while isValid() and readBuffer.length() < length
 			nextChunk()
 
-		if isGood()
+		if isValid()
 			// if we haven't errored out at this point, it's safe to pop the string
 			let value = readBuffer.substring(0, length)
 			readBuffer = readBuffer.substring(length)
@@ -501,7 +556,7 @@ public class StringBuffer extends AbstractBuffer
 	private function checkType(ValueType toCheck) returns boolean
 		let currentType = popTypeIdentifier()
 		// might have malformed input after popping type identifier, so check that first
-		if not isGood()
+		if not isValid()
 			return false
 		if currentType != toCheck
 			fail(BufferFailureMode.INCORRECT_TYPE, "tried to read " + toCheck.toString() + " but was " + currentType.toString())
@@ -565,16 +620,33 @@ public class StringBuffer extends AbstractBuffer
 		checkRead()
 		return checkType(ValueType.BOOLEAN) ? (popString(1) == "1") : false
 
+	override function clear()
+		for chunk in chunks
+			destroy chunk
+		chunks.clear()
+		readBuffer = ""
+		writeBuffer = ""
+
+	/** Looks at the type of the next value, if any. **/
+	function peekType() returns ValueType
+		let valueType = popTypeIdentifier()
+		// put the identifier back into the buffer
+		readBuffer = valueType.toString() + readBuffer
+		return valueType
+
+	function canRead() returns boolean
+		return isDataAvailable()
+
 	/*
 		Methods to directly manipulate the underlying chunk storage
 	*/
-	function pushChunk(string value)
+	function writeChunk(string value)
 		chunks.push(new ChunkElement(value))
 
 	function hasChunk() returns boolean
 		return chunks.size() > 0
 
-	function popChunk() returns string
+	function readChunk() returns string
 		if not hasChunk()
 			error("StringBuffer: trying to pop non-existent chunk")
 		let chunk = chunks.dequeue()

@@ -1,37 +1,124 @@
 package Execute
 
+import ErrorHandling
+
 /**
 	This package exposes a single function execute(),
 	the primary use of which is to reset the OP limit.
 **/
 
 public interface ForForceCallback
-	function callback()
+	function run()
 
 let executeForce = CreateForce()
 
 init
 	executeForce.addPlayer(localPlayer)
 
-function executeCurrentCallback() returns boolean
-	getCurrentCallback().callback()
-	return false
-	
+function executeCurrentCallback()
+	lastError = null
+	getCurrentCallback().run()
+	setCurrentCallbackSuccess(true)
+
+boolean array tempCallbacksSuccess
 ForForceCallback array tempCallbacks
 int tempCallbacksCount = 0
 
 function pushCallback(ForForceCallback c)
 	tempCallbacks[tempCallbacksCount] = c
+	tempCallbacksSuccess[tempCallbacksCount] = false
 	tempCallbacksCount++
 	
 function popCallback()
 	tempCallbacksCount--
 	destroy tempCallbacks[tempCallbacksCount]
 
+function isLastCallbackSuccessful() returns boolean
+	return tempCallbacksSuccess[tempCallbacksCount]
+
+function setCurrentCallbackSuccess(boolean value)
+	tempCallbacksSuccess[tempCallbacksCount - 1] = value
+
 function getCurrentCallback() returns ForForceCallback
 	return tempCallbacks[tempCallbacksCount - 1]
 
+/**
+	This function starts a new 'thread' inside the
+	callback closure, where the op limit is at zero, allowing us to bypass it.
+	This is extremely useful when you have expensive computations
+	which would otherwise crash the thread.
+
+	If the callback crashes due to an error or hitting the OP limit, it will
+	error out as well.
+
+	Note: Unlike timers and doAfter(), this method is synchronous, meaning
+	that it will wait for the called method to finish before continuing the in the current thread.
+
+	Note: We use ForForce because it does not require a Trigger to be called, only an empty
+	force which is reusable, unlike TriggerEvaluate.
+
+	Note: You may use this inside a local clause, like this:
+		if localPlayer == caller
+			execute(...)
+	But be warned that this will cause a desync, unless you are
+	calling this from within another execute(...) clause.
+
+	This will desync:
+		// code called by a trigger
+		if localPlayer == caller
+			execute()
+	This will not desync:
+		execute(() -> begin
+			// do some stuff here
+
+			if localPlayer == caller
+				execute(...)
+		end)
+**/
 public function execute(ForForceCallback c)
+	if not try(c)
+		error("execute: thread has crashed. caused by:\n| - " + lastError)
+
+/**
+	This function works exactly the same as execute(), with
+	the only difference that it will allow you to inspect
+	an error if one occured.
+
+	If the error is caused by error(), then you can inspect
+	the error message using lastError from ErrorHandling.
+	If the error is caused by another form of thread crash,
+	such as zero division or OP limit, lastError will be null.
+**/
+public function try(ForForceCallback c) returns boolean
 	pushCallback(c)
 	executeForce.forEach(function executeCurrentCallback)
 	popCallback()
+	return isLastCallbackSuccessful()
+
+interface LimitedExecuteCondition 
+	function check() returns boolean 
+ 
+interface LimitedExecuteAction 
+	function run() 
+ 
+function executeWhileInternal(int resetCount, LimitedExecuteCondition condition, LimitedExecuteAction action) 
+	execute(() -> begin 
+		var i = 0 
+		while condition.check() and i < resetCount 
+			action.run() 
+			i++
+
+		// restart the execute if necessary 
+		if condition.check() 
+			executeWhileInternal(resetCount, condition, action) 
+	end) 
+ 
+/** 
+  This is an utility function which you can use to process arbitrarily large loops. 
+  It functions like a while loop that will run action.run() while condition.check() == true, 
+  however it will reset the OP limit each time after the specified amount of resetCount.
+**/ 
+public function executeWhile(int resetCount, LimitedExecuteCondition condition, LimitedExecuteAction action) 
+	executeWhileInternal(resetCount, condition, action) 
+	destroy condition 
+	destroy action

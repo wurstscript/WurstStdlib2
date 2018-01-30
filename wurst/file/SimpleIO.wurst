@@ -1,0 +1,206 @@
+package SimpleIO
+
+import ErrorHandling
+import StringUtils
+import ClosureTimers
+
+/** Maximum amount of packets per single readable file. */
+public constant PACKETS_PER_FILE = 16 	
+/** Maximum payload size of a single readable packet. */
+public constant MAX_PACKET_LENGTH = 209
+
+/**
+	Low-level static writer wrapper around the Preload API
+	Supports writing directly to Preload, or can write
+	readable "packets", max PACKETS_PER_FILE for a file, 
+	each up to MAX_PACKET_LENGTH characters. 
+
+	WARNING 1: Due to the way how WC3 handles file IO, you have to use
+	this class only in one place at once. Avoid using it over time, lest you
+	risk causing conflicts with other clients of the class.
+	WARNING 2: WC3 does not correctly handle recursive folder creation.
+	If you are creating a file that is nested deeper than one folder, e.g.
+	"a/b/c", make sure to use IOWriter.createFolder("a/b/c") before that.
+**/
+public class IOWriter
+	private static constant DATA_PADDING_1 = "\")\r\n\tcall SetPlayerName(Player("
+	private static constant DATA_PADDING_2 = "), \""
+	private static constant DATA_PADDING_3 = "\")\r\n//"
+	private static constant DATA_FOOTER = "\" )\r\nendfunction\r\nfunction AAA takes nothing returns nothing \r\n//"
+
+	private static var packetNumber = 0
+
+	/** This function prepares a new file for writing. */
+	static function prepareWrite()
+		packetNumber = 0
+		PreloadGenClear()
+		PreloadGenStart()
+
+	/** Simply writes a string as-is, without the possibility of reading it back. */
+	static function write(string content)
+		Preload(content)
+
+	/** Writes a readable 'packet' using SetPlayerName trick, allowing us to read it out of the file */
+	static function writePacket(string packet)
+		if packetNumber == PACKETS_PER_FILE
+			error("IOWriter: tried to write more packets than allowed")
+
+		if packet.length() > MAX_PACKET_LENGTH
+			error("IOWriter: tried to write more than max packet length")
+
+		write(DATA_PADDING_1 + packetNumber.toString() + DATA_PADDING_2 + packet + DATA_PADDING_3)
+		packetNumber++
+
+	/** Flushes a file and all written content to disk under the specified path. */
+	static function flushFile(string path)
+		Preload(DATA_FOOTER)
+		if LocalFiles.fallback
+			PreloadGenEnd("Logs\\" + path)
+		else
+			PreloadGenEnd(path)
+
+	/** Returns the amount of packets we can write to the current file. */
+	static function getRemainingWrites() returns int
+		return PACKETS_PER_FILE - packetNumber
+
+	/** Returns whether we can write to the current file anymore. */
+	static function canWrite() returns boolean
+		return getRemainingWrites() > 0
+
+	/**
+		Recursively creates the specified folder. 
+		Necessary because WC3 doesn't automatically 
+		creat nested folders and fails silently. 
+	**/
+	static function createFolder(string path)
+		var current = ""
+		for folder in path.split("/")
+			if folder.contains(".")
+				break
+			current += folder + "/"
+			prepareWrite()
+			flushFile(current + "touch.txt")
+
+/**
+	Low-level static reader wrapper around the Preload API
+	Supports reading packets written by IOWriter, 
+	up to PACKETS_PER_FILE packets per file,
+	up to MAX_PACKET_LENGTH characters per packet.
+**/
+public class IOReader
+	private static string array playerNames
+	private static string array packets
+
+	private static var packetNumber = 0
+	private static var packetCount = 0
+	
+	private static function saveNames()
+		for i = 0 to PACKETS_PER_FILE - 1
+			playerNames[i] = players[i].getName()
+			packets[i] = null
+
+	private static function restoreNames()
+		for i = 0 to PACKETS_PER_FILE - 1
+			players[i].setName(playerNames[i])
+
+	/** 
+		Loads the content of the specified file into IOReader's buffer,
+		allowing it to be read with IOReader.readPacket() and IOReader.getPacket().
+	**/
+	static function load(string path)
+		packetNumber = 0
+		packetCount = 0
+		saveNames()
+		if LocalFiles.fallback
+			Preloader("Logs\\" + path)
+		else
+			Preloader(path)
+
+		for i = 0 to PACKETS_PER_FILE - 1
+			if playerNames[i] != players[i].getName()
+				packets[i] = players[i].getName()
+				packetCount++
+			else
+				break
+
+		restoreNames()
+
+	/** Returns the specified packet from the current loaded file. */
+	static function getPacket(int i) returns string
+		return packets[i]
+
+	/** Reads the next packet from the current loaded file. */
+	static function readPacket() returns string
+		if packetNumber == packetCount
+			error("IOReader: tried to read more packets than available")
+
+		packetNumber++
+		return packets[packetNumber - 1]
+
+	/** Returns the amount of packets available for reading from the currently loaded file. */
+	static function getRemainingReads() returns int
+		return packetCount - packetNumber
+
+	/** Returns whether there are any packets left to be read from the currently loaded file. */
+	static function canRead() returns boolean
+		return getRemainingReads() > 0
+
+/**
+	Utility class used to check if the LocalFiles registry property of the
+	player is enabled.
+
+	In other words, this checks if the user can reliably write/read files.
+	This also includes a fallback mechanism for the 1.26 patch and before,
+	which uses the Logs\ folder to write files in.
+**/
+public class LocalFiles
+	private static constant testDestination = "localtest.txt"
+	private static constant fallbackDestination = "Logs\\localtest.txt"
+	private static constant testString = "test"
+
+	protected static var checked = false
+	protected static var enabled = false
+	protected static var fallback = false
+
+	static function isEnabled() returns boolean
+		if checked
+			return enabled
+		else
+			check()
+			return enabled
+
+	static function isFallback() returns boolean
+		if checked
+			return fallback
+		else
+			check()
+			return fallback
+		
+	protected static function check()
+		// try regular writing/reading first
+		IOWriter.prepareWrite()
+		IOWriter.writePacket(testString)
+		IOWriter.flushFile(testDestination)
+		IOReader.load(testDestination)
+		if IOReader.getPacket(0) == testString
+			checked = true
+			enabled = true
+			return
+	
+		// now try 1.26 fallback
+		IOWriter.prepareWrite()
+		IOWriter.writePacket(testString)
+		IOWriter.flushFile(fallbackDestination)
+		IOReader.load(fallbackDestination)
+		if IOReader.getPacket(0) == testString
+			checked = true
+			enabled = true
+			fallback = true
+			return
+		
+		checked = true
+
+init
+	// force a check as soon as possible to trigger 1.26 detection
+	doAfter(0, () -> LocalFiles.check())
+	
