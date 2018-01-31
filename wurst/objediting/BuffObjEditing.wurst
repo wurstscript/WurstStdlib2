@@ -42,10 +42,18 @@ public class BuffDefinition
 	function setCaster(int level, string value)
 		def.setLvlDataString("fcat",  level, 0,  value)
 
+	@deprecated("use #setArtTarget() instead")
 	function setTarget(int level, string value)
 		def.setLvlDataString("ftat",  level, 0,  value)
 
+	function setArtTarget(int level, string value)
+		def.setLvlDataString("ftat",  level, 0,  value)
+
+	@deprecated("use #setArtSpecial() instead")
 	function setSpecial(int level, string value)
+		def.setLvlDataString("fsat",  level, 0,  value)
+
+	function setArtSpecial(int level, string value)
 		def.setLvlDataString("fsat",  level, 0,  value)
 
 	function setEffect(int level, string value)
