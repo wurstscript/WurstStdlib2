@@ -7,6 +7,12 @@ import public ObjEditingNatives
 import String
 import public UnitObjEditing
 
+public enum AllowWhenFull
+	NEVER
+	LIFE_ONLY
+	MANA_ONLY
+	ALWAYS
+
 public interface TooltipGenerator
 	function addProperty(string title, StringLevelClosure lc)
 	function applyToDef(AbilityDefinition def)
@@ -925,11 +931,11 @@ public class AbilityDefinitionRejuvinationFurbolg extends AbilityDefinition
 		def.setLevelsDataUnreal("Rej1", lvls, 1, lc)
 		addTooltipProperty("HitPointsGained", lc)
 
-	function setAllowWhenFull(int level, string value)
-		def.setLvlDataString("Rej3", level, 3, value)
+	function setAllowWhenFull(int level, AllowWhenFull value)
+		def.setLvlDataInt("Rej3", level, 3, value castTo int)
 
-	function presetAllowWhenFull(StringLevelClosure lc)
-		def.setLevelsDataString("Rej3", lvls, 3, lc)
+	function presetAllowWhenFull(IntLevelClosure lc)
+		def.setLevelsDataInt("Rej3", lvls, 3, lc)
 		addTooltipProperty("AllowWhenFull", lc)
 
 
@@ -1859,11 +1865,11 @@ public class AbilityDefinitionRejuvinationcreep extends AbilityDefinition
 		def.setLevelsDataUnreal("Rej1", lvls, 1, lc)
 		addTooltipProperty("HitPointsGained", lc)
 
-	function setAllowWhenFull(int level, string value)
-		def.setLvlDataString("Rej3", level, 3, value)
+	function setAllowWhenFull(int level, AllowWhenFull value)
+		def.setLvlDataInt("Rej3", level, 3, value castTo int)
 
-	function presetAllowWhenFull(StringLevelClosure lc)
-		def.setLevelsDataString("Rej3", lvls, 3, lc)
+	function presetAllowWhenFull(IntLevelClosure lc)
+		def.setLevelsDataInt("Rej3", lvls, 3, lc)
 		addTooltipProperty("AllowWhenFull", lc)
 
 
@@ -8744,11 +8750,11 @@ public class AbilityDefinitionScrollofRejuvII extends AbilityDefinition
 		def.setLevelsDataUnreal("irl2", lvls, 2, lc)
 		addTooltipProperty("ManaRegenerated", lc)
 
-	function setAllowWhenFull(int level, string value)
-		def.setLvlDataString("irl3", level, 3, value)
+	function setAllowWhenFull(int level, AllowWhenFull value)
+		def.setLvlDataInt("irl3", level, 3, value castTo int)
 
-	function presetAllowWhenFull(StringLevelClosure lc)
-		def.setLevelsDataString("irl3", lvls, 3, lc)
+	function presetAllowWhenFull(IntLevelClosure lc)
+		def.setLevelsDataInt("irl3", lvls, 3, lc)
 		addTooltipProperty("AllowWhenFull", lc)
 
 	function setLifeRegenerated(int level, real value)
@@ -8818,11 +8824,11 @@ public class AbilityDefinitionScrollofRejuvI extends AbilityDefinition
 		def.setLevelsDataUnreal("irl2", lvls, 2, lc)
 		addTooltipProperty("ManaRegenerated", lc)
 
-	function setAllowWhenFull(int level, string value)
-		def.setLvlDataString("irl3", level, 3, value)
+	function setAllowWhenFull(int level, AllowWhenFull value)
+		def.setLvlDataInt("irl3", level, 3, value castTo int)
 
-	function presetAllowWhenFull(StringLevelClosure lc)
-		def.setLevelsDataString("irl3", lvls, 3, lc)
+	function presetAllowWhenFull(IntLevelClosure lc)
+		def.setLevelsDataInt("irl3", lvls, 3, lc)
 		addTooltipProperty("AllowWhenFull", lc)
 
 	function setLifeRegenerated(int level, real value)
@@ -8885,11 +8891,11 @@ public class AbilityDefinitionPotionofRejuvIV extends AbilityDefinition
 		def.setLevelsDataUnreal("irl2", lvls, 2, lc)
 		addTooltipProperty("ManaRegenerated", lc)
 
-	function setAllowWhenFull(int level, string value)
-		def.setLvlDataString("irl3", level, 3, value)
+	function setAllowWhenFull(int level, AllowWhenFull value)
+		def.setLvlDataInt("irl3", level, 3, value castTo int)
 
-	function presetAllowWhenFull(StringLevelClosure lc)
-		def.setLevelsDataString("irl3", lvls, 3, lc)
+	function presetAllowWhenFull(IntLevelClosure lc)
+		def.setLevelsDataInt("irl3", lvls, 3, lc)
 		addTooltipProperty("AllowWhenFull", lc)
 
 	function setLifeRegenerated(int level, real value)
@@ -8926,11 +8932,11 @@ public class AbilityDefinitionPotionofRejuvIII extends AbilityDefinition
 		def.setLevelsDataUnreal("irl2", lvls, 2, lc)
 		addTooltipProperty("ManaRegenerated", lc)
 
-	function setAllowWhenFull(int level, string value)
-		def.setLvlDataString("irl3", level, 3, value)
+	function setAllowWhenFull(int level, AllowWhenFull value)
+		def.setLvlDataInt("irl3", level, 3, value castTo int)
 
-	function presetAllowWhenFull(StringLevelClosure lc)
-		def.setLevelsDataString("irl3", lvls, 3, lc)
+	function presetAllowWhenFull(IntLevelClosure lc)
+		def.setLevelsDataInt("irl3", lvls, 3, lc)
 		addTooltipProperty("AllowWhenFull", lc)
 
 	function setLifeRegenerated(int level, real value)
@@ -9042,11 +9048,11 @@ public class AbilityDefinitionPotionofRejuvII extends AbilityDefinition
 		def.setLevelsDataUnreal("irl2", lvls, 2, lc)
 		addTooltipProperty("ManaRegenerated", lc)
 
-	function setAllowWhenFull(int level, string value)
-		def.setLvlDataString("irl3", level, 3, value)
+	function setAllowWhenFull(int level, AllowWhenFull value)
+		def.setLvlDataInt("irl3", level, 3, value castTo int)
 
-	function presetAllowWhenFull(StringLevelClosure lc)
-		def.setLevelsDataString("irl3", lvls, 3, lc)
+	function presetAllowWhenFull(IntLevelClosure lc)
+		def.setLevelsDataInt("irl3", lvls, 3, lc)
 		addTooltipProperty("AllowWhenFull", lc)
 
 	function setLifeRegenerated(int level, real value)
@@ -9144,11 +9150,11 @@ public class AbilityDefinitionPotionofRejuvI extends AbilityDefinition
 		def.setLevelsDataUnreal("irl2", lvls, 2, lc)
 		addTooltipProperty("ManaRegenerated", lc)
 
-	function setAllowWhenFull(int level, string value)
-		def.setLvlDataString("irl3", level, 3, value)
+	function setAllowWhenFull(int level, AllowWhenFull value)
+		def.setLvlDataInt("irl3", level, 3, value castTo int)
 
-	function presetAllowWhenFull(StringLevelClosure lc)
-		def.setLevelsDataString("irl3", lvls, 3, lc)
+	function presetAllowWhenFull(IntLevelClosure lc)
+		def.setLevelsDataInt("irl3", lvls, 3, lc)
 		addTooltipProperty("AllowWhenFull", lc)
 
 	function setLifeRegenerated(int level, real value)
@@ -9666,11 +9672,11 @@ public class AbilityDefinitionPotionofLifeRegen extends AbilityDefinition
 		def.setLevelsDataUnreal("irl2", lvls, 2, lc)
 		addTooltipProperty("ManaRegenerated", lc)
 
-	function setAllowWhenFull(int level, string value)
-		def.setLvlDataString("irl3", level, 3, value)
+	function setAllowWhenFull(int level, AllowWhenFull value)
+		def.setLvlDataInt("irl3", level, 3, value castTo int)
 
-	function presetAllowWhenFull(StringLevelClosure lc)
-		def.setLevelsDataString("irl3", lvls, 3, lc)
+	function presetAllowWhenFull(IntLevelClosure lc)
+		def.setLevelsDataInt("irl3", lvls, 3, lc)
 		addTooltipProperty("AllowWhenFull", lc)
 
 	function setLifeRegenerated(int level, real value)
@@ -11533,11 +11539,11 @@ public class AbilityDefinitionPotionofManaRegengreater extends AbilityDefinition
 		def.setLevelsDataUnreal("irl2", lvls, 2, lc)
 		addTooltipProperty("ManaRegenerated", lc)
 
-	function setAllowWhenFull(int level, string value)
-		def.setLvlDataString("irl3", level, 3, value)
+	function setAllowWhenFull(int level, AllowWhenFull value)
+		def.setLvlDataInt("irl3", level, 3, value castTo int)
 
-	function presetAllowWhenFull(StringLevelClosure lc)
-		def.setLevelsDataString("irl3", lvls, 3, lc)
+	function presetAllowWhenFull(IntLevelClosure lc)
+		def.setLevelsDataInt("irl3", lvls, 3, lc)
 		addTooltipProperty("AllowWhenFull", lc)
 
 	function setLifeRegenerated(int level, real value)
@@ -11669,11 +11675,11 @@ public class AbilityDefinitionPotionofManaRegenlesser extends AbilityDefinition
 		def.setLevelsDataUnreal("irl2", lvls, 2, lc)
 		addTooltipProperty("ManaRegenerated", lc)
 
-	function setAllowWhenFull(int level, string value)
-		def.setLvlDataString("irl3", level, 3, value)
+	function setAllowWhenFull(int level, AllowWhenFull value)
+		def.setLvlDataInt("irl3", level, 3, value castTo int)
 
-	function presetAllowWhenFull(StringLevelClosure lc)
-		def.setLevelsDataString("irl3", lvls, 3, lc)
+	function presetAllowWhenFull(IntLevelClosure lc)
+		def.setLevelsDataInt("irl3", lvls, 3, lc)
 		addTooltipProperty("AllowWhenFull", lc)
 
 	function setLifeRegenerated(int level, real value)
@@ -14510,11 +14516,11 @@ public class AbilityDefinitionScrollofLifeRegen extends AbilityDefinition
 		def.setLevelsDataUnreal("irl2", lvls, 2, lc)
 		addTooltipProperty("ManaRegenerated", lc)
 
-	function setAllowWhenFull(int level, string value)
-		def.setLvlDataString("irl3", level, 3, value)
+	function setAllowWhenFull(int level, AllowWhenFull value)
+		def.setLvlDataInt("irl3", level, 3, value castTo int)
 
-	function presetAllowWhenFull(StringLevelClosure lc)
-		def.setLevelsDataString("irl3", lvls, 3, lc)
+	function presetAllowWhenFull(IntLevelClosure lc)
+		def.setLevelsDataInt("irl3", lvls, 3, lc)
 		addTooltipProperty("AllowWhenFull", lc)
 
 	function setLifeRegenerated(int level, real value)
@@ -16101,11 +16107,11 @@ public class AbilityDefinitionRejuvination extends AbilityDefinition
 		def.setLevelsDataUnreal("Rej1", lvls, 1, lc)
 		addTooltipProperty("HitPointsGained", lc)
 
-	function setAllowWhenFull(int level, string value)
-		def.setLvlDataString("Rej3", level, 3, value)
+	function setAllowWhenFull(int level, AllowWhenFull value)
+		def.setLvlDataInt("Rej3", level, 3, value castTo int)
 
-	function presetAllowWhenFull(StringLevelClosure lc)
-		def.setLevelsDataString("Rej3", lvls, 3, lc)
+	function presetAllowWhenFull(IntLevelClosure lc)
+		def.setLevelsDataInt("Rej3", lvls, 3, lc)
 		addTooltipProperty("AllowWhenFull", lc)
 
 
