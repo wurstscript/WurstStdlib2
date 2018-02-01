@@ -91,7 +91,8 @@ public function inTan( real p1, real p2, real p3, real p, real c, real b ) retur
 public function outTan( real p1, real p2, real p3, real p, real c, real b ) returns real
 	return (1.0-p)*(1.0+c)*(1.0+b)*(p2-p1)/2. + (1.0-p)*(1.0-c)*(1.0-b)*(p3-p2)/2.
 	
-// @test function linearVecTest()
-// 	let v = linear(vec2(3,4), vec2(6,2), 0.5)
-// 	v.x.assertEquals(4.5, .001)
-// 	v.y.assertEquals(3, .001)
+@Test 
+function linearVecTest()
+	let v = linear(vec2(3,4), vec2(6,2), 0.5)
+	v.x.assertEquals(4.5)
+	v.y.assertEquals(3)
