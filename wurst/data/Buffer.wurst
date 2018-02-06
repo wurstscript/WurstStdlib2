@@ -265,7 +265,7 @@ public class HashBuffer extends AbstractBuffer
 	function readIntUnsafe() returns int
 		checkRead()
 		integerReadIndex++
-		if not buffer.hasInt(integerReadIndex)
+		if SAFETY_CHECKS_ENABLED and not buffer.hasInt(integerReadIndex)
 			error("HashBuffer: trying to read non-present int at pos#" + integerReadIndex.toString())
 		return buffer.loadInt(integerReadIndex)
 

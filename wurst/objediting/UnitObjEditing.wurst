@@ -284,7 +284,6 @@ public class W3UDefinition
 	
 
 public class UnitOrBuildingOrHeroDefinition extends W3UDefinition
-	
 
 	construct(int newUnitId, int origUnitId)
 		super(newUnitId, origUnitId)
@@ -331,7 +330,11 @@ public class UnitOrBuildingOrHeroDefinition extends W3UDefinition
 	function setTargetedAs(string data)
 		def.setString("utar", data)
 
+	@deprecated("use #setArtTarget() instead")
 	function setTarget(string data)
+		def.setString("utaa", data)
+
+	function setArtTarget(string data)
 		def.setString("utaa", data)
 
 	function setStockStartDelay(int data)
@@ -352,7 +355,11 @@ public class UnitOrBuildingOrHeroDefinition extends W3UDefinition
 	function setSpeedBase(int data)
 		def.setInt("umvs", data)
 
+	@deprecated("use #setArtSpecial() instead")
 	function setSpecial(string data)
+		def.setString("uspa", data)
+
+	function setArtSpecial(string data)
 		def.setString("uspa", data)
 
 	function setSleeps(boolean data)

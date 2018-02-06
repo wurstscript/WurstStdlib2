@@ -2,4 +2,23 @@ package PrimitivesTests
 
 @Test
 function testR2SW()
-	(1.2131241.toString(3)).assertEquals("1.213")
+	(1.213124.toString()).assertEquals("1.213124")
+	(1.213124.toString(3)).assertEquals("1.213")
+
+@Test
+function testArithmetics()
+	(12314123 + 56235424).assertEquals(68549547)
+	(99 * 99).assertEquals(9801)
+
+	(1. / 100.).assertEquals(0.01)
+
+	(-2.).abs().assertEquals(2)
+	
+	(4. .squared()).assertEquals(4.*4.)
+
+@Test
+function testMisc()
+	(true).assertEquals(true)
+	(false).assertEquals(false)
+	(true.toInt()).assertEquals(1)
+	(false.toInt()).assertEquals(0)
