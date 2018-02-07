@@ -35,57 +35,43 @@ public class SoundDefinition
 	string file
 	int duration = 10000
 	boolean looping
-	boolean is3D
-	boolean stopOnLeaveRange
-	int fadeIn
-	int fadeOut
-	string eaxSetting
+	boolean is3D = false
+	boolean stopOnLeaveRange = false
+	int fadeIn = DEFAULT_SOUND_FADE_IN_RATE
+	int fadeOut = DEFAULT_SOUND_FADE_OUT_RATE
+	string eaxSetting = DEFAULT_SOUND_EAX_SETTINGS
 
-	construct(string file, boolean looping )
+	construct(string file, boolean looping)
 		this.file = file
 		this.looping = looping
-		this.is3D = false
-		this.stopOnLeaveRange = false
-		this.fadeIn = DEFAULT_SOUND_FADE_IN_RATE
-		this.fadeOut = DEFAULT_SOUND_FADE_OUT_RATE
-		this.eaxSetting = DEFAULT_SOUND_EAX_SETTINGS
 				
-	construct(string file, boolean looping, boolean is3D )
+	construct(string file, boolean looping, boolean is3D)
 		this.file = file
 		this.looping = looping
 		this.is3D = is3D
-		this.stopOnLeaveRange = true
-		this.fadeIn = DEFAULT_SOUND_FADE_IN_RATE
-		this.fadeOut = DEFAULT_SOUND_FADE_OUT_RATE
-		this.eaxSetting = DEFAULT_SOUND_EAX_SETTINGS
 
 	private function getSound() returns SoundInstance
-		// If there is a handle on the stack
 		if soundStack.size() > 0
-			return soundStack.pop()
+			let shandle = soundStack.pop()
+			shandle.snd..setVolume(DEFAULT_SOUND_VOLUME)..setPitch(DEFAULT_SOUND_PITCH)..setChannel(SOUND_CHANNEL)
+			return shandle
 		else
 			// No free handle, create a new one
 			var sdata = new SoundInstance()
 			sdata.snd = CreateSound(this.file, this.looping, this.is3D, this.stopOnLeaveRange, this.fadeIn, this.fadeOut, this.eaxSetting)
 			sdata.soundDef = this
-			/*
-			*   Configure sound
-			*/
+
 			sdata.snd..setDuration(this.duration)
 			..setChannel(SOUND_CHANNEL)
 			..setVolume(DEFAULT_SOUND_VOLUME)
 			..setPitch(DEFAULT_SOUND_PITCH)
 			
-			/*
-			*   Proper 3D sound configuration
-			*/
-			if this.is3D
+			if is3D
 				SetSoundDistances(sdata.snd, SOUND_MIN_DIST, SOUND_MAX_DIST)
 				SetSoundDistanceCutoff(sdata.snd, SOUND_DIST_CUT)
 				SetSoundConeAngles(sdata.snd, 0, 0, DEFAULT_SOUND_VOLUME)
 				SetSoundConeOrientation(sdata.snd, 0, 0, 0)
 				
-			
 			return sdata
 
 	/** Plays this sound for all Players with a default duration.
@@ -140,7 +126,6 @@ public class SoundDefinition
 			AttachSoundToUnit(sdata.snd, sdata.onUnit)
 		if sdata.pos.x != 0 and sdata.pos.y != 0
 			SetSoundPosition(sdata.snd, sdata.pos.x, sdata.pos.y, sdata.pos.z)
-		SetSoundVolume(sdata.snd, 100)
 		if sdata.p != null
 			if GetLocalPlayer() == sdata.p
 				StartSound(sdata.snd)

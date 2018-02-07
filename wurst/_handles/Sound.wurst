@@ -5,8 +5,8 @@ import NoWurst
 public function sound.setDuration(int dur)
 	SetSoundDuration(this, dur)
 
-public function sound.play(string soundname)
-	PlaySound(soundname)
+public function sound.play()
+	StartSound(this)
 
 public function sound.stop(boolean killWhenDone, boolean fadeOut)
 	StopSound(this, killWhenDone, fadeOut)
@@ -29,6 +29,7 @@ public function sound.setCutoff(real cutoff)
 
 /** Plays the sound, starting at the given position */	
 public function sound.playPosition(int millisecs)
+	this.play()
 	SetSoundPlayPosition(this, millisecs)
 			
 public function sound.getDuration() returns int
