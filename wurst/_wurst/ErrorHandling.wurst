@@ -18,6 +18,13 @@ constant HT = InitHashtable()
 **/
 public string lastError = null
 
+/**
+	Allows you to suppress error output.
+	This is primarily useful when you catch
+	an error with try().
+**/
+public boolean suppressErrorMessages = false
+
 /** error handing function.
 This function is used by libraries and for internal Wurst errors like 
 accessing a null-pointer. Overwrite this function to customize error handling.
@@ -35,24 +42,25 @@ You can also use try() from package Execute to handle an error happening in a ca
 	if compiletime
 		print("ERROR: " + msg + "\n" + getStackTraceString())
 	else
-		let hash = msg.getHash()
-		if HT.hasInt(PRIMARY_ERROR_KEY, hash)
-			// Error has been printed before
-			if HT.loadInt(PRIMARY_ERROR_KEY, hash) + MUTE_ERROR_DURATION < currentTime
-				// Time to print the error again
-				Log.error(msg + getStackTraceString())
-				HT.saveInt(PRIMARY_ERROR_KEY, hash, currentTime.toInt())
-				HT.saveBoolean(PRIMARY_ERROR_KEY, hash, false)
-			else if HT.hasBoolean(PRIMARY_ERROR_KEY, hash)
-				if not HT.loadBoolean(PRIMARY_ERROR_KEY, hash)
+		if not suppressErrorMessages
+			let hash = msg.getHash()
+			if HT.hasInt(PRIMARY_ERROR_KEY, hash)
+				// Error has been printed before
+				if HT.loadInt(PRIMARY_ERROR_KEY, hash) + MUTE_ERROR_DURATION < currentTime
+					// Time to print the error again
+					Log.error(msg + getStackTraceString())
+					HT.saveInt(PRIMARY_ERROR_KEY, hash, currentTime.toInt())
+					HT.saveBoolean(PRIMARY_ERROR_KEY, hash, false)
+				else if HT.hasBoolean(PRIMARY_ERROR_KEY, hash)
+					if not HT.loadBoolean(PRIMARY_ERROR_KEY, hash)
+						Log.error("|cffFF3A29Excessive repeating errors are being omitted")
+						HT.saveBoolean(PRIMARY_ERROR_KEY, hash, true)	
+				else
 					Log.error("|cffFF3A29Excessive repeating errors are being omitted")
 					HT.saveBoolean(PRIMARY_ERROR_KEY, hash, true)	
 			else
-				Log.error("|cffFF3A29Excessive repeating errors are being omitted")
-				HT.saveBoolean(PRIMARY_ERROR_KEY, hash, true)	
-		else
-			HT.saveInt(PRIMARY_ERROR_KEY, hash, currentTime.toInt())
-			Log.error("|cffFF3A29Error:|r " + msg + getStackTraceString())
+				HT.saveInt(PRIMARY_ERROR_KEY, hash, currentTime.toInt())
+				Log.error("|cffFF3A29Error:|r " + msg + getStackTraceString())
 		// crash the thread:
 		lastError = msg
 		I2S(1 div 0)

@@ -1,30 +1,9 @@
-package SyncSimple
-
-import UnitIndexer
-import BitSet
-import LinkedListModule
-import RegisterEvents
-import MapBounds
-import OnUnitEnterLeave
-import ClosureForGroups
-
-/**
-	Configure this function if you need to change how the dummy is created.
-	WARNING: The dummy must be selectable and not locusted, or else it will not work.
-**/
-@configurable
-function getDummy() returns unit
-	return createUnit(DUMMY_PLAYER, 'hfoo', boundMax, 0 .fromDeg())
-	..addAbility(GHOST_VIS_ID)
-	..pause()
-	..setScale(0)
-
 /********************************************************************************
 	SyncSimple library by MoriMori.
 
 	Based on TriggerHappy's SyncInteger library.
 
-	Rationale:
+	Overview:
 		This library can be used to send a 'synchronize' network event that will fire
 		for all players after all previous network events have also been received
 		by all players.
@@ -87,6 +66,26 @@ function getDummy() returns unit
 		To synchronize again, create a new SimpleSynchronizer
 			
 ********************************************************************************/
+package SyncSimple
+
+import UnitIndexer
+import BitSet
+import LinkedListModule
+import RegisterEvents
+import MapBounds
+import OnUnitEnterLeave
+import ClosureForGroups
+
+/**
+	Configure this function if you need to change how the dummy is created.
+	WARNING: The dummy must be selectable and not locusted, or else it will not work.
+**/
+@configurable
+function getDummy() returns unit
+	return createUnit(DUMMY_PLAYER, 'hfoo', boundMax, 0 .fromDeg())
+	..addAbility(GHOST_VIS_ID)
+	..pause()
+	..setScale(0)
 
 // briefly selects the specified unit by the player
 unit last = null

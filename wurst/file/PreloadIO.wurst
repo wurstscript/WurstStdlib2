@@ -1,8 +1,20 @@
-package SimpleIO
+/**
+	This package is meant to provide a primitive wrapper around the
+	Preload API of WC3 to be able to read and write files.
+
+	This package is not meant to handle Local Files setting in WC3,
+	nor is it meant to handle 1.26 version adjustment.
+
+	This functionality is provided in the LocalFiles package,
+	and is handled by other packages in the file subsystem.
+
+	If you want to read/write in 1.26 with local files, 
+	you will need to prepend "Logs\\" to your paths.
+**/
+package PreloadIO
 
 import ErrorHandling
 import StringUtils
-import ClosureTimers
 
 /** Maximum amount of packets per single readable file. */
 public constant PACKETS_PER_FILE = 16 	
@@ -54,10 +66,7 @@ public class IOWriter
 	/** Flushes a file and all written content to disk under the specified path. */
 	static function flushFile(string path)
 		Preload(DATA_FOOTER)
-		if LocalFiles.fallback
-			PreloadGenEnd("Logs\\" + path)
-		else
-			PreloadGenEnd(path)
+		PreloadGenEnd(path)
 
 	/** Returns the amount of packets we can write to the current file. */
 	static function getRemainingWrites() returns int
@@ -70,7 +79,7 @@ public class IOWriter
 	/**
 		Recursively creates the specified folder. 
 		Necessary because WC3 doesn't automatically 
-		creat nested folders and fails silently. 
+		create nested folders and fails silently. 
 	**/
 	static function createFolder(string path)
 		var current = ""
@@ -111,10 +120,7 @@ public class IOReader
 		packetNumber = 0
 		packetCount = 0
 		saveNames()
-		if LocalFiles.fallback
-			Preloader("Logs\\" + path)
-		else
-			Preloader(path)
+		Preloader(path)
 
 		for i = 0 to PACKETS_PER_FILE - 1
 			if playerNames[i] != players[i].getName()
@@ -144,63 +150,3 @@ public class IOReader
 	/** Returns whether there are any packets left to be read from the currently loaded file. */
 	static function canRead() returns boolean
 		return getRemainingReads() > 0
-
-/**
-	Utility class used to check if the LocalFiles registry property of the
-	player is enabled.
-
-	In other words, this checks if the user can reliably write/read files.
-	This also includes a fallback mechanism for the 1.26 patch and before,
-	which uses the Logs\ folder to write files in.
-**/
-public class LocalFiles
-	private static constant testDestination = "localtest.txt"
-	private static constant fallbackDestination = "Logs\\localtest.txt"
-	private static constant testString = "test"
-
-	protected static var checked = false
-	protected static var enabled = false
-	protected static var fallback = false
-
-	static function isEnabled() returns boolean
-		if checked
-			return enabled
-		else
-			check()
-			return enabled
-
-	static function isFallback() returns boolean
-		if checked
-			return fallback
-		else
-			check()
-			return fallback
-		
-	protected static function check()
-		// try regular writing/reading first
-		IOWriter.prepareWrite()
-		IOWriter.writePacket(testString)
-		IOWriter.flushFile(testDestination)
-		IOReader.load(testDestination)
-		if IOReader.getPacket(0) == testString
-			checked = true
-			enabled = true
-			return
-	
-		// now try 1.26 fallback
-		IOWriter.prepareWrite()
-		IOWriter.writePacket(testString)
-		IOWriter.flushFile(fallbackDestination)
-		IOReader.load(fallbackDestination)
-		if IOReader.getPacket(0) == testString
-			checked = true
-			enabled = true
-			fallback = true
-			return
-		
-		checked = true
-
-init
-	// force a check as soon as possible to trigger 1.26 detection
-	doAfter(0, () -> LocalFiles.check())
-	

@@ -1,22 +1,9 @@
-package Network
-
-import public SyncSimple
-import ErrorHandling
-import public Execute
-import public Buffer
-
-import NetworkConfig
-import Metadata
-import GamecacheKeys
-import GamecacheBuffer
-import StringEncoder
-
 /********************************************************************************
 	Network library by MoriMori.
 
 	Based on TriggerHappy's Sync library.
 
-	Rationale:
+	Overview:
 		In multiplayer games, this package is for synchronizing data between game clients.
 		It's useful for when one player is the source of game data, such as from gamecache or file IO.
 
@@ -37,8 +24,8 @@ import StringEncoder
 		methods of the HashBuffer class.
 
 		Before sending the data, the sender populates the HashBuffer with the data that
-		they want to send, then Network.start() is called, as well as Network.onFinish(callback)
-		and data is received from the same buffer inside the callback when it has all been received.
+		they want to send, then Network.start() is called, and data is received from 
+		the same buffer inside the callback when it has all been transferred.
 
 		Read SyncSimple docs for a slightly more in-depth overview of this particular
 		peculiarity of WC3.
@@ -58,16 +45,15 @@ import StringEncoder
 					...
 
 			3. Specify a callback for when Network has finished it's operation and
-			all data is available for players to be read:
-				network.onFinish((buffer) -> begin
+			all data is available for players to be read, and start the transmission.
+			Status will be set to NetworkResult.ABORTED if the player left during
+			the transmission, or is not present:
+				network.start((status, buffer) -> begin
 					var int = buffer.readInt()
 					var real = buffer.readReal()
 					var string = buffer.readString()
 					...
 				end)
-
-			4. Start the transmission:
-				network.start()
 
 		Sending objects implementing BufferSerializable:
 			You may find yourself sending not simply raw data, but some
@@ -114,7 +100,7 @@ import StringEncoder
 					buffer.write(myClass)
 
 			3. Read instances of MyClass:
-				network.onFinish((buffer) -> begin
+				network.start((status, buffer) -> begin
 					let myClass = new MyClass(buffer)
 
 					doSomethingWithMyClass(myClass)
@@ -122,7 +108,7 @@ import StringEncoder
 
 				// or, without the constructor
 
-				network.onFinish((buffer) -> begin
+				network.start((status, buffer) -> begin
 					// get existing instance
 					let myClass = getOldMyClassInstance()
 
@@ -179,8 +165,8 @@ import StringEncoder
 		all the heavy lifting.
 
 		Before starting the transmission, the HashBuffer is locked into an immutable state, in
-		which incorrect mutation attempts will print warnings, so long as safety checks are not disabled.
-		The maximum amount of data across all primitive buffer is calculated, and the amount of 
+		which incorrect mutation attempts will print warnings, as long as safety checks are not disabled.
+		The maximum amount of data across all primitive buffers is calculated, and the amount of 
 		required 'sync rounds' is calculated - that is, the amount of times we need to flush/sync
 		data out of the gamecaches to keep key sizes short.
 
@@ -193,14 +179,30 @@ import StringEncoder
 		to stop, and start another sync round if necessary. If it is not necessary,
 		we open the HashBuffer for reading and call the finish callback, and destroy the instance.
 ********************************************************************************/
+package Network
+
+import public SyncSimple
+import ErrorHandling
+import public Execute
+import public Buffer
+
+import NetworkConfig
+import Metadata
+import GamecacheKeys
+import GamecacheBuffer
+import StringEncoder
 
 enum NetworkState
 	PREPARING
 	SENDING_ROUND
 	FINISHED
 
+public enum NetworkResult
+	SUCCESS
+	ABORTED
+
 interface NetworkFinishedCallback
-	function onFinish(HashBuffer buffer)
+	function onFinish(NetworkResult status, HashBuffer buffer)
 
 public class Network
 	// gamecache used for syncing integers, reals and booleans
@@ -239,7 +241,7 @@ public class Network
 	private var counters = EMPTY_META
 
 	// finish callback
-	private NetworkFinishedCallback finishCallback = (Buffer _buffer) -> error("Network: did not specify any callback function")
+	private NetworkFinishedCallback finishCallback = (NetworkResult _result, Buffer _buffer) -> error("Network: did not specify any callback function")
 
 	construct(player sender)
 		this.sender = sender
@@ -257,11 +259,22 @@ public class Network
 	function getData() returns HashBuffer
 		return dataBuffer
 
+	/** aborts the current transmission **/
+	private function abort()
+		currentState = NetworkState.FINISHED
+		finishCallback.onFinish(NetworkResult.ABORTED, dataBuffer)
+		destroy this
+
 	/** sends info about the amount of data to be expected to each player **/
 	private function sendMetadata()
 		// we should only send the metadata once
 		if SAFETY_CHECKS_ENABLED and currentState != NetworkState.PREPARING
 			error("Network: trying to send duplicate metadata")
+
+		// if the sender disconnected, we can't expect any valid data, so immediately return
+		if not sender.isIngame()
+			abort()
+			return
 
 		if localPlayer == sender
 			// push all strings into the string encoder
@@ -410,6 +423,10 @@ public class Network
 		if SAFETY_CHECKS_ENABLED and currentState != NetworkState.SENDING_ROUND
 			error("Network: trying to receive round at the wrong time")
 
+		if not sender.isIngame()
+			abort()
+			return
+
 		// metadata is sent with the first round, so read it first
 		if not metaReceived
 			receiveMetadata()
@@ -447,11 +464,10 @@ public class Network
 			dataBuffer.setMode(BufferMode.READ)
 			dataBuffer.resetRead()
 			currentState = NetworkState.FINISHED
-			finishCallback.onFinish(dataBuffer)
+			finishCallback.onFinish(NetworkResult.SUCCESS, dataBuffer)
 			destroy this
 
 	/** this is the function to start sending all data in the intermediate dataBuffer buffer, as well as specifying a callback **/
 	function start(NetworkFinishedCallback callback)
 		finishCallback = callback
 		sendMetadata()
-
