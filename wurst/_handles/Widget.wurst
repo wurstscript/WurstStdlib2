@@ -2,6 +2,12 @@ package Widget
 import NoWurst
 import public Vectors
 
+public function widget.getLife() returns real
+	return GetWidgetLife(this)
+
+public function widget.setLife(real newLife)
+	SetWidgetLife(this, newLife)
+
 public function widget.getPos() returns vec2
 	return vec2(this.getX(), this.getY())
 	
