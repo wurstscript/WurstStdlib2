@@ -35,3 +35,7 @@ public function int.pow(int x) returns int
 /** Linear Interpolation with alphafactor(smoothness) */
 public function int.lerp(int target, real alpha) returns int
 	return ((this * (1-alpha)) + (target * alpha)).round()
+
+/** Checks if this int is between low and high value */
+public function int.isBetween(int low, int high) returns bool
+	return this >= low and this <= high
