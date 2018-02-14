@@ -2,6 +2,7 @@ package Unit
 import NoWurst
 import public Vectors
 import TerrainUtils
+import Item
 
 native UnitAlive(unit id) returns boolean
 
@@ -53,7 +54,7 @@ public function unit.setLevel(int level, boolean showEyeCandy)
 	SetHeroLevel(this, level, showEyeCandy)
 
 public function unit.addLevels(int toAdd, boolean showEyeCandy)
-	SetHeroLevel(this, GetUnitLevel(this) + toAdd, showEyeCandy)
+	SetHeroLevel(this, this.getLevel() + toAdd, showEyeCandy)
 
 public function unit.removeLevels(int toRemove) returns bool
 	return UnitStripHeroLevel(this, toRemove)
@@ -180,7 +181,7 @@ public function unit.hasItem(item whichItem) returns boolean
 public function unit.hasItemById(int itemId) returns boolean
 	var hasItem = false
 	for i = 0 to this.inventorySize() - 1
-		if GetItemTypeId(this.itemInSlot(i)) == itemId
+		if this.itemInSlot(i).getTypeId() == itemId
 			hasItem = true
 			break
 	return hasItem
