@@ -1,0 +1,104 @@
+package PlayerUtils
+import LinkedList
+
+/**
+*   Credits to TriggerHappy for making PlayerUtils [vJass]
+*    - Link : https://www.hiveworkshop.com/threads/playerutils.278559/
+**/
+
+User array USERS
+
+public function player.toUser() returns User
+    return USERS[this.getId()]
+
+public class User
+    static constant let activeUsers = new LinkedList<User>
+    static constant player local = GetLocalPlayer()
+    static constant int localId = GetPlayerId(User.local)
+
+    protected player _player
+    protected int id
+    protected string originalName
+    protected int index
+    protected bool isPlaying
+
+    private construct(player pl, int playerId)
+        _player = pl
+        id = playerId
+
+    function getId() returns integer
+        return id
+
+    function getName() returns string
+        return GetPlayerName(this._player)
+
+    function getColoredName() returns string
+        return playercolors[this.id].toColorString() + this.getName() + "|r"
+
+    function getOriginalName() returns string
+        return originalName
+
+    function getColor() returns playercolor
+        return GetPlayerColor(this._player)
+
+    function setName(string newName)
+        SetPlayerName(this._player, newName)
+
+    function setColor(playercolor c)
+        SetPlayerColor(this._player, c)
+
+    // Similar to Player(#)
+    static function fromIndex(int index) returns thistype
+        return USERS[index]
+
+    // Similar to GetLocalPlayer
+    static function fromLocal() returns thistype
+        return USERS[localId]
+
+    // Access Active Players array
+    static function fromPlaying(int index) returns thistype
+        return activeUsers.get(index)
+    
+    function toPlayer() returns player
+        return this._player
+    
+    function toIndex() returns integer
+        return this.index
+
+    function isPlaying() returns bool
+        return isPlaying
+
+    static function getNumPlaying() returns int
+        return activeUsers.size()
+
+    static function iterator() returns LLIterator<User>
+        return activeUsers.iterator()
+
+    private static function onLeave() returns bool
+        thistype u = User.fromIndex(GetPlayerId(GetTriggerPlayer()))
+
+        u.isPlaying = false
+        activeUsers.remove(u)
+        return false
+
+    protected static function _initialize()
+        let t = CreateTrigger()
+        int indexNum = 0
+        User u
+
+        for i = 0 to 11
+            u = new User(players[i], i)
+
+            if GetPlayerController(u._player) == MAP_CONTROL_USER and GetPlayerSlotState(u._player) == PLAYER_SLOT_STATE_PLAYING
+                TriggerRegisterPlayerEvent(t, u._player, EVENT_PLAYER_LEAVE)
+                u.isPlaying = true
+                u.index = indexNum
+                indexNum++
+                activeUsers.add(u)
+            
+            u.originalName = GetPlayerName(u._player)
+            USERS[i] = u
+        TriggerAddCondition(t, Filter(function onLeave))
+
+init
+    User._initialize()
