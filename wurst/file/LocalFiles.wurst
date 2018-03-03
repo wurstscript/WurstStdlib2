@@ -96,5 +96,5 @@ public class LocalFiles
 		end)
 
 init
-	doAfter(0, () -> LocalFiles.checkAll())
+	nullTimer(() -> LocalFiles.checkAll())
 	

@@ -16,10 +16,7 @@ function getChunkPath(string path, int id) returns string
 	return path + "/chunk" + id.toString() + ".txt"
 
 function getBasePath() returns string
-	var path = ""
-	if LocalFiles.isFallback()
-		path = "Logs\\"
-	return path
+	return LocalFiles.isFallback() ? "Logs\\" : ""
 
 /**
 	Represents the status of a file operation.

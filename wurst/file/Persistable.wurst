@@ -16,7 +16,7 @@ import LocalFiles
 	This can also happen if the file is empty or doesn't exist.
 	FAIL_NO_PLAYER - The player has left either during data transfer, or before.
 **/
-enum LoadStatus
+public enum LoadStatus
 	SUCCESS
 	FAIL_NOT_ENABLED
 	FAIL_FILE_CORRUPT
@@ -29,7 +29,7 @@ enum LoadStatus
 	FAIL_NOT_ENABLED - Local files have not been enabled for this user.
 	FAIL_NO_PLAYER - The player is not present.
 **/
-enum SaveStatus
+public enum SaveStatus
 	SUCCESS
 	FAIL_NOT_ENABLED
 	FAIL_NO_PLAYER
