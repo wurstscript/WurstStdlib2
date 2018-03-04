@@ -2,6 +2,7 @@ package Unit
 import NoWurst
 import public Vectors
 import TerrainUtils
+import Item
 
 native UnitAlive(unit id) returns boolean
 
@@ -12,12 +13,12 @@ public function unit.isType(unittype utype) returns boolean
 
 public function createUnit(player p, int unitId, vec2 pos, angle facing) returns unit
 	return CreateUnit(p, unitId, pos.x, pos.y, facing.degrees())
-	
+
 public function createUnit(player p, int unitId, vec3 pos, angle facing) returns unit
 	let u = CreateUnit(p, unitId, pos.x, pos.y, facing.degrees())
 	u.setFlyHeight(pos.z, 0)
 	return u
-	
+
 public function createUnitZ(player p, int unitId, vec3 pos, angle facing) returns unit
 	return CreateUnit(p, unitId, pos.x, pos.y, facing.degrees())
 		..setFlyHeight(pos.z - getTerrainZ(pos.x, pos.y), 0)
@@ -27,21 +28,36 @@ public function unit.addAbility(int abil) returns boolean
 
 public function unit.addEffect(string fx, string attachment) returns effect
 	return AddSpecialEffectTarget(fx, this, attachment)
-	
+
 public function unit.addHP(real val)
 	this.addState(UNIT_STATE_LIFE, val)
-	
-public function unit.addItem(int id)
-	UnitAddItemById(this, id)
+
+public function unit.addItem(int id) returns item
+	return UnitAddItemById(this, id)
+
+public function unit.addItemToSlot(int id, int slot) returns bool
+	return UnitAddItemToSlotById(this, id, slot)
 
 public function unit.addMana(real val)
 	this.addState(UNIT_STATE_MANA, val)
-	
+
 public function unit.addState( unitstate state, real value )
 	SetUnitState( this, state, this.getState(state) + value )
 
 public function unit.addXp(int toAdd, boolean showEyeCandy)
 	AddHeroXP(this, toAdd, showEyeCandy)
+
+public function unit.getLevel() returns int
+	return this.isType(UNIT_TYPE_HERO) ? GetHeroLevel(this) : GetUnitLevel(this)
+
+public function unit.setLevel(int level, boolean showEyeCandy)
+	SetHeroLevel(this, level, showEyeCandy)
+
+public function unit.addLevels(int toAdd, boolean showEyeCandy)
+	SetHeroLevel(this, this.getLevel() + toAdd, showEyeCandy)
+
+public function unit.removeLevels(int toRemove) returns bool
+	return UnitStripHeroLevel(this, toRemove)
 
 public function unit.getStr(bool includeBonuses) returns int
 	return GetHeroStr(this, includeBonuses)
@@ -87,7 +103,7 @@ public function unit.getCurrentOrder() returns int
 	!Use .getFacingAngle() instead. */
 public function unit.getFacing() returns real
 	return GetUnitFacing(this)
-	
+
 /** Returns the facing of the unit as an angle.
 	Use this to avoid confusion between radians and degrees */
 public function unit.getFacingAngle() returns angle
@@ -101,7 +117,7 @@ public function unit.getFoodUsed() returns int
 
 public function unit.getHP() returns real
 	return this.getState( UNIT_STATE_LIFE )
-	
+
 public function handle.getHandleId() returns int
 	return GetHandleId(this)
 
@@ -113,7 +129,7 @@ public function unit.getMaxHP() returns real
 
 public function unit.getMaxMana() returns real
 	return this.getState(UNIT_STATE_MAX_MANA)
-	
+
 public function unit.getMoveSpeed() returns real
 	return GetUnitMoveSpeed(this)
 
@@ -147,6 +163,9 @@ public function unit.getTypeId() returns int
 public function unit.getUserData() returns int
 	return GetUnitUserData(this)
 
+public function unit.getPointValue() returns int
+	return GetUnitPointValue(this)
+
 public function unit.getX() returns real
 	return GetUnitX(this)
 
@@ -155,6 +174,17 @@ public function unit.getY() returns real
 
 public function unit.hasAbility(int id) returns boolean
 	return (GetUnitAbilityLevel(this, id) > 0)
+
+public function unit.hasItem(item whichItem) returns boolean
+	return UnitHasItem(this, whichItem)
+
+public function unit.hasItemById(int itemId) returns boolean
+	var hasItem = false
+	for i = 0 to this.inventorySize() - 1
+		if this.itemInSlot(i).getTypeId() == itemId
+			hasItem = true
+			break
+	return hasItem
 
 public function unit.hide()
 	ShowUnit(this, false)
@@ -172,22 +202,22 @@ public function unit.isAliveTrick() returns boolean
 
 public function unit.issueImmediateOrder(string order) returns boolean
 	return IssueImmediateOrder(this, order)
-	
+
 public function unit.issueImmediateOrderById(int id) returns boolean
 	return IssueImmediateOrderById(this, id)
 
 public function unit.issuePointOrder(string order, vec2 target) returns boolean
 	return IssuePointOrder(this, order, target.x, target.y)
-	
+
 public function unit.issuePointOrderById(int id, vec2 target) returns boolean
 	return IssuePointOrderById(this, id, target.x, target.y)
-	
+
 public function unit.issueRallyPoint(vec2 pos)
 	this.issuePointOrder("rally", pos)
 
 public function unit.issueTargetOrder(string order, widget targetWidget) returns boolean
 	return IssueTargetOrder(this,order,targetWidget)
-	
+
 public function unit.issueTargetOrderById(int id, widget target) returns boolean
 	return IssueTargetOrderById(this, id, target)
 
@@ -202,10 +232,10 @@ public function unit.makeAbilityPermanent(int abil, boolean flag) returns boolea
 
 public function unit.isPaused() returns boolean
 	return IsUnitPaused(this)
-	
+
 public function unit.pause()
 	PauseUnit(this, true)
-	
+
 public function unit.queueAnimation(string animation)
 	QueueUnitAnimation(this, animation)
 
@@ -217,10 +247,13 @@ public function unit.removeAbility(int abil) returns boolean
 
 public function unit.removeItem(item itm)
 	UnitRemoveItem(this, itm)
-	
+
+public function unit.removeItemFromSlot(int slot) returns item
+	return UnitRemoveItemFromSlot(this, slot)
+
 public function unit.revive(vec2 pos, boolean doEyecandy)
 	ReviveHero(this, pos.x, pos.y, doEyecandy)
-	
+
 public function unit.setAbilityLevel(int abilId, int lvl)
 	SetUnitAbilityLevel(this, abilId, lvl)
 
@@ -229,34 +262,34 @@ public function unit.setAnimation(string name)
 
 public function unit.setAnimation(int index)
 	SetUnitAnimationByIndex(this, index)
-	
+
 public function unit.setColor( playercolor c )
 	SetUnitColor(this, c)
-	
+
 public function unit.setFacing(angle a)
 	SetUnitFacing(this, a.degrees())
-	
+
 public function unit.setFlyHeight(real height, real rate)
 	SetUnitFlyHeight(this, height, rate)
 
 public function unit.setHP( real hp )
 	this.setState( UNIT_STATE_LIFE, hp )
-	
+
 public function unit.setInvulnerable(boolean flag)
 	SetUnitInvulnerable(this, flag)
 
 public function unit.setMana(real val)
 	this.setState(UNIT_STATE_MANA, val)
-	
+
 public function unit.setMoveSpeed(real speed)
 	SetUnitMoveSpeed(this, speed)
-	
+
 public function unit.setOwner(player p, boolean changeColor)
 	SetUnitOwner(this, p, changeColor)
-	
+
 public function unit.setPathing(boolean value)
 	SetUnitPathing(this,value)
-	
+
 /** Sets the unit's position using the SetUnitPosition native.
 	This native comes with some side effects like additional
 	position verification and stopping the target unit. */	
@@ -273,19 +306,19 @@ public function unit.setPosReal(vec3 pos)
 
 public function unit.setPos(real x, real y)
 	SetUnitPosition(this, x, y)
-	
+
 public function unit.setPropWindow(real value)
 	SetUnitPropWindow(this, value)
-	
+
 public function unit.setScale(real scale)
 	SetUnitScale(this, scale, scale, scale)
-	
+
 public function unit.setState( unitstate state, real value )
 	SetUnitState( this, state, value )
-	
+
 public function unit.setTimeScale(real scale)
 	SetUnitTimeScale(this, scale)
-	
+
 public function unit.setTimedLife( real time )
 	UnitApplyTimedLife( this, 'BTLF', time )
 
@@ -297,10 +330,10 @@ public function unit.setUseFood(boolean flag)
 
 public function unit.setUserData(int data)
 	SetUnitUserData(this, data)
-	
+
 public function unit.setVertexColor(int r, int g, int b, int a)
 	SetUnitVertexColor(this, r, g, b, a)
-	
+
 public function unit.setX(real x)
 	SetUnitX(this, x)
 
@@ -319,27 +352,27 @@ public function unit.setXY(vec3 pos)
 public function unit.setXYZ(vec3 pos)
 	this..setX(pos.x)..setY(pos.y)
 	..setFlyHeight(pos.z, 0)
-	
+
 public function unit.setXYZReal(vec3 pos)
 	SetUnitX(this, pos.x)
 	SetUnitY(this, pos.y)
 	SetUnitFlyHeight(this, pos.z-getTerrainZ(pos.x, pos.y), 0)
-	
+
 public function unit.setY(real y)
 	SetUnitY(this, y)
-	
+
 public function unit.show()
 	ShowUnit(this, true)
-	
+
 public function unit.subHP(real val)
 	this.subState(UNIT_STATE_LIFE, val)
-	
+
 public function unit.subMana(real val)
 	this.subState(UNIT_STATE_MANA, val)
-	
+
 public function unit.subState( unitstate state, real value )
 	SetUnitState( this, state, this.getState(state) - value )
-	
+
 public function unit.unpause()
 	PauseUnit(this, false)
 
