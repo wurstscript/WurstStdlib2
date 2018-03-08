@@ -5,8 +5,11 @@ import Wurstunit
 
 constant CHARMAP = ".................................!.#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[.]^_`abcdefghijklmnopqrstuvwxyz{|}~................................................................................................................................."
 
+@deprecated("Use .toRawCode() instead.") public function int2fourchar(int value) returns string
+	return toRawCode(value)
+
 /** Convert a integer id value into a 4-letter id code. */
-public function int2fourchar(int value) returns string
+public function toRawCode(int value) returns string
 	var result = ""
 	var remainingValue = value
 
@@ -17,8 +20,11 @@ public function int2fourchar(int value) returns string
 
 	return result
 
+@deprecated("Use .fromRawCode() instead.") public function fourchar2int(string value) returns int
+	return fromRawCode(value)
+
 /** converts a 4-letter id code to an integer */
-public function fourchar2int(string value) returns int
+public function fromRawCode(string value) returns int
 	var result = 0
 	if value.length() != 4
 		error("Fourchar value must be 4 chars long")
@@ -31,18 +37,18 @@ public function fourchar2int(string value) returns int
 	
 	return result	
 	
-public function string.fourchar2int() returns int
-	return fourchar2int(this)
+public function string.fromRawCode() returns int
+	return fromRawCode(this)
 	
-public function int.int2fourchar() returns string
-	return int2fourchar(this)
+public function int.toRawCode() returns string
+	return toRawCode(this)
 
 @test function test_idString2IdInteger()
-	fourchar2int("hfoo") .assertEquals('hfoo')
-	fourchar2int("abcd") .assertEquals('abcd')
-	fourchar2int("ABCD") .assertEquals('ABCD')
+	fromRawCode("hfoo") .assertEquals('hfoo')
+	fromRawCode("abcd") .assertEquals('abcd')
+	fromRawCode("ABCD") .assertEquals('ABCD')
 	
 @test function test_idInteger2IdString()
-	int2fourchar('hfoo') .assertEquals("hfoo")
-	int2fourchar('abcd') .assertEquals("abcd")
-	int2fourchar('ABCD') .assertEquals("ABCD")
+	toRawCode('hfoo') .assertEquals("hfoo")
+	toRawCode('abcd') .assertEquals("abcd")
+	toRawCode('ABCD') .assertEquals("ABCD")
