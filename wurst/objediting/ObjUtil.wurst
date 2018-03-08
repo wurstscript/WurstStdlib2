@@ -4,11 +4,17 @@ import ObjectIds
 import Assets
 import LinkedList
 
-@Test function asListTest()
+@Test function asListIntTest()
 	asList(
 		AbilityIds.invulnerable,
 		AbilityIds.reveal
 	).assertEquals("Avul,Adta")
+
+@Test function asListStringTest()
+	asList(
+		"self",
+		"structure"
+	).assertEquals("self,structure")
 
 public function asList(int a1) returns string
 	return asListGeneric<int>(a1).joinBy((int i) -> i.toRawCode(), ",")
