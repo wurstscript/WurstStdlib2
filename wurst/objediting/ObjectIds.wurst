@@ -31,7 +31,12 @@ public function fourchar2int(string value) returns int
 	
 	return result	
 	
+public function string.fourchar2int() returns int
+	return fourchar2int(this)
 	
+public function int.int2fourchar() returns string
+	return int2fourchar(this)
+
 @test function test_idString2IdInteger()
 	fourchar2int("hfoo") .assertEquals('hfoo')
 	fourchar2int("abcd") .assertEquals('abcd')
@@ -41,4 +46,3 @@ public function fourchar2int(string value) returns int
 	int2fourchar('hfoo') .assertEquals("hfoo")
 	int2fourchar('abcd') .assertEquals("abcd")
 	int2fourchar('ABCD') .assertEquals("ABCD")
-	

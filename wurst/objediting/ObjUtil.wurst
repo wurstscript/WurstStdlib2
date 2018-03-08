@@ -1,0 +1,40 @@
+package ObjUtil
+
+import ObjectIds
+import Assets
+import LinkedList
+
+function asList(LinkedList<int> idList) returns string
+	string s = ""
+	for id in idList
+		s += id.int2fourchar() + ","
+	// Remove trailing comma.
+	return s.substring(0, s.length()-1)
+
+public function asList(int a1) returns string
+	return asList(new LinkedList<int>..add(a1))
+public function asList(int a1, int a2) returns string
+	return asList(new LinkedList<int>..add(a1)..add(a2))
+public function asList(int a1, int a2, int a3) returns string
+	return asList(new LinkedList<int>..add(a1)..add(a2)..add(a3))
+public function asList(int a1, int a2, int a3, int a4) returns string
+	return asList(new LinkedList<int>..add(a1)..add(a2)..add(a3)..add(a4))
+public function asList(int a1, int a2, int a3, int a4, int a5) returns string
+	return asList(new LinkedList<int>..add(a1)..add(a2)..add(a3)..add(a4)..add(a5))
+public function asList(int a1, int a2, int a3, int a4, int a5, int a6) returns string
+	return asList(new LinkedList<int>..add(a1)..add(a2)..add(a3)..add(a4)..add(a5)..add(a6))
+public function asList(int a1, int a2, int a3, int a4, int a5, int a6, int a7) returns string
+	return asList(new LinkedList<int>..add(a1)..add(a2)..add(a3)..add(a4)..add(a5)..add(a6)..add(a7))
+public function asList(int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8) returns string
+	return asList(new LinkedList<int>..add(a1)..add(a2)..add(a3)..add(a4)..add(a5)..add(a6)..add(a7)..add(a8))
+public function asList(int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9) returns string
+	return asList(new LinkedList<int>..add(a1)..add(a2)..add(a3)..add(a4)..add(a5)..add(a6)..add(a7)..add(a8)..add(a9))
+public function asList(int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9, int a10) returns string
+	return asList(new LinkedList<int>..add(a1)..add(a2)..add(a3)..add(a4)..add(a5)..add(a6)..add(a7)..add(a8)..add(a9)..add(a10))
+
+@Test function asListTest()
+	LinkedList<int> l = new LinkedList<int>
+	..add(AbilityIds.invulnerable)
+	..add(AbilityIds.reveal)
+
+	asList(l).assertEquals("Avul,Adta")
