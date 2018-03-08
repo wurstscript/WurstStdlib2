@@ -4,37 +4,90 @@ import ObjectIds
 import Assets
 import LinkedList
 
-function asList(LinkedList<int> idList) returns string
-	string s = ""
-	for id in idList
-		s += id.int2fourchar() + ","
-	// Remove trailing comma.
-	return s.substring(0, s.length()-1)
+@Test function asListTest()
+	asList(
+		AbilityIds.invulnerable,
+		AbilityIds.reveal
+	).assertEquals("Avul,Adta")
 
 public function asList(int a1) returns string
-	return asList(new LinkedList<int>..add(a1))
+	return asListGeneric<int>(a1).joinBy((int i) -> i.toRawCode(), ",")
 public function asList(int a1, int a2) returns string
-	return asList(new LinkedList<int>..add(a1)..add(a2))
+	return asListGeneric<int>(a1, a2).joinBy((int i) -> i.toRawCode(), ",")
 public function asList(int a1, int a2, int a3) returns string
-	return asList(new LinkedList<int>..add(a1)..add(a2)..add(a3))
+	return asListGeneric<int>(a1, a2, a3).joinBy((int i) -> i.toRawCode(), ",")
 public function asList(int a1, int a2, int a3, int a4) returns string
-	return asList(new LinkedList<int>..add(a1)..add(a2)..add(a3)..add(a4))
+	return asListGeneric<int>(a1, a2, a3, a4).joinBy((int i) -> i.toRawCode(), ",")
 public function asList(int a1, int a2, int a3, int a4, int a5) returns string
-	return asList(new LinkedList<int>..add(a1)..add(a2)..add(a3)..add(a4)..add(a5))
+	return asListGeneric<int>(a1, a2, a3, a4, a5).joinBy((int i) -> i.toRawCode(), ",")
 public function asList(int a1, int a2, int a3, int a4, int a5, int a6) returns string
-	return asList(new LinkedList<int>..add(a1)..add(a2)..add(a3)..add(a4)..add(a5)..add(a6))
+	return asListGeneric<int>(a1, a2, a3, a4, a5, a6).joinBy((int i) -> i.toRawCode(), ",")
 public function asList(int a1, int a2, int a3, int a4, int a5, int a6, int a7) returns string
-	return asList(new LinkedList<int>..add(a1)..add(a2)..add(a3)..add(a4)..add(a5)..add(a6)..add(a7))
+	return asListGeneric<int>(a1, a2, a3, a4, a5, a6, a7).joinBy((int i) -> i.toRawCode(), ",")
 public function asList(int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8) returns string
-	return asList(new LinkedList<int>..add(a1)..add(a2)..add(a3)..add(a4)..add(a5)..add(a6)..add(a7)..add(a8))
+	return asListGeneric<int>(a1, a2, a3, a4, a5, a6, a7, a8).joinBy((int i) -> i.toRawCode(), ",")
 public function asList(int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9) returns string
-	return asList(new LinkedList<int>..add(a1)..add(a2)..add(a3)..add(a4)..add(a5)..add(a6)..add(a7)..add(a8)..add(a9))
+	return asListGeneric<int>(a1, a2, a3, a4, a5, a6, a7, a8, a9).joinBy((int i) -> i.toRawCode(), ",")
 public function asList(int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9, int a10) returns string
-	return asList(new LinkedList<int>..add(a1)..add(a2)..add(a3)..add(a4)..add(a5)..add(a6)..add(a7)..add(a8)..add(a9)..add(a10))
+	return asListGeneric<int>(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10).joinBy((int i) -> i.toRawCode(), ",")
 
-@Test function asListTest()
-	LinkedList<int> l = new LinkedList<int>
-	..add(AbilityIds.invulnerable)
-	..add(AbilityIds.reveal)
+public function asList(string a1) returns string
+	return asListGeneric<string>(a1).joinBy(( string s) -> s, ",")
+public function asList(string a1, string a2) returns string
+	return asListGeneric<string>(a1, a2).joinBy(( string s) -> s, ",")
+public function asList(string a1, string a2, string a3) returns string
+	return asListGeneric<string>(a1, a2, a3).joinBy(( string s) -> s, ",")
+public function asList(string a1, string a2, string a3, string a4) returns string
+	return asListGeneric<string>(a1, a2, a3, a4).joinBy(( string s) -> s, ",")
+public function asList(string a1, string a2, string a3, string a4, string a5) returns string
+	return asListGeneric<string>(a1, a2, a3, a4, a5).joinBy(( string s) -> s, ",")
+public function asList(string a1, string a2, string a3, string a4, string a5, string a6) returns string
+	return asListGeneric<string>(a1, a2, a3, a4, a5, a6).joinBy(( string s) -> s, ",")
+public function asList(string a1, string a2, string a3, string a4, string a5, string a6, string a7) returns string
+	return asListGeneric<string>(a1, a2, a3, a4, a5, a6, a7).joinBy(( string s) -> s, ",")
+public function asList(string a1, string a2, string a3, string a4, string a5, string a6, string a7, string a8) returns string
+	return asListGeneric<string>(a1, a2, a3, a4, a5, a6, a7, a8).joinBy(( string s) -> s, ",")
+public function asList(string a1, string a2, string a3, string a4, string a5, string a6, string a7, string a8, string a9) returns string
+	return asListGeneric<string>(a1, a2, a3, a4, a5, a6, a7, a8, a9).joinBy(( string s) -> s, ",")
+public function asList(string a1, string a2, string a3, string a4, string a5, string a6, string a7, string a8, string a9, string a10) returns string
+	return asListGeneric<string>(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10).joinBy(( string s) -> s, ",")
 
-	asList(l).assertEquals("Avul,Adta")
+function asListGeneric<T>(T a1) returns LinkedList<T>
+	return new LinkedList<T>()..add(a1)
+function asListGeneric<T>(T a1, T a2) returns LinkedList<T>
+	return new LinkedList<T>()..add(a1)..add(a2)
+function asListGeneric<T>(T a1, T a2, T a3) returns LinkedList<T>
+	return new LinkedList<T>()..add(a1)..add(a2)..add(a3)
+function asListGeneric<T>(T a1, T a2, T a3, T a4) returns LinkedList<T>
+	return new LinkedList<T>()..add(a1)..add(a2)..add(a3)..add(a4)
+function asListGeneric<T>(T a1, T a2, T a3, T a4, T a5) returns LinkedList<T>
+	return new LinkedList<T>()..add(a1)..add(a2)..add(a3)..add(a4)..add(a5)
+function asListGeneric<T>(T a1, T a2, T a3, T a4, T a5, T a6) returns LinkedList<T>
+	return new LinkedList<T>()..add(a1)..add(a2)..add(a3)..add(a4)..add(a5)..add(a6)
+function asListGeneric<T>(T a1, T a2, T a3, T a4, T a5, T a6, T a7) returns LinkedList<T>
+	return new LinkedList<T>()..add(a1)..add(a2)..add(a3)..add(a4)..add(a5)..add(a6)..add(a7)
+function asListGeneric<T>(T a1, T a2, T a3, T a4, T a5, T a6, T a7, T a8) returns LinkedList<T>
+	return new LinkedList<T>()..add(a1)..add(a2)..add(a3)..add(a4)..add(a5)..add(a6)..add(a7)..add(a8)
+function asListGeneric<T>(T a1, T a2, T a3, T a4, T a5, T a6, T a7, T a8, T a9) returns LinkedList<T>
+	return new LinkedList<T>()..add(a1)..add(a2)..add(a3)..add(a4)..add(a5)..add(a6)..add(a7)..add(a8)..add(a9)
+function asListGeneric<T>(T a1, T a2, T a3, T a4, T a5, T a6, T a7, T a8, T a9, T a10) returns LinkedList<T>
+	return new LinkedList<T>()..add(a1)..add(a2)..add(a3)..add(a4)..add(a5)..add(a6)..add(a7)..add(a8)..add(a9)..add(a10)
+
+interface ToStringClosure<T>
+	function toString(T elem) returns string
+
+function LinkedList<T>.joinBy<T>(ToStringClosure<T> cls, string separator) returns string
+	var joined = ""
+	var first = true
+	let iter = this.iterator()
+	
+	for elem from iter
+		if iter.hasNext() or not first
+			joined += cls.toString(elem) + separator
+		else
+			joined += cls.toString(elem)
+			first = false
+			
+	iter.close()
+	return joined
+	
