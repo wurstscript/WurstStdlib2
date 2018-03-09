@@ -55,6 +55,7 @@ public class LocalFiles
 		IOReader.load(testDestination)
 		if IOReader.getPacket(0) == testString
 			enabled = true
+			checked = true
 			return
 	
 		// now try 1.26 fallback
@@ -65,10 +66,9 @@ public class LocalFiles
 		if IOReader.getPacket(0) == testString
 			enabled = true
 			fallback = true
+			checked = true
 			return
 		
-		checked = true
-
 	/**
 		Performs the checking for all players,
 		and sends the results to others.
