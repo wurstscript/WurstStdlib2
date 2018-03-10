@@ -215,8 +215,8 @@ public class LinkedList<T>
 
 	/** Adds the given element directly behind the element at the given index */
 	function addAt(T elem, int index)
-		let entry = new LLEntry<T>(elem, dummy.prev, dummy)
 		let entryAtIndex = getEntry(index)
+		let entry = new LLEntry<T>(elem, entryAtIndex.prev, entryAtIndex)
 		entryAtIndex.prev.next = entry
 		entryAtIndex.prev = entry
 		size++
