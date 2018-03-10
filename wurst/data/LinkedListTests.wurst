@@ -109,3 +109,13 @@ function testGenerics()
 		bi2++
 
 	bi2.assertEquals(list.size())
+
+@test function testAddAt()
+	let list = new LinkedList<int>()
+	for i = 1 to 6
+		list.add(i)
+	list.addAt(7, 4)
+	string elems = ""
+	for elem in list
+		elems += elem.toString()
+	elems.assertEquals("1234756")
