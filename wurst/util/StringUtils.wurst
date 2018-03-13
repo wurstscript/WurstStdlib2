@@ -114,6 +114,21 @@ public function LinkedList<string>.joinBy(string separator) returns string
 	iter.close()
 	return joined
 
+interface ToStringClosure<T>
+	function toString(T elem) returns string
+
+public function LinkedList<T>.joinBy<T>(ToStringClosure<T> cls, string separator) returns string
+	let iter = this.iterator()
+	LinkedList<string> strings = new LinkedList<string>
+
+	for elem from iter
+		strings.add(cls.toString(elem))
+
+	iter.close()
+	let result = strings.joinBy(separator)
+	destroy strings
+	return result
+
 /** Joins elements from a string list into one string */ 
 public function LinkedList<string>.join() returns string
 	return this.joinBy("")
