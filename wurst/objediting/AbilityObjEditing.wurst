@@ -54,13 +54,13 @@ public class AbilityDefinition
 			tooltipGen.addProperty(pName, lc)
 			
 	function addTooltipProperty(string pName, IntLevelClosure lc)
-		addTooltipProperty(pName, (int lvl) -> lc.run(lvl).toString())
+		addTooltipProperty(pName, lvl -> lc.run(lvl).toString())
 		
 	function addTooltipProperty(string pName, RealLevelClosure lc)
-		addTooltipProperty(pName, (int lvl) -> lc.run(lvl).toString())
+		addTooltipProperty(pName, lvl -> lc.run(lvl).toString())
 		
 	function addTooltipProperty(string pName, BooleanLevelClosure lc)
-		addTooltipProperty(pName, (int lvl) -> lc.run(lvl).toString())
+		addTooltipProperty(pName, lvl -> lc.run(lvl).toString())
 		
 	function registerTooltipGegenrator(TooltipGenerator tgen)
 		tooltipGen = tgen

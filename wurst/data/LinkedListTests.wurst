@@ -22,7 +22,7 @@ function testForLoop()
 	
 	list..add(1)..add(2)..add(3)..add(4)
 	
-	list.updateAll((int i) -> i + 1)
+	list.updateAll(i -> i + 1)
 	
 	var result = 0
 	for i in list
@@ -63,13 +63,13 @@ function testClosures()
 	let list = new LinkedList<int>()
 	list..add(1)..add(2)..add(3)..add(4)
 	
-	list.updateAll((int i) -> i * 2)
+	list.updateAll(i -> i * 2)
 	assertTrue(list.get(3) == 4*2)
 
-	list.removeWhen((int i) -> i > 4)
+	list.removeWhen(i -> i > 4)
 	assertTrue(list.size() == 2)
 
-	let realList = list.map<real>((int i) -> i * 10.)
+	let realList = list.map<real>(i -> i * 10.)
 	assertTrue(realList.get(1) == 40.)
 
 @Test
