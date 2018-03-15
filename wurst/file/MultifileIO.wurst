@@ -122,14 +122,14 @@ public class FileWriter extends AbstractFile
 		buffer.writeString(value)
 
 	private function saveTerminator(int chunkId)
-		executor.submit(() -> begin
+		executor.submit() ->
 			IOWriter.prepareWrite()
 			IOWriter.writePacket(TERMINATOR)
 			IOWriter.flushFile(getChunkPath(path, chunkId))
-		end)
+
 
 	private function saveSingle(int chunkId)
-		executor.submit(() -> begin
+		executor.submit() ->
 			IOWriter.prepareWrite()
 			// write out as much data as we can into this file
 			while buffer.hasString() and IOWriter.canWrite()
@@ -139,7 +139,7 @@ public class FileWriter extends AbstractFile
 				IOWriter.flushFile(getChunkPath(path, chunkId))
 			else
 				IOWriter.flushFile(path)
-		end)
+
 
 	/**
 		Starts saving the queue data to disk, and specifies a callback when all data has been saved.
@@ -162,10 +162,10 @@ public class FileWriter extends AbstractFile
 			saveSingle(0)
 
 		if callback != null
-			executor.onComplete(() -> begin
+			executor.onComplete() ->
 				working = false
 				callback.run()
-			end)
+	
 		working = true
 		executor.start()
 
@@ -180,10 +180,10 @@ public class FileWriter extends AbstractFile
 			let reader = new FileReader("path/to/folder")
 		
 		2. Load the data, and specify a callback when the file has loaded, and read the data
-			reader.load(() -> begin
+			reader.load() ->
 				while reader.canRead()
 					doSomethingWithData(reader.readLine())
-			end)
+	
 		
 		3. Destroy the instance
 			destroy reader
@@ -209,7 +209,7 @@ public class FileReader extends AbstractFile
 		super(path)
 
 	private function readChunk(int chunkId)
-		executor.submit(() -> begin
+		executor.submit() ->
 			// select proper file depending on multimode
 			if multiMode
 				IOReader.load(getChunkPath(path, chunkId))
@@ -225,7 +225,7 @@ public class FileReader extends AbstractFile
 				// start reading the next file if we're in multimode
 				if multiMode
 					readChunk(chunkId + 1)
-		end)
+
 	
 	/**
 		Starts loading the file and specifies a callback to be called when all data has loaded
@@ -237,10 +237,10 @@ public class FileReader extends AbstractFile
 		if working
 			error("FileReader: trying to load the file, but it is already loading")
 
-		executor.onComplete(() -> begin
+		executor.onComplete() ->
 			working = false
 			callback.run(FileLoadStatus.SUCCESS)
-		end)
+
 		// initiate reading, since readChunk will load other chunks as necessary
 		readChunk(0)
 		working = true

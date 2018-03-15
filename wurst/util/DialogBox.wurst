@@ -12,10 +12,10 @@ public interface DialogBoxButtonClosure
 The DialogBox should be destroyed after it is no longer needed.
 Example use:
 | let dBox = new DialogBox("Extra starting gold?")
-| dBox.addButton("Yes", () -> begin
+| dBox.addButton("Yes") ->
 |     players[0].addGold(500)
 |     destroy dBox
-| end)
+|
 | dBox.addButton("No", () -> destroy dBox)
 | dBox.display(players[0], true) */
 public class DialogBox
@@ -95,12 +95,11 @@ public class DialogBox
         return this.title
 
     ondestroy
-        buttons.forEach((button btn) -> begin
+        buttons.forEach() btn ->
             let cb = buttonClosures.get(btn)
             buttonClosures.remove(btn)
             if cb != null
                 destroy cb
-        end)
 
         destroy buttons
         this.dialogHandle

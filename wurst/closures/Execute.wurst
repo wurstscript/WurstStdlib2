@@ -68,12 +68,12 @@ function getCurrentCallback() returns ForForceCallback
 		if localPlayer == caller
 			execute()
 	This will not desync:
-		execute(() -> begin
+		execute() ->
 			// do some stuff here
 
 			if localPlayer == caller
 				execute(...)
-		end)
+
 **/
 public function execute(ForForceCallback c)
 	if not try(c)
@@ -108,7 +108,7 @@ interface LimitedExecuteAction
 	function run() 
  
 function executeWhileInternal(int resetCount, LimitedExecuteCondition condition, LimitedExecuteAction action) 
-	execute(() -> begin 
+	execute() -> 
 		var i = 0 
 		while condition.check() and i < resetCount 
 			action.run() 
@@ -116,8 +116,7 @@ function executeWhileInternal(int resetCount, LimitedExecuteCondition condition,
 
 		// restart the execute if necessary 
 		if condition.check() 
-			executeWhileInternal(resetCount, condition, action) 
-	end) 
+			executeWhileInternal(resetCount, condition, action)  
  
 /** 
   This is an utility function which you can use to process arbitrarily large loops. 

@@ -142,6 +142,5 @@ init
 	registerPlayerUnitEvent(EVENT_PLAYER_UNIT_ISSUED_ORDER, null, function actions)
 	registerPlayerUnitEvent(EVENT_PLAYER_UNIT_SPELL_EFFECT, null, function spellActions)
 
-	onUnitDeindex(() -> begin
+	onUnitDeindex() ->
 		getDeindexedUnit().clearLastOrders()
-	end)

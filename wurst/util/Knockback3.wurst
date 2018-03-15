@@ -198,12 +198,11 @@ public class Knockback3
     private static function tickTryDestructable(Knockback3 knockback, vec3 newPos3)
         hitDestructable = false
         MoveRectTo(destructableRect, newPos3.x, newPos3.y)
-        EnumDestructablesInRect(destructableRect, null, () -> begin
+        EnumDestructablesInRect(destructableRect, null) ->
             let des = GetEnumDestructable()
             if GetDestructableLife(des) > 0.
                 des.kill()
                 hitDestructable = true
-        end)
 
         if hitDestructable
             knockback.del *= restitutionCoefficientDestructable

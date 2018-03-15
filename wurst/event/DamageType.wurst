@@ -154,13 +154,12 @@ function handler() returns bool
 
 
 init
-    onEnter(() -> begin
+    onEnter() ->
         GetTriggerUnit()..addAbility(DAMAGE_TYPE_CHECK_ID)..makeAbilityPermanent(DAMAGE_TYPE_CHECK_ID, true)
-    end)
-    forUnitsInRect(bj_mapInitialPlayableArea, (unit iter) -> begin
+
+    forUnitsInRect(bj_mapInitialPlayableArea) iter ->
         iter..addAbility(          DAMAGE_TYPE_CHECK_ID)
             ..makeAbilityPermanent(DAMAGE_TYPE_CHECK_ID, true)
-    end)
 
     addOnDamageFunc(Condition(function handler))
 

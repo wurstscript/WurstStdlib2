@@ -100,15 +100,15 @@ public class GamecacheBuffer
 
 		switch bufferType
 			case BufferType.INTEGER
-				synchronizer = (string key) -> begin
+				synchronizer = key -> begin
 					gc.syncInt(parentKey, key)
 				end
 			case BufferType.REAL
-				synchronizer = (string key) -> begin
+				synchronizer = key -> begin
 					gc.syncReal(parentKey, key)
 				end
 			case BufferType.BOOLEAN
-				synchronizer = (string key) -> begin
+				synchronizer = key -> begin
 					gc.syncBoolean(parentKey, key)
 				end
 
@@ -119,14 +119,14 @@ public class GamecacheBuffer
 		syncCounter = 0
 
 		while syncCounter <= writeIndex
-			execute(() -> begin
+			execute() ->
 				var i = 0
 				// keep syncing until we hit the limit or finish
 				while syncCounter <= writeIndex and i < DATA_PER_EXECUTE
 					synchronizer.sync(GamecacheKeys.get(syncCounter))
 					syncCounter++
 					i++
-			end)
+
 		destroy synchronizer
 
 	function reset()
