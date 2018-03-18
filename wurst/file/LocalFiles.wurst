@@ -48,6 +48,8 @@ public class LocalFiles
 		This function is only meant to be called once.
 	**/
 	private static function check()
+		checked = true
+
 		// try regular writing/reading first
 		IOWriter.prepareWrite()
 		IOWriter.writePacket(testString)
@@ -55,7 +57,6 @@ public class LocalFiles
 		IOReader.load(testDestination)
 		if IOReader.getPacket(0) == testString
 			enabled = true
-			checked = true
 			return
 	
 		// now try 1.26 fallback
@@ -66,7 +67,6 @@ public class LocalFiles
 		if IOReader.getPacket(0) == testString
 			enabled = true
 			fallback = true
-			checked = true
 			return
 		
 	/**
