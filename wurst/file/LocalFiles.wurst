@@ -48,6 +48,8 @@ public class LocalFiles
 		This function is only meant to be called once.
 	**/
 	private static function check()
+		checked = true
+
 		// try regular writing/reading first
 		IOWriter.prepareWrite()
 		IOWriter.writePacket(testString)
@@ -67,8 +69,6 @@ public class LocalFiles
 			fallback = true
 			return
 		
-		checked = true
-
 	/**
 		Performs the checking for all players,
 		and sends the results to others.
