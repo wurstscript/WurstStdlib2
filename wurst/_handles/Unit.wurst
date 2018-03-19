@@ -392,3 +392,18 @@ public function unit.abortOrder() returns boolean
 public function unit.resetAbilityCooldown(int abilId)
 	let lvl = this.getAbilityLevel(abilId)
 	this..removeAbility(abilId)..addAbility(abilId)..setAbilityLevel(abilId, lvl)
+
+public function unit.getDefaultMovespeed() returns real
+	return GetUnitDefaultMoveSpeed(this)
+
+public function unit.getDefaultPropWindow() returns real
+	return GetUnitDefaultPropWindow(this)
+
+public function unit.getDefaultTurnSpeed() returns real
+	return GetUnitDefaultTurnSpeed(this)
+
+public function unit.getDefaultAquireRange() returns real
+	return GetUnitDefaultAcquireRange(this)
+
+public function unit.getDefaultFlyHeight() returns real
+	return GetUnitDefaultFlyHeight(this)

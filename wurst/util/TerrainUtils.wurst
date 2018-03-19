@@ -33,12 +33,16 @@ public function getTerrainNormal( real x, real y, real sampleRadius) returns vec
 	return vec3( zx*sampleRadius2, zy*sampleRadius2, sampleRadius2*sampleRadius2 )
 
 public function getTerrainZ(real x, real y) returns real
-	MoveLocation( tempLoc, x, y )
-	return GetLocationZ( tempLoc )
+	MoveLocation(tempLoc, x, y)
+	return GetLocationZ(tempLoc)
 	
 public function getTerrainZ(vec2 v) returns real
-	MoveLocation( tempLoc, v.x, v.y )
-	return GetLocationZ( tempLoc )
+	MoveLocation(tempLoc, v.x, v.y)
+	return GetLocationZ(tempLoc)
+
+public function vec2.getTerrainZ() returns real
+	MoveLocation(tempLoc, this.x, this.y)
+	return GetLocationZ(tempLoc)
 	
 public function vec2.withTerrainZ() returns vec3
 	return vec3(this.x, this.y, getTerrainZ(this.x, this.y))
