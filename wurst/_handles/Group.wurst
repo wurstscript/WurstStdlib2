@@ -40,9 +40,9 @@ public function group.contains(unit u) returns boolean
 var unitCounter = 0
 public function group.size() returns int
 	unitCounter = 0
-	ForGroup(this, () -> begin
+	ForGroup(this) ->
 		unitCounter++
-	end)
+
 	return unitCounter
 
 public function group.isEmpty() returns boolean
@@ -56,11 +56,11 @@ public function group.getRandomUnit() returns unit
 	let size = this.size()
 	randomCounter = 1 + GetRandomInt(0, size-1)
 	randomSelected = null
-	ForGroup(this, () -> begin
+	ForGroup(this) ->
 		randomCounter--
 		if randomCounter == 0
 			randomSelected = GetEnumUnit()
-	end)
+
 	return randomSelected
 	
 /* Group iterator */

@@ -6,9 +6,9 @@ import Real
 	The callback object is automatically destroyed.
 	
 	Example use:
-	| doAfter(10.0, () -> begin
+	| doAfter(10.0) ->
 	|     print("10 seconds later")		
-	| end) */			
+*/			
 public function doAfter(real timeToWait, CallbackSingle cb) returns CallbackSingle
 	cb.start(timeToWait)
 	return cb
@@ -24,11 +24,12 @@ public function nullTimer(CallbackSingle cb) returns CallbackSingle
 	The callback has to be destroyed manually.
 	
 	Example use:
-	| doPeriodically(0.5, (CallbackPeriodic cb) -> begin
+	| doPeriodically(0.5) cb ->
 	|     if i > 10
 			destroy cb
-	| end)
 */
+
+
 public function doPeriodically(real time, CallbackPeriodic cb) returns CallbackPeriodic
 	cb.start(time)
 	return cb
@@ -37,9 +38,8 @@ public function doPeriodically(real time, CallbackPeriodic cb) returns CallbackP
 	The callback object is destroyed after the action has been executed callAmount times.
 	
 	Example use:
-	| doPeriodicallyCounted(0.5, 100, (CallbackCounted cb) -> begin
-	|     doSomething()		
-	| end)
+	| doPeriodicallyCounted(0.5, 100) cb ->
+	|     doSomething()	
 	
 */
 public function doPeriodicallyCounted(real time, int callAmount, CallbackCounted cb) returns CallbackCounted
@@ -49,9 +49,8 @@ public function doPeriodicallyCounted(real time, int callAmount, CallbackCounted
 	The callback object is destroyed afterwards.
 	
 	Example use:
-	| doPeriodicallyCounted(0.5, 10., () -> begin
+	| doPeriodicallyCounted(0.5, 10.) ->
 	|     doSomething()		
-	| end)
 	
 */	
 public function doPeriodicallyTimed(real interval, real timerDuration, CallbackCounted cb) returns CallbackCounted

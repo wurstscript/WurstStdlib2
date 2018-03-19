@@ -47,7 +47,7 @@ init
 	for i = 0 to bj_MAX_PLAYER_SLOTS-1
 		players[i].setAbilityAvailable(ABILITY_ID, false)
 
-	nullTimer(() -> begin
+	nullTimer() ->
 		// Process preplaced units
 		preplacedUnits.enumUnitsInRect(boundRect)
 		ForGroup(preplacedUnits, () -> prepareUnit(GetEnumUnit()))
@@ -57,14 +57,12 @@ init
 		CreateTrigger()..registerEnterRegion(boundRegion, Filter(() -> prepareUnit(GetFilterUnit())))
 
 		// Create the leave event
-		registerPlayerUnitEvent(EVENT_PLAYER_UNIT_ISSUED_ORDER, () -> begin
+		registerPlayerUnitEvent(EVENT_PLAYER_UNIT_ISSUED_ORDER) ->
 			let leavingUnit = GetTriggerUnit()
 			if leavingUnit.getAbilityLevel(ABILITY_ID) == 0
 				eventUnit = leavingUnit
 				eventTrigger.execute()
 				eventUnit = null
-		end)
-	end)
 
 @compiletime function generateAbility()
 	new AbilityDefinitionDefend(ABILITY_ID)

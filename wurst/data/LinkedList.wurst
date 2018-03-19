@@ -81,7 +81,7 @@ public class LinkedList<T>
 			removeEntry(top)
 		return result
 		
-	/** Returns and removes the lastly added Element */
+	/** Returns the lastly added Element */
 	function peek() returns T
 		return dummy.prev.elem
 	
@@ -215,8 +215,8 @@ public class LinkedList<T>
 
 	/** Adds the given element directly behind the element at the given index */
 	function addAt(T elem, int index)
-		let entry = new LLEntry<T>(elem, dummy.prev, dummy)
 		let entryAtIndex = getEntry(index)
+		let entry = new LLEntry<T>(elem, entryAtIndex.prev, entryAtIndex)
 		entryAtIndex.prev.next = entry
 		entryAtIndex.prev = entry
 		size++
@@ -427,6 +427,6 @@ public interface MapClosure<T, Q>
 public interface Comparator<T>
 	function compare(T o1, T o2) returns int
 
-constant Comparator<int> intComparator = (int i1, int i2) -> i1 - i2
+constant Comparator<int> intComparator = (i1, i2) -> i1 - i2
 public function LinkedList<int>.sort()
 	this.sortWith(intComparator)

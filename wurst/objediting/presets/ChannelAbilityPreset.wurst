@@ -51,22 +51,22 @@ public class ChannelAbilityPreset extends AbilityDefinitionIllidanChannel
 		this.lvls = lvls
 		setLevels(lvls)
 		orderString = odf.getOrderString(true)
-		presetBaseOrderID((int _lvl) -> orderString)
+		presetBaseOrderID(_lvl -> orderString)
 		if removeChannelProperties
 			removeChannelProperties(true)
 			
 	function makeUnitSpell(int mana, real cooldown)
 		setHeroAbility(false)
-		presetManaCost((int lvl) -> mana)
-		presetCooldown((int lvl) -> cooldown)
+		presetManaCost(lvl -> mana)
+		presetCooldown(lvl -> cooldown)
 		
 	function removeChannelProperties(boolean removeVisuals)
 		removeChannelProperties(removeVisuals, true)
 		
 	function removeChannelProperties(boolean removeVisuals, boolean makeVisible)
-		presetDisableOtherAbilities((int lvl) -> false)
-		presetFollowThroughTime((int lvl) -> 0.)
-		presetArtDuration((int lvl) -> 0.)
+		presetDisableOtherAbilities(lvl -> false)
+		presetFollowThroughTime(lvl -> 0.)
+		presetArtDuration(lvl -> 0.)
 		if makeVisible
 			presetOption(Option.VISIBLE, true)
 		if removeVisuals
@@ -76,7 +76,7 @@ public class ChannelAbilityPreset extends AbilityDefinitionIllidanChannel
 			setArtTarget("")
 
 	function presetTargetTypes(Targettype ttype)
-		presetTargetType((int lvl) -> ttype castTo int)
+		presetTargetType(lvl -> ttype castTo int)
 					
 	function presetOption(Option opt, boolean flag)
 		let pow = opt castTo int
@@ -86,7 +86,7 @@ public class ChannelAbilityPreset extends AbilityDefinitionIllidanChannel
 		else if flag
 			optionSet = optionSet.add(pow)
 
-		presetOptions((int lvl) -> optionSet.val)
+		presetOptions(lvl -> optionSet.val)
 	
 	function hasOption(Option option) returns boolean
 		return optionSet.contains(option castTo int)

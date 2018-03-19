@@ -18,9 +18,8 @@ int testInt = 0
 @Test
 function testForForce()
 	testInt = 0
-	execute(() -> begin
+	execute() ->
 		testInt.assertEquals(0)
 		testInt = 10
-	end)
 
 	testInt.assertEquals(10)

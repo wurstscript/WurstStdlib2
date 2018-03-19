@@ -6,6 +6,11 @@ constant numberset = "0123456789"
 constant numbersetlength = numberset.length()
 constant charsetlength = charset.length()
 
+/** Returns true if this string is non-null and 
+	not empty or only consisting of whitespace. */
+public function string.isNotBlank() returns boolean
+	return this != null and this.trim().length() > 0
+
 /** returns the position of the char in the charset
 	therefore converting a single char into an int that can
 	be converted back to a char with .toCharsetString() */

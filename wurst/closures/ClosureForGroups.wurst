@@ -146,12 +146,12 @@ public function forNearestDestructable(vec2 pos, real range, ForGroupCallbackD c
 	nearestDDist = range.squared()
 	nearestD = null
 	let r = Rect(pos.x - range, pos.y - range, pos.x + range, pos.y + range)
-	EnumDestructablesInRect(r, filterEnumDestructablesInCircleBJ, () -> begin
+	EnumDestructablesInRect(r, filterEnumDestructablesInCircleBJ) ->
 		let dist = gpos.distanceToSq(GetFilterDestructable().getPos())
 		if dist < nearestDDist
 			nearestD = GetFilterDestructable()
 			nearestDDist = dist
-	end)
+
 	c.callback(nearestD)
 	popCallbackD()
 

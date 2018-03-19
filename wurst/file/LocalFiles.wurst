@@ -48,6 +48,8 @@ public class LocalFiles
 		This function is only meant to be called once.
 	**/
 	private static function check()
+		checked = true
+
 		// try regular writing/reading first
 		IOWriter.prepareWrite()
 		IOWriter.writePacket(testString)
@@ -67,8 +69,6 @@ public class LocalFiles
 			fallback = true
 			return
 		
-		checked = true
-
 	/**
 		Performs the checking for all players,
 		and sends the results to others.
@@ -81,7 +81,7 @@ public class LocalFiles
 			enabledPlayers[i] = false
 			let network = new Network(players[i])
 			network.getData().writeBoolean(LocalFiles.isEnabled())
-			network.start((NetworkResult status, Buffer data) -> begin
+			network.start() (NetworkResult status, Buffer data) ->
 				if status == NetworkResult.SUCCESS
 					enabledPlayers[i] = data.readBoolean()
 				else
@@ -89,11 +89,9 @@ public class LocalFiles
 
 				if players[i] == localPlayer
 					synchronizer.sync()
-			end)
 
-		synchronizer.onSynced(() -> begin
+		synchronizer.onSynced() ->
 			checkedAll = true
-		end)
 
 init
 	nullTimer(() -> LocalFiles.checkAll())
