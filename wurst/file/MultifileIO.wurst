@@ -75,6 +75,9 @@ abstract class AbstractFile
 	allowing us to write as much data as we need to be later read
 	with FileReader.
 
+	Keep in mind, that single-file mode only supports PACKETS_PER_FILE
+	max lines.
+
 	Writing is line-based, meaning we write line-by-line, and reading
 	also works line-by-line.
 
@@ -83,8 +86,8 @@ abstract class AbstractFile
 			let writer = new FileWriter("path/to/folder")
 		
 		2. Queue some data for writing
-			writer.write("abc")
-			writer.write("cba")
+			writer.writeLine("abc")
+			writer.writeLine("cba")
 
 		3. Save the file, specifying a callback to be called when all data has been saved
 			writer.save(() -> doStuffAfterSave())
