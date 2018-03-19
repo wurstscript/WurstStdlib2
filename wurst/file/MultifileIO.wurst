@@ -1,9 +1,10 @@
-package MultiIO
+package MultifileIO
 
-import SimpleIO
+import PreloadIO
 import ErrorHandling
 import Buffer
 import IOTaskExecutor
+import LocalFiles
 
 class FilePacket
 	string packet
@@ -14,7 +15,21 @@ class FilePacket
 function getChunkPath(string path, int id) returns string
 	return path + "/chunk" + id.toString() + ".txt"
 
-public interface FileCallback
+function getBasePath() returns string
+	return LocalFiles.isFallback() ? "Logs\\" : ""
+
+/**
+	Represents the status of a file operation.
+	NOT_ENABLED corresponds to Local Files not being enabled for the player.
+**/
+public enum FileLoadStatus
+	SUCCESS
+	NOT_ENABLED
+
+public interface FileLoadCallback
+	function run(FileLoadStatus status)
+
+public interface FileSaveCallback
 	function run()
 
 /**
@@ -129,7 +144,7 @@ public class FileWriter extends AbstractFile
 	/**
 		Starts saving the queue data to disk, and specifies a callback when all data has been saved.
 	**/
-	function save(FileCallback callback)
+	function save(FileSaveCallback callback)
 		if working
 			error("FileWriter: trying to save the file, but it is already saving")
 
@@ -215,13 +230,16 @@ public class FileReader extends AbstractFile
 	/**
 		Starts loading the file and specifies a callback to be called when all data has loaded
 	**/
-	function load(FileCallback callback)
+	function load(FileLoadCallback callback)
+		if not LocalFiles.isEnabled()
+			callback.run(FileLoadStatus.NOT_ENABLED)
+
 		if working
 			error("FileReader: trying to load the file, but it is already loading")
 
 		executor.onComplete(() -> begin
 			working = false
-			callback.run()
+			callback.run(FileLoadStatus.SUCCESS)
 		end)
 		// initiate reading, since readChunk will load other chunks as necessary
 		readChunk(0)

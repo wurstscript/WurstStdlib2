@@ -1,9 +1,38 @@
 package Persistable
 import Network
-import MultiIO
-import SimpleIO
+import MultifileIO
+import PreloadIO
 import BufferAdapters
 import public Buffer
+import LocalFiles
+
+/**
+	Represents the various states of a persistable class load.
+	SUCCESS - The class has successfully loaded from disk.
+	FAIL_NOT_ENABLED - Local files have not been enabled for this user.
+	FAIL_FILE_CORRUPT - Decoding failed due to a corrupted/tampered file.
+	FAIL_DESERIALIZE - Decoding failed due to bad data in the file, meaning the .deserialize()
+	function errored out due to missing/malformed data after it has been succesfully decoded.
+	This can also happen if the file is empty or doesn't exist.
+	FAIL_NO_PLAYER - The player has left either during data transfer, or before.
+**/
+public enum LoadStatus
+	SUCCESS
+	FAIL_NOT_ENABLED
+	FAIL_FILE_CORRUPT
+	FAIL_DESERIALIZE
+	FAIL_NO_PLAYER
+
+/**
+	Represents the various states of a persistable class save.
+	SUCCESS - The class has successfully saved to disk.
+	FAIL_NOT_ENABLED - Local files have not been enabled for this user.
+	FAIL_NO_PLAYER - The player is not present.
+**/
+public enum SaveStatus
+	SUCCESS
+	FAIL_NOT_ENABLED
+	FAIL_NO_PLAYER
 
 /**
 	This is the folder that all your map objects will be serialized in.
@@ -14,7 +43,7 @@ constant PERSISTABLE_MAP_PREFIX = "persistent"
 
 /** Functional interface for optional lambda callback in Persistable.load() **/
 public interface PersistableLoadCallback
-	function onLoaded(boolean success)
+	function onLoaded(LoadStatus status)
 
 /** Functional interface for optional lambda callback in Persistable.save() **/
 public interface PersistableSaveCallback
@@ -42,13 +71,13 @@ public abstract class Persistable implements BufferSerializable
 	abstract function getClassId() returns string
 	/** This function should return a unique object id for this instance **/
 	abstract function getId() returns string
-	/** This function should apply default settings in the event that loading has failed **/
+	/** This function should apply default data in the event that loading has failed **/
 	abstract function supplyDefault()
 
 	/* Optionally overridable functions */
 
 	/** Override this function if you want to do something on object load **/
-	protected function onLoaded(boolean _success)
+	protected function onLoaded(LoadStatus _status)
 	/** Override this function if you want to do something on object save **/
 	protected function onSaved()
 	/** 
@@ -96,20 +125,32 @@ class PersistentStore
 		this.entity = entity
 		this.owner = owner
 
+	private function finishWithStatus(LoadStatus status, PersistableLoadCallback callback)
+		if status != LoadStatus.SUCCESS
+			entity.supplyDefault()
+		
+		if callback != null
+			callback.onLoaded(status)
+		entity.onLoaded(status)
+
 	function load(PersistableLoadCallback callback)
+		if not LocalFiles.isEnabled(owner)
+			finishWithStatus(LoadStatus.FAIL_NOT_ENABLED, callback)
+			return
+
 		// synchronizer used to proceed when the owner has finished loading data
 		let synchronizer = new SimpleSynchronizer()
 		let network = new Network(owner)
 		let reader = new FileReader(entity.getPath(), entity.getIODelay())
 	
 		if localPlayer == owner
-			reader.load(() -> begin
+			reader.load((FileLoadStatus _status) -> begin
 				var buffer = new StringBuffer(MAX_PACKET_LENGTH)
 				// a boolean for keeping track of whether the load was succesful or not
 				network.getData().writeBoolean(true)
 				// read the data from the file into the buffer, and then transfer it into the network's buffer
 				buffer.populateFromFile(reader)
-				buffer.transfer(network.getData())
+				try(() -> buffer.transfer(network.getData()))
 				// if there was an error during transfer, we scrap the data...
 				if not buffer.isValid()
 					network.getData().clear()
@@ -126,21 +167,24 @@ class PersistentStore
 		synchronizer.onSynced(() -> begin
 			destroy reader
 
-			network.start((Buffer buffer) -> begin
-				// first boolean in the stream is always an indicator of whether the owner loaded succesfully
-				let success = buffer.readBoolean()
-				
-				if success
-					// if the deserialization has failed for some reason, we need to catch that
-					let deserializeSuccess = try(() -> entity.deserialize(buffer))
-					if not deserializeSuccess
-						entity.supplyDefault()
-				else
-					entity.supplyDefault()
+			network.start((NetworkResult status, Buffer buffer) -> begin
+				var loadStatus = LoadStatus.SUCCESS
 
-				if callback != null
-					callback.onLoaded(success)
-				entity.onLoaded(success)
+				if status == NetworkResult.ABORTED
+					loadStatus = LoadStatus.FAIL_NO_PLAYER
+				else
+					// first boolean in the stream is always an indicator of whether the owner loaded succesfully
+					let decodeSuccess = buffer.readBoolean()
+					
+					if decodeSuccess
+						// if the deserialization has failed for some reason, we need to catch that
+						let deserializeSuccess = try(() -> entity.deserialize(buffer))
+						if not deserializeSuccess
+							loadStatus = LoadStatus.FAIL_DESERIALIZE
+					else
+						loadStatus = LoadStatus.FAIL_FILE_CORRUPT
+
+				finishWithStatus(loadStatus, callback)
 			end)
 		end)
 

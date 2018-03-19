@@ -84,14 +84,20 @@ public function execute(ForForceCallback c)
 	the only difference that it will allow you to inspect
 	an error if one occured.
 
+	If an error occured, the return value will be false.
+
 	If the error is caused by error(), then you can inspect
 	the error message using lastError from ErrorHandling.
 	If the error is caused by another form of thread crash,
 	such as zero division or OP limit, lastError will be null.
+
+	The error will also be suppressed from being printed.
 **/
 public function try(ForForceCallback c) returns boolean
 	pushCallback(c)
+	let suppressErrors = suppressErrorMessages
 	executeForce.forEach(function executeCurrentCallback)
+	suppressErrorMessages = suppressErrors
 	popCallback()
 	return isLastCallbackSuccessful()
 

@@ -1,5 +1,49 @@
 package BuffObjEditing
-import ObjEditingNatives
+import AbilityObjEditing
+import ObjectIds
+import ObjectIdGenerator
+
+/**  You should use 'createBuffObject' inside compiletime expressions:
+	let someBuff = compiletime(createBuffObject("Yes", "cool", Icons.bTNFarm))
+	
+	And then add the 'abilId' to the target to apply the buff.	*/
+public tuple buffTuple(int abilId, int buffId)
+
+/** Creates an ability and buff based on Tornado aura that allows to display a buff on units without side effects */
+public function createDummyBuffObject(string name, string tooltip, string iconpath) returns buffTuple
+	return createDummyBuffObject(name, tooltip, iconpath, "")
+
+/** Creates an ability and buff  based on Tornado aura that allows to display a buff on units without side effects */
+public function createDummyBuffObject(string name, string tooltip, string iconpath, string effectPath) returns buffTuple
+	return createDummyBuffObject(name, tooltip, iconpath, effectPath, "origin")
+
+/** Creates an ability and buff  based on Tornado aura that allows to display a buff on units without side effects */
+public function createDummyBuffObject(string name, string tooltip, string iconpath, string effectPath, string attachmentPoint) returns buffTuple
+	let abilId = ABIL_ID_GEN.next()
+	let buffId = BUFF_ID_GEN.next()
+
+	if compiletime
+		new BuffDefinition(buffId, 'Basl')
+			..setName(1, name)
+			..setTooltipNormal(1, name)
+			..setTooltipNormalExtended(1, tooltip)
+			..setIcon(iconpath)
+
+		new AbilityDefinitionAuraSlow(abilId)
+			..setName("Aura Dummy: " + name)
+			..setMovementSpeedFactor(1, 0)
+			..setBuffs(1, int2fourchar(buffId))
+			..presetIcon(iconpath)
+			..setArtTarget("")
+			..setTargetsAllowed(1, "self")
+			..setArtTarget(effectPath)
+			..setTargetAttachmentPoint(attachmentPoint)
+			..setEditorSuffix("wurst")
+		
+	return buffTuple(abilId, buffId)
+
+public function compiletime(buffTuple buffT) returns buffTuple
+	return buffT
 
 public class BuffDefinition
 	ObjectDefinition def
