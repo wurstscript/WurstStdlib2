@@ -1,5 +1,6 @@
 package LinkedList
 import NoWurst
+import Printing
 
 /** 
 Doubly-linked list implementation that implements all common list, stack and queue operations.
@@ -174,15 +175,13 @@ public class LinkedList<T>
 		return false
 
 	/** Removes the element if the predicates returns true */
-	function removeWhen(LinkedListPredicate<T> predicate) 
-		LLEntry<T> r = dummy.next
-		while r != dummy
-			if predicate.isTrueFor(r.elem)
-				r.prev.next = r.next
-				r.next.prev = r.prev
-				destroy r
-				size--
-			r = r.next
+	function removeWhen(LinkedListPredicate<T> predicate)
+		let itr = iterator()
+		for elem from itr
+			if predicate.isTrueFor(elem)
+				itr.remove()
+		itr.close()
+
 		destroy predicate
 		
 	/** Executes the closure for each element */	
@@ -206,13 +205,6 @@ public class LinkedList<T>
 		for i = 0 to size
 			add(removeAt(GetRandomInt(0, size-1)))
 
-	/** Returns a list containing the results of running the given closure function
-		for each element in the original list */ 
-	function map<Q>(MapClosure<T, Q> itr) returns LinkedList<Q>
-		let output = new LinkedList<Q>()
-		this.forEach((T t) -> output.add(itr.run(t)))
-		return output
-
 	/** Adds the given element directly behind the element at the given index */
 	function addAt(T elem, int index)
 		let entryAtIndex = getEntry(index)
@@ -229,6 +221,19 @@ public class LinkedList<T>
 			while last.next != dummy
 				last = last.next
 			dummy.prev = last
+
+	/** Returns a list containing the results of running the given closure function
+	for each element in the original list */ 
+	function map<Q>(MapClosure<T, Q> itr) returns LinkedList<Q>
+		let output = new LinkedList<Q>()
+		this.forEach((T t) -> output.add(itr.run(t)))
+		return output
+
+	/** Returns a new list of the elements that satisfy the predicate */
+	function filter(LinkedListPredicate<T> predicate) returns LinkedList<T>
+		let result = copy()
+		result.removeWhen(t -> not predicate.isTrueFor(t))
+		return result
 
 	/** internal merge sort */
 	private function sort(Comparator<T> comparator, LLEntry<T> e) returns LLEntry<T>
@@ -302,7 +307,7 @@ public class LinkedList<T>
 		return entry
 		
 	/** Removes an entry */
-	private function removeEntry(LLEntry<T> entry)
+	protected function removeEntry(LLEntry<T> entry)
 		entry.prev.next = entry.next
 		entry.next.prev = entry.prev
 		destroy entry
@@ -352,13 +357,10 @@ public class LLIterator<T>
 	 	This call can only be made once per call to next */
 	function remove() returns T
 		if current != dummy
-			parent.size--
-			current.next.prev = current.prev
-			current.prev.next = current.next
-			let removedNode   = current
-			current		   = current.prev
-			destroy removedNode
-			return removedNode.elem
+			parent.removeEntry(current)
+			let removed = current.elem
+			current = current.prev
+			return removed
 		return null
 
 	function hasNext() returns boolean
