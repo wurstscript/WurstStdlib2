@@ -135,3 +135,10 @@ function testGenerics()
 	list = list.filter(i -> i > 3)
 	list.size().assertEquals(3)
 	list.get(2).assertEquals(6)
+
+@Test function testFoldl()
+	var list = new LinkedList<int>()
+	for i = 1 to 6
+		list.add(i)
+	let result = list.foldl<int>(0, (i, q) -> q + i)
+	result.assertEquals(21)

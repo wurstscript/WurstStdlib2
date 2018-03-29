@@ -228,12 +228,25 @@ public class LinkedList<T>
 	function map<Q>(MapClosure<T, Q> itr) returns LinkedList<Q>
 		let output = new LinkedList<Q>()
 		this.forEach((T t) -> output.add(itr.run(t)))
+		destroy itr
 		return output
 
 	/** Returns a new list of the elements that satisfy the predicate */
 	function filter(LinkedListPredicate<T> predicate) returns LinkedList<T>
 		let result = copy()
 		result.removeWhen(t -> not predicate.isTrueFor(t))
+		destroy predicate
+		return result
+
+	/** 'Folds' this list into a single value of type Q 
+		Example int-list sum: `list.foldl<int>(0, (i, q) -> q + i)` */
+	function foldl<Q>(Q startValue, FoldClosure<T, Q> predicate) returns Q
+		var result = startValue
+		var r = dummy.next
+		while r != dummy
+			result = predicate.run(r.elem, result)
+			r = r.next
+		destroy predicate
 		return result
 
 	/** internal merge sort */
@@ -426,6 +439,9 @@ public interface LinkedListUpdater<T>
 
 public interface MapClosure<T, Q>
 	function run(T t) returns Q
+
+public interface FoldClosure<T, Q>
+	function run(T t, Q q) returns Q
 
 public interface Comparator<T>
 	function compare(T o1, T o2) returns int
