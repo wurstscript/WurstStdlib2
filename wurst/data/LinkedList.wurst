@@ -185,12 +185,13 @@ public class LinkedList<T>
 		destroy predicate
 		
 	/** Executes the closure for each element */	
-	function forEach(LLItrClosure<T> itr)
+	function forEach(LLItrClosure<T> itr) returns LinkedList<T>
 		LLEntry<T> r = dummy.next
 		while r != dummy
 			itr.run(r.elem)
 			r = r.next
 		destroy itr
+		return this
 	
 	/** Updates all elements */	
 	function updateAll(LinkedListUpdater<T> f)
