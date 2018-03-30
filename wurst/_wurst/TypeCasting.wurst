@@ -183,7 +183,7 @@ public function trackableToIndex(trackable object) returns int
 	return object.getHandleId()
 
 public function lightningFromIndex(int index) returns lightning
-	return typecastdata.loadLightning(-index)
+	return typecastdata.loadLightning(index)
 
 public function lightningToIndex(lightning object) returns int
 	typecastdata.saveLightning(-object.getHandleId(), object)
