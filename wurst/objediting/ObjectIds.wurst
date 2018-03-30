@@ -5,7 +5,7 @@ import Wurstunit
 
 constant CHARMAP = ".................................!.#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[.]^_`abcdefghijklmnopqrstuvwxyz{|}~................................................................................................................................."
 
-/** Convert a integer id value into a 4-letter id code. */
+/** Convert a int id value into a 4-letter id code. */
 public function int2fourchar(int value) returns string
 	var result = ""
 	var remainingValue = value
@@ -17,7 +17,7 @@ public function int2fourchar(int value) returns string
 
 	return result
 
-/** converts a 4-letter id code to an integer */
+/** converts a 4-letter id code to an int */
 public function fourchar2int(string value) returns int
 	var result = 0
 	if value.length() != 4

@@ -23,7 +23,7 @@ import OnUnitEnterLeave
 			import UnitIndexer
 
 	2) Getting the index of a unit and getting the unit with an index
-		To get a unit's unique index as an integer:
+		To get a unit's unique index as an int:
 
 			unit.getIndex()
 			
@@ -111,10 +111,10 @@ unit deindexedUnit = null
 @configurable public function shouldIndex(unit _u) returns boolean
 	return true
 
-/**  Returns the integer index of this unit. 
+/**  Returns the int index of this unit. 
 	Can be configured by the user to supply a custom unit indexer which won't break 
 	other stdlib components. */
-@configurable public function unit.getIndex() returns integer
+@configurable public function unit.getIndex() returns int
 	return this.getUserData()
 
 /**  Returns the UnitIndex associated with this unit, creating a new one if necessary. */

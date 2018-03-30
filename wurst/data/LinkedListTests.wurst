@@ -142,3 +142,10 @@ function testGenerics()
 		list.add(i)
 	let result = list.foldl<int>(0, (i, q) -> q + i)
 	result.assertEquals(21)
+
+@Test function testToString()
+	var list = new LinkedList<int>()
+	for i = 1 to 6
+		list.add(i)
+	let result = list.toString()
+	result.assertEquals("[1,2,3,4,5,6]")

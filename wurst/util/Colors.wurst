@@ -137,7 +137,7 @@ public function toHex(int number) returns string
 	var secondpart = number - firstpart * 16
 	return hexs[firstpart] + hexs[secondpart]
 	
-/** Converts a twochar string to an integer */
+/** Converts a twochar string to an int */
 public function toDec(string twochar) returns int
 	if twochar.length() > 2
 		return -1

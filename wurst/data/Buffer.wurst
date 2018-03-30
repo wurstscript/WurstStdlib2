@@ -62,7 +62,7 @@ public enum BufferFailureMode
 	integers, booleans, reals and strings in sequential order.
 **/
 public interface Buffer
-	/** Reads an integer from the buffer **/
+	/** Reads an int from the buffer **/
 	function readInt() returns int
 	/** Reads a boolean from the buffer **/
 	function readBoolean() returns boolean
@@ -71,7 +71,7 @@ public interface Buffer
 	/** Reads a string from the buffer **/
 	function readString() returns string
 
-	/** Writes an integer to the buffer **/
+	/** Writes an int to the buffer **/
 	function writeInt(int value)
 	/** Writes a boolean to the buffer **/
 	function writeBoolean(boolean value)
@@ -395,11 +395,11 @@ class ChunkElement
 	Strings are encoded with a length-field prepending them.
 
 	Examples of serialized values:
-		1. "i50392|" - integer 50392
+		1. "i50392|" - int 50392
 		2. "r3.1415|" - real 3.1415
 		3. "b1" - boolean true
 		4. "s10|0123456789" - string 0123456789
-		5. "s5|01234i10|b1b0r1.0005|" - string 012345, integer 10, bool true, bool false, real 1.0005
+		5. "s5|01234i10|b1b0r1.0005|" - string 012345, int 10, bool true, bool false, real 1.0005
 **/
 public class StringBuffer extends AbstractBuffer
 	private static constant TERMINATOR = "|"
@@ -479,7 +479,7 @@ public class StringBuffer extends AbstractBuffer
 		if not isDataAvailable()
 			fail(BufferFailureMode.EOF, "reached EOF")
 
-	private function getNextChunkSize() returns integer
+	private function getNextChunkSize() returns int
 		return chunks.getFirst().content.length()
 
 	// loads the next chunk into the buffer

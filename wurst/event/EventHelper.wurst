@@ -25,7 +25,7 @@ public function unit.clearRegister()
 	if triggerData.loadTrigger(h) == null
 		return
 	trigger t = triggerData.loadTrigger(h)
-	integer th = GetHandleId(t)
+	int th = GetHandleId(t)
 	DestroyTrigger(t)
 	triggerData.removeHandle(h)
 	triggerData.removeHandle(th)

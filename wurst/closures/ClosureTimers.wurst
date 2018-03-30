@@ -2,6 +2,7 @@ package ClosureTimers
 import NoWurst
 import TimerUtils
 import Real
+
 /** Execute an action after a certain time. 
 	The callback object is automatically destroyed.
 	
@@ -28,8 +29,6 @@ public function nullTimer(CallbackSingle cb) returns CallbackSingle
 	|     if i > 10
 			destroy cb
 */
-
-
 public function doPeriodically(real time, CallbackPeriodic cb) returns CallbackPeriodic
 	cb.start(time)
 	return cb
@@ -45,6 +44,7 @@ public function doPeriodically(real time, CallbackPeriodic cb) returns CallbackP
 public function doPeriodicallyCounted(real time, int callAmount, CallbackCounted cb) returns CallbackCounted
 	cb.start(time, callAmount)
 	return cb
+
 /** execute an action periodically, with a limited duration 
 	The callback object is destroyed afterwards.
 	
@@ -96,8 +96,8 @@ public abstract class CallbackPeriodic
 		t.release()
 		
 public abstract class CallbackCounted
+	private var count = 0
 	private timer t
-	private int count = 0
 	
 	protected abstract function call(thistype cb)
 
