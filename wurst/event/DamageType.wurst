@@ -1,6 +1,8 @@
-// Use this package for finding the damage type in the context of a
-// DamageDetection handler. Typically this means differentiating between spells
-// and basic attacks.
+/** Use this package for finding the damage type in the context of a
+    DamageDetection handler. Typically this means differentiating between spells
+    and basic attacks. 
+    
+    It is deprecated tho, since there's DamageModify package. */
 package DamageType
 import TimerUtils
 import AbilityObjEditing
@@ -138,7 +140,7 @@ function handler() returns bool
 
         let sampledLife = tU.getHP() - .405
         if sampledLife >= attemptedDamage and sampledLife <= 2.*attemptedDamage
-            tU.setHP(sampledLife - attemptedDamage)
+            tU.setHP(sampledLife - attemptedDamage + .405)
 
             let tempDat = new DelayDat
             tempDat.target = tU
@@ -155,7 +157,7 @@ function handler() returns bool
 
 init
     onEnter() ->
-        GetTriggerUnit()..addAbility(DAMAGE_TYPE_CHECK_ID)..makeAbilityPermanent(DAMAGE_TYPE_CHECK_ID, true)
+        getEnterLeaveUnit()..addAbility(DAMAGE_TYPE_CHECK_ID)..makeAbilityPermanent(DAMAGE_TYPE_CHECK_ID, true)
 
     forUnitsInRect(bj_mapInitialPlayableArea) iter ->
         iter..addAbility(          DAMAGE_TYPE_CHECK_ID)
