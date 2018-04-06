@@ -1,0 +1,102 @@
+package Illusion
+// Credits goes to Flux for original vJass system, Trokkin for Wurst transition
+import NoWurst
+import Trigger
+import Unit
+import Orders
+import HashMap
+import DamageModify
+import Printing
+import OnUnitEnterLeave
+import AbilityObjEditing
+import InstantDummyCaster
+
+@configurable constant int ILLUSION_ID = 'AILS'
+@configurable constant int REFRESH_COUNT = 30
+
+unit lastCreatedIllusion
+trigger illusionCatchTrigger
+
+function unit.getIllusion(int abilId, int lvl) returns unit
+	unit r = null
+	if this != null and this.isAlive()
+		lastCreatedIllusion = null
+		illusionCatchTrigger.enable()
+		if InstantDummyCaster.castTarget(null, abilId, lvl, Orders.wandOfIllusion, this)
+			if lastCreatedIllusion != null
+				r = lastCreatedIllusion
+			else
+				Log.error("[Illusion] No illusion created (or found)")
+		else
+			Log.error("[Illusion] Issued illusion create order failed")
+		illusionCatchTrigger.disable()
+	else
+		Log.error("[Illusion] Source unit dead or non-existing")
+	return r
+
+init
+	illusionCatchTrigger = CreateTrigger()
+		..registerAnyUnitEvent(EVENT_PLAYER_UNIT_SUMMON)
+		..addCondition(Condition(() -> begin
+			if IsUnitIllusion(GetSummonedUnit())
+				lastCreatedIllusion = GetSummonedUnit()
+		end))
+		..disable()
+
+	onLeave(() -> begin
+		let ill = Illusion.get(getEnterLeaveUnit())
+		if(ill != null)
+			destroy ill
+	end)
+	addDamageModifier() d ->
+		let sourceIllusion = Illusion.get(d.source)
+		if(sourceIllusion != null)
+			d.amount *= sourceIllusion.damageGiven
+		let targetIllusion = Illusion.get(d.target)
+		if(targetIllusion != null)
+			d.amount *= targetIllusion.damageTaken
+
+public class Illusion
+	unit u
+	real damageTaken = 1
+	real damageGiven = 1
+
+	static HashMap<unit, Illusion> tb = new HashMap<unit, Illusion>
+	static function get(unit u) returns Illusion
+		return tb.get(u)
+	
+	function setDuration(real time)
+		u.setTimedLife(time)
+
+	construct(unit u)
+		this.u = u
+		tb.put(u, this)		
+
+	static function create(player owner, unit source, vec2 pos, int abilId, int lvl) returns Illusion
+		unit u = source.getIllusion(abilId, lvl)
+		if u == null
+			return null
+		if u.isType(UNIT_TYPE_STRUCTURE)
+			u.setPos(pos)
+		else
+			u.setXY(pos)
+		if owner != null
+			u.setOwner(owner, true)
+		u.setAnimation("stand")
+		return new Illusion(u)
+
+	static function create(player owner, unit source, vec2 pos) returns Illusion
+		return create(owner, source, pos, ILLUSION_ID, 1)
+
+	ondestroy
+		tb.remove(u)
+		if u.isAlive()
+			u.kill()
+
+@compiletime function generateObject()
+	new AbilityDefinitionItemIllusion(ILLUSION_ID)
+	..setCooldown(1, 0)
+	..setDurationHero(1, 0)
+	..setDurationNormal(1, 0)
+	..setDamageDealtofnormal(1, 1)
+	..setDamageReceivedMultiplier(1, 1)
