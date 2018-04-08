@@ -110,7 +110,7 @@ function testGenerics()
 
 	bi2.assertEquals(list.size())
 
-@test function testAddAt()
+@Test function testAddAt()
 	let list = new LinkedList<int>()
 	for i = 1 to 6
 		list.add(i)
@@ -119,3 +119,33 @@ function testGenerics()
 	for elem in list
 		elems += elem.toString()
 	elems.assertEquals("1234756")
+
+@Test function testRemoveWhen()
+	var list = new LinkedList<int>()
+	for i = 1 to 6
+		list.add(i)
+	list.removeWhen(i -> i < 3)
+	list.size().assertEquals(4)
+	list.get(2).assertEquals(5)
+
+@Test function testFilter()
+	var list = new LinkedList<int>()
+	for i = 1 to 6
+		list.add(i)
+	list = list.filter(i -> i > 3)
+	list.size().assertEquals(3)
+	list.get(2).assertEquals(6)
+
+@Test function testFoldl()
+	var list = new LinkedList<int>()
+	for i = 1 to 6
+		list.add(i)
+	let result = list.foldl<int>(0, (i, q) -> q + i)
+	result.assertEquals(21)
+
+@Test function testToString()
+	var list = new LinkedList<int>()
+	for i = 1 to 6
+		list.add(i)
+	let result = list.toString()
+	result.assertEquals("[1,2,3,4,5,6]")

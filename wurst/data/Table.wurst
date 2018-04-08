@@ -18,7 +18,7 @@ public class Table
 	function hasString(int parentKey) returns boolean
 		return ht.hasString(this castTo int, parentKey)
 		
-	function removeBoolean(integer parentKey)
+	function removeBoolean(int parentKey)
 		RemoveSavedBoolean(ht, this castTo int, parentKey)
 	
 	function loadInt(int parentKey) returns int
@@ -30,7 +30,7 @@ public class Table
 	function hasInt(int parentKey) returns boolean
 		return ht.hasInt(this castTo int, parentKey)
 	
-	function removeInt(integer parentKey)
+	function removeInt(int parentKey)
 		RemoveSavedInteger(ht, this castTo int, parentKey)
 		
 	function loadReal(int parentKey) returns real
@@ -48,10 +48,10 @@ public class Table
 	function hasReal(int parentKey) returns boolean
 		return ht.hasReal(this castTo int, parentKey)
 	
-	function removeReal(integer parentKey)
+	function removeReal(int parentKey)
 		RemoveSavedReal(ht, this castTo int, parentKey)
 	
-	function removeHandle(integer parentKey)
+	function removeHandle(int parentKey)
 		RemoveSavedHandle(ht, this castTo int, parentKey)
 		
 	function loadPlayer(int parentKey) returns player
@@ -202,7 +202,7 @@ public class Table
 		return ht.loadImageHandle( this castTo int, parentKey)
 	
 	function saveImage(int parentKey, image value)
-		ht.saveImageHandle( this castTo int, parentKey, value)
+		ht.saveImageHandle(this castTo int, parentKey, value)
 	
 	function loadUbersplat(int parentKey) returns ubersplat
 		return ht.loadUbersplatHandle( this castTo int, parentKey)

@@ -16,14 +16,14 @@ constant HT = InitHashtable()
 	Stores the last error thrown by error().
 	This error can be inspected when using try() from package Execute.
 **/
-public string lastError = null
+public var lastError = ""
 
 /**
 	Allows you to suppress error output.
 	This is primarily useful when you catch
 	an error with try().
 **/
-public boolean suppressErrorMessages = false
+public var suppressErrorMessages = false
 
 /** error handing function.
 This function is used by libraries and for internal Wurst errors like 
