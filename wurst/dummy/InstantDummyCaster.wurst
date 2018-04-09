@@ -1,5 +1,7 @@
 package InstantDummyCaster
 import NoWurst
+import MagicFunctions
+import ObjectIdGenerator
 import Basics
 import Unit
 import Widget
@@ -86,15 +88,15 @@ public class InstantDummyCaster
 	static function castPoint(player owner, int abilityId, int lvl, int orderId, vec2 targetPos, vec2 casterPos) returns boolean
 		return castPoint(owner, abilityId, lvl, orderId, targetPos, casterPos.toVec3())
 
-constant DUMMY_CASTER_UNIT_ID = 'xcas'
+constant DUMMY_CASTER_UNIT_ID = compiletime(UNIT_ID_GEN.next())
 
 init
 	InstantDummyCaster.caster = createUnit(DUMMY_PLAYER, DUMMY_CASTER_UNIT_ID, boundMax, angle(0))
 	..setPathing(false)..addAbility(HEIGHT_ENABLER)..removeAbility(HEIGHT_ENABLER)
 		
 @compiletime function generateObject()
-	let u = new UnitDefinition(DUMMY_CASTER_UNIT_ID, 'ewsp')
-	u..setName("Dummy Caster")
+	new UnitDefinition(DUMMY_CASTER_UNIT_ID, 'ewsp')
+	..setName("Dummy Caster")
 	..setManaMaximum(1000000)
 	..setMovementType(MovementType.Fly)
 	..setUpgradesUsed("")
