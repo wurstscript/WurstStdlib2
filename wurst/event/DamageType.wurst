@@ -159,9 +159,9 @@ init
     onEnter() ->
         getEnterLeaveUnit()..addAbility(DAMAGE_TYPE_CHECK_ID)..makeAbilityPermanent(DAMAGE_TYPE_CHECK_ID, true)
 
-    forUnitsInRect(bj_mapInitialPlayableArea) iter ->
-        iter..addAbility(          DAMAGE_TYPE_CHECK_ID)
-            ..makeAbilityPermanent(DAMAGE_TYPE_CHECK_ID, true)
+    forUnits() u ->
+        u..addAbility(DAMAGE_TYPE_CHECK_ID)
+        ..makeAbilityPermanent(DAMAGE_TYPE_CHECK_ID, true)
 
     addOnDamageFunc(Condition(function handler))
 

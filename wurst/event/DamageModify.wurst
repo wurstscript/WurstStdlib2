@@ -177,7 +177,7 @@ function handler() returns bool
 init
 	onEnter() ->
 		getEnterLeaveUnit()..addAbility(DAMAGE_TYPE_CHECK_ID)..makeAbilityPermanent(DAMAGE_TYPE_CHECK_ID, true)
-	forUnitsInRect(bj_mapInitialPlayableArea) u ->
+	forUnits() u ->
 		u..addAbility(DAMAGE_TYPE_CHECK_ID)..makeAbilityPermanent(DAMAGE_TYPE_CHECK_ID, true)
 	addOnDamageFunc(Condition(function handler))
 
