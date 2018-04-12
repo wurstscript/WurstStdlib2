@@ -38,6 +38,9 @@ public function item.remove()
 public function item.getTypeId() returns int
 	return GetItemTypeId(this)
 
+public function item.setVisible(boolean flag)
+	SetItemVisible(this, flag)
+
 public function item.setName(string name)
 	SetItemName(this, name)
 
@@ -64,6 +67,3 @@ public function item.setIconPath(string path)
 
 public function item.getIconPath() returns string
 	return GetItemIconPath(this)
-
-public function item.setVisible(boolean flag)
-	SetItemVisible(this, flag)
