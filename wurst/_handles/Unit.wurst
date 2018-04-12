@@ -407,3 +407,93 @@ public function unit.getDefaultAquireRange() returns real
 
 public function unit.getDefaultFlyHeight() returns real
 	return GetUnitDefaultFlyHeight(this)
+
+public function unit.getMaxHP() returns int
+	return GetUnitMaxHP(this)
+
+public function unit.setMaxHP(int hp)
+	SetUnitMaxHP(this, hp)
+
+public function unit.getMaxMana() returns int
+	return GetUnitMaxMana(this)
+
+public function unit.setMaxMana(int mana)
+	SetUnitMaxMana(this, mana)
+
+public function unit.deleteAbility(int abilCode)
+	DeleteHeroAbility(this, abilCode)
+
+public function unit.setName(string name)
+	SetUnitName(this, name)
+
+public function unit.SetProperName(string name)
+	SetHeroProperName(this, name)
+
+public function unit.getBaseDamage(int weaponIndex) returns int
+	return GetUnitBaseDamage(this, weaponIndex)
+
+public function unit.setBaseDamage(int baseDamage, int weaponIndex)
+	SetUnitBaseDamage(this, baseDamage, weaponIndex)
+
+public function unit.getDiceNumber(int weaponIndex) returns int
+	return GetUnitDiceNumber(this, weaponIndex)
+
+public function unit.setDiceNumber(int diceNumber, int weaponIndex)
+	SetUnitDiceNumber(this, diceNumber, weaponIndex)
+
+public function unit.getDiceSides(int weaponIndex) returns int
+	return GetUnitDiceSides(this, weaponIndex)
+
+public function unit.setDiceSides(int diceSides, int weaponIndex)
+	SetUnitDiceSides(this, diceSides, weaponIndex)
+
+public function unit.getAttackCooldown(int weaponIndex) returns real
+	return GetUnitAttackCooldown(this, weaponIndex)
+
+public function unit.setAttackCooldown(real cooldown, int weaponIndex)
+	SetUnitAttackCooldown(this, cooldown, weaponIndex)
+
+public function unit.getArmor(int weaponIndex) returns real
+	return GetUnitArmor(this)
+
+public function unit.setArmor(real armorAmount)
+	SetUnitAttackCooldown(this, armorAmount)
+
+public function unit.hideAbility(int abilId, boolean flag)
+	UnitHideAbility(this, abilId, flag)
+
+public function unit.disableAbility(int abilId, boolean flag, boolean hideUI)
+	UnitDisableAbility(this, abilId, flag, hideUI)
+
+public function unit.cancelTimedLife()
+	UnitCancelTimedLife(this)
+
+public function unit.isSelectable() returns boolean
+	return IsUnitSelectable(this)
+
+public function unit.isInvulnerable() returns boolean
+	return IsUnitInvulnerable(this)
+
+public function unit.interruptAttack()
+	UnitInterruptAttack(this)
+
+public function unit.getCollisionSize() returns real
+	return GetUnitCollisionSize(this)
+
+public function unit.setAbilityCooldown(int abilId, int level, real cooldown)
+	SetUnitAbilityCooldown(this, abilId, level, cooldown)
+
+public function unit.getAbilityCooldown(int abilId, int level) returns real
+	return GetUnitAbilityCooldown(this, abilId, level)
+
+public function unit.getAbilityCooldownRemaining(int abilId) returns real
+	return GetUnitAbilityCooldownRemaining(this, abilId)
+
+public function unit.endAbilityCooldown(int abilCode)
+	EndUnitAbilityCooldown(this, abilCode)
+
+public function unit.getAbilityManaCost(int abilId, int level) returns int
+	return GetUnitAbilityManaCost(this, abilId, level)
+
+public function unit.getLocalZ() returns real
+	return GetLocalUnitZ(this)
