@@ -104,3 +104,6 @@ public function player.unselect(unit u)
 
 public function player.isIngame() returns boolean
 	return this.getSlotState() == PLAYER_SLOT_STATE_PLAYING and this.getController() == MAP_CONTROL_USER
+
+public function player.decTechResearched(int techId, int levels)
+	BlzDecPlayerTechResearched(this, techid, levels)
