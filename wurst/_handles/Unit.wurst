@@ -124,10 +124,10 @@ public function handle.getHandleId() returns int
 public function unit.getMana() returns real
 	return this.getState(UNIT_STATE_MANA)
 
-public function unit.getStateMaxHP() returns real
+public function unit.getMaxHP() returns real
 	return this.getState( UNIT_STATE_MAX_LIFE )
 
-public function unit.getStateMaxMana() returns real
+public function unit.getMaxMana() returns real
 	return this.getState(UNIT_STATE_MAX_MANA)
 
 public function unit.getMoveSpeed() returns real
@@ -408,10 +408,10 @@ public function unit.getDefaultAquireRange() returns real
 public function unit.getDefaultFlyHeight() returns real
 	return GetUnitDefaultFlyHeight(this)
 
-public function unit.getMaxHP() returns int
+public function unit.getIntMaxHP() returns int
 	return BlzGetUnitMaxHP(this)
 
-public function unit.setMaxHP(int hp)
+public function unit.setIntMaxHP(int hp)
 	BlzSetUnitMaxHP(this, hp)
 
 public function unit.getMaxMana() returns int
