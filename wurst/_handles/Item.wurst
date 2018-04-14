@@ -37,6 +37,33 @@ public function item.remove()
 
 public function item.getTypeId() returns int
 	return GetItemTypeId(this)
-	
+
 public function item.setVisible(boolean flag)
 	SetItemVisible(this, flag)
+
+public function item.setName(string name)
+	BlzSetItemName(this, name)
+
+public function item.setDescription(string description)
+	BlzSetItemDescription(this, description)
+
+public function item.getDescription() returns string
+	return BlzGetItemDescription(this)
+
+public function item.setTooltip(string tooltip)
+	BlzSetItemTooltip(this, tooltip)
+
+public function item.getTooptip() returns string
+	return BlzGetItemTooltip(this)
+
+public function item.setExtendedTooltip(string tooltip)
+	BlzSetItemExtendedTooltip(this, tooltip)
+
+public function item.getExtendedTooltip() returns string
+	return BlzGetItemExtendedTooltip(this)
+
+public function item.setIconPath(string path)
+	BlzSetItemIconPath(this, path)
+
+public function item.getIconPath() returns string
+	return BlzGetItemIconPath(this)
