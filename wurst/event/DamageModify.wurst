@@ -1,3 +1,112 @@
+/**
+	DamageModify
+	by Trokkin
+
+	API:
+
+	// Pretty much '(Damage d) -> ...'
+	interface ForDamageCallback
+		run(Damage d)
+
+	// these are called before the damage is dealt
+	// can be called multiple amount of times or not called at all
+	addDamageModifier(ForDamageCallback cb)
+	removeDamageModifier(ForDamageCallback cb)
+	
+	// these are called after the damage is dealt
+	// are called strictly once per damage instance
+	addDamageListener(ForDamageCallback cb)
+	removeDamageListener(ForDamageCallback cb)
+
+	// a short for 'new Damage(this, target, amount, isSpell, id)..modify()..deal()'
+	unit.damage(unit target, real amount, OPTIONAL bool isSpell = true, int id = 0)
+
+	class Damage
+		
+		// Basic damage event info
+		unit source
+		unit target
+		bool spell
+		real initial
+
+		// .id is used for any unique iterations
+		integer id
+		// .amount is used to manipulate damage amount
+		// like, addDamageModifier(d -> d.amount += d.initial * 1.00) adds +100% multiplier onto damage
+		real amount
+
+		// if .saveTarget is checked then .target will survive from this damage no matter what
+		bool saveTarget = false
+
+		// after damage has happened the Damage object is destroyed, but only if wantSave == 0
+		// which should happen only if other system would want to save it and destroy it manually
+		// (even then destroy should reduce .wantSave by 1 and check if it's not positive number if other system still wants it)
+		// (probably something like counter in Link class from Java)
+		int wantSave = 0
+
+		// .modify() evaluates all damageModifiers on itself
+		// is automatically called on non-triggered damage once
+		// isn't called on manual construction, so user can manually decide how many iterations a damage should have, from 0 to infinity
+		modify()
+
+		// Returns true if the damage is going to kill or already have killed target
+		isKillingBlow() -> bool
+
+		// Damage objects can be created manually to have full control on them from the code
+		construct(unit source, unit target, real amount, bool isSpell, int id)
+		// .deal() runs manually created damage
+		deal()
+
+	// an important note:
+	// for damageListeners .amount is set to actual difference in target's life
+	// so damage won't be more than target's life if it has killed target (or it was saved)
+	// (a unit has 10 hp, it takes 100 damage, for damageModifiers it's 100 damage
+		but for damageListeners it's 10 damage / 10 - .405 damage if .saveTarget == true)
+
+	Examples:
+	
+	// Leech ability
+		constant int LEECH_ID = compiletime(ABIL_ID_GEN.next())
+		constant int LEECH_DAMAGE = compiletime(GetRandomInt(100, 200)) // just for lulz
+
+		// Implementation #1
+		function onLeechEffect1()
+			let d = new Damage(GetTriggerUnit(), GetSpellTargetUnit(), LEECH_DAMAGE, true, 0)..modify()
+			d.wantSave += 1
+			d.deal()
+
+			d.source.addHP(d.amount) // Leech effect implementation #1
+			d.source.addEffect(Abilities.vampiricAuraTarget, "origin").destr()
+
+			d.wantSave -= 1
+			if d.wantSave <= 0
+				destroy d
+
+		// Implementation #2
+		function onLeechEffect2()
+			GetTriggerUnit().damage(GetSpellTargetUnit(), LEECH_DAMAGE, LEECH_ID)
+		
+		init
+			addDamageListener() d ->
+				if d.id == LEECH_ID	
+					d.source.addHP(d.amount) // Leech effect implementation #2
+					d.source.addEffect(Abilities.vampiricAuraTarget, "origin").destr()
+
+	// Damage resistance buff
+		constant BUFF_DURATION = 5.0
+
+		function onBuffEffect()
+			let target = GetSpellTargetUnit()
+			let effect = target.addEffect(Abilities.voodooAuraTarget, "origin")
+			ForDamageCallback cb = () d ->
+				if target == d.target
+					d.amount -= d.initial * .5
+			addDamageModifier(cb)
+			doAfter(BUFF_DURATION) ->
+				removeDamageModifier(cb)
+				effect.destr()
+
+*/
 package DamageModify
 import AbilityObjEditing
 import ClosureForGroups
