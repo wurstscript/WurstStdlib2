@@ -124,10 +124,10 @@ public function handle.getHandleId() returns int
 public function unit.getMana() returns real
 	return this.getState(UNIT_STATE_MANA)
 
-public function unit.getMaxHP() returns real
+public function unit.getStateMaxHP() returns real
 	return this.getState( UNIT_STATE_MAX_LIFE )
 
-public function unit.getMaxMana() returns real
+public function unit.getStateMaxMana() returns real
 	return this.getState(UNIT_STATE_MAX_MANA)
 
 public function unit.getMoveSpeed() returns real
@@ -457,7 +457,7 @@ public function unit.getArmor(int weaponIndex) returns real
 	return BlzGetUnitArmor(this)
 
 public function unit.setArmor(real armorAmount)
-	BlzSetUnitAttackCooldown(this, armorAmount)
+	BlzSetUnitArmor(this, armorAmount)
 
 public function unit.hideAbility(int abilId, boolean flag)
 	BlzUnitHideAbility(this, abilId, flag)
