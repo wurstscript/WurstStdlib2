@@ -1,5 +1,6 @@
 package DamageDetection
 import OnUnitEnterLeave
+import ClosureForGroups
 
 constant SWAP_TIMEOUT = 600.
 
@@ -41,8 +42,7 @@ function swap()
 	if not b
 		current.disable()
 
-	for i = 0 to bj_MAX_PLAYER_SLOTS - 1
-		GroupEnumUnitsOfPlayer(ENUM_GROUP, players[i], filter)
+	forUnitsAll(u -> addUnit(u))
 
 	for i = 0 to funcNext-1
 		current.addCondition(func[i])
