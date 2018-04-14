@@ -426,7 +426,7 @@ public function unit.deleteAbility(int abilCode)
 public function unit.setName(string name)
 	BlzSetUnitName(this, name)
 
-public function unit.SetProperName(string name)
+public function unit.setProperName(string name)
 	BlzSetHeroProperName(this, name)
 
 public function unit.getBaseDamage(int weaponIndex) returns int
@@ -453,7 +453,7 @@ public function unit.getAttackCooldown(int weaponIndex) returns real
 public function unit.setAttackCooldown(real cooldown, int weaponIndex)
 	BlzSetUnitAttackCooldown(this, cooldown, weaponIndex)
 
-public function unit.getArmor(int weaponIndex) returns real
+public function unit.getArmor() returns real
 	return BlzGetUnitArmor(this)
 
 public function unit.setArmor(real armorAmount)
