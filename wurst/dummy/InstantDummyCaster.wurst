@@ -1,5 +1,7 @@
 package InstantDummyCaster
 import NoWurst
+import MagicFunctions
+import ObjectIdGenerator
 import Basics
 import Unit
 import Widget
@@ -7,111 +9,118 @@ import UnitObjEditing
 import MapBounds
 
 /**
- *   Dummy caster for casting spells
+ *  Dummy caster for casting instant spells.
+ *	vec3 can be used for casterpos so that any effects/projectiles on/from caster will be on given height.
  *
- *   Spells must have 0 cooldown, 92083 range, and cost 0 mana. Spells must be instant and
- *   can't share the same order as other spells on the dummy caster.
+ *	Can't cast channeling spells or impale.
+ *	Any damage from instant spells would be treaten as from DUMMY_PLAYER.
+ *	Spells are recommended to be 0 cooldown, 92083 cast range and 0 manacost.
  */
 public class InstantDummyCaster
-	static unit caster
-	static int id
-	
+	protected static unit caster
+
 	private construct()
 	
-	private static function prepare(player owner, int abilityId, int lvl, vec2 pos)
-		id = abilityId
-		caster.addAbility(id)
-		caster.setXY(pos)
+	private static function prepare(player owner, int id, int lvl, vec3 pos)
+		caster..addAbility(id)..setMana(1000000)
+		if pos.inBounds()
+			caster.setXYZ(pos)
 		if lvl > 1
 			caster.setAbilityLevel(id, lvl)
 		if owner != null
 			caster.setOwner(owner, false)
 			
-	private static function finish()
+	private static function finish(int id)
 		caster.setOwner(DUMMY_PLAYER, false)
 		caster.removeAbility(id)
 		caster.setPos(boundMax)
 			
-	static function castImmediate(player owner, int abilityId, int lvl, int orderId, vec2 pos) returns boolean
+	static function castImmediate(player owner, int abilityId, int lvl, int orderId, vec3 pos) returns boolean
 		prepare(owner, abilityId, lvl, pos)
 		boolean b = caster.issueImmediateOrderById(orderId)
-		finish()
+		finish(abilityId)
 		return b
 		
-	static function castTarget(player owner, int abilityId, int lvl, int orderId, widget target, vec2 casterPos) returns boolean
+	static function castTarget(player owner, int abilityId, int lvl, int orderId, widget target, vec3 casterPos) returns boolean
 		prepare(owner, abilityId, lvl, casterPos)
 		caster.setFacing(caster.getPos().angleTo(target.getPos()))
 		boolean b = caster.issueTargetOrderById(orderId, target)
-		finish()
+		finish(abilityId)
 		return b
 	
-	static function castPoint(player owner, int abilityId, int lvl, int orderId, vec2 targetPos, vec2 casterPos) returns boolean
+	static function castPoint(player owner, int abilityId, int lvl, int orderId, vec2 targetPos, vec3 casterPos) returns boolean
 		prepare(owner, abilityId, lvl, casterPos)
 		caster.setFacing(caster.getPos().angleTo(targetPos))
 		boolean b = caster.issuePointOrderById(orderId, targetPos)
-		finish()
+		finish(abilityId)
 		return b
 
 	// Use with Orders package
 	static function castTarget(player owner, int abilityId, int lvl, int orderId, widget target) returns boolean
-		return castTarget(owner, abilityId, lvl, orderId, target, vec2(GetWidgetX(target), GetWidgetY(target)))
+		return castTarget(owner, abilityId, lvl, orderId, target, vec2(GetWidgetX(target), GetWidgetY(target)).toVec3())
 
 	static function castPoint(player owner, int abilityId, int lvl, int orderId, vec2 targetPos) returns boolean
-		return castPoint(owner, abilityId, lvl, orderId, targetPos, targetPos)
+		return castPoint(owner, abilityId, lvl, orderId, targetPos, targetPos.toVec3())
 
-	// string order wrappers
-	static function castImmediate(player owner, int abilityId, int lvl, string order, vec2 pos) returns boolean
+	// string orders / vec2 casterpos wrappers
+	static function castImmediate(player owner, int abilityId, int lvl, string order, vec3 pos) returns boolean
 		return castImmediate(owner, abilityId, lvl, OrderId(order), pos)
-
-	static function castTarget(player owner, int abilityId, int lvl, string order, widget target, vec2 casterPos) returns boolean
-		return castTarget(owner, abilityId, lvl, OrderId(order), target, casterPos)
+	static function castImmediate(player owner, int abilityId, int lvl, string order, vec2 pos) returns boolean
+		return castImmediate(owner, abilityId, lvl, OrderId(order), pos.toVec3())
+	static function castImmediate(player owner, int abilityId, int lvl, int orderId, vec2 pos) returns boolean
+		return castImmediate(owner, abilityId, lvl, orderId, pos.toVec3())
 
 	static function castTarget(player owner, int abilityId, int lvl, string order, widget target) returns boolean
 		return castTarget(owner, abilityId, lvl, OrderId(order), target)
-		
-	static function castPoint(player owner, int abilityId, int lvl, string order, vec2 targetPos, vec2 casterPos) returns boolean
-		return castPoint(owner, abilityId, lvl, OrderId(order), targetPos, casterPos)
-		
+	static function castTarget(player owner, int abilityId, int lvl, string order, widget target, vec3 casterPos) returns boolean
+		return castTarget(owner, abilityId, lvl, OrderId(order), target, casterPos)
+	static function castTarget(player owner, int abilityId, int lvl, string order, widget target, vec2 casterPos) returns boolean
+		return castTarget(owner, abilityId, lvl, OrderId(order), target, casterPos.toVec3())
+	static function castTarget(player owner, int abilityId, int lvl, int orderId, widget target, vec2 casterPos) returns boolean
+		return castTarget(owner, abilityId, lvl, orderId, target, casterPos.toVec3())
+
 	static function castPoint(player owner, int abilityId, int lvl, string order, vec2 targetPos) returns boolean
 		return castPoint(owner, abilityId, lvl, OrderId(order), targetPos)
-		
-constant DUMMY_CASTER_UNIT_ID = 'xcas'
+	static function castPoint(player owner, int abilityId, int lvl, string order, vec2 targetPos, vec3 casterPos) returns boolean
+		return castPoint(owner, abilityId, lvl, OrderId(order), targetPos, casterPos)
+	static function castPoint(player owner, int abilityId, int lvl, string order, vec2 targetPos, vec2 casterPos) returns boolean
+		return castPoint(owner, abilityId, lvl, OrderId(order), targetPos, casterPos.toVec3())
+	static function castPoint(player owner, int abilityId, int lvl, int orderId, vec2 targetPos, vec2 casterPos) returns boolean
+		return castPoint(owner, abilityId, lvl, orderId, targetPos, casterPos.toVec3())
+
+constant DUMMY_CASTER_UNIT_ID = compiletime(UNIT_ID_GEN.next())
 
 init
-	InstantDummyCaster.caster = createUnit(DUMMY_PLAYER, DUMMY_CASTER_UNIT_ID, vec2(0,0), angle(0))
-	InstantDummyCaster.caster.setPos(boundMax)
+	InstantDummyCaster.caster = createUnit(DUMMY_PLAYER, DUMMY_CASTER_UNIT_ID, boundMax, angle(0))
+	..setPathing(false)..addAbility(HEIGHT_ENABLER)..removeAbility(HEIGHT_ENABLER)
 		
 @compiletime function generateObject()
-		let u = new BuildingDefinition(DUMMY_CASTER_UNIT_ID, 'nfr2')
-		u..setName("Dummy Caster")
-		..setUpgradesUsed("")
-		..setManaRegeneration(0.1)
-		..setManaInitialAmount(1000)
-		..setManaMaximum(1000)
-		..setCollisionSize(0.0)
-		..setRace(Race.Commoner)
-		..setFoodCost(0)
-		..setArmorType(ArmorType.Divine)
-		..setIconGameInterface("ReplaceableTextures\\CommandButtons\\BTNtemp.blp")
-		..setSpeedBase(522)
-		..setModelFile("dummy.mdl")
-		..setAnimationBlendTimeseconds(0.0)
-		..setAnimationCastBackswing(0.0)
-		..setMaximumPitchAngledegrees(0.0)
-		..setMaximumRollAngledegrees(0.0)
-		..setTurnRate(3)
-		..setArtSpecial("")
-		..setProjectileImpactZ(0.0)
-		..setProjectileLaunchZ(0.0)
-		..setNameEditorSuffix("(Basics)")
-		..setSightRadiusDay(1)
-		..setSightRadiusNight(1)
-		..setUnitClassification("_")
-		..setPropulsionWindowdegrees(1.0)
-		..setTooltipBasic("")
-		..setNormalAbilities("Aloc,Agho")
-		..setGroundTexture("")
-		..setShadowTextureBuilding("")
-		..setCollisionSize(0)
-		..setPathingMap("")
-		..setNeutralBuildingShowsMinimapIcon(false)
+	new UnitDefinition(DUMMY_CASTER_UNIT_ID, 'ewsp')
+	..setName("Dummy Caster")
+	..setManaMaximum(1000000)
+	..setMovementType(MovementType.Fly)
+	..setUpgradesUsed("")
+	..setCollisionSize(0.0)
+	..setStructuresBuilt("")
+	..setRace(Race.Commoner)
+	..setFoodCost(0)
+	..setArmorType(ArmorType.Divine)
+	..setIconGameInterface("ReplaceableTextures\\CommandButtons\\BTNtemp.blp")
+	..setSpeedBase(522)
+	..setModelFile("dummy.mdl")
+	..setAnimationBlendTimeseconds(0.0)
+	..setAnimationCastBackswing(0.0)
+	..setMaximumPitchAngledegrees(0.0)
+	..setMaximumRollAngledegrees(0.0)
+	..setTurnRate(3)
+	..setSpecial("")
+	..setProjectileImpactZ(0.0)
+	..setProjectileLaunchZ(0.0)
+	..setNameEditorSuffix("(Basics)")
+	..setSightRadiusDay(1)
+	..setSightRadiusNight(1)
+	..setUnitClassification("_")
+	..setPropulsionWindowdegrees(1.0)
+	..setTooltipBasic("")
+	..setNormalAbilities("Aloc,Agho")
+	..setCollisionSize(0)
