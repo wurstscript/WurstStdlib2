@@ -21,6 +21,9 @@
 	// a short for 'new Damage(this, target, amount, isSpell, id)..modify()..deal()'
 	unit.damage(unit target, real amount, OPTIONAL bool isSpell = true, int id = 0)
 
+	// a short for '= new Damage(this, target, amount, isSpell, id)..saveInstance()..modify()..deal()'
+	unit.returnDamage(unit target, real amount, bool isSpell, int id) -> Damage
+
 	class Damage
 		
 		// Basic damage event info
@@ -35,14 +38,17 @@
 		// like, addDamageModifier(d -> d.amount += d.initial * 1.00) adds +100% multiplier onto damage
 		real amount
 
-		// if .saveTarget is checked then .target will survive from this damage no matter what
-		bool saveTarget = false
+		// if .saveTarget was called then .target will survive from this damage no matter what
+		saveTarget()
 
-		// after damage has happened the Damage object is destroyed, but only if wantSave == 0
-		// which should happen only if other system would want to save it and destroy it manually
-		// (even then destroy should reduce .wantSave by 1 and check if it's not positive number if other system still wants it)
-		// (probably something like counter in Link class from Java)
-		int wantSave = 0
+		// after damage has happened the Damage object is destroyed if saveInstance() wasn't called
+		saveInstance()
+		// releaseInstance is used to destroy Damage objects. Use this instead of 'destroy'!
+		releaseInstance()
+
+		// Some obvious wrappers
+		addAmount(real amount)
+		addMultiplier(real mult)
 
 		// .modify() evaluates all damageModifiers on itself
 		// is automatically called on non-triggered damage once
@@ -61,7 +67,7 @@
 	// for damageListeners .amount is set to actual difference in target's life
 	// so damage won't be more than target's life if it has killed target (or it was saved)
 	// (a unit has 10 hp, it takes 100 damage, for damageModifiers it's 100 damage
-		but for damageListeners it's 10 damage / 10 - .405 damage if .saveTarget == true)
+		but for damageListeners it's 10 damage / 10 - .405 damage if .doSaveTarget == true)
 
 	Examples:
 	
@@ -71,16 +77,12 @@
 
 		// Implementation #1
 		function onLeechEffect1()
-			let d = new Damage(GetTriggerUnit(), GetSpellTargetUnit(), LEECH_DAMAGE, true, 0)..modify()
-			d.wantSave += 1
-			d.deal()
+			let d = GetTriggerUnit().returnDamage(GetSpellTargetUnit(), LEECH_DAMAGE, true, 0)
 
 			d.source.addHP(d.amount) // Leech effect implementation #1
 			d.source.addEffect(Abilities.vampiricAuraTarget, "origin").destr()
 
-			d.wantSave -= 1
-			if d.wantSave <= 0
-				destroy d
+			d.releaseInstance()
 
 		// Implementation #2
 		function onLeechEffect2()
@@ -133,6 +135,12 @@ public function removeDamageListener(ForDamageCallback cb)
 	damageListeners.remove(cb)
 
 /** Deals triggered damage from unit to target.
+	You can specify id if there's any unique id interactions.
+	Damage instance is saved after being destroyed. */
+public function unit.returnDamage(unit target, real amount, bool spell, int id) returns Damage
+	return new Damage(this, target, amount, spell, id)..saveInstance()..modify()..deal()
+
+/** Deals triggered damage from unit to target.
 	You can specify id if there's any unique id interactions. */
 public function unit.damage(unit target, real amount, bool spell, int id)
 	new Damage(this, target, amount, spell, id)..modify()..deal()
@@ -159,10 +167,22 @@ public class Damage
 	real amount
 
 	/** check this if you want to save target from damage in all cases */
-	bool saveTarget = false
+	protected bool doSaveTarget = false
+	function saveTarget()
+		doSaveTarget = true
 
-	/** check this if damage instance is needed elsewhere before .deal(), though you'll need to delete this manually */
-	int wantSave = 0
+	/** Damage instances are automatically destroyed.
+		Use this to protect them if you need that instances somehow. */
+	function saveInstance()
+		wantSave += 1
+
+	/** Releases Damage instance so it can be destroyed. */
+	function releaseInstance()
+		wantSave -= 1
+		if fired and wantSave <= 0
+			destroy this
+
+	protected int wantSave = 0
 	
 	/** stores how much health were added */
 	protected real afterDamage = 0.
@@ -181,7 +201,14 @@ public class Damage
 	function isKillingBlow() returns bool
 		return killingBlow or (not fired and target.getHP() - .405 < amount)
 		
+	/** Multiplies initial damage with given magnitude */
+	function addMultiplier(real mult)
+		amount += initial * (mult - 1)
 
+	/** Increases damage amount with given amount */
+	function addAmount(real amount)
+		this.amount += amount
+		
 	construct(unit source, unit target, real amount, bool isSpell, int id)
 		this.source = source
 		this.target = target
@@ -205,7 +232,7 @@ public class Damage
 			if target.isAlive()
 				let life = target.getHP()
 				killingBlow = life - .405 < amount
-				if killingBlow and saveTarget
+				if killingBlow and doSaveTarget
 					amount = target.getHP() - .406
 					killingBlow = false			
 				dealCodeDamage(source, target, amount, killingBlow)
@@ -241,7 +268,7 @@ function handler() returns bool
 	let life = d.target.getHP()
 	d.killingBlow = life - .405 < d.amount
 	if d.killingBlow
-		if d.saveTarget
+		if d.doSaveTarget
 			d.amount = life - .406
 			d.killingBlow = false
 		else
