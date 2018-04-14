@@ -177,8 +177,6 @@ function handler() returns bool
 init
 	onEnter() ->
 		getEnterLeaveUnit()..addAbility(DAMAGE_TYPE_CHECK_ID)..makeAbilityPermanent(DAMAGE_TYPE_CHECK_ID, true)
-	forUnits() u ->
-		u..addAbility(DAMAGE_TYPE_CHECK_ID)..makeAbilityPermanent(DAMAGE_TYPE_CHECK_ID, true)
 	addOnDamageFunc(Condition(function handler))
 
 @compiletime function generateAbility()
