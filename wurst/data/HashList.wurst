@@ -75,7 +75,7 @@ public class HashList<T>
 
 	/** Return whether the element exists in the list */
 	@deprecated function contains(T elem) returns bool
-		return ht.loadReal(this castTo int, elem castTo int) > 0
+		return ht.hasInt(this castTo int, elem castTo int)
 
 	/** Return whether the element exists in the list */
 	function has(T elem) returns bool
