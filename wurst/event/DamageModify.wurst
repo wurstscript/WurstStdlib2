@@ -1,15 +1,16 @@
 /**
 	DamageModify
-	by Trokkin
 
+	Never use both this and DamageType package.
+	
 	API:
 
-	// Pretty much '(Damage d) -> ...'
+	// Essentially used for callback closures taking on the form Damage -> null
 	interface ForDamageCallback
 		run(Damage d)
 
-	// these are called before the damage is dealt
-	// can be called multiple amount of times or not called at all
+	// These adjust effective damage before any has occurred.
+	// Can be called zero or more times.
 	addDamageModifier(ForDamageCallback cb)
 	removeDamageModifier(ForDamageCallback cb)
 	
@@ -18,10 +19,10 @@
 	addDamageListener(ForDamageCallback cb)
 	removeDamageListener(ForDamageCallback cb)
 
-	// a short for 'new Damage(this, target, amount, isSpell, id)..modify()..deal()'
+	// a helper for 'new Damage(this, target, amount, isSpell, id)..modify()..deal()'
 	unit.damage(unit target, real amount, OPTIONAL bool isSpell = true, int id = 0)
 
-	// a short for '= new Damage(this, target, amount, isSpell, id)..saveInstance()..modify()..deal()'
+	// a helper for '= new Damage(this, target, amount, isSpell, id)..saveInstance()..modify()..deal()'
 	unit.returnDamage(unit target, real amount, bool isSpell, int id) -> Damage
 
 	class Damage
@@ -67,7 +68,7 @@
 	// for damageListeners .amount is set to actual difference in target's life
 	// so damage won't be more than target's life if it has killed target (or it was saved)
 	// (a unit has 10 hp, it takes 100 damage, for damageModifiers it's 100 damage
-		but for damageListeners it's 10 damage / 10 - .405 damage if .doSaveTarget == true)
+	// but for damageListeners it's 10 damage / 10 - .405 damage if .doSaveTarget == true)
 
 	Examples:
 	
@@ -84,11 +85,15 @@
 
 			d.releaseInstance()
 
+		init
+			registerSpellEffectEvent(LEECH_ID, function onLeechEffect1)
+
 		// Implementation #2
 		function onLeechEffect2()
 			GetTriggerUnit().damage(GetSpellTargetUnit(), LEECH_DAMAGE, LEECH_ID)
-		
+	
 		init
+			registerSpellEffectEvent(LEECH_ID, function onLeechEffect2)
 			addDamageListener() d ->
 				if d.id == LEECH_ID	
 					d.source.addHP(d.amount) // Leech effect implementation #2
@@ -136,7 +141,7 @@ public function removeDamageListener(ForDamageCallback cb)
 
 /** Deals triggered damage from unit to target.
 	You can specify id if there's any unique id interactions.
-	Damage instance is saved after being destroyed. */
+	Damage instance is saved and returned after being dealt. */
 public function unit.returnDamage(unit target, real amount, bool spell, int id) returns Damage
 	return new Damage(this, target, amount, spell, id)..saveInstance()..modify()..deal()
 
@@ -152,8 +157,9 @@ public function unit.damage(unit target, real amount, bool spell)
 public function unit.damage(unit target, real amount)
 	new Damage(this, target, amount, true, 0)..modify()..deal()
 
-// ConvertAttackType(7) is a hidden attack type with some unique properties. For
-// more information see goo.gl/9k8tn .
+// ConvertAttackType(7) is a hidden attack type with some unique properties.
+// For more information see "goo.gl/9k8tn".
+// Note that the values in the table at this link are outdated, but the principle still applies.
 constant ATTACK_TYPE_UNIVERSAL = ConvertAttackType(7)
 constant DAMAGE_TYPE_CHECK_ID = compiletime(ABIL_ID_GEN.next())
 constant CHEAT_DEATH_ID = compiletime(ABIL_ID_GEN.next())
@@ -166,26 +172,28 @@ public class Damage
 	real initial
 	real amount
 
-	/** check this if you want to save target from damage in all cases */
+	/** Determines if target is needed to be saved. */
 	protected bool doSaveTarget = false
+	/** Call this if you want to save the target
+		no matter the amount of damage. */ 
 	function saveTarget()
 		doSaveTarget = true
 
 	/** Damage instances are automatically destroyed.
-		Use this to protect them if you need that instances somehow. */
+		Use this to protect them if you need that instances anyhow. */
 	function saveInstance()
 		wantSave += 1
 
-	/** Releases Damage instance so it can be destroyed. */
+	/** Releases Damage instance so it can be destroyed.
+		It is destroyed immediately if anybody else haven't saved it. */
 	function releaseInstance()
 		wantSave -= 1
 		if fired and wantSave <= 0
 			destroy this
 
+	/** The counter inside saveInstance() and releaseInstance(). */
 	protected int wantSave = 0
-	
-	/** stores how much health were added */
-	protected real afterDamage = 0.
+
 	protected bool killingBlow = false
 	private bool fired = false
 
@@ -216,14 +224,8 @@ public class Damage
 		this.amount = amount
 		spell = isSpell
 		this.id = id
-
-	protected static function processEvent() returns Damage
-		let damage = GetEventDamage()
-		if damage == 0
-			return null
-		let d = new Damage(GetEventDamageSource(), GetTriggerUnit(), (damage < 0 ? -damage : damage), damage < 0, DAMAGE_ID_NONTRIGGERED)
-		d.fired = true
-		return d
+		if id == DAMAGE_ID_NONTRIGGERED
+			this.fired = true
 
 	/** applies user-created Damage instance. */
 	function deal()
@@ -237,8 +239,10 @@ public class Damage
 					killingBlow = false			
 				dealCodeDamage(source, target, amount, killingBlow)
 				anounce()
-			if this.wantSave == 0
+			if this.wantSave <= 0
 				destroy this
+		else
+			Log.warn("Damage.deal() called on already fired damage!")
 
 /** Deal an exact amount of damage to `target`, crediting kill experience and
 	gold bounty to `attacker` and not triggering any of DamageDetection listeners. KillingBlow parameter decides whether to kill the target. Isn't supposed to use outside of the system. */
@@ -259,10 +263,12 @@ function dealCodeDamage(unit attacker, unit target, real damage, bool killingBlo
 		enableDamageDetect()
 
 function handler() returns bool
-	let d = Damage.processEvent()
-	if d == null
+	let damage = GetEventDamage()
+	if damage == 0
 		return false
-	
+
+	let d = new Damage(GetEventDamageSource(), GetTriggerUnit(), (damage < 0 ? -damage : damage), damage < 0, DAMAGE_ID_NONTRIGGERED)
+
 	d.modify()
 
 	let life = d.target.getHP()
@@ -280,12 +286,13 @@ function handler() returns bool
 		
 	real rLife
 	bool doTimer
+	real afterDamage = 0
 	if d.spell
 		// After all: life += -d.amount - d.initial // + d.initial from event
 		rLife = life - d.initial - d.amount
 		doTimer = rLife < .405
 		if doTimer
-			d.afterDamage = d.initial + d.amount
+			afterDamage = d.initial + d.amount
 	else
 		// After all: life += -d.amount + d.initial // - d.initial from event 
 		rLife = life + d.initial - d.amount
@@ -296,8 +303,10 @@ function handler() returns bool
 			
 	if doTimer
 		nullTimer() ->
+			let hp = d.target.getHP()
 			d.target.removeAbility(CHEAT_DEATH_ID)
-			dealCodeDamage(d.source, d.target, d.afterDamage, false)
+			d.target.setHP(hp)
+			dealCodeDamage(d.source, d.target, afterDamage, false)
 			
 			d.anounce()
 		
