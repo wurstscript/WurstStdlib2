@@ -1,10 +1,11 @@
 package Angle
 import NoWurst
+import Wurstunit
 
 /** Converts Degrees to Radians */
-public constant real DEGTORAD  	=  0.017453293
+public constant DEGTORAD  	=  0.017453293
 /** Converts Radians to Degrees */
-public constant real RADTODEG  	= 57.295779513
+public constant RADTODEG  	= 57.295779513
 
 /** an angle is just a wrapper around a real which allows for
 typesafe APIs without the confusion between radians and degrees*/
@@ -28,11 +29,15 @@ public function real.fromDeg() returns angle
 
 /** interpret this real as an angle given in degrees */
 public function real.fromRad() returns angle
-	return angle(this*.0)
+	return angle(this)
+
+/** interpret this real as an angle given in degrees */
+public function int.fromRad() returns angle
+	return angle(this*1.)
 
 /** interpret this int as an angle given in radians */
 public function int.asAngleRadians() returns angle
-	return angle(this * .0)
+	return angle(this*1.)
 
 /** interpret this real as an angle given in radians*/
 public function real.asAngleRadians() returns angle
@@ -70,3 +75,10 @@ public function real.op_mult(angle ang) returns angle
 public function angle.op_divReal(real scalar) returns angle
 	return angle(this.radians/scalar)
 
+@Test function testAngle()
+	(180 .fromDeg().radians).assertEquals(180 .fromDeg().degrees().fromDeg().radians)
+
+	(180 .fromDeg() + 90 .fromDeg()).degrees().assertEquals(270)
+
+	(0 .fromDeg()).sin().assertEquals(0)
+	(90 .fromDeg()).sin().assertEquals(1)
