@@ -32,8 +32,11 @@ public function unit.addEffect(string fx, string attachment) returns effect
 public function unit.addHP(real val)
 	this.addState(UNIT_STATE_LIFE, val)
 
-public function unit.addItem(int id) returns item
-	return UnitAddItemById(this, id)
+public function unit.addItem(item whichItem) returns boolean
+	return UnitAddItem(this, whichItem)
+
+public function unit.addItemById(int itemId) returns item
+	return UnitAddItemById(this, itemId)
 
 public function unit.addItemToSlot(int id, int slot) returns bool
 	return UnitAddItemToSlotById(this, id, slot)
@@ -179,18 +182,29 @@ public function unit.hasItem(item whichItem) returns boolean
 	return UnitHasItem(this, whichItem)
 
 public function unit.hasItemById(int itemId) returns boolean
-	var hasItem = false
-	for i = 0 to this.inventorySize() - 1
-		if this.itemInSlot(i).getTypeId() == itemId
-			hasItem = true
-			break
-	return hasItem
+	for slot = 0 to this.inventorySize() - 1
+		if this.itemInSlot(slot).getTypeId() == itemId
+			return true
+	return false
 
 public function unit.hide()
 	ShowUnit(this, false)
 
 public function unit.inventorySize() returns int
 	return UnitInventorySize(this)
+
+/** Returns the number of items equipped. */
+public function unit.itemCount() returns int
+	int result = 0
+
+	for slot = 0 to this.inventorySize() - 1
+		if this.itemInSlot(slot) != null
+			result++
+	return result
+
+/** Checks if unit inventory is full. */
+public function unit.isInventoryFull() returns boolean
+	return this.itemCount() == this.inventorySize()
 
 /** Checks if the unit is alive using the UnitAlive native */
 public function unit.isAlive() returns boolean
@@ -223,6 +237,14 @@ public function unit.issueTargetOrderById(int id, widget target) returns boolean
 
 public function unit.itemInSlot(int inventoryIndex) returns item
 	return UnitItemInSlot(this, inventoryIndex)
+
+/** Retrieves slot number for speficied item. */
+public function unit.itemSlot(item itm) returns int
+	if this.hasItem(itm)
+		for slot = 0 to this.inventorySize() - 1
+			if this.itemInSlot(slot) == itm
+				return slot
+	return -1
 
 public function unit.kill()
 	KillUnit(this)
