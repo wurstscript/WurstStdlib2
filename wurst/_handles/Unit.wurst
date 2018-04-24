@@ -32,10 +32,14 @@ public function unit.addEffect(string fx, string attachment) returns effect
 public function unit.addHP(real val)
 	this.addState(UNIT_STATE_LIFE, val)
 
-public function unit.addItem(item whichItem) returns boolean
+public function unit.addItemHandle(item whichItem) returns boolean
 	return UnitAddItem(this, whichItem)
 
 public function unit.addItemById(int itemId) returns item
+	return UnitAddItemById(this, itemId)
+
+@deprecated("Use addItemById method instead.")
+public function unit.addItem(int itemId) returns item
 	return UnitAddItemById(this, itemId)
 
 public function unit.addItemToSlot(int id, int slot) returns bool
@@ -182,10 +186,12 @@ public function unit.hasItem(item whichItem) returns boolean
 	return UnitHasItem(this, whichItem)
 
 public function unit.hasItemById(int itemId) returns boolean
+	var hasItem = false
 	for slot = 0 to this.inventorySize() - 1
 		if this.itemInSlot(slot).getTypeId() == itemId
-			return true
-	return false
+			hasItem = true
+			break
+	return hasItem
 
 public function unit.hide()
 	ShowUnit(this, false)
@@ -196,7 +202,6 @@ public function unit.inventorySize() returns int
 /** Returns the number of items equipped. */
 public function unit.itemCount() returns int
 	int result = 0
-
 	for slot = 0 to this.inventorySize() - 1
 		if this.itemInSlot(slot) != null
 			result++
@@ -238,13 +243,15 @@ public function unit.issueTargetOrderById(int id, widget target) returns boolean
 public function unit.itemInSlot(int inventoryIndex) returns item
 	return UnitItemInSlot(this, inventoryIndex)
 
-/** Retrieves slot number for speficied item. */
+/** Retrieves slot number for speficied item or -1 if not found. */
 public function unit.itemSlot(item itm) returns int
+	int result = -1
 	if this.hasItem(itm)
 		for slot = 0 to this.inventorySize() - 1
 			if this.itemInSlot(slot) == itm
-				return slot
-	return -1
+				result = slot
+				break
+	return result
 
 public function unit.kill()
 	KillUnit(this)
