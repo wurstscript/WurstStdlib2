@@ -244,11 +244,11 @@ public function unit.itemInSlot(int inventoryIndex) returns item
 	return UnitItemInSlot(this, inventoryIndex)
 
 /** Retrieves slot number for speficied item or -1 if not found. */
-public function unit.itemSlot(item itm) returns int
+public function unit.getItemSlot(item whichItem) returns int
 	int result = -1
-	if this.hasItem(itm)
+	if this.hasItem(whichItem)
 		for slot = 0 to this.inventorySize() - 1
-			if this.itemInSlot(slot) == itm
+			if this.itemInSlot(slot) == whichItem
 				result = slot
 				break
 	return result
