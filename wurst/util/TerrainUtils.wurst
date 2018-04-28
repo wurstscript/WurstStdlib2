@@ -1,24 +1,58 @@
 package TerrainUtils
 import NoWurst
 import Item
+import MapBounds
+import Maths
 
 public function vec2.setTerrainType(int ttype, int variation, int area, int shape)
 	SetTerrainType(this.x, this.y, ttype, variation, area, shape)
 
+
+public function vec2.toTileCenter() returns vec2
+	return vec2(round(this.x, 128), round(this.y, 128))
+
+/** represents a single terrain tile */
+public tuple tile(int id)
+let tilesX = R2I(boundMax.x - boundMin.x) div 128 + 1
+let tilesY = R2I(boundMax.y - boundMin.y) div 128 + 1
+
+public function tile(int x, int y) returns tile
+	if ((x < 0) or (x >= tilesX) or (y < 0) or (y >= tilesY))
+		return tile(-1)
+	return tile(y * tilesX + x)
+
+public function vec2.getTile() returns tile
+	return tile(R2I(this.x - boundMin.x + 64) div 128, R2I(this.y - boundMin.y + 64) div 128)
+
+public function tile.toVec2() returns vec2
+	return vec2((this.id mod tilesX) * 128., (this.id div tilesX) * 128.)
+
+public function tile.setType(int ttype, int variation)
+	this.toVec2().setTerrainType(ttype, variation, 1, 1)
+public function tile.setType(int ttype)
+	this.toVec2().setTerrainType(ttype, -1, 1, 1)
+
+/** Applies a single terrain deformation to given tile. Is not immediate.
+	(otherwise TerrainDeformCrater wouldn't change terrain's shadow) */
+public function tile.addHeight(real val) returns terraindeformation
+	return TerrainDeformCrater((this.id mod tilesX) * 128., (this.id div tilesX) * 128., 63, -val, 1, true)
+
+public function tile.getType() returns int
+	return GetTerrainType((this.id mod tilesX) * 128., (this.id div tilesX) * 128.)
+public function tile.getVariance() returns int
+	return GetTerrainVariance((this.id mod tilesX) * 128., (this.id div tilesX) * 128.)
+public function tile.getHeight() returns real
+	return this.toVec2().getTerrainZ()
+
 constant		MAX_RANGE	 	= 10.
 constant 		DUMMY_ITEM_ID 	= 'wolg'
-location 		tempLoc 		= Location(0.,0.)
-item	   		dItem   		= null
-rect	   		find   			= null
+let 		tempLoc 		= Location(0.,0.)
+let	   		dItem   		= CreateItem(DUMMY_ITEM_ID, 0, 0)..setVisible(false)
+let	   		find   			= Rect(0., 0., 128., 128.)
 item array 		hid
 int			hidMax 			= 0
 vec2 			tempPos 		= vec2(0,0)
 
-init
-	find = Rect(0., 0., 128., 128.)
-	dItem = CreateItem(DUMMY_ITEM_ID, 0, 0)
-	dItem.setVisible(false)
-	
 /** Returns the (not normalised) terrain-normal at the given point */
 public function getTerrainNormal( real x, real y, real sampleRadius) returns vec3
 	MoveLocation(tempLoc, x-sampleRadius, y)
@@ -31,6 +65,10 @@ public function getTerrainNormal( real x, real y, real sampleRadius) returns vec
 	zy -= GetLocationZ(tempLoc)
 	let sampleRadius2 = 2*sampleRadius
 	return vec3( zx*sampleRadius2, zy*sampleRadius2, sampleRadius2*sampleRadius2 )
+	
+/** Returns the (not normalised) terrain-normal at the given vector */
+public function vec2.getTerrainNormal(real sampleRadius) returns vec3
+	return getTerrainNormal(this.x, this.y, sampleRadius)
 
 public function getTerrainZ(real x, real y) returns real
 	MoveLocation(tempLoc, x, y)
@@ -45,16 +83,16 @@ public function vec2.getTerrainZ() returns real
 	return GetLocationZ(tempLoc)
 	
 public function vec2.withTerrainZ() returns vec3
-	return vec3(this.x, this.y, getTerrainZ(this.x, this.y))
+	return vec3(this.x, this.y, this.getTerrainZ())
 	
 public function vec2.withTerrainZ(real zoffset) returns vec3
-	return vec3(this.x, this.y, getTerrainZ(this.x, this.y) + zoffset)
+	return vec3(this.x, this.y, this.getTerrainZ() + zoffset)
 
 public function vec3.withTerrainZ() returns vec3
-	return vec3(this.x, this.y, getTerrainZ(this.x, this.y))
+	return vec3(this.x, this.y, this.toVec2().getTerrainZ())
 	
 public function vec3.withTerrainZ(real zoffset) returns vec3
-	return vec3(this.x, this.y, getTerrainZ(this.x, this.y) + zoffset)
+	return vec3(this.x, this.y, this.toVec2().getTerrainZ() + zoffset)
 	
 public function isTerrainDeepWater(real x, real y) returns boolean
 	return not IsTerrainPathable(x, y, PATHING_TYPE_FLOATABILITY) and IsTerrainPathable(x, y, PATHING_TYPE_WALKABILITY)
@@ -67,17 +105,39 @@ public function isTerrainLand(real x, real y) returns boolean
 
 public function isTerrainPlatform(real x, real y) returns boolean
 	return not IsTerrainPathable(x, y, PATHING_TYPE_FLOATABILITY) and not IsTerrainPathable(x, y, PATHING_TYPE_WALKABILITY) and not IsTerrainPathable(x, y, PATHING_TYPE_BUILDABILITY)
+	
+public function isTerrainDeepWater(vec2 v) returns boolean
+	return not IsTerrainPathable(v.x, v.y, PATHING_TYPE_FLOATABILITY) and IsTerrainPathable(v.x, v.y, PATHING_TYPE_WALKABILITY)
 
-function hideItem()
-	if IsItemVisible(GetEnumItem())
-		hid[hidMax] = GetEnumItem()
-		SetItemVisible(hid[hidMax], false)
-		hidMax++
+public function isTerrainShallowWater(vec2 v) returns boolean
+	return not IsTerrainPathable(v.x, v.y, PATHING_TYPE_FLOATABILITY) and not IsTerrainPathable(v.x, v.y, PATHING_TYPE_WALKABILITY) and IsTerrainPathable(v.x, v.y, PATHING_TYPE_BUILDABILITY)
+
+public function isTerrainLand(vec2 v) returns boolean
+	return IsTerrainPathable(v.x, v.y, PATHING_TYPE_FLOATABILITY)
+
+public function isTerrainPlatform(vec2 v) returns boolean
+	return not IsTerrainPathable(v.x, v.y, PATHING_TYPE_FLOATABILITY) and not IsTerrainPathable(v.x, v.y, PATHING_TYPE_WALKABILITY) and not IsTerrainPathable(v.x, v.y, PATHING_TYPE_BUILDABILITY)
+
+public function vec2.isTerrainDeepWater() returns boolean
+	return isTerrainDeepWater(this)
+
+public function vec2.isTerrainShallowWater() returns boolean
+	return isTerrainShallowWater(this)
+
+public function vec2.isTerrainLand() returns boolean
+	return isTerrainLand(this)
+
+public function vec2.isTerrainPlatform() returns boolean
+	return isTerrainPlatform(this)
 
 public function isTerrainWalkable(real x, real y) returns boolean
 	//Hide any items in the area to avoid conflicts with our item
 	MoveRectTo(find, x, y)
-	EnumItemsInRect(find ,null, function hideItem)
+	EnumItemsInRect(find, null) ->
+		if IsItemVisible(GetEnumItem())
+			hid[hidMax] = GetEnumItem()
+			SetItemVisible(hid[hidMax], false)
+			hidMax++
 	//Try to move the test item and get its coords
 	SetItemPosition(dItem, x, y) //Unhides the item
 	tempPos = dItem.getPos()
