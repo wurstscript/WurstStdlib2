@@ -28,6 +28,21 @@ public function hypot(real dx, real dy) returns real
 		x = y
 	return x * SquareRoot(1 + t * t)
 
+/** Returns value of 'a' rounded up or down to 'scale' */
+public function round(real a, real scale) returns real
+	return R2I((a/scale) + (a >= 0. ? .5 : -.5))*scale
+
+/** Returns value of 'a' rounded up to 'scale' */
+public function roundUp(real a, real scale) returns real
+	var r = R2I(a/scale)*scale
+	if a - r != 0.
+		r += scale
+	return r
+
+/** Returns value of 'a' rounded down to 'scale' */
+public function roundDown(real a, real scale) returns real
+	return R2I(a/scale)*scale
+
 /** Returns the angle of a height-slope */	
 public function getSlopeAngle( real z1, real z2, real dist ) returns angle
 	return angle(Atan2(z2-z1, dist ))
