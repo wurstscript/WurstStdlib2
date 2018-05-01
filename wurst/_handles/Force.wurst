@@ -8,8 +8,16 @@ public function force.destr()
 public function force.addPlayer(player whichPlayer)
 	ForceAddPlayer(this, whichPlayer)
 
+public function force.addPlayers(vararg player players)
+	for whichPlayer in players
+		ForceAddPlayer(this, whichPlayer)
+
 public function force.removePlayer(player whichPlayer)
 	ForceRemovePlayer(this, whichPlayer)
+
+public function force.removePlayers(vararg player players)
+	for whichPlayer in players
+		ForceRemovePlayer(this, whichPlayer)
 
 public function force.clear()
 	ForceClear(this)

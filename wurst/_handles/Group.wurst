@@ -27,9 +27,17 @@ public function group.clear()
 	
 public function group.addUnit(unit u)
 	GroupAddUnit(this, u)
+
+public function group.addUnits(vararg unit units)
+	for u in units
+		GroupAddUnit(this, u)
 	
 public function group.removeUnit(unit u)
 	GroupRemoveUnit(this, u)
+
+public function group.removeUnit(vararg unit units)
+	for u in units
+		GroupRemoveUnit(this, u)
 	
 public function group.destr()
 	DestroyGroup(this)
