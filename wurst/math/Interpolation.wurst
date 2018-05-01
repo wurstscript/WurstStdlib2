@@ -11,7 +11,7 @@ public function linear(vec2 start, vec2 stop, real p) returns vec2
 	Sample Usage:
 	AddSpecialEffect(TEST_SFX,linear(P1X,P2X,p),linear(P1Y,P2Y,p))
 */
-public function linear( real start, real stop, real p ) returns real
+public function linear(real start, real stop, real p) returns real
 	return start + (stop-start)*p
 
 public function vec3.bezier3(vec3 mid, vec3 stop, real p) returns vec3
@@ -31,14 +31,14 @@ public function vec2.lerp(vec2 target, real alpha) returns vec2
 	Sample Usage:
 	AddSpecialEffect(TEST_SFX,bezier_3(P1X,P3X,P2X,p),bezier_3(P1Y,P3Y,P2Y,p))
 */
-public function bezier_3( real start, real mid, real stop, real p ) returns real
+public function bezier_3(real start, real mid, real stop, real p) returns real
 	return start + 2.*(mid-start)*p + (stop -2.*mid + start)*p*p
 
 /** 
 	This function returns the derivate of the 3-Point-Bezier curve on certain point. 
 	(d(bezier_3())/dt)
 */
-public function derivBezier_3( real start, real mid, real stop, real p ) returns real
+public function derivBezier_3(real start, real mid, real stop, real p) returns real
 	return 2.*(mid-start) + 2.*(stop-2.*mid+start)*p 
 	
 
@@ -47,7 +47,7 @@ public function derivBezier_3( real start, real mid, real stop, real p ) returns
 	Sample Usage:
 	AddSpecialEffect(TEST_SFX,bezier_4(P1X,P3X,P4X,P2X,t),bezier_4(P1Y,P3Y,P4Y,P2Y,t))
 */
-function bezier_4( real start, real mid1, real mid2, real stop, real p ) returns real
+function bezier_4(real start, real mid1, real mid2, real stop, real p) returns real
 	real m = p*p
 	return  start + 3.*p*(mid1 - start) + 3.*m*(mid2 - 2.*mid1 + start) + m*p*(3.*(mid1-mid2) + stop - start)
 
@@ -55,7 +55,7 @@ function bezier_4( real start, real mid1, real mid2, real stop, real p ) returns
 	This function returns the derivate of the 4-Point-Bezier curve on certain point. 
 	(d(bezier_4())/dt)
 */	
-public function derivBezier_4( real start, real mid1, real mid2, real stop, real p ) returns real
+public function derivBezier_4(real start, real mid1, real mid2, real stop, real p) returns real
 	return 3.*(mid1-start) + 6.*(mid2-2.*mid1+start)*p + 3.*(3.*(mid1-mid2) + stop -start)*p*p
 	
 	
@@ -63,7 +63,7 @@ public function derivBezier_4( real start, real mid1, real mid2, real stop, real
 //Bezier_4(<Start Point>, <OutTan_of_StartPoint>, <InTan_of_EndPoint>, <EndPoint>)
 
 /**	Hermite Interpolation */
-public function hermite( real start, real stop, real tangent1, real tangent2, real s ) returns real
+public function hermite(real start, real stop, real tangent1, real tangent2, real s) returns real
 	real s2 = s*s
 	real h1 = 8.0*s*s2 - 9.0*s2
 	real h2 = h1*(-1)
@@ -84,11 +84,11 @@ public function hermite( real start, real stop, real tangent1, real tangent2, re
 // sidenote: specify p1 as 0, when working with 2 points.
 
 /** Returns the intan of p2 */
-public function inTan( real p1, real p2, real p3, real p, real c, real b ) returns real
+public function inTan(real p1, real p2, real p3, real p, real c, real b) returns real
 	return (1.0-p)*(1.0-c)*(1.0+b)*(p2-p1)/2. + (1.0-p)*(1.0+c)*(1.0-b)*(p3-p2)/2.
 
 /** Returns the outtan of p2 */
-public function outTan( real p1, real p2, real p3, real p, real c, real b ) returns real
+public function outTan(real p1, real p2, real p3, real p, real c, real b) returns real
 	return (1.0-p)*(1.0+c)*(1.0+b)*(p2-p1)/2. + (1.0-p)*(1.0-c)*(1.0-b)*(p3-p2)/2.
 	
 @Test 

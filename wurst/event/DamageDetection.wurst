@@ -29,7 +29,7 @@ public function enableDamageDetect()
 
 /** Periodic Cleanup-Function */
 function swap()
-	boolean b = IsTriggerEnabled(current)
+	var isEnabled = IsTriggerEnabled(current)
 
 	current.disable()
 	if toDestroy != null
@@ -38,7 +38,7 @@ function swap()
 	toDestroy = current
 	current = CreateTrigger()
 
-	if not b
+	if not isEnabled
 		current.disable()
 
 	for i = 0 to bj_MAX_PLAYER_SLOTS - 1
