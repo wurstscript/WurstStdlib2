@@ -122,3 +122,15 @@ public function player.setRacePreference(racepreference whichRacePreference)
 
 public function player.setRaceSelectable(boolean value)
 	SetPlayerRaceSelectable(this, value)
+
+public function player.getTeam() returns int
+	return GetPlayerTeam(this)
+
+public function player.isSelectable() returns bool
+	return GetPlayerSelectable(this)
+
+public function player.getTaxRate(player otherPlayer, playerstate whichResource) returns int
+	return GetPlayerTaxRate(this, otherPlayer, whichResource)
+
+public function player.isRacePrefSet(racepreference preference) returns bool
+	return IsPlayerRacePrefSet(this, preference)
