@@ -149,3 +149,11 @@ function testGenerics()
 		list.add(i)
 	let result = list.toString()
 	result.assertEquals("[1,2,3,4,5,6]")
+
+@Test function testSortReal()
+	var list = new LinkedList<real>()
+	for i = 6 downto 1
+		list.add(i.toReal())
+	list.sort()
+	list.get(0).assertEquals(1.)
+	list.get(5).assertEquals(6.)
