@@ -41,13 +41,11 @@ constant PLAYER_COLOR_NAMES = [
 
 /** Returns the name of the player color */
 public function playercolor.getName() returns string
-	let idx = this.toInt()
-	return idx < 24 ? PLAYER_COLOR_NAMES[idx] : "black"
+	return this.toInt() < 24 ? PLAYER_COLOR_NAMES[this.toInt()] : "black"
 	
 /** Returns the color associated with the playercolor */
 public function playercolor.toColor() returns color
-	let idx = this.toInt()
-	return idx < 24 ? PLAYER_COLORS[idx] : color(0,0,0)
+	return this.toInt() < 24 ? PLAYER_COLORS[this.toInt()] : color(0,0,0)
 
 /** Tuple for your RGB color needs. 0 = black, 255 = full color */
 public tuple color(int red, int green, int blue)
