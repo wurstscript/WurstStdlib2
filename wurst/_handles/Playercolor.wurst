@@ -1,12 +1,13 @@
 package Playercolor
 import NoWurst
+import Force
 
-public constant PLAYER_COLOR_BLACK_AGGRESSIVE = ConvertPlayerColor(12)
-public constant PLAYER_COLOR_UNKNOWN1 = ConvertPlayerColor(13)
-public constant PLAYER_COLOR_UNKNOWN2 = ConvertPlayerColor(14)
-public constant PLAYER_COLOR_BLACK_PASSIVE = ConvertPlayerColor(15)
+public constant PLAYER_COLOR_BLACK_AGGRESSIVE = ConvertPlayerColor(24)
+public constant PLAYER_COLOR_UNKNOWN1 = ConvertPlayerColor(25)
+public constant PLAYER_COLOR_UNKNOWN2 = ConvertPlayerColor(26)
+public constant PLAYER_COLOR_BLACK_PASSIVE = ConvertPlayerColor(27)
 
-let lookup = [
+constant lookup = [
 	PLAYER_COLOR_RED, 
 	PLAYER_COLOR_BLUE, 
 	PLAYER_COLOR_CYAN, 
@@ -19,6 +20,18 @@ let lookup = [
 	PLAYER_COLOR_LIGHT_BLUE, 
 	PLAYER_COLOR_AQUA, 
 	PLAYER_COLOR_BROWN,
+	PLAYER_COLOR_MAROON,
+    PLAYER_COLOR_NAVY,
+    PLAYER_COLOR_TURQUOISE,
+    PLAYER_COLOR_VIOLET,
+    PLAYER_COLOR_WHEAT,
+    PLAYER_COLOR_PEACH,
+    PLAYER_COLOR_MINT,
+    PLAYER_COLOR_LAVENDER,
+    PLAYER_COLOR_COAL,
+    PLAYER_COLOR_SNOW,
+    PLAYER_COLOR_EMERALD,
+    PLAYER_COLOR_PEANUT,
 	PLAYER_COLOR_BLACK_AGGRESSIVE,
 	PLAYER_COLOR_UNKNOWN1,
 	PLAYER_COLOR_UNKNOWN2,
@@ -29,8 +42,23 @@ public function int.toPlayerColor() returns playercolor
 
 public function playercolor.toInt() returns int
 	var value = 0
-	for i = 0 to 15
+	for i = 0 to 27
 		if lookup[i] == this
 			value = i
 			break
 	return value
+
+	
+/** Returns the player that had this color *at the start of the game*. Does not
+respect SetPlayerColor. */
+public function playercolor.getPlayer() returns player
+	return Player(this.toInt())
+
+/** Returns the players who are currently using this player color. Respects calls
+to SetPlayerColor */
+public function playercolor.getPlayers() returns force
+	let f = CreateForce()
+	for i = 0 to bj_MAX_PLAYERS
+		if GetPlayerColor(Player(i)) == this
+			f.addPlayer(Player(i))
+	return f
