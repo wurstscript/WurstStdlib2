@@ -208,8 +208,8 @@ init
 	assertTrue(fromHexString("33ccff44") == colorA(204, 255, 68, 51))
 
 @Test public function testColorNames()
-	assertTrue(color(255, 2, 2).getName() == "red")
-	assertTrue(color(164, 11, 51).getName() == "peanut")
+	color(255, 2, 2).getName().assertEquals("red")
+	color(164, 11, 51).getName().assertEquals("peanut")
 	assertTrue("red".toColor() == color(255, 2, 2))
 	assertTrue("peanut".toColor() == color(164, 11, 51))
 	// Following tests require a compiletime ConvertPlayerColor() function
@@ -225,6 +225,6 @@ init
 	// assertTrue(PLAYER_COLOR_BLUE.toColor() == color(0,65,255))
 	// assertTrue(PLAYER_COLOR_RED.toColor() == color(255, 2, 2))
 	// assertTrue(PLAYER_COLOR_PEANUT.toColor() ==  color(164, 11, 51))
-	// assertTrue(PLAYER_COLOR_RED.getName() == "red")
-	// assertTrue(PLAYER_COLOR_COAL.getName() == "coal")
+	// PLAYER_COLOR_RED.getName().assertEquals("red")
+	// PLAYER_COLOR_COAL.getName().assertEquals("coal")
 
