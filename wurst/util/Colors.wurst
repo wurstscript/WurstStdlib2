@@ -9,6 +9,8 @@ import Playercolor
 public constant COLOR_WHITE = colorA(255,255,255,255)
 public constant COLOR_BLACK = colorA(0,0,0,0)
 
+constant DEFAULT_COLOR_NAME = "black"
+
 /** Player color array. Access through playercolor.toColor() */
 constant PLAYER_COLORS = [
 	color(255,2,2), color(0,65,255), color(27,229,184), color(83,0,128), 
@@ -41,11 +43,11 @@ constant PLAYER_COLOR_NAMES = [
 
 /** Returns the name of the player color */
 public function playercolor.getName() returns string
-	return this.toInt() < 24 ? PLAYER_COLOR_NAMES[this.toInt()] : "black"
+	return this.toInt() < 24 ? PLAYER_COLOR_NAMES[this.toInt()] : DEFAULT_COLOR_NAME
 	
 /** Returns the color associated with the playercolor */
 public function playercolor.toColor() returns color
-	return this.toInt() < 24 ? PLAYER_COLORS[this.toInt()] : color(0,0,0)
+	return this.toInt() < 24 ? PLAYER_COLORS[this.toInt()] : COLOR_BLACK.withoutAlpha()
 
 /** Tuple for your RGB color needs. 0 = black, 255 = full color */
 public tuple color(int red, int green, int blue)
@@ -55,6 +57,9 @@ public tuple colorA(int red, int green, int blue, int alpha)
 /** Add an alpha value to a simple color tuple */
 public function color.withAlpha( int a ) returns colorA
 	return colorA(this.red, this.green, this.blue, a)
+
+public function colorA.withoutAlpha() returns color
+	return color(this.red, this.green, this.blue)
 	
 /** Get a colorA tuple from a hexstring */
 public function fromHexString(string number) returns colorA
