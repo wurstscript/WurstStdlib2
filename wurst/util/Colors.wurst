@@ -42,16 +42,12 @@ constant PLAYER_COLOR_NAMES = [
 /** Returns the name of the player color */
 public function playercolor.getName() returns string
 	let idx = this.toInt()
-	if idx < 24
-		return PLAYER_COLOR_NAMES[idx]
-	return "black"
-
+	return idx < 24 ? PLAYER_COLOR_NAMES[idx] : "black"
+	
 /** Returns the color associated with the playercolor */
 public function playercolor.toColor() returns color
 	let idx = this.toInt()
-	if idx < 24
-		return PLAYER_COLORS[idx]
-	return color(0, 0, 0)
+	return idx < 24 ? PLAYER_COLORS[idx] : color(0,0,0)
 
 /** Tuple for your RGB color needs. 0 = black, 255 = full color */
 public tuple color(int red, int green, int blue)
@@ -177,23 +173,25 @@ public function color.getName() returns string
 	based on starting color, not current color (does not respect SetPlayerColor)*/
 public function toPlayerFromColorName(string colorName) returns player
 	let pc = colorName.toPlayerColor()
-	if pc != null
-		return pc.getPlayer()
-	return null
+	return pc != null ? pc.getPlayer() : null
 
 /** Returns the color that the string describes. Only works on player colors. */
 public function string.toColor() returns color
+	var col = color(0,0,0)
 	for i = 0 to 23
 		if (this.toLowerCase() == PLAYER_COLOR_NAMES[i])
-			return PLAYER_COLORS[i]
-	return color(0,0,0)
+			col = PLAYER_COLORS[i]
+			break
+	return col
 
 /** Returns the player color that the string describes. Only works on player colors. */
 public function string.toPlayerColor() returns playercolor
+	playercolor pc = null
 	for i = 0 to 23
 		if (this.toLowerCase() == PLAYER_COLOR_NAMES[i])
-			return i.toPlayerColor()
-	return null
+			pc = i.toPlayerColor()
+			break
+	return pc
 
 @compiletime function initializeTable()
 	for i = 0 to 15
@@ -211,15 +209,24 @@ init
 
 	assertTrue(fromHexString("33ccff44") == colorA(204, 255, 68, 51))
 
+@Test public function testColorNames()
 	assertTrue(color(255, 2, 2).getName() == "red")
 	assertTrue(color(164, 11, 51).getName() == "peanut")
 	assertTrue("red".toColor() == color(255, 2, 2))
 	assertTrue("peanut".toColor() == color(164, 11, 51))
+	// Following tests require a compiletime ConvertPlayerColor() function
+	// assertTrue("red".toPlayerColor() == PLAYER_COLOR_RED)
+	// assertTrue("peanut".toPlayerColor() == PLAYER_COLOR_PEANUT)
+	// assertTrue(toPlayerFromColorName("red") == Player(0))
+	// assertTrue(toPlayerFromColorName("PEANUT") == Player(23))
+	// assertTrue(toPlayerFromColorName("wurstlang") == null)
 
+@Test public function testPlayerColorConversion()
+	skip // TODO remove skip, uncomment these
 	// Following tests require a compiletime ConvertPlayerColor() function
 	// assertTrue(PLAYER_COLOR_BLUE.toColor() == color(0,65,255))
 	// assertTrue(PLAYER_COLOR_RED.toColor() == color(255, 2, 2))
 	// assertTrue(PLAYER_COLOR_PEANUT.toColor() ==  color(164, 11, 51))
-	// assertTrue(toPlayerFromColorName("red") == Player(0))
-	// assertTrue(toPlayerFromColorName("PEANUT") == Player(23))
-	// assertTrue(toPlayerFromColorName("wurstlang") == null)
+	// assertTrue(PLAYER_COLOR_RED.getName() == "red")
+	// assertTrue(PLAYER_COLOR_COAL.getName() == "coal")
+
