@@ -50,7 +50,7 @@ public function player.getName() returns string
 	return GetPlayerName(this)
 
 public function player.getNameColored() returns string
-	return PLAYER_COLORS[this.getId()].toColorString() + GetPlayerName(this) + "|r"
+	return this.getColor().toColor().toColorString() + GetPlayerName(this) + "|r"
 
 public function player.getSlotState() returns playerslotstate
 	return GetPlayerSlotState(this)
