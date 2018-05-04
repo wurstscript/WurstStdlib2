@@ -70,5 +70,5 @@ function testHandleId()
 @Test
 function testVararg()
 	let g = CreateGroup()
-	g.addUnits(createUnit(Player(0), 'hfoo', vec2(0, 0), 0 .fromDeg()), createUnit(Player(0), 'hfoo', vec2(0, 0), 0 .fromDeg()), createUnit(Player(0), 'hfoo', vec2(0, 0), 0 .fromDeg()))
+	g.addUnit(createUnit(Player(0), 'hfoo', vec2(0, 0), 0 .fromDeg()), createUnit(Player(0), 'hfoo', vec2(0, 0), 0 .fromDeg()), createUnit(Player(0), 'hfoo', vec2(0, 0), 0 .fromDeg()))
 	g.size().assertEquals(3)
