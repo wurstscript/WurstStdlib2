@@ -29,12 +29,13 @@ public class LinkedList<T>
 		dummy.next = dummy
 		dummy.prev = dummy
 
-	/** Add an element to the end of the list (top of stack, beginning of queue) */
-	function add(T elem)
-		let entry = new LLEntry<T>(elem, dummy.prev, dummy)
-		dummy.prev.next = entry
-		dummy.prev = entry
-		size++
+	/** Add one or more elements to the end of the list (top of stack, beginning of queue) */
+	function add(vararg T elems)
+		for elem in elems
+			let entry = new LLEntry<T>(elem, dummy.prev, dummy)
+			dummy.prev.next = entry
+			dummy.prev = entry
+			size++
 
 	/** add all elements from elems to the end of this list */
 	function addAll(LinkedList<T> elems)

@@ -204,13 +204,15 @@ init
 	initializeTable()
 
 @Test public function testColors()
-	assertTrue(hexs[10] == "A")
-	assertTrue(decs.loadInt(hexs[10].getHash()) == 10)
+	hexs[10].assertEquals("A")
+	decs.loadInt(hexs[10].getHash()).assertEquals(10)
 
 	let mixed = colorA(0,0,0,0).mix(colorA(255,255,255,255), 0.5)
 	assertTrue(mixed == colorA(128,128,128,128))
 
 	assertTrue(fromHexString("33ccff44") == colorA(204, 255, 68, 51))
+	
+	assertTrue(PLAYER_COLOR_RED != null)
 
 @Test public function testColorNames()
 	color(255, 2, 2).getName().assertEquals("red")
@@ -232,4 +234,5 @@ init
 	// assertTrue(PLAYER_COLOR_PEANUT.toColor() ==  color(164, 11, 51))
 	// PLAYER_COLOR_RED.getName().assertEquals("red")
 	// PLAYER_COLOR_COAL.getName().assertEquals("coal")
+
 
