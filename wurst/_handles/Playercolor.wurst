@@ -1,14 +1,15 @@
 package Playercolor
 import NoWurst
 import Force
-import initlater Player
+import Player
+import Wurstunit
 
 public constant PLAYER_COLOR_BLACK_AGGRESSIVE = ConvertPlayerColor(24)
 public constant PLAYER_COLOR_UNKNOWN1 = ConvertPlayerColor(25)
 public constant PLAYER_COLOR_UNKNOWN2 = ConvertPlayerColor(26)
 public constant PLAYER_COLOR_BLACK_PASSIVE = ConvertPlayerColor(27)
 
-constant lookup = [
+constant LOOKUP = [
 	PLAYER_COLOR_RED, 
 	PLAYER_COLOR_BLUE, 
 	PLAYER_COLOR_CYAN, 
@@ -39,27 +40,50 @@ constant lookup = [
 	PLAYER_COLOR_BLACK_PASSIVE]
 
 public function int.toPlayerColor() returns playercolor
-	return lookup[this]
+	return LOOKUP[this]
 
 public function playercolor.toInt() returns int
 	var value = 0
-	for i = 0 to 27
-		if lookup[i] == this
+	for i = 0 to bj_MAX_PLAYERS
+		if LOOKUP[i] == this
 			value = i
 			break
 	return value
 
 	
 /** Returns the player that had this color *at the start of the game*. Does not
-respect SetPlayerColor. */
+	respect SetPlayerColor. */
 public function playercolor.getPlayer() returns player
 	return players[this.toInt()]
 
 /** Returns the players who are currently using this player color. Respects calls
-to SetPlayerColor */
+	to SetPlayerColor */
 public function playercolor.getPlayers() returns force
 	let matchingPlayers = CreateForce()
 	for i = 0 to bj_MAX_PLAYERS
 		if players[i].getColor() == this
-			matchingPlayers.addPlayer(Player(i))
+			matchingPlayers.addPlayer(players[i])
 	return matchingPlayers
+
+
+@test public function testToInt()
+	PLAYER_COLOR_RED.toInt().assertEquals(0)
+	PLAYER_COLOR_PEANUT.toInt().assertEquals(23)
+
+@test public function testToPlayerColor()
+	assertTrue((0).toPlayerColor() == PLAYER_COLOR_RED)
+	assertTrue((23).toPlayerColor() == PLAYER_COLOR_PEANUT)
+
+@test public function testGetPlayer()
+	assertTrue(PLAYER_COLOR_RED.getPlayer() == Player(0))
+	assertTrue(PLAYER_COLOR_PEANUT.getPlayer() == Player(23))
+
+@test public function testGetPlayers()
+	skip // TODO(Halithor): enable these tests
+	// These these tests require compiletime SetPlayerColor and GetPlayerColor
+	// let force1 = PLAYER_COLOR_RED.getPlayers()
+	// force1.containsPlayer(Player(0)).assertTrue()
+	// Player(2).setColor(PLAYER_COLOR_BLUE)
+	// let force2 = PLAYER_COLOR_BLUE.getPlayers()
+	// force2.containsPlayer(Player(1)).assertTrue()
+	// force2.containsPlayer(Player(2)).assertTrue()
