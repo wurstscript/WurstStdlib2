@@ -37,7 +37,7 @@ public function getPlayerUnitEventTrigger(playerunitevent p) returns trigger
 /*****PlayerEvent*****/
 
 public function registerPlayerEvent(playerevent p, code c)
-	registerPlayerEvent(p, c, null)
+	registerPlayerEvent(p, null, c)
 
 public function registerPlayerEvent(playerevent p, code condition, code action)
 	int hid = p.getHandleId()
