@@ -3,6 +3,7 @@ import NoWurst
 import Force
 import Player
 import Wurstunit
+import Printing
 
 public constant PLAYER_COLOR_BLACK_AGGRESSIVE = ConvertPlayerColor(24)
 public constant PLAYER_COLOR_UNKNOWN1 = ConvertPlayerColor(25)
@@ -60,7 +61,7 @@ public function playercolor.getPlayer() returns player
 	to SetPlayerColor */
 public function playercolor.getPlayers() returns force
 	let matchingPlayers = CreateForce()
-	for i = 0 to bj_MAX_PLAYERS
+	for i = 0 to bj_MAX_PLAYER_SLOTS - 1
 		if players[i].getColor() == this
 			matchingPlayers.addPlayer(players[i])
 	return matchingPlayers
@@ -79,11 +80,16 @@ public function playercolor.getPlayers() returns force
 	assertTrue(PLAYER_COLOR_PEANUT.getPlayer() == Player(23))
 
 @test public function testGetPlayers()
-	skip // TODO(Halithor): enable these tests
-	// These these tests require compiletime SetPlayerColor and GetPlayerColor
-	// let force1 = PLAYER_COLOR_RED.getPlayers()
-	// force1.containsPlayer(Player(0)).assertTrue()
-	// Player(2).setColor(PLAYER_COLOR_BLUE)
-	// let force2 = PLAYER_COLOR_BLUE.getPlayers()
-	// force2.containsPlayer(Player(1)).assertTrue()
-	// force2.containsPlayer(Player(2)).assertTrue()
+	// Test some Player package methods that this file depends on
+	(players[0] != null).assertTrue()
+	players[0].setColor(PLAYER_COLOR_RED)
+	(players[0].getColor() == PLAYER_COLOR_RED).assertTrue()
+	// Test getting forces of players.
+	let force1 = PLAYER_COLOR_RED.getPlayers()
+	force1.containsPlayer(Player(0)).assertTrue()
+	players[1].setColor(PLAYER_COLOR_BLUE)
+	players[2].setColor(PLAYER_COLOR_BLUE)
+	let force2 = PLAYER_COLOR_BLUE.getPlayers()
+	force2.containsPlayer(Player(1)).assertTrue()
+	force2.containsPlayer(Player(2)).assertTrue()
+	force2.containsPlayer(Player(3)).assertFalse()
