@@ -5,6 +5,7 @@ import String
 import Integer
 import Wurstunit
 import Playercolor
+import Player
 
 public constant COLOR_WHITE = colorA(255,255,255,255)
 public constant COLOR_BLACK = colorA(0,0,0,0)
@@ -105,7 +106,7 @@ public function fromPlayerColor( playercolor pc ) returns color
 /** Get a simple colortuple containing the colorvalues of the playercolor */	
 @deprecated("Use player.getColor().toColor()")
 public function fromPlayer( player p ) returns color
-	return GetPlayerColor(p).toColor()
+	return p.getColor().toColor()
 
 /** 
 *	Mixes two colors, s would be a number 0<=s<=1 that determines
