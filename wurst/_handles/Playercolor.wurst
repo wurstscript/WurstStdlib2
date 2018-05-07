@@ -45,7 +45,7 @@ public function int.toPlayerColor() returns playercolor
 
 public function playercolor.toInt() returns int
 	var value = 0
-	for i = 0 to bj_MAX_PLAYERS
+	for i = 0 to bj_MAX_PLAYER_SLOTS - 1
 		if LOOKUP[i] == this
 			value = i
 			break
