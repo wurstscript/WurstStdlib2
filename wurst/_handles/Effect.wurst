@@ -1,6 +1,7 @@
 package Effect
 import NoWurst
 import Vectors
+import Wurstunit
 
 public function effect.destr()
 	DestroyEffect(this)
@@ -73,3 +74,12 @@ public function effect.getLocalY() returns real
 
 public function effect.getLocalZ() returns real
 	return BlzGetLocalSpecialEffectZ(this)
+
+@Test
+function testEffect()
+	let eff = addEffect("testPath", vec2(12,32))
+	
+	eff.getLocalX().assertEquals(12.)
+	eff.getLocalY().assertEquals(32.)
+
+	eff.destr()

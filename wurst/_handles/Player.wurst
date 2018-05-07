@@ -1,5 +1,6 @@
 package Player
 import NoWurst
+import Wurstunit
 import Colors
 import Unit
 
@@ -137,3 +138,12 @@ public function player.getTaxRate(player otherPlayer, playerstate whichResource)
 
 public function player.isRacePrefSet(racepreference preference) returns bool
 	return IsPlayerRacePrefSet(this, preference)
+
+@Test
+function testPlayer()
+	let p = Player(0)
+	assertTrue(p == Player(0))
+
+	assertTrue(p.getColor() == null)
+	p.setColor(PLAYER_COLOR_AQUA)
+	assertTrue(p.getColor() == PLAYER_COLOR_AQUA)
