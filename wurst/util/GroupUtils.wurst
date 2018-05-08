@@ -87,11 +87,10 @@ function createGroups(int number)
         let createNow = min(toCreate, maxCreatePerCycle)
         toCreate -= createNow
 
-        execute(() -> begin 
+        execute() -> 
             numTotal += createNow
             for i = 1 to createNow
                 push(CreateGroup())
-        end)
         
     if numTotal >= GROUP_NUMBER_LIMIT and not shownMaxError
         Log.warn("Maximum number of GroupUtils groups (" + GROUP_NUMBER_LIMIT.toString() + ") created. "

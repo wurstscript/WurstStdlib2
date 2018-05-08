@@ -3,7 +3,7 @@ import RegisterEvents
 import UnitIndexer
 import EventHelper
 
-/** How many bast orders to hold.
+/** How many past orders to hold.
 	Should be at least 2 */
 @configurable constant ORDERS_TO_HOLD = 3
 
@@ -142,6 +142,5 @@ init
 	registerPlayerUnitEvent(EVENT_PLAYER_UNIT_ISSUED_ORDER, null, function actions)
 	registerPlayerUnitEvent(EVENT_PLAYER_UNIT_SPELL_EFFECT, null, function spellActions)
 
-	onUnitDeindex(() -> begin
+	onUnitDeindex() ->
 		getDeindexedUnit().clearLastOrders()
-	end)

@@ -1,5 +1,9 @@
 package LinkedList
 import NoWurst
+import TypeCasting
+import Integer
+import String
+import Real
 
 /** 
 Doubly-linked list implementation that implements all common list, stack and queue operations.
@@ -7,10 +11,11 @@ Permits all elements (including null).
 Use the Typecasting package if you require lists of warcraft handles.
 */
 public class LinkedList<T>
-	private LLEntry<T> dummy = new LLEntry<T>(null, null, null)
+	private var dummy = new LLEntry<T>(null, null, null)
+	protected var size = 0
+
 	private LLIterator<T> staticItr = null 
 	private LLBackIterator<T> staticBackItr = null
-	protected int size = 0
 
 	/** Create a new list by copying all elements from another list into it */
 	construct(thistype base)
@@ -24,18 +29,19 @@ public class LinkedList<T>
 		dummy.next = dummy
 		dummy.prev = dummy
 
-	/** Add an element to the end of the list (top of stack, beginning of queue) */
-	function add(T elem)
-		let entry = new LLEntry<T>(elem, dummy.prev, dummy)
-		dummy.prev.next = entry
-		dummy.prev = entry
-		size++
+	/** Add one or more elements to the end of the list (top of stack, beginning of queue) */
+	function add(vararg T elems)
+		for elem in elems
+			let entry = new LLEntry<T>(elem, dummy.prev, dummy)
+			dummy.prev.next = entry
+			dummy.prev = entry
+			size++
 
 	/** add all elements from elems to the end of this list */
 	function addAll(LinkedList<T> elems)
 		for elem in elems
 			add(elem)
-			
+
 	/** Returns the element at the specified index */
 	function get(int index) returns T
 		return getEntry(index).elem
@@ -43,7 +49,7 @@ public class LinkedList<T>
 	/** Returns the index of the specified element or -1 is it doesn't exist */
 	function indexOf(T t) returns int
 		var entry = dummy.next
-		int idx = 0
+		var idx = 0
 		while entry != dummy
 			if entry.elem == t
 				return idx
@@ -81,7 +87,7 @@ public class LinkedList<T>
 			removeEntry(top)
 		return result
 		
-	/** Returns and removes the lastly added Element */
+	/** Returns the lastly added Element */
 	function peek() returns T
 		return dummy.prev.elem
 	
@@ -105,7 +111,7 @@ public class LinkedList<T>
 		
 	/** Removes the first occurence of t from this list */
 	function remove(T elem)
-		LLEntry<T> entry = dummy.next
+		var entry = dummy.next
 		while entry != dummy
 			if entry.elem == elem
 				removeEntry(entry)
@@ -165,7 +171,7 @@ public class LinkedList<T>
 		false if 'whichelement' is not contained in the list
 	*/
 	function replace(T whichElement, T newElement) returns boolean
-		LLEntry<T> current = dummy.next
+		var current = dummy.next
 		while current != dummy
 			if current.elem == whichElement
 				current.elem = newElement
@@ -174,28 +180,27 @@ public class LinkedList<T>
 		return false
 
 	/** Removes the element if the predicates returns true */
-	function removeWhen(LinkedListPredicate<T> predicate) 
-		LLEntry<T> r = dummy.next
-		while r != dummy
-			if predicate.isTrueFor(r.elem)
-				r.prev.next = r.next
-				r.next.prev = r.prev
-				destroy r
-				size--
-			r = r.next
+	function removeWhen(LinkedListPredicate<T> predicate)
+		let itr = iterator()
+		for elem from itr
+			if predicate.isTrueFor(elem)
+				itr.remove()
+		itr.close()
+
 		destroy predicate
 		
 	/** Executes the closure for each element */	
-	function forEach(LLItrClosure<T> itr)
-		LLEntry<T> r = dummy.next
+	function forEach(LLItrClosure<T> itr) returns LinkedList<T>
+		var r = dummy.next
 		while r != dummy
 			itr.run(r.elem)
 			r = r.next
 		destroy itr
+		return this
 	
 	/** Updates all elements */	
 	function updateAll(LinkedListUpdater<T> f)
-		LLEntry<T> r = dummy.next
+		var r = dummy.next
 		while r != dummy
 			r.elem = f.update(r.elem) 
 			r = r.next
@@ -206,17 +211,10 @@ public class LinkedList<T>
 		for i = 0 to size
 			add(removeAt(GetRandomInt(0, size-1)))
 
-	/** Returns a list containing the results of running the given closure function
-		for each element in the original list */ 
-	function map<Q>(MapClosure<T, Q> itr) returns LinkedList<Q>
-		let output = new LinkedList<Q>()
-		this.forEach((T t) -> output.add(itr.run(t)))
-		return output
-
 	/** Adds the given element directly behind the element at the given index */
 	function addAt(T elem, int index)
-		let entry = new LLEntry<T>(elem, dummy.prev, dummy)
 		let entryAtIndex = getEntry(index)
+		let entry = new LLEntry<T>(elem, entryAtIndex.prev, entryAtIndex)
 		entryAtIndex.prev.next = entry
 		entryAtIndex.prev = entry
 		size++
@@ -229,6 +227,31 @@ public class LinkedList<T>
 			while last.next != dummy
 				last = last.next
 			dummy.prev = last
+
+	/** Returns the list obtained by applying the given closure to each element of the original list */ 
+	function map<Q>(MapClosure<T, Q> itr) returns LinkedList<Q>
+		let output = new LinkedList<Q>()
+		forEach(t -> output.add(itr.run(t)))
+		destroy itr
+		return output
+
+	/** Returns a new list of the elements that satisfy the predicate */
+	function filter(LinkedListPredicate<T> predicate) returns LinkedList<T>
+		let result = copy()
+		result.removeWhen(t -> not predicate.isTrueFor(t))
+		destroy predicate
+		return result
+
+	/** 'Folds' this list into a single value of type Q 
+		Example int-list sum: `list.foldl<int>(0, (i, q) -> q + i)` */
+	function foldl<Q>(Q startValue, FoldClosure<T, Q> predicate) returns Q
+		var result = startValue
+		var r = dummy.next
+		while r != dummy
+			result = predicate.run(r.elem, result)
+			r = r.next
+		destroy predicate
+		return result
 
 	/** internal merge sort */
 	private function sort(Comparator<T> comparator, LLEntry<T> e) returns LLEntry<T>
@@ -261,8 +284,8 @@ public class LinkedList<T>
 
 	/** returns the middle of a fragment list */
 	private function split(LLEntry<T> e) returns LLEntry<T>
-		LLEntry<T> normalRef = e
-		LLEntry<T> halfRef = e
+		var normalRef = e
+		var halfRef = e
 		while(normalRef.next != dummy and normalRef.next.next != dummy)
 			normalRef = normalRef.next.next
 			halfRef = halfRef.next
@@ -272,18 +295,12 @@ public class LinkedList<T>
 
 	/** Prints the content of the list */
 	function toString() returns string
-		string s="["
-		var first = true
-		for e in this
-			if not first
-				s += ", "
-			s += I2S(e castTo int)
-			first = false
-		return s + "]"
+		let fold = foldl<string>("[", (i, q) -> q + (i castTo int).toString() + ",")
+		return fold.substring(0, fold.length()-1) + "]"
 	
 	/** Removes all elements from the list */
 	function clear()
-		LLEntry<T> current = dummy.next
+		var current = dummy.next
 		while current != dummy
 			current = current.next
 			destroy current.prev
@@ -297,12 +314,12 @@ public class LinkedList<T>
 	/** Returns the entry at the given index */
 	private function getEntry(int index) returns LLEntry<T>
 		var entry = dummy
-		for int i = 0 to index
+		for i = 0 to index
 			entry = entry.next
 		return entry
 		
 	/** Removes an entry */
-	private function removeEntry(LLEntry<T> entry)
+	protected function removeEntry(LLEntry<T> entry)
 		entry.prev.next = entry.next
 		entry.next.prev = entry.prev
 		destroy entry
@@ -313,7 +330,7 @@ public class LinkedList<T>
 			destroy staticItr
 		if staticBackItr != null
 			destroy staticBackItr
-		LLEntry<T> current = dummy.next
+		var current = dummy.next
 		while current != dummy
 			current = current.next
 			destroy current.prev
@@ -333,7 +350,7 @@ public class LLIterator<T>
 	LLEntry<T>	dummy
 	LLEntry<T>	current
 	LinkedList<T> parent
-	protected bool destroyOnClose = true
+	protected var destroyOnClose = true
 
 	construct(LinkedList<T> parent)
 		this.parent  = parent
@@ -352,13 +369,10 @@ public class LLIterator<T>
 	 	This call can only be made once per call to next */
 	function remove() returns T
 		if current != dummy
-			parent.size--
-			current.next.prev = current.prev
-			current.prev.next = current.next
-			let removedNode   = current
-			current		   = current.prev
-			destroy removedNode
-			return removedNode.elem
+			parent.removeEntry(current)
+			let removed = current.elem
+			current = current.prev
+			return removed
 		return null
 
 	function hasNext() returns boolean
@@ -424,9 +438,16 @@ public interface LinkedListUpdater<T>
 public interface MapClosure<T, Q>
 	function run(T t) returns Q
 
+public interface FoldClosure<T, Q>
+	function run(T t, Q q) returns Q
+
 public interface Comparator<T>
 	function compare(T o1, T o2) returns int
 
-constant Comparator<int> intComparator = (int i1, int i2) -> i1 - i2
+constant Comparator<real> realComparator = (r1, r2) -> (r1 - r2).toInt()
+public function LinkedList<real>.sort()
+	this.sortWith(realComparator)
+
+constant Comparator<int> intComparator = (i1, i2) -> i1 - i2
 public function LinkedList<int>.sort()
 	this.sortWith(intComparator)

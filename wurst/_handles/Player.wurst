@@ -1,5 +1,6 @@
 package Player
 import NoWurst
+import Wurstunit
 import Colors
 import Unit
 
@@ -7,6 +8,9 @@ import Unit
 public player array players
 public constant localPlayer = GetLocalPlayer()
 init
+	initPlayerArray()
+
+@compiletime function initPlayerArray()
 	for i = 0 to bj_MAX_PLAYER_SLOTS-1
 		players[i] = Player(i)
 
@@ -80,7 +84,7 @@ public function player.selectSingle(unit u)
 		ClearSelection()
 		SelectUnit(u, true)
 
-public function player.setAbilityAvailable(integer abilityId, boolean avail)
+public function player.setAbilityAvailable(int abilityId, boolean avail)
 	SetPlayerAbilityAvailable(this, abilityId, avail)
 
 public function player.setName(string name)
@@ -104,3 +108,42 @@ public function player.unselect(unit u)
 
 public function player.isIngame() returns boolean
 	return this.getSlotState() == PLAYER_SLOT_STATE_PLAYING and this.getController() == MAP_CONTROL_USER
+
+public function player.decTechResearched(int techId, int levels)
+	BlzDecPlayerTechResearched(this, techId, levels)
+
+public function player.forceStartLocation(int index)
+	ForcePlayerStartLocation(this, index)
+
+public function player.setPlayerAlliance(player otherPlayer, alliancetype whichAllianceSetting, boolean value)
+	SetPlayerAlliance(this, otherPlayer, whichAllianceSetting, value)
+
+public function player.setTaxRate(player otherPlayer, playerstate whichResource, integer rate)
+	SetPlayerTaxRate(this, otherPlayer, whichResource, rate)
+
+public function player.setRacePreference(racepreference whichRacePreference)
+	SetPlayerRacePreference(this, whichRacePreference)
+
+public function player.setRaceSelectable(boolean value)
+	SetPlayerRaceSelectable(this, value)
+
+public function player.getTeam() returns int
+	return GetPlayerTeam(this)
+
+public function player.isSelectable() returns bool
+	return GetPlayerSelectable(this)
+
+public function player.getTaxRate(player otherPlayer, playerstate whichResource) returns int
+	return GetPlayerTaxRate(this, otherPlayer, whichResource)
+
+public function player.isRacePrefSet(racepreference preference) returns bool
+	return IsPlayerRacePrefSet(this, preference)
+
+@Test
+function testPlayer()
+	let p = Player(0)
+	assertTrue(p == Player(0))
+
+	assertTrue(p.getColor() == null)
+	p.setColor(PLAYER_COLOR_AQUA)
+	assertTrue(p.getColor() == PLAYER_COLOR_AQUA)

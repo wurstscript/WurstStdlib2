@@ -71,11 +71,10 @@ public class StringEncoder
 		buffer.writeInt(length)
 		asciiIntCount++
 		
-		executeWhile(CHARS_PER_ENCODE_DECODE, () -> counter < length, () -> begin
+		executeWhile(CHARS_PER_ENCODE_DECODE, () -> counter < length) ->
 			buffer.writeInt(getIndexFromChar(value.charAt(counter)))
 			counter++
 			asciiIntCount++
-		end)
 
 	private function decodeString() returns string
 		currentValue = ""
@@ -83,11 +82,10 @@ public class StringEncoder
 		asciiIntCount--
 		counter = 0
 
-		executeWhile(CHARS_PER_ENCODE_DECODE, () -> counter < length, () -> begin
+		executeWhile(CHARS_PER_ENCODE_DECODE, () -> counter < length) ->
 			currentValue += getCharFromIndex(buffer.readIntUnsafe())
 			counter++
 			asciiIntCount--
-		end)
 		
 		return currentValue
 

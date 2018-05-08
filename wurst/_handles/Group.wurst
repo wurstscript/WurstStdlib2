@@ -25,11 +25,13 @@ public function group.enumUnitsSelected(player p, boolexpr filter)
 public function group.clear()
 	GroupClear(this)
 	
-public function group.addUnit(unit u)
-	GroupAddUnit(this, u)
+public function group.addUnit(vararg unit units)
+	for u in units
+		GroupAddUnit(this, u)
 	
-public function group.removeUnit(unit u)
-	GroupRemoveUnit(this, u)
+public function group.removeUnit(vararg unit units)
+	for u in units
+		GroupRemoveUnit(this, u)
 	
 public function group.destr()
 	DestroyGroup(this)
@@ -40,9 +42,9 @@ public function group.contains(unit u) returns boolean
 var unitCounter = 0
 public function group.size() returns int
 	unitCounter = 0
-	ForGroup(this, () -> begin
+	ForGroup(this) ->
 		unitCounter++
-	end)
+
 	return unitCounter
 
 public function group.isEmpty() returns boolean
@@ -56,12 +58,31 @@ public function group.getRandomUnit() returns unit
 	let size = this.size()
 	randomCounter = 1 + GetRandomInt(0, size-1)
 	randomSelected = null
-	ForGroup(this, () -> begin
+	ForGroup(this) ->
 		randomCounter--
 		if randomCounter == 0
 			randomSelected = GetEnumUnit()
-	end)
+
 	return randomSelected
+
+public function group.immediateOrder(string order) returns boolean
+	return GroupImmediateOrder(this, order)
+
+public function group.immediateOrderById(int order) returns boolean
+	return GroupImmediateOrderById(this, order)
+
+public function group.pointOrder(string order, vec2 point) returns boolean
+	return GroupPointOrder(this, order, point.x, point.y)
+
+public function group.pointOrderById(int order, vec2 point) returns boolean
+	return GroupPointOrderById(this, order, point.x, point.y)
+
+public function group.targetOrder(string order, widget targetWidget) returns boolean
+	return GroupTargetOrder(this, order, targetWidget)
+
+public function group.targetOrder(int order, widget targetWidget) returns boolean
+	return GroupTargetOrderById(this, order, targetWidget)
+
 	
 /* Group iterator */
 

@@ -1,0 +1,66 @@
+package TargetsAllowed
+import NoWurst
+
+public class TargetsAllowed
+	/** Can only target air units. */
+	static constant air          = "air"
+	/** Can only target alive units (non-skeleton). */
+	static constant alive        = "alive"
+	/** Can only target allied units, but not units on the same team as casting unit. */
+	static constant allies       = "allies"
+	/** Can only target ancients i.e only the night elf buildings that can uproot. */
+	static constant ancient      = "ancient"
+	/** Can only target dead units (corpses, skeletons). */
+	static constant dead         = "dead"
+	/** Can only target debris, e.g crates. */
+	static constant debris       = "debris"
+	/** TODO: unknown what this target allows. */
+	static constant decoration   = "decoration"
+	/** Can only target enemy units. */
+	static constant enemies      = "enemies"
+	/** Can only target allied and own units. */
+	static constant friend       = "friend"
+	/** Can only target units without flying/hover movement type. */
+	static constant ground       = "ground"
+	/** Can only target hero units. */
+	static constant hero         = "hero"
+	/** Can only target invulnerable targets. */
+	static constant invulnerable = "invulnerable"
+	/** Can only target items lying on the ground. */
+	static constant item_t       = "item" // Suffixed with _t to prevent collision with native type item
+	/** Can only target mechanichal units catapults etc. */
+	static constant mechanical   = "mechanical"
+	/** Can only target units which belong to neutral players (Neutral Hostile, Neutral Passive) */
+	static constant neutral      = "neutral"
+	/** Can only target non-ancient units. */
+	static constant nonancient   = "nonancient"
+	/** No targets allowed. */
+	static constant none         = "none"
+	/** Can only target non-heroes. */
+	static constant nonhero      = "nonhero"
+	/** Can only target non-suicidal units. */
+	static constant nonsapper    = "nonsapper"
+	/** Cannot target casting unit. */
+	static constant notself      = "notself"
+	/** Can only target non-mechanical units. */
+	static constant organic      = "organic"
+	/** TOOD: this is unknown what it does. */
+	static constant player_t     = "player" // Suffixed with _t to prevent collision with native type player
+	/** Only able to target units from the same player as casting unit. */
+	static constant playerunits  = "playerunits"
+	/** Can only target suicidal units such as Goblin Sapper. */
+	static constant sapper       = "sapper"
+	/** Can only target caster. */
+	static constant self         = "self"
+	/** Can target buildings. */
+	static constant structure    = "structure"
+	/** Can only target landscape such as grass, water or dirt. */
+	static constant terrain      = "terrain"
+	/** Can only target trees. */
+	static constant tree         = "tree"
+	/** Can only target units that can take damage. */
+	static constant vulnerable   = "vulnerable"
+	/** TODO: uncertain if this limits valid targets to gates. */
+	static constant wall         = "wall"
+	/** Limit to units which are wards (Statis Traps, etc). */
+	static constant ward         = "ward"

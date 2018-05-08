@@ -12,15 +12,15 @@ function testForce()
 
 	f.addPlayer(Player(0))
 
+	f.containsPlayer(Player(0)).assertTrue()
 
-int testInt = 0
+var testInt = 0
 
 @Test
 function testForForce()
 	testInt = 0
-	execute(() -> begin
+	execute() ->
 		testInt.assertEquals(0)
 		testInt = 10
-	end)
 
 	testInt.assertEquals(10)

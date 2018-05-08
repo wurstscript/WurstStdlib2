@@ -23,7 +23,7 @@ import OnUnitEnterLeave
 			import UnitIndexer
 
 	2) Getting the index of a unit and getting the unit with an index
-		To get a unit's unique index as an integer:
+		To get a unit's unique index as an int:
 
 			unit.getIndex()
 			
@@ -58,13 +58,13 @@ import OnUnitEnterLeave
 		Conversely, if we want to create a class instance that belongs to
 		a unit that had just been indexed, we can do the same:
 			
-			onUnitIndex(() -> new Class(GetIndexedUnit()))
+			onUnitIndex(() -> new Class(getIndexedUnit()))
 
 		If you have never worked with lambda functions, the above code might
 		look like black magic, but it essentially translates to this:
 
 			function someFunction()
-				new Class(GetIndexedUnit())
+				new Class(getIndexedUnit())
 
 			...in code somewhere...
 				onUnitIndex(function someFunction())
@@ -111,10 +111,10 @@ unit deindexedUnit = null
 @configurable public function shouldIndex(unit _u) returns boolean
 	return true
 
-/**  Returns the integer index of this unit. 
+/**  Returns the int index of this unit. 
 	Can be configured by the user to supply a custom unit indexer which won't break 
 	other stdlib components. */
-@configurable public function unit.getIndex() returns integer
+@configurable public function unit.getIndex() returns int
 	return this.getUserData()
 
 /**  Returns the UnitIndex associated with this unit, creating a new one if necessary. */

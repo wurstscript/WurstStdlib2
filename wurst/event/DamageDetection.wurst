@@ -1,11 +1,10 @@
 package DamageDetection
-import MapBounds
 import OnUnitEnterLeave
 
 constant SWAP_TIMEOUT = 600.
 
 boolexpr array func
-integer funcNext = 0
+int funcNext = 0
 trigger current = null
 trigger toDestroy = null
 
@@ -30,7 +29,7 @@ public function enableDamageDetect()
 
 /** Periodic Cleanup-Function */
 function swap()
-	boolean b = IsTriggerEnabled(current)
+	var isEnabled = IsTriggerEnabled(current)
 
 	current.disable()
 	if toDestroy != null
@@ -39,10 +38,11 @@ function swap()
 	toDestroy = current
 	current = CreateTrigger()
 
-	if not b
+	if not isEnabled
 		current.disable()
 
-	GroupEnumUnitsInRect(ENUM_GROUP, boundRect, filter)
+	for i = 0 to bj_MAX_PLAYER_SLOTS - 1
+		GroupEnumUnitsOfPlayer(ENUM_GROUP, players[i], filter)
 
 	for i = 0 to funcNext-1
 		current.addCondition(func[i])

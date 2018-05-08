@@ -65,8 +65,7 @@ public function image.setLevel(Layer layer)
 	
 /** Destroy the image */		
 public function image.remove()
-	if this != null
-		DestroyImage(this)
-	else
+	if this == null
 		error("Nullpointer exeption by destroying an image")
+	DestroyImage(this)
 

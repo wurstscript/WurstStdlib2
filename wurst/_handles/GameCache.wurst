@@ -5,7 +5,7 @@ import public Vectors
 public function gamecache.save() returns boolean
 	return SaveGameCache(this)
 
-public function gamecache.saveInt(string missionKey, string key, integer value)
+public function gamecache.saveInt(string missionKey, string key, int value)
 	StoreInteger(this, missionKey, key, value)
 
 public function gamecache.saveReal(string missionKey, string key, real value)
@@ -56,7 +56,7 @@ public function gamecache.flushUnit(string missionKey, string key)
 public function gamecache.flushString(string missionKey, string key)
 	FlushStoredString(this, missionKey, key)
 	
-public function gamecache.loadInt(string missionKey, string key) returns integer
+public function gamecache.loadInt(string missionKey, string key) returns int
 	return GetStoredInteger(this, missionKey, key)
 
 public function gamecache.loadReal(string missionKey, string key) returns real

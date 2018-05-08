@@ -12,6 +12,6 @@ public function getElapsedGameTime() returns real
 init
 	gameTimer = CreateTimer()
 	gameTimer.start(100000, null)
-	CreateTimer().startPeriodic(ANIMATION_PERIOD, () -> begin
+	CreateTimer().startPeriodic(ANIMATION_PERIOD) ->
 		currentTime += ANIMATION_PERIOD
-	end)
+

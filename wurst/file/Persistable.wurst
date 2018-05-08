@@ -144,7 +144,7 @@ class PersistentStore
 		let reader = new FileReader(entity.getPath(), entity.getIODelay())
 	
 		if localPlayer == owner
-			reader.load((FileLoadStatus _status) -> begin
+			reader.load() _status ->
 				var buffer = new StringBuffer(MAX_PACKET_LENGTH)
 				// a boolean for keeping track of whether the load was succesful or not
 				network.getData().writeBoolean(true)
@@ -158,16 +158,16 @@ class PersistentStore
 				destroy buffer
 
 				synchronizer.sync()
-			end)
+
 		else
 			// all other players just need to wait for the owner to tell others he's ready
 			synchronizer.sync()
 		
 		// when the sender has finished loading, we can start the transmission
-		synchronizer.onSynced(() -> begin
+		synchronizer.onSynced() ->
 			destroy reader
 
-			network.start((NetworkResult status, Buffer buffer) -> begin
+			network.start() (NetworkResult status, Buffer buffer) ->
 				var loadStatus = LoadStatus.SUCCESS
 
 				if status == NetworkResult.ABORTED
@@ -185,8 +185,7 @@ class PersistentStore
 						loadStatus = LoadStatus.FAIL_FILE_CORRUPT
 
 				finishWithStatus(loadStatus, callback)
-			end)
-		end)
+
 
 	function save(PersistableSaveCallback callback)
 		// used to proceed when the owner has finished saving to disk
@@ -210,11 +209,10 @@ class PersistentStore
 			synchronizer.sync()
 
 		// call the callback when everything has finished
-		synchronizer.onSynced(() -> begin
+		synchronizer.onSynced() ->
 			if localPlayer == owner
 				destroy writer
 
 			if callback != null
 				callback.onSaved()
 			entity.onSaved()
-		end)

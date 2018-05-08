@@ -137,7 +137,7 @@ public function toHex(int number) returns string
 	var secondpart = number - firstpart * 16
 	return hexs[firstpart] + hexs[secondpart]
 	
-/** Converts a twochar string to an integer */
+/** Converts a twochar string to an int */
 public function toDec(string twochar) returns int
 	if twochar.length() > 2
 		return -1
@@ -155,10 +155,13 @@ init
 	initializeTable()
 
 @Test public function testColors()
-	assertTrue(hexs[10] == "A")
-	assertTrue(decs.loadInt(hexs[10].getHash()) == 10)
+	hexs[10].assertEquals("A")
+	decs.loadInt(hexs[10].getHash()).assertEquals(10)
 
 	let mixed = colorA(0,0,0,0).mix(colorA(255,255,255,255), 0.5)
 	assertTrue(mixed == colorA(128,128,128,128))
 
 	assertTrue(fromHexString("33ccff44") == colorA(204, 255, 68, 51))
+
+	assertTrue(PLAYER_COLOR_RED != null)
+	

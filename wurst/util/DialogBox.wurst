@@ -12,10 +12,10 @@ public interface DialogBoxButtonClosure
 The DialogBox should be destroyed after it is no longer needed.
 Example use:
 | let dBox = new DialogBox("Extra starting gold?")
-| dBox.addButton("Yes", () -> begin
+| dBox.addButton("Yes") ->
 |     players[0].addGold(500)
 |     destroy dBox
-| end)
+|
 | dBox.addButton("No", () -> destroy dBox)
 | dBox.display(players[0], true) */
 public class DialogBox
@@ -49,11 +49,11 @@ public class DialogBox
         this.addButton(buttonText, 0 , cb)
 
     /** Hotkey: use ASCII number of the capital letter. */
-    function addButton(string buttonText, integer hotkey)
+    function addButton(string buttonText, int hotkey)
         this.addButton(buttonText, hotkey , null)
 
     /** Hotkey: use ASCII number of the capital letter. */
-    function addButton(string buttonText, integer hotkey, DialogBoxButtonClosure cb)
+    function addButton(string buttonText, int hotkey, DialogBoxButtonClosure cb)
         let btn = this.dialogHandle.addButton(buttonText, hotkey)
         this.buttons.add(btn)
         buttonClosures.put(btn, cb)
@@ -68,14 +68,14 @@ public class DialogBox
     
     /** Adds a quit button to this dialog. If it is clicked, it ends the game for that player.
     Hotkey: use ASCII numbers of the capital letter. */
-    function addQuitButton(boolean doScoreScreen, string buttonText, integer hotkey)
+    function addQuitButton(boolean doScoreScreen, string buttonText, int hotkey)
         let btn = this.dialogHandle.addQuitButton(doScoreScreen, buttonText, hotkey)
         this.buttons.add(btn)
         buttonClosures.put(btn, null)
 
     /** Adds a quit button to this dialog. If it is clicked, it ends the game for that player.
     Hotkey: use ASCII numbers of the capital letter. */
-    function addQuitButton(boolean doScoreScreen, string buttonText, integer hotkey, DialogBoxButtonClosure cb)
+    function addQuitButton(boolean doScoreScreen, string buttonText, int hotkey, DialogBoxButtonClosure cb)
         let btn = this.dialogHandle.addQuitButton(doScoreScreen, buttonText, hotkey)
         this.buttons.add(btn)
         buttonClosures.put(btn, cb)
@@ -95,12 +95,11 @@ public class DialogBox
         return this.title
 
     ondestroy
-        buttons.forEach((button btn) -> begin
+        buttons.forEach() btn ->
             let cb = buttonClosures.get(btn)
             buttonClosures.remove(btn)
             if cb != null
                 destroy cb
-        end)
 
         destroy buttons
         this.dialogHandle

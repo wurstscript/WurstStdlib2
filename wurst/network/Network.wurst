@@ -48,12 +48,11 @@
 			all data is available for players to be read, and start the transmission.
 			Status will be set to NetworkResult.ABORTED if the player left during
 			the transmission, or is not present:
-				network.start((status, buffer) -> begin
+				network.start() (status, buffer) ->
 					var int = buffer.readInt()
 					var real = buffer.readReal()
 					var string = buffer.readString()
 					...
-				end)
 
 		Sending objects implementing BufferSerializable:
 			You may find yourself sending not simply raw data, but some
@@ -100,21 +99,21 @@
 					buffer.write(myClass)
 
 			3. Read instances of MyClass:
-				network.start((status, buffer) -> begin
+				network.start() (status, buffer) ->
 					let myClass = new MyClass(buffer)
 
 					doSomethingWithMyClass(myClass)
-				end)
+				
 
 				// or, without the constructor
 
-				network.start((status, buffer) -> begin
+				network.start() (status, buffer) ->
 					// get existing instance
 					let myClass = getOldMyClassInstance()
 
 					// update it
 					myClass.deserialize(buffer)
-				end)
+				
 
 		Important notes:
 			1. Upon creation, the HashBuffer object is locked in a write-only state.
@@ -279,9 +278,9 @@ public class Network
 		if localPlayer == sender
 			// push all strings into the string encoder
 
-			executeWhile(DATA_PER_EXECUTE, () -> dataBuffer.hasString(), () -> begin
+			executeWhile(DATA_PER_EXECUTE, () -> dataBuffer.hasString()) ->
 				stringEncoder.pushString(dataBuffer.readString())
-			end)
+			
 
 			// encode all strings into ints
 			stringEncoder.encode()
@@ -333,52 +332,52 @@ public class Network
 	// sorry, but this is needed to avoid hitting the OP limit without too much of a performance hit
 
 	private function writeInts()
-		executeWhile(DATA_PER_EXECUTE, () -> counters.ints < meta.ints and gcIntBuffer.getRemainingWrite() > 0, () -> begin
+		executeWhile(DATA_PER_EXECUTE, () -> counters.ints < meta.ints and gcIntBuffer.getRemainingWrite() > 0) ->
 			gcIntBuffer.writeInt(dataBuffer.readIntUnsafe())
 			counters.ints++
-		end)
+		
 
 	private function readInts()
-		executeWhile(DATA_PER_EXECUTE, () -> counters.ints < meta.ints and gcIntBuffer.getRemainingRead() > 0, () -> begin
+		executeWhile(DATA_PER_EXECUTE, () -> counters.ints < meta.ints and gcIntBuffer.getRemainingRead() > 0) ->
 			dataBuffer.writeInt(gcIntBuffer.readInt())
 			counters.ints++
-		end)
+		
 
 	private function writeReals()
-		executeWhile(DATA_PER_EXECUTE, () -> counters.reals < meta.reals and gcRealBuffer.getRemainingWrite() > 0, () -> begin
+		executeWhile(DATA_PER_EXECUTE, () -> counters.reals < meta.reals and gcRealBuffer.getRemainingWrite() > 0) ->
 			gcRealBuffer.writeReal(dataBuffer.readRealUnsafe())
 			counters.reals++
-		end)
+		
 
 	private function readReals()
-		executeWhile(DATA_PER_EXECUTE, () -> counters.reals < meta.reals and gcRealBuffer.getRemainingRead() > 0, () -> begin
+		executeWhile(DATA_PER_EXECUTE, () -> counters.reals < meta.reals and gcRealBuffer.getRemainingRead() > 0) ->
 			dataBuffer.writeReal(gcRealBuffer.readReal())
 			counters.reals++
-		end)
+		
 
 	private function writeBooleans()
-		executeWhile(DATA_PER_EXECUTE, () -> counters.booleans < meta.booleans and gcBooleanBuffer.getRemainingWrite() > 0, () -> begin
+		executeWhile(DATA_PER_EXECUTE, () -> counters.booleans < meta.booleans and gcBooleanBuffer.getRemainingWrite() > 0) ->
 			gcBooleanBuffer.writeBoolean(dataBuffer.readBooleanUnsafe())
 			counters.booleans++
-		end)
+		
 
 	private function readBooleans()
-		executeWhile(DATA_PER_EXECUTE, () -> counters.booleans < meta.booleans and gcBooleanBuffer.getRemainingRead() > 0, () -> begin
+		executeWhile(DATA_PER_EXECUTE, () -> counters.booleans < meta.booleans and gcBooleanBuffer.getRemainingRead() > 0) ->
 			dataBuffer.writeBoolean(gcBooleanBuffer.readBoolean())
 			counters.booleans++
-		end)
+		
 
 	private function writeStrings()
-		executeWhile(DATA_PER_EXECUTE, () -> counters.asciiInts < meta.asciiInts and gcStringBuffer.getRemainingWrite() > 0, () -> begin
+		executeWhile(DATA_PER_EXECUTE, () -> counters.asciiInts < meta.asciiInts and gcStringBuffer.getRemainingWrite() > 0) ->
 			gcStringBuffer.writeInt(stringEncoder.popInt())
 			counters.asciiInts++
-		end)
+		
 
 	private function readStrings()
-		executeWhile(DATA_PER_EXECUTE, () -> counters.asciiInts < meta.asciiInts and gcStringBuffer.getRemainingRead() > 0, () -> begin
+		executeWhile(DATA_PER_EXECUTE, () -> counters.asciiInts < meta.asciiInts and gcStringBuffer.getRemainingRead() > 0) ->
 			stringEncoder.pushInt(gcStringBuffer.readInt())
 			counters.asciiInts++
-		end)
+		
 
 	private function sendRound()
 		if SAFETY_CHECKS_ENABLED and currentState != NetworkState.SENDING_ROUND
@@ -457,9 +456,9 @@ public class Network
 
 				dataBuffer.setMode(BufferMode.WRITE)
 
-				executeWhile(DATA_PER_EXECUTE, () -> stringEncoder.getStringCount() > 0, () -> begin
+				executeWhile(DATA_PER_EXECUTE, () -> stringEncoder.getStringCount() > 0) ->
 					dataBuffer.writeString(stringEncoder.popString())
-				end)
+				
 
 			dataBuffer.setMode(BufferMode.READ)
 			dataBuffer.resetRead()

@@ -14,7 +14,7 @@ public function dialog.addButton(string buttonText) returns button
     return this.addButton(buttonText, 0)
 
 /** Hotkey: use ASCII numbers of the capital letter. */
-public function dialog.addButton(string buttonText, integer hotkey) returns button
+public function dialog.addButton(string buttonText, int hotkey) returns button
     return DialogAddButton(this, buttonText, hotkey)
 
 /** Adds a quit button to this dialog. If it is clicked, it ends the game for that player. */
@@ -23,7 +23,7 @@ public function dialog.addQuitButton(boolean doScoreScreen, string buttonText) r
 
 /** Adds a quit button to this dialog. If it is clicked, it ends the game for that player.
 Hotkey: use ASCII numbers of the capital letter. */
-public function dialog.addQuitButton(boolean doScoreScreen, string buttonText, integer hotkey) returns button
+public function dialog.addQuitButton(boolean doScoreScreen, string buttonText, int hotkey) returns button
     return DialogAddQuitButton(this, doScoreScreen, buttonText, hotkey)
 
 /** Removes all buttons from a dialog */
@@ -41,3 +41,11 @@ public function dialog.display(player whichPlayer, boolean flag)
 public function dialog.setMessage(string messageText)
     DialogSetMessage(this, messageText)
 
+@Test
+function testDialog()
+    let dia = createDialog()
+    dia..addButton("text")
+    ..addQuitButton(true, "test")
+    ..display(Player(0), true)
+    ..clear()
+    ..destr()

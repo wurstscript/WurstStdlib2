@@ -26,10 +26,10 @@ public class MetadataStore
 	construct()
 		META_CACHE.flushMission(mkey)
 
-	private function saveValue(string key, integer value)
+	private function saveValue(string key, int value)
 		META_CACHE.saveInt(mkey, key, value)
 
-	private function loadValue(string key) returns integer
+	private function loadValue(string key) returns int
 		return META_CACHE.loadInt(mkey, key)
 
 	function setCounts(metadata data)

@@ -51,13 +51,12 @@
 				gc.syncInteger(mkey, vkey1, value1)
 		
 		3. Set a callback to be called after all players have synchronized and read the data
-			synchronizer.onSynced(() -> begin
+			synchronizer.onSynced() ->
 				let value1 = LoadInteger(gc, mkey, vkey1)
 				let value2 = LoadInteger(gc, mkey, vkey2)
 
 				// here, value1 and value2 are integers received from sender
 				...
-			end)
 
 		4. Call .sync() on all game clients, after having called the Sync natives.
 			synchronizer.sync()
@@ -94,10 +93,9 @@ function player.onceSelect(unit what)
 	ENUM_GROUP.enumUnitsSelected(this, null)
 	last = null
 	count = 0
-	forUnitsSelected(this, (unit u) -> begin
+	forUnitsSelected(this) u ->
 		count++
 		last = u
-	end)
 
 	if count >= 12
 		this.unselect(last)
@@ -164,23 +162,20 @@ public class SimpleSynchronizer
 		return reverseLookup[what.getIndex()]
 
 init
-	registerPlayerUnitEvent(EVENT_PLAYER_UNIT_SELECTED, null, null, () -> begin
+	registerPlayerUnitEvent(EVENT_PLAYER_UNIT_SELECTED, null, null) ->
 		let synchronizer = SimpleSynchronizer.getSynchronizer(GetTriggerUnit())
 
 		if synchronizer != null
 			synchronizer.onPlayerFinishedSync(GetTriggerPlayer())
-	end)
 
-	registerPlayerEvent(EVENT_PLAYER_LEAVE, () -> begin
+	registerPlayerEvent(EVENT_PLAYER_LEAVE) ->
 		let who = GetTriggerPlayer()
 
 		for synchronizer in SimpleSynchronizer
 			synchronizer.onPlayerLeave(who)
-	end)
 
-	onLeave(() -> begin
+	onLeave() ->
 		let synchronizer = SimpleSynchronizer.getSynchronizer(getEnterLeaveUnit())
 
 		if synchronizer != null and not synchronizer.areAllPlayersSynced()
 			Log.error("SimpleSynchronizer: dummy unit was removed before all players synced, make sure your map doesn't remove neutral dummy units")
-	end)

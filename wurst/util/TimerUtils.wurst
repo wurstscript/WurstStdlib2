@@ -13,11 +13,11 @@ constant timerData = new Table()
 constant HELD = 0x28829022
 
 /** Attach Data to this timer */
-public function timer.setData(integer data)
+public function timer.setData(int data)
 	timerData.saveInt(this.getHandleId(), data )
 	
 /** Retrieve the data attached to this timer */
-public function timer.getData() returns integer
+public function timer.getData() returns int
 	return timerData.loadInt(this.getHandleId())
 
 /** Get a new timer. Use this instead of "CreateTimer".
@@ -62,7 +62,7 @@ enum Mode
 
 public module TimedLoop
 	static private thistype array instances		// The array
-	static private integer instanceCount = 0	// The count
+	static private int instanceCount = 0	// The count
 	static private triggercondition triggerCond = null // the triggerCondition for this
 	static private conditionfunc cond = Condition(function onExpire)
 
