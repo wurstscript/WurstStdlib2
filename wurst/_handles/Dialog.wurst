@@ -41,3 +41,11 @@ public function dialog.display(player whichPlayer, boolean flag)
 public function dialog.setMessage(string messageText)
     DialogSetMessage(this, messageText)
 
+@Test
+function testDialog()
+    let dia = createDialog()
+    dia..addButton("text")
+    ..addQuitButton(true, "test")
+    ..display(Player(0), true)
+    ..clear()
+    ..destr()
