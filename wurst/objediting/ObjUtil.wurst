@@ -17,125 +17,18 @@ import StringUtils
 		"structure"
 	).assertEquals("self,structure")
 
-public function asList(int a1) returns string
-	let list = asListGeneric<int>(a1)
-	let result = list.joinBy((int i) -> i.toRawCode(), ",")
-	destroy list
-	return result
-public function asList(int a1, int a2) returns string
-	let list = asListGeneric<int>(a1, a2)
-	let result = list.joinBy((int i) -> i.toRawCode(), ",")
-	destroy list
-	return result
-public function asList(int a1, int a2, int a3) returns string
-	let list = asListGeneric<int>(a1, a2, a3)
-	let result = list.joinBy((int i) -> i.toRawCode(), ",")
-	destroy list
-	return result
-public function asList(int a1, int a2, int a3, int a4) returns string
-	let list = asListGeneric<int>(a1, a2, a3, a4)
-	let result = list.joinBy((int i) -> i.toRawCode(), ",")
-	destroy list
-	return result
-public function asList(int a1, int a2, int a3, int a4, int a5) returns string
-	let list = asListGeneric<int>(a1, a2, a3, a4, a5)
-	let result = list.joinBy((int i) -> i.toRawCode(), ",")
-	destroy list
-	return result
-public function asList(int a1, int a2, int a3, int a4, int a5, int a6) returns string
-	let list = asListGeneric<int>(a1, a2, a3, a4, a5, a6)
-	let result = list.joinBy((int i) -> i.toRawCode(), ",")
-	destroy list
-	return result
-public function asList(int a1, int a2, int a3, int a4, int a5, int a6, int a7) returns string
-	let list = asListGeneric<int>(a1, a2, a3, a4, a5, a6, a7)
-	let result = list.joinBy((int i) -> i.toRawCode(), ",")
-	destroy list
-	return result
-public function asList(int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8) returns string
-	let list = asListGeneric<int>(a1, a2, a3, a4, a5, a6, a7, a8)
-	let result = list.joinBy((int i) -> i.toRawCode(), ",")
-	destroy list
-	return result
-public function asList(int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9) returns string
-	let list = asListGeneric<int>(a1, a2, a3, a4, a5, a6, a7, a8, a9)
-	let result = list.joinBy((int i) -> i.toRawCode(), ",")
-	destroy list
-	return result
-public function asList(int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9, int a10) returns string
-	let list = asListGeneric<int>(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)
+public function asList(vararg int ids) returns string
+	let list = new LinkedList<int>
+	for id in ids
+		list.add(id)
 	let result = list.joinBy((int i) -> i.toRawCode(), ",")
 	destroy list
 	return result
 
-public function asList(string a1) returns string
-	let list = asListGeneric<string>(a1)
+public function asList(vararg string values) returns string
+	let list = new LinkedList<string>
+	for v in values
+		list.add(v)
 	let result = list.joinBy(",")
 	destroy list
 	return result
-public function asList(string a1, string a2) returns string
-	let list = asListGeneric<string>(a1, a2)
-	let result = list.joinBy(",")
-	destroy list
-	return result
-public function asList(string a1, string a2, string a3) returns string
-	let list = asListGeneric<string>(a1, a2, a3)
-	let result = list.joinBy(",")
-	destroy list
-	return result
-public function asList(string a1, string a2, string a3, string a4) returns string
-	let list = asListGeneric<string>(a1, a2, a3, a4)
-	let result = list.joinBy(",")
-	destroy list
-	return result
-public function asList(string a1, string a2, string a3, string a4, string a5) returns string
-	let list = asListGeneric<string>(a1, a2, a3, a4, a5)
-	let result = list.joinBy(",")
-	destroy list
-	return result
-public function asList(string a1, string a2, string a3, string a4, string a5, string a6) returns string
-	let list = asListGeneric<string>(a1, a2, a3, a4, a5, a6)
-	let result = list.joinBy(",")
-	destroy list
-	return result
-public function asList(string a1, string a2, string a3, string a4, string a5, string a6, string a7) returns string
-	let list = asListGeneric<string>(a1, a2, a3, a4, a5, a6, a7)
-	let result = list.joinBy(",")
-	destroy list
-	return result
-public function asList(string a1, string a2, string a3, string a4, string a5, string a6, string a7, string a8) returns string
-	let list = asListGeneric<string>(a1, a2, a3, a4, a5, a6, a7, a8)
-	let result = list.joinBy(",")
-	destroy list
-	return result
-public function asList(string a1, string a2, string a3, string a4, string a5, string a6, string a7, string a8, string a9) returns string
-	let list = asListGeneric<string>(a1, a2, a3, a4, a5, a6, a7, a8, a9)
-	let result = list.joinBy(",")
-	destroy list
-	return result
-public function asList(string a1, string a2, string a3, string a4, string a5, string a6, string a7, string a8, string a9, string a10) returns string
-	let list = asListGeneric<string>(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)
-	let result = list.joinBy(",")
-	destroy list
-	return result
-
-function asListGeneric<T>(T a1) returns LinkedList<T>
-	return new LinkedList<T>()..add(a1)
-function asListGeneric<T>(T a1, T a2) returns LinkedList<T>
-	return new LinkedList<T>()..add(a1)..add(a2)
-function asListGeneric<T>(T a1, T a2, T a3) returns LinkedList<T>
-	return new LinkedList<T>()..add(a1)..add(a2)..add(a3)
-function asListGeneric<T>(T a1, T a2, T a3, T a4) returns LinkedList<T>
-	return new LinkedList<T>()..add(a1)..add(a2)..add(a3)..add(a4)
-function asListGeneric<T>(T a1, T a2, T a3, T a4, T a5) returns LinkedList<T>
-	return new LinkedList<T>()..add(a1)..add(a2)..add(a3)..add(a4)..add(a5)
-function asListGeneric<T>(T a1, T a2, T a3, T a4, T a5, T a6) returns LinkedList<T>
-	return new LinkedList<T>()..add(a1)..add(a2)..add(a3)..add(a4)..add(a5)..add(a6)
-function asListGeneric<T>(T a1, T a2, T a3, T a4, T a5, T a6, T a7) returns LinkedList<T>
-	return new LinkedList<T>()..add(a1)..add(a2)..add(a3)..add(a4)..add(a5)..add(a6)..add(a7)
-function asListGeneric<T>(T a1, T a2, T a3, T a4, T a5, T a6, T a7, T a8) returns LinkedList<T>
-	return new LinkedList<T>()..add(a1)..add(a2)..add(a3)..add(a4)..add(a5)..add(a6)..add(a7)..add(a8)
-function asListGeneric<T>(T a1, T a2, T a3, T a4, T a5, T a6, T a7, T a8, T a9) returns LinkedList<T>
-	return new LinkedList<T>()..add(a1)..add(a2)..add(a3)..add(a4)..add(a5)..add(a6)..add(a7)..add(a8)..add(a9)
-function asListGeneric<T>(T a1, T a2, T a3, T a4, T a5, T a6, T a7, T a8, T a9, T a10) returns LinkedList<T>
-	return new LinkedList<T>()..add(a1)..add(a2)..add(a3)..add(a4)..add(a5)..add(a6)..add(a7)..add(a8)..add(a9)..add(a10)
