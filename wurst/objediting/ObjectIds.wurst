@@ -2,6 +2,10 @@ package ObjectIds
 import NoWurst
 import ErrorHandling
 import Wurstunit
+import Assets
+import LinkedList
+import StringUtils
+import TypeCasting
 
 constant CHARMAP = ".................................!.#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[.]^_`abcdefghijklmnopqrstuvwxyz{|}~................................................................................................................................."
 
@@ -52,3 +56,31 @@ public function int.toRawCode() returns string
 	toRawCode('hfoo') .assertEquals("hfoo")
 	toRawCode('abcd') .assertEquals("abcd")
 	toRawCode('ABCD') .assertEquals("ABCD")
+
+public function asList(vararg int ids) returns string
+	let list = new LinkedList<int>
+	for id in ids
+		list.add(id)
+	let result = list.joinBy((int i) -> i.toRawCode(), ",")
+	destroy list
+	return result
+
+public function asList(vararg string values) returns string
+	let list = new LinkedList<string>
+	for v in values
+		list.add(v)
+	let result = list.joinBy(",")
+	destroy list
+	return result
+
+@Test function asListIntTest()
+	asList(
+		AbilityIds.invulnerable,
+		AbilityIds.reveal
+	).assertEquals("Avul,Adta")
+
+@Test function asListStringTest()
+	asList(
+		"self",
+		"structure"
+	).assertEquals("self,structure")
