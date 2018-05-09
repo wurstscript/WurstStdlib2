@@ -4,9 +4,52 @@ import Table
 import String
 import Integer
 import Wurstunit
+import Playercolor
+import Player
 
 public constant COLOR_WHITE = colorA(255,255,255,255)
 public constant COLOR_BLACK = colorA(0,0,0,0)
+
+constant DEFAULT_COLOR_NAME = "black"
+
+constant MAX_PLAYER_COLORS = 23
+/** Player color array. Access through playercolor.toColor() */
+constant PLAYER_COLORS = [
+	color(255,2,2), color(0,65,255), color(27,229,184), color(83,0,128), 
+	color(255,252,0), color(254,137,13), color(31,191,0), color(228,90,175), 
+	color(148,149,150), color(125,190,241),	color(15,97,69), color(77,41,3),
+	color(155,0,0), color(0, 0, 195), color(0, 234, 255), color(190, 0, 254), 
+	color(235, 205, 135), color(248, 164, 139), color(191, 255, 128), color(220, 185, 235), 
+	color(40, 40, 40), color(235, 240, 255), color(0, 120, 30), color(164, 11, 51)
+]
+
+@deprecated("use playercolor.toColor()") // Please delete this monster at a later date
+public constant playercolors = [
+	PLAYER_COLORS[0], PLAYER_COLORS[1], PLAYER_COLORS[2], PLAYER_COLORS[3], 
+	PLAYER_COLORS[4], PLAYER_COLORS[5], PLAYER_COLORS[6], PLAYER_COLORS[7], 
+	PLAYER_COLORS[8], PLAYER_COLORS[9], PLAYER_COLORS[10], PLAYER_COLORS[11], 
+	PLAYER_COLORS[12], PLAYER_COLORS[13], PLAYER_COLORS[14], PLAYER_COLORS[15], 
+	PLAYER_COLORS[16], PLAYER_COLORS[17], PLAYER_COLORS[18], PLAYER_COLORS[19], 
+	PLAYER_COLORS[20], PLAYER_COLORS[21], PLAYER_COLORS[22], PLAYER_COLORS[23]
+]
+
+/** Player color names array. Access through playercolor.getName() */
+constant PLAYER_COLOR_NAMES = [
+	"red", "blue", "teal", "purple",
+	"yellow", "orange", "green", "pink",
+	"gray", "light blue", "dark green", "brown",
+	"maroon", "navy", "turquoise", "violet",
+	"wheat", "peach", "mint", "lavender",
+	"coal", "snow", "emerald", "peanut"
+]
+
+/** Returns the name of the player color */
+public function playercolor.getName() returns string
+	return this.toInt() <= MAX_PLAYER_COLORS ? PLAYER_COLOR_NAMES[this.toInt()] : DEFAULT_COLOR_NAME
+	
+/** Returns the color associated with the playercolor */
+public function playercolor.toColor() returns color
+	return this.toInt() <= MAX_PLAYER_COLORS ? PLAYER_COLORS[this.toInt()] : COLOR_BLACK.withoutAlpha()
 
 /** Tuple for your RGB color needs. 0 = black, 255 = full color */
 public tuple color(int red, int green, int blue)
@@ -16,6 +59,9 @@ public tuple colorA(int red, int green, int blue, int alpha)
 /** Add an alpha value to a simple color tuple */
 public function color.withAlpha( int a ) returns colorA
 	return colorA(this.red, this.green, this.blue, a)
+
+public function colorA.withoutAlpha() returns color
+	return color(this.red, this.green, this.blue)
 	
 /** Get a colorA tuple from a hexstring */
 public function fromHexString(string number) returns colorA
@@ -51,39 +97,16 @@ public function makeColor(int colo) returns colorA
 	b=col-g*0x100
 
 	return colorA(r,g,b,a)
-	
-/** Constant playercolors */
+
+/** Returns the color associated with the given playercolor */
+@deprecated("Use playercolor.toColor()")
 public function fromPlayerColor( playercolor pc ) returns color
-	if pc  ==  PLAYER_COLOR_RED
-		return color(255,3,3)
-	else if pc == PLAYER_COLOR_BLUE
-		return color(0,66,255)
-	else if pc == PLAYER_COLOR_CYAN
-		return color(28,230,185)
-	else if pc == PLAYER_COLOR_PURPLE
-		return color(84,0,129)
-	else if pc == PLAYER_COLOR_YELLOW
-		return color(255,252,1)
-	else if pc == PLAYER_COLOR_ORANGE
-		return color(254,138,14)
-	else if pc == PLAYER_COLOR_GREEN
-		return color(32,192,0)
-	else if pc == PLAYER_COLOR_PINK
-		return color(229,91,176)
-	else if pc == PLAYER_COLOR_LIGHT_GRAY
-		return color(149,150,151)
-	else if pc == PLAYER_COLOR_LIGHT_BLUE
-		return color(126,191,241)
-	else if pc == PLAYER_COLOR_AQUA
-		return color(16,98,70)
-	else if pc == PLAYER_COLOR_BROWN
-		return color(78,42,4)
-	
-	return color(0,0,0)
+	return pc.toColor()
 	
 /** Get a simple colortuple containing the colorvalues of the playercolor */	
+@deprecated("Use player.getColor().toColor()")
 public function fromPlayer( player p ) returns color
-	return fromPlayerColor(GetPlayerColor(p))
+	return p.getColor().toColor()
 
 /** 
 *	Mixes two colors, s would be a number 0<=s<=1 that determines
@@ -125,10 +148,6 @@ public function colorA.toString() returns string
 
 /** Hexadecimal numbers */
 public constant hexs = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F"]
-/** Playercolor array */
-public constant playercolors = [color(255,2,2), color(0,65,255), color(27,229,184), color(83,0,128), 
-						color(255,252,0), color(254,137,13), color(31,191,0), color(228,90,175), 
-						color(148,149,150), color(125,190,241),	color(15,97,69), color(77,41,3)]
 constant decs = new Table()
 
 /** Converts and int to a hexnumber */
@@ -147,6 +166,38 @@ public function toDec(string twochar) returns int
 	
 	return decs.loadInt(StringHash(first)) * 16 + decs.loadInt(StringHash(second))
 
+/** Gets the name of the color. Only works on player colors. See PLAYER_COLORS. */
+public function color.getName() returns string
+	for i = 0 to MAX_PLAYER_COLORS
+		if (this == PLAYER_COLORS[i])
+			return PLAYER_COLOR_NAMES[i]
+	return "Unknown Color"
+	
+/** Returns the player that corresponds to described color. Returns null if a 
+	bad string is provided. See PLAYER_COLOR_NAMES for options. Returns players 
+	based on starting color, not current color (does not respect SetPlayerColor)*/
+public function toPlayerFromColorName(string colorName) returns player
+	let pc = colorName.toPlayerColor()
+	return pc != null ? pc.getPlayer() : null
+
+/** Returns the color that the string describes. Only works on player colors. */
+public function string.toColor() returns color
+	var col = color(0,0,0)
+	for i = 0 to MAX_PLAYER_COLORS
+		if (this.toLowerCase() == PLAYER_COLOR_NAMES[i])
+			col = PLAYER_COLORS[i]
+			break
+	return col
+
+/** Returns the player color that the string describes. Only works on player colors. */
+public function string.toPlayerColor() returns playercolor
+	playercolor pc = null
+	for i = 0 to MAX_PLAYER_COLORS
+		if (this.toLowerCase() == PLAYER_COLOR_NAMES[i])
+			pc = i.toPlayerColor()
+			break
+	return pc
+
 @compiletime function initializeTable()
 	for i = 0 to 15
 		decs.saveInt(hexs[i].getHash(), i)
@@ -155,10 +206,34 @@ init
 	initializeTable()
 
 @Test public function testColors()
-	assertTrue(hexs[10] == "A")
-	assertTrue(decs.loadInt(hexs[10].getHash()) == 10)
+	hexs[10].assertEquals("A")
+	decs.loadInt(hexs[10].getHash()).assertEquals(10)
 
 	let mixed = colorA(0,0,0,0).mix(colorA(255,255,255,255), 0.5)
 	assertTrue(mixed == colorA(128,128,128,128))
 
 	assertTrue(fromHexString("33ccff44") == colorA(204, 255, 68, 51))
+	
+	assertTrue(PLAYER_COLOR_RED != null)
+
+@Test public function testColorNames()
+	color(255, 2, 2).getName().assertEquals("red")
+	color(164, 11, 51).getName().assertEquals("peanut")
+	assertTrue("red".toColor() == color(255, 2, 2))
+	assertTrue("peanut".toColor() == color(164, 11, 51))
+	assertTrue("red".toPlayerColor() == PLAYER_COLOR_RED)
+	assertTrue("peanut".toPlayerColor() == PLAYER_COLOR_PEANUT)
+
+@Test public function testPlayerColorConversion()
+	assertTrue(PLAYER_COLOR_BLUE.toColor() == color(0,65,255))
+	assertTrue(PLAYER_COLOR_RED.toColor() == color(255, 2, 2))
+	assertTrue(PLAYER_COLOR_PEANUT.toColor() ==  color(164, 11, 51))
+	PLAYER_COLOR_RED.getName().assertEquals("red")
+	PLAYER_COLOR_COAL.getName().assertEquals("coal")
+
+@Test public function testPlayerFromColorName()
+	assertTrue(toPlayerFromColorName("red") == Player(0))
+	assertTrue(toPlayerFromColorName("PEANUT") == Player(23))
+	assertTrue(toPlayerFromColorName("wurstlang") == null)
+
+

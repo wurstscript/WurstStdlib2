@@ -3,6 +3,7 @@ import NoWurst
 import TypeCasting
 import Integer
 import String
+import Real
 
 /** 
 Doubly-linked list implementation that implements all common list, stack and queue operations.
@@ -28,18 +29,19 @@ public class LinkedList<T>
 		dummy.next = dummy
 		dummy.prev = dummy
 
-	/** Add an element to the end of the list (top of stack, beginning of queue) */
-	function add(T elem)
-		let entry = new LLEntry<T>(elem, dummy.prev, dummy)
-		dummy.prev.next = entry
-		dummy.prev = entry
-		size++
+	/** Add one or more elements to the end of the list (top of stack, beginning of queue) */
+	function add(vararg T elems)
+		for elem in elems
+			let entry = new LLEntry<T>(elem, dummy.prev, dummy)
+			dummy.prev.next = entry
+			dummy.prev = entry
+			size++
 
 	/** add all elements from elems to the end of this list */
 	function addAll(LinkedList<T> elems)
 		for elem in elems
 			add(elem)
-			
+
 	/** Returns the element at the specified index */
 	function get(int index) returns T
 		return getEntry(index).elem
@@ -441,6 +443,10 @@ public interface FoldClosure<T, Q>
 
 public interface Comparator<T>
 	function compare(T o1, T o2) returns int
+
+constant Comparator<real> realComparator = (r1, r2) -> (r1 - r2).toInt()
+public function LinkedList<real>.sort()
+	this.sortWith(realComparator)
 
 constant Comparator<int> intComparator = (i1, i2) -> i1 - i2
 public function LinkedList<int>.sort()

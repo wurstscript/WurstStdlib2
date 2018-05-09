@@ -32,8 +32,15 @@ public function unit.addEffect(string fx, string attachment) returns effect
 public function unit.addHP(real val)
 	this.addState(UNIT_STATE_LIFE, val)
 
-public function unit.addItem(int id) returns item
-	return UnitAddItemById(this, id)
+public function unit.addItemHandle(item whichItem) returns boolean
+	return UnitAddItem(this, whichItem)
+
+public function unit.addItemById(int itemId) returns item
+	return UnitAddItemById(this, itemId)
+
+@deprecated("Use addItemById method instead.")
+public function unit.addItem(int itemId) returns item
+	return UnitAddItemById(this, itemId)
 
 public function unit.addItemToSlot(int id, int slot) returns bool
 	return UnitAddItemToSlotById(this, id, slot)
@@ -41,8 +48,8 @@ public function unit.addItemToSlot(int id, int slot) returns bool
 public function unit.addMana(real val)
 	this.addState(UNIT_STATE_MANA, val)
 
-public function unit.addState( unitstate state, real value )
-	SetUnitState( this, state, this.getState(state) + value )
+public function unit.addState(unitstate state, real value)
+	SetUnitState(this, state, this.getState(state) + value)
 
 public function unit.addXp(int toAdd, boolean showEyeCandy)
 	AddHeroXP(this, toAdd, showEyeCandy)
@@ -116,7 +123,7 @@ public function unit.getFoodUsed() returns int
 	return GetFoodUsed(this.getTypeId())
 
 public function unit.getHP() returns real
-	return this.getState( UNIT_STATE_LIFE )
+	return this.getState(UNIT_STATE_LIFE)
 
 public function handle.getHandleId() returns int
 	return GetHandleId(this)
@@ -125,7 +132,7 @@ public function unit.getMana() returns real
 	return this.getState(UNIT_STATE_MANA)
 
 public function unit.getMaxHP() returns real
-	return this.getState( UNIT_STATE_MAX_LIFE )
+	return this.getState(UNIT_STATE_MAX_LIFE)
 
 public function unit.getMaxMana() returns real
 	return this.getState(UNIT_STATE_MAX_MANA)
@@ -154,8 +161,8 @@ public function unit.getPos3Zero() returns vec3
 public function unit.getPos3with(real z) returns vec3
 	return vec3(this.getX(), this.getY(), z)
 
-public function unit.getState( unitstate state ) returns real
-	return GetUnitState( this, state )
+public function unit.getState(unitstate state) returns real
+	return GetUnitState(this, state)
 
 public function unit.getTypeId() returns int
 	return GetUnitTypeId(this)
@@ -180,8 +187,8 @@ public function unit.hasItem(item whichItem) returns boolean
 
 public function unit.hasItemById(int itemId) returns boolean
 	var hasItem = false
-	for i = 0 to this.inventorySize() - 1
-		if this.itemInSlot(i).getTypeId() == itemId
+	for slot = 0 to this.inventorySize() - 1
+		if this.itemInSlot(slot).getTypeId() == itemId
 			hasItem = true
 			break
 	return hasItem
@@ -191,6 +198,18 @@ public function unit.hide()
 
 public function unit.inventorySize() returns int
 	return UnitInventorySize(this)
+
+/** Returns the number of items equipped. */
+public function unit.itemCount() returns int
+	int result = 0
+	for slot = 0 to this.inventorySize() - 1
+		if this.itemInSlot(slot) != null
+			result++
+	return result
+
+/** Checks if unit inventory is full. */
+public function unit.isInventoryFull() returns boolean
+	return this.itemCount() == this.inventorySize()
 
 /** Checks if the unit is alive using the UnitAlive native */
 public function unit.isAlive() returns boolean
@@ -223,6 +242,16 @@ public function unit.issueTargetOrderById(int id, widget target) returns boolean
 
 public function unit.itemInSlot(int inventoryIndex) returns item
 	return UnitItemInSlot(this, inventoryIndex)
+
+/** Retrieves slot number for speficied item or -1 if not found. */
+public function unit.getItemSlot(item whichItem) returns int
+	int result = -1
+	if this.hasItem(whichItem)
+		for slot = 0 to this.inventorySize() - 1
+			if this.itemInSlot(slot) == whichItem
+				result = slot
+				break
+	return result
 
 public function unit.kill()
 	KillUnit(this)
@@ -263,7 +292,7 @@ public function unit.setAnimation(string name)
 public function unit.setAnimation(int index)
 	SetUnitAnimationByIndex(this, index)
 
-public function unit.setColor( playercolor c )
+public function unit.setColor(playercolor c)
 	SetUnitColor(this, c)
 
 public function unit.setFacing(angle a)
@@ -272,8 +301,8 @@ public function unit.setFacing(angle a)
 public function unit.setFlyHeight(real height, real rate)
 	SetUnitFlyHeight(this, height, rate)
 
-public function unit.setHP( real hp )
-	this.setState( UNIT_STATE_LIFE, hp )
+public function unit.setHP(real hp)
+	this.setState(UNIT_STATE_LIFE, hp)
 
 public function unit.setInvulnerable(boolean flag)
 	SetUnitInvulnerable(this, flag)
@@ -313,14 +342,14 @@ public function unit.setPropWindow(real value)
 public function unit.setScale(real scale)
 	SetUnitScale(this, scale, scale, scale)
 
-public function unit.setState( unitstate state, real value )
-	SetUnitState( this, state, value )
+public function unit.setState(unitstate state, real value)
+	SetUnitState(this, state, value)
 
 public function unit.setTimeScale(real scale)
 	SetUnitTimeScale(this, scale)
 
-public function unit.setTimedLife( real time )
-	UnitApplyTimedLife( this, 'BTLF', time )
+public function unit.setTimedLife(real time)
+	UnitApplyTimedLife(this, 'BTLF', time)
 
 public function unit.setTurnSpeed(real speed)
 	SetUnitTurnSpeed(this, speed)
@@ -370,8 +399,8 @@ public function unit.subHP(real val)
 public function unit.subMana(real val)
 	this.subState(UNIT_STATE_MANA, val)
 
-public function unit.subState( unitstate state, real value )
-	SetUnitState( this, state, this.getState(state) - value )
+public function unit.subState(unitstate state, real value)
+	SetUnitState(this, state, this.getState(state) - value)
 
 public function unit.unpause()
 	PauseUnit(this, false)
@@ -407,3 +436,96 @@ public function unit.getDefaultAquireRange() returns real
 
 public function unit.getDefaultFlyHeight() returns real
 	return GetUnitDefaultFlyHeight(this)
+
+public function unit.getIntMaxHP() returns int
+	return BlzGetUnitMaxHP(this)
+
+public function unit.setMaxHP(int hp)
+	BlzSetUnitMaxHP(this, hp)
+
+public function unit.getIntMaxMana() returns int
+	return BlzGetUnitMaxMana(this)
+
+public function unit.setMaxMana(int mana)
+	BlzSetUnitMaxMana(this, mana)
+
+public function unit.deleteAbility(int abilCode)
+	BlzDeleteHeroAbility(this, abilCode)
+
+public function unit.setName(string name)
+	BlzSetUnitName(this, name)
+
+public function unit.setProperName(string name)
+	BlzSetHeroProperName(this, name)
+
+public function unit.getBaseDamage(int weaponIndex) returns int
+	return BlzGetUnitBaseDamage(this, weaponIndex)
+
+public function unit.setBaseDamage(int baseDamage, int weaponIndex)
+	BlzSetUnitBaseDamage(this, baseDamage, weaponIndex)
+
+public function unit.getDiceNumber(int weaponIndex) returns int
+	return BlzGetUnitDiceNumber(this, weaponIndex)
+
+public function unit.setDiceNumber(int diceNumber, int weaponIndex)
+	BlzSetUnitDiceNumber(this, diceNumber, weaponIndex)
+
+public function unit.getDiceSides(int weaponIndex) returns int
+	return BlzGetUnitDiceSides(this, weaponIndex)
+
+public function unit.setDiceSides(int diceSides, int weaponIndex)
+	BlzSetUnitDiceSides(this, diceSides, weaponIndex)
+
+public function unit.getAttackCooldown(int weaponIndex) returns real
+	return BlzGetUnitAttackCooldown(this, weaponIndex)
+
+public function unit.setAttackCooldown(real cooldown, int weaponIndex)
+	BlzSetUnitAttackCooldown(this, cooldown, weaponIndex)
+
+public function unit.getArmor() returns real
+	return BlzGetUnitArmor(this)
+
+public function unit.setArmor(real armorAmount)
+	BlzSetUnitArmor(this, armorAmount)
+
+public function unit.hideAbility(int abilId, boolean flag)
+	BlzUnitHideAbility(this, abilId, flag)
+
+public function unit.disableAbility(int abilId, boolean flag, boolean hideUI)
+	BlzUnitDisableAbility(this, abilId, flag, hideUI)
+
+public function unit.cancelTimedLife()
+	BlzUnitCancelTimedLife(this)
+
+public function unit.isSelectable() returns boolean
+	return BlzIsUnitSelectable(this)
+
+public function unit.isInvulnerable() returns boolean
+	return BlzIsUnitInvulnerable(this)
+
+public function unit.interruptAttack()
+	BlzUnitInterruptAttack(this)
+
+public function unit.getCollisionSize() returns real
+	return BlzGetUnitCollisionSize(this)
+
+public function unit.setAbilityCooldown(int abilId, int level, real cooldown)
+	BlzSetUnitAbilityCooldown(this, abilId, level, cooldown)
+
+public function unit.getAbilityCooldown(int abilId, int level) returns real
+	return BlzGetUnitAbilityCooldown(this, abilId, level)
+
+public function unit.getAbilityCooldownRemaining(int abilId) returns real
+	return BlzGetUnitAbilityCooldownRemaining(this, abilId)
+
+public function unit.endAbilityCooldown(int abilCode)
+	BlzEndUnitAbilityCooldown(this, abilCode)
+
+public function unit.getAbilityManaCost(int abilId, int level) returns int
+	return BlzGetUnitAbilityManaCost(this, abilId, level)
+
+public function unit.getLocalZ() returns real
+	return BlzGetLocalUnitZ(this)
+
+public function unit.isIllusion() returns bool
+	return IsUnitIllusion(this)

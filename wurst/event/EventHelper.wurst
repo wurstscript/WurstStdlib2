@@ -8,10 +8,7 @@ constant regionMap = new HashMap<region, int>()
 constant triggerData = new Table()
 
 public function trigger.registerUnitInRangeSource(unit whichUnit, real range, boolexpr filter) returns event
-	int h = GetHandleId(this)
-	int u = GetHandleId(whichUnit)
-	triggerData.saveUnit(h,whichUnit)
-	triggerData.saveTrigger(u,this)
+	triggerData..saveUnit(this.getHandleId(), whichUnit)..saveTrigger(whichUnit.getHandleId(), this)
 	return TriggerRegisterUnitInRange(this, whichUnit, range, filter)
 
 public function trigger.registerUnitInRangeSource(unit whichUnit, real range) returns event
@@ -21,14 +18,13 @@ public function trigger.getSource() returns unit
 	return triggerData.loadUnit(GetHandleId(this))
 
 public function unit.clearRegister()
-	int h = GetHandleId(this)
-	if triggerData.loadTrigger(h) == null
+	let handleId = this.getHandleId()
+	if triggerData.loadTrigger(handleId) == null
 		return
-	trigger t = triggerData.loadTrigger(h)
-	int th = GetHandleId(t)
-	DestroyTrigger(t)
-	triggerData.removeHandle(h)
-	triggerData.removeHandle(th)
+	let t = triggerData.loadTrigger(handleId)
+	let trigHandleId = t.getHandleId()
+	t.destr()
+	triggerData..removeHandle(handleId)..removeHandle(trigHandleId)
 	
 public function getSpellTargetPos() returns vec2
 	return vec2(GetSpellTargetX(), GetSpellTargetY())
@@ -39,11 +35,11 @@ public function getOrderPos() returns vec2
 public function getOrderTargetPos() returns vec2
 	return GetOrderTarget().getPos()
 	
-public function trigger.registerRectEnterEventSource( rect r )
+public function trigger.registerRectEnterEventSource(rect r)
 	TriggerRegisterEnterRectSimple(this, r)
 	rectMap.put(this, r)
 	
-public function trigger.registerRectLeaveEventSource( rect r )
+public function trigger.registerRectLeaveEventSource(rect r)
 	TriggerRegisterLeaveRectSimple(this, r)
 	rectMap.put(this, r)
 
