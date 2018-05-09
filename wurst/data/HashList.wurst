@@ -17,10 +17,11 @@ public class HashList<T>
 		occurences.saveInt(this castTo int, elem castTo int, count(elem) - 1)
 
 	/** Add an element to the end of the list */
-	function add(T elem)
-		ht.saveInt(this castTo int, size, elem castTo int)
-		incrOccurences(elem)
-		size++
+	function add(vararg T elems)
+		for elem in elems
+			ht.saveInt(this castTo int, size, elem castTo int)
+			incrOccurences(elem)
+			size++
 	
 	/** Set an existing element at the given position to a new value */
 	function set(int index, T elem)

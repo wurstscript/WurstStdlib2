@@ -24,10 +24,7 @@ import LinkedList
 
 @Test function testJoin()
     let list = new LinkedList<string>()
-        ..add("this")
-        ..add("is")
-        ..add("a")
-        ..add("string")
+        ..add("this", "is", "a", "string")
 
     list.join().assertEquals("thisisastring")
     list.joinBy(" ").assertEquals("this is a string")

@@ -6,10 +6,11 @@ public class HashSet<T> extends HashList<T>
 	private static hashtable position = InitHashtable()
 
 	/** Adds an element to this set */
-	override function add(T elem)
-		if count(elem) <= 0
-			super.add(elem)
-			position.saveInt(this castTo int, elem castTo int, size())
+	override function add(vararg T elems)
+		for elem in elems
+			if count(elem) <= 0
+				super.add(elem)
+				position.saveInt(this castTo int, elem castTo int, size())
 
 	/** Removes an element from this set if present */
 	override function remove(T elem)
