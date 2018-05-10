@@ -277,6 +277,12 @@ public function unit.removeAbility(int abil) returns boolean
 public function unit.removeItem(item itm)
 	UnitRemoveItem(this, itm)
 
+public function unit.removeItemById(int itemId)
+	for slot = 0 to this.inventorySize()-1
+		if this.itemInSlot(slot).getTypeId() == itemId
+			UnitRemoveItem(this, this.itemInSlot(slot))
+			break
+
 public function unit.removeItemFromSlot(int slot) returns item
 	return UnitRemoveItemFromSlot(this, slot)
 
