@@ -1,7 +1,6 @@
 package Unit
 import NoWurst
 import public Vectors
-import TerrainUtils
 import Item
 
 native UnitAlive(unit id) returns boolean
@@ -21,7 +20,7 @@ public function createUnit(player p, int unitId, vec3 pos, angle facing) returns
 
 public function createUnitZ(player p, int unitId, vec3 pos, angle facing) returns unit
 	return CreateUnit(p, unitId, pos.x, pos.y, facing.degrees())
-		..setFlyHeight(pos.z - getTerrainZ(pos.x, pos.y), 0)
+		..setFlyHeight(pos.z - pos.getTerrainZ(), 0)
 
 public function unit.addAbility(int abil) returns boolean
 	return UnitAddAbility(this, abil)
@@ -331,7 +330,7 @@ public function unit.setPosFly(vec3 pos)
 
 public function unit.setPosReal(vec3 pos)
 	this.setPos(pos.x, pos.y)
-	this.setFlyHeight(pos.z-getTerrainZ(pos.x, pos.y), 0)
+	this.setFlyHeight(pos.z - pos.getTerrainZ(), 0)
 
 public function unit.setPos(real x, real y)
 	SetUnitPosition(this, x, y)
@@ -385,7 +384,7 @@ public function unit.setXYZ(vec3 pos)
 public function unit.setXYZReal(vec3 pos)
 	SetUnitX(this, pos.x)
 	SetUnitY(this, pos.y)
-	SetUnitFlyHeight(this, pos.z-getTerrainZ(pos.x, pos.y), 0)
+	SetUnitFlyHeight(this, pos.z - pos.getTerrainZ(), 0)
 
 public function unit.setY(real y)
 	SetUnitY(this, y)
@@ -406,7 +405,7 @@ public function unit.unpause()
 	PauseUnit(this, false)
 
 public function vec2.withRealZ(unit u) returns vec3
-	return vec3(this.x, this.y, getTerrainZ(this.x, this.y)+u.getFlyHeight())
+	return vec3(this.x, this.y, this.getTerrainZ() + u.getFlyHeight())
 
 /** Cancels the current order */
 public function unit.abortOrder() returns boolean

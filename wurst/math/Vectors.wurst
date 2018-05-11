@@ -80,6 +80,21 @@ public function vec2.rotate(angle angl) returns vec2 //angle is taken in radians
 public function vec2.toVec3() returns vec3
 	return vec3(this.x, this.y, 0.)
 	
+let tempLoc = Location(0.,0.)
+public function vec2.getTerrainZ() returns real
+	MoveLocation(tempLoc, this.x, this.y)
+	return GetLocationZ(tempLoc)
+
+public function vec3.getTerrainZ() returns real
+	MoveLocation(tempLoc, this.x, this.y)
+	return GetLocationZ(tempLoc)
+
+public function vec2.withTerrainZ() returns vec3
+	return vec3(this.x, this.y, this.getTerrainZ())
+	
+public function vec2.withTerrainZ(real zoffset) returns vec3
+	return vec3(this.x, this.y, this.getTerrainZ() + zoffset)
+	
 /** Set the length of this vector */
 public function vec2.setLength(real length) returns vec2
 	real l = SquareRoot(this.x*this.x + this.y*this.y)

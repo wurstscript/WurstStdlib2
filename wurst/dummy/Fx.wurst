@@ -3,7 +3,6 @@ import NoWurst
 import DummyRecycler
 import Effect
 import Colors
-import TerrainUtils
 
 /********************************************************
  * * * * * * * * * * Fx * * * * * * * * * * * * * * * * *
@@ -160,7 +159,7 @@ public class Fx
 		if ignoreTerrainHeight
 			setZ(pos.z)
 		else
-			setZ(pos.z-getTerrainZ(pos.x, pos.y))
+			setZ(pos.z - pos.getTerrainZ())
 	
 	/** Set the z coordinate (flyHeight) */
 	function setZ(real z)

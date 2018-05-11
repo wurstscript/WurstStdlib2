@@ -8,10 +8,6 @@ import Colors
 
 // Terrain API
 
-/** Returns center of the Tile which given vec2 belongs to. */
-public function vec2.toTileCenter() returns vec2
-	return vec2(round(this.x, 128), round(this.y, 128))
-
 public function setWaterBaseColor(colorA color)
 	SetWaterBaseColor(color.red, color.green, color.blue, color.alpha)
 
@@ -24,13 +20,73 @@ public function vec2.getTerrainType() returns int
 public function vec2.getTerrainVariance() returns int
 	return GetTerrainVariance(this.x, this.y)
 
-/** Applies a single terrain deformation to closest tile. Is not immediate. */
+/** Applies a single terrain deformation to closest tile. Is not immediate.
+	Reports shows that this may cause desync with Mac players. */
 public function vec2.addTerrainHeight(real val) returns terraindeformation
 	return TerrainDeformCrater(this.x, this.y, 63, -val, 1, true)
 
+/** Fills 32x32 rect around vec2 with given pathing type
+	min = vec2(roundDown(x,32), roundDown(x,32))
+	max = vec2(roundUp(x,32), roundUp(x,32))
+	min.x <= x < max.x; min.y <= y < max.y */
+// Source: http://www.wc3c.net/showthread.php?t=92581
+public function vec2.setTerrainPathable(pathingtype ttype, bool flag)
+	SetTerrainPathable(this.x, this.y, ttype, flag)
+	
+public function vec2.isTerrainPathable(pathingtype ttype) returns bool
+	return IsTerrainPathable(this.x, this.y, ttype)
+	
+/** Returns center of the Tile which given vec2 belongs to. */
+public function vec2.toTileCenter() returns vec2
+	return vec2(round(this.x, 128), round(this.y, 128))
+
+/** Returns the (not normalised) terrain-normal at the given point */
+public function vec2.getTerrainNormal(real sampleRadius) returns vec3
+	return 2 * sampleRadius * vec3( (this.add(-sampleRadius, 0).getTerrainZ() - this.add(sampleRadius, 0).getTerrainZ()), (this.add(-sampleRadius, 0).getTerrainZ() - this.add(sampleRadius, 0).getTerrainZ()), 2*sampleRadius )
+	
+public function vec2.isTerrainDeepWater() returns boolean
+	return not this.isTerrainPathable(PATHING_TYPE_FLOATABILITY) and this.isTerrainPathable(PATHING_TYPE_WALKABILITY)
+
+public function vec2.isTerrainShallowWater() returns boolean
+	return not this.isTerrainPathable(PATHING_TYPE_FLOATABILITY) and not this.isTerrainPathable(PATHING_TYPE_WALKABILITY) and this.isTerrainPathable(PATHING_TYPE_BUILDABILITY)
+
+public function vec2.isTerrainLand() returns boolean
+	return this.isTerrainPathable(PATHING_TYPE_FLOATABILITY)
+
+public function vec2.isTerrainPlatform() returns boolean
+	return not this.isTerrainPathable(PATHING_TYPE_FLOATABILITY) and not this.isTerrainPathable(PATHING_TYPE_WALKABILITY) and not this.isTerrainPathable(PATHING_TYPE_BUILDABILITY)
+
+constant	MAX_RANGE_SQ 	= 10.*10.
+constant 	DUMMY_ITEM_ID 	= 'wolg'
+let	   		dItem   		= CreateItem(DUMMY_ITEM_ID, 0, 0)..setVisible(false)
+let	   		find   			= Rect(0., 0., 128., 128.)
+item array 	hid
+int			hidMax 			= 0
+public function vec2.isTerrainWalkable() returns boolean
+	// Hide any items in the area to avoid conflicts with our item
+	find.moveTo(this)
+	EnumItemsInRect(find, null) ->
+		if GetEnumItem().isVisible()
+			hid[hidMax] = GetEnumItem()
+			hid[hidMax].setVisible(false)
+			hidMax++
+	
+	// Try to move the test item and get its coords
+	dItem.setPos(this) // Unhides the item
+	let tempPos = dItem.getPos()
+	dItem.setVisible(false) // Hide it again
+
+	// Unhide any items hidden at the start
+	while hidMax > 0
+		hidMax--
+		hid[hidMax].setVisible(true)		
+		hid[hidMax] = null
+
+	return (tempPos.x-this.x)*(tempPos.x-this.x)+(tempPos.y-this.y)*(tempPos.y-this.y) <= MAX_RANGE_SQ and not this.isTerrainPathable(PATHING_TYPE_WALKABILITY)
+
 // Tile API
 /** represents a single terrain tile
-	can be used as vec2 <-> int conversion */
+	can also be used as vec2 <-> int conversion */
 public tuple tile(int id)
 
 function tileToIndex(tile t) returns int
@@ -94,118 +150,4 @@ public function tile.getVariance() returns int
 public function tile.setPathing(pathingtype ttype, bool flag)
 	for i = 0 to 3
 		for j = 0 to 3
-			(this.toVec2() + vec2(-48. + i*32,-48. + j*32)).setPathing(ttype, flag)
-
-/** Fills 32x32 rect around vec2 with given pathing type
-	min = vec2(roundDown(x,32), roundDown(x,32))
-	max = vec2(roundUp(x,32), roundUp(x,32))
-	min.x <= x < max.x; min.y <= y < max.y */
-// Source: http://www.wc3c.net/showthread.php?t=92581
-function vec2.setPathing(pathingtype ttype, bool flag)
-	SetTerrainPathable(this.x, this.y, ttype, flag)
-
-constant		MAX_RANGE_SQ	 	= 10.*10.
-constant 		DUMMY_ITEM_ID 	= 'wolg'
-let 		tempLoc 		= Location(0.,0.)
-let	   		dItem   		= CreateItem(DUMMY_ITEM_ID, 0, 0)..setVisible(false)
-let	   		find   			= Rect(0., 0., 128., 128.)
-item array 		hid
-int			hidMax 			= 0
-vec2 			tempPos 		= vec2(0,0)
-
-/** Returns the (not normalised) terrain-normal at the given point */
-public function getTerrainNormal( real x, real y, real sampleRadius) returns vec3
-	MoveLocation(tempLoc, x-sampleRadius, y)
-	var zx = GetLocationZ(tempLoc)
-	MoveLocation(tempLoc, x+sampleRadius, y)
-	zx -= GetLocationZ(tempLoc)
-	MoveLocation(tempLoc, x, y-sampleRadius)
-	var zy = GetLocationZ(tempLoc)
-	MoveLocation(tempLoc, x, y+sampleRadius)
-	zy -= GetLocationZ(tempLoc)
-	let sampleRadius2 = 2*sampleRadius
-	return vec3( zx*sampleRadius2, zy*sampleRadius2, sampleRadius2*sampleRadius2 )
-	
-/** Returns the (not normalised) terrain-normal at the given vector */
-public function vec2.getTerrainNormal(real sampleRadius) returns vec3
-	return getTerrainNormal(this.x, this.y, sampleRadius)
-
-public function getTerrainZ(real x, real y) returns real
-	MoveLocation(tempLoc, x, y)
-	return GetLocationZ(tempLoc)
-	
-public function getTerrainZ(vec2 v) returns real
-	MoveLocation(tempLoc, v.x, v.y)
-	return GetLocationZ(tempLoc)
-
-public function vec2.getTerrainZ() returns real
-	MoveLocation(tempLoc, this.x, this.y)
-	return GetLocationZ(tempLoc)
-	
-public function vec2.withTerrainZ() returns vec3
-	return vec3(this.x, this.y, this.getTerrainZ())
-	
-public function vec2.withTerrainZ(real zoffset) returns vec3
-	return vec3(this.x, this.y, this.getTerrainZ() + zoffset)
-
-public function vec3.withTerrainZ() returns vec3
-	return vec3(this.x, this.y, this.toVec2().getTerrainZ())
-	
-public function vec3.withTerrainZ(real zoffset) returns vec3
-	return vec3(this.x, this.y, this.toVec2().getTerrainZ() + zoffset)
-	
-public function isTerrainDeepWater(real x, real y) returns boolean
-	return not IsTerrainPathable(x, y, PATHING_TYPE_FLOATABILITY) and IsTerrainPathable(x, y, PATHING_TYPE_WALKABILITY)
-
-public function isTerrainShallowWater(real x, real y) returns boolean
-	return not IsTerrainPathable(x, y, PATHING_TYPE_FLOATABILITY) and not IsTerrainPathable(x, y, PATHING_TYPE_WALKABILITY) and IsTerrainPathable(x, y, PATHING_TYPE_BUILDABILITY)
-
-public function isTerrainLand(real x, real y) returns boolean
-	return IsTerrainPathable(x, y, PATHING_TYPE_FLOATABILITY)
-
-public function isTerrainPlatform(real x, real y) returns boolean
-	return not IsTerrainPathable(x, y, PATHING_TYPE_FLOATABILITY) and not IsTerrainPathable(x, y, PATHING_TYPE_WALKABILITY) and not IsTerrainPathable(x, y, PATHING_TYPE_BUILDABILITY)
-	
-public function isTerrainDeepWater(vec2 v) returns boolean
-	return not IsTerrainPathable(v.x, v.y, PATHING_TYPE_FLOATABILITY) and IsTerrainPathable(v.x, v.y, PATHING_TYPE_WALKABILITY)
-
-public function isTerrainShallowWater(vec2 v) returns boolean
-	return not IsTerrainPathable(v.x, v.y, PATHING_TYPE_FLOATABILITY) and not IsTerrainPathable(v.x, v.y, PATHING_TYPE_WALKABILITY) and IsTerrainPathable(v.x, v.y, PATHING_TYPE_BUILDABILITY)
-
-public function isTerrainLand(vec2 v) returns boolean
-	return IsTerrainPathable(v.x, v.y, PATHING_TYPE_FLOATABILITY)
-
-public function isTerrainPlatform(vec2 v) returns boolean
-	return not IsTerrainPathable(v.x, v.y, PATHING_TYPE_FLOATABILITY) and not IsTerrainPathable(v.x, v.y, PATHING_TYPE_WALKABILITY) and not IsTerrainPathable(v.x, v.y, PATHING_TYPE_BUILDABILITY)
-
-public function vec2.isTerrainDeepWater() returns boolean
-	return isTerrainDeepWater(this)
-
-public function vec2.isTerrainShallowWater() returns boolean
-	return isTerrainShallowWater(this)
-
-public function vec2.isTerrainLand() returns boolean
-	return isTerrainLand(this)
-
-public function vec2.isTerrainPlatform() returns boolean
-	return isTerrainPlatform(this)
-
-public function isTerrainWalkable(real x, real y) returns boolean
-	//Hide any items in the area to avoid conflicts with our item
-	find.moveTo(x, y)
-	EnumItemsInRect(find, null) ->
-		if GetEnumItem().isVisible()
-			hid[hidMax] = GetEnumItem()
-			hid[hidMax].setVisible(false)
-			hidMax++
-	//Try to move the test item and get its coords
-	dItem.setPos(x, y) //Unhides the item
-	tempPos = dItem.getPos()
-	dItem.setVisible(false)//Hide it again
-	//Unhide any items hidden at the start
-	while hidMax > 0
-		hidMax--
-		hid[hidMax].setVisible(true)		
-		hid[hidMax] = null
-	//Return walkability
-	return (tempPos.x-x)*(tempPos.x-x)+(tempPos.y-y)*(tempPos.y-y) <= MAX_RANGE_SQ and not IsTerrainPathable(x, y, PATHING_TYPE_WALKABILITY)
+			(this.toVec2() + vec2(-48. + i*32,-48. + j*32)).setTerrainPathable(ttype, flag)
