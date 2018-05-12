@@ -56,6 +56,9 @@ public function unit.addXp(int toAdd, boolean showEyeCandy)
 
 public function unit.suspendXp(boolean suspend)
 	SuspendHeroXP(this, suspend)
+	
+public function unit.isSuspendedXp() returns boolean
+	return IsSuspendedXP(this)
 
 public function unit.getLevel() returns int
 	return this.isType(UNIT_TYPE_HERO) ? GetHeroLevel(this) : GetUnitLevel(this)
