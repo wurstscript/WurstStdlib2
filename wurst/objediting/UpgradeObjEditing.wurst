@@ -1,47 +1,143 @@
 package UpgradeObjEditing
 import ObjEditingNatives
 import NoWurst
+import public RaceOptions
 
-public class W3QDefinition
+constant BASE_UPGRADE_ID = 'Rhse' // magic sentry has no default effects and level 0
+constant CLEAN_UPGRADE_ID = 'RXXX'
+
+public enum UpgradeClass
+	NONE
+	Armor
+	Artillery
+	Melee
+	Ranged
+	Caster
+
+public class UpgradeDefition
 	ObjectDefinition def
-	
-	protected int newId 
-	protected int baseId
 
+	protected int newId
+	protected int levels = 1
+	
 	function getNewId() returns int
 		return newId
 
-	function getBaseId() returns int
-		return baseId
+	function getLevels() returns int
+		return levels
 
-	construct(int newId, int baseId)
+	construct(int newId)
 		this.newId = newId
-		this.baseId = baseId
-		def = createObjectDefinition("w3q", newId, baseId)
-				
-	function setTooltipExtended(string data)
-		def.setString("utub", data)
+		def = createObjectDefinition("w3q", newId, CLEAN_UPGRADE_ID)
+
+	construct(int newId, int levels)
+		this.newId = newId
+		this.levels = levels
+		def = createObjectDefinition("w3q", newId, CLEAN_UPGRADE_ID)
+
+	function setButtonPositionX(int value)
+		skip
+		
+	function setButtonPositionY(int value)
+		skip
+
+	function setAppliesToAllUnits(bool value)
+		skip
+
+	function setClass(UpgradeClass value)
+		skip
+
+	function setCostGoldBase(int value)
+		skip
+
+	function setCostGoldIncrement(int value)
+		skip
+
+	function setLevels(int value)
+		skip
+
+	function setCostLumberBase(int value)
+		skip
+
+	function setCostLumberIncrement(int value)
+		skip
+
+	function setRace(Race value)
+		skip
+
+	function setTimeBase(int value)
+		skip
+
+	function setTimeIncrement(int value)
+		skip
+
+	function setTransferWithUnitOwnership(bool value)
+		skip
 	
-	function setTooltipBasic(string data)
-		def.setString("utip", data)
+	function setIcon(int level, string value)
+		skip
+
+	/** Comma separated list of ids for tech requirements. */
+	function setRequirements(int level, string value)
+		skip
+
+	/** Comma separated list of ints corresponding to list of tech requirements
+		provided by setRequirements. */
+	function setRequirementsLevels(int level, string value)
+		skip
+
+	function setEditorSuffix(int level, string value)
+		skip
+
+	function setHotkey(int level, string value)
+		skip
+
+	function setName(int level, string value)
+		skip
+
+	function setTooltip(int level, string value)
+		skip
+
+	function setTooltipExtended(int level, string value)
+		skip
 	
-	function setRequirementsLevels(string data)
-		def.setString("urqa", data)
-	
-	function setRequirements(string data)
-		def.setString("ureq", data)
-	
-	function setName(string data)
-		def.setString("unam", data)
-	
-	function setHotkey(string data)
-		def.setString("uhot", data)
-	
-	function setDescription(string data)
-		def.setString("ides", data)
-	
-	function setButtonPositionY(int data)
-		def.setInt("ubpy", data)
-	
-	function setButtonPositionX(int data)
-		def.setInt("ubpx", data)
+	function presetIcon(StringLevelClosure lc)
+		skip
+
+	/** Comma separated list of ids for tech requirements. */
+	function presetRequirements(StringLevelClosure lc)
+		skip
+
+	/** Comma separated list of ints corresponding to list of tech requirements
+		provided by setRequirements. */
+	function presetRequirementsLevels(StringLevelClosure lc)
+		skip
+
+	function presetEditorSuffix(StringLevelClosure lc)
+		skip
+
+	function presetHotkey(StringLevelClosure lc)
+		skip
+
+	function presetName(StringLevelClosure lc)
+		skip
+
+	function presetTooltip(StringLevelClosure lc)
+		skip
+
+	function presetTooltipExtended(StringLevelClosure lc)
+		skip
+
+
+
+// This is a "clean" defition from which to work.
+@compiletime function genCleanUpgrade()
+	createObjectDefinition("w3q", CLEAN_UPGRADE_ID, BASE_UPGRADE_ID)
+		..setLvlDataString("gnam", 1, 0, "")
+		..setLvlDataString("gtp1", 1, 0, "")
+		..setLvlDataString("gub1", 1, 0, "")
+		..setLvlDataString("ghk1", 1, 0, "")
+		..setLvlDataInt("gbpy", 0, 0, 0)
+		..setLvlDataInt("gbpx", 0, 0, 0)
+		..setLvlDataInt("gglb", 0, 0, 0)
+		..setLvlDataInt("glmb", 0, 0, 0)

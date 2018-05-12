@@ -13,19 +13,7 @@ public enum MovementType
 	Float
 	Amphipic
 
-public enum Race
-	Commoner
-	Creeps
-	Critters
-	Demon
-	Human
-	Naga
-	Nightelf
-	Orc
-	Other
-	Undead
-	Unknown
-	
+
 public enum ArmorType
 	Normal
 	Small
@@ -193,34 +181,7 @@ public function AttackType.toObjectString() returns string
 		case Hero
 			result = "hero"
 	return result
-	
-public function Race.toObjectString() returns string
-	string result = "unknown"
-	switch this
-		case Commoner
-			result = "commoner"
-		case Creeps
-			result = "creeps"
-		case Critters
-			result = "critters"
-		case Demon
-			result = "demon"
-		case Human
-			result = "human"
-		case Naga
-			result = "naga"
-		case Nightelf
-			result = "nightelf"
-		case Orc
-			result = "orc"
-		case Other
-			result = "other"
-		case Undead
-			result = "undead"
-		case Unknown
-			result = "unknown"
-	return result
-	
+
 public function MovementType.toObjectString() returns string
 	var result = ""
 	switch this
