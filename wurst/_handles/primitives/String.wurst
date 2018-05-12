@@ -86,6 +86,9 @@ public function string.isUpper() returns boolean
 
 /** Returns the given string with whitespaces removed from both ends*/
 public function string.trim() returns string
+	if this == ""
+		return this
+
 	int i = 0
 	while (this.charAt(i) == " ")
 		i++
@@ -96,6 +99,9 @@ public function string.trim() returns string
 
 /** Returns the given string with whitespaces removed from the left end */
 public function string.ltrim() returns string
+	if this == ""
+		return this
+
 	int i = 0
 	while (this.charAt(i) == " ")
 		i++
@@ -103,6 +109,9 @@ public function string.ltrim() returns string
 
 /** Returns the given string with whitespaces removed from the right end */
 public function string.rtrim() returns string
+	if this == ""
+		return this
+
 	int j = this.length()
 	while (this.charAt(j - 1) == " ")
 		j--
