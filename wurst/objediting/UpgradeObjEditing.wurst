@@ -1,7 +1,7 @@
 package UpgradeObjEditing
 import ObjEditingNatives
 import NoWurst
-import public RaceOptions
+import public SharedEnums
 
 constant BASE_UPGRADE_ID = 'Rhse' // magic sentry has no default effects and level 0
 constant CLEAN_UPGRADE_ID = 'RXXX'
@@ -13,6 +13,28 @@ public enum UpgradeClass
 	Melee
 	Ranged
 	Caster
+
+// Set defense type upgrade is weird af. 
+function ArmorType.toDefenseTypeChangeInt() returns real
+	real result = 0.0
+	switch this
+		case Normal
+			result = 4.0
+		case Small
+			result = 0.0
+		case Medium
+			result = 1.0
+		case Large
+			result = 2.0
+		case Fortified
+			result = 3.0
+		case Hero
+			result = 5.0
+		case Divine
+			result = 6.0
+		case Unarmored
+			result = 7.0
+	return result
 
 public class UpgradeDefition
 	ObjectDefinition def
@@ -126,6 +148,146 @@ public class UpgradeDefition
 		skip
 
 	function presetTooltipExtended(StringLevelClosure lc)
+		skip
+	
+	/** Increases the level of an ability */
+	function addEffectAbilityLevelBonus(int base, int increment, string abilCode)
+		def.setInt("levb", base)
+		def.setInt("levm", increment)
+		def.setString("levc", abilCode)
+
+	// This is commented out because it does nothing when used. Look at the Ultravision
+	// ability 'Ault' to see how Blizzard implements this.
+	// function addEffectAddUltravision()
+	// 	skip
+
+	/** Increases the base damage of units by their "Attack Upgrade Bonus" field */
+	function addEffectApplyAttackUpgradeBonus()
+		skip
+
+	/** Increases the defense of units by their "Defense Upgrade Bonus" field */
+	function addEffectApplyDefenseUpgradeBonus()
+		skip
+
+	/** Bonus to base damage of attacks. Supports negative bonuses. */
+	function addEffectAttackDamageBonus(int base, int increment)
+		skip
+	
+	// This doesn't work. Use DamageBonus with negative numbers
+	// function addEffectAttackDamageLoss(int base, int increment)
+	// 	skip
+
+	/** Increases the number of Attack Dice on attacks */
+	function addEffectAttackDiceBonus(int base, int increment)
+		skip
+
+	/** Increases the attack range of attacks */
+	function addEffectAttackRangeBonus(int base, int increment)
+		skip
+
+	/** Percentage increase on attack speed. Note: 0.1 = 10%. */
+	function addEffectAttackSpeedBonus(real base, real increment)
+		skip
+
+	/** Upgrades the distance "Artillery (Line)" attack types travel. For example
+		Glaive Throwers use this. */
+	function addEffectAttackSpillDistanceBonus(int base, int increment)
+		skip
+
+	/** Upgrades the radius of "Artillery (Line)" attack types (over the distance
+		they travel). */
+	function addEffectAttackSpillRadiusBonus(int base, int increment)
+		skip
+
+	/** Increases the number of attack targets */
+	function addEffectAttackTargetCountBonus(int base, int increment)
+		skip
+
+	/** This is used to increase the damage of Kodo's command auras in melee. Use
+		at your own risk on other auras. */
+	function addEffectAuraDataBonus(real base, real increment)
+		skip
+
+	/** Note, this does not work like you expect it. TODO explain. */
+	function addEffectDefenseTypeChange(ArmorType base)
+		skip
+
+	/** 0 = none, 1 = attack 1 only, 2 = attack 2 only, 3 = both*/
+	function addEffectEnableAttacks(int base)
+		skip
+	
+	/** 0 = none, 1 = attack 1 only, 2 = attack 2 only, 3 = both*/
+	function addEffectEnableAttacksRooted(int base)
+		skip
+	
+	/** 0 = none, 1 = attack 1 only, 2 = attack 2 only, 3 = both*/
+	function addEffectEnableAttacksUprooted(int base)
+		skip
+
+	/** Increases gold harvested by Harvest abilities. */
+	function addEffectGoldHarvestBonus(int base, int increment)
+		skip
+
+	/** Increases gold harvested by Gold Harvest Entangled abilities. Apply to the
+		entangled mine. */
+	function addEffectGoldHarvestBonusEntangle(int base, int increment)
+		skip
+
+	/** Flat increase to hitpoints. */
+	function addEffectHitPointBonus(int base, int increment)
+		skip
+	
+	/** Percent increase to base hitpoints. Note: 0.1 = 10% increase */
+	function addEffectHitPointBonusPercent(real base, real increment)
+		skip
+
+	/** Percent bonus increase to hitpoint regeneration. Note: 0.1 = 10% increase */
+	function addEffectHitPointRegeneration(real base, real increment)
+		skip
+
+	/** Increases lumber capcity on "gather" type abilities. */
+	function addEffectLumberHarvestBonus(int base, int increment)
+		skip
+	
+	/** Adds magic immunity to unit's effected */
+	function addEffectMagicImmunity()
+		skip
+
+	/** Flat bonus to max mana points. */
+	function addEffectManaPointBonus(int base, int increment)
+		skip
+	
+	/** Percent bonus to max mana. Note: 0.1 = 10%. */
+	function addEffectManaPointBonusPercent(real base, real increment)
+		skip
+	
+	/** Percent bonus to mana regeneration. Note: 0.1 = 10%. */
+	function addEffectManaRegeneration(real base, real increment)
+		skip
+
+	/** Flat bonus to movement speed. */
+	function addEffectMovementSpeedBonus(int base, int increment)
+		skip
+
+	/** Percent bonus to base movement speed. Note: 0.1 = 10%. */
+	function addEffectMovementSpeedBonusPercent(real base, real increment)
+		skip
+
+	/** Increases the lifetime of skeletons raised via the Raise Dead ability. */
+	function addEffectRaiseDeadDurationBonus(int base, int increment)
+		skip
+
+	/** Increases sight range of units effected. */
+	function addEffectSightRangeBonus(int base, int increment)
+		skip
+
+	/** Damage dealt to melee attackers on attack. */
+	function addEffectSpikedBarricades(int base, int increment)
+		skip
+	
+	/** Changes availabilty of units. Note: the unit MUST have this upgrade as 
+		an "Upgrade Used" or it will have no effect. */
+	function addEffectUnitAvailabilityChange(bool available, string unitId)
 		skip
 
 
