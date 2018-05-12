@@ -14,28 +14,6 @@ public enum UpgradeClass
 	Ranged
 	Caster
 
-// Set defense type upgrade is weird af. 
-function ArmorType.toDefenseTypeChangeInt() returns real
-	real result = 0.0
-	switch this
-		case Normal
-			result = 4.0
-		case Small
-			result = 0.0
-		case Medium
-			result = 1.0
-		case Large
-			result = 2.0
-		case Fortified
-			result = 3.0
-		case Hero
-			result = 5.0
-		case Divine
-			result = 6.0
-		case Unarmored
-			result = 7.0
-	return result
-
 public class UpgradeDefition
 	ObjectDefinition def
 
@@ -173,7 +151,7 @@ public class UpgradeDefition
 	function addEffectAttackDamageBonus(int base, int increment)
 		skip
 	
-	// This doesn't work. Use DamageBonus with negative numbers
+	// This doesn't do anything. Use DamageBonus with negative numbers
 	// function addEffectAttackDamageLoss(int base, int increment)
 	// 	skip
 
@@ -208,8 +186,27 @@ public class UpgradeDefition
 	function addEffectAuraDataBonus(real base, real increment)
 		skip
 
-	/** Note, this does not work like you expect it. TODO explain. */
-	function addEffectDefenseTypeChange(ArmorType base)
+	/** Changes the effected units' armor type by *adding or removing this value 
+		from their current armor type*.The following table describes the index
+		for each armor type:
+			small = 0
+			medium = 1
+			large = 2
+			fortified = 3
+			normal = 4
+			hero = 5
+			divine = 6
+			unarmored = 7
+		
+		Resulting armor type indexes under 0 or greater than 7 will result in 
+		broken unit armors. 
+
+		Examples. Unit has "Large" armor. You upgrade a type change of 1, the unit 
+		now has fortified armor (this is what Orc Reinforced Burrows does). Having
+		an armor type of large and applying 7 to it will give the unit an undefined,
+		breaking their armor type.
+	*/
+	function addEffectDefenseTypeChange(int base)
 		skip
 
 	/** 0 = none, 1 = attack 1 only, 2 = attack 2 only, 3 = both*/
@@ -292,7 +289,7 @@ public class UpgradeDefition
 
 
 
-// This is a "clean" defition from which to work.
+// This is a "clean" defition from which all others are created
 @compiletime function genCleanUpgrade()
 	createObjectDefinition("w3q", CLEAN_UPGRADE_ID, BASE_UPGRADE_ID)
 		..setLvlDataString("gnam", 1, 0, "")
