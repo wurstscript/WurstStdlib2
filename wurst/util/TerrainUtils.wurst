@@ -25,11 +25,7 @@ public function vec2.getTerrainVariance() returns int
 public function vec2.addTerrainHeight(real val) returns terraindeformation
 	return TerrainDeformCrater(this.x, this.y, 63, -val, 1, true)
 
-/** Fills 32x32 rect around vec2 with given pathing type
-	min = vec2(roundDown(x,32), roundDown(x,32))
-	max = vec2(roundUp(x,32), roundUp(x,32))
-	min.x <= x < max.x; min.y <= y < max.y */
-// Source: http://www.wc3c.net/showthread.php?t=92581
+/** Fills 32x32 rect around vec2 with given pathing type */
 public function vec2.setTerrainPathable(pathingtype ttype, bool flag)
 	SetTerrainPathable(this.x, this.y, ttype, flag)
 	
@@ -38,7 +34,7 @@ public function vec2.isTerrainPathable(pathingtype ttype) returns bool
 	
 /** Returns center of the Tile which given vec2 belongs to. */
 public function vec2.toTileCenter() returns vec2
-	return vec2(round(this.x, 128), round(this.y, 128))
+	return vec2(this.x.round(128), this.y.round(128))
 
 /** Returns the (not normalised) terrain-normal at the given point */
 public function vec2.getTerrainNormal(real sampleRadius) returns vec3
@@ -117,7 +113,7 @@ public function tile.getX() returns real
 public function tile.getY() returns real
 	return (this.id div TILES_X) * 128. + boundMin.y
 
-// vec2 convertion
+// vec2 conversion
 
 /** Returns the tile which given vec2 belongs to. */
 public function vec2.getTile() returns tile
