@@ -90,7 +90,7 @@ public function string.trim() returns string
 	int j = this.length()
 	while (i != j and this.charAt(i) == " ")
 		i++
-	while (i != j and this.charAt(j - 1) == " ")
+	while (j != 0 and this.charAt(j - 1) == " ")
 		j--
 	return this.substring(i, j)
 
