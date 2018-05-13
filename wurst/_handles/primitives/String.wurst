@@ -87,28 +87,22 @@ public function string.isUpper() returns boolean
 /** Returns the given string with whitespaces removed from both ends*/
 public function string.trim() returns string
 	int i = 0
-	int j = this.length()
-	while (i != j and this.charAt(i) == " ")
+	while (this.charAt(i) == " ")
 		i++
-	while (i != j and this.charAt(j - 1) == " ")
+	int j = this.length()
+	while (this.charAt(j - 1) == " ")
 		j--
 	return this.substring(i, j)
 
 /** Returns the given string with whitespaces removed from the left end */
 public function string.ltrim() returns string
 	int i = 0
-	int length = this.length()
-	while (i < length and this.charAt(i) == " ")
+	while (this.charAt(i) == " ")
 		i++
 	return this.substring(i, this.length())
 
 /** Returns the given string with whitespaces removed from the right end */
 public function string.rtrim() returns string
-	int j = this.length()
-	while (j != 0 and this.charAt(j - 1) == " ")
-		j--
-	return this.substring(0, j)
-
 	int j = this.length()
 	while (this.charAt(j - 1) == " ")
 		j--
