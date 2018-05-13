@@ -109,11 +109,6 @@ public function string.rtrim() returns string
 		j--
 	return this.substring(0, j)
 
-	int j = this.length()
-	while (this.charAt(j - 1) == " ")
-		j--
-	return this.substring(0, j)
-
 /** Removes a string from the beginning of another string */
 public function string.ltrim(string val) returns string
 	if this.startsWith(val)
@@ -266,6 +261,3 @@ public class StringLines
 /** Returns a StringLines Object of the given string for iteration */
 public function string.toLines() returns StringLines
 	return new StringLines(this, 0, this.countOccurences("\n")+1)
-		
-
-
