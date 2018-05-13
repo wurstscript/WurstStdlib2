@@ -1,7 +1,7 @@
 package BigNum
 // Credits: Pipedream
 //prefer algebraic approach because of real subtraction issues
-public function log( real py, real pbase ) returns real
+public function log(real py, real pbase) returns real
 	real y = py
 	real base = pbase
 	real factor = 1.0
@@ -48,7 +48,7 @@ public class BigNum_l
 			return false
 
 	
-	function divSmall ( int base, int denom ) returns int
+	function divSmall (int base, int denom) returns int
 		int remainder = 0
 		if next != null
 			remainder = next.divSmall(base,denom)
@@ -64,7 +64,7 @@ public class BigNum
 	BigNum_l list = null
 	int base
 		
-	construct( int base )
+	construct(int base)
 		this.base = base
 
 	ondestroy
@@ -90,7 +90,7 @@ public class BigNum
 	
 	//fails if bignum is null
 	//BASE() + carry must be less than MAXINT()
-	function addSmall( int pcarry )
+	function addSmall(int pcarry)
 		BigNum_l cur = list
 		int sum
 		int carry = pcarry
@@ -113,7 +113,7 @@ public class BigNum
 
 	
 	//x*BASE() must be less than MAXINT()
-	function mulSmall( int x )
+	function mulSmall(int x)
 		BigNum_l cur = list
 		int product
 		int remainder
@@ -129,7 +129,7 @@ public class BigNum
 			cur = cur.next
 	
 	//Returns remainder
-	function divSmall( int denom ) returns int
+	function divSmall(int denom) returns int
 		return list.divSmall(base,denom)
 	
 	function lastDigit() returns int

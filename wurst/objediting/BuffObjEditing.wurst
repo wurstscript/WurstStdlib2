@@ -32,7 +32,7 @@ public function createDummyBuffObject(string name, string tooltip, string iconpa
 		new AbilityDefinitionAuraSlow(abilId)
 			..setName("Aura Dummy: " + name)
 			..setMovementSpeedFactor(1, 0)
-			..setBuffs(1, int2fourchar(buffId))
+			..setBuffs(1, buffId.toRawCode())
 			..presetIcon(iconpath)
 			..setArtTarget("")
 			..setTargetsAllowed(1, "self")

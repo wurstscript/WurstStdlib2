@@ -1,9 +1,10 @@
 package Effect
 import NoWurst
 import Vectors
+import Wurstunit
 
 public function effect.destr()
-	DestroyEffect( this )
+	DestroyEffect(this)
 
 public function flashEffect(string path, vec3 pos)
 	addEffect(path, pos).destr()
@@ -16,3 +17,69 @@ public function addEffect(string path, vec2 pos) returns effect
 	
 public function addEffect(string path, vec3 pos) returns effect
 	return AddSpecialEffect(path, pos.x, pos.y)
+
+public function effect.setColorByPlayer(player whichPlayer)
+	BlzSetSpecialEffectColorByPlayer(this, whichPlayer)
+
+public function effect.setColor(int r, int g, int b)
+	BlzSetSpecialEffectColor(this, r, g, b)
+
+public function effect.setAlpha(int alpha)
+	BlzSetSpecialEffectAlpha(this, alpha)
+
+public function effect.setScale(real scale)
+	BlzSetSpecialEffectScale(this, scale)
+
+public function effect.setPosition(real x, real y, real z)
+	BlzSetSpecialEffectPosition(this, x, y, z)
+
+public function effect.setHeight(real height)
+	BlzSetSpecialEffectHeight(this, height)
+
+public function effect.setTimeScale(real timeScale)
+	BlzSetSpecialEffectTimeScale(this, timeScale)
+
+public function effect.setTime(real time)
+	BlzSetSpecialEffectTime(this, time)
+
+public function effect.setOrientation(real yaw, real pitch, real roll)
+	BlzSetSpecialEffectOrientation(this, yaw, pitch, roll)
+
+public function effect.setYaw(real yaw)
+	BlzSetSpecialEffectYaw(this, yaw)
+
+public function effect.setPitch(real pitch)
+	BlzSetSpecialEffectPitch(this, pitch)
+
+public function effect.setRoll(real roll)
+	BlzSetSpecialEffectRoll(this, roll)
+
+public function effect.setX(real x)
+	BlzSetSpecialEffectX(this, x)
+
+public function effect.setY(real y)
+	BlzSetSpecialEffectY(this, y)
+
+public function effect.setZ(real z)
+	BlzSetSpecialEffectZ(this, z)
+
+public function effect.setPositionLoc(location loc)
+	BlzSetSpecialEffectPositionLoc(this, loc)
+
+public function effect.getLocalX() returns real
+	return BlzGetLocalSpecialEffectX(this)
+
+public function effect.getLocalY() returns real
+	return BlzGetLocalSpecialEffectY(this)
+
+public function effect.getLocalZ() returns real
+	return BlzGetLocalSpecialEffectZ(this)
+
+@Test
+function testEffect()
+	let eff = addEffect("testPath", vec2(12,32))
+	
+	eff.getLocalX().assertEquals(12.)
+	eff.getLocalY().assertEquals(32.)
+
+	eff.destr()

@@ -66,3 +66,9 @@ function testHandleId()
 		let g2 = CreateGroup()
 		assertTrue(g2.getHandleId() != 0)
 		assertTrue(g2.getHandleId() != g.getHandleId())
+
+@Test
+function testVararg()
+	let g = CreateGroup()
+	g.addUnit(createUnit(Player(0), 'hfoo', vec2(0, 0), 0 .fromDeg()), createUnit(Player(0), 'hfoo', vec2(0, 0), 0 .fromDeg()), createUnit(Player(0), 'hfoo', vec2(0, 0), 0 .fromDeg()))
+	g.size().assertEquals(3)

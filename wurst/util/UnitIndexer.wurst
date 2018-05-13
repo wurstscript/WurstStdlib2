@@ -58,13 +58,13 @@ import OnUnitEnterLeave
 		Conversely, if we want to create a class instance that belongs to
 		a unit that had just been indexed, we can do the same:
 			
-			onUnitIndex(() -> new Class(GetIndexedUnit()))
+			onUnitIndex(() -> new Class(getIndexedUnit()))
 
 		If you have never worked with lambda functions, the above code might
 		look like black magic, but it essentially translates to this:
 
 			function someFunction()
-				new Class(GetIndexedUnit())
+				new Class(getIndexedUnit())
 
 			...in code somewhere...
 				onUnitIndex(function someFunction())

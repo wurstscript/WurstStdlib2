@@ -13,9 +13,9 @@ import TypeCasting
 string array c2s
 int array s2c
 int array width
-constant int MAX_INDEX = '~' + 1
-constant int DEFAULT_WIDTH = 0
-constant string DEFAULT_STRING = ""
+constant MAX_INDEX = '~' + 1
+constant DEFAULT_WIDTH = 0
+constant DEFAULT_STRING = ""
 
 public function texttag.center(vec3 pos, string message, real size) returns texttag
 	var str = message
@@ -37,21 +37,21 @@ public tuple char(int c)
 
 /** Returns the width of the string */
 public function string.getWidth() returns int
-	int width = 0
-	for int i = 0 to this.length() - 1
+	var width = 0
+	for i = 0 to this.length() - 1
 		width += char(this.charAt(i)).getWidth()
 	return width
 
 public function char(string s) returns char
-	if ("\\" == s)
+	if "\\" == s
 		return char('\')
-	int a = s2c[StringHash(s) div 0x1F0748 + 0x3EA]
-	if (s != c2s[a])
+	var a = s2c[s.getHash() div 0x1F0748 + 0x3EA]
+	if s != c2s[a]
 		return char(a + 32)
 	return char(a)
 
 public function char.toString() returns string
-	if (this.c > MAX_INDEX)
+	if this.c > MAX_INDEX
 		return DEFAULT_STRING
 	return c2s[this.c]
 
@@ -59,7 +59,7 @@ public function char.toInt() returns int
 	return this.c
 
 public function char.getWidth() returns int
-	if (this.c > MAX_INDEX)
+	if this.c > MAX_INDEX
 		return DEFAULT_WIDTH
 	return width[this.c]
 
@@ -67,7 +67,7 @@ public function string.toChar() returns char
 	return char(this)
 
 public function string.toCharList() returns LinkedList<char>
-	LinkedList<char> res = new LinkedList<char>()
+	let res = new LinkedList<char>()
 	for int i = 0 to this.length() - 1
 		res.add(char(this.charAt(i)))
 	return res
@@ -113,6 +113,21 @@ public function LinkedList<string>.joinBy(string separator) returns string
 			
 	iter.close()
 	return joined
+
+interface ToStringClosure<T>
+	function toString(T elem) returns string
+
+public function LinkedList<T>.joinBy<T>(ToStringClosure<T> cls, string separator) returns string
+	let iter = this.iterator()
+	LinkedList<string> strings = new LinkedList<string>
+
+	for elem from iter
+		strings.add(cls.toString(elem))
+
+	iter.close()
+	let result = strings.joinBy(separator)
+	destroy strings
+	return result
 
 /** Joins elements from a string list into one string */ 
 public function LinkedList<string>.join() returns string
@@ -280,11 +295,9 @@ function widthInit()
 	width[127] = 0
 
 function s2cInit()
-	for int i = 0 to MAX_INDEX
+	for i = 0 to MAX_INDEX
 		if c2s[i].toUpperCase() == c2s[i]
 			s2c[StringHash(c2s[i]) div 0x1F0748 + 0x3EA] = i
-		else
-			skip
 
 function c2sInit()
 	c2s[0] = ""
