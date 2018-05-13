@@ -316,9 +316,9 @@ public function vec3.angleTo2d(vec3 v) returns angle
 	
 /** Get a polarprojection of this Vector */
 public function vec3.polarProject(real distance, angle angleGround, angle angleAir) returns vec3
-	real x = this.x + distance * angleGround.cos() * angleAir.sin()
-	real y = this.y + distance * angleGround.sin() * angleAir.sin()
-	real z = this.z + distance * angleAir.cos() 
+	real x = this.x + distance * angleGround.cos() * angleAir.cos()
+	real y = this.y + distance * angleGround.sin() * angleAir.cos()
+	real z = this.z + distance * angleAir.sin()
 	return vec3(x,y,z)
 
 /** returns a vector of length 1 which points into the direction of target,
