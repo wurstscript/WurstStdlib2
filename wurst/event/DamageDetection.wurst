@@ -9,8 +9,6 @@ int funcNext = 0
 trigger current = null
 trigger toDestroy = null
 
-constant filter = Filter(() -> addUnit(GetFilterUnit()))
-
 function addUnit(unit u)
 	current.registerUnitEvent(u, EVENT_UNIT_DAMAGED)
 
