@@ -50,6 +50,13 @@ public function createTTEx(vec3 pos, string message, real size) returns texttag
 		..setPos(pos)
 		..setVisibility(true)
 
+public function createTTEx(vec3 pos, string message, real size, colorA col) returns texttag
+	return CreateTextTag()
+		..setPos(pos.toVec2().withZ(20.))
+		..setText(message, size)
+		..setColor(col)
+		..setVisibility(true)
+
 public function createTTEx(vec3 pos, string message, real size, colorA col, player p) returns texttag
 	return CreateTextTag()
 		..setPos(pos.toVec2().withZ(20.))

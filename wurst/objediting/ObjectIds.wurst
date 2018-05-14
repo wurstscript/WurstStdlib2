@@ -2,11 +2,18 @@ package ObjectIds
 import NoWurst
 import ErrorHandling
 import Wurstunit
+import Assets
+import LinkedList
+import StringUtils
+import TypeCasting
 
 constant CHARMAP = ".................................!.#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[.]^_`abcdefghijklmnopqrstuvwxyz{|}~................................................................................................................................."
 
-/** Convert a int id value into a 4-letter id code. */
-public function int2fourchar(int value) returns string
+@deprecated("Use .toRawCode() instead.") public function int2fourchar(int value) returns string
+	return toRawCode(value)
+
+/** Convert a integer id value into a 4-letter id code. */
+public function toRawCode(int value) returns string
 	var result = ""
 	var remainingValue = value
 
@@ -17,8 +24,11 @@ public function int2fourchar(int value) returns string
 
 	return result
 
-/** converts a 4-letter id code to an int */
-public function fourchar2int(string value) returns int
+@deprecated("Use .fromRawCode() instead.") public function fourchar2int(string value) returns int
+	return fromRawCode(value)
+
+/** converts a 4-letter id code to an integer */
+public function fromRawCode(string value) returns int
 	var result = 0
 	if value.length() != 4
 		error("Fourchar value must be 4 chars long")
@@ -31,14 +41,46 @@ public function fourchar2int(string value) returns int
 	
 	return result	
 	
+public function string.fromRawCode() returns int
+	return fromRawCode(this)
 	
+public function int.toRawCode() returns string
+	return toRawCode(this)
+
 @test function test_idString2IdInteger()
-	fourchar2int("hfoo") .assertEquals('hfoo')
-	fourchar2int("abcd") .assertEquals('abcd')
-	fourchar2int("ABCD") .assertEquals('ABCD')
+	fromRawCode("hfoo") .assertEquals('hfoo')
+	fromRawCode("abcd") .assertEquals('abcd')
+	fromRawCode("ABCD") .assertEquals('ABCD')
 	
 @test function test_idInteger2IdString()
-	int2fourchar('hfoo') .assertEquals("hfoo")
-	int2fourchar('abcd') .assertEquals("abcd")
-	int2fourchar('ABCD') .assertEquals("ABCD")
-	
+	toRawCode('hfoo') .assertEquals("hfoo")
+	toRawCode('abcd') .assertEquals("abcd")
+	toRawCode('ABCD') .assertEquals("ABCD")
+
+public function asList(vararg int ids) returns string
+	let list = new LinkedList<int>
+	for id in ids
+		list.add(id)
+	let result = list.joinBy((int i) -> i.toRawCode(), ",")
+	destroy list
+	return result
+
+public function asList(vararg string values) returns string
+	let list = new LinkedList<string>
+	for v in values
+		list.add(v)
+	let result = list.joinBy(",")
+	destroy list
+	return result
+
+@Test function asListIntTest()
+	asList(
+		AbilityIds.invulnerable,
+		AbilityIds.reveal
+	).assertEquals("Avul,Adta")
+
+@Test function asListStringTest()
+	asList(
+		"self",
+		"structure"
+	).assertEquals("self,structure")

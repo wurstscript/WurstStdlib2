@@ -23,7 +23,7 @@ public function preloadAbility(int abilId) returns boolean
 	if dum == null 
 		error("Do not load abilities after map init when autoFinish = true")
 	else if not dum.hasAbility(abilId)
-		Log.trace("PreloadAbility: Ability " + int2fourchar(abilId) + " does not exist.")
+		Log.trace("PreloadAbility: Ability " + abilId.toRawCode() + " does not exist.")
 		result = false
 	return result
 
@@ -45,6 +45,6 @@ public function finishPreload()
 init
 	dum = createUnit(DUMMY_PLAYER, DUMMY_UNIT_ID, vec2(0,0), angle(0))
 	if dum == null
-		error("DUMMY_UNITID (" + int2fourchar(DUMMY_UNIT_ID) + ") not added correctly to the map.")
+		error("DUMMY_UNITID (" + DUMMY_UNIT_ID.toRawCode() + ") not added correctly to the map.")
 	if autoFinish
 		nullTimer(() -> finishPreload())
