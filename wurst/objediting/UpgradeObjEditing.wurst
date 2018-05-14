@@ -294,12 +294,12 @@ public class UpgradeDefinition extends W3QDefinition
 	
 	/** Increases the level of an ability */
 	function addEffectAbilityLevelBonus(int base, int increment, string abilCode)
-		super.setEffect(addNewEffectCount(), UpgradeEffectType.AbilityLevelBonus, base, increment, abilCode)
+		super.setEffect(addNewEffectCount(), UpgradeEffectType.AbilityLevelBonus, base.toReal(), increment.toReal(), abilCode)
 
 	// This is commented out because it does nothing when used. Look at the Ultravision
 	// ability 'Ault' to see how Blizzard implements this.
 	// function addEffectAddUltravision()
-	// 	skip
+	// 	super.setEffectType(addNewEffectCount(), UpgradeEffectType.AddUltravision)
 
 	/** Increases the base damage of units by their "Attack Upgrade Bonus" field */
 	function addEffectApplyAttackUpgradeBonus()
@@ -311,42 +311,42 @@ public class UpgradeDefinition extends W3QDefinition
 
 	/** Bonus to base damage of attacks. Supports negative bonuses. */
 	function addEffectAttackDamageBonus(int base, int increment)
-		super.setEffect(addNewEffectCount(), UpgradeEffectType.AttackDamageBonus, base, increment)
+		super.setEffect(addNewEffectCount(), UpgradeEffectType.AttackDamageBonus, base.toReal(), increment.toReal())
 	
 	// This doesn't do anything. Use DamageBonus with negative numbers
 	// function addEffectAttackDamageLoss(int base, int increment)
-	// 	skip
+	// 	super.setEffect(addNewEffectCount(), UpgradeEffectType.AttackDamageLoss, base.toReal(), increment.toReal())
 
 	/** Increases the number of Attack Dice on attacks */
 	function addEffectAttackDiceBonus(int base, int increment)
-		skip
+		super.setEffect(addNewEffectCount(), UpgradeEffectType.AttackDiceBonus, base.toReal(), increment.toReal())
 
 	/** Increases the attack range of attacks */
 	function addEffectAttackRangeBonus(int base, int increment)
-		skip
+		super.setEffect(addNewEffectCount(), UpgradeEffectType.AttackRangeBonus, base.toReal(), increment.toReal())
 
 	/** Percentage increase on attack speed. Note: 0.1 = 10%. */
 	function addEffectAttackSpeedBonus(real base, real increment)
-		skip
+		super.setEffect(addNewEffectCount(), UpgradeEffectType.AttackSpeedBonus, base, increment)
 
 	/** Upgrades the distance "Artillery (Line)" attack types travel. For example
 		Glaive Throwers use this. */
 	function addEffectAttackSpillDistanceBonus(int base, int increment)
-		skip
+		super.setEffect(addNewEffectCount(), UpgradeEffectType.AttackSpillDistanceBonus, base.toReal(), increment.toReal())
 
 	/** Upgrades the radius of "Artillery (Line)" attack types (over the distance
 		they travel). */
 	function addEffectAttackSpillRadiusBonus(int base, int increment)
-		skip
+		super.setEffect(addNewEffectCount(), UpgradeEffectType.AttackSpillRadiusBonus, base.toReal(), increment.toReal())
 
 	/** Increases the number of attack targets */
 	function addEffectAttackTargetCountBonus(int base, int increment)
-		skip
+		super.setEffect(addNewEffectCount(), UpgradeEffectType.AttackTargetCountBonus, base.toReal(), increment.toReal())
 
 	/** This is used to increase the damage of Kodo's command auras in melee. Use
 		at your own risk on other auras. */
 	function addEffectAuraDataBonus(real base, real increment)
-		skip
+		super.setEffect(addNewEffectCount(), UpgradeEffectType.AuraDataBonus, base, increment)
 
 	/** Changes the effected units' armor type by *adding or removing this value 
 		from their current armor type*.The following table describes the index
@@ -369,85 +369,88 @@ public class UpgradeDefinition extends W3QDefinition
 		breaking their armor type.
 	*/
 	function addEffectDefenseTypeChange(int base)
-		skip
+		super.setEffect(addNewEffectCount(), UpgradeEffectType.DefenseTypeChange, base.toReal())
 
 	/** 0 = none, 1 = attack 1 only, 2 = attack 2 only, 3 = both*/
 	function addEffectEnableAttacks(int base)
-		skip
+		super.setEffect(addNewEffectCount(), UpgradeEffectType.EnableAttacks, base.toReal())
 	
 	/** 0 = none, 1 = attack 1 only, 2 = attack 2 only, 3 = both*/
 	function addEffectEnableAttacksRooted(int base)
-		skip
+		super.setEffect(addNewEffectCount(), UpgradeEffectType.EnableAttacksRooted, base.toReal())
 	
 	/** 0 = none, 1 = attack 1 only, 2 = attack 2 only, 3 = both*/
 	function addEffectEnableAttacksUprooted(int base)
-		skip
+		super.setEffect(addNewEffectCount(), UpgradeEffectType.EnableAttacksUprooted, base.toReal())
 
 	/** Increases gold harvested by Harvest abilities. */
 	function addEffectGoldHarvestBonus(int base, int increment)
-		skip
+		super.setEffect(addNewEffectCount(), UpgradeEffectType.GoldHarvestBonus, base.toReal(), increment.toReal())
 
 	/** Increases gold harvested by Gold Harvest Entangled abilities. Apply to the
 		entangled mine. */
 	function addEffectGoldHarvestBonusEntangle(int base, int increment)
-		skip
+		super.setEffect(addNewEffectCount(), UpgradeEffectType.GoldHarvestBonusEntangle, base.toReal(), increment.toReal())
 
 	/** Flat increase to hitpoints. */
 	function addEffectHitPointBonus(int base, int increment)
-		skip
+		super.setEffect(addNewEffectCount(), UpgradeEffectType.HitPointBonus, base.toReal(), increment.toReal())
 	
 	/** Percent increase to base hitpoints. Note: 0.1 = 10% increase */
 	function addEffectHitPointBonusPercent(real base, real increment)
-		skip
+		super.setEffect(addNewEffectCount(), UpgradeEffectType.HitPointBonusPercent, base, increment)
 
 	/** Percent bonus increase to hitpoint regeneration. Note: 0.1 = 10% increase */
 	function addEffectHitPointRegeneration(real base, real increment)
-		skip
+		super.setEffect(addNewEffectCount(), UpgradeEffectType.HitPointRegeneration, base, increment)
 
 	/** Increases lumber capcity on "gather" type abilities. */
 	function addEffectLumberHarvestBonus(int base, int increment)
-		skip
+		super.setEffect(addNewEffectCount(), UpgradeEffectType.LumberHarvestBonus, base.toReal(), increment.toReal())
 	
 	/** Adds magic immunity to unit's effected */
 	function addEffectMagicImmunity()
-		skip
+		super.setEffectType(addNewEffectCount(), UpgradeEffectType.MagicImmunity)
 
 	/** Flat bonus to max mana points. */
 	function addEffectManaPointBonus(int base, int increment)
-		skip
+		super.setEffect(addNewEffectCount(), UpgradeEffectType.ManaPointBonus, base.toReal(), increment.toReal())
 	
 	/** Percent bonus to max mana. Note: 0.1 = 10%. */
 	function addEffectManaPointBonusPercent(real base, real increment)
-		skip
+		super.setEffect(addNewEffectCount(), UpgradeEffectType.ManaPointBonusPercent, base, increment)
 	
 	/** Percent bonus to mana regeneration. Note: 0.1 = 10%. */
 	function addEffectManaRegeneration(real base, real increment)
-		skip
+		super.setEffect(addNewEffectCount(), UpgradeEffectType.ManaRegeneration, base, increment)
 
 	/** Flat bonus to movement speed. */
 	function addEffectMovementSpeedBonus(int base, int increment)
-		skip
+		super.setEffect(addNewEffectCount(), UpgradeEffectType.MovementSpeedBonus, base.toReal(), increment.toReal())
 
 	/** Percent bonus to base movement speed. Note: 0.1 = 10%. */
 	function addEffectMovementSpeedBonusPercent(real base, real increment)
-		skip
+		super.setEffect(addNewEffectCount(), UpgradeEffectType.MovementspeedBonusPercent, base, increment)
 
 	/** Increases the lifetime of skeletons raised via the Raise Dead ability. */
 	function addEffectRaiseDeadDurationBonus(int base, int increment)
-		skip
+		super.setEffect(addNewEffectCount(), UpgradeEffectType.RaiseDeadDurationBonus, base.toReal(), increment.toReal())
 
 	/** Increases sight range of units effected. */
 	function addEffectSightRangeBonus(int base, int increment)
-		skip
+		super.setEffect(addNewEffectCount(), UpgradeEffectType.SightRangeBonus, base.toReal(), increment.toReal())
 
 	/** Damage dealt to melee attackers on attack. */
 	function addEffectSpikedBarricades(int base, int increment)
-		skip
+		super.setEffect(addNewEffectCount(), UpgradeEffectType.SpikedBarricades, base.toReal(), increment.toReal())
 	
 	/** Changes availabilty of units. Note: the unit MUST have this upgrade as 
 		an "Upgrade Used" or it will have no effect. */
 	function addEffectUnitAvailabilityChange(bool available, string unitId)
-		skip
+		let effectIndex = addNewEffectCount()
+		super.setEffectType(effectIndex, UpgradeEffectType.UnitAvailabilityChange)
+		super.setEffectCode(effectIndex, unitId)
+		super.setEffectBase(effectIndex, available ? -1 : 1)
 
 
 
