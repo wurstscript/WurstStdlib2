@@ -12,8 +12,8 @@
 	Examples:
 	
 	// Leech ability
-	constant int LEECH_ID = compiletime(ABIL_ID_GEN.next())
-	constant int LEECH_DAMAGE = compiletime(GetRandomInt(100, 200)) // just for lulz
+	constant LEECH_ID = compiletime(ABIL_ID_GEN.next())
+	constant LEECH_DAMAGE = compiletime(GetRandomInt(100, 200))
 
 	// Leech implementation #1
 	function onLeechEffect1()
@@ -39,19 +39,21 @@
 				d.source.addEffect(Abilities.vampiricAuraTarget, "origin").destr()
 
 	// Simple damage resistance buff
+	constant BUFF_ID = compiletime(ABIL_ID_GEN.next())
 	constant BUFF_DURATION = 5.0
 
 	function onBuffEffect()
 		let target = GetSpellTargetUnit()
 		let effect = target.addEffect(Abilities.voodooAuraTarget, "origin")
 		ForDamageCallback cb = () d ->
-			if target == d.target
-				d.amount -= d.initial * .5
-		addDamageModifier(cb)
+			d.amount -= d.initial * .5
+		addTargetDamageModifier(cb)
 		doAfter(BUFF_DURATION) ->
-			removeDamageModifier(cb)
+			removeTargetDamageModifier(cb)
 			effect.destr()
 
+	init
+		registerSpellEffectEvent(BUFF_ID, function onLeechEffect2)
 */
 package DamageModify
 import AbilityObjEditing
@@ -59,39 +61,7 @@ import DamageDetection
 import OnUnitEnterLeave
 import ObjectIdGenerator
 import LinkedList
-import ClosureTimers
-
-/** If Damage instance wasn't created
-	by one of DamageModify package's functions (or `new Damage(...)`),
-	then Damage.id would be set to this value. */
-@configurable public constant DAMAGE_ID_NONTRIGGERED = -1
-
-/** Essentially used for callback closures taking on the form Damage -> null */
-public interface ForDamageCallback
-	function run(Damage d)
-
-let damageModifiers = new LinkedList<ForDamageCallback>
-
-/** These callbacks adjust damage before it happens.
-
-	Is called once by default, but for manually created
-	damage it is possible to call zero or multiple times. */
-public function addDamageModifier(ForDamageCallback cb)
-	damageModifiers.add(cb)
-
-public function removeDamageModifier(ForDamageCallback cb)
-	damageModifiers.remove(cb)
-
-let damageListeners = new LinkedList<ForDamageCallback>
-
-/** These callbacks are called right before the damage is dealt.
-
-	Is called strictly once per damage instance. */
-public function addDamageListener(ForDamageCallback cb)
-	damageListeners.add(cb)
-
-public function removeDamageListener(ForDamageCallback cb)
-	damageListeners.remove(cb)
+import HashMap
 
 /** Deals triggered damage from unit to target.
 	You can specify id if there's any unique id interactions.
@@ -119,6 +89,106 @@ public function unit.damage(unit target, real amount, bool spell)
 public function unit.damage(unit target, real amount)
 	new Damage(this, target, amount, true, 0)..modify()..deal()
 
+/** If Damage instance wasn't created
+	by one of DamageModify package's functions (or `new Damage(...)`),
+	then Damage.id would be set to this value */
+@configurable public constant DAMAGE_ID_NONTRIGGERED = -1
+
+/** Essentially used for callback closures taking on the form Damage -> null */
+public interface ForDamageCallback
+	function run(Damage d)
+
+let damageModifiers = new LinkedList<ForDamageCallback>
+
+/** These callbacks adjust damage before it happens.
+
+	Is called once by default, but for manually created
+	damage it is possible to call zero or multiple times */
+public function addDamageModifier(ForDamageCallback cb)
+	damageModifiers.add(cb)
+
+public function removeDamageModifier(ForDamageCallback cb)
+	damageModifiers.remove(cb)
+
+let damageListeners = new LinkedList<ForDamageCallback>
+
+/** These callbacks are called right before the damage is dealt.
+
+	Is called strictly once per damage instance */
+public function addDamageListener(ForDamageCallback cb)
+	damageListeners.add(cb)
+
+public function removeDamageListener(ForDamageCallback cb)
+	damageListeners.remove(cb)
+
+let targetUniqueModifiers = new HashMap<unit, LinkedList<ForDamageCallback>>
+/** Much more effective way to run unit-unique damageModifiers */
+public function addTargetDamageModifier(unit u, ForDamageCallback cb)
+	var list = targetUniqueModifiers.get(u)
+	if list == null
+		list = new LinkedList<ForDamageCallback>
+		targetUniqueModifiers.put(u, list)
+	list.add(cb)
+
+public function removeTargetDamageModifier(unit u, ForDamageCallback cb)
+	var list = targetUniqueModifiers.get(u)
+	if list != null
+		list.remove(cb)
+		if list.isEmpty()
+			targetUniqueModifiers.remove(u)
+			destroy list
+			
+let sourceUniqueModifiers = new HashMap<unit, LinkedList<ForDamageCallback>>
+/** Much more effective way to run unit-unique damageModifiers */
+public function addSourceDamageModifier(unit u, ForDamageCallback cb)
+	var list = sourceUniqueModifiers.get(u)
+	if list == null
+		list = new LinkedList<ForDamageCallback>
+		sourceUniqueModifiers.put(u, list)
+	list.add(cb)
+
+public function removeSourceDamageModifier(unit u, ForDamageCallback cb)
+	var list = sourceUniqueModifiers.get(u)
+	if list != null
+		list.remove(cb)
+		if list.isEmpty()
+			sourceUniqueModifiers.remove(u)
+			destroy list
+
+let targetUniqueListeners = new HashMap<unit, LinkedList<ForDamageCallback>>
+/** Much more effective way to run unit-unique damageListeners */
+public function addTargetDamageListener(unit u, ForDamageCallback cb)
+	var list = targetUniqueListeners.get(u)
+	if list == null
+		list = new LinkedList<ForDamageCallback>
+		targetUniqueListeners.put(u, list)
+	list.add(cb)
+
+public function removeTargetDamageListener(unit u, ForDamageCallback cb)
+	var list = targetUniqueListeners.get(u)
+	if list != null
+		list.remove(cb)
+		if list.isEmpty()
+			targetUniqueListeners.remove(u)
+			destroy list
+			
+let sourceUniqueListeners = new HashMap<unit, LinkedList<ForDamageCallback>>
+/** Much more effective way to run unit-unique damageListeners */
+public function addSourceDamageListener(unit u, ForDamageCallback cb)
+	var list = sourceUniqueListeners.get(u)
+	if list == null
+		list = new LinkedList<ForDamageCallback>
+		sourceUniqueListeners.put(u, list)
+	list.add(cb)
+
+public function removeSourceDamageListener(unit u, ForDamageCallback cb)
+	var list = sourceUniqueListeners.get(u)
+	if list != null
+		list.remove(cb)
+		if list.isEmpty()
+			sourceUniqueListeners.remove(u)
+			destroy list
+
 // ConvertAttackType(7) is a hidden attack type with some unique properties.
 // For more information see "goo.gl/9k8tn".
 // Note that the values in the table at this link are outdated, but the principle still applies.
@@ -134,27 +204,83 @@ public class Damage
 
 		If Damage instance wasn't created
 		by one of DamageModify package's functions (or `new Damage(...)`),
-		then this would be set to DAMAGE_ID_NONTRIGGERED. */
+		then this would be set to DAMAGE_ID_NONTRIGGERED */
 	integer id
-	/** Who is dealing the damage. */
+
+	/** Who is dealing the damage */
 	unit source
-	/** Who is recieving the damage. */
+
+	/** Who is recieving the damage */
 	unit target
+
 	/** If the Damage is of ATTACK_TYPE_NORMAL */
 	bool spell
-	/** What amount of damage was originally convieved. */
+
+	/** What amount of damage was originally convieved */
 	real initial
+
 	/** What amount of damage was/will be dealt to `target`.
 	
 		"amount of damage" == "amount of HP to remove" */
 	real amount
 
-	protected bool doSaveTarget = false
 	/** Call this if you want to save the target.
 		This means that target won't die from the damage,
-		no matter how big `amount` would be. */
+		no matter how big `amount` would be */
 	function saveTarget()
 		doSaveTarget = true
+	protected bool doSaveTarget = false
+
+	/** Returns true if the damage is going to kill or already have killed target */
+	function isKillingBlow() returns bool
+		return killingBlow or (not fired and target.getHP() - .405 < amount)
+
+	/** It is set to true if the damage, when it was dealt, killed the target */
+	protected bool killingBlow = false
+		
+	/** Increases `amount` of the damage by `initial * magnitude` */
+	function addMultiplier(real magnitude)
+		if not fired
+			amount += initial * (magnitude - 1)
+
+	/** Increases `amount` of the damage with given amount */
+	function addAmount(real amount)
+		if not fired
+			this.amount += amount
+
+	/** applies all modifiers to the damage instance once */
+	function modify()
+		for i in damageModifiers
+			i.run(this)
+
+	/** applies user-created Damage instance */
+	function deal()
+		if not fired
+			anounce()
+			if target.isAlive()
+				let life = target.getHP()
+				killingBlow = life - .405 < amount
+				if killingBlow 
+					if doSaveTarget
+						killingBlow = false
+						amount = life - .405
+					else
+						amount = life
+				disableDamageDetect()
+				if killingBlow
+					target.setHP(.405)
+					source.damageTarget(target, 1000000., ATTACK_TYPE_UNIVERSAL)
+					source.damageTarget(target, 1000000., ATTACK_TYPE_MAGIC)
+				else
+					target.setHP(life - amount)
+					source.damageTarget(target, 0., ATTACK_TYPE_UNIVERSAL)
+					source.damageTarget(target, 0., ATTACK_TYPE_MAGIC)
+				enableDamageDetect()
+					
+			if this.wantSave <= 0
+				destroy this
+		else
+			Log.warn("Damage.deal() called on already fired damage!")
 
 	/** Damage instances are automatically destroyed.
 		Use this to protect them if you need an instance anyhow.
@@ -163,50 +289,22 @@ public class Damage
 		in order to destroy the instance.
 
 		This means that the instance will be destroyed
-		when the last `releaseInstance()` is called on it. */
+		when the last `releaseInstance()` is called on it */
 	function saveInstance()
 		wantSave += 1
 
 	/** Releases Damage instance so it can be destroyed.
-		It is destroyed immediately if nobody else had saved it. */
+		It is destroyed immediately if nobody else had saved it */
 	function releaseInstance()
 		wantSave -= 1
 		if fired and wantSave <= 0
 			destroy this
 
-	/** The counter inside saveInstance() and releaseInstance(). */
+	/** The counter inside saveInstance() and releaseInstance() */
 	protected int wantSave = 0
 	ondestroy
 		if wantSave > 0
 			Log.error("Damage instance was unsafely destroyed! Use .releaseInstance() instead!")
-
-	/** It is set to true if the damage, when it was dealt, killed the target. */
-	protected bool killingBlow = false
-	/** If the damage was dealt. */
-	private bool fired = false
-
-	/** applies all modifiers to the damage instance once */
-	function modify()
-		for i in damageModifiers
-			i.run(this)
-
-	protected function anounce()
-		for i in damageListeners
-			i.run(this)
-		fired = true
-
-	/** Returns true if the damage is going to kill or already have killed target */
-	function isKillingBlow() returns bool
-		return killingBlow or (not fired and target.getHP() - .405 < amount)
-		
-	/** Multiplies initial damage with given magnitude
-		(increases `amount` by `initial` * magnitude) */
-	function addMultiplier(real magnitude)
-		amount += initial * (magnitude - 1)
-
-	/** Increases `amount` with given amount */
-	function addAmount(real amount)
-		this.amount += amount
 		
 	construct(unit source, unit target, real amount, bool isSpell, int id)
 		this.source = source
@@ -216,44 +314,14 @@ public class Damage
 		spell = isSpell
 		this.id = id
 
-	/** applies user-created Damage instance. */
-	function deal()
-		if not fired
-			anounce()
-			if target.isAlive()
-				let life = target.getHP()
-				killingBlow = life - .405 < amount and not doSaveTarget			
-				amount = dealCodeDamage(source, target, amount, killingBlow)
-			if this.wantSave <= 0
-				destroy this
-		else
-			Log.warn("Damage.deal() called on already fired damage!")
+	/** If the damage was already dealt */
+	private bool fired = false
 
-/** Deal an exact amount of damage to `target`, crediting kill experience and
-	gold bounty to `attacker` and not triggering any of DamageDetection listeners.
-	KillingBlow parameter decides whether to kill the target.
-	Isn't supposed to use outside of the system. */
-function dealCodeDamage(unit attacker, unit target, real damage, bool killingBlow) returns real
-	real d = 0.
-	let hp = target.getHP()
-	disableDamageDetect()
-	if not killingBlow
-		if damage != 0
-			d = min(hp - .405, damage)
-			target.setHP(hp-d)
-			attacker.damageTarget(target, 0., ATTACK_TYPE_UNIVERSAL)
-			attacker.damageTarget(target, 0., ATTACK_TYPE_MAGIC)
-	else
-		// Deal damage using two separate components. The ATTACK_TYPE_UNIVERSAL
-		// case will deal damage to units of all armor types, even if that armor
-		// would otherwise block all damage. The ATTACK_TYPE_MAGIC case affect
-		// ethereal units, whereas other attack types do not.
-		d = hp
-		target.setHP(.405)
-		attacker.damageTarget(target, 1000000., ATTACK_TYPE_UNIVERSAL)
-		attacker.damageTarget(target, 1000000., ATTACK_TYPE_MAGIC)
-	enableDamageDetect()
-	return d
+	/** Runs all damageListeners */
+	protected function anounce()
+		for i in damageListeners
+			i.run(this)
+		fired = true
 
 function handler() returns bool
 	let damage = GetEventDamage()
@@ -267,47 +335,23 @@ function handler() returns bool
 
 	let life = d.target.getHP()
 	d.killingBlow = life - .405 < d.amount
-	if d.killingBlow
-		if d.doSaveTarget
-			d.amount = life - .406
-			d.killingBlow = false
-		else
-			// So the unit should die no matter what. The following line should secure it.
-			d.amount = dealCodeDamage(d.source, d.target, life, true) // DIE, INSECT!!!
-			return false
-		
-	real rLife
-	bool doTimer
-	real afterDamage = 0
-	if d.spell
-		// After all: life += -d.amount - d.initial // + d.initial from event
-		rLife = life - d.initial - d.amount
-		doTimer = rLife < .405
-		if doTimer
-			afterDamage = d.initial + d.amount
-	else
-		// After all: life += -d.amount + d.initial // - d.initial from event 
-		rLife = life + d.initial - d.amount
-		doTimer = rLife > d.target.getMaxHP()
-		if doTimer
-			d.target.addAbility(CHEAT_DEATH_ID)
-			d.target.setHP(rLife)
-			
-	if doTimer
-		nullTimer() ->
-			let hp = d.target.getHP()
-			d.target.removeAbility(CHEAT_DEATH_ID)
-			d.target.setHP(hp)
-			dealCodeDamage(d.source, d.target, afterDamage, false)
-		
-			if d.wantSave == 0
-				destroy d
-	else
-		d.target.setHP(rLife)
-
+	if d.killingBlow and d.doSaveTarget
+		d.killingBlow = false
+		d.amount = life - .405
+	BlzSetEventDamage(d.amount)
 	return false
 
 init
+	addDamageModifier() d ->
+		for cb in targetUniqueModifiers.get(d.target)
+			cb.run(d)
+		for cb in sourceUniqueModifiers.get(d.source)
+			cb.run(d)
+	addDamageListener() d ->
+		for cb in targetUniqueListeners.get(d.target)
+			cb.run(d)
+		for cb in sourceUniqueListeners.get(d.source)
+			cb.run(d)
 	onEnter() ->
 		getEnterLeaveUnit()..addAbility(DAMAGE_TYPE_CHECK_ID)..makeAbilityPermanent(DAMAGE_TYPE_CHECK_ID, true)
 	addOnDamageFunc(Condition(function handler))
@@ -318,8 +362,3 @@ init
 		..setEditorSuffix("(DamageType)")
 		..setItemAbility(false)
 		..setDamageReduction(1, 2.)
-	new AbilityDefinitionAIhe(CHEAT_DEATH_ID)
-		..setName("Cheat Death Dummy")
-		..setEditorSuffix("(Damage)")
-		..setItemAbility(false)
-		..setHitPointsGained(1, 1000000)
