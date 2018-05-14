@@ -241,7 +241,7 @@ public class Damage
 		if not fired
 			let temp = dealingInstance
 			dealingInstance = this
-			target.damageTarget(target, initial)
+			target.damageTarget(target, initial, spell ? ATTACK_TYPE_NORMAL : ATTACK_TYPE_CHAOS)
 			dealingInstance = temp
 		else
 			Log.warn("Damage.deal() called on already fired damage!")
@@ -292,9 +292,10 @@ function handler() returns bool
 	if damage == 0
 		return false
 	var d = Damage.dealingInstance
-	if d == null
+	if d == null or d.source != GetEventDamageSource() or d.target != GetTriggerUnit() or damage < 0 != d.spell
 		d = new Damage(GetEventDamageSource(), GetTriggerUnit(), (damage < 0 ? -damage : damage), damage < 0, DAMAGE_ID_NONTRIGGERED)
 	else
+		d.amount = (damage < 0 ? -damage : damage)
 		Damage.dealingInstance = null
 	d.saveInstance()
 	d.modify()
