@@ -210,58 +210,58 @@ public class W3QDefinition
 		def.setLvlDataInt("ginh", 0, 0, value.toInt())
 	
 	function setIcon(int level, string value)
-		skip
+		def.setLvlDataString("gar1", level, 0, value)
 
 	/** Comma separated list of ids for tech requirements. */
 	function setRequirements(int level, string value)
-		skip
+		def.setLvlDataString("greq", level, 0, value)
 
 	/** Comma separated list of ints corresponding to list of tech requirements
 		provided by setRequirements. */
 	function setRequirementsLevels(int level, string value)
-		skip
+		def.setLvlDataString("grqc", level, 0, value)
 
 	function setEditorSuffix(int level, string value)
-		skip
+		def.setLvlDataString("gnsf", level, 0, value)
 
 	function setHotkey(int level, string value)
-		skip
+		def.setLvlDataString("ghk1", level, 0, value)
 
 	function setName(int level, string value)
-		skip
+		def.setLvlDataString("gnam", level, 0, value)
 
 	function setTooltip(int level, string value)
-		skip
+		def.setLvlDataString("gtp1", level, 0, value)
 
 	function setTooltipExtended(int level, string value)
-		skip
+		def.setLvlDataString("gub1", level, 0, value)
 	
 	function presetIcon(StringLevelClosure lc)
-		skip
+		def.setLevelsDataString("gar1", levels, 0, lc)
 
 	/** Comma separated list of ids for tech requirements. */
 	function presetRequirements(StringLevelClosure lc)
-		skip
+		def.setLevelsDataString("greq", levels, 0, lc)
 
 	/** Comma separated list of ints corresponding to list of tech requirements
 		provided by setRequirements. */
 	function presetRequirementsLevels(StringLevelClosure lc)
-		skip
+		def.setLevelsDataString("grqc", levels, 0, lc)
 
 	function presetEditorSuffix(StringLevelClosure lc)
-		skip
+		def.setLevelsDataString("gnsf", levels, 0, lc)
 
 	function presetHotkey(StringLevelClosure lc)
-		skip
+		def.setLevelsDataString("ghk1", levels, 0, lc)
 
 	function presetName(StringLevelClosure lc)
-		skip
+		def.setLevelsDataString("gnam", levels, 0, lc)
 
 	function presetTooltip(StringLevelClosure lc)
-		skip
+		def.setLevelsDataString("gtp1", levels, 0, lc)
 
 	function presetTooltipExtended(StringLevelClosure lc)
-		skip
+		def.setLevelsDataString("gub1", levels, 0, lc)
 	
 	function setEffectType(int effectIndex, UpgradeEffectType effectType)
 		def.setLvlDataString(EFFECT_TAG_PREFIX + effectIndex.toString(), 0, 0, 
