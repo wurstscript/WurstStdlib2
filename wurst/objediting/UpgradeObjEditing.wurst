@@ -2,9 +2,16 @@ package UpgradeObjEditing
 import ObjEditingNatives
 import NoWurst
 import public SharedEnums
+import Integer
+import ErrorHandling
 
 constant BASE_UPGRADE_ID = 'Rhse' // magic sentry has no default effects and level 0
 constant CLEAN_UPGRADE_ID = 'RXXX'
+// Prefixes
+constant EFFECT_TAG_PREFIX = "gef"
+constant BASE_TAG_PREFIX = "gba"
+constant INCREMENT_TAG_PREFIX = "gmo"
+constant CODE_TAG_PREFIX = "gco"
 
 public enum UpgradeClass
 	NONE
@@ -14,7 +21,116 @@ public enum UpgradeClass
 	Ranged
 	Caster
 
-public class UpgradeDefition
+public enum UpgradeEffectType
+	NONE
+	AbilityLevelBonus
+	AddUltravision // Has no in-game effect.
+	ApplyAttackUpgradeBonus
+	ApplyDefenseUpgradeBonus
+	AttackDamageBonus
+	AttackDamageLoss // Has no in-game effect.
+	AttackDiceBonus
+	AttackRangeBonus
+	AttackSpeedBonus
+	AttackSpillDistanceBonus
+	AttackSpillRadiusBonus
+	AttackTargetCountBonus
+	AuraDataBonus
+	DefenseTypeChange
+	EnableAttacks
+	EnableAttacksRooted
+	EnableAttacksUprooted
+	GoldHarvestBonus
+	GoldHarvestBonusEntangle
+	HitPointBonus
+	HitPointBonusPercent
+	HitPointRegeneration
+	LumberHarvestBonus
+	MagicImmunity
+	ManaPointBonus
+	ManaPointBonusPercent
+	ManaRegeneration
+	MovementSpeedBonus
+	MovementspeedBonusPercent
+	RaiseDeadDurationBonus
+	SightRangeBonus
+	SpikedBarricades
+	UnitAvailabilityChange
+
+function UpgradeEffectType.toIdentifierString() returns string
+	string result = ""
+	switch this
+		case NONE
+			result = ""
+		case AbilityLevelBonus
+			result = "rlev"
+		case AddUltravision 
+			result = "rauv"
+		case ApplyAttackUpgradeBonus
+			result = "ratt"
+		case ApplyDefenseUpgradeBonus
+			result = "rarm"
+		case AttackDamageBonus
+			result = "ratx"
+		case AttackDamageLoss 
+			result = "radl"
+		case AttackDiceBonus
+			result = "atd"
+		case AttackRangeBonus
+			result = "ratr"
+		case AttackSpeedBonus
+			result = "rats"
+		case AttackSpillDistanceBonus
+			result = "rasd"
+		case AttackSpillRadiusBonus
+			result = "rasr"
+		case AttackTargetCountBonus
+			result = "atc"
+		case AuraDataBonus
+			result = "raud"
+		case DefenseTypeChange
+			result = "rart"
+		case EnableAttacks
+			result = "renw"
+		case EnableAttacksRooted
+			result = "rroo"
+		case EnableAttacksUprooted
+			result = "ruro"
+		case GoldHarvestBonus
+			result = "rmin"
+		case GoldHarvestBonusEntangle
+			result = "rent"
+		case HitPointBonus
+			result = "rhpx"
+		case HitPointBonusPercent
+			result = "rhpo"
+		case HitPointRegeneration
+			result = "rhpr"
+		case LumberHarvestBonus
+			result = "rlum"
+		case MagicImmunity
+			result = "rmim"
+		case ManaPointBonus
+			result = "rmnx"
+		case ManaPointBonusPercent
+			result = "rman"
+		case ManaRegeneration
+			result = "rmnr"
+		case MovementSpeedBonus
+			result = "rmvx"
+		case MovementspeedBonusPercent
+			result = "rmov"
+		case RaiseDeadDurationBonus
+			result = "rrai"
+		case SightRangeBonus
+			result = "rsig"
+		case SpikedBarricades
+			result = "rspi"
+		case UnitAvailabilityChange
+			result = "rtma"
+	return result
+
+public class W3QDefinition
 	ObjectDefinition def
 
 	protected int newId
@@ -26,14 +142,14 @@ public class UpgradeDefition
 	function getLevels() returns int
 		return levels
 
-	construct(int newId)
+	construct(int newId, int baseId)
 		this.newId = newId
-		def = createObjectDefinition("w3q", newId, CLEAN_UPGRADE_ID)
+		def = createObjectDefinition("w3q", newId, baseId)
 
-	construct(int newId, int levels)
+	construct(int newId, int levels, int baseId)
 		this.newId = newId
 		this.levels = levels
-		def = createObjectDefinition("w3q", newId, CLEAN_UPGRADE_ID)
+		def = createObjectDefinition("w3q", newId, baseId)
 
 	function setButtonPositionX(int value)
 		skip
@@ -128,11 +244,57 @@ public class UpgradeDefition
 	function presetTooltipExtended(StringLevelClosure lc)
 		skip
 	
+	function setEffectType(int effectIndex, UpgradeEffectType effectType)
+		def.setLvlDataString(EFFECT_TAG_PREFIX + effectIndex.toString(), 0, 0, 
+			effectType.toIdentifierString())
+
+	function setEffectBase(int effectIndex, real value)
+		def.setLvlDataUnreal(BASE_TAG_PREFIX + effectIndex.toString(), 0, 0, value)
+
+	function setEffectIncrement(int effectIndex, real value)
+		def.setLvlDataUnreal(INCREMENT_TAG_PREFIX + effectIndex.toString(), 0, 0, value)
+
+	function setEffectCode(int effectIndex, string value)
+		def.setLvlDataString(CODE_TAG_PREFIX + effectIndex.toString(), 0, 0, value)
+	
+	function setEffect(int effectIndex, UpgradeEffectType effectType, real base)
+		setEffectType(effectIndex, effectType)
+		setEffectBase(effectIndex, base)
+
+	function setEffect(int effectIndex, UpgradeEffectType effectType, real base, real increment)
+		setEffect(effectIndex, effectType, base)
+		setEffectIncrement(effectIndex, increment)
+
+	function setEffect(int effectIndex, UpgradeEffectType effectType, real base, real increment, string codeId)
+		setEffect(effectIndex, effectType, base, increment)
+		setEffectCode(effectIndex, codeId)
+
+/** Use this class to create upgrade definitions. Constructors provide a "Clean"
+	upgrade definition, without any research cost or effects. Using the 
+	addEffectXXX() methods will add additional effects, with a limit of 4 
+	effects. Do not use the setEffect methods from the W3Q baseclass. */
+public class UpgradeDefinition extends W3QDefinition
+	int effectCount = 0
+
+	private function addNewEffectCount() returns int
+		effectCount += 1
+		if effectCount > 4
+			error("Upgrades cannot have more than 4 effects!")
+		return effectCount
+			
+	function getEffectCount() returns int
+		return effectCount
+
+	construct(int newId)
+		super(newId, CLEAN_UPGRADE_ID)
+
+	construct(int newId, int levels)
+		super(newId, levels, CLEAN_UPGRADE_ID)
+	
+	
 	/** Increases the level of an ability */
 	function addEffectAbilityLevelBonus(int base, int increment, string abilCode)
-		def.setInt("levb", base)
-		def.setInt("levm", increment)
-		def.setString("levc", abilCode)
+		super.setEffect(addNewEffectCount(), UpgradeEffectType.AbilityLevelBonus, base, increment, abilCode)
 
 	// This is commented out because it does nothing when used. Look at the Ultravision
 	// ability 'Ault' to see how Blizzard implements this.
@@ -141,15 +303,15 @@ public class UpgradeDefition
 
 	/** Increases the base damage of units by their "Attack Upgrade Bonus" field */
 	function addEffectApplyAttackUpgradeBonus()
-		skip
+		super.setEffectType(addNewEffectCount(), UpgradeEffectType.ApplyAttackUpgradeBonus)
 
 	/** Increases the defense of units by their "Defense Upgrade Bonus" field */
 	function addEffectApplyDefenseUpgradeBonus()
-		skip
+		super.setEffectType(addNewEffectCount(), UpgradeEffectType.ApplyDefenseUpgradeBonus)
 
 	/** Bonus to base damage of attacks. Supports negative bonuses. */
 	function addEffectAttackDamageBonus(int base, int increment)
-		skip
+		super.setEffect(addNewEffectCount(), UpgradeEffectType.)
 	
 	// This doesn't do anything. Use DamageBonus with negative numbers
 	// function addEffectAttackDamageLoss(int base, int increment)
