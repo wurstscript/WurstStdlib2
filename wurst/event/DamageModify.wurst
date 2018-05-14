@@ -65,29 +65,11 @@ import HashMap
 
 /** Deals triggered damage from unit to target.
 	You can specify id if there's any unique id interactions.
-	Damage instance is saved and returned after being dealt. 
+	Damage instance is saved and returned after being dealt.
 
 	Is a helper for `new Damage(this, target, amount, spell, 0)..saveInstance()..modify()..deal()` */
 public function unit.returnDamage(unit target, real amount, bool spell, int id) returns Damage
 	return new Damage(this, target, amount, spell, id)..saveInstance()..modify()..deal()
-
-/** Deals triggered damage from unit to target.
-	You can specify id if there's any unique id interactions. 
-
-	Is a helper for `new Damage(this, target, amount, spell, id)..modify()..deal()` */
-public function unit.damage(unit target, real amount, bool spell, int id)
-	new Damage(this, target, amount, spell, id)..modify()..deal()
-
-/** Deals triggered damage from unit to target.
-
-	Is a helper for `new Damage(this, target, amount, spell, 0)..modify()..deal()` */
-public function unit.damage(unit target, real amount, bool spell)
-	new Damage(this, target, amount, spell, 0)..modify()..deal()
-/** Deals triggered spell damage from unit to target.
-
-	Is a helper for `new Damage(this, target, amount, true, 0)..modify()..deal()` */
-public function unit.damage(unit target, real amount)
-	new Damage(this, target, amount, true, 0)..modify()..deal()
 
 /** If Damage instance wasn't created
 	by one of DamageModify package's functions (or `new Damage(...)`),
@@ -253,32 +235,14 @@ public class Damage
 		for i in damageModifiers
 			i.run(this)
 
+	protected static Damage dealingInstance = null
 	/** applies user-created Damage instance */
 	function deal()
 		if not fired
-			anounce()
-			if target.isAlive()
-				let life = target.getHP()
-				killingBlow = life - .405 < amount
-				if killingBlow 
-					if doSaveTarget
-						killingBlow = false
-						amount = life - .405
-					else
-						amount = life
-				disableDamageDetect()
-				if killingBlow
-					target.setHP(.405)
-					source.damageTarget(target, 1000000., ATTACK_TYPE_UNIVERSAL)
-					source.damageTarget(target, 1000000., ATTACK_TYPE_MAGIC)
-				else
-					target.setHP(life - amount)
-					source.damageTarget(target, 0., ATTACK_TYPE_UNIVERSAL)
-					source.damageTarget(target, 0., ATTACK_TYPE_MAGIC)
-				enableDamageDetect()
-					
-			if this.wantSave <= 0
-				destroy this
+			let temp = dealingInstance
+			dealingInstance = this
+			target.damageTarget(target, initial)
+			dealingInstance = temp
 		else
 			Log.warn("Damage.deal() called on already fired damage!")
 
@@ -327,9 +291,12 @@ function handler() returns bool
 	let damage = GetEventDamage()
 	if damage == 0
 		return false
-
-	let d = new Damage(GetEventDamageSource(), GetTriggerUnit(), (damage < 0 ? -damage : damage), damage < 0, DAMAGE_ID_NONTRIGGERED)
-
+	var d = Damage.dealingInstance
+	if d == null
+		d = new Damage(GetEventDamageSource(), GetTriggerUnit(), (damage < 0 ? -damage : damage), damage < 0, DAMAGE_ID_NONTRIGGERED)
+	else
+		Damage.dealingInstance = null
+	d.saveInstance()
 	d.modify()
 	d.anounce()
 
@@ -339,6 +306,7 @@ function handler() returns bool
 		d.killingBlow = false
 		d.amount = life - .405
 	BlzSetEventDamage(d.amount)
+	d.releaseInstance()
 	return false
 
 init
