@@ -311,7 +311,7 @@ public class UpgradeDefinition extends W3QDefinition
 
 	/** Bonus to base damage of attacks. Supports negative bonuses. */
 	function addEffectAttackDamageBonus(int base, int increment)
-		super.setEffect(addNewEffectCount(), UpgradeEffectType.)
+		super.setEffect(addNewEffectCount(), UpgradeEffectType.AttackDamageBonus, base, increment)
 	
 	// This doesn't do anything. Use DamageBonus with negative numbers
 	// function addEffectAttackDamageLoss(int base, int increment)
