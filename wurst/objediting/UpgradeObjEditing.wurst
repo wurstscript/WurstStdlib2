@@ -3,6 +3,7 @@ import ObjEditingNatives
 import NoWurst
 import public SharedEnums
 import Integer
+import Boolean
 import ErrorHandling
 
 constant BASE_UPGRADE_ID = 'Rhse' // magic sentry has no default effects and level 0
@@ -56,6 +57,23 @@ public enum UpgradeEffectType
 	SightRangeBonus
 	SpikedBarricades
 	UnitAvailabilityChange
+
+function UpgradeClass.toObjectString() returns string
+	var result = ""
+	switch this
+		case NONE
+			result = ""
+		case Armor
+			result = "armor"
+		case Artillery
+			result = "artillery"
+		case Melee
+			result = "melee"
+		case Ranged
+			result = "ranged"
+		case Caster
+			result = "caster"
+	return result
 
 function UpgradeEffectType.toIdentifierString() returns string
 	string result = ""
@@ -149,46 +167,47 @@ public class W3QDefinition
 	construct(int newId, int levels, int baseId)
 		this.newId = newId
 		this.levels = levels
+		setLevels(levels)
 		def = createObjectDefinition("w3q", newId, baseId)
 
 	function setButtonPositionX(int value)
-		skip
+		def.setLvlDataInt("gbpx", 0, 0, value)
 		
 	function setButtonPositionY(int value)
-		skip
+		def.setLvlDataInt("gbpy", 0, 0, value)
 
 	function setAppliesToAllUnits(bool value)
-		skip
+		def.setLvlDataInt("glob", 0, 0, value.toInt())
 
 	function setClass(UpgradeClass value)
-		skip
+		def.setLvlDataString("gcls", 0, 0, value.toObjectString())
 
 	function setCostGoldBase(int value)
-		skip
+		def.setLvlDataInt("gglb", 0, 0, value)
 
 	function setCostGoldIncrement(int value)
-		skip
+		def.setLvlDataInt("gglm", 0, 0, value)
 
 	function setLevels(int value)
-		skip
+		def.setLvlDataInt("glvl", 0, 0, value)
 
 	function setCostLumberBase(int value)
-		skip
+		def.setLvlDataInt("glmb", 0, 0, value)
 
 	function setCostLumberIncrement(int value)
-		skip
+		def.setLvlDataInt("glmm", 0, 0, value)
 
 	function setRace(Race value)
-		skip
+		def.setLvlDataString("grac", 0, 0, value.toObjectString())
 
 	function setTimeBase(int value)
-		skip
+		def.setLvlDataInt("gtib", 0, 0, value)
 
 	function setTimeIncrement(int value)
-		skip
+		def.setLvlDataInt("gtim", 0, 0, value)
 
 	function setTransferWithUnitOwnership(bool value)
-		skip
+		def.setLvlDataInt("ginh", 0, 0, value.toInt())
 	
 	function setIcon(int level, string value)
 		skip
@@ -291,7 +310,28 @@ public class UpgradeDefinition extends W3QDefinition
 	construct(int newId, int levels)
 		super(newId, levels, CLEAN_UPGRADE_ID)
 	
+	// override all of the setEffect methods to avoid weird behavior.
+	override function setEffectType(int effectIndex, UpgradeEffectType effectType)
+		error("Use addEffect methods for UpgradeDefinition!")
+
+	override function setEffectBase(int effectIndex, real value)
+		error("Use addEffect methods for UpgradeDefinition!")
+
+	override function setEffectIncrement(int effectIndex, real value)
+		error("Use addEffect methods for UpgradeDefinition!")
+
+	override function setEffectCode(int effectIndex, string value)
+		error("Use addEffect methods for UpgradeDefinition!")
 	
+	override function setEffect(int effectIndex, UpgradeEffectType effectType, real base)
+		error("Use addEffect methods for UpgradeDefinition!")
+
+	override function setEffect(int effectIndex, UpgradeEffectType effectType, real base, real increment)
+		error("Use addEffect methods for UpgradeDefinition!")
+
+	override function setEffect(int effectIndex, UpgradeEffectType effectType, real base, real increment, string codeId)
+		error("Use addEffect methods for UpgradeDefinition!")
+
 	/** Increases the level of an ability */
 	function addEffectAbilityLevelBonus(int base, int increment, string abilCode)
 		super.setEffect(addNewEffectCount(), UpgradeEffectType.AbilityLevelBonus, base.toReal(), increment.toReal(), abilCode)
