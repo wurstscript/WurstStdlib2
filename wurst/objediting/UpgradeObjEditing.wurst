@@ -188,20 +188,20 @@ public class W3QDefinition
 	function setClass(UpgradeClass value)
 		def.setLvlDataString("gcls", 0, 0, value.toObjectString())
 
-	function setCostGoldBase(int value)
+	function setGoldCostBase(int value)
 		def.setLvlDataInt("gglb", 0, 0, value)
 
-	function setCostGoldIncrement(int value)
+	function setGoldCostIncrement(int value)
 		def.setLvlDataInt("gglm", 0, 0, value)
 
 	function setLevels(int value)
 		this.levels = value
 		def.setLvlDataInt("glvl", 0, 0, value)
 
-	function setCostLumberBase(int value)
+	function setLumberCostBase(int value)
 		def.setLvlDataInt("glmb", 0, 0, value)
 
-	function setCostLumberIncrement(int value)
+	function setLumberCostIncrement(int value)
 		def.setLvlDataInt("glmm", 0, 0, value)
 
 	function setRace(Race value)
