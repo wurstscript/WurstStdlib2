@@ -6,9 +6,8 @@ import Integer
 import Boolean
 import ErrorHandling
 
-constant BASE_UPGRADE_ID = 'Rhse' // magic sentry has no default effects and level 0
-constant CLEAN_UPGRADE_ID = 'RXXX'
-// Prefixes
+constant BASE_UPGRADE_ID = 'Rhse' // magic sentry has no default effects and 1 level
+// Prefixes for the effects
 constant EFFECT_TAG_PREFIX = "gef"
 constant BASE_TAG_PREFIX = "gba"
 constant INCREMENT_TAG_PREFIX = "gmo"
@@ -29,7 +28,7 @@ public enum UpgradeEffectType
 	ApplyAttackUpgradeBonus
 	ApplyDefenseUpgradeBonus
 	AttackDamageBonus
-	AttackDamageLoss // Has no in-game effect.
+	AttackDamageLoss
 	AttackDiceBonus
 	AttackRangeBonus
 	AttackSpeedBonus
@@ -365,10 +364,9 @@ public class UpgradeDefinition extends W3QDefinition
 	function addEffectAbilityLevelBonus(int base, int increment, string abilCode)
 		internalSetEffect(addNewEffectCount(), UpgradeEffectType.AbilityLevelBonus, base.toReal(), increment.toReal(), abilCode)
 
-	// This is commented out because it does nothing when used. Look at the Ultravision
-	// ability 'Ault' to see how Blizzard implements this.
-	// function addEffectAddUltravision()
-	// 	super.setEffectType(addNewEffectCount(), UpgradeEffectType.AddUltravision)
+	/** Allows effected units to see as far at night as they see during the day. */
+	function addEffectAddUltravision()
+		super.setEffectType(addNewEffectCount(), UpgradeEffectType.AddUltravision)
 
 	/** Increases the base damage of units by their "Attack Upgrade Bonus" field */
 	function addEffectApplyAttackUpgradeBonus()
@@ -382,9 +380,9 @@ public class UpgradeDefinition extends W3QDefinition
 	function addEffectAttackDamageBonus(int base, int increment)
 		internalSetEffect(addNewEffectCount(), UpgradeEffectType.AttackDamageBonus, base.toReal(), increment.toReal())
 	
-	// This doesn't do anything. Use DamageBonus with negative numbers
-	// function addEffectAttackDamageLoss(int base, int increment)
-	// 	internalSetEffect(addNewEffectCount(), UpgradeEffectType.AttackDamageLoss, base.toReal(), increment.toReal())
+	/**  Increases the unit's damage loss by a set amount. This effects line or bounce attacks! */
+	function addEffectAttackDamageLoss(int base, int increment)
+		internalSetEffect(addNewEffectCount(), UpgradeEffectType.AttackDamageLoss, base.toReal(), increment.toReal())
 
 	/** Increases the number of Attack Dice on attacks */
 	function addEffectAttackDiceBonus(int base, int increment)
