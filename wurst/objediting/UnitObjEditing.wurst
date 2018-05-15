@@ -14,6 +14,16 @@ public enum MovementType
 	Float
 	Amphipic
 
+public enum ArmorType
+	Normal
+	Small
+	Medium
+	Large
+	Fortified
+	Hero
+	Divine
+	Unarmored
+
 public enum AttackType
 	Unknown
 	Normal
@@ -128,6 +138,27 @@ public function ArmorSoundType.toString() returns string
 		default
 			return null
 				
+public function ArmorType.toObjectString() returns string
+	string result = "normal"
+	switch this
+		case Normal
+			result = "normal"
+		case Small
+			result = "small"
+		case Medium
+			result = "medium"
+		case Large
+			result = "large"
+		case Fortified
+			result = "fort"
+		case Hero
+			result = "hero"
+		case Divine
+			result = "divine"
+		case Unarmored
+			result = "none"
+	return result
+	
 public function AttackType.toObjectString() returns string
 	string result = "unknown"
 	switch this
