@@ -151,20 +151,26 @@ public class W3QDefinition
 	ObjectDefinition def
 
 	protected int newId
+	protected int baseId
 	protected int levels = 1
 	
 	function getNewId() returns int
 		return newId
 
+	function getBaseId() returns int
+		return baseId
+		
 	function getLevels() returns int
 		return levels
 
 	construct(int newId, int baseId)
 		this.newId = newId
+		this.baseId = baseId
 		def = createObjectDefinition("w3q", newId, baseId)
 
 	construct(int newId, int levels, int baseId)
 		this.newId = newId
+		this.baseId = baseId
 		def = createObjectDefinition("w3q", newId, baseId)
 		setLevels(levels)
 		
