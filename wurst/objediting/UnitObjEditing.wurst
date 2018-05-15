@@ -23,7 +23,7 @@ public enum ArmorType
 	Hero
 	Divine
 	Unarmored
-
+	
 public enum AttackType
 	Unknown
 	Normal
@@ -137,7 +137,9 @@ public function ArmorSoundType.toString() returns string
 			return "Metal"
 		default
 			return null
-				
+
+
+
 public function ArmorType.toObjectString() returns string
 	string result = "normal"
 	switch this
@@ -158,7 +160,7 @@ public function ArmorType.toObjectString() returns string
 		case Unarmored
 			result = "none"
 	return result
-	
+
 public function AttackType.toObjectString() returns string
 	string result = "unknown"
 	switch this
