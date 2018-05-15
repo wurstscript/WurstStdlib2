@@ -173,3 +173,7 @@ function testGenerics()
 	list.sort()
 	list.get(0).assertEquals(1.)
 	list.get(5).assertEquals(6.)
+
+@Test function testAsList()
+	asList(1,2,3,4).foldl<int>(0, (i, q) -> q + i)
+		.assertEquals(asList(4,3,2,1).foldl<int>(0, (i, q) -> q + i))
