@@ -446,17 +446,17 @@ public class UpgradeDefinition extends W3QDefinition
 			error("Defense type changes must be in the range of -7 to 7!")
 		internalSetEffect(addNewEffectCount(), UpgradeEffectType.DefenseTypeChange, base.toReal())
 
-	/** 0 = none, 1 = attack 1 only, 2 = attack 2 only, 3 = both*/
-	function addEffectEnableAttacks(int base)
-		internalSetEffect(addNewEffectCount(), UpgradeEffectType.EnableAttacks, base.toReal())
+	/** Changes the attacks enabled for the effected units. */
+	function addEffectEnableAttacks(AttacksEnabled base)
+		internalSetEffect(addNewEffectCount(), UpgradeEffectType.EnableAttacks, base.toObjectInt().toReal())
 	
-	/** 0 = none, 1 = attack 1 only, 2 = attack 2 only, 3 = both*/
-	function addEffectEnableAttacksRooted(int base)
-		internalSetEffect(addNewEffectCount(), UpgradeEffectType.EnableAttacksRooted, base.toReal())
+	/** Changes the attacks enabled for the effected units when rooted. */
+	function addEffectEnableAttacksRooted(AttacksEnabled base)
+		internalSetEffect(addNewEffectCount(), UpgradeEffectType.EnableAttacksRooted, base.toObjectInt().toReal())
 	
-	/** 0 = none, 1 = attack 1 only, 2 = attack 2 only, 3 = both*/
-	function addEffectEnableAttacksUprooted(int base)
-		internalSetEffect(addNewEffectCount(), UpgradeEffectType.EnableAttacksUprooted, base.toReal())
+	/** Changes the attacks enabled for the effected units when rooted. */
+	function addEffectEnableAttacksUprooted(AttacksEnabled base)
+		internalSetEffect(addNewEffectCount(), UpgradeEffectType.EnableAttacksUprooted, base.toObjectInt().toReal())
 
 	/** Increases gold harvested by Harvest abilities. */
 	function addEffectGoldHarvestBonus(int base, int increment)

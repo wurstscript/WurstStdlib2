@@ -12,7 +12,13 @@ public enum Race
 	Other
 	Undead
 	Unknown
-		
+
+public enum AttacksEnabled
+	None
+	AttackOneOnly
+	AttackTwoOnly
+	Both
+
 public function Race.toObjectString() returns string
 	string result = "unknown"
 	switch this
@@ -38,4 +44,18 @@ public function Race.toObjectString() returns string
 			result = "undead"
 		case Unknown
 			result = "unknown"
+	return result
+
+
+public function AttacksEnabled.toObjectInt() returns int
+	var result = 0
+	switch this
+		case None
+			result = 0
+		case AttackOneOnly
+			result = 1
+		case AttackTwoOnly
+			result = 2
+		case Both
+			result = 3
 	return result
