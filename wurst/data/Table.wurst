@@ -209,6 +209,12 @@ public class Table
 	
 	function saveUbersplat(int parentKey, ubersplat value)
 		ht.saveUbersplatHandle( this castTo int, parentKey, value)
+
+	function loadHashtable(int parentKey) returns hashtable
+		return LoadHashtableHandle(ht, this castTo int, parentKey)
+	
+	function saveHashtable(int parentKey, hashtable value)
+		SaveHashtableHandle(ht, this castTo int, parentKey, value)
 				
 	/** Remove all data from this table */
 	function flush()
