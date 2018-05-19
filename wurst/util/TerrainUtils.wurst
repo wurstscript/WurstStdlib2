@@ -94,6 +94,7 @@ function tileFromIndex(int i) returns tile
 
 let TILES_X = (boundMax.x - boundMin.x).toInt() div 128 + 1
 let TILES_Y = (boundMax.y - boundMin.y).toInt() div 128 + 1
+let TILES_COUNT = TILES_X * TILES_Y
 
 public function tile(int x, int y) returns tile
 	if ((x < 0) or (x >= TILES_X) or (y < 0) or (y >= TILES_Y))
@@ -150,14 +151,37 @@ public function tile.setPathing(pathingtype ttype, bool flag)
 
 @test public function testMapCorners()
 	boundMin.getTile().id.assertEquals(0)
-	boundMax.getTile().id.assertEquals(TILES_X * TILES_Y - 1)
+	boundMax.getTile().id.assertEquals(TILES_COUNT - 1)
 	tile(boundMax.x, boundMin.y).id.assertEquals(TILES_X - 1)
 	tile(boundMin.x, boundMax.y).id.assertEquals(TILES_X * (TILES_Y - 1))
 
-@test public function tilePos()
+@test public function testUpperBound()
 	(boundMin + vec2(1,0)).getTile().id.assertEquals(0)
+	(boundMin + vec2(63.9999,0)).getTile().id.assertEquals(0)
 	(boundMin + vec2(64,0)).getTile().id.assertEquals(1)
 	(boundMin + vec2(128,0)).getTile().id.assertEquals(1)
 
 	(boundMin + vec2(63.9999,63.9999)).getTile().id.assertEquals(0)
 	(boundMin + vec2(64,64)).getTile().id.assertEquals(TILES_X + 1)
+
+@test public function testLowerBound()
+	(boundMax - vec2(1,0)).getTile().id.assertEquals(TILES_COUNT - 1)
+	(boundMax - vec2(64,0)).getTile().id.assertEquals(TILES_COUNT - 1)
+	(boundMax - vec2(64.0002,0)).getTile().id.assertEquals(TILES_COUNT - 2)
+	(boundMax - vec2(128,0)).getTile().id.assertEquals(TILES_COUNT - 2)
+
+	(boundMax - vec2(64,64)).getTile().id.assertEquals(TILES_COUNT - 1)
+	(boundMax - vec2(64.0002,64.0002)).getTile().id.assertEquals(TILES_COUNT - 1 - (TILES_X + 1))
+
+// Some notes:
+	// tile(0,0) bounds:
+	// x: [-64; 64)
+	// y: [-64; 64)
+
+// Tile mapping example on a map sized 256x256 pts.
+	// Total tile count: 9
+	// Last tile index: 8 == <Total> - 1
+
+	// 6 7 8
+	// 3 4 5
+	// 0 1 2
