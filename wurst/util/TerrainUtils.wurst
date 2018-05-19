@@ -148,8 +148,16 @@ public function tile.setPathing(pathingtype ttype, bool flag)
 		for j = 0 to 3
 			(this.toVec2() + vec2(-48. + i*32,-48. + j*32)).setTerrainPathable(ttype, flag)
 
-@test public function testToInt()
+@test public function testMapCorners()
 	boundMin.getTile().id.assertEquals(0)
 	boundMax.getTile().id.assertEquals(TILES_X * TILES_Y - 1)
 	tile(boundMax.x, boundMin.y).id.assertEquals(TILES_X - 1)
 	tile(boundMin.x, boundMax.y).id.assertEquals(TILES_X * (TILES_Y - 1))
+
+@test public function tilePos()
+	(boundMin + vec2(1,0)).getTile().id.assertEquals(0)
+	(boundMin + vec2(64,0)).getTile().id.assertEquals(1)
+	(boundMin + vec2(128,0)).getTile().id.assertEquals(1)
+
+	(boundMin + vec2(63.9999,63.9999)).getTile().id.assertEquals(0)
+	(boundMin + vec2(64,64)).getTile().id.assertEquals(TILES_X + 1)
