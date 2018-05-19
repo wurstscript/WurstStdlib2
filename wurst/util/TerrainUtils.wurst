@@ -3,7 +3,7 @@ import NoWurst
 import Item
 import Rect
 import MapBounds
-import Maths
+import Wurstunit
 import Colors
 
 // Terrain API
@@ -147,3 +147,9 @@ public function tile.setPathing(pathingtype ttype, bool flag)
 	for i = 0 to 3
 		for j = 0 to 3
 			(this.toVec2() + vec2(-48. + i*32,-48. + j*32)).setTerrainPathable(ttype, flag)
+
+@test public function testToInt()
+	boundMin.getTile().id.assertEquals(0)
+	boundMax.getTile().id.assertEquals(TILES_X * TILES_Y - 1)
+	tile(boundMax.x, boundMin.y).id.assertEquals(TILES_X - 1)
+	tile(boundMin.x, boundMax.y).id.assertEquals(TILES_X * (TILES_Y - 1))
