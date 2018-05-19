@@ -336,6 +336,12 @@ public class LinkedList<T>
 			destroy current.prev
 		destroy dummy
 
+public function asList<T>(vararg T ts) returns LinkedList<T>
+	let ll = new LinkedList<T>
+	for t in ts
+		ll.add(t)
+	return ll
+
 class LLEntry<T>
 	T elem
 	LLEntry<T> prev

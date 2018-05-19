@@ -1,0 +1,61 @@
+package ObjEditingCommons
+
+public enum Race
+	Commoner
+	Creeps
+	Critters
+	Demon
+	Human
+	Naga
+	Nightelf
+	Orc
+	Other
+	Undead
+	Unknown
+
+public enum AttacksEnabled
+	None
+	AttackOneOnly
+	AttackTwoOnly
+	Both
+
+public function Race.toObjectString() returns string
+	string result = "unknown"
+	switch this
+		case Commoner
+			result = "commoner"
+		case Creeps
+			result = "creeps"
+		case Critters
+			result = "critters"
+		case Demon
+			result = "demon"
+		case Human
+			result = "human"
+		case Naga
+			result = "naga"
+		case Nightelf
+			result = "nightelf"
+		case Orc
+			result = "orc"
+		case Other
+			result = "other"
+		case Undead
+			result = "undead"
+		case Unknown
+			result = "unknown"
+	return result
+
+
+public function AttacksEnabled.toObjectInt() returns int
+	var result = 0
+	switch this
+		case None
+			result = 0
+		case AttackOneOnly
+			result = 1
+		case AttackTwoOnly
+			result = 2
+		case Both
+			result = 3
+	return result

@@ -1,12 +1,13 @@
 package Vectors
 import NoWurst
+import Wurstunit
 import public Real
 import public Angle
 import initlater Printing
 
-/** A vector is a geometric object that has magnitude (or length) and direction. 
+/** A vector is a geometric object that has a length and direction. 
 	Vectors can be added to other vectors according to vector algebra.
-	The most common use in wc3 is as a point in space. For example a unit's position
+	The most common use in warcraft III is as a point in space. For example a units position
 	can be represented as a vector as well as a knockback force acting on it.
 */
 
@@ -68,7 +69,7 @@ public function vec2.norm() returns vec2
 	return vec2(x,y)
 
 /** Rotate this vector */
-public function vec2.rotate(angle angl) returns vec2 //angle is taken in radians
+public function vec2.rotate(angle angl) returns vec2
 	var c = angl.cos()
 	var s = angl.sin()
 
@@ -222,7 +223,7 @@ public function vec3.norm() returns vec3
 	return vec3(x,y,z)
 	
 /** Rotate this vector around an axis */
-public function vec3.rotate(vec3 axis, real radians) returns vec3 //angle is taken in radians
+public function vec3.rotate(vec3 axis, real radians) returns vec3
 	var al = axis.x*axis.x+axis.y*axis.y+axis.z*axis.z //axis length^2
 	var c = Cos(radians)
 	var s = Sin(radians)
@@ -370,3 +371,13 @@ public function angle.direction(real dist) returns vec2
 public function vec2.getAngle() returns angle
 	return angle(Atan2(this.y, this.x))
 
+@Test
+function vectorTests()
+	let v1 = vec2(1,2)
+	let v2 = vec2(2,1)
+
+	((v1 + v2) == (vec2(3,3))).assertTrue()
+
+	((v1 - v2) == (vec2(-1,1))).assertTrue()
+
+	((v1.moveTowards(vec2(1,0), 10.) == (vec2(1,-8)))).assertTrue()

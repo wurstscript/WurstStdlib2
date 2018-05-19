@@ -66,6 +66,14 @@ package StringTests
     ".test".ltrim(".").assertEquals("test")
     ".test.".ltrim(".").assertEquals("test.")
 
+    "".trim().assertEquals("")
+    "".ltrim().assertEquals("")
+    "".rtrim().assertEquals("")
+    
+    "    ".trim().assertEquals("")
+    "    ".ltrim().assertEquals("")
+    "    ".rtrim().assertEquals("")
+
 @Test function testIndexOf()
     "test".indexOf("t").assertEquals(0)
     "test".indexOf("es").assertEquals(1)

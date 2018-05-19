@@ -48,15 +48,13 @@ var lastDamageType = DamageType.NULLED
         import DamageType
 
         init
-            addOnDamageFunc(Condition(() -> begin
+            addOnDamageFunc() ->
                 switch getDamageType()
                     case ATTACK
                         print(GetEventDamageSource().getName() + " attacked " + GetTriggerUnit().getName())
                     case SPELL
-                        print(GetEventDamageSource().getName() + " used a sell on " + GetTriggerUnit().getName())
+                        print(GetEventDamageSource().getName() + " used a spell on " + GetTriggerUnit().getName())
                     default
-                        skip
-            end))
 */
 public function getDamageType() returns DamageType
     let sourceDamage = GetEventDamage()
