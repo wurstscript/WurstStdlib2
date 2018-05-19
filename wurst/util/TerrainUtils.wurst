@@ -52,31 +52,31 @@ public function vec2.isTerrainLand() returns boolean
 public function vec2.isTerrainPlatform() returns boolean
 	return not this.isTerrainPathable(PATHING_TYPE_FLOATABILITY) and not this.isTerrainPathable(PATHING_TYPE_WALKABILITY) and not this.isTerrainPathable(PATHING_TYPE_BUILDABILITY)
 
-constant	MAX_RANGE_SQ 	= 10.*10.
-constant 	DUMMY_ITEM_ID 	= 'wolg'
-let	   		dItem   		= CreateItem(DUMMY_ITEM_ID, 0, 0)..setVisible(false)
-let	   		find   			= Rect(0., 0., 128., 128.)
-item array 	hid
-int			hidMax 			= 0
+constant MAX_RANGE_SQ = 10.*10.
+constant DUMMY_ITEM_ID = 'wolg'
+let dummyItem = createItem(DUMMY_ITEM_ID, ZERO2)..setVisible(false)
+let itemSearchRect = Rect(0., 0., 128., 128.)
+item array hiddenItems
+int hiddenItemsCount = 0
 public function vec2.isTerrainWalkable() returns boolean
 	// Hide any items in the area to avoid conflicts with our item
-	find.moveTo(this)
-	EnumItemsInRect(find, null) ->
+	itemSearchRect.moveTo(this)
+	EnumItemsInRect(itemSearchRect, null) ->
 		if GetEnumItem().isVisible()
-			hid[hidMax] = GetEnumItem()
-			hid[hidMax].setVisible(false)
-			hidMax++
+			hiddenItems[hiddenItemsCount] = GetEnumItem()
+			hiddenItems[hiddenItemsCount].setVisible(false)
+			hiddenItemsCount++
 	
 	// Try to move the test item and get its coords
-	dItem.setPos(this) // Unhides the item
-	let tempPos = dItem.getPos()
-	dItem.setVisible(false) // Hide it again
+	dummyItem.setPos(this) // Unhides the item
+	let tempPos = dummyItem.getPos()
+	dummyItem.setVisible(false) // Hide it again
 
 	// Unhide any items hidden at the start
-	while hidMax > 0
-		hidMax--
-		hid[hidMax].setVisible(true)		
-		hid[hidMax] = null
+	while hiddenItemsCount > 0
+		hiddenItemsCount--
+		hiddenItems[hiddenItemsCount].setVisible(true)		
+		hiddenItems[hiddenItemsCount] = null
 
 	return (tempPos.x-this.x)*(tempPos.x-this.x)+(tempPos.y-this.y)*(tempPos.y-this.y) <= MAX_RANGE_SQ and not this.isTerrainPathable(PATHING_TYPE_WALKABILITY)
 
