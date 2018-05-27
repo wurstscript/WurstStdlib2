@@ -7,8 +7,8 @@ public interface DialogBoxButtonClosure
     function run()
 
 /** DialogBox lets you create dialogs more easily and associate its buttons with closures.
-    WARNING: Dialogs cannot be created at map init!
-    
+    WARNING: Dialogs cannot be displayed at map init!
+
     The DialogBox should be destroyed after it is no longer needed.
     Example use:
         let dBox = new DialogBox("Extra starting gold?")
@@ -17,6 +17,7 @@ public interface DialogBoxButtonClosure
             destroy dBox
         
         dBox.addButton("No", () -> destroy dBox)
+        // Make sure to not call display at map initialization
         dBox.display(players[0], true) 
 */
 public class DialogBox
@@ -82,7 +83,7 @@ public class DialogBox
         buttonClosures.put(btn, cb)
 
     /** Toggles visibility of the DialogBox for a player. Dialogs are invisible by default
-    Dialogs cannot be shown at map initialization. */
+        WARNING: Dialogs cannot be shown at map initialization */
     function display(player whichPlayer, boolean flag)
         this.dialogHandle.display(whichPlayer, flag)
 
@@ -103,7 +104,6 @@ public class DialogBox
                 destroy cb
 
         destroy buttons
-        this.dialogHandle
             ..clear()
             ..destr()
         this.clickDialog
