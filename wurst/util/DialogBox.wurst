@@ -1,5 +1,3 @@
-/** DialogBox lets you create dialogs more easily and associate its buttons with closures. */
-
 package DialogBox
 import HashMap
 import Dialog
@@ -8,16 +6,19 @@ import LinkedList
 public interface DialogBoxButtonClosure
     function run()
 
-/** DialogBox lets you create dialogs more easily and associate its buttons with closures. 
-The DialogBox should be destroyed after it is no longer needed.
-Example use:
-| let dBox = new DialogBox("Extra starting gold?")
-| dBox.addButton("Yes") ->
-|     players[0].addGold(500)
-|     destroy dBox
-|
-| dBox.addButton("No", () -> destroy dBox)
-| dBox.display(players[0], true) */
+/** DialogBox lets you create dialogs more easily and associate its buttons with closures.
+    WARNING: Dialogs cannot be created at map init!
+    
+    The DialogBox should be destroyed after it is no longer needed.
+    Example use:
+        let dBox = new DialogBox("Extra starting gold?")
+        dBox.addButton("Yes") ->
+            players[0].addGold(500)
+            destroy dBox
+        
+        dBox.addButton("No", () -> destroy dBox)
+        dBox.display(players[0], true) 
+*/
 public class DialogBox
 
     private static constant buttonClosures = new HashMap<button, DialogBoxButtonClosure>
