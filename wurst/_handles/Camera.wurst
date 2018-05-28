@@ -8,19 +8,17 @@ public function getCameraBoundMin() returns vec2
 public function getCameraBoundMax() returns vec2
     return vec2(GetCameraBoundMaxX(), GetCameraBoundMaxY())
 
-public function getCameraTargetPositionVec2() returns vec2
+public function getCameraTargetPosition() returns vec2
     return vec2(GetCameraTargetPositionX(), GetCameraTargetPositionY())
 
-public function getCameraTargetPositionVec3() returns vec3
-    let targetPosition = getCameraTargetPositionVec2()
-    return vec3(targetPosition.x, targetPosition.y, GetCameraTargetPositionZ())
+public function getCameraTargetPosition3() returns vec3
+    return getCameraTargetPosition().withZ(GetCameraTargetPositionZ())
 
-public function getCameraEyePositionVec2() returns vec2
+public function getCameraEyePosition() returns vec2
     return vec2(GetCameraEyePositionX(), GetCameraEyePositionY())
 
-public function getCameraEyePositionVec3() returns vec3
-    let eyePosition = getCameraEyePositionVec2()
-    return vec3(eyePosition.x, eyePosition.y, GetCameraEyePositionZ())
+public function getCameraEyePosition3() returns vec3
+    return getCameraEyePosition().withZ(GetCameraEyePositionZ())
 
 public function setCameraPosition(vec2 pos)
     SetCameraPosition(pos.x, pos.y)
@@ -28,8 +26,8 @@ public function setCameraPosition(vec2 pos)
 public function setCameraQuickPosition(vec2 pos)
     SetCameraQuickPosition(pos.x, pos.y)
 
-public function setCameraBounds(vec2 corner1, vec2 corner2, vec2 corner3, vec2 corner4)
-    SetCameraBounds(corner1.x, corner1.y, corner2.x, corner2.y, corner3.x, corner3.y, corner4.x, corner4.y)
+public function setCameraBounds(vec2 bottomLeft, vec2 topRight, vec2 topLeft, vec2 bottomRight)
+    SetCameraBounds(bottomLeft.x, bottomLeft.y, topRight.x, topRight.y, topLeft.x, topLeft.y, bottomRight.x, bottomRight.y)
 
 public function panCameraTo(vec2 pos)
     PanCameraTo(pos.x, pos.y)
@@ -70,7 +68,7 @@ public function camerasetup.getField(camerafield whichField) returns real
 public function camerasetup.setDestPosition(vec2 pos, real duration)
     CameraSetupSetDestPosition(this, pos.x, pos.y, duration)
 
-public function camerasetup.getDestPositionVec2() returns vec2
+public function camerasetup.getDestPosition() returns vec2
     return vec2(CameraSetupGetDestPositionX(this),CameraSetupGetDestPositionY(this))
 
 public function camerasetup.apply(boolean doPan, boolean panTimed)
@@ -109,19 +107,21 @@ public function player.panCameraTo(vec2 pos)
 public function player.panCameraToTimed(vec2 pos, real duration)
     PanCameraToTimedForPlayer(this, pos.x, pos.y, duration)
 
+/** Pans the camera depending on how far pos is from the current
+    camera target:
+    - If the distance is larger than
+      bj_SMARTPAN_TRESHOLD_SNAP, the camera snaps instantenously
+    - If the distance is larger than bj_SMARTPAN_TRESHOLD_PAN, the
+      camera pans over the specified duration
+    - If the distance is smaller than bj_SMARTPAN_TRESHOLD_PAN, the
+      camera doesn't move at all. */
 public function player.smartCameraPan(vec2 pos, real duration)
     if GetLocalPlayer() == this
-        let dist = pos.distanceTo(getCameraTargetPositionVec2())   // DistanceBetweenPoints(locA, locB)
-
+        let dist = pos.distanceTo(getCameraTargetPosition())
         if dist >= bj_SMARTPAN_TRESHOLD_SNAP
-            // If the user is too far away, snap the camera.
             panCameraToTimed(pos, 0.0)
-
         else if dist >= bj_SMARTPAN_TRESHOLD_PAN
-            // If the user is moderately close, pan the camera.
             panCameraToTimed(pos, duration)
-
-            // Else: User is close enough, so don't touch the camera.
 
 public function player.setCinematicCamera(string cameraModelFile)
     SetCinematicCameraForPlayer(this, cameraModelFile)
