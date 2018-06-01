@@ -297,6 +297,24 @@ public function unit.removeItemById(int itemId) returns boolean
 public function unit.removeItemFromSlot(int slot) returns item
 	return UnitRemoveItemFromSlot(this, slot)
 
+public function unit.dropItemPoint(item itm, real x, real y) returns boolean
+	return UnitDropItemPoint(this, itm, x, y)
+
+public function unit.dropItemSlot(item itm, int slot) returns boolean
+	return UnitDropItemSlot(this, itm, slot)
+
+public function unit.dropItemTarget(item itm, widget target) returns boolean
+	return UnitDropItemTarget(this, itm, target)
+
+public function unit.useItem(item itm) returns boolean
+	return UnitUseItem(this, itm)
+
+public function unit.useItemPoint(item itm, real x, real y) returns boolean
+	return UnitUseItemPoint(this, itm, x, y)
+
+public function unit.useItemTarget(item itm, widget target) returns boolean
+	return UnitUseItemTarget(this, itm, target)
+
 public function unit.revive(vec2 pos, boolean doEyecandy)
 	ReviveHero(this, pos.x, pos.y, doEyecandy)
 

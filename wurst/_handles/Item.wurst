@@ -65,6 +65,12 @@ public function item.isSellable() returns boolean
 public function item.isPawnable() returns boolean
 	return IsItemPawnable(this)
 
+public function item.isAlive() returns boolean
+	return this.getTypeId() != 0 and GetWidgetLife(this) > .405
+
+public function item.isPickupable() returns boolean
+	return this.isAlive() and not this.isOwned() and this.isVisible()
+
 public function item.getPlayer() returns player
 	return GetItemPlayer(this)
 
