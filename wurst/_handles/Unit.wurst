@@ -170,9 +170,11 @@ public function unit.getPos3Zero() returns vec3
 public function unit.getPos3with(real z) returns vec3
 	return vec3(this.getX(), this.getY(), z)
 
+/** Returns the prop window of the unit in radians.*/
 public function unit.getPropWindow() returns real
 	return GetUnitPropWindow(this)
 
+/** Returns the prop window of the unit as angle.*/
 public function unit.getPropWindowAngle() returns angle
 	return angle(GetUnitPropWindow(this))
 
@@ -367,8 +369,8 @@ public function unit.setPos(real x, real y)
 
 /**	A prop window of 0 prevents the unit from moving, but
 	it can still turn around.*/
-public function unit.setPropWindow(real value)
-	SetUnitPropWindow(this, value)
+public function unit.setPropWindow(real radians)
+	SetUnitPropWindow(this, radians)
 	
 /**	A prop window of 0 prevents the unit from moving, but
 	it can still turn around.*/
@@ -461,10 +463,11 @@ public function unit.resetAbilityCooldown(int abilId)
 public function unit.getDefaultMovespeed() returns real
 	return GetUnitDefaultMoveSpeed(this)
 
-//the native function GetUnitDefaultPropWindow() returns the value in degrees
+/** Returns the default prop window of the unit in degrees.*/
 public function unit.getDefaultPropWindow() returns real
-	return GetUnitDefaultPropWindow(this) * bj_DEGTORAD
+	return GetUnitDefaultPropWindow(this)
 
+/** Returns the default prop window of the unit as angle.*/
 public function unit.getDefaultPropWindowAngle() returns angle
 	return GetUnitDefaultPropWindow(this).fromDeg()
 
