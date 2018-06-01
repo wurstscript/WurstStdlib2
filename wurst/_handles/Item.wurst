@@ -65,9 +65,11 @@ public function item.isSellable() returns boolean
 public function item.isPawnable() returns boolean
 	return IsItemPawnable(this)
 
+/** Verifies whether item is not destroyed and has a valid type id. */
 public function item.isAlive() returns boolean
 	return this.getTypeId() != 0 and GetWidgetLife(this) > .405
 
+/** Verifies whether item can be picked up by a unit by validating its life and ownership status. */
 public function item.isPickupable() returns boolean
 	return this.isAlive() and not this.isOwned() and this.isVisible()
 
