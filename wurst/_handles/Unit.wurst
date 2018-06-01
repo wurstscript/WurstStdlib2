@@ -108,6 +108,9 @@ public function unit.damageTarget(unit target, real amount, attacktype attacktyp
 public function unit.getAbilityLevel(int id) returns int
 	return GetUnitAbilityLevel(this, id)
 
+public function unit.getUnitAcquireRange() returns real
+	return GetUnitAcquireRange(this)
+
 /** Returns the current order of the unit */
 public function unit.getCurrentOrder() returns int
 	return GetUnitCurrentOrder(this)
@@ -167,8 +170,17 @@ public function unit.getPos3Zero() returns vec3
 public function unit.getPos3with(real z) returns vec3
 	return vec3(this.getX(), this.getY(), z)
 
+public function unit.getPropWindow() returns real
+	return GetUnitPropWindow(this)
+
+public function unit.getPropWindowAngle() returns angle
+	return angle(GetUnitPropWindow(this))
+
 public function unit.getState(unitstate state) returns real
 	return GetUnitState(this, state)
+
+public function unit.getTurnSpeed() returns real
+	return GetUnitTurnSpeed(this)
 
 public function unit.getTypeId() returns int
 	return GetUnitTypeId(this)
@@ -353,8 +365,15 @@ public function unit.setPosReal(vec3 pos)
 public function unit.setPos(real x, real y)
 	SetUnitPosition(this, x, y)
 
+/**	A prop window of 0 prevents the unit from moving, but
+	it can still turn around.*/
 public function unit.setPropWindow(real value)
 	SetUnitPropWindow(this, value)
+	
+/**	A prop window of 0 prevents the unit from moving, but
+	it can still turn around.*/
+public function unit.setPropWindow(angle value)
+	SetUnitPropWindow(this, value.radians())
 
 public function unit.setScale(real scale)
 	SetUnitScale(this, scale, scale, scale)
@@ -442,13 +461,17 @@ public function unit.resetAbilityCooldown(int abilId)
 public function unit.getDefaultMovespeed() returns real
 	return GetUnitDefaultMoveSpeed(this)
 
+//the native function GetUnitDefaultPropWindow() returns the value in degrees
 public function unit.getDefaultPropWindow() returns real
-	return GetUnitDefaultPropWindow(this)
+	return GetUnitDefaultPropWindow(this) * bj_DEGTORAD
+
+public function unit.getDefaultPropWindowAngle() returns angle
+	return GetUnitDefaultPropWindow(this).fromDeg()
 
 public function unit.getDefaultTurnSpeed() returns real
 	return GetUnitDefaultTurnSpeed(this)
 
-public function unit.getDefaultAquireRange() returns real
+public function unit.getDefaultAcquireRange() returns real
 	return GetUnitDefaultAcquireRange(this)
 
 public function unit.getDefaultFlyHeight() returns real
