@@ -486,11 +486,25 @@ public function unit.getIntMaxHP() returns int
 public function unit.setMaxHP(int hp)
 	BlzSetUnitMaxHP(this, hp)
 
+/** Changes a unit's maximum hp, adjusting the
+	current hp to keep the same ratio.*/
+public function unit.setMaxHPKeepRatio(int hp)
+	let ratio = this.getHP()/this.getMaxHP()
+	BlzSetUnitMaxHP(this, hp)
+	this.setHP(ratio * hp)	
+
 public function unit.getIntMaxMana() returns int
 	return BlzGetUnitMaxMana(this)
 
 public function unit.setMaxMana(int mana)
 	BlzSetUnitMaxMana(this, mana)
+
+/** Changes a unit's maximum mana, adjusting the
+	current mana to keep the same ratio.*/
+public function unit.setMaxManaKeepRatio(int mana)
+	let ratio = this.getMana()/this.getMaxMana()
+	BlzSetUnitMaxMana(this, mana)
+	this.setMana(ratio * mana)	
 
 public function unit.deleteAbility(int abilCode)
 	BlzDeleteHeroAbility(this, abilCode)
