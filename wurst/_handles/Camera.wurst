@@ -1,6 +1,8 @@
 package Camera
 import NoWurst
 import public Vectors
+import Player
+import TerrainUtils
 
 public function getCameraBoundMin() returns vec2
     return vec2(GetCameraBoundMinX(), GetCameraBoundMinY())
@@ -35,14 +37,23 @@ public function panCameraTo(vec2 pos)
 public function panCameraToTimed(vec2 pos, real duration)
     PanCameraToTimed(pos.x, pos.y, duration)
 
-public function panCameraToWithZ(vec2 pos, real zOffsetDest)
-    PanCameraToWithZ(pos.x, pos.y, zOffsetDest)
+/** Pans the camera to pos.x, pos.y and absolute height pos.z
+    If pos.z > pos.getTerrainZ, the camera will not drop below
+    the terrain on its path. */
+public function panCameraTo(vec3 pos)
+    PanCameraToWithZ(pos.x, pos.y, pos.z - pos.toVec2().getTerrainZ())
 
-public function panCameraToTimedWithZ(vec2 pos, real zOffsetDest, real duration)
-    PanCameraToTimedWithZ(pos.x, pos.y, zOffsetDest, duration)
+public function panCameraToTimed(vec3 pos, real duration)
+    PanCameraToTimedWithZ(pos.x, pos.y, pos.z - pos.toVec2().getTerrainZ(), duration)
 
 public function setCameraRotateMode(vec2 pos, angle toSweep, real duration)
     SetCameraRotateMode(pos.x, pos.y, toSweep.radians(), duration)
+
+/** Runs the camera through the cinematic camera
+    specified in cameraModelFile. Existing cameras are available
+    via Objects.cameraXXX paths" */
+public function setCinematicCamera(string cameraModelFile)
+    SetCinematicCamera(cameraModelFile)
 
 public function camerafield.set(real value, real duration)
     SetCameraField(this, value, duration)
@@ -104,8 +115,16 @@ public function player.setCameraPosition(vec2 pos)
 public function player.panCameraTo(vec2 pos)
     PanCameraToForPlayer(this, pos.x, pos.y)
 
+public function player.panCameraTo(vec3 pos)
+    if localPlayer == this
+        panCameraTo(pos)
+
 public function player.panCameraToTimed(vec2 pos, real duration)
     PanCameraToTimedForPlayer(this, pos.x, pos.y, duration)
+
+public function player.panCameraToTimed(vec3 pos, real duration)
+    if localPlayer == this
+        panCameraToTimed(pos, duration)
 
 /** Pans the camera depending on how far pos is from the current
     camera target:
@@ -116,13 +135,16 @@ public function player.panCameraToTimed(vec2 pos, real duration)
     - If the distance is smaller than bj_SMARTPAN_TRESHOLD_PAN, the
       camera doesn't move at all. */
 public function player.smartCameraPan(vec2 pos, real duration)
-    if GetLocalPlayer() == this
+    if localPlayer == this
         let dist = pos.distanceTo(getCameraTargetPosition())
         if dist >= bj_SMARTPAN_TRESHOLD_SNAP
             panCameraToTimed(pos, 0.0)
         else if dist >= bj_SMARTPAN_TRESHOLD_PAN
             panCameraToTimed(pos, duration)
 
+/** Runs the camera for the player through the cinematic camera
+    specified in  cameraModelFile. Existing cameras are available
+    via Objects.cameraXXX paths" */
 public function player.setCinematicCamera(string cameraModelFile)
     SetCinematicCameraForPlayer(this, cameraModelFile)
 
