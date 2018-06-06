@@ -105,6 +105,7 @@ public function unit.damageTarget(unit target, real amount)
 public function unit.damageTarget(unit target, real amount, attacktype attacktyp)
 	UnitDamageTarget(this, target, amount, false, false, attacktyp, DAMAGE_TYPE_UNIVERSAL, WEAPON_TYPE_WHOKNOWS)
 
+/** Kills a unit by blowing it up */
 public function unit.explode()
 	this.setExploded(true)
 	this.kill()
@@ -334,6 +335,7 @@ public function unit.setAnimation(int index)
 public function unit.setColor(playercolor c)
 	SetUnitColor(this, c)
 
+/** Sets whether a unit explodes on death */
 public function unit.setExploded(boolean exploded)
 	SetUnitExploded(this, exploded)
 
