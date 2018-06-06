@@ -56,7 +56,7 @@ public function unit.addXp(int toAdd, boolean showEyeCandy)
 
 public function unit.suspendXp(boolean suspend)
 	SuspendHeroXP(this, suspend)
-	
+
 public function unit.isSuspendedXp() returns boolean
 	return IsSuspendedXP(this)
 
@@ -104,6 +104,10 @@ public function unit.damageTarget(unit target, real amount)
 
 public function unit.damageTarget(unit target, real amount, attacktype attacktyp)
 	UnitDamageTarget(this, target, amount, false, false, attacktyp, DAMAGE_TYPE_UNIVERSAL, WEAPON_TYPE_WHOKNOWS)
+
+public function unit.explode()
+	this.setExploded(true)
+	this.kill()
 
 public function unit.getAbilityLevel(int id) returns int
 	return GetUnitAbilityLevel(this, id)
@@ -330,6 +334,9 @@ public function unit.setAnimation(int index)
 public function unit.setColor(playercolor c)
 	SetUnitColor(this, c)
 
+public function unit.setExploded(boolean exploded)
+	SetUnitExploded(this, exploded)
+
 public function unit.setFacing(angle a)
 	SetUnitFacing(this, a.degrees())
 
@@ -356,7 +363,7 @@ public function unit.setPathing(boolean value)
 
 /** Sets the unit's position using the SetUnitPosition native.
 	This native comes with some side effects like additional
-	position verification and stopping the target unit. */	
+	position verification and stopping the target unit. */
 public function unit.setPos(vec2 pos)
 	SetUnitPosition(this, pos.x, pos.y)
 
