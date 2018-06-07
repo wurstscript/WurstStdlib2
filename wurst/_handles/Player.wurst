@@ -29,6 +29,12 @@ public function player.addLumber(int val)
 public function player.addState(playerstate state, int val)
 	SetPlayerState(this, state, this.getState(state) + val)
 
+/** Clears the selection for the player, no matter which
+	unit is selected. */
+public function player.clearSelection()
+	if localPlayer == this
+		ClearSelection()
+
 public function player.getColor() returns playercolor
 	return GetPlayerColor(this)
 
@@ -92,7 +98,7 @@ public function player.setName(string name)
 
 public function player.setColor(playercolor color)
 	SetPlayerColor(this, color)
-	
+
 public function player.setState(playerstate state, int val)
 	SetPlayerState(this, state, val)
 
