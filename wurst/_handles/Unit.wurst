@@ -113,13 +113,14 @@ public function unit.explode()
 public function unit.getAbilityLevel(int id) returns int
 	return GetUnitAbilityLevel(this, id)
 
+public function unit.getUnitAcquireRange() returns real
+	return GetUnitAcquireRange(this)
+
 /** Returns the current order of the unit */
 public function unit.getCurrentOrder() returns int
 	return GetUnitCurrentOrder(this)
 
-/** Returns the unit's facing in degrees.
-	!Use .getFacingAngle() instead. */
-public function unit.getFacing() returns real
+@deprecated("Use .getFacingAngle() instead.") public function unit.getFacing() returns real
 	return GetUnitFacing(this)
 
 /** Returns the facing of the unit as an angle.
@@ -172,8 +173,15 @@ public function unit.getPos3Zero() returns vec3
 public function unit.getPos3with(real z) returns vec3
 	return vec3(this.getX(), this.getY(), z)
 
+/** Returns the prop window of the unit as angle.*/
+public function unit.getPropWindow() returns angle
+	return angle(GetUnitPropWindow(this))
+
 public function unit.getState(unitstate state) returns real
 	return GetUnitState(this, state)
+
+public function unit.getTurnSpeed() returns real
+	return GetUnitTurnSpeed(this)
 
 public function unit.getTypeId() returns int
 	return GetUnitTypeId(this)
@@ -380,8 +388,13 @@ public function unit.setPosReal(vec3 pos)
 public function unit.setPos(real x, real y)
 	SetUnitPosition(this, x, y)
 
-public function unit.setPropWindow(real value)
-	SetUnitPropWindow(this, value)
+@deprecated("Use .setPropWindow(angle value) instead.") public function unit.setPropWindow(real radians)
+	SetUnitPropWindow(this, radians)
+	
+/**	A prop window of 0 prevents the unit from moving, but
+	it can still turn around.*/
+public function unit.setPropWindow(angle value)
+	SetUnitPropWindow(this, value.radians())
 
 public function unit.setScale(real scale)
 	SetUnitScale(this, scale, scale, scale)
@@ -469,13 +482,14 @@ public function unit.resetAbilityCooldown(int abilId)
 public function unit.getDefaultMovespeed() returns real
 	return GetUnitDefaultMoveSpeed(this)
 
-public function unit.getDefaultPropWindow() returns real
-	return GetUnitDefaultPropWindow(this)
+/** Returns the default prop window of the unit as angle.*/
+public function unit.getDefaultPropWindow() returns angle
+	return GetUnitDefaultPropWindow(this).fromDeg()
 
 public function unit.getDefaultTurnSpeed() returns real
 	return GetUnitDefaultTurnSpeed(this)
 
-public function unit.getDefaultAquireRange() returns real
+public function unit.getDefaultAcquireRange() returns real
 	return GetUnitDefaultAcquireRange(this)
 
 public function unit.getDefaultFlyHeight() returns real
@@ -487,11 +501,31 @@ public function unit.getIntMaxHP() returns int
 public function unit.setMaxHP(int hp)
 	BlzSetUnitMaxHP(this, hp)
 
+/** Changes a unit's maximum hp, adjusting the
+	current hp to keep the same ratio.*/
+public function unit.setMaxHP(int hp, boolean keepRatio)
+	if keepRatio
+		let ratio = this.getHP()/this.getMaxHP()
+		BlzSetUnitMaxHP(this, hp)
+		this.setHP(ratio * hp)	
+	else
+		BlzSetUnitMaxHP(this, hp)
+
 public function unit.getIntMaxMana() returns int
 	return BlzGetUnitMaxMana(this)
 
 public function unit.setMaxMana(int mana)
 	BlzSetUnitMaxMana(this, mana)
+
+/** Changes a unit's maximum mana, adjusting the
+	current mana to keep the same ratio.*/
+public function unit.setMaxMana(int mana, boolean keepRatio)
+	if keepRatio
+		let ratio = this.getMana()/this.getMaxMana()
+		BlzSetUnitMaxMana(this, mana)
+		this.setMana(ratio * mana)	
+	else
+		BlzSetUnitMaxMana(this, mana)
 
 public function unit.deleteAbility(int abilCode)
 	BlzDeleteHeroAbility(this, abilCode)
