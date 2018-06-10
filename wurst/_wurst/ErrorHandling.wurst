@@ -40,7 +40,7 @@ You can also use try() from package Execute to handle an error happening in a ca
 */
 @configurable public function error(string msg)
 	if compiletime
-		print("ERROR: " + msg + "\n" + getStackTraceString())
+		compileError("ERROR: " + msg)
 	else
 		if not suppressErrorMessages
 			let hash = msg.getHash()
@@ -65,3 +65,6 @@ You can also use try() from package Execute to handle an error happening in a ca
 		lastError = msg
 		I2S(1 div 0)
 
+/** Stops compilation with the provided error message */
+@compiletimenative
+public function compileError(string message)

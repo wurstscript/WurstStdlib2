@@ -5,10 +5,10 @@ import Vectors
 public function rect.randomPoint() returns vec2
 	return vec2(GetRandomReal(this.getMinX(), this.getMaxX()), GetRandomReal(this.getMinY(), this.getMaxY()))
 
-public function vec2.isInRect(rect r)returns boolean
+public function vec2.isInRect(rect r) returns boolean
 	return this.x > r.getMinX() and this.x < r.getMaxX() and this.y > r.getMinY() and this.y < r.getMaxY()
 	
-public function rect.contains(vec2 r)returns boolean
+public function rect.contains(vec2 r) returns boolean
 	return r.x > this.getMinX() and r.x < this.getMaxX() and r.y > this.getMinY() and r.y < this.getMaxY()
 
 public function rect.getCenter() returns vec2

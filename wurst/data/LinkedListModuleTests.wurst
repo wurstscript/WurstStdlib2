@@ -2,7 +2,6 @@ package LinkedListModuleTests
 import LinkedListModule
 
 // -----TESTS------
-
 class TestClass
 	use LinkedListModule
 	string str
@@ -10,7 +9,7 @@ class TestClass
 		this.str = str
 
 function allToString() returns string
-	string res = ""
+	var res = ""
  	for x in TestClass
 		res += x.str
 	return res
@@ -22,15 +21,15 @@ function test()
 	let c = new TestClass("c")
 	let d = new TestClass("d")
  
- 	assertTrue(allToString() == "abcd")
+ 	allToString().assertEquals("abcd")
  	destroy c
- 	assertTrue(allToString() == "abd")
+ 	allToString().assertEquals("abd")
  	destroy d
- 	assertTrue(allToString() == "ab")
+ 	allToString().assertEquals("ab")
  	destroy a
- 	assertTrue(allToString() == "b")
+ 	allToString().assertEquals("b")
  	destroy b
- 	assertTrue(allToString() == "")
+ 	allToString().assertEquals("")
  	
  @Test
  function testDestroy()
@@ -38,13 +37,13 @@ function test()
 	let b = new TestClass("b")
 	new TestClass("c")
 	new TestClass("d")
- 	string s = ""
+ 	var s = ""
  	for x in TestClass
 		s += x.str
 		if x == b
 			destroy x
-	assertTrue(s == "abcd")
-	assertTrue(allToString() == "acd")
+	s.assertEquals("abcd")
+	allToString().assertEquals("acd")
 	for x in TestClass
 		destroy x
-	assertTrue(allToString() == "")
+	allToString().assertEquals("")
