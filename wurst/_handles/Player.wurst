@@ -29,8 +29,8 @@ public function player.addLumber(int val)
 public function player.addState(playerstate state, int val)
 	SetPlayerState(this, state, this.getState(state) + val)
 
-/** Clears the selection for the player, no matter which
-	unit is selected. */
+/** Clears the selection for the player, deselecting all
+	widgets. */
 public function player.clearSelection()
 	if localPlayer == this
 		ClearSelection()
