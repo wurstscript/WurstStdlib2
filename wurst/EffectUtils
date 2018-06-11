@@ -1,0 +1,134 @@
+package EffectUtils
+import NoWurst
+import Effect
+import Vectors
+import Colors
+import Player
+
+public class EffectEx
+        private string modelName
+        private angle yaw
+        private angle pitch 
+        private angle roll
+        private colorA color
+        private widget target
+        private string attachment 
+        private player playerColor
+        private real scale
+        private real timeScale
+        private effect fx
+
+        construct(string modelName, vec2 pos)
+                initialze()
+                fx = AddSpecialEffect(modelName, pos.x, pos.y)
+                this.modelName = modelName
+
+        construct(string modelName, widget target, string attachPointName)
+                initialze()
+                fx = AddSpecialEffectTarget(modelName, target, attachPointName)
+                this.modelName = modelName
+                this.target = target
+                this.attachment = attachPointName
+
+        private function initialze()
+                yaw = angle(0)
+                pitch = angle(0)
+                roll = angle(0)
+                color = COLOR_WHITE
+                target = null
+                attachment = ""
+                playerColor = players[PLAYER_NEUTRAL_PASSIVE]
+                scale = 1.
+
+        ondestroy
+                DestroyEffect(fx)
+
+        function getModelName() returns string 
+                return modelName
+
+        function getYaw() returns angle 
+                return yaw
+
+        function getPitch() returns angle 
+                return pitch
+
+        function getRoll() returns angle 
+                return roll
+
+        function getPos3() returns vec3
+                return fx.getPos3()
+
+        function getPos() returns vec2
+                return fx.getPos()
+
+        function getColor() returns color 
+                return color.withoutAlpha()
+
+        function getColorA() returns colorA 
+                return color
+
+        function getAttatchment() returns string 
+                return attachment
+
+        function getWidget() returns widget 
+                return target
+                
+        function getPlayerColor() returns player 
+                return playerColor
+
+        function getScale() returns real 
+                return scale
+
+        function getTimeScale() returns real 
+                return timeScale
+                
+        function setPos(vec2 pos)
+                BlzSetSpecialEffectPosition(fx, pos.x, pos.y, fx.getLocalZ())
+
+        function setPos(vec3 pos)
+                BlzSetSpecialEffectPosition(fx, pos.x, pos.y, pos.z)
+
+        function setOrientation(angle yaw, angle pitch, angle roll)
+                BlzSetSpecialEffectOrientation(fx, yaw.radians(), pitch.radians(), roll.radians())
+
+        function setYaw(angle yaw)
+                this.yaw = yaw
+                BlzSetSpecialEffectYaw(fx, yaw.radians())
+
+        function setPitch(angle pitch)
+                this.pitch = pitch
+                BlzSetSpecialEffectPitch(fx, pitch.radians())
+
+        function setRoll(angle roll)
+                this.roll = roll
+                BlzSetSpecialEffectRoll(fx, roll.radians())
+
+        function setColor(color color)
+                this.color = color.withAlpha(this.color.alpha)
+                BlzSetSpecialEffectColor(fx, color.red, color.green, color.blue)
+
+        function setColor(colorA color)
+                this.color = color
+                BlzSetSpecialEffectColor(fx, color.red, color.green, color.blue)
+                BlzSetSpecialEffectAlpha(fx, color.alpha)
+
+        function setPlayerColor(player whichPlayer)
+                this.playerColor = whichPlayer
+                BlzSetSpecialEffectColorByPlayer(fx, whichPlayer)
+
+        function setScale(real scale)
+                this.scale = scale 
+                BlzSetSpecialEffectScale(fx, scale)
+                
+        function setTimeScale(real timeScale)
+                this.timeScale = timeScale
+                BlzSetSpecialEffectTimeScale(fx, timeScale)
+
+public function unit.addEffectEx(string modelName, string attachPointName) returns EffectEx
+        return new EffectEx(modelName, this, attachPointName)
+
+public function destructable.addEffectEx(string modelName, string attachPointName) returns EffectEx
+        return new EffectEx(modelName, this, attachPointName)
+
+public function widget.addEffectEx(string modelName, string attachPointName) returns EffectEx
+        return new EffectEx(modelName, this, attachPointName)
