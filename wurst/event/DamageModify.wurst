@@ -1,4 +1,11 @@
-/**
+package DamageModify
+import AbilityObjEditing
+import DamageDetection
+import OnUnitEnterLeave
+import ObjectIdGenerator
+import LinkedList
+import HashMap
+/*
 	DamageModify
 
 	Never use both this and DamageType package.
@@ -7,7 +14,9 @@
 	for damageListeners .amount is set to actual difference in target's life
 	so damage won't be more than target's life if it has killed target (or it was saved)
 	(a unit has 10 hp, it takes 100 damage, for damageModifiers it's 100 damage
-	but for damageListeners it's 10 damage / 10 - .405 damage if .doSaveTarget == true)
+	but for damageListeners it's 10 damage / 10 - .406 damage if .doSaveTarget == true)
+
+	Changes to Damage instance made in listeners or after the damage event are not considered.
 
 	Examples:
 	
@@ -55,13 +64,6 @@
 	init
 		registerSpellEffectEvent(BUFF_ID, function onLeechEffect2)
 */
-package DamageModify
-import AbilityObjEditing
-import DamageDetection
-import OnUnitEnterLeave
-import ObjectIdGenerator
-import LinkedList
-import HashMap
 
 /** Deals triggered damage from unit to target.
 	You can specify id if there's any unique id interactions.
@@ -102,74 +104,6 @@ public function addDamageListener(ForDamageCallback cb)
 
 public function removeDamageListener(ForDamageCallback cb)
 	damageListeners.remove(cb)
-
-let targetUniqueModifiers = new HashMap<unit, LinkedList<ForDamageCallback>>
-/** Much more effective way to run unit-unique damageModifiers */
-public function addTargetDamageModifier(unit u, ForDamageCallback cb)
-	var list = targetUniqueModifiers.get(u)
-	if list == null
-		list = new LinkedList<ForDamageCallback>
-		targetUniqueModifiers.put(u, list)
-	list.add(cb)
-
-public function removeTargetDamageModifier(unit u, ForDamageCallback cb)
-	var list = targetUniqueModifiers.get(u)
-	if list != null
-		list.remove(cb)
-		if list.isEmpty()
-			targetUniqueModifiers.remove(u)
-			destroy list
-			
-let sourceUniqueModifiers = new HashMap<unit, LinkedList<ForDamageCallback>>
-/** Much more effective way to run unit-unique damageModifiers */
-public function addSourceDamageModifier(unit u, ForDamageCallback cb)
-	var list = sourceUniqueModifiers.get(u)
-	if list == null
-		list = new LinkedList<ForDamageCallback>
-		sourceUniqueModifiers.put(u, list)
-	list.add(cb)
-
-public function removeSourceDamageModifier(unit u, ForDamageCallback cb)
-	var list = sourceUniqueModifiers.get(u)
-	if list != null
-		list.remove(cb)
-		if list.isEmpty()
-			sourceUniqueModifiers.remove(u)
-			destroy list
-
-let targetUniqueListeners = new HashMap<unit, LinkedList<ForDamageCallback>>
-/** Much more effective way to run unit-unique damageListeners */
-public function addTargetDamageListener(unit u, ForDamageCallback cb)
-	var list = targetUniqueListeners.get(u)
-	if list == null
-		list = new LinkedList<ForDamageCallback>
-		targetUniqueListeners.put(u, list)
-	list.add(cb)
-
-public function removeTargetDamageListener(unit u, ForDamageCallback cb)
-	var list = targetUniqueListeners.get(u)
-	if list != null
-		list.remove(cb)
-		if list.isEmpty()
-			targetUniqueListeners.remove(u)
-			destroy list
-			
-let sourceUniqueListeners = new HashMap<unit, LinkedList<ForDamageCallback>>
-/** Much more effective way to run unit-unique damageListeners */
-public function addSourceDamageListener(unit u, ForDamageCallback cb)
-	var list = sourceUniqueListeners.get(u)
-	if list == null
-		list = new LinkedList<ForDamageCallback>
-		sourceUniqueListeners.put(u, list)
-	list.add(cb)
-
-public function removeSourceDamageListener(unit u, ForDamageCallback cb)
-	var list = sourceUniqueListeners.get(u)
-	if list != null
-		list.remove(cb)
-		if list.isEmpty()
-			sourceUniqueListeners.remove(u)
-			destroy list
 
 // ConvertAttackType(7) is a hidden attack type with some unique properties.
 // For more information see "goo.gl/9k8tn".
@@ -215,7 +149,7 @@ public class Damage
 
 	/** Returns true if the damage is going to kill or already have killed target */
 	function isKillingBlow() returns bool
-		return killingBlow or (not fired and target.getHP() - .405 < amount)
+		return killingBlow or (not fired and target.getHP() - .406 < amount)
 
 	/** It is set to true if the damage, when it was dealt, killed the target */
 	protected bool killingBlow = false
@@ -291,36 +225,29 @@ function handler() returns bool
 	let damage = GetEventDamage()
 	if damage == 0
 		return false
+
 	var d = Damage.dealingInstance
 	if d == null or d.source != GetEventDamageSource() or d.target != GetTriggerUnit() or damage < 0 != d.spell
 		d = new Damage(GetEventDamageSource(), GetTriggerUnit(), (damage < 0 ? -damage : damage), damage < 0, DAMAGE_ID_NONTRIGGERED)
+		d.modify()
 	else
 		d.amount = (damage < 0 ? -damage : damage)
 		Damage.dealingInstance = null
 	d.saveInstance()
-	d.modify()
-	d.anounce()
 
 	let life = d.target.getHP()
-	d.killingBlow = life - .405 < d.amount
+	d.killingBlow = life - .406 < d.amount
 	if d.killingBlow and d.doSaveTarget
 		d.killingBlow = false
-		d.amount = life - .405
+		d.amount = life - .406
 	BlzSetEventDamage(d.amount)
+	
+	d.anounce()
+
 	d.releaseInstance()
 	return false
 
 init
-	addDamageModifier() d ->
-		for cb in targetUniqueModifiers.get(d.target)
-			cb.run(d)
-		for cb in sourceUniqueModifiers.get(d.source)
-			cb.run(d)
-	addDamageListener() d ->
-		for cb in targetUniqueListeners.get(d.target)
-			cb.run(d)
-		for cb in sourceUniqueListeners.get(d.source)
-			cb.run(d)
 	onEnter() ->
 		getEnterLeaveUnit()..addAbility(DAMAGE_TYPE_CHECK_ID)..makeAbilityPermanent(DAMAGE_TYPE_CHECK_ID, true)
 	addOnDamageFunc(Condition(function handler))
@@ -331,3 +258,93 @@ init
 		..setEditorSuffix("(DamageType)")
 		..setItemAbility(false)
 		..setDamageReduction(1, 2.)
+
+let targetUniqueModifiers = new HashMap<unit, LinkedList<ForDamageCallback>>
+/** Much more effective way to run unit-unique damageModifiers */
+public function addTargetDamageModifier(unit u, ForDamageCallback cb)
+	var list = targetUniqueModifiers.get(u)
+	if list == null
+		list = new LinkedList<ForDamageCallback>
+		targetUniqueModifiers.put(u, list)
+	list.add(cb)
+
+public function removeTargetDamageModifier(unit u, ForDamageCallback cb)
+	var list = targetUniqueModifiers.get(u)
+	if list != null
+		list.remove(cb)
+		if list.isEmpty()
+			targetUniqueModifiers.remove(u)
+			destroy list
+			
+let sourceUniqueModifiers = new HashMap<unit, LinkedList<ForDamageCallback>>
+/** Much more effective way to run unit-unique damageModifiers */
+public function addSourceDamageModifier(unit u, ForDamageCallback cb)
+	var list = sourceUniqueModifiers.get(u)
+	if list == null
+		list = new LinkedList<ForDamageCallback>
+		sourceUniqueModifiers.put(u, list)
+	list.add(cb)
+
+public function removeSourceDamageModifier(unit u, ForDamageCallback cb)
+	var list = sourceUniqueModifiers.get(u)
+	if list != null
+		list.remove(cb)
+		if list.isEmpty()
+			sourceUniqueModifiers.remove(u)
+			destroy list
+
+let targetUniqueListeners = new HashMap<unit, LinkedList<ForDamageCallback>>
+/** Much more effective way to run unit-unique damageListeners */
+public function addTargetDamageListener(unit u, ForDamageCallback cb)
+	var list = targetUniqueListeners.get(u)
+	if list == null
+		list = new LinkedList<ForDamageCallback>
+		targetUniqueListeners.put(u, list)
+	list.add(cb)
+
+public function removeTargetDamageListener(unit u, ForDamageCallback cb)
+	var list = targetUniqueListeners.get(u)
+	if list != null
+		list.remove(cb)
+		if list.isEmpty()
+			targetUniqueListeners.remove(u)
+			destroy list
+			
+let sourceUniqueListeners = new HashMap<unit, LinkedList<ForDamageCallback>>
+/** Much more effective way to run unit-unique damageListeners */
+public function addSourceDamageListener(unit u, ForDamageCallback cb)
+	var list = sourceUniqueListeners.get(u)
+	if list == null
+		list = new LinkedList<ForDamageCallback>
+		sourceUniqueListeners.put(u, list)
+	list.add(cb)
+
+public function removeSourceDamageListener(unit u, ForDamageCallback cb)
+	var list = sourceUniqueListeners.get(u)
+	if list != null
+		list.remove(cb)
+		if list.isEmpty()
+			sourceUniqueListeners.remove(u)
+			destroy list
+
+
+init
+	addDamageModifier() d ->
+		if targetUniqueModifiers.has(d.target)
+			for cb in targetUniqueModifiers.get(d.target)
+				cb.run(d)
+		if sourceUniqueModifiers.has(d.source)
+			for cb in sourceUniqueModifiers.get(d.source)
+				cb.run(d)
+	addDamageListener() d ->
+		if targetUniqueListeners.has(d.target)
+			for cb in targetUniqueListeners.get(d.target)
+				cb.run(d)
+		if sourceUniqueListeners.has(d.source)
+			for cb in sourceUniqueListeners.get(d.source)
+				cb.run(d)
+	onLeave() ->
+		targetUniqueModifiers.remove(getEnterLeaveUnit())
+		sourceUniqueModifiers.remove(getEnterLeaveUnit())
+		targetUniqueListeners.remove(getEnterLeaveUnit())
+		sourceUniqueListeners.remove(getEnterLeaveUnit())
