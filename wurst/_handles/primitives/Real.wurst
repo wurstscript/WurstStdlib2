@@ -21,15 +21,15 @@ public function real.sign() returns int
 public function real.round() returns int
 	return this > 0 ? (this+.5).toInt() : (this-.5).toInt()
 
-/** Rounds the input real to the nearest 'scale' divisible */
+/** Returns the nearest real divisible by 'scale' */
 public function real.round(real scale) returns real
 	return ((this/scale) + (this >= 0. ? .5 : -.5)).toInt() * scale
 
-/** Rounds down the input real to the nearest 'scale' divisible */
+/** Returns the nearest equal or lesser real divisible by 'scale' */
 public function real.roundDown(real scale) returns real
 	return (this/scale).toInt() * scale
 
-/** Rounds up the input real to the nearest 'scale' divisible */
+/** Returns the nearest equal or greater real divisible by 'scale' */
 public function real.roundUp(real scale) returns real
 	var r = this.roundDown(scale)
 	if this - r != 0.
