@@ -57,7 +57,7 @@ public function int.toRawCode() returns string
 	toRawCode('abcd') .assertEquals("abcd")
 	toRawCode('ABCD') .assertEquals("ABCD")
 
-public function commList(vararg int ids) returns string
+public function commaList(vararg int ids) returns string
 	let list = new LinkedList<int>
 	for id in ids
 		list.add(id)
@@ -65,7 +65,7 @@ public function commList(vararg int ids) returns string
 	destroy list
 	return result
 
-public function commList(vararg string values) returns string
+public function commaList(vararg string values) returns string
 	let list = new LinkedList<string>
 	for v in values
 		list.add(v)
@@ -75,13 +75,13 @@ public function commList(vararg string values) returns string
 
 @Test function asListIntTest()
 	realToIndex(0.)
-	commList(
+	commaList(
 		AbilityIds.invulnerable,
 		AbilityIds.reveal
 	).assertEquals("Avul,Adta")
 
 @Test function asListStringTest()
-	commList(
+	commaList(
 		"self",
 		"structure"
 	).assertEquals("self,structure")
