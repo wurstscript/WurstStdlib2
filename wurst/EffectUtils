@@ -23,12 +23,12 @@ public class EffectEx
                 fx = AddSpecialEffect(modelName, pos.x, pos.y)
                 this.modelName = modelName
 
-        construct(string modelName, widget target, string attachPointName)
+        construct(string modelName, widget target, string attachment)
                 initialze()
-                fx = AddSpecialEffectTarget(modelName, target, attachPointName)
+                fx = AddSpecialEffectTarget(modelName, target, attachment)
                 this.modelName = modelName
                 this.target = target
-                this.attachment = attachPointName
+                this.attachment = attachment
 
         private function initialze()
                 yaw = angle(0)
@@ -39,6 +39,7 @@ public class EffectEx
                 attachment = ""
                 playerColor = players[PLAYER_NEUTRAL_PASSIVE]
                 scale = 1.
+                timeScale = 1.
 
         ondestroy
                 DestroyEffect(fx)
@@ -124,11 +125,11 @@ public class EffectEx
                 this.timeScale = timeScale
                 BlzSetSpecialEffectTimeScale(fx, timeScale)
 
-public function unit.addEffectEx(string modelName, string attachPointName) returns EffectEx
-        return new EffectEx(modelName, this, attachPointName)
+public function unit.addEffectEx(string modelName, string attachment) returns EffectEx
+        return new EffectEx(modelName, this, attachment)
 
-public function destructable.addEffectEx(string modelName, string attachPointName) returns EffectEx
-        return new EffectEx(modelName, this, attachPointName)
+public function destructable.addEffectEx(string modelName, string attachment) returns EffectEx
+        return new EffectEx(modelName, this, attachment)
 
-public function widget.addEffectEx(string modelName, string attachPointName) returns EffectEx
-        return new EffectEx(modelName, this, attachPointName)
+public function widget.addEffectEx(string modelName, string attachment) returns EffectEx
+        return new EffectEx(modelName, this, attachment)
