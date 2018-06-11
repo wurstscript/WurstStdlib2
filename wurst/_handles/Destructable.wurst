@@ -68,6 +68,9 @@ public function destructable.setOccluderHeight(real height)
 
 public function destructable.getName() returns string
 	return GetDestructableName(this)
+	
+public function destructable.addEffect(string modelName, string attachment) returns effect
+	return AddSpecialEffectTarget(fx, this, attachment)
 
 @Test function testDestructables()
 	let destr = createDestructable(0, ZERO2, 0 .fromDeg(), 1, -1)
