@@ -57,10 +57,10 @@ public class EffectEx
                 return roll
 
         function getPos3() returns vec3
-                return fx.getPos3()
+                return vec3(BlzGetLocalSpecialEffectX(fx), BlzGetLocalSpecialEffectY(fx), BlzGetLocalSpecialEffectZ(fx))
 
         function getPos() returns vec2
-                return fx.getPos()
+                return vec2(BlzGetLocalSpecialEffectX(fx), BlzGetLocalSpecialEffectY(fx))
 
         function getColor() returns color 
                 return color.withoutAlpha()
@@ -82,6 +82,9 @@ public class EffectEx
 
         function getTimeScale() returns real 
                 return timeScale
+
+        function getHandleId() returns integer 
+                return GetHandleId(fx)
                 
         function setPos(vec2 pos)
                 BlzSetSpecialEffectPosition(fx, pos.x, pos.y, fx.getLocalZ())
@@ -90,6 +93,9 @@ public class EffectEx
                 BlzSetSpecialEffectPosition(fx, pos.x, pos.y, pos.z)
 
         function setOrientation(angle yaw, angle pitch, angle roll)
+                this.yaw = yaw
+                this.pitch = pitch
+                this.roll = roll
                 BlzSetSpecialEffectOrientation(fx, yaw.radians(), pitch.radians(), roll.radians())
 
         function setYaw(angle yaw)
@@ -124,12 +130,6 @@ public class EffectEx
         function setTimeScale(real timeScale)
                 this.timeScale = timeScale
                 BlzSetSpecialEffectTimeScale(fx, timeScale)
-
-public function unit.addEffectEx(string modelName, string attachment) returns EffectEx
-        return new EffectEx(modelName, this, attachment)
-
-public function destructable.addEffectEx(string modelName, string attachment) returns EffectEx
-        return new EffectEx(modelName, this, attachment)
 
 public function widget.addEffectEx(string modelName, string attachment) returns EffectEx
         return new EffectEx(modelName, this, attachment)

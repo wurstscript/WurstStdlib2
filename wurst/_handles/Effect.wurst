@@ -80,13 +80,13 @@ public function effect.setPos(vec3 pos)
 	BlzSetSpecialEffectPosition(this, pos.x, pos.y, pos.z)
 
 public function effect.setPos(vec2 pos)
-	BlzSetSpecialEffectPosition(this, pos.x, pos.y, this.getLocalZ())
+	BlzSetSpecialEffectPosition(this, pos.x, pos.y, BlzGetLocalSpecialEffectZ(this))
 
 public function effect.getPos3() returns vec3
-	return vec3(this.getLocalX(), this.getLocalY(), this.getLocalZ())
+	return vec3(BlzGetLocalSpecialEffectX(this), BlzGetLocalSpecialEffectY(this), BlzGetLocalSpecialEffectZ(this))
 	
 public function effect.getPos() returns vec2
-	return vec2(this.getLocalX(), this.getLocalY())
+	return vec2(BlzGetLocalSpecialEffectX(this), BlzGetLocalSpecialEffectY(this))
 
 public function effect.setColor(color color)
 	BlzSetSpecialEffectColor(this, color.red, color.green, color.blue)
