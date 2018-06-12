@@ -77,18 +77,6 @@ public function effect.getLocalZ() returns real
 	return BlzGetLocalSpecialEffectZ(this)
 	
 public function effect.setPos(vec3 pos)
-	this.setPosition(pos.x, pos.y, pos.z)
-	
-public function effect.setPos(vec2 pos)
-	this.setPosition(pos.x, pos.y, this.getLocalZ())
-
-public function effect.getPos3() returns vec3
-	return vec3(this.getLocalX(), this.getLocalY(), this.getLocalZ())
-	
-public function effect.getPos() returns vec2
-	return vec2(this.getLocalX(), this.getLocalY())
-
-public function effect.setPos(vec3 pos)
 	BlzSetSpecialEffectPosition(this, pos.x, pos.y, pos.z)
 
 public function effect.setPos(vec2 pos)
