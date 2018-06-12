@@ -5,7 +5,7 @@ import Integer
 import String
 import Real
 
-/** 
+/**
 Doubly-linked list implementation that implements all common list, stack and queue operations.
 Permits all elements (including null). 
 Use the Typecasting package if you require lists of warcraft handles.
@@ -90,7 +90,7 @@ public class LinkedList<T>
 	/** Returns the lastly added Element */
 	function peek() returns T
 		return dummy.prev.elem
-	
+
 	/** Returns whether the lists contains the specified element */
 	function contains(T elem) returns boolean
 		var entry = dummy.next
@@ -223,6 +223,7 @@ public class LinkedList<T>
 	function sortWith(Comparator<T> comparator)
 		if comparator != null and size() > 1
 			dummy.next = sort(comparator, dummy.next)
+			dummy.next.prev = dummy
 			var last = dummy.next
 			while last.next != dummy
 				last = last.next
@@ -262,25 +263,46 @@ public class LinkedList<T>
 		let first = sort(comparator, e)
 		second = sort(comparator, second)
 		return sortMerge(comparator, first, second)
-	
+
 	/** internal merge */
-	private function sortMerge(Comparator<T> comparator, LLEntry<T> a, LLEntry<T> b) returns LLEntry<T>
-		var _result = dummy
+	private function sortMerge(Comparator<T> comparator, LLEntry<T> pa, LLEntry<T> pb) returns LLEntry<T>
+		var a = pa
+		var b = pb
 		if a == dummy
-			_result = b
-		else if b == dummy
-			_result = a
+			return b
+		if b == dummy
+			return a
+		LLEntry<T> head
+		LLEntry<T> tail
+		if comparator.compare(a.elem, b.elem) < 0
+			head = a
+			tail = a
+			a = a.next
 		else
-			let cval = comparator.compare(a.elem, b.elem)
-			if cval < 0
-				_result = a
-				_result.next = sortMerge(comparator, a.next, b)
+			head = b
+			tail = b
+			b = b.next
+
+		while true
+			if a == dummy
+				tail.next = b
+				b.prev = tail
+				break
+			if b == dummy
+				tail.next = a
+				a.prev = tail
+				break
+			if comparator.compare(a.elem, b.elem) < 0
+				tail.next = a
+				a.prev = tail
+				tail = a
+				a = a.next
 			else
-				_result = b
-				_result.next = sortMerge(comparator, a, b.next)
-			_result.next.prev = _result
-			_result.prev = dummy
-		return _result 
+				tail.next = b
+				b.prev = tail
+				tail = b
+				b = b.next
+		return head
 
 	/** returns the middle of a fragment list */
 	private function split(LLEntry<T> e) returns LLEntry<T>
