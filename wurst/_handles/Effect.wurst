@@ -96,7 +96,7 @@ public function effect.setColor(colorA color)
 	BlzSetSpecialEffectAlpha(this, color.alpha)
 
 /** 
-Change the axes of the special effect.
+Change the orientation of the special effect.
 yaw  : x-axis
 pitch: y-axis
 roll : z-axis
@@ -105,20 +105,20 @@ public function effect.setOrientation(angle yaw, angle pitch, angle roll)
 	BlzSetSpecialEffectOrientation(this, yaw.radians(), pitch.radians(), roll.radians())
 
 /**
-Change the x-axis of the special effect.
+Change the angle of the special effect around the x-axis.
 */
 public function effect.setYaw(angle yaw)
 	BlzSetSpecialEffectYaw(this, yaw.radians())
 
 /**
-Change the y-axis of the special effect.
-Warning: As of 1.29.2, setPitch have issues when reaching the values 1.57-4.7 radians or 90-270 degrees. It is recommended to use setOrientation.
+Change the  of the special effect around the y-axis.
+Warning: As of 1.29.2, setPitch has issues for values between 1.57-4.7 radians or 90-270 degrees. It is recommended to use setOrientation.
 */
 public function effect.setPitch(angle pitch)
 	BlzSetSpecialEffectPitch(this, pitch.radians())
 	
 /**
-Change the z-axis of the special effect.
+Change the angle of the special effect around z-axis.
 */
 public function effect.setRoll(angle roll)
 	BlzSetSpecialEffectRoll(this, roll.radians())
