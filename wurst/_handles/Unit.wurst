@@ -26,10 +26,6 @@ public function createUnitZ(player p, int unitId, vec3 pos, angle facing) return
 public function unit.addAbility(int abil) returns boolean
 	return UnitAddAbility(this, abil)
 
-@deprecated("To be replaced with widget.addEffect. Add 'import Widget' to this package if 'import NoWurst' is used.")
-public function unit.addEffect(string fx, string attachment) returns effect
-	return AddSpecialEffectTarget(fx, this, attachment)
-
 public function unit.addHP(real val)
 	this.addState(UNIT_STATE_LIFE, val)
 
