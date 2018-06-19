@@ -44,5 +44,11 @@ public function rect.getLeftBot() returns vec2
 public function rect.getRightBot() returns vec2
 	return vec2(this.getMaxX(), this.getMinY())
 
+public function rect.moveTo(vec2 newCenter)
+	MoveRectTo(this, newCenter.x, newCenter.y)
+	
+public function rect.moveTo(real newCenterX, real newCenterY)
+	MoveRectTo(this, newCenterX, newCenterY)
+
 public function rect.remove()
 	RemoveRect(this)
