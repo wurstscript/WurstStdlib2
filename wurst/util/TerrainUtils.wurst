@@ -34,7 +34,7 @@ public function vec2.isTerrainPathable(pathingtype ttype) returns bool
 	
 /** Returns center of the Tile which given vec2 belongs to. */
 public function vec2.toTileCenter() returns vec2
-	return vec2(this.x.round(128), this.y.round(128))
+	return vec2((this.x/128.).round() * 128., (this.y/128.).round() * 128.)
 
 /** Returns the (not normalised) terrain-normal at the given point */
 public function vec2.getTerrainNormal(real sampleRadius) returns vec3
