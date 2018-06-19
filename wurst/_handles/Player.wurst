@@ -35,10 +35,13 @@ public function player.clearSelection()
 	if localPlayer == this
 		ClearSelection()
 
-/** Enables / disables user UI control for the player */
-public function player.userControl(boolean enable)
-	if localPlayer == this
-		EnableUserControl(enable)
+/** Disable UI control for the player */
+public function player.disableUserControl()
+	this.setUserControl(false)
+
+/** Enable UI control for the player */
+public function player.enableUserControl()
+	this.setUserControl(true)
 
 public function player.getColor() returns playercolor
 	return GetPlayerColor(this)
@@ -112,6 +115,11 @@ public function player.subGold(int val)
 
 public function player.subState(playerstate state, int val)
 	SetPlayerState(this, state, this.getState(state) - val)
+
+/** Enables / disables user UI control for the player */
+public function player.setUserControl(boolean enable)
+	if localPlayer == this
+		EnableUserControl(enable)
 
 public function player.unselect(unit u)
 	if localPlayer == this
