@@ -21,6 +21,7 @@ public function real.sign() returns int
 public function real.round() returns int
 	return this > 0 ? (this+.5).toInt() : (this-.5).toInt()
 
+<<<<<<< HEAD
 /** Rounds the input real towards zero to the nearest int */
 public function real.trunc() returns int
 	return this.toInt()
@@ -37,6 +38,21 @@ public function real.ceil() returns int
 	var r = this.toInt()
 	if this > 0 and this - r != 0.
 		r += 1
+=======
+/** Returns the nearest real divisible by 'scale' */
+public function real.round(real scale) returns real
+	return ((this/scale) + (this >= 0. ? .5 : -.5)).toInt() * scale
+
+/** Returns the nearest equal or lesser real divisible by 'scale' */
+public function real.roundDown(real scale) returns real
+	return (this/scale).toInt() * scale
+
+/** Returns the nearest equal or greater real divisible by 'scale' */
+public function real.roundUp(real scale) returns real
+	var r = this.roundDown(scale)
+	if this - r != 0.
+		r += scale
+>>>>>>> 068bdc1e730db2d5dff9d0d5214feba6a00cc5d2
 	return r
 
 /** Converts the input real to an int. This cuts off
