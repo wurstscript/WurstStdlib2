@@ -35,6 +35,11 @@ public function player.clearSelection()
 	if localPlayer == this
 		ClearSelection()
 
+/** Enables / disables user UI control for the player */
+public function player.userControl(boolean enable)
+	if localPlayer == this
+		EnableUserControl(enable)
+
 public function player.getColor() returns playercolor
 	return GetPlayerColor(this)
 
