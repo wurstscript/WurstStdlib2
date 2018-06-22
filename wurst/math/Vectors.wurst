@@ -95,6 +95,11 @@ public function getTerrainZ(vec2 pos) returns real
 	MoveLocation(tempLoc, pos.x, pos.y)
 	return GetLocationZ(tempLoc)
 
+@Deprecated("Use the .getTerrainZ() extension functions")
+public function getTerrainZ(real x, real y) returns real
+	MoveLocation(tempLoc, x, y)
+	return GetLocationZ(tempLoc)
+
 public function vec2.withTerrainZ() returns vec3
 	return vec3(this.x, this.y, this.getTerrainZ())
 	
