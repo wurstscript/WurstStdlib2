@@ -26,17 +26,16 @@ public constant EVENT_PLAYER_CHAT_FILTER = ConvertPlayerEvent(96)
 		> EventListener.add(someUnit, EVENT_PLAYER_UNIT_DEATH) ->
 		>	 <only 'someUnit' death actions>
 
-	For spell handling there are comfort wrappers:
+	For spell handling there are comfort wrappers via the `on` prefix:
 
-	> EventListener.addCast(MY_SPELL_ID) (caster) ->
+	> EventListener.onCast(MY_SPELL_ID) (caster) ->
 	>	 <some non target spell event for all units>
 
-	> EventListener.addCast(myUnit, MY_SPELL_ID) (caster) ->
+	> EventListener.onCast(myUnit, MY_SPELL_ID) (caster) ->
 	>	 <some non target spell for 'myUnit'>
 
-	> EventListener.addPointCast(myUnit, MY_SPELL_ID) (caster, target) ->
+	> EventListener.onPointCast(myUnit, MY_SPELL_ID) (caster, target) ->
 	>	 <actions for a point cast spell. 'target' is the vec2 target point>
-
 
 
 	**IMPORTANT**:
@@ -74,6 +73,13 @@ abstract class OnCastListener
 
 		next = null
 		prev = null
+
+abstract class OnCast extends OnCastListener
+	
+	override function fire(unit caster)
+		fireEx(GetSpellAbilityId())
+
+	abstract function fireEx(int id)
 
 abstract class OnPointCast extends OnCastListener
 	
@@ -115,29 +121,31 @@ public abstract class EventListener
 		if uid <= 0
 			return listener
 		listener.eventId = eventId.toIntId()
-		// print("adding eventlistener to entityid: " + uid.toString() + " eventid: " + listener.eventId.toString())
 		if unitListenersFirsts[uid] != null
 			unitListenersFirsts[uid].prev = listener
 			listener.next = unitListenersFirsts[uid]
 		unitListenersFirsts[uid] = listener
 		return listener
 
-	static function addCast(unit u, int abilId, OnCastListener listener) returns OnCastListener
+	static function onCast(unit u, int abilId, OnCastListener listener) returns OnCastListener
 		return addSpellInternal(u, abilId, listener)
 
-	static function addUnitCast(unit u, int abilId, OnUnitCast listener) returns OnUnitCast
+	static function onTargetCast(unit u, int abilId, OnUnitCast listener) returns OnUnitCast
 		return addSpellInternal(u, abilId, listener) castTo OnUnitCast
 
-	static function addPointCast(unit u, int abilId, OnPointCast listener) returns OnPointCast
+	static function onPointCast(unit u, int abilId, OnPointCast listener) returns OnPointCast
 		return addSpellInternal(u, abilId, listener) castTo OnPointCast
 
-	static function addCast(int abilId, OnCastListener listener) returns OnCastListener
+	static function onCast(int abilId, OnCastListener listener) returns OnCastListener
 		return addSpellInternal(null, abilId, listener)
 
-	static function addUnitCast(int abilId, OnUnitCast listener) returns OnUnitCast
+	static function onCast(unit u, OnCast listener) returns OnCast
+		return addSpellInternal(u, -1, listener) castTo OnCast
+
+	static function onTargetCast(int abilId, OnUnitCast listener) returns OnUnitCast
 		return addSpellInternal(null, abilId, listener) castTo OnUnitCast
 
-	static function addPointCast(int abilId, OnPointCast listener) returns OnPointCast
+	static function onPointCast(int abilId, OnPointCast listener) returns OnPointCast
 		return addSpellInternal(null, abilId, listener) castTo OnPointCast
 
 	static private function addSpellInternal(unit u, int abilId, OnCastListener listener) returns OnCastListener
@@ -146,7 +154,7 @@ public abstract class EventListener
 			listener.eventUnit = u
 			if castMapCasters.has(u)
 				castMapCasters.get(u).prev = listener
-				listener.next = castMap.get(abilId)
+				listener.next = castMapCasters.get(u)
 			castMapCasters.put(u, listener)
 		else
 			if castMap.has(abilId)
@@ -174,7 +182,15 @@ public abstract class EventListener
 				listener.onEvent()
 				listener = listener.next
 		
+	static function onSpellEffect()
+		let trigUnit = GetTriggerUnit()
 		let abilId = GetSpellAbilityId()
+		if castMapCasters.has(trigUnit)
+			var listener = castMapCasters.get(trigUnit)
+			while listener != null
+				if listener.abilId == -1 or listener.abilId == abilId
+					listener.fire(GetSpellAbilityUnit())
+				listener = listener.next
 		if castMap.has(abilId)
 			var listener = castMap.get(abilId)
 			while listener != null
@@ -240,6 +256,12 @@ public function unregisterEventsForUnit(unit u)
 				let t = listener
 				listener = listener.next
 				destroy t
+		if EventListener.castMapCasters.has(u)
+			var listener = EventListener.castMapCasters.get(u)
+			while listener != null
+				let t = listener
+				listener = listener.next
+				destroy t
 
 public function unregisterEvents(int id)
 	if id > 0 
@@ -277,3 +299,5 @@ init
 			..registerPlayerEvent(players[i], EVENT_PLAYER_ARROW_RIGHT_UP)
 			..registerPlayerEvent(players[i], EVENT_PLAYER_END_CINEMATIC)
 			..registerPlayerChatEvent(players[i], "", false)
+
+		registerPlayerUnitEvent(EVENT_PLAYER_UNIT_SPELL_EFFECT, null, () -> EventListener.onSpellEffect(), null)
