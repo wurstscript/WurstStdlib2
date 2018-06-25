@@ -3,5 +3,5 @@ import ClosureEvents
 
 @Test function testEvents()
 	let hero = createUnit(players[0], 'hfoo' , ZERO2, 0 .fromDeg())
-	EventListener.addCast(hero, 'Abld') (caster) ->
+	EventListener.onCast(hero, 'Abld') (caster) ->
 		print("OnCast")
