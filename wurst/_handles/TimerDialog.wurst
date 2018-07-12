@@ -1,0 +1,41 @@
+package TimerDialog
+import NoWurst
+import Colors
+
+public function timer.createTimerDialog() returns timerdialog
+    return CreateTimerDialog(this)
+
+public function timerdialog.destr() 
+    DestroyTimerDialog(this)
+
+public function timerdialog.setTitle(string title) 
+    TimerDialogSetTitle(this, title)
+
+public function timerdialog.setTitleColor(int red, int green, int blue, int alpha) 
+    TimerDialogSetTitleColor(this, red, green, blue, alpha)
+
+public function timerdialog.setTitleColor(colorA colorA) 
+    TimerDialogSetTitleColor(this, colorA.red, colorA.green, colorA.blue, colorA.alpha)
+
+public function timerdialog.setTimeColor(int red, int green, int blue, int alpha) 
+    TimerDialogSetTimeColor(this, red, green, blue, alpha)
+
+public function timerdialog.setTimeColor(colorA colorA) 
+    TimerDialogSetTimeColor(this, colorA.red, colorA.green, colorA.blue, colorA.alpha)
+
+/** Multiplies the  timer's tick rate and remaining time, so that the overall elapsed time stays the same. 
+For example, timer was started with initial time 60 seconds.
+If speed is set to 2, then the time shown in dialog will be 120 seconds, but counting is two times faster. 
+If speed is set to 0.5, then the time shown in dialog will be 30 seconds, but counting is two times slower. */
+public function timerdialog.setSpeed(real speedMultFactor) 
+    TimerDialogSetSpeed(this, speedMultFactor)
+
+public function timerdialog.display(boolean display) 
+    TimerDialogDisplay(this, display)
+
+public function timerdialog.isDisplayed() returns boolean
+    return IsTimerDialogDisplayed(this)
+
+public function timerdialog.setRealTimeRemaining(real timeRemaining) 
+    TimerDialogSetRealTimeRemaining(this, timeRemaining)  
+
