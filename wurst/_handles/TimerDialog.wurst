@@ -23,6 +23,10 @@ public function timerdialog.setTimeColor(int red, int green, int blue, int alpha
 public function timerdialog.setTimeColor(colorA colorA) 
     TimerDialogSetTimeColor(this, colorA.red, colorA.green, colorA.blue, colorA.alpha)
 
+/** Multiplies the  timer's tick rate and remaining time, so that the overall elapsed time stays the same. 
+For example, timer was started with initial time 60 seconds.
+If speed is set to 2, then the time shown in dialog will be 120 seconds, but counting is two times faster. 
+If speed is set to 0.5, then the time shown in dialog will be 30 seconds, but counting is two times slower. */
 public function timerdialog.setSpeed(real speedMultFactor) 
     TimerDialogSetSpeed(this, speedMultFactor)
 
