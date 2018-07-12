@@ -1,5 +1,6 @@
 package TimerDialog
 import NoWurst
+import Colors
 
 public function timer.createTimerDialog() returns timerdialog
     return CreateTimerDialog(this)
@@ -13,8 +14,14 @@ public function timerdialog.setTitle(string title)
 public function timerdialog.setTitleColor(int red, int green, int blue, int alpha) 
     TimerDialogSetTitleColor(this, red, green, blue, alpha)
 
+public function timerdialog.setTitleColor(colorA colorA) 
+    TimerDialogSetTitleColor(this, colorA.red, colorA.green, colorA.blue, colorA.alpha)
+
 public function timerdialog.setTimeColor(int red, int green, int blue, int alpha) 
     TimerDialogSetTimeColor(this, red, green, blue, alpha)
+
+public function timerdialog.setTimeColor(colorA colorA) 
+    TimerDialogSetTimeColor(this, colorA.red, colorA.green, colorA.blue, colorA.alpha)
 
 public function timerdialog.setSpeed(real speedMultFactor) 
     TimerDialogSetSpeed(this, speedMultFactor)
