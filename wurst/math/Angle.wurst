@@ -31,7 +31,7 @@ public function real.fromDeg() returns angle
 public function real.fromRad() returns angle
 	return angle(this)
 
-/** interpret this real as an angle given in degrees */
+/** interpret this int as an angle given in degrees */
 public function int.fromRad() returns angle
 	return angle(this*1.)
 
@@ -42,8 +42,8 @@ public function int.asAngleRadians() returns angle
 /** interpret this real as an angle given in radians*/
 public function real.asAngleRadians() returns angle
 	return angle(this)
-/** get the sinus of this angle */
 
+/** get the sinus of this angle */
 public function angle.sin() returns real
 	return Sin(this.radians)
 

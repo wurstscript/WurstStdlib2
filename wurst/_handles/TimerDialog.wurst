@@ -1,0 +1,30 @@
+package TimerDialog
+import NoWurst
+
+public function timer.createTimerDialog() returns timerdialog
+    return CreateTimerDialog(this)
+
+public function timerdialog.destr() 
+    DestroyTimerDialog(this)
+
+public function timerdialog.setTitle(string title) 
+    TimerDialogSetTitle(this, title)
+
+public function timerdialog.setTitleColor(int red, int green, int blue, int alpha) 
+    TimerDialogSetTitleColor(this, red, green, blue, alpha)
+
+public function timerdialog.setTimeColor(int red, int green, int blue, int alpha) 
+    TimerDialogSetTimeColor(this, red, green, blue, alpha)
+
+public function timerdialog.setSpeed(real speedMultFactor) 
+    TimerDialogSetSpeed(this, speedMultFactor)
+
+public function timerdialog.display(boolean display) 
+    TimerDialogDisplay(this, display)
+
+public function timerdialog.isDisplayed() returns boolean
+    return IsTimerDialogDisplayed(this)
+
+public function timerdialog.setRealTimeRemaining(real timeRemaining) 
+    TimerDialogSetRealTimeRemaining(this, timeRemaining)  
+
