@@ -37,51 +37,31 @@ public function int.moduloInt(int divisor) returns int
 
 /** returns the bigger number of parameters */
 public function max(vararg int numbers) returns int
-	boolean isFirstIteration = true
-	int maxNumber = 0
+	var maxNumber = INT_MIN
 	for number in numbers 
-		if isFirstIteration
-			isFirstIteration = false
-			maxNumber = number
-		else 
-			maxNumber = number > maxNumber ? number : maxNumber
+		maxNumber = number > maxNumber ? number : maxNumber
 	return maxNumber
 
 /** returns the bigger number of parameters */
 public function max(vararg real numbers) returns real
-	boolean isFirstIteration = true
-	real maxNumber = 0
+	var maxNumber = REAL_MIN
 	for number in numbers 
-		if isFirstIteration
-			isFirstIteration = false
-			maxNumber = number
-		else 
-			maxNumber = number > maxNumber ? number : maxNumber
+		maxNumber = number > maxNumber ? number : maxNumber
 	return maxNumber
 
 /** returns the smaller number of parameters */
 public function min(vararg int numbers) returns int
-	boolean isFirstIteration = true
-	int maxNumber = 0
+	var minNumber = INT_MAX
 	for number in numbers 
-		if isFirstIteration
-			isFirstIteration = false
-			maxNumber = number
-		else 
-			maxNumber = number < maxNumber ? number : maxNumber
-	return maxNumber
+		minNumber = number < minNumber ? number : minNumber
+	return minNumber
 
 /** returns the smaller number of parameters */
 public function min(vararg real numbers) returns real
-	boolean isFirstIteration = true
-	real maxNumber = 0
+	var minNumber = REAL_MAX
 	for number in numbers 
-		if isFirstIteration
-			isFirstIteration = false
-			maxNumber = number
-		else 
-			maxNumber = number < maxNumber ? number : maxNumber
-	return maxNumber
+		minNumber = number < minNumber ? number : minNumber
+	return minNumber
 
 @test function minmax()
 	// better test min and max, they are difficult to implement M;D
