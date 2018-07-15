@@ -36,28 +36,32 @@ public function getSlopeAngle( real z1, real z2, real dist ) returns angle
 public function int.moduloInt(int divisor) returns int
 	return this - (this div divisor) * divisor
 
-/** returns the bigger number of parameters */
+/** Returns the largest value in the set provided as arguments.
+    Example: max(6, 4, -12)  // Returns 6. */
 public function max(vararg int numbers) returns int
 	var maxNumber = INT_MIN
 	for number in numbers 
 		maxNumber = number > maxNumber ? number : maxNumber
 	return maxNumber
 
-/** returns the bigger number of parameters */
+/** Returns the largest value in the set provided as arguments.
+    Example: max(6.5, 4.5, -12.5)  // Returns 6.5. */
 public function max(vararg real numbers) returns real
 	var maxNumber = REAL_MIN
 	for number in numbers 
 		maxNumber = number > maxNumber ? number : maxNumber
 	return maxNumber
 
-/** returns the smaller number of parameters */
+/** Returns the smallest value in the set provided as arguments.
+    Example: min(6, 4, -12)  // Returns -12. */
 public function min(vararg int numbers) returns int
 	var minNumber = INT_MAX
 	for number in numbers 
 		minNumber = number < minNumber ? number : minNumber
 	return minNumber
 
-/** returns the smaller number of parameters */
+/** Returns the smallest value in the set provided as arguments.
+    Example: min(6.5, 4.5, -12.5)  // Returns -12,5. */
 public function min(vararg real numbers) returns real
 	var minNumber = REAL_MAX
 	for number in numbers 
