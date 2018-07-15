@@ -17,8 +17,19 @@ function testArithmetics()
 	(4. .squared()).assertEquals(4.*4.)
 
 @Test
-function testMisc()
+function testBoolean()
 	(true).assertEquals(true)
 	(false).assertEquals(false)
+
 	(true.toInt()).assertEquals(1)
 	(false.toInt()).assertEquals(0)
+
+	(true.toString()).assertEquals("true")
+	(false.toString()).assertEquals("false")
+
+	(42 .toBool()).assertEquals(true)
+	(0 .toBool()).assertEquals(false)
+
+	("true".toBool()).assertEquals(true)
+	("1".toBool()).assertEquals(true)
+	("nottrue".toBool()).assertEquals(false)
