@@ -7,7 +7,7 @@ import initlater Printing
 
 /** A vector is a geometric object that has a length and direction. 
 	Vectors can be added to other vectors according to vector algebra.
-	The most common use in warcraft III is as a point in space. For example a units position
+	The most common use in warcraft III is as a point in space. For example a unit's position
 	can be represented as a vector as well as a knockback force acting on it.
 */
 
@@ -21,7 +21,7 @@ public constant DOWN = vec2(0,-1)
 /** 2d Vector tuple */
 public tuple vec2(real x, real y)
 
-// Airthmetic Operators
+// Arithmetic Operators
 /** + Operator vec2 */
 public function vec2.op_plus(vec2 v) returns vec2
 	return vec2(this.x + v.x, this.y + v.y)
