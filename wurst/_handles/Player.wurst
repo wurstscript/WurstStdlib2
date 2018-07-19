@@ -1,6 +1,5 @@
 package Player
 import NoWurst
-import initlater Colors
 import Wurstunit
 import Unit
 
@@ -43,9 +42,6 @@ public function player.disableUserControl()
 public function player.enableUserControl()
 	this.setUserControl(true)
 
-public function player.getColor() returns playercolor
-	return GetPlayerColor(this)
-
 public function player.getController() returns mapcontrol
 	return GetPlayerController(this)
 
@@ -66,9 +62,6 @@ public function player.getMaxSupply() returns int
 
 public function player.getName() returns string
 	return GetPlayerName(this)
-
-public function player.getNameColored() returns string
-	return this.getColor().toColor().toColorString() + GetPlayerName(this) + "|r"
 
 public function player.getSlotState() returns playerslotstate
 	return GetPlayerSlotState(this)
@@ -104,8 +97,7 @@ public function player.setAbilityAvailable(int abilityId, boolean avail)
 public function player.setName(string name)
 	SetPlayerName(this, name)
 
-public function player.setColor(playercolor color)
-	SetPlayerColor(this, color)
+
 
 public function player.setState(playerstate state, int val)
 	SetPlayerState(this, state, val)
@@ -163,6 +155,3 @@ function testPlayer()
 	let p = Player(0)
 	assertTrue(p == Player(0))
 
-	assertTrue(p.getColor() == null)
-	p.setColor(PLAYER_COLOR_AQUA)
-	assertTrue(p.getColor() == PLAYER_COLOR_AQUA)

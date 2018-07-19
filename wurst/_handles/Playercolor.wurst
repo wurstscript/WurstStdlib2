@@ -39,6 +39,12 @@ constant LOOKUP = [
 	PLAYER_COLOR_UNKNOWN2,
 	PLAYER_COLOR_BLACK_PASSIVE]
 
+public function player.setColor(playercolor color)
+	SetPlayerColor(this, color)
+
+public function player.getColor() returns playercolor
+	return GetPlayerColor(this)
+
 public function int.toPlayerColor() returns playercolor
 	return LOOKUP[this]
 
@@ -92,3 +98,8 @@ public function playercolor.getPlayers() returns force
 	force2.containsPlayer(Player(1)).assertTrue()
 	force2.containsPlayer(Player(2)).assertTrue()
 	force2.containsPlayer(Player(3)).assertFalse()
+
+	let p = players[5]
+	assertTrue(p.getColor() == null)
+	p.setColor(PLAYER_COLOR_AQUA)
+	assertTrue(p.getColor() == PLAYER_COLOR_AQUA)

@@ -5,7 +5,6 @@ import String
 import Integer
 import Wurstunit
 import Playercolor
-import Player
 
 public constant COLOR_WHITE = colorA(255,255,255,255)
 public constant COLOR_BLACK = colorA(0,0,0,0)
@@ -42,6 +41,9 @@ constant PLAYER_COLOR_NAMES = [
 	"wheat", "peach", "mint", "lavender",
 	"coal", "snow", "emerald", "peanut"
 ]
+
+public function player.getNameColored() returns string
+	return this.getColor().toColor().toColorString() + GetPlayerName(this) + "|r"
 
 /** Returns the name of the player color */
 public function playercolor.getName() returns string
