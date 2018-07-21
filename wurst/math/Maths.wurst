@@ -70,11 +70,11 @@ public function min(vararg real numbers) returns real
 
 @test function minmax()
 	int three = 3
-	max(three,4,21,43,51,30)	.assertEquals(51)	
-	max(3.,4.,5.)				.assertEquals(5)	
-	max(-4,three)				.assertEquals(3)
-	min(three,4,0,-2,-1)		.assertEquals(-2)
-	min(3.,4.,-20.,-3.)			.assertEquals(-20.)
+	max(three,4,21,43,51,30).assertEquals(51)	
+	max(3.,4.,5.).assertEquals(5)	
+	max(-4,three).assertEquals(3)
+	min(three,4,0,-2,-1).assertEquals(-2)
+	min(3.,4.,-20.,-3.).assertEquals(-20.)
 	
 @test function test_hypot()
 	test_hypot_help(5,6)
