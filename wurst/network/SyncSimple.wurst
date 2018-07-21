@@ -117,8 +117,8 @@ public class SimpleSynchronizer
 
 	private unit dummy
 	private bitset syncedPlayers = emptyBitset()
-	// 4095 is 1111 1111 1111 in binary, one bit for each player slot
-	private static bitset allPlayers = bitset(4095)
+	// this sets allPlayers to a bit pattern of 1111..1111 where the total amount of 1's is equal to bj_MAX_PLAYER_SLOTS
+	private static bitset allPlayers = bitset(2 .pow(bj_MAX_PLAYER_SLOTS) - 1)
 	private SynchronizationCallback callback = null
 
 	construct()
