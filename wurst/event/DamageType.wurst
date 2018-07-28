@@ -152,13 +152,7 @@ function handler() returns bool
 
 
 init
-    onEnter() ->
-        getEnterLeaveUnit()..addAbility(DAMAGE_TYPE_CHECK_ID)..makeAbilityPermanent(DAMAGE_TYPE_CHECK_ID, true)
-        
-    forUnitsInRect(bj_mapInitialPlayableArea) iter ->
-        iter..addAbility(          DAMAGE_TYPE_CHECK_ID)
-            ..makeAbilityPermanent(DAMAGE_TYPE_CHECK_ID, true)
-
+    onEnter(() -> getEnterLeaveUnit()..addAbility(DAMAGE_TYPE_CHECK_ID)..makeAbilityPermanent(DAMAGE_TYPE_CHECK_ID, true))
     addOnDamageFunc(Condition(function handler))
 
 @compiletime function generateAbility()
