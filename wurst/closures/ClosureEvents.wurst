@@ -1,0 +1,303 @@
+package ClosureEvents
+import public EventHelper
+import public RegisterEvents
+import ClosureTimers
+import UnitIndexer
+import HashMap
+import ErrorHandling
+
+/** Use this chat event if you want to access the entered message */
+public constant EVENT_PLAYER_CHAT_FILTER = ConvertPlayerEvent(96)
+
+/** Configure this function if you want some logic to prevent events being
+	fired for specific units */
+@configurable function fireEvents(unit _u) returns boolean
+	return true
+
+/**
+	This package is a comfort wrapper around wc3 events,
+	for easy global and per-unit event listening via closures.
+
+	To listen to an event, simply #add, optionally passing a target unit:
+
+		> EventListener.add(EVENT_PLAYER_UNIT_DEATH) ->
+		>	 <any unit death actions>
+
+		> EventListener.add(someUnit, EVENT_PLAYER_UNIT_DEATH) ->
+		>	 <only 'someUnit' death actions>
+
+	For spell handling there are comfort wrappers via the `on` prefix:
+
+	> EventListener.onCast(MY_SPELL_ID) (caster) ->
+	>	 <some non target spell event for all units>
+
+	> EventListener.onCast(myUnit, MY_SPELL_ID) (caster) ->
+	>	 <some non target spell for 'myUnit'>
+
+	> EventListener.onPointCast(myUnit, MY_SPELL_ID) (caster, target) ->
+	>	 <actions for a point cast spell. 'target' is the vec2 target point>
+
+
+	**IMPORTANT**:
+		Make sure to always use the "EVENT_PLAYER_UNIT_*" variants of the eventids.
+		Other supported events:
+			- EVENT_PLAYER_LEAVE
+			- EVENT_UNIT_DAMAGED
+			- EVENT_PLAYER_CHAT_FILTER
+			- EVENT_PLAYER_ARROW_*
+*/
+
+abstract class OnCastListener
+ 	OnCastListener next = null
+	OnCastListener prev = null
+	int abilId
+	unit eventUnit = null
+
+	abstract function fire(unit caster)
+
+	ondestroy
+		if eventUnit != null
+			var listener = EventListener.castMapCasters.get(eventUnit)
+			if listener == this
+				EventListener.castMapCasters.put(eventUnit, next)
+			else if prev != null
+				prev.next = next
+		else
+			var listener = EventListener.castMap.get(abilId)
+			if listener == this
+				EventListener.castMap.put(abilId, next)
+			else if prev != null
+				prev.next = next
+			
+		next.prev = prev
+
+		next = null
+		prev = null
+
+abstract class OnCast extends OnCastListener
+	
+	override function fire(unit caster)
+		fireEx(GetSpellAbilityId())
+
+	abstract function fireEx(int id)
+
+abstract class OnPointCast extends OnCastListener
+	
+	override function fire(unit caster)
+		fireEx(caster, getSpellTargetPos())
+
+	abstract function fireEx(unit caster, vec2 target)
+
+abstract class OnUnitCast extends OnCastListener
+	
+	override function fire(unit caster)
+		fireEx(caster, GetSpellTargetUnit())
+
+	abstract function fireEx(unit caster, unit target)
+
+public abstract class EventListener
+	static constant castMap = new HashMap<int, OnCastListener>
+	static constant castMapCasters = new HashMap<unit, OnCastListener>
+	static EventListener array generalListenersFirsts
+	static EventListener array unitListenersFirsts
+
+	int eventId = 0
+	EventListener next = null
+	EventListener prev = null
+
+	abstract function onEvent()
+	
+	static function add(eventid eventId, EventListener listener) returns EventListener
+		listener.eventId = eventId.toIntId()
+		if generalListenersFirsts[listener.eventId] != null
+			generalListenersFirsts[listener.eventId].prev = listener
+			listener.next = generalListenersFirsts[listener.eventId]
+
+		generalListenersFirsts[listener.eventId] = listener
+		return listener
+		
+	static function add(unit u, eventid eventId, EventListener listener) returns EventListener
+		let uid = u.getIndex()
+		if uid <= 0
+			return listener
+		listener.eventId = eventId.toIntId()
+		if unitListenersFirsts[uid] != null
+			unitListenersFirsts[uid].prev = listener
+			listener.next = unitListenersFirsts[uid]
+		unitListenersFirsts[uid] = listener
+		return listener
+
+	static function onCast(unit u, int abilId, OnCastListener listener) returns OnCastListener
+		return addSpellInternal(u, abilId, listener)
+
+	static function onTargetCast(unit u, int abilId, OnUnitCast listener) returns OnUnitCast
+		return addSpellInternal(u, abilId, listener) castTo OnUnitCast
+
+	static function onPointCast(unit u, int abilId, OnPointCast listener) returns OnPointCast
+		return addSpellInternal(u, abilId, listener) castTo OnPointCast
+
+	static function onCast(int abilId, OnCastListener listener) returns OnCastListener
+		return addSpellInternal(null, abilId, listener)
+
+	static function onCast(unit u, OnCast listener) returns OnCast
+		return addSpellInternal(u, -1, listener) castTo OnCast
+
+	static function onTargetCast(int abilId, OnUnitCast listener) returns OnUnitCast
+		return addSpellInternal(null, abilId, listener) castTo OnUnitCast
+
+	static function onPointCast(int abilId, OnPointCast listener) returns OnPointCast
+		return addSpellInternal(null, abilId, listener) castTo OnPointCast
+
+	static private function addSpellInternal(unit u, int abilId, OnCastListener listener) returns OnCastListener
+		listener.abilId = abilId
+		if u != null
+			listener.eventUnit = u
+			if castMapCasters.has(u)
+				castMapCasters.get(u).prev = listener
+				listener.next = castMapCasters.get(u)
+			castMapCasters.put(u, listener)
+		else
+			if castMap.has(abilId)
+				castMap.get(abilId).prev = listener
+				listener.next = castMap.get(abilId)
+
+			castMap.put(abilId, listener)
+		return listener
+			
+	static function generalEventCallback()
+		let trigUnit = GetTriggerUnit()
+		let id = GetTriggerEventId().toIntId()
+		// Unit Listeners
+		if trigUnit != null and fireEvents(trigUnit) and trigUnit.getIndex() > 0
+			if unitListenersFirsts[trigUnit.getIndex()] != null 
+				var listener = unitListenersFirsts[trigUnit.getIndex()]
+				while listener != null
+					if listener.eventId == id
+						listener.onEvent()
+					listener = listener.next
+		// Global Listeners		
+		if generalListenersFirsts[id] != null
+			var listener = generalListenersFirsts[id]
+			while listener != null
+				listener.onEvent()
+				listener = listener.next
+		
+	static function onSpellEffect()
+		let trigUnit = GetTriggerUnit()
+		let abilId = GetSpellAbilityId()
+		if castMapCasters.has(trigUnit)
+			var listener = castMapCasters.get(trigUnit)
+			while listener != null
+				if listener.abilId == -1 or listener.abilId == abilId
+					listener.fire(GetSpellAbilityUnit())
+				listener = listener.next
+		if castMap.has(abilId)
+			var listener = castMap.get(abilId)
+			while listener != null
+				if listener.eventUnit == null or listener.eventUnit == trigUnit
+					listener.fire(GetSpellAbilityUnit())
+				listener = listener.next
+		
+	ondestroy
+		var listener = generalListenersFirsts[this.eventId]
+		if listener == this
+			generalListenersFirsts[this.eventId] = next
+		else if prev != null
+			prev.next = next
+			
+		next.prev = prev
+
+		listener = unitListenersFirsts[this.eventId]
+		if listener == this
+			unitListenersFirsts[this.eventId] = next
+		else if prev != null
+			prev.next = next
+			
+		next.prev = prev
+
+		next = null
+		prev = null
+	
+let unitTrig = CreateTrigger()
+let leaveTrig = CreateTrigger()
+let keyTrig = CreateTrigger()
+
+public function eventid.toIntId() returns int
+	var id = eventidToIndex[this.getHandleId()]
+	if id == 0
+		id = registerEventId(this)
+	return id
+			
+int array eventidToIndex
+var eventTypeCounter = 0
+
+function registerEventId(eventid evnt) returns int
+	let eventId = evnt.getHandleId()
+	eventTypeCounter++
+	eventidToIndex[eventId] = eventTypeCounter
+	if evnt.isPlayerunitEvent()
+		Log.debug("reg handleid: " + eventId.toString() + " -> eventId: " + eventTypeCounter.toString())
+		registerPlayerUnitEvent(ConvertPlayerUnitEvent(eventId), function EventListener.generalEventCallback)
+	else if evnt != EVENT_UNIT_DAMAGED and evnt != EVENT_PLAYER_LEAVE and evnt != EVENT_PLAYER_CHAT_FILTER and not evnt.isKeyboardEvent()
+		error("registering handleid: " + eventId.toString() + " non-playerunitevent. Except EVENT_UNIT_DAMAGED and EVENT_PLAYER_LEAVE these are not supported right now.")
+	return eventTypeCounter
+	
+function registerEventsForUnit(unit u)
+	if fireEvents(u)
+		unitTrig.registerUnitEvent(u, EVENT_UNIT_DAMAGED)
+
+public function unregisterEventsForUnit(unit u)
+	if fireEvents(u)
+		unregisterEvents(u.getIndex())
+		if EventListener.castMapCasters.has(u)
+			var listener = EventListener.castMapCasters.get(u)
+			EventListener.castMapCasters.remove(u)
+			while listener != null
+				let t = listener
+				listener = listener.next
+				destroy t
+		if EventListener.castMapCasters.has(u)
+			var listener = EventListener.castMapCasters.get(u)
+			while listener != null
+				let t = listener
+				listener = listener.next
+				destroy t
+
+public function unregisterEvents(int id)
+	if id > 0 
+		if EventListener.unitListenersFirsts[id] != null
+			Log.trace("unregister unit has listeners. startid: " + id.toString())
+			var listener = EventListener.unitListenersFirsts[id]
+			EventListener.unitListenersFirsts[id] = null
+			while listener != null
+				let t = listener
+				listener = listener.next
+				destroy t
+		
+
+init
+	nullTimer() ->
+		// Register Events when unit enters map
+		onUnitIndex(() -> registerEventsForUnit(getIndexedUnit()))
+		// Delete 
+		onUnitDeindex(() -> unregisterEventsForUnit(getDeindexedUnit()))
+		
+		// Register Actions
+		unitTrig.addAction(() -> EventListener.generalEventCallback())	
+		leaveTrig.addAction(() -> EventListener.generalEventCallback())
+		keyTrig.addAction(() -> EventListener.generalEventCallback())
+
+		for i = 0 to bj_MAX_PLAYERS-1
+			leaveTrig.registerPlayerEvent(players[i], EVENT_PLAYER_LEAVE)
+			keyTrig..registerPlayerEvent(players[i], EVENT_PLAYER_ARROW_DOWN_DOWN)
+			..registerPlayerEvent(players[i], EVENT_PLAYER_ARROW_DOWN_UP)
+			..registerPlayerEvent(players[i], EVENT_PLAYER_ARROW_UP_DOWN)
+			..registerPlayerEvent(players[i], EVENT_PLAYER_ARROW_UP_UP)
+			..registerPlayerEvent(players[i], EVENT_PLAYER_ARROW_LEFT_DOWN)
+			..registerPlayerEvent(players[i], EVENT_PLAYER_ARROW_LEFT_UP)
+			..registerPlayerEvent(players[i], EVENT_PLAYER_ARROW_RIGHT_DOWN)
+			..registerPlayerEvent(players[i], EVENT_PLAYER_ARROW_RIGHT_UP)
+			..registerPlayerEvent(players[i], EVENT_PLAYER_END_CINEMATIC)
+			..registerPlayerChatEvent(players[i], "", false)
+
+		registerPlayerUnitEvent(EVENT_PLAYER_UNIT_SPELL_EFFECT, null, () -> EventListener.onSpellEffect(), null)

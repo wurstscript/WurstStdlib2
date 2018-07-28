@@ -37,7 +37,7 @@ public class HeroPreset extends HeroDefinition
 		setProperNames(s)
 		
 	function addHeroAbility(int id)
-		heroAbilityString += int2fourchar(id) + ","
+		heroAbilityString += id.toRawCode() + ","
 		
 	function buildHeroAbilities()
 		if heroAbilityString.length() > 0

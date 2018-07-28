@@ -2,8 +2,8 @@ package Fx
 import NoWurst
 import DummyRecycler
 import Effect
+import Widget
 import Colors
-import TerrainUtils
 
 /********************************************************
  * * * * * * * * * * Fx * * * * * * * * * * * * * * * * *
@@ -104,7 +104,7 @@ public class Fx
 		
 	/** Get the xy angle */
 	function getXYAngle() returns angle
-		return dummy.getFacing().asAngleDegrees()
+		return dummy.getFacingAngle()
  
 	/** Set the xy angle */
 	function setXYAngle(angle value)
@@ -160,7 +160,7 @@ public class Fx
 		if ignoreTerrainHeight
 			setZ(pos.z)
 		else
-			setZ(pos.z-getTerrainZ(pos.x, pos.y))
+			setZ(pos.z - pos.getTerrainZ())
 	
 	/** Set the z coordinate (flyHeight) */
 	function setZ(real z)

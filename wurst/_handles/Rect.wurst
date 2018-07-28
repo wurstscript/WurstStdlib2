@@ -5,10 +5,10 @@ import Vectors
 public function rect.randomPoint() returns vec2
 	return vec2(GetRandomReal(this.getMinX(), this.getMaxX()), GetRandomReal(this.getMinY(), this.getMaxY()))
 
-public function vec2.isInRect(rect r)returns boolean
+public function vec2.isInRect(rect r) returns boolean
 	return this.x > r.getMinX() and this.x < r.getMaxX() and this.y > r.getMinY() and this.y < r.getMaxY()
 	
-public function rect.contains(vec2 r)returns boolean
+public function rect.contains(vec2 r) returns boolean
 	return r.x > this.getMinX() and r.x < this.getMaxX() and r.y > this.getMinY() and r.y < this.getMaxY()
 
 public function rect.getCenter() returns vec2
@@ -43,6 +43,12 @@ public function rect.getLeftBot() returns vec2
 	
 public function rect.getRightBot() returns vec2
 	return vec2(this.getMaxX(), this.getMinY())
+
+public function rect.moveTo(vec2 newCenter)
+	MoveRectTo(this, newCenter.x, newCenter.y)
+	
+public function rect.moveTo(real newCenterX, real newCenterY)
+	MoveRectTo(this, newCenterX, newCenterY)
 
 public function rect.remove()
 	RemoveRect(this)

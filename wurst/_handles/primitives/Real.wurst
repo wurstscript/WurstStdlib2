@@ -21,6 +21,24 @@ public function real.sign() returns int
 public function real.round() returns int
 	return this > 0 ? (this+.5).toInt() : (this-.5).toInt()
 
+/** Rounds the input real towards zero to the nearest int */
+public function real.trunc() returns int
+	return this.toInt()
+
+/** Rounds the input real downward to the nearest int */
+public function real.floor() returns int
+	var r = this.toInt()
+	if this < 0 and this - r != 0.
+		r -= 1
+	return r
+
+/** Rounds the input real upward to the nearest int */
+public function real.ceil() returns int
+	var r = this.toInt()
+	if this > 0 and this - r != 0.
+		r += 1
+	return r
+
 /** Converts the input real to an int. This cuts off
 	the decimal digits. (1.9->1) */
 public function real.toInt() returns int

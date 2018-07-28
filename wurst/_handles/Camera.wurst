@@ -1,0 +1,187 @@
+package Camera
+import NoWurst
+import public Vectors
+import Player
+
+public function getCameraBoundMin() returns vec2
+    return vec2(GetCameraBoundMinX(), GetCameraBoundMinY())
+
+public function getCameraBoundMax() returns vec2
+    return vec2(GetCameraBoundMaxX(), GetCameraBoundMaxY())
+
+public function getCameraTargetPosition() returns vec2
+    return vec2(GetCameraTargetPositionX(), GetCameraTargetPositionY())
+
+public function getCameraTargetPosition3() returns vec3
+    return getCameraTargetPosition().withZ(GetCameraTargetPositionZ())
+
+public function getCameraEyePosition() returns vec2
+    return vec2(GetCameraEyePositionX(), GetCameraEyePositionY())
+
+public function getCameraEyePosition3() returns vec3
+    return getCameraEyePosition().withZ(GetCameraEyePositionZ())
+
+public function setCameraPosition(vec2 pos)
+    SetCameraPosition(pos.x, pos.y)
+
+public function setCameraQuickPosition(vec2 pos)
+    SetCameraQuickPosition(pos.x, pos.y)
+
+public function setCameraBounds(vec2 bottomLeft, vec2 topRight, vec2 topLeft, vec2 bottomRight)
+    SetCameraBounds(bottomLeft.x, bottomLeft.y, topRight.x, topRight.y, topLeft.x, topLeft.y, bottomRight.x, bottomRight.y)
+
+public function panCameraTo(vec2 pos)
+    PanCameraTo(pos.x, pos.y)
+
+public function panCameraToTimed(vec2 pos, real duration)
+    PanCameraToTimed(pos.x, pos.y, duration)
+
+/** Pans the camera to pos.x, pos.y and absolute height pos.z
+    If pos.z > pos.getTerrainZ, the camera will not drop below
+    the terrain on its path. */
+public function panCameraTo(vec3 pos)
+    PanCameraToWithZ(pos.x, pos.y, pos.z - pos.toVec2().getTerrainZ())
+
+public function panCameraToTimed(vec3 pos, real duration)
+    PanCameraToTimedWithZ(pos.x, pos.y, pos.z - pos.toVec2().getTerrainZ(), duration)
+
+public function setCameraRotateMode(vec2 pos, angle toSweep, real duration)
+    SetCameraRotateMode(pos.x, pos.y, toSweep.radians(), duration)
+
+/** Runs the camera through the cinematic camera
+    specified in cameraModelFile. Existing cameras are available
+    via Objects.cameraXXX paths" */
+public function setCinematicCamera(string cameraModelFile)
+    SetCinematicCamera(cameraModelFile)
+
+public function camerafield.set(real value, real duration)
+    SetCameraField(this, value, duration)
+
+public function camerafield.adjust(real offset, real duration)
+    AdjustCameraField(this, offset, duration)
+
+public function camerafield.get() returns real
+    return GetCameraField(this)
+
+public function camerafield.getFieldSwap(camerasetup whichSetup) returns real
+    return CameraSetupGetFieldSwap(this, whichSetup)
+
+public function camerafield.setCameraField(player whichPlayer, real value, real duration)
+    SetCameraFieldForPlayer(whichPlayer, this, value, duration)
+
+public function camerasetup.setField(camerafield whichField, real value, real duration)
+    CameraSetupSetField(this, whichField, value, duration)
+
+public function camerasetup.getField(camerafield whichField) returns real
+    return CameraSetupGetField(this, whichField)
+
+public function camerasetup.setDestPosition(vec2 pos, real duration)
+    CameraSetupSetDestPosition(this, pos.x, pos.y, duration)
+
+public function camerasetup.getDestPosition() returns vec2
+    return vec2(CameraSetupGetDestPositionX(this),CameraSetupGetDestPositionY(this))
+
+public function camerasetup.apply(boolean doPan, boolean panTimed)
+    CameraSetupApply(this, doPan, panTimed)
+
+public function camerasetup.applyWithZ(real zDestOffset)
+    CameraSetupApplyWithZ(this, zDestOffset)
+
+public function camerasetup.applyForceDuration(boolean doPan, real forceDuration)
+    CameraSetupApplyForceDuration(this, doPan, forceDuration)
+
+public function camerasetup.applyForceDurationWithZ(real zDestOffset, real forceDuration)
+    CameraSetupApplyForceDurationWithZ(this, zDestOffset, forceDuration)
+
+public function camerasetup.apply(boolean doPan, player whichPlayer, real duration)
+    CameraSetupApplyForPlayer(doPan, this, whichPlayer, duration)
+
+public function camerasetup.getFieldSwap(camerafield whichField) returns real
+    return CameraSetupGetFieldSwap(whichField, this)
+
+public function player.cameraSetupApply(boolean doPan, camerasetup whichSetup, real duration)
+    CameraSetupApplyForPlayer(doPan, whichSetup, this, duration)
+
+public function player.setCameraField(camerafield whichField, real value, real duration)
+    SetCameraFieldForPlayer(this, whichField, value, duration)
+
+public function player.setCameraTargetControllerNoZ(unit whichUnit, vec2 offset, boolean inheritOrientation)
+    SetCameraTargetControllerNoZForPlayer(this, whichUnit, offset.x, offset.y, inheritOrientation)
+
+public function player.setCameraPosition(vec2 pos)
+    SetCameraPositionForPlayer(this, pos.x, pos.y)
+
+public function player.panCameraTo(vec2 pos)
+    PanCameraToForPlayer(this, pos.x, pos.y)
+
+public function player.panCameraTo(vec3 pos)
+    if localPlayer == this
+        panCameraTo(pos)
+
+public function player.panCameraToTimed(vec2 pos, real duration)
+    PanCameraToTimedForPlayer(this, pos.x, pos.y, duration)
+
+public function player.panCameraToTimed(vec3 pos, real duration)
+    if localPlayer == this
+        panCameraToTimed(pos, duration)
+
+/** Pans the camera depending on how far pos is from the current
+    camera target:
+    - If the distance is larger than
+      bj_SMARTPAN_TRESHOLD_SNAP, the camera snaps instantenously
+    - If the distance is larger than bj_SMARTPAN_TRESHOLD_PAN, the
+      camera pans over the specified duration
+    - If the distance is smaller than bj_SMARTPAN_TRESHOLD_PAN, the
+      camera doesn't move at all. */
+public function player.smartCameraPan(vec2 pos, real duration)
+    if localPlayer == this
+        let dist = pos.distanceTo(getCameraTargetPosition())
+        if dist >= bj_SMARTPAN_TRESHOLD_SNAP
+            panCameraToTimed(pos, 0.0)
+        else if dist >= bj_SMARTPAN_TRESHOLD_PAN
+            panCameraToTimed(pos, duration)
+
+/** Runs the camera for the player through the cinematic camera
+    specified in  cameraModelFile. Existing cameras are available
+    via Objects.cameraXXX paths" */
+public function player.setCinematicCamera(string cameraModelFile)
+    SetCinematicCameraForPlayer(this, cameraModelFile)
+
+public function player.resetToGameCamera(real duration)
+    ResetToGameCameraForPlayer(this, duration)
+
+public function player.cameraSetSourceNoise(real magnitude, real velocity)
+    CameraSetSourceNoiseForPlayer(this, magnitude, velocity)
+
+public function player.cameraSetTargetNoise(real magnitude, real velocity)
+    CameraSetTargetNoiseForPlayer(this, magnitude, velocity)
+
+public function player.cameraSetEQNoise(real magnitude)
+    CameraSetEQNoiseForPlayer(this, magnitude)
+
+public function player.cameraClearNoise()
+    CameraClearNoiseForPlayer(this)
+
+public function player.setCameraBoundsToRect(rect r)
+    SetCameraBoundsToRectForPlayerBJ(this, r)
+
+public function player.adjustCameraBounds(integer adjustMethod, real dxWest, real dxEast, real dyNorth, real dySouth)
+    AdjustCameraBoundsForPlayerBJ(adjustMethod, this, dxWest, dxEast, dyNorth, dySouth)
+
+public function player.setCameraQuickPosition(vec2 pos)
+    SetCameraQuickPositionForPlayer(this, pos.x, pos.y)
+
+public function player.stopCamera()
+    StopCameraForPlayerBJ(this)
+
+public function player.setCameraOrientController(unit whichUnit, vec2 offset)
+    SetCameraOrientControllerForPlayerBJ(this, whichUnit, offset.x, offset.y)
+
+public function unit.setCameraTargetController(vec2 offset, boolean inheritOrientation)
+    SetCameraTargetController(this, offset.x, offset.y, inheritOrientation)
+
+public function unit.setCameraOrientController(vec2 offset)
+    SetCameraOrientController(this, offset.x, offset.y)
+
+public function unit.setCameraOrientControllerForPlayer(vec2 offset, player whichPlayer)
+    SetCameraOrientControllerForPlayerBJ(whichPlayer, this, offset.x, offset.y)

@@ -30,6 +30,45 @@ public function destructable.setAnimation(string anim)
 public function destructable.remove()
 	RemoveDestructable(this)
 
+public function destructable.setInvulnerable(bool flag)
+	SetDestructableInvulnerable(this, flag)
+
+public function destructable.getInvulnerable() returns bool
+	return IsDestructableInvulnerable(this)
+
+public function destructable.setLife(real life)
+	SetDestructableLife(this, life)
+
+public function destructable.getLife() returns real
+	return GetDestructableLife(this)
+
+public function destructable.setMaxLife(real max)
+	SetDestructableMaxLife(this, max)
+
+public function destructable.getMaxLife() returns real
+	return GetDestructableMaxLife(this)
+
+public function destructable.restoreLife(real life, boolean birth)
+	DestructableRestoreLife(this, life, birth)
+	
+public function destructable.queueAnimation(string anim)
+	QueueDestructableAnimation(this, anim)
+
+public function destructable.setAnimationSpeed(real speedFactor)
+	SetDestructableAnimationSpeed(this, speedFactor)
+
+public function destructable.show(bool flag)
+	ShowDestructable(this, flag)
+
+public function destructable.getOccluderHeight() returns real
+	return GetDestructableOccluderHeight(this)
+
+public function destructable.setOccluderHeight(real height)
+	SetDestructableOccluderHeight(this, height)
+
+public function destructable.getName() returns string
+	return GetDestructableName(this)
+
 @Test function testDestructables()
 	let destr = createDestructable(0, ZERO2, 0 .fromDeg(), 1, -1)
 	destr.getX().assertEquals(0.)

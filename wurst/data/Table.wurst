@@ -5,55 +5,61 @@ import public Hashtable
 /** Wraps a hashtable to provide single key tables */
 public class Table
 	private static constant ht = InitHashtable()
+
+	function hasInt(int parentKey) returns boolean
+		return ht.hasInt(this castTo int, parentKey)
+
+	function hasReal(int parentKey) returns boolean
+		return ht.hasReal(this castTo int, parentKey)
+
+	function hasBoolean(int parentKey) returns boolean
+		return ht.hasBoolean(this castTo int, parentKey)
+
+	function hasString(int parentKey) returns boolean
+		return ht.hasString(this castTo int, parentKey)
+
+	function hasHandle(int parentKey) returns boolean
+		return ht.hasHandle(this castTo int, parentKey)
+
+	function removeInt(int parentKey)
+		RemoveSavedInteger(ht, this castTo int, parentKey)
+
+	function removeReal(int parentKey)
+		RemoveSavedReal(ht, this castTo int, parentKey)
+
+	function removeBoolean(int parentKey)
+		RemoveSavedBoolean(ht, this castTo int, parentKey)
+
+	function removeString(int parentKey)
+		RemoveSavedString(ht, this castTo int, parentKey)
+
+	function removeHandle(int parentKey)
+		RemoveSavedHandle(ht, this castTo int, parentKey)
+
+	function loadInt(int parentKey) returns int
+		return ht.loadInt(this castTo int, parentKey)
+
+	function saveInt(int parentKey, int value)
+		ht.saveInt(this castTo int, parentKey, value)
+
+	function loadReal(int parentKey) returns real
+		return ht.loadReal(this castTo int, parentKey)
 	
+	function saveReal(int parentKey, real value)
+		ht.saveReal(this castTo int, parentKey, value)
+
 	function loadBoolean(int parentKey) returns boolean
 		return ht.loadBoolean( this castTo int, parentKey)
 
 	function saveBoolean(int parentKey, boolean value)
 		ht.saveBoolean( this castTo int, parentKey, value)
 
-	function hasBoolean(int parentKey) returns boolean
-		return ht.hasBoolean(this castTo int, parentKey)
-	
-	function hasString(int parentKey) returns boolean
-		return ht.hasString(this castTo int, parentKey)
-		
-	function removeBoolean(int parentKey)
-		RemoveSavedBoolean(ht, this castTo int, parentKey)
-	
-	function loadInt(int parentKey) returns int
-		return ht.loadInt(this castTo int, parentKey)
-	
-	function saveInt(int parentKey, int value)
-		ht.saveInt(this castTo int, parentKey, value)
-
-	function hasInt(int parentKey) returns boolean
-		return ht.hasInt(this castTo int, parentKey)
-	
-	function removeInt(int parentKey)
-		RemoveSavedInteger(ht, this castTo int, parentKey)
-		
-	function loadReal(int parentKey) returns real
-		return ht.loadReal(this castTo int, parentKey)
-	
-	function saveReal(int parentKey, real value)
-		ht.saveReal(this castTo int, parentKey, value)
-		
 	function loadString(int parentKey) returns string
 		return ht.loadString(this castTo int, parentKey)
-	
+
 	function saveString(int parentKey, string value)
 		ht.saveString(this castTo int, parentKey, value)
 
-	function hasReal(int parentKey) returns boolean
-		return ht.hasReal(this castTo int, parentKey)
-	
-	function removeReal(int parentKey)
-		RemoveSavedReal(ht, this castTo int, parentKey)
-	
-	function removeHandle(int parentKey)
-		RemoveSavedHandle(ht, this castTo int, parentKey)
-		
 	function loadPlayer(int parentKey) returns player
 		return ht.loadPlayerHandle( this castTo int, parentKey)
 	
@@ -209,6 +215,12 @@ public class Table
 	
 	function saveUbersplat(int parentKey, ubersplat value)
 		ht.saveUbersplatHandle( this castTo int, parentKey, value)
+
+	function loadHashtable(int parentKey) returns hashtable
+		return LoadHashtableHandle(ht, this castTo int, parentKey)
+	
+	function saveHashtable(int parentKey, hashtable value)
+		SaveHashtableHandle(ht, this castTo int, parentKey, value)
 				
 	/** Remove all data from this table */
 	function flush()

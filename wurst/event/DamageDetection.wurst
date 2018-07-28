@@ -2,6 +2,15 @@ package DamageDetection
 import OnUnitEnterLeave
 import ClosureForGroups
 
+/**
+	Use `addOnDamageFunc` to add a listener to any damage event that happens on the map.
+	Example:
+
+		init
+			addOnDamageFunc() ->
+				print("Damage Event with dmg: " + GetEventDamage().toString())
+*/
+
 constant SWAP_TIMEOUT = 600.
 
 boolexpr array func
@@ -11,6 +20,13 @@ trigger toDestroy = null
 
 function addUnit(unit u)
 	current.registerUnitEvent(u, EVENT_UNIT_DAMAGED)
+
+/** Add a Action to the damage Event. */
+public function addOnDamageFunc(code c)
+	let cf = Condition(c)
+	current.addCondition(cf)
+	func[funcNext] = cf
+	funcNext++
 
 /** Add a Condition(Action) to the damage Event. */
 public function addOnDamageFunc(boolexpr cf)

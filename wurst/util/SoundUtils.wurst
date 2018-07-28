@@ -1,5 +1,6 @@
 package SoundUtils
 import NoWurst
+import public Sounds
 import LinkedList
 import Simulate3dSound
 import TimerUtils
@@ -22,7 +23,7 @@ constant SOUND_MAX_DIST = 8000.
 constant SOUND_DIST_CUT = 1500.
 
 class SoundInstance
-	vec3 pos = vec3(0,0,0)
+	var pos = vec3(0,0,0)
 	sound snd
 	SoundDefinition soundDef
 	unit onUnit = null
@@ -30,7 +31,7 @@ class SoundInstance
 	Sim3DSound s3s = null
 	
 public class SoundDefinition
-	LinkedList<SoundInstance> soundStack = new LinkedList<SoundInstance>()
+	constant soundStack = new LinkedList<SoundInstance>()
 	
 	string file
 	int duration = 10000

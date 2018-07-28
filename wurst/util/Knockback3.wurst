@@ -145,7 +145,7 @@ public class Knockback3
 
 
     private static function tickNearGround(Knockback3 knockback, vec3 newPos3, vec3 pos3, bool newInMap, real velXySquared)
-        if isTerrainWalkable(newPos3.x, newPos3.y) and newInMap
+        if newPos3.toVec2().isTerrainWalkable() and newInMap
             knockback.u.setXY(newPos3)
 
             if knockback.del.z <= isAirborneThreshold
@@ -173,7 +173,7 @@ public class Knockback3
 
     private static function tickAboveGround(Knockback3 knockback, vec3 newPos3, vec3 pos3)
         knockback.del.z -= gravity*ANIMATION_PERIOD
-        let heightDifference = getTerrainZ(newPos3.x, newPos3.y) - getTerrainZ(pos3.x, pos3.y)
+        let heightDifference = newPos3.getTerrainZ() - pos3.getTerrainZ()
 
         knockback.u..setFlyHeight(newPos3.z - heightDifference, 0.)
                    ..setXY(newPos3)
@@ -182,7 +182,7 @@ public class Knockback3
             knockback.u.setMoveSpeed(0.)
 
         if USE_PROP_WINDOW_MODIFIERS
-            knockback.u.setPropWindow(0.)
+            knockback.u.setPropWindow(angle(0.))
 
 
     private static bool hitDestructable

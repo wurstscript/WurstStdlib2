@@ -32,7 +32,6 @@ public function item.setPos(real x, real y)
 public function item.setPos(vec2 pos)
 	SetItemPosition(this, pos.x, pos.y)
 
-
 public function item.setDropOnDeath(boolean flag)
 	SetItemDropOnDeath(this, flag)
 
@@ -65,6 +64,14 @@ public function item.isSellable() returns boolean
 
 public function item.isPawnable() returns boolean
 	return IsItemPawnable(this)
+
+/** Returns true if item is not destroyed and has a valid type id. */
+public function item.isAlive() returns boolean
+	return this.getTypeId() != 0 and GetWidgetLife(this) > .405
+
+/** Returns true if item can be picked up by a unit. */
+public function item.isPickupable() returns boolean
+	return this.isAlive() and not this.isOwned() and this.isVisible()
 
 public function item.getPlayer() returns player
 	return GetItemPlayer(this)
