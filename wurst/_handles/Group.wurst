@@ -1,7 +1,6 @@
 package Group
 import NoWurst
 import Vectors
-import Player
 
 /** Use this group for your non-nested group enum calls
 	and then iterate through the group via **for from** or
@@ -14,7 +13,7 @@ public function group.enumUnitsInRange(vec2 pos, real range)
 public function group.enumUnitsInRange(vec2 pos, real range, boolexpr filter)
 	GroupEnumUnitsInRange(this, pos.x, pos.y, range, filter)
 
-public function group.enumUnitsInRect(rect rec)
+public function group.enumUnitsInRect(rect rec) 
 	this.enumUnitsInRect(rec, null) 
 	
 public function group.enumUnitsInRect(rect rec, boolexpr filter) 
@@ -22,13 +21,6 @@ public function group.enumUnitsInRect(rect rec, boolexpr filter)
 
 public function group.enumUnitsSelected(player p, boolexpr filter)
 	GroupEnumUnitsSelected(this, p, filter)
-
-public function group.enumUnitsOfPlayer(player p, boolexpr filter)
-	GroupEnumUnitsOfPlayer(this, p, filter)
-
-public function group.enumUnitsAll(boolexpr filter)
-	for i = 0 to bj_MAX_PLAYER_SLOTS - 1
-		this.enumUnitsOfPlayer(players[i], filter)
 
 public function group.clear()
 	GroupClear(this)

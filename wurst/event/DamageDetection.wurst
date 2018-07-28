@@ -1,6 +1,5 @@
 package DamageDetection
 import OnUnitEnterLeave
-import ClosureForGroups
 
 /**
 	Use `addOnDamageFunc` to add a listener to any damage event that happens on the map.
@@ -17,6 +16,8 @@ boolexpr array func
 int funcNext = 0
 trigger current = null
 trigger toDestroy = null
+
+constant filter = Filter(() -> addUnit(GetFilterUnit()))
 
 function addUnit(unit u)
 	current.registerUnitEvent(u, EVENT_UNIT_DAMAGED)
@@ -56,7 +57,8 @@ function swap()
 	if not isEnabled
 		current.disable()
 
-	forUnitsAll(u -> addUnit(u))
+	for i = 0 to bj_MAX_PLAYER_SLOTS - 1
+		GroupEnumUnitsOfPlayer(ENUM_GROUP, players[i], filter)
 
 	for i = 0 to funcNext-1
 		current.addCondition(func[i])

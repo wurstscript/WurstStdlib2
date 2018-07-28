@@ -1,11 +1,10 @@
-/** Use this package for finding the damage type in the context of a
-    DamageDetection handler. Typically this means differentiating between spells
-    and basic attacks. 
-    
-    Never use both this and DamageModify package. */
+// Use this package for finding the damage type in the context of a
+// DamageDetection handler. Typically this means differentiating between spells
+// and basic attacks.
 package DamageType
 import TimerUtils
 import AbilityObjEditing
+import ClosureForGroups
 import DamageDetection
 import OnUnitEnterLeave
 import ObjectIdGenerator
@@ -137,7 +136,7 @@ function handler() returns bool
 
         let sampledLife = tU.getHP() - .405
         if sampledLife >= attemptedDamage and sampledLife <= 2.*attemptedDamage
-            tU.setHP(sampledLife - attemptedDamage + .405)
+            tU.setHP(sampledLife - attemptedDamage)
 
             let tempDat = new DelayDat
             tempDat.target = tU
@@ -155,7 +154,11 @@ function handler() returns bool
 init
     onEnter() ->
         getEnterLeaveUnit()..addAbility(DAMAGE_TYPE_CHECK_ID)..makeAbilityPermanent(DAMAGE_TYPE_CHECK_ID, true)
-        
+
+    forUnitsInRect(bj_mapInitialPlayableArea) iter ->
+        iter..addAbility(          DAMAGE_TYPE_CHECK_ID)
+            ..makeAbilityPermanent(DAMAGE_TYPE_CHECK_ID, true)
+
     addOnDamageFunc(Condition(function handler))
 
 @compiletime function generateAbility()
