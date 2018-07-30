@@ -17,13 +17,23 @@ import ClosureTimers
 
 let eventTrigger = CreateTrigger()
 let preplacedUnits = CreateGroup()
-unit eventUnit = null
+
+/* Unit stack for nested usage */
+unit array tempUnits
+var tempUnitsCount = 0
+
+function pushUnit(unit u)
+	tempUnits[tempUnitsCount] = u
+	tempUnitsCount++
+	
+function popUnit()
+	tempUnitsCount--
 
 /* @API */
 
 /** Returns the unit that caused the enter/leave event to happen */
 public function getEnterLeaveUnit() returns unit
-	return eventUnit
+	return tempUnits[tempUnitsCount - 1]
 
 /** Adds a callback that is run when a unit enters the map */
 public function onEnter(code c)
@@ -37,10 +47,10 @@ public function onLeave(code c)
 constant ABILITY_ID = compiletime(ABIL_ID_GEN.next())
 
 function prepareUnit(unit u)
-	eventUnit = u
 	u..addAbility(ABILITY_ID)..makeAbilityPermanent(ABILITY_ID, true)
+	pushUnit(u)
 	eventTrigger.evaluate()
-	eventUnit = null
+	popUnit()
 
 init
 	// Make the ability invisible to the player
@@ -48,11 +58,6 @@ init
 		players[i].setAbilityAvailable(ABILITY_ID, false)
 
 	nullTimer() ->
-		// Process preplaced units
-		preplacedUnits.enumUnitsInRect(boundRect)
-		ForGroup(preplacedUnits, () -> prepareUnit(GetEnumUnit()))
-		preplacedUnits..clear()..destr()
-
 		// Create the enter event
 		CreateTrigger()..registerEnterRegion(boundRegion, Filter(() -> prepareUnit(GetFilterUnit())))
 
@@ -60,9 +65,14 @@ init
 		registerPlayerUnitEvent(EVENT_PLAYER_UNIT_ISSUED_ORDER) ->
 			let leavingUnit = GetTriggerUnit()
 			if leavingUnit.getAbilityLevel(ABILITY_ID) == 0
-				eventUnit = leavingUnit
+				pushUnit(leavingUnit)
 				eventTrigger.execute()
-				eventUnit = null
+				popUnit()
+		
+		// Process preplaced units
+		preplacedUnits.enumUnitsInRect(boundRect)
+		ForGroup(preplacedUnits, () -> prepareUnit(GetEnumUnit()))
+		preplacedUnits..clear()..destr()
 
 @compiletime function generateAbility()
 	new AbilityDefinitionDefend(ABILITY_ID)
