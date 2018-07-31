@@ -93,7 +93,6 @@ public class LocalFiles
 			network.start() (NetworkResult status, Buffer data) ->
 				if status == NetworkResult.SUCCESS
 					enabledPlayers[i] = data.readBoolean()
-					print("checked local files for player " + i.toString() + ": " + enabledPlayers[i].toString())
 				else
 					enabledPlayers[i] = false
 
