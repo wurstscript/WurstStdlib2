@@ -531,6 +531,10 @@ public class StringBuffer extends AbstractBuffer
 		if SAFETY_CHECKS_ENABLED and length > MAX_BUFFER_SIZE
 			fail(BufferFailureMode.INTERNAL_ERROR, "trying to pop a string above max size")
 
+		// length 0 is a special case for a string, so just return it immediately
+		if length == 0
+			return ""
+
 		checkDataAvailable()
 		// if there isn't enough data in the readBuffer, load additional chunks
 		while isValid() and readBuffer.length() < length

@@ -4,6 +4,10 @@ import PreloadIO
 import ClosureTimers
 import Network
 import ErrorHandling
+import LinkedList
+
+interface LocalFilesCallback
+	function run()
 
 /**
 	Utility class used to check if the LocalFiles registry property of the
@@ -17,12 +21,16 @@ public class LocalFiles
 	private static constant testDestination = "localtest.txt"
 	private static constant fallbackDestination = "Logs\\localtest.txt"
 	private static constant testString = "test"
+	private static var callbacks = new LinkedList<LocalFilesCallback>
 
 	static var checkedAll = false
 	private static var checked = false
 	private static var enabled = false
 	private static var fallback = false
 	private static boolean array enabledPlayers
+
+	static function registerLocalFilesChecked(LocalFilesCallback cb)
+		callbacks.add(cb)
 
 	/** 
 		Checks whether Local Files are enabled for this local player. 
@@ -77,10 +85,11 @@ public class LocalFiles
 		let synchronizer = new SimpleSynchronizer()
 		check()
 
-		for i = 0 to bj_MAX_PLAYER_SLOTS
+		for i = 0 to bj_MAX_PLAYER_SLOTS - 1
 			enabledPlayers[i] = false
 			let network = new Network(players[i])
-			network.getData().writeBoolean(LocalFiles.isEnabled())
+			if localPlayer == players[i]
+				network.getData().writeBoolean(LocalFiles.isEnabled())
 			network.start() (NetworkResult status, Buffer data) ->
 				if status == NetworkResult.SUCCESS
 					enabledPlayers[i] = data.readBoolean()
@@ -92,6 +101,9 @@ public class LocalFiles
 
 		synchronizer.onSynced() ->
 			checkedAll = true
+
+			for cb in callbacks
+				cb.run()
 
 init
 	nullTimer(() -> LocalFiles.checkAll())
