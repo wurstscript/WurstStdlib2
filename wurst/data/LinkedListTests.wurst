@@ -82,7 +82,7 @@ function testClosures()
 	list.updateAll(i -> i * 2)
 	list.get(3).assertEquals(4*2)
 
-	list.removeWhen(i -> i > 4)
+	list.removeIf(i -> i > 4)
 	list.size().assertEquals(2)
 
 	let realList = list.map<real>(i -> i * 10.)
@@ -140,7 +140,7 @@ function testGenerics()
 	var list = new LinkedList<int>()
 	for i = 1 to 6
 		list.add(i)
-	list.removeWhen(i -> i < 3)
+	list.removeIf(i -> i < 3)
 	list.size().assertEquals(4)
 	list.get(2).assertEquals(5)
 
