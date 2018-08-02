@@ -1,5 +1,6 @@
 package Basics
 import public _Primitives
+import Player
 import NoWurst
 
 /* Map defaults */
@@ -22,6 +23,6 @@ public constant GHOST_INVIS_ID			= 'Agho'
 /** Id of Ghost (Invisible) */
 public constant GHOST_VIS_ID			= 'Aeth'
 /** Neutral Passive (grey) */
-public constant DUMMY_PLAYER 			= Player(PLAYER_NEUTRAL_PASSIVE)
+public constant DUMMY_PLAYER 			= players[PLAYER_NEUTRAL_PASSIVE]
 /** Neutral Hostile (darkgreen) */
-public constant DUMMY_HOSTILE_PLAYER 	= Player(PLAYER_NEUTRAL_AGGRESSIVE)
+public constant DUMMY_HOSTILE_PLAYER 	= players[PLAYER_NEUTRAL_AGGRESSIVE]
