@@ -243,7 +243,7 @@ public class LinkedList<T>
 	/** Returns a new list of the elements that satisfy the predicate */
 	function filter(LinkedListPredicate<T> predicate) returns LinkedList<T>
 		let result = copy()
-		result.removeWhen(t -> not predicate.isTrueFor(t))
+		result.removeIf(t -> not predicate.isTrueFor(t))
 		destroy predicate
 		return result
 
