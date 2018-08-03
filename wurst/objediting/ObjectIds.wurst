@@ -9,7 +9,8 @@ import TypeCasting
 
 constant CHARMAP = ".................................!.#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[.]^_`abcdefghijklmnopqrstuvwxyz{|}~................................................................................................................................."
 
-@deprecated("Use .toRawCode() instead.") public function int2fourchar(int value) returns string
+@deprecated("Use .toRawCode() instead.")
+public function int2fourchar(int value) returns string
 	return toRawCode(value)
 
 /** Convert a integer id value into a 4-letter id code. */
@@ -24,7 +25,8 @@ public function toRawCode(int value) returns string
 
 	return result
 
-@deprecated("Use .fromRawCode() instead.") public function fourchar2int(string value) returns int
+@deprecated("Use .fromRawCode() instead.")
+public function fourchar2int(string value) returns int
 	return fromRawCode(value)
 
 /** converts a 4-letter id code to an integer */
@@ -46,16 +48,6 @@ public function string.fromRawCode() returns int
 	
 public function int.toRawCode() returns string
 	return toRawCode(this)
-
-@test function test_idString2IdInteger()
-	fromRawCode("hfoo") .assertEquals('hfoo')
-	fromRawCode("abcd") .assertEquals('abcd')
-	fromRawCode("ABCD") .assertEquals('ABCD')
-	
-@test function test_idInteger2IdString()
-	toRawCode('hfoo') .assertEquals("hfoo")
-	toRawCode('abcd') .assertEquals("abcd")
-	toRawCode('ABCD') .assertEquals("ABCD")
 
 public function commaList(vararg int ids) returns string
 	let list = new LinkedList<int>
@@ -85,3 +77,13 @@ public function commaList(vararg string values) returns string
 		"self",
 		"structure"
 	).assertEquals("self,structure")
+
+@Test function test_idString2IdInteger()
+	fromRawCode("hfoo") .assertEquals('hfoo')
+	fromRawCode("abcd") .assertEquals('abcd')
+	fromRawCode("ABCD") .assertEquals('ABCD')
+	
+@Test function test_idInteger2IdString()
+	toRawCode('hfoo') .assertEquals("hfoo")
+	toRawCode('abcd') .assertEquals("abcd")
+	toRawCode('ABCD') .assertEquals("ABCD")
