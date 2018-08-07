@@ -113,6 +113,18 @@ public class Table
 	
 	function saveTrigger(int parentKey, trigger value)
 		ht.saveTriggerHandle( this castTo int, parentKey, value)
+		
+	function loadTriggerAction(int parentKey) returns triggeraction
+		return ht.loadTriggerActionHandle( this castTo int, parentKey)
+	
+	function saveTriggerAction(int parentKey, triggeraction value)
+		ht.saveTriggerActionHandle( this castTo int, parentKey, value)
+		
+	function loadTriggerCondition(int parentKey) returns triggercondition
+		return ht.loadTriggerConditionHandle( this castTo int, parentKey)
+	
+	function saveTriggerCondition(int parentKey, triggercondition value)
+		ht.saveTriggerConditionHandle( this castTo int, parentKey, value)
 			
 	function loadTimer(int parentKey) returns timer
 		return ht.loadTimerHandle( this castTo int, parentKey)
