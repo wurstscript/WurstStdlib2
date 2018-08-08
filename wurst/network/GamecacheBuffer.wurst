@@ -1,7 +1,6 @@
 package GamecacheBuffer
 import GamecacheKeys
 import Execute
-import Buffer
 import NetworkConfig
 import ErrorHandling
 
@@ -24,7 +23,6 @@ public class GamecacheBuffer
 	private int writeIndex = -1
 	private int readIndex  = -1
 	private BufferType bufferType
-	private BufferMode currentMode
 	private var syncCounter = 0
 
 	construct(gamecache gc, string parentKey, BufferType bufferType)

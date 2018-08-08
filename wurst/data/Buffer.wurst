@@ -479,9 +479,6 @@ public class StringBuffer extends AbstractBuffer
 		if not isDataAvailable()
 			fail(BufferFailureMode.EOF, "reached EOF")
 
-	private function getNextChunkSize() returns int
-		return chunks.getFirst().content.length()
-
 	// loads the next chunk into the buffer
 	private function nextChunk()
 		if chunks.isEmpty()
