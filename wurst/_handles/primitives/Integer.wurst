@@ -1,6 +1,5 @@
 package Integer
 import NoWurst
-import Wurstunit
 import Real
 
 public constant INT_MAX = 2147483647
@@ -48,8 +47,3 @@ public function int.lerp(int target, real alpha) returns int
 /** Checks if this int is between low and high value */
 public function int.isBetween(int low, int high) returns bool
 	return this >= low and this <= high
-	
-@test function test_clamp()
-	(-1).clamp(0, 10).assertEquals(0)
-	(11).clamp(0, 10).assertEquals(10)
-	(5).clamp(0, 10).assertEquals(5)
