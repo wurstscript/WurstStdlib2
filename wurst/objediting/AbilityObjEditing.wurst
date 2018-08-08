@@ -372,7 +372,7 @@ public class AbilityDefinition
 
 public class AbilityDefinitionTaunt extends AbilityDefinition
 	construct(int newAbilityId)
-		super(newAbilityId, 'Atau')
+		super(newAbilityId, AbilityIds.taunt)
 
 	function setPreferFriendlies(int level, int value)
 		def.setLvlDataInt("Tau2", level, 2, value)
@@ -399,7 +399,7 @@ public class AbilityDefinitionTaunt extends AbilityDefinition
 
 public class AbilityDefinitionPoisonArrows extends AbilityDefinition
 	construct(int newAbilityId)
-		super(newAbilityId, 'AEpa')
+		super(newAbilityId, AbilityIds.PoisonArrows)
 
 	function setAttackSpeedFactor(int level, real value)
 		def.setLvlDataUnreal("Poa3", level, 3, value)
@@ -474,7 +474,7 @@ public class AbilityDefinitionRangerColdArrows extends AbilityDefinition
 
 public class AbilityDefinitionSeaWitchTornado extends AbilityDefinition
 	construct(int newAbilityId)
-		super(newAbilityId, 'ANto')
+		super(newAbilityId, AbilityIds.Tornado)
 
 	function setSummonedUnitType(int level, string value)
 		def.setLvlDataString("Ntou", level, 0, value)
@@ -521,7 +521,7 @@ public class AbilityDefinitionAgilityBonusPlus4 extends AbilityDefinition
 
 public class AbilityDefinitionAlchemistTransmute extends AbilityDefinition
 	construct(int newAbilityId)
-		super(newAbilityId, 'ANtm')
+		super(newAbilityId, AbilityIds.transmute)
 
 	function setLumberCostFactor(int level, real value)
 		def.setLvlDataUnreal("Ntm2", level, 2, value)
@@ -584,8 +584,6 @@ public class AbilityDefinitionAgilityBonusPlus3 extends AbilityDefinition
 	function presetStrengthBonus(IntLevelClosure lc)
 		def.setLevelsDataInt("Istr", lvls, 3, lc)
 		addTooltipProperty("StrengthBonus", lc)
-
-		
 
 
 
@@ -686,7 +684,7 @@ public class AbilityDefinitionAgilityBonusPlus6 extends AbilityDefinition
 
 public class AbilityDefinitionBloodMageSiphonMana extends AbilityDefinition
 	construct(int newAbilityId)
-		super(newAbilityId, 'AHdr')
+		super(newAbilityId, AbilityIds.siphonMana)
 
 	function setBonusLifeDecay(int level, real value)
 		def.setLvlDataUnreal("Ndr7", level, 7, value)
@@ -884,7 +882,7 @@ public class AbilityDefinitionRoarcreepSkeletalOrc extends AbilityDefinition
 
 public class AbilityDefinitionTauntCreep extends AbilityDefinition
 	construct(int newAbilityId)
-		super(newAbilityId, 'ANta')
+		super(newAbilityId, AbilityIds.taunt1)
 
 	function setPreferFriendlies(int level, int value)
 		def.setLvlDataInt("Tau2", level, 2, value)
@@ -945,7 +943,7 @@ public class AbilityDefinitionRejuvinationFurbolg extends AbilityDefinition
 
 public class AbilityDefinitionPulverizecreep extends AbilityDefinition
 	construct(int newAbilityId)
-		super(newAbilityId, 'ACpv')
+		super(newAbilityId, AbilityIds.pulverize1)
 
 	function setHalfDamageRadius(int level, real value)
 		def.setLvlDataUnreal("War4", level, 4, value)
@@ -1129,7 +1127,7 @@ public class AbilityDefinitionBeastMasterStampede extends AbilityDefinition
 
 public class AbilityDefinitionFirelordSoulBurn extends AbilityDefinition
 	construct(int newAbilityId)
-		super(newAbilityId, 'ANso')
+		super(newAbilityId, AbilityIds.soulBurn)
 
 	function setAttackSpeedReduction(int level, real value)
 		def.setLvlDataUnreal("Nso5", level, 5, value)
@@ -1190,7 +1188,7 @@ public class AbilityDefinitionBeastMasterSummonQuilbeast extends AbilityDefiniti
 
 public class AbilityDefinitionFrenzy extends AbilityDefinition
 	construct(int newAbilityId)
-		super(newAbilityId, 'Afzy')
+		super(newAbilityId, AbilityIds.frenzy)
 
 	function setMovementSpeedIncrease(int level, real value)
 		def.setLvlDataUnreal("Blo2", level, 2, value)
@@ -1250,7 +1248,7 @@ public class AbilityDefinitionBeastMasterSummonBear extends AbilityDefinition
 
 public class AbilityDefinitionDarkRangerSilence extends AbilityDefinition
 	construct(int newAbilityId)
-		super(newAbilityId, 'ANsi')
+		super(newAbilityId, AbilityIds.silence)
 
 	function setAttackSpeedModifier(int level, real value)
 		def.setLvlDataUnreal("Nsi4", level, 4, value)
@@ -1405,7 +1403,7 @@ public class AbilityDefinitionSpiritPigcreep extends AbilityDefinition
 
 public class AbilityDefinitionUnstableConcoction extends AbilityDefinition
 	construct(int newAbilityId)
-		super(newAbilityId, 'Auco')
+		super(newAbilityId, AbilityIds.unstableConcoction)
 
 	function setPartialDamageAmount(int level, real value)
 		def.setLvlDataUnreal("Dda4", level, 4, value)
@@ -2169,7 +2167,7 @@ public class AbilityDefinitionThunderClapThunderLizard extends AbilityDefinition
 
 public class AbilityDefinitionWardenShadowStrike extends AbilityDefinition
 	construct(int newAbilityId)
-		super(newAbilityId, 'AEsh')
+		super(newAbilityId, AbilityIds.shadowStrike)
 
 	function setMovementSpeedFactor(int level, real value)
 		def.setLvlDataUnreal("Esh2", level, 2, value)
@@ -2210,7 +2208,7 @@ public class AbilityDefinitionWardenShadowStrike extends AbilityDefinition
 
 public class AbilityDefinitionBloodMageBanish extends AbilityDefinition
 	construct(int newAbilityId)
-		super(newAbilityId, 'AHbn')
+		super(newAbilityId, AbilityIds.banish)
 
 	function setAttackSpeedReduction(int level, real value)
 		def.setLvlDataUnreal("Hbn2", level, 2, value)
@@ -3505,7 +3503,7 @@ public class AbilityDefinitionKeeperoftheGroveTranquility extends AbilityDefinit
 
 public class AbilityDefinitionWindWalk extends AbilityDefinition
 	construct(int newAbilityId)
-		super(newAbilityId, 'ANwk')
+		super(newAbilityId, AbilityIds.windWalk1)
 
 	function setBackstabDamage(int level, real value)
 		def.setLvlDataUnreal("Owk3", level, 3, value)
@@ -3694,7 +3692,7 @@ public class AbilityDefinitionMonsooncreep extends AbilityDefinition
 
 public class AbilityDefinitionDevourMagic extends AbilityDefinition
 	construct(int newAbilityId)
-		super(newAbilityId, 'Advm')
+		super(newAbilityId, AbilityIds.devourMagic)
 
 	function setManaPerBuff(int level, real value)
 		def.setLvlDataUnreal("dvm4", level, 4, value)
@@ -4011,7 +4009,7 @@ public class AbilityDefinitionDetectMagicSentinel extends AbilityDefinition
 
 public class AbilityDefinitionFirelordVolcano extends AbilityDefinition
 	construct(int newAbilityId)
-		super(newAbilityId, 'ANvc')
+		super(newAbilityId, AbilityIds.Volcano)
 
 	function setDestructibleID(int level, string value)
 		def.setLvlDataString("Nvcu", level, 0, value)
@@ -4590,7 +4588,7 @@ public class AbilityDefinitionIntelligenceBonusPlus4 extends AbilityDefinition
 
 public class AbilityDefinitionFirelordSummonLavaSpawn extends AbilityDefinition
 	construct(int newAbilityId)
-		super(newAbilityId, 'ANlm')
+		super(newAbilityId, AbilityIds.summonLavaSpawn)
 
 	function setSummonedUnitCount(int level, int value)
 		def.setLvlDataInt("Hwe2", level, 1, value)
@@ -5038,7 +5036,7 @@ public class AbilityDefinitionHealCreepHigh extends AbilityDefinition
 
 public class AbilityDefinitionAuraSlow extends AbilityDefinition
 	construct(int newAbilityId)
-		super(newAbilityId, 'Aasl')
+		super(newAbilityId, AbilityIds.slowAura)
 
 	function setMovementSpeedFactor(int level, real value)
 		def.setLvlDataUnreal("Slo1", level, 1, value)
@@ -8615,7 +8613,7 @@ public class AbilityDefinitionMonsoon extends AbilityDefinition
 
 public class AbilityDefinitionInventory extends AbilityDefinition
 	construct(int newAbilityId)
-		super(newAbilityId, 'AInv')
+		super(newAbilityId, AbilityIds.inventory)
 
 	function setCanDropItems(int level, bool value)
 		def.setLvlDataBoolean("inv5", level, 5, value)
@@ -9793,7 +9791,7 @@ public class AbilityDefinitionAuraBrilliancecreep extends AbilityDefinition
 
 public class AbilityDefinitionIllidanChannel extends AbilityDefinition
 	construct(int newAbilityId)
-		super(newAbilityId, 'ANcl')
+		super(newAbilityId, AbilityIds.channel)
 
 	function setArtDuration(int level, real value)
 		def.setLvlDataUnreal("Ncl4", level, 4, value)
@@ -11736,7 +11734,7 @@ public class AbilityDefinitionItemPlaceMine extends AbilityDefinition
 
 public class AbilityDefinitionBloodMagePhoenix extends AbilityDefinition
 	construct(int newAbilityId)
-		super(newAbilityId, 'AHpx')
+		super(newAbilityId, AbilityIds.phoenix)
 
 	function setSummonedUnitCount(int level, int value)
 		def.setLvlDataInt("Hwe2", level, 1, value)
@@ -11756,7 +11754,7 @@ public class AbilityDefinitionBloodMagePhoenix extends AbilityDefinition
 
 public class AbilityDefinitionAlchemistAcidBomb extends AbilityDefinition
 	construct(int newAbilityId)
-		super(newAbilityId, 'ANab')
+		super(newAbilityId, AbilityIds.acidBomb)
 
 	function setDamageInterval(int level, real value)
 		def.setLvlDataUnreal("Nab6", level, 6, value)
@@ -15117,7 +15115,7 @@ public class AbilityDefinitionDetectSentryWard extends AbilityDefinition
 
 public class AbilityDefinitionPhoenixFire extends AbilityDefinition
 	construct(int newAbilityId)
-		super(newAbilityId, 'Apxf')
+		super(newAbilityId, AbilityIds.phoenixFire)
 
 	function setInitialDamage(int level, real value)
 		def.setLvlDataUnreal("pxf1", level, 1, value)
