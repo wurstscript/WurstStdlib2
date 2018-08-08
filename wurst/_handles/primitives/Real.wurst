@@ -38,6 +38,14 @@ public function real.ceil() returns int
 	if this > 0 and this - r != 0.
 		r += 1
 	return r
+	
+/** Limits the input real to the given range */
+public function real.clamp(real lowerBound, real higherBound) returns real
+	if this <= lowerBound
+        	return lowerBound
+    	else if this >= higherBound
+        	return highterBound
+    	return this
 
 /** Converts the input real to an int. This cuts off
 	the decimal digits. (1.9->1) */
