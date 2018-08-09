@@ -2,9 +2,9 @@ package PrimitivesTests
 
 @Test
 function testClamp()
-	(-1).clamp(0, 10).assertEquals(0)
-	(11).clamp(0, 10).assertEquals(10)
-	(5).clamp(0, 10).assertEquals(5)
+	(-1).toInt().clamp(0, 10).assertEquals(0)
+	(11).toInt().clamp(0, 10).assertEquals(10)
+	(5).toInt().clamp(0, 10).assertEquals(5)
 	(-1.5).clamp(-0.5, 1.5).assertEquals(-0.5)
 	(2.5).clamp(-0.5, 1.5).assertEquals(1.5)
 	(1.0).clamp(-0.5, 1.5).assertEquals(1.0)
