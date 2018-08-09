@@ -19,11 +19,7 @@ public function int.sign() returns int
 	
 /** Limits this int to the given range */
 public function int.clamp(int lowerBound, int higherBound) returns int
-	if this <= lowerBound
-		return lowerBound
-	else if this >= higherBound
-		return higherBound
-	return this
+	return (this <= lowerBound ? lowerBound : (this >= higherBound ? higherBound : this))
 
 /** Returns the int as real */
 public function int.toReal() returns real
