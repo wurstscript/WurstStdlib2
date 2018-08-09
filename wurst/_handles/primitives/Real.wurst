@@ -41,11 +41,7 @@ public function real.ceil() returns int
 	
 /** Limits the input real to the given range */
 public function real.clamp(real lowerBound, real higherBound) returns real
-	if this <= lowerBound
-		return lowerBound
-	else if this >= higherBound
-		return higherBound
-	return this
+	return (this <= lowerBound ? lowerBound : (this >= higherBound ? higherBound : this))
 
 /** Converts the input real to an int. This cuts off
 	the decimal digits. (1.9->1) */
