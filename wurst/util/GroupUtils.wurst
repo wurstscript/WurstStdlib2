@@ -18,7 +18,7 @@ import Maths
 
 /** The max number of recyclable groups. Even if this number is reached, 
     the system will create new groups on following requests, but they won't be recyclable.
-    The maximum number for this setting is 8191. */
+    The maximum number for this setting is JASS_MAX_ARRAY_SIZE - 1. */
 @configurable constant GROUP_NUMBER_LIMIT = 1024
 
 /** The number of groups created when more are needed */
@@ -78,7 +78,7 @@ var shownMaxError = false
 
 function createGroups(int number)
     let maxCreatePerCycle = 256
-    let actualLimit = max(8191, GROUP_NUMBER_LIMIT)
+    let actualLimit = max(JASS_MAX_ARRAY_SIZE - 1, GROUP_NUMBER_LIMIT)
     let numTarget = numTotal + number 
     let overflow  = max(0, numTarget - actualLimit)
     var toCreate  = max(0, numTarget - overflow)

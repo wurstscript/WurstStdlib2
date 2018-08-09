@@ -19,27 +19,13 @@ function StringBuffer.transferValueTo(HashBuffer sink)
 		default
 
 public function StringBuffer.transfer(HashBuffer sink)
-	while this.canRead()
-		execute() ->
-			var counter = 0
-			while this.canRead() and counter < 64
-				this.transferValueTo(sink)
-				counter++
-
+	executeWhile(64, () -> this.canRead()) ->
+		this.transferValueTo(sink)
 
 public function StringBuffer.populateFromFile(FileReader reader)
-	while reader.canRead()
-		execute() ->
-			var counter = 0
-			while reader.canRead()and counter < 64
-				this.writeChunk(reader.readLine())
-				counter++
-
+	executeWhile(64, () -> reader.canRead()) ->
+		this.writeChunk(reader.readLine())
 
 public function FileWriter.populateFromBuffer(StringBuffer buffer)
-	while buffer.hasChunk()
-		execute() ->
-			var counter = 0
-			while buffer.hasChunk() and counter < 64
-				this.writeLine(buffer.readChunk())
-				counter++	
+	executeWhile(64, () -> buffer.hasChunk()) ->
+		this.writeLine(buffer.readChunk())

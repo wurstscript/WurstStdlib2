@@ -116,14 +116,9 @@ public class GamecacheBuffer
 		let synchronizer = getSynchronizerFunction()
 		syncCounter = 0
 
-		while syncCounter <= writeIndex
-			execute() ->
-				var i = 0
-				// keep syncing until we hit the limit or finish
-				while syncCounter <= writeIndex and i < DATA_PER_EXECUTE
-					synchronizer.sync(GamecacheKeys.get(syncCounter))
-					syncCounter++
-					i++
+		executeWhile(DATA_PER_EXECUTE, () -> syncCounter <= writeIndex) () ->
+			synchronizer.sync(GamecacheKeys.get(syncCounter))
+			syncCounter++
 
 		destroy synchronizer
 

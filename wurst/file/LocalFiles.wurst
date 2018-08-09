@@ -106,5 +106,5 @@ public class LocalFiles
 				cb.run()
 
 init
-	nullTimer(() -> LocalFiles.checkAll())
+	doAfter(1, () -> LocalFiles.checkAll())
 	

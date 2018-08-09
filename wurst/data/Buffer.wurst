@@ -290,7 +290,6 @@ public class HashBuffer extends AbstractBuffer
 			error("HashBuffer: trying to read non-present boolean at pos#" + booleanReadIndex.toString())
 		return buffer.loadBoolean(booleanReadIndex)
 
-
 	override function clear()
 		buffer.flush()
 
