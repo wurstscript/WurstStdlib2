@@ -16,6 +16,10 @@ interface LocalFilesCallback
 	In other words, this checks if the user can reliably write/read files.
 	This also includes a fallback mechanism for the 1.26 patch and before,
 	which uses the Logs\ folder to write files in.
+
+	NOTE: Since patch 1.30, the requirement for the Allow Local Files registry
+	setting has been lifted. This class will always succeed for future versions.
+	
 **/
 public class LocalFiles
 	private static constant testDestination = "localtest.txt"

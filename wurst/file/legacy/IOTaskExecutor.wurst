@@ -7,6 +7,9 @@ import TimerUtils
 import ErrorHandling
 import GameTimer
 
+abstract class Executor
+	use ExecuteModule
+
 /** Simple interface of an IO task */
 public interface IOTask
 	function run()
@@ -60,13 +63,13 @@ public abstract class AbstractIOTaskExecutor implements IOTaskExecutor
 			error("AbstractIOTaskExecutor: trying to execute in a finished executor")
 
 		if not taskQueue.isEmpty()
-			execute() ->
+			Executor.execute() ->
 				let task = taskQueue.dequeue()
 				task.run()
 				destroy task
 		else
 			if onCompleteTask != null
-				execute(() -> onCompleteTask.run())
+				Executor.execute(() -> onCompleteTask.run())
 				destroy onCompleteTask
 				onCompleteTask = null
 			finished = true

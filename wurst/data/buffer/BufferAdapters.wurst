@@ -4,6 +4,9 @@ import Buffer
 import Execute
 import MultifileIO
 
+abstract class Executor
+	use ExecuteModule
+
 function StringBuffer.transferValueTo(HashBuffer sink)
 	let valueType = this.peekType()
 
@@ -19,13 +22,13 @@ function StringBuffer.transferValueTo(HashBuffer sink)
 		default
 
 public function StringBuffer.transfer(HashBuffer sink)
-	executeWhile(64, () -> this.canRead()) ->
+	Executor.executeWhile(64, () -> this.canRead()) ->
 		this.transferValueTo(sink)
 
 public function StringBuffer.populateFromFile(FileReader reader)
-	executeWhile(64, () -> reader.canRead()) ->
+	Executor.executeWhile(64, () -> reader.canRead()) ->
 		this.writeChunk(reader.readLine())
 
 public function FileWriter.populateFromBuffer(StringBuffer buffer)
-	executeWhile(64, () -> buffer.hasChunk()) ->
+	Executor.executeWhile(64, () -> buffer.hasChunk()) ->
 		this.writeLine(buffer.readChunk())

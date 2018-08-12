@@ -4,6 +4,9 @@ import Execute
 import NetworkConfig
 import ErrorHandling
 
+abstract class Executor
+	use ExecuteModule
+
 interface SynchronizerFunction
 	function sync(string key)
 
@@ -43,16 +46,16 @@ public class GamecacheBuffer
 
 	// these functions will inline with uncheckedDispatch on
 	private function checkType(BufferType toCheck)
-		if SAFETY_CHECKS_ENABLED and bufferType != toCheck
+		if NW_SAFETY_CHECKS_ENABLED and bufferType != toCheck
 			error("GamecacheBuffer: invalid buffer usage - mismatched type")
 
 	private function advanceWriteIndex()
-		if SAFETY_CHECKS_ENABLED and writeIndex + 1 >= GamecacheKeys.count
+		if NW_SAFETY_CHECKS_ENABLED and writeIndex + 1 >= GamecacheKeys.count
 			error("GamecacheBuffer: trying to write out of available keys bounds")
 		writeIndex++
 	
 	private function advanceReadIndex()
-		if SAFETY_CHECKS_ENABLED and readIndex + 1 >= GamecacheKeys.count
+		if NW_SAFETY_CHECKS_ENABLED and readIndex + 1 >= GamecacheKeys.count
 			error("GamecacheBuffer: trying to read out of available keys bounds")
 		readIndex++
 
@@ -116,7 +119,7 @@ public class GamecacheBuffer
 		let synchronizer = getSynchronizerFunction()
 		syncCounter = 0
 
-		executeWhile(DATA_PER_EXECUTE, () -> syncCounter <= writeIndex) () ->
+		Executor.executeWhile(DATA_PER_EXECUTE, () -> syncCounter <= writeIndex) () ->
 			synchronizer.sync(GamecacheKeys.get(syncCounter))
 			syncCounter++
 

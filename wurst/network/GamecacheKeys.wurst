@@ -4,6 +4,9 @@ import Execute
 import ErrorHandling
 import NetworkConfig
 
+abstract class Executor
+	use ExecuteModule
+
 // characters that can be used as GC keys
 // their amount also determines the size of a single 'round'
 constant GC_KEYS = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`{|}~"
@@ -25,11 +28,11 @@ public class GamecacheKeys
 				count++
 		else
 			for i = 0 to GC_KEYS_LENGTH - 1
-				execute(() -> precompute(prefix + GC_KEYS.charAt(i), depth - 1))
+				Executor.execute(() -> precompute(prefix + GC_KEYS.charAt(i), depth - 1))
 
 	protected static function precompute(int length)
 		precompute("", length - 1)
 		
 init
 	for i = 1 to MAX_CHARACTERS_PER_KEY - 1
-		execute(() -> GamecacheKeys.precompute(i))
+		Executor.execute(() -> GamecacheKeys.precompute(i))

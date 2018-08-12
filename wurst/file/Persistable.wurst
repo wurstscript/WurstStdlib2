@@ -6,6 +6,9 @@ import BufferAdapters
 import public Buffer
 import LocalFiles
 
+abstract class Executor
+	use ExecuteModule
+
 /**
 	Represents the various states of a persistable class load.
 	SUCCESS - The class has successfully loaded from disk.
@@ -148,15 +151,17 @@ class PersistentStore
 				// a boolean for keeping track of whether the load was succesful or not
 				network.getData().writeBoolean(true)
 				// read the data from the file into the buffer, and then transfer it into the network's buffer
-				var populateSuccess = false
-				var transferSuccess = false
+				boolean populateSuccess
+				boolean transferSuccess
 
-				populateSuccess = try() ->
+				populateSuccess = Executor.try() ->
 					buffer.populateFromFile(reader)
 
 				if populateSuccess
-					transferSuccess = try() -> 
+					transferSuccess = Executor.try() -> 
 						buffer.transfer(network.getData())
+				else
+					transferSuccess = false
 						
 				// if there was an error during transfer or loading, we scrap the data...
 				if (not populateSuccess) or (not transferSuccess) or (not buffer.isValid())
@@ -184,7 +189,7 @@ class PersistentStore
 					
 					if decodeSuccess
 						// if the deserialization has failed for some reason, we need to catch that
-						let deserializeSuccess = try(() -> entity.deserialize(buffer))
+						let deserializeSuccess = Executor.try(() -> entity.deserialize(buffer))
 						if not deserializeSuccess
 							loadStatus = LoadStatus.FAIL_DESERIALIZE
 					else
@@ -203,7 +208,7 @@ class PersistentStore
 			let buffer = new StringBuffer(MAX_PACKET_LENGTH)
 
 			// write the entity into the buffer
-			execute(() -> buffer.write(entity))
+			Executor.execute(() -> buffer.write(entity))
 			// flush any remaining data into buffer (mandatory for StringBuffer)
 			buffer.flush()
 			// transfer the data into the writer and destroy the buffer

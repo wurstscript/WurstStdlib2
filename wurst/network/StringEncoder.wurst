@@ -5,6 +5,9 @@ import HashMap
 import ErrorHandling
 import NetworkConfig
 
+abstract class Executor
+	use ExecuteModule
+
 // characters that can be sent over the network
 public constant STRING_ALPHABET = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~"
 public constant STRING_ALPHABET_LENGTH = compiletime(STRING_ALPHABET.length())
@@ -23,7 +26,7 @@ function getIndexFromChar(string c) returns int
 	else
 		hash = c.getHash()
 
-	if SAFETY_CHECKS_ENABLED and not alphabetLookup.has(hash)
+	if NW_SAFETY_CHECKS_ENABLED and not alphabetLookup.has(hash)
 		error("Network: trying to get index from invalid character '" + c + "'")
 
 	return alphabetLookup.get(hash)
@@ -49,8 +52,8 @@ function testCollisions()
 			Log.error("This is a BAD thing and you should report it to wurst devs!")
 
 init
-	execute(() -> precomputeLookup())
-	execute(() -> testCollisions())
+	Executor.execute(() -> precomputeLookup())
+	Executor.execute(() -> testCollisions())
 /**
 	Utility class to convert a string to/from a series of ints corellating to positions in STRING_ALPHABET.
 **/
@@ -72,7 +75,7 @@ public class StringEncoder
 		buffer.writeInt(length)
 		asciiIntCount++
 		
-		executeWhile(CHARS_PER_ENCODE_DECODE, () -> counter < length) ->
+		Executor.executeWhile(CHARS_PER_ENCODE_DECODE, () -> counter < length) ->
 			buffer.writeInt(getIndexFromChar(value.charAt(counter)))
 			counter++
 			asciiIntCount++
@@ -83,7 +86,7 @@ public class StringEncoder
 		asciiIntCount--
 		counter = 0
 
-		executeWhile(CHARS_PER_ENCODE_DECODE, () -> counter < length) ->
+		Executor.executeWhile(CHARS_PER_ENCODE_DECODE, () -> counter < length) ->
 			currentValue += getCharFromIndex(buffer.readIntUnsafe())
 			counter++
 			asciiIntCount--
@@ -91,10 +94,10 @@ public class StringEncoder
 		return currentValue
 
 	function encode()
-		executeWhile(DATA_PER_EXECUTE, () -> stringCount > 0, () -> encodeString(popString()))
+		Executor.executeWhile(DATA_PER_EXECUTE, () -> stringCount > 0, () -> encodeString(popString()))
 
 	function decode()
-		executeWhile(DATA_PER_EXECUTE, () -> asciiIntCount > 0, () -> pushString(decodeString()))
+		Executor.executeWhile(DATA_PER_EXECUTE, () -> asciiIntCount > 0, () -> pushString(decodeString()))
 
 	function pushString(string value)
 		stringCount++
