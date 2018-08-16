@@ -147,7 +147,7 @@ class PersistentStore
 	
 		if localPlayer == owner
 			reader.load() _status ->
-				var buffer = new StringBuffer(MAX_PACKET_LENGTH)
+				var buffer = new OrderedStringBuffer(MAX_PACKET_LENGTH)
 				// a boolean for keeping track of whether the load was succesful or not
 				network.getData().writeBoolean(true)
 				// read the data from the file into the buffer, and then transfer it into the network's buffer
@@ -205,11 +205,11 @@ class PersistentStore
 
 		if localPlayer == owner
 			writer = new FileWriter(entity.getPath(), entity.getIODelay())
-			let buffer = new StringBuffer(MAX_PACKET_LENGTH)
+			let buffer = new OrderedStringBuffer(MAX_PACKET_LENGTH)
 
 			// write the entity into the buffer
 			Executor.execute(() -> buffer.write(entity))
-			// flush any remaining data into buffer (mandatory for StringBuffer)
+			// flush any remaining data into buffer (mandatory for OrderedStringBuffer)
 			buffer.flush()
 			// transfer the data into the writer and destroy the buffer
 			writer.populateFromBuffer(buffer)

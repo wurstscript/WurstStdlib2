@@ -3,11 +3,12 @@ package BufferAdapters
 import Buffer
 import Execute
 import MultifileIO
+import Encryptor
 
 abstract class Executor
 	use ExecuteModule
 
-function StringBuffer.transferValueTo(HashBuffer sink)
+function OrderedStringBuffer.transferValueTo(HashBuffer sink)
 	let valueType = this.peekType()
 
 	switch valueType
@@ -21,14 +22,14 @@ function StringBuffer.transferValueTo(HashBuffer sink)
 			sink.writeBoolean(this.readBoolean())
 		default
 
-public function StringBuffer.transfer(HashBuffer sink)
+public function OrderedStringBuffer.transfer(HashBuffer sink)
 	Executor.executeWhile(64, () -> this.canRead()) ->
 		this.transferValueTo(sink)
 
-public function StringBuffer.populateFromFile(FileReader reader)
+public function OrderedStringBuffer.populateFromFile(FileReader reader)
 	Executor.executeWhile(64, () -> reader.canRead()) ->
-		this.writeChunk(reader.readLine())
+		this.pushChunk(reader.readLine())
 
-public function FileWriter.populateFromBuffer(StringBuffer buffer)
+public function FileWriter.populateFromBuffer(OrderedStringBuffer buffer)
 	Executor.executeWhile(64, () -> buffer.hasChunk()) ->
-		this.writeLine(buffer.readChunk())
+		this.writeLine(buffer.popChunk())
