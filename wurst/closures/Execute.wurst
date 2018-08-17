@@ -7,9 +7,6 @@ import ErrorHandling
 	the primary use of which is to reset the OP limit.
 **/
 
-public module ExecuteModule
-	function dummy()
-
 public interface ForForceCallback
 	function run()
 
@@ -17,7 +14,6 @@ let executeForce = CreateForce()
 
 init
 	executeForce.addPlayer(localPlayer)
-	callFunctionsWithAnnotation("executeInit")
 
 function executeCurrentCallback()
 	lastError = ""
