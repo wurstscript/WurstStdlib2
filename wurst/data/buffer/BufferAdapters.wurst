@@ -4,9 +4,6 @@ import Buffer
 import Execute
 import MultifileIO
 
-abstract class Executor
-	use ExecuteModule
-
 function OrderedStringBuffer.transferValueTo(HashBuffer sink)
 	let valueType = this.peekType()
 
