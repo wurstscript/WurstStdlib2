@@ -3,7 +3,6 @@ package BufferAdapters
 import Buffer
 import Execute
 import MultifileIO
-import Encryptor
 
 abstract class Executor
 	use ExecuteModule
@@ -23,13 +22,13 @@ function OrderedStringBuffer.transferValueTo(HashBuffer sink)
 		default
 
 public function OrderedStringBuffer.transfer(HashBuffer sink)
-	Executor.executeWhile(64, () -> this.canRead()) ->
+	executeWhile(64, () -> this.canRead()) ->
 		this.transferValueTo(sink)
 
 public function OrderedStringBuffer.populateFromFile(FileReader reader)
-	Executor.executeWhile(64, () -> reader.canRead()) ->
+	executeWhile(64, () -> reader.canRead()) ->
 		this.pushChunk(reader.readLine())
 
 public function FileWriter.populateFromBuffer(OrderedStringBuffer buffer)
-	Executor.executeWhile(64, () -> buffer.hasChunk()) ->
+	executeWhile(64, () -> buffer.hasChunk()) ->
 		this.writeLine(buffer.popChunk())

@@ -52,8 +52,8 @@ function testCollisions()
 			Log.error("This is a BAD thing and you should report it to wurst devs!")
 
 init
-	Executor.execute(() -> precomputeLookup())
-	Executor.execute(() -> testCollisions())
+	execute(() -> precomputeLookup())
+	execute(() -> testCollisions())
 /**
 	Utility class to convert a string to/from a series of ints corellating to positions in STRING_ALPHABET.
 **/
@@ -75,7 +75,7 @@ public class StringEncoder
 		buffer.writeInt(length)
 		asciiIntCount++
 		
-		Executor.executeWhile(CHARS_PER_ENCODE_DECODE, () -> counter < length) ->
+		executeWhile(CHARS_PER_ENCODE_DECODE, () -> counter < length) ->
 			buffer.writeInt(getIndexFromChar(value.charAt(counter)))
 			counter++
 			asciiIntCount++
@@ -86,7 +86,7 @@ public class StringEncoder
 		asciiIntCount--
 		counter = 0
 
-		Executor.executeWhile(CHARS_PER_ENCODE_DECODE, () -> counter < length) ->
+		executeWhile(CHARS_PER_ENCODE_DECODE, () -> counter < length) ->
 			currentValue += getCharFromIndex(buffer.readIntUnsafe())
 			counter++
 			asciiIntCount--
@@ -94,10 +94,10 @@ public class StringEncoder
 		return currentValue
 
 	function encode()
-		Executor.executeWhile(DATA_PER_EXECUTE, () -> stringCount > 0, () -> encodeString(popString()))
+		executeWhile(DATA_PER_EXECUTE, () -> stringCount > 0, () -> encodeString(popString()))
 
 	function decode()
-		Executor.executeWhile(DATA_PER_EXECUTE, () -> asciiIntCount > 0, () -> pushString(decodeString()))
+		executeWhile(DATA_PER_EXECUTE, () -> asciiIntCount > 0, () -> pushString(decodeString()))
 
 	function pushString(string value)
 		stringCount++

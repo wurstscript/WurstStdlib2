@@ -154,11 +154,11 @@ class PersistentStore
 				boolean populateSuccess
 				boolean transferSuccess
 
-				populateSuccess = Executor.try() ->
+				populateSuccess = try() ->
 					buffer.populateFromFile(reader)
 
 				if populateSuccess
-					transferSuccess = Executor.try() -> 
+					transferSuccess = try() -> 
 						buffer.transfer(network.getData())
 				else
 					transferSuccess = false
@@ -189,7 +189,7 @@ class PersistentStore
 					
 					if decodeSuccess
 						// if the deserialization has failed for some reason, we need to catch that
-						let deserializeSuccess = Executor.try(() -> entity.deserialize(buffer))
+						let deserializeSuccess = try(() -> entity.deserialize(buffer))
 						if not deserializeSuccess
 							loadStatus = LoadStatus.FAIL_DESERIALIZE
 					else
@@ -208,7 +208,7 @@ class PersistentStore
 			let buffer = new OrderedStringBuffer(MAX_PACKET_LENGTH)
 
 			// write the entity into the buffer
-			Executor.execute(() -> buffer.write(entity))
+			execute(() -> buffer.write(entity))
 			// flush any remaining data into buffer (mandatory for OrderedStringBuffer)
 			buffer.flush()
 			// transfer the data into the writer and destroy the buffer

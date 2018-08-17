@@ -281,7 +281,7 @@ public class Network
 		if localPlayer == sender
 			// push all strings into the string encoder
 
-			Executor.executeWhile(DATA_PER_EXECUTE, () -> dataBuffer.hasString()) ->
+			executeWhile(DATA_PER_EXECUTE, () -> dataBuffer.hasString()) ->
 				stringEncoder.pushString(dataBuffer.readString())
 			
 
@@ -335,49 +335,49 @@ public class Network
 	// sorry, but this is needed to avoid hitting the OP limit without too much of a performance hit
 
 	private function writeInts()
-		Executor.executeWhile(DATA_PER_EXECUTE, () -> counters.ints < meta.ints and gcIntBuffer.getRemainingWrite() > 0) ->
+		executeWhile(DATA_PER_EXECUTE, () -> counters.ints < meta.ints and gcIntBuffer.getRemainingWrite() > 0) ->
 			gcIntBuffer.writeInt(dataBuffer.readIntUnsafe())
 			counters.ints++
 		
 
 	private function readInts()
-		Executor.executeWhile(DATA_PER_EXECUTE, () -> counters.ints < meta.ints and gcIntBuffer.getRemainingRead() > 0) ->
+		executeWhile(DATA_PER_EXECUTE, () -> counters.ints < meta.ints and gcIntBuffer.getRemainingRead() > 0) ->
 			dataBuffer.writeInt(gcIntBuffer.readInt())
 			counters.ints++
 		
 
 	private function writeReals()
-		Executor.executeWhile(DATA_PER_EXECUTE, () -> counters.reals < meta.reals and gcRealBuffer.getRemainingWrite() > 0) ->
+		executeWhile(DATA_PER_EXECUTE, () -> counters.reals < meta.reals and gcRealBuffer.getRemainingWrite() > 0) ->
 			gcRealBuffer.writeReal(dataBuffer.readRealUnsafe())
 			counters.reals++
 		
 
 	private function readReals()
-		Executor.executeWhile(DATA_PER_EXECUTE, () -> counters.reals < meta.reals and gcRealBuffer.getRemainingRead() > 0) ->
+		executeWhile(DATA_PER_EXECUTE, () -> counters.reals < meta.reals and gcRealBuffer.getRemainingRead() > 0) ->
 			dataBuffer.writeReal(gcRealBuffer.readReal())
 			counters.reals++
 		
 
 	private function writeBooleans()
-		Executor.executeWhile(DATA_PER_EXECUTE, () -> counters.booleans < meta.booleans and gcBooleanBuffer.getRemainingWrite() > 0) ->
+		executeWhile(DATA_PER_EXECUTE, () -> counters.booleans < meta.booleans and gcBooleanBuffer.getRemainingWrite() > 0) ->
 			gcBooleanBuffer.writeBoolean(dataBuffer.readBooleanUnsafe())
 			counters.booleans++
 		
 
 	private function readBooleans()
-		Executor.executeWhile(DATA_PER_EXECUTE, () -> counters.booleans < meta.booleans and gcBooleanBuffer.getRemainingRead() > 0) ->
+		executeWhile(DATA_PER_EXECUTE, () -> counters.booleans < meta.booleans and gcBooleanBuffer.getRemainingRead() > 0) ->
 			dataBuffer.writeBoolean(gcBooleanBuffer.readBoolean())
 			counters.booleans++
 		
 
 	private function writeStrings()
-		Executor.executeWhile(DATA_PER_EXECUTE, () -> counters.asciiInts < meta.asciiInts and gcStringBuffer.getRemainingWrite() > 0) ->
+		executeWhile(DATA_PER_EXECUTE, () -> counters.asciiInts < meta.asciiInts and gcStringBuffer.getRemainingWrite() > 0) ->
 			gcStringBuffer.writeInt(stringEncoder.popInt())
 			counters.asciiInts++
 		
 
 	private function readStrings()
-		Executor.executeWhile(DATA_PER_EXECUTE, () -> counters.asciiInts < meta.asciiInts and gcStringBuffer.getRemainingRead() > 0) ->
+		executeWhile(DATA_PER_EXECUTE, () -> counters.asciiInts < meta.asciiInts and gcStringBuffer.getRemainingRead() > 0) ->
 			stringEncoder.pushInt(gcStringBuffer.readInt())
 			counters.asciiInts++
 		
@@ -450,7 +450,7 @@ public class Network
 		counters.syncs++
 		
 		if counters.syncs < meta.syncs
-			Executor.execute(() -> sendRound())
+			execute(() -> sendRound())
 		else
 			// if this is the last round, finalize and call the callback
 			if localPlayer != sender
@@ -459,7 +459,7 @@ public class Network
 
 				dataBuffer.setMode(BufferMode.WRITE)
 
-				Executor.executeWhile(DATA_PER_EXECUTE, () -> stringEncoder.getStringCount() > 0) ->
+				executeWhile(DATA_PER_EXECUTE, () -> stringEncoder.getStringCount() > 0) ->
 					dataBuffer.writeString(stringEncoder.popString())
 				
 

@@ -28,11 +28,11 @@ public class GamecacheKeys
 				count++
 		else
 			for i = 0 to GC_KEYS_LENGTH - 1
-				Executor.execute(() -> precompute(prefix + GC_KEYS.charAt(i), depth - 1))
+				execute(() -> precompute(prefix + GC_KEYS.charAt(i), depth - 1))
 
 	protected static function precompute(int length)
 		precompute("", length - 1)
 		
 init
 	for i = 1 to MAX_CHARACTERS_PER_KEY - 1
-		Executor.execute(() -> GamecacheKeys.precompute(i))
+		execute(() -> GamecacheKeys.precompute(i))

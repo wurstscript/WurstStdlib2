@@ -397,5 +397,5 @@ public class OrderedStringBuffer extends AbstractStringBuffer
 			default
 
 	override function moveTo(Buffer buffer)
-		Executor.executeWhile(64, () -> this.canRead()) ->
+		executeWhile(64, () -> this.canRead()) ->
 			this.transferValueTo(buffer)

@@ -63,13 +63,13 @@ public abstract class AbstractIOTaskExecutor implements IOTaskExecutor
 			error("AbstractIOTaskExecutor: trying to execute in a finished executor")
 
 		if not taskQueue.isEmpty()
-			Executor.execute() ->
+			execute() ->
 				let task = taskQueue.dequeue()
 				task.run()
 				destroy task
 		else
 			if onCompleteTask != null
-				Executor.execute(() -> onCompleteTask.run())
+				execute(() -> onCompleteTask.run())
 				destroy onCompleteTask
 				onCompleteTask = null
 			finished = true

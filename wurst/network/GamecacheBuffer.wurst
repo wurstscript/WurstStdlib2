@@ -119,7 +119,7 @@ public class GamecacheBuffer
 		let synchronizer = getSynchronizerFunction()
 		syncCounter = 0
 
-		Executor.executeWhile(DATA_PER_EXECUTE, () -> syncCounter <= writeIndex) () ->
+		executeWhile(DATA_PER_EXECUTE, () -> syncCounter <= writeIndex) () ->
 			synchronizer.sync(GamecacheKeys.get(syncCounter))
 			syncCounter++
 
