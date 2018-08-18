@@ -121,7 +121,7 @@ function executeWhileInternal(int resetCount, LimitedExecuteCondition condition,
 			executeWhileInternal(resetCount, condition, action)  
 	
 /** 
-	This is an utility function which you can use to process arbitrarily large loops. 
+	This is a utility function which you can use to process arbitrarily large loops. 
 	It functions like a while loop that will run action.run() while condition.check() == true, 
 	however it will reset the OP limit each time after the specified amount of resetCount.
 **/ 
