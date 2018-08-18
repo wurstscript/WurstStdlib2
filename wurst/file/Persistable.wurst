@@ -148,10 +148,9 @@ class PersistentStore
 				// a boolean for keeping track of whether the load was succesful or not
 				network.getData().writeBoolean(true)
 				// read the data from the file into the buffer, and then transfer it into the network's buffer
-				boolean populateSuccess
 				boolean transferSuccess
 
-				populateSuccess = try() ->
+				var populateSuccess = try() ->
 					buffer.populateFromFile(reader)
 
 				if populateSuccess
