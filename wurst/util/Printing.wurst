@@ -1,7 +1,6 @@
 package Printing
 import NoWurst
 import Player
-import MagicFunctions
 
 @configurable public var DEBUG_LEVEL = Loglevel.INFO
 @configurable public var DEBUG_MSG_DURATION = 45.
@@ -31,28 +30,23 @@ public function Loglevel.getTag() returns string
 public class Log
 	/** Prints a trace logmessage */
 	static function trace(string msg)
-		if (DEBUG_LEVEL castTo int) <= (Loglevel.TRACE castTo int)
-			printLogInternal(localPlayer, compiletime(Loglevel.TRACE.getTag()), msg)
+		printLog(localPlayer, Loglevel.TRACE, msg)
 
 	/** Prints a debug logmessage */
 	static function debug(string msg)
-		if (DEBUG_LEVEL castTo int) <= (Loglevel.DEBUG castTo int)
-			printLogInternal(localPlayer, compiletime(Loglevel.DEBUG.getTag()), msg)
+		printLog(localPlayer, Loglevel.DEBUG, msg)
 
 	/** Prints a info logmessage*/
 	static function info(string msg)
-		if (DEBUG_LEVEL castTo int) <= (Loglevel.INFO castTo int)
-			printLogInternal(localPlayer, compiletime(Loglevel.INFO.getTag()), msg)
+		printLog(localPlayer, Loglevel.INFO, msg)
 
 	/** Prints a warning logmessage */
 	static function warn(string msg)
-		if (DEBUG_LEVEL castTo int) <= (Loglevel.WARNING castTo int)
-			printLogInternal(localPlayer, compiletime(Loglevel.WARNING.getTag()), msg)
+		printLog(localPlayer, Loglevel.WARNING, msg)
 	
 	/** Prints a warning logmessage */
 	static function error(string msg)
-		if (DEBUG_LEVEL castTo int) <= (Loglevel.ERROR castTo int)
-			printLogInternal(localPlayer, compiletime(Loglevel.ERROR.getTag()), msg)
+		printLog(localPlayer, Loglevel.ERROR, msg)
 
 	static function setLevel(Loglevel lvl)
 		DEBUG_LEVEL = lvl
@@ -80,16 +74,13 @@ public function print(bool msg)
 
 /** Prints a special motification-message */
 public function printLog(Loglevel loglvl, string msg)
-	printLogInternal(localPlayer, loglvl.getTag(), msg)
+	printLog(localPlayer, loglvl, msg)
 		
 public function printLog(player showTo, Loglevel loglvl, string msg)
 	if (DEBUG_LEVEL castTo int) <= (loglvl castTo int)
-		printLogInternal(showTo, loglvl.getTag(), msg)
-
-function printLogInternal(player showTo, string prefix, string msg)
-	let compositeMsg = prefix + " - " + msg
-	DisplayTimedTextToPlayer(showTo, 0., 0., DEBUG_MSG_DURATION, compositeMsg)
-
+		let compositeMsg = loglvl.getTag() + " - " + msg
+		DisplayTimedTextToPlayer(showTo, 0., 0., DEBUG_MSG_DURATION, compositeMsg)
+	
 /** Prints a simple message that is shown for the given duration */
 public function printTimed(string msg, real duration)
 	DisplayTimedTextToPlayer(localPlayer, 0., 0., duration, msg)
@@ -103,4 +94,3 @@ public function printTimedToPlayerClear(string msg, real duration, player p)
 	if localPlayer == p
 		ClearTextMessages()
 	DisplayTimedTextToPlayer(p, 0., 0., duration, msg)
-
