@@ -1,0 +1,70 @@
+package DamageStack
+import DamageModify
+import LinkedList
+import TimerUtils
+
+/*
+	DamageStack is created to make damage event listeners follow the same order
+	in which damage are invoked and also protect from the infinite thorns problem.
+
+	When damage is invoked, event listeners are run before target's health is
+	changed, which can lead to some hard to track bugs if there is nested damage
+	invokation, for example - DOTA's blademail.
+
+	Explaining example:
+
+	Test case:
+	init
+		addDamageListener() d ->
+			Log.info("Start " + (d castTo int).toString())
+		addDamageListener() d ->
+			if d.attackType != ATTACK_TYPE_NORMAL
+				d.source.damageTarget(d.target, 50, ATTACK_TYPE_NORMAL, 0).releaseInstance()
+			// Adds 50 spell damage to each non-spell damage instance
+		addDamageListener() d ->
+			Log.info("End " + (d castTo int).toString())
+
+	Unit (id:1) hits unit (id:2) with 75 chaos attack.
+	
+	Logs:
+	Start 1
+	Start 2
+	End 2
+	*Here unit 2's life is changed by 2nd damage*
+	End 1
+	*Here unit 2's life is changed by 1nd damage*
+
+	If you replace .damageTarget with .damageTargetQueued, you'll get this
+	result with in same test case:
+
+	Start 1
+	*Here unit 2's life is changed by 1nd damage*
+	End 1
+	Start 2
+	*Here unit 2's life is changed by 2nd damage*
+	End 2
+
+	This is proved for war3 version 1.30.
+	As you can see, in second case damage processing follows the order given
+*/
+
+public function unit.damageTargetQueued(unit target, real amount, bool attack, bool ranged, attacktype attackType, damagetype damageType, weapontype weaponType, int data) returns Damage
+	return new Damage(this, target, amount, attack, ranged, attackType, damageType, weaponType, data)..saveInstance()..modify()..dealQueued()
+
+public function unit.damageTargetQueued(unit target, real amount, attacktype attackType, int data) returns Damage
+	return this.damageTargetQueued(target, amount, false, false, attackType, DAMAGE_TYPE_UNIVERSAL, WEAPON_TYPE_WHOKNOWS, data)
+
+public function unit.damageTargetQueued(unit target, real amount, int data) returns Damage
+	return this.damageTargetQueued(target, amount, false, false, ATTACK_TYPE_CHAOS, DAMAGE_TYPE_UNIVERSAL, WEAPON_TYPE_WHOKNOWS, data)
+
+let queue = new LinkedList<Damage>
+public function Damage.dealQueued()
+	if queue.isEmpty()
+		getTimer()..start(0., function queueFlush)
+	this.saveInstance()
+	queue.add(this)
+
+function queueFlush()
+	while not queue.isEmpty()
+		queue.dequeue()..deal()..releaseInstance()
+	GetExpiredTimer().release()

@@ -1,0 +1,135 @@
+package UniqueDamageListening
+import DamageModify
+import HashMap
+import OnUnitEnterLeave
+import LinkedList
+
+/*
+	This snippet aims to improve perfomance of unit-unique listeners,
+	meaning those having certain unit check.
+	
+	Now instead of 
+	
+		let victim = GetSpellTargetDamage()
+		addDamageModifier() d ->
+			if d.target == victim
+				d.addMultiplier(2)
+	
+	you should have
+				
+		addTargetDamageModifier(GetSpellTargetDamage()) ->
+			d.addMultiplier(2)
+
+	It messes up callback invokation order, but it's anyways a bad thing to rely
+	on. In case you need prioritization, you should implement your own snippet
+	that will support it.
+
+	Also, it adds small overhead of 4 hashmaps, some linked lists and 2 global
+	damage callbacks.
+
+	Callbacks passed into this snipped is not destroyed automatically.
+*/
+
+let targetUniqueModifiers = new HashMap<unit, LinkedList<DamageModifier>>
+let sourceUniqueModifiers = new HashMap<unit, LinkedList<DamageModifier>>
+let targetUniqueListeners = new HashMap<unit, LinkedList<DamageListener>>
+let sourceUniqueListeners = new HashMap<unit, LinkedList<DamageListener>>
+
+/** The modifier would be called only if damage target equals to given unit.
+	This allows to save perfomance with unit-unique modifiers. 
+	Remember to destroy the modifier after it's used.*/
+public function addTargetDamageModifier(unit u, DamageModifier cb) returns DamageModifier
+	if not targetUniqueModifiers.has(u)
+		targetUniqueModifiers.put(u, new LinkedList<DamageModifier>)
+	targetUniqueModifiers.get(u).add(cb)
+	return cb
+			
+/** The modifier would be called only if damage source equals to given unit.
+	This allows to save perfomance with unit-unique modifiers. 
+	Remember to destroy the modifier after it's used.*/
+public function addSourceDamageModifier(unit u, DamageModifier cb) returns DamageModifier
+	if not sourceUniqueModifiers.has(u)
+		sourceUniqueModifiers.put(u, new LinkedList<DamageModifier>)
+	sourceUniqueModifiers.get(u).add(cb)
+	return cb
+
+/** The listener would be called only if damage target equals to given unit.
+	This allows to save perfomance with unit-unique listeners. 
+	Remember to destroy the listener after it's used.*/
+public function addTargetDamageListener(unit u, DamageListener cb) returns DamageListener
+	if not targetUniqueListeners.has(u)
+		targetUniqueListeners.put(u, new LinkedList<DamageListener>)
+	targetUniqueListeners.get(u).add(cb)
+	return cb
+			
+/** The listener would be called only if source target equals to given unit.
+	This allows to save perfomance with unit-unique listeners. 
+	Remember to destroy the listener after it's used.*/
+public function addSourceDamageListener(unit u, DamageListener cb) returns DamageListener
+	if not sourceUniqueListeners.has(u)
+		sourceUniqueListeners.put(u, new LinkedList<DamageListener>)
+	sourceUniqueListeners.get(u).add(cb)
+	return cb
+
+public function removeTargetDamageModifier(unit u, DamageModifier cb)
+	var list = targetUniqueModifiers.get(u)
+	if list != null
+		list.remove(cb)
+		if list.isEmpty()
+			targetUniqueModifiers.remove(u)
+			destroy list
+
+public function removeSourceDamageModifier(unit u, DamageModifier cb)
+	var list = sourceUniqueModifiers.get(u)
+	if list != null
+		list.remove(cb)
+		if list.isEmpty()
+			sourceUniqueModifiers.remove(u)
+			destroy list
+
+public function removeTargetDamageListener(unit u, DamageListener cb)
+	var list = targetUniqueListeners.get(u)
+	if list != null
+		list.remove(cb)
+		if list.isEmpty()
+			targetUniqueListeners.remove(u)
+			destroy list
+
+public function removeSourceDamageListener(unit u, DamageListener cb)
+	var list = sourceUniqueListeners.get(u)
+	if list != null
+		list.remove(cb)
+		if list.isEmpty()
+			sourceUniqueListeners.remove(u)
+			destroy list
+
+init
+	addDamageModifier() d ->
+		if targetUniqueModifiers.has(d.target)
+			for cb in targetUniqueModifiers.get(d.target)
+				cb.modify(d)
+		if sourceUniqueModifiers.has(d.source)
+			for cb in sourceUniqueModifiers.get(d.source)
+				cb.modify(d)
+
+	addDamageListener() d ->
+		if targetUniqueListeners.has(d.target)
+			for cb in targetUniqueListeners.get(d.target)
+				cb.listen(d)
+		if sourceUniqueListeners.has(d.source)
+			for cb in sourceUniqueListeners.get(d.source)
+				cb.listen(d)
+				
+	onLeave() ->
+		if targetUniqueModifiers.has(getEnterLeaveUnit())
+			destroy targetUniqueModifiers.get(getEnterLeaveUnit())
+			targetUniqueModifiers.remove(getEnterLeaveUnit())
+		if sourceUniqueModifiers.has(getEnterLeaveUnit())
+			destroy sourceUniqueModifiers.get(getEnterLeaveUnit())
+			sourceUniqueModifiers.remove(getEnterLeaveUnit())
+		if targetUniqueListeners.has(getEnterLeaveUnit())
+			destroy targetUniqueListeners.get(getEnterLeaveUnit())
+			targetUniqueListeners.remove(getEnterLeaveUnit())
+		if sourceUniqueListeners.has(getEnterLeaveUnit())
+			destroy sourceUniqueListeners.get(getEnterLeaveUnit())
+			sourceUniqueListeners.remove(getEnterLeaveUnit())
