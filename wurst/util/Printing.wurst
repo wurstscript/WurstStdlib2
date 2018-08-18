@@ -80,7 +80,7 @@ public function print(bool msg)
 
 /** Prints a special motification-message */
 public function printLog(Loglevel loglvl, string msg)
-	printLogInternal(localPlayer, loglvl.getTag(), msg)
+	printLog(localPlayer, loglvl, msg)
 		
 public function printLog(player showTo, Loglevel loglvl, string msg)
 	if (DEBUG_LEVEL castTo int) <= (loglvl castTo int)
