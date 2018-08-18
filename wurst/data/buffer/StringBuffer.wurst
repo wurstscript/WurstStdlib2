@@ -4,41 +4,6 @@ import ErrorHandling
 import LinkedList
 import BufferInterface
 
-enum ValueType
-	INTEGER
-	REAL
-	STRING
-	BOOLEAN
-	INVALID
-
-function ValueType.toString() returns string
-	var id = ""
-	switch this
-		case INTEGER
-			id = "i"
-		case REAL
-			id = "r"
-		case BOOLEAN
-			id = "b"
-		case STRING
-			id = "s"
-		case INVALID
-			error("ValueType: INVALID should never be serializable")
-	return id
-
-function valueTypeFromString(string value) returns ValueType
-	var valueType = ValueType.INVALID
-	switch value
-		case "i"
-			valueType = ValueType.INTEGER
-		case "r"
-			valueType = ValueType.REAL
-		case "b"
-			valueType = ValueType.BOOLEAN
-		case "s"
-			valueType = ValueType.STRING
-	return valueType
-
 class ChunkElement
 	var content = ""
 
