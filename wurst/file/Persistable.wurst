@@ -150,7 +150,7 @@ class PersistentStore
 				// read the data from the file into the buffer, and then transfer it into the network's buffer
 				boolean transferSuccess
 
-				var populateSuccess = try() ->
+				let populateSuccess = try() ->
 					buffer.populateFromFile(reader)
 
 				if populateSuccess
