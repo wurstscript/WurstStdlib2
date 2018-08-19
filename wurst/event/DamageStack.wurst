@@ -48,6 +48,8 @@ import TimerUtils
 	As you can see, in second case damage processing follows the order given
 */
 
+@configurable constant RECURSION_TRESHOLD = 128
+
 public function unit.damageTargetQueued(unit target, real amount, bool attack, bool ranged, attacktype attackType, damagetype damageType, weapontype weaponType, int data) returns Damage
 	return new Damage(this, target, amount, attack, ranged, attackType, damageType, weaponType, data)..saveInstance()..modify()..dealQueued()
 
@@ -59,10 +61,13 @@ public function unit.damageTargetQueued(unit target, real amount, int data) retu
 
 let queue = new LinkedList<Damage>
 public function Damage.dealQueued()
-	if queue.isEmpty()
-		getTimer()..start(0., function queueFlush)
-	this.saveInstance()
-	queue.add(this)
+	if queue.size() < 128
+		if queue.isEmpty()
+			getTimer()..start(0., function queueFlush)
+		this.saveInstance()
+		queue.add(this)
+	else
+		Log.debug("DamageStack: recursion stopped.")
 
 function queueFlush()
 	while not queue.isEmpty()
