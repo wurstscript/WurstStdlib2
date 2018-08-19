@@ -6,9 +6,9 @@ import DamageType
 	The system does not handle 0 damage events.
 	
 	Has several cases of possibly unexpected behavior:
-	- Event Damage is set to .actualAmount, not .amount.
+	- Event Damage is set to .actualAmount, not .amount (calculated from .amount
+		after all modifiers and listeners are run).
 	- Actual amount can not go below zero.
-	- Listeners are not notified of damage with actual amount equals to zero. 
 	- Changes to Damage instance made in listeners or after the damage event are not considered.
 
 	There will be output to debug stream if anything would go wrong,
@@ -19,9 +19,9 @@ import DamageType
 	
 	// Leech implementation #1
 	function onLeechEffect1()
-		let d = GetTriggerUnit().returnDamage(GetSpellTargetUnit(), LEECH_DAMAGE, true, 0)
+		let d = GetTriggerUnit().damageTarget(GetSpellTargetUnit(), LEECH_DAMAGE, ATTACK_TYPE_NORMAL, 0)
 
-		d.source.addHP(d.amount)
+		d.source.addHP(d.getActual())
 		d.source.addEffect(Abilities.vampiricAuraTarget, "origin").destr()
 
 		d.releaseInstance()
@@ -31,16 +31,17 @@ import DamageType
 
 	// Leech implementation #2
 	function onLeechEffect2()
-		GetTriggerUnit().damage(GetSpellTargetUnit(), LEECH_DAMAGE, LEECH_ID)
+		GetTriggerUnit().damageTarget(GetSpellTargetUnit(), LEECH_DAMAGE, ATTACK_TYPE_NORMAL, LEECH_ID)
 
 	init
 		registerSpellEffectEvent(LEECH_ID, function onLeechEffect2)
 		addDamageListener() d ->
-			if d.data == LEECH_ID	
-				d.source.addHP(d.amount) // Leech effect implementation #2
+			if d.data == LEECH_ID
+				d.source.addHP(d.getActual()) // Leech effect implementation #2
 				d.source.addEffect(Abilities.vampiricAuraTarget, "origin").destr()
 
 	// Simple damage resistance buff
+	import UniqueDamageListening
 
 	function onBuffEffect()
 		let target = GetSpellTargetUnit()
