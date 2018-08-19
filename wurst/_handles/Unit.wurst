@@ -151,6 +151,9 @@ public function unit.getMoveSpeed() returns real
 public function unit.getName() returns string
 	return GetUnitName(this)
 
+public function unit.getProperName() returns string
+	return GetHeroProperName(this)
+
 public function unit.getOwner() returns player
 	return GetOwningPlayer(this)
 

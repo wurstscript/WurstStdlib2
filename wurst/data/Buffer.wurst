@@ -479,9 +479,6 @@ public class StringBuffer extends AbstractBuffer
 		if not isDataAvailable()
 			fail(BufferFailureMode.EOF, "reached EOF")
 
-	private function getNextChunkSize() returns int
-		return chunks.getFirst().content.length()
-
 	// loads the next chunk into the buffer
 	private function nextChunk()
 		if chunks.isEmpty()
@@ -530,6 +527,10 @@ public class StringBuffer extends AbstractBuffer
 	private function popString(int length) returns string
 		if SAFETY_CHECKS_ENABLED and length > MAX_BUFFER_SIZE
 			fail(BufferFailureMode.INTERNAL_ERROR, "trying to pop a string above max size")
+
+		// length 0 is a special case for a string, so just return it immediately
+		if length == 0
+			return ""
 
 		checkDataAvailable()
 		// if there isn't enough data in the readBuffer, load additional chunks

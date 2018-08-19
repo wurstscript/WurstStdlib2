@@ -50,6 +50,20 @@ class TestSerializable implements BufferSerializable
 			elements.add(new SerializableElement(buffer))
 
 @test
+function stringBufferEmptyStringTest()
+	let sBuffer = new StringBuffer(4)
+	Buffer buffer = sBuffer
+
+	buffer.writeInt(1)
+	buffer.writeInt(2)
+	buffer.writeString("")
+	sBuffer.flush()
+
+	buffer.readInt().assertEquals(1)
+	buffer.readInt().assertEquals(2)
+	buffer.readString().assertEquals("")
+
+@test
 function stringBufferShortSerializationTest()
 	let sBuffer = new StringBuffer(4)
 	Buffer buffer = sBuffer
@@ -126,3 +140,5 @@ function hashBufferTestSerialization()
 	buffer.readReal().assertEquals(3.14)
 	buffer.readBoolean().assertEquals(true)
 	buffer.readString().assertEquals("abc")
+
+	

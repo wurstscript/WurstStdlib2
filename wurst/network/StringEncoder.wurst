@@ -6,12 +6,13 @@ import ErrorHandling
 import NetworkConfig
 
 // characters that can be sent over the network
-constant STRING_ALPHABET = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~"
+public constant STRING_ALPHABET = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~"
+public constant STRING_ALPHABET_LENGTH = compiletime(STRING_ALPHABET.length())
 // lookup table for alphabet
 let alphabetLookup = new HashMap<int, int>()
 
 function getCharFromIndex(int i) returns string
-	if i > STRING_ALPHABET.length()
+	if i > STRING_ALPHABET_LENGTH
 		error("Network: trying to get invalid character from index '" + i.toString() + "'")
 	return STRING_ALPHABET.charAt(i)
 
@@ -29,7 +30,7 @@ function getIndexFromChar(string c) returns int
 
 // only called in the init block
 function precomputeLookup()
-	for i = 0 to STRING_ALPHABET.length() - 1
+	for i = 0 to STRING_ALPHABET_LENGTH - 1
 		let c = STRING_ALPHABET.charAt(i)
 
 		if (c.toUpperCase() == c and c.toLowerCase() != c) or c == "/"
@@ -40,7 +41,7 @@ function precomputeLookup()
 function testCollisions()
 	// this test here is mostly to ensure that the StringHash implementation in WC3 never collides
 	// for our use case, especially if it's somehow changed by a patch
-	for i = 0 to STRING_ALPHABET.length() - 1
+	for i = 0 to STRING_ALPHABET_LENGTH - 1
 		if getIndexFromChar(getCharFromIndex(i)) != i
 			Log.error("CollisionTest failed for " + i.toString() + " " + getCharFromIndex(i))
 			Log.error("getIndexFromChar() == " + getIndexFromChar(getCharFromIndex(i)).toString())

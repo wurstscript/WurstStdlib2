@@ -56,6 +56,13 @@ public function forUnitsOfPlayer(player p, ForGroupCallback c)
 	GroupEnumUnitsOfPlayer(DUMMY_GROUP, p, filter)
 	popCallback()
 
+/** Executes the given closure for every existing unit */	
+public function forUnitsAll(ForGroupCallback c)
+	for i = 0 to bj_MAX_PLAYER_SLOTS - 1
+		pushCallback(c)
+		GroupEnumUnitsOfPlayer(DUMMY_GROUP, players[i], filter)
+		popCallback()
+
 /** Executes the given closure for every unit in the given rect */	
 public function forUnitsInRect(rect r, ForGroupCallback c)
 	pushCallback(c)

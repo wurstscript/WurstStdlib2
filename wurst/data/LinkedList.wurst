@@ -179,8 +179,12 @@ public class LinkedList<T>
 			current = current.next
 		return false
 
-	/** Removes the element if the predicates returns true */
+	@deprecated("Use #removeIf")
 	function removeWhen(LinkedListPredicate<T> predicate)
+		removeIf(predicate)
+
+	/** Removes the element if the predicates returns true */
+	function removeIf(LinkedListPredicate<T> predicate)
 		let itr = iterator()
 		for elem from itr
 			if predicate.isTrueFor(elem)
@@ -239,7 +243,7 @@ public class LinkedList<T>
 	/** Returns a new list of the elements that satisfy the predicate */
 	function filter(LinkedListPredicate<T> predicate) returns LinkedList<T>
 		let result = copy()
-		result.removeWhen(t -> not predicate.isTrueFor(t))
+		result.removeIf(t -> not predicate.isTrueFor(t))
 		destroy predicate
 		return result
 

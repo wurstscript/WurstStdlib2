@@ -90,6 +90,20 @@ public function triggerFromIndex(int index) returns trigger
 
 public function triggerToIndex(trigger object) returns int
 	return object.getHandleId()
+	
+public function triggeractionFromIndex(int index) returns triggeraction
+	typecastdata.saveFogState(0,ConvertFogState(index))
+	return typecastdata.loadTriggerAction(0)
+
+public function triggeractionToIndex(triggeraction object) returns int
+	return object.getHandleId()
+	
+public function triggerconditionFromIndex(int index) returns triggercondition
+	typecastdata.saveFogState(0,ConvertFogState(index))
+	return typecastdata.loadTriggerCondition(0)
+
+public function triggerconditionToIndex(triggercondition object) returns int
+	return object.getHandleId()
 
 public function timerFromIndex(int index) returns timer
 	typecastdata.saveFogState(0,ConvertFogState(index))
