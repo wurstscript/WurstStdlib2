@@ -145,3 +145,6 @@ public class HashBuffer extends AbstractBuffer
 	
 	function hasString() returns boolean
 		return stringReadIndex < stringWriteIndex
+
+	function getReadRemainingInts() returns int
+		return getIntCount() - (integerReadIndex + 1)
