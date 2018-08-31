@@ -70,9 +70,9 @@ package SyncSimple
 import UnitIndexer
 import BitSet
 import LinkedListModule
-import RegisterEvents
 import MapBounds
 import OnUnitEnterLeave
+import ClosureEvents
 import ClosureForGroups
 
 /**
@@ -162,13 +162,13 @@ public class SimpleSynchronizer
 		return reverseLookup[what.getIndex()]
 
 init
-	registerPlayerUnitEvent(EVENT_PLAYER_UNIT_SELECTED, null, null) ->
+	EventListener.add(EVENT_PLAYER_UNIT_SELECTED) ->
 		let synchronizer = SimpleSynchronizer.getSynchronizer(GetTriggerUnit())
 
 		if synchronizer != null
 			synchronizer.onPlayerFinishedSync(GetTriggerPlayer())
 
-	registerPlayerEvent(EVENT_PLAYER_LEAVE) ->
+	EventListener.add(EVENT_PLAYER_LEAVE) ->
 		let who = GetTriggerPlayer()
 
 		for synchronizer in SimpleSynchronizer

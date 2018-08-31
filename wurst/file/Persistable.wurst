@@ -95,7 +95,6 @@ public abstract class Persistable implements BufferSerializable
 	protected function getPath() returns string
 		return PERSISTABLE_MAP_PREFIX + "/" + getClassId() + "/" + getId()
 
-
 	/* Public interface */
 
 	/** Saves this Persistable to disk **/
@@ -145,20 +144,28 @@ class PersistentStore
 	
 		if localPlayer == owner
 			reader.load() _status ->
-				var buffer = new StringBuffer(MAX_PACKET_LENGTH)
+				var buffer = new OrderedStringBuffer(MAX_PACKET_LENGTH)
 				// a boolean for keeping track of whether the load was succesful or not
 				network.getData().writeBoolean(true)
 				// read the data from the file into the buffer, and then transfer it into the network's buffer
-				buffer.populateFromFile(reader)
-				try(() -> buffer.transfer(network.getData()))
-				// if there was an error during transfer, we scrap the data...
-				if not buffer.isValid()
+				boolean transferSuccess
+
+				let populateSuccess = try() ->
+					buffer.populateFromFile(reader)
+
+				if populateSuccess
+					transferSuccess = try() -> 
+						buffer.transfer(network.getData())
+				else
+					transferSuccess = false
+						
+				// if there was an error during transfer or loading, we scrap the data...
+				if (not populateSuccess) or (not transferSuccess) or (not buffer.isValid())
 					network.getData().clear()
 					network.getData().writeBoolean(false)
+
 				destroy buffer
-
 				synchronizer.sync()
-
 		else
 			// all other players just need to wait for the owner to tell others he's ready
 			synchronizer.sync()
@@ -194,11 +201,11 @@ class PersistentStore
 
 		if localPlayer == owner
 			writer = new FileWriter(entity.getPath(), entity.getIODelay())
-			let buffer = new StringBuffer(MAX_PACKET_LENGTH)
+			let buffer = new OrderedStringBuffer(MAX_PACKET_LENGTH)
 
 			// write the entity into the buffer
 			execute(() -> buffer.write(entity))
-			// flush any remaining data into buffer (mandatory for StringBuffer)
+			// flush any remaining data into buffer (mandatory for OrderedStringBuffer)
 			buffer.flush()
 			// transfer the data into the writer and destroy the buffer
 			writer.populateFromBuffer(buffer)
