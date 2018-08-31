@@ -1,0 +1,107 @@
+package Quaternions
+import NoWurst
+import Vectors
+import String
+import Matrices
+
+
+public tuple quat(real x, real y, real z, real w)
+
+public let IDENTITYQ = quat(0, 0, 0, 1)
+public let ZEROQ = quat(0, 0, 0, 0)
+
+public function quat.op_plus(quat q) returns quat
+    return quat(this.x + q.x, this.y + q.y, this.z + q.z, this.w + q.w)
+
+public function quat.op_minus(quat q) returns quat
+    return quat(this.x - q.x, this.y - q.y, this.z - q.z, this.w - q.w)
+
+public function quat.op_mult(real scalar) returns quat
+    return quat(this.x*scalar, this.y*scalar, this.z*scalar, this.w*scalar)
+
+public function quat.dot(quat q) returns real
+    return this.x*q.x + this.y*q.y + this.z*q.z + this.w*q.w
+
+/** Represents the composition of two rotations. */
+public function quat.cross(quat q) returns quat
+    return quat(
+        this.x*q.w + this.y*q.z - this.z*q.y + this.w*q.x,
+        -this.x*q.z + this.y*q.w + this.z*q.x + this.w*q.y,
+        this.x*q.y - this.y*q.x + this.z*q.w + this.w*q.z,
+        -this.x*q.x - this.y*q.y - this.z*q.z + this.w*q.w)
+
+/** Represents the same rotation in opposite direction. */
+public function quat.conj() returns quat
+    return quat(-this.x, -this.y, -this.z, this.w)
+
+public function quat.length() returns real
+    return SquareRoot(this.x.squared() + this.y.squared() + this.z.squared() + this.w.squared())
+
+/** Returns zero quaternion if lenght is zero. */
+public function quat.norm() returns quat
+    var length = this.length()
+    return length > 0.002 ? quat(this.x/length, this.y/length, this.y/length, this.w/length) : ZEROQ
+
+public function quat.toMatrix() returns mat3
+    var q = this.norm()
+    var x = q.x
+    var y = q.y
+    var z = q.z
+    var w = q.w
+    return mat3(
+        1 - 2*y*y - 2*z*z,2*x*y - 2*z*w, 2*x*z + 2*y*w,
+        2*x*y + 2*z*w, 1 - 2*x*x - 2*z*z, 2*y*z - 2*x*w,
+        2*x*z - 2*y*w, 2*y*z + 2*x*w, 1 - 2*x*x - 2*y*y)
+
+/** Spherical Linear intERPolation. Interpolates about two rotations.
+q - targeted quaternion. p - progress from 0 to 1.*/
+public function quat.slerp(quat q, real p) returns quat
+    var dot = this.dot(q)
+    if dot.abs() < 0.002
+        return q
+    var theta = dot.acos()
+    return ((1 - p)*theta).sin()/theta.sin()*this + (p*theta).sin()/theta.sin()*q
+
+/** Spherical Linear intERPolation. Interpolates about two rotations.
+Always choosing the SHORTEST way between rotations.
+q - targeted quaternion. p - progress from 0 to 1.*/
+public function quat.slerpShort(quat q, real p) returns quat
+    var dot = this.dot(q)
+    if dot.abs() < 0.002
+        return q
+    // choosing the shortest way
+    return dot < 0 ? this.slerp(quat(-q.x, -q.y, -q.z, -q.w), p) : this.slerp(q, p)
+
+/** Spherical Linear intERPolation. Interpolates about two rotations.
+Always choosing the LONGEST way between rotations.
+q - targeted quaternion. p - progress from 0 to 1.*/
+public function quat.slerpLong(quat q, real p) returns quat
+    var dot = this.dot(q)
+    if dot.abs() < 0.002
+        return q
+    // choosing the longest way
+    return dot < 0 ? this.slerp(q, p) : this.slerp(quat(-q.x, -q.y, -q.z, -q.w), p)
+    
+public function quat.toString() returns string
+    return "Quaternion [X {0}, Y {1}, Z {2}, W {3}]".format(this.x.toString(), this.y.toString(), this.z.toString(), this.w.toString())
+
+
+/** Extracts Euler-angles (Tait-Bryan) from quaternion. Order of result angles is X-Y-Z.
+There's not universal way for quaternions thus we have to use quat to matrix conversion first. */
+public function quat.toEuler() returns vec3
+    return this.norm().toMatrix().toEuler()
+
+/** Creates a quaternion from rotation axis and angle. */
+public function vec3.toQuat(angle angl) returns quat
+    var v = this.norm()
+    var sin = (angl/2).sin()
+    return quat(v.x*sin, v.y*sin, v.z*sin,  (angl/2).cos())
+
+/** Rotate a vector by a quaternion. */
+public function vec3.rotate(quat q) returns vec3
+    var tmp = quat(this.x, this.y, this.z, 0)
+    var result = q.cross(tmp).cross(q.conj())
+    return vec3(result.x, result.y, result.z)
+
+public function real.op_mult(quat q) returns quat
+    return q*this
