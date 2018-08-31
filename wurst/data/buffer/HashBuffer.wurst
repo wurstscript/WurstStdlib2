@@ -3,6 +3,7 @@ package HashBuffer
 import Table
 import ErrorHandling
 import BufferInterface
+import SafetyChecks
 
 /**
 	Implementation of Buffer backed by a hashtable. Primarily used in Network.
@@ -88,28 +89,28 @@ public class HashBuffer extends AbstractBuffer
 	function readIntUnsafe() returns int
 		checkRead()
 		integerReadIndex++
-		if BUFFER_SAFETY_CHECKS_ENABLED and not buffer.hasInt(integerReadIndex)
+		if SAFETY_CHECKS_ENABLED and not buffer.hasInt(integerReadIndex)
 			error("HashBuffer: trying to read non-present int at pos#" + integerReadIndex.toString())
 		return buffer.loadInt(integerReadIndex)
 
 	function readRealUnsafe() returns real
 		checkRead()
 		realReadIndex++
-		if BUFFER_SAFETY_CHECKS_ENABLED and not buffer.hasReal(realReadIndex)
+		if SAFETY_CHECKS_ENABLED and not buffer.hasReal(realReadIndex)
 			error("HashBuffer: trying to read non-present real at pos#" + realReadIndex.toString())
 		return buffer.loadReal(realReadIndex)
 
 	function readStringUnsafe() returns string
 		checkRead()
 		stringReadIndex++
-		if BUFFER_SAFETY_CHECKS_ENABLED and not buffer.hasString(stringReadIndex)
+		if SAFETY_CHECKS_ENABLED and not buffer.hasString(stringReadIndex)
 			error("HashBuffer: trying to read non-present string at pos#" + stringReadIndex.toString())
 		return buffer.loadString(stringReadIndex)
 
 	function readBooleanUnsafe() returns bool
 		checkRead()
 		booleanReadIndex++
-		if BUFFER_SAFETY_CHECKS_ENABLED and not buffer.hasBoolean(booleanReadIndex)
+		if SAFETY_CHECKS_ENABLED and not buffer.hasBoolean(booleanReadIndex)
 			error("HashBuffer: trying to read non-present boolean at pos#" + booleanReadIndex.toString())
 		return buffer.loadBoolean(booleanReadIndex)
 

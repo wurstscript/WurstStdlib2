@@ -3,6 +3,7 @@ package StringBuffer
 import ErrorHandling
 import LinkedList
 import BufferInterface
+import SafetyChecks
 
 class ChunkElement
 	var content = ""
@@ -157,7 +158,7 @@ public abstract class AbstractStringBuffer extends AbstractBuffer
 
 	// returns length amount of characters from the buffer, if there is enough
 	protected function popString(int length) returns string
-		if BUFFER_SAFETY_CHECKS_ENABLED and length > MAX_BUFFER_SIZE
+		if SAFETY_CHECKS_ENABLED and length > MAX_BUFFER_SIZE
 			fail(BufferFailureMode.INTERNAL_ERROR, "trying to pop a string above max size")
 
 		// length 0 is a special case for a string, so just return it immediately

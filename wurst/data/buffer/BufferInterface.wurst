@@ -1,12 +1,7 @@
 package BufferInterface
 
 import ErrorHandling
-
-/**
-	Enables or disables various runtime safety checks in the Buffer classes.
-	Do not disable this unless you are 100% sure your code works correctly.
-**/
-@configurable public constant BUFFER_SAFETY_CHECKS_ENABLED = true
+import SafetyChecks
 
 /**
 	Interface to be implemented by classes that wish to be directly
@@ -123,7 +118,7 @@ public abstract class AbstractBuffer implements Buffer
 	private var failureMessage = ""
 
 	protected function checkFailed()
-		if BUFFER_SAFETY_CHECKS_ENABLED and not isValid()
+		if SAFETY_CHECKS_ENABLED and not isValid()
 			error("Buffer: trying to use a failed buffer")
 
 	protected function fail(BufferFailureMode mode, string message)
@@ -157,20 +152,20 @@ public abstract class AbstractBuffer implements Buffer
 
 	/**
 		Extending classes should call this in write methods.
-		This function will be eliminated with optimizations turned on and when BUFFER_SAFETY_CHECKS_ENABLED == false.
+		This function will be eliminated with optimizations turned on and when SAFETY_CHECKS_ENABLED == false.
 	**/
 	protected function checkWrite()
 		checkFailed()
-		if BUFFER_SAFETY_CHECKS_ENABLED and not isWriteable()
+		if SAFETY_CHECKS_ENABLED and not isWriteable()
 			error("Buffer: cannot write to buffer with mode " + mode.toString())
 
 	/**
 		Extending classes should call this in read methods.
-		This function will be eliminated with optimizations turned on and when BUFFER_SAFETY_CHECKS_ENABLED == false.
+		This function will be eliminated with optimizations turned on and when SAFETY_CHECKS_ENABLED == false.
 	**/
 	protected function checkRead()
 		checkFailed()
-		if BUFFER_SAFETY_CHECKS_ENABLED and not isReadable()
+		if SAFETY_CHECKS_ENABLED and not isReadable()
 			error("Buffer: cannot read from buffer with mode " + mode.toString())
 
 	override function write(BufferSerializable object)

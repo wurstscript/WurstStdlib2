@@ -3,6 +3,7 @@ import GamecacheKeys
 import Execute
 import NetworkConfig
 import ErrorHandling
+import SafetyChecks
 
 interface SynchronizerFunction
 	function sync(string key)
@@ -43,16 +44,16 @@ public class GamecacheBuffer
 
 	// these functions will inline with uncheckedDispatch on
 	private function checkType(BufferType toCheck)
-		if NW_SAFETY_CHECKS_ENABLED and bufferType != toCheck
+		if SAFETY_CHECKS_ENABLED and bufferType != toCheck
 			error("GamecacheBuffer: invalid buffer usage - mismatched type")
 
 	private function advanceWriteIndex()
-		if NW_SAFETY_CHECKS_ENABLED and writeIndex + 1 >= GamecacheKeys.count
+		if SAFETY_CHECKS_ENABLED and writeIndex + 1 >= GamecacheKeys.count
 			error("GamecacheBuffer: trying to write out of available keys bounds")
 		writeIndex++
 	
 	private function advanceReadIndex()
-		if NW_SAFETY_CHECKS_ENABLED and readIndex + 1 >= GamecacheKeys.count
+		if SAFETY_CHECKS_ENABLED and readIndex + 1 >= GamecacheKeys.count
 			error("GamecacheBuffer: trying to read out of available keys bounds")
 		readIndex++
 

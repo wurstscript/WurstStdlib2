@@ -185,6 +185,7 @@ import ErrorHandling
 import public Execute
 import public Buffer
 
+import SafetyChecks
 import NetworkConfig
 import Metadata
 import GamecacheKeys
@@ -267,7 +268,7 @@ public class Network
 	/** sends info about the amount of data to be expected to each player **/
 	private function sendMetadata()
 		// we should only send the metadata once
-		if NW_SAFETY_CHECKS_ENABLED and currentState != NetworkState.PREPARING
+		if SAFETY_CHECKS_ENABLED and currentState != NetworkState.PREPARING
 			error("Network: trying to send duplicate metadata")
 
 		// if the sender disconnected, we can't expect any valid data, so immediately return
@@ -320,7 +321,7 @@ public class Network
 			return
 		
 		// check that we are transitioning from the correct state
-		if NW_SAFETY_CHECKS_ENABLED and currentState != NetworkState.SENDING_ROUND
+		if SAFETY_CHECKS_ENABLED and currentState != NetworkState.SENDING_ROUND
 			error("Network: trying to receive metadata at a wrong time")
 		
 		// save the metadata
@@ -380,7 +381,7 @@ public class Network
 		
 
 	private function sendRound()
-		if NW_SAFETY_CHECKS_ENABLED and currentState != NetworkState.SENDING_ROUND
+		if SAFETY_CHECKS_ENABLED and currentState != NetworkState.SENDING_ROUND
 			error("Network: trying to send round at the wrong time")
 
 		let synchronizer = new SimpleSynchronizer()
@@ -419,7 +420,7 @@ public class Network
 		synchronizer.onSynced(() -> receiveRound())
 
 	private function receiveRound()
-		if NW_SAFETY_CHECKS_ENABLED and currentState != NetworkState.SENDING_ROUND
+		if SAFETY_CHECKS_ENABLED and currentState != NetworkState.SENDING_ROUND
 			error("Network: trying to receive round at the wrong time")
 
 		if not sender.isIngame()
