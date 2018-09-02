@@ -12,14 +12,7 @@ By introducing a standard library, we offer the developers everything they need 
 
 # Contributing
 
-The standard library has greatly flourished due to amazing feedback, pull requests and issue reports. Bugs and anomalies have been fixed and documented. We highly appreciate any PR with fixes or improvements. However a few points of advice:
-- Please keep PRs as small as possible to allow for easier review and faster merging
-- Anything that can be unit tested, should be unit tested
-- We expect your code to adhere to the existing conventions
-
-If further natives need to be implemented for compiletime, they can be requested via a Feature Request.
-
-Feel free to join our [irc channel](https://webchat.quakenet.org/?channels=#inwc.de-maps) if you would like to contribute.
+[View CONTRIBUTING.md](https://github.com/wurstscript/WurstStdlib2/blob/master/CONTRIBUTING.md)
 
 # Usage Notes
 
