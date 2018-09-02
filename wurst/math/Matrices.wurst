@@ -162,10 +162,9 @@ public function mat3.op_minus(real scalar) returns mat3
                 this.m20 - scalar,    this.m21 - scalar,    this.m22 - scalar)
 
 public function mat3.op_mult(real scalar) returns mat3
-    return mat3(
-        this.m00*scalar,    this.m01*scalar,    this.m02*scalar,
-        this.m10*scalar,    this.m11*scalar,    this.m12*scalar,
-        this.m20*scalar,    this.m21*scalar,    this.m22*scalar)
+    return mat3(this.m00*scalar,    this.m01*scalar,    this.m02*scalar,
+                this.m10*scalar,    this.m11*scalar,    this.m12*scalar,
+                this.m20*scalar,    this.m21*scalar,    this.m22*scalar)
 
 public function real.op_mult(mat3 m) returns mat3
     return m*this
@@ -408,10 +407,10 @@ function test33()
     let rotation = axis.toMatrix(a)
     print("Rotation around {0} by {1} degrees is rotation {2}\n".format(axis.toString(), a.degrees().toString(), rotation.toString()))
     // To Euler angles
-    /* Cannot produce this tests bcz Asin is not implemented yet.
+    // Cannot produce this tests bcz Asin is not implemented yet.
     let euler = rotation.toEuler()
     print("Found rotation matrix to Euler angles {0}".format(euler.toString()))
-    */
+    
 
 @test
 function test()
