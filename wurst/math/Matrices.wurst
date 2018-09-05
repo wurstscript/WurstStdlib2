@@ -1,8 +1,7 @@
 package Matrices
 import NoWurst
-import Vectors
+import public Vectors
 import _Primitives
-import Printing
 
 
 /* Great thanks to euclideanspace.com for wide explanations. */
@@ -59,23 +58,23 @@ public function mat2.op_plus(real scalar) returns mat2
                 this.m10 + scalar,  this.m11 + scalar)
     
 public function mat2.op_mult(real scalar) returns mat2
-    return mat2(this.m00*scalar,    this.m01*scalar,
-                this.m10*scalar,    this.m11*scalar)
+    return mat2(this.m00 * scalar,    this.m01 * scalar,
+                this.m10 * scalar,    this.m11 * scalar)
 
 public function real.op_mult(mat2 m) returns mat2
-    return m*this
+    return m * this
 
 /** Matrix multiplication is not commutative that means matrix*vect is not the same as vec*matrix. */
 public function mat2.op_mult(vec2 v) returns vec2
-    return vec2(this.m00*v.x + this.m01*v.y, this.m10*v.x + this.m11*v.y)
+    return vec2(this.m00 * v.x + this.m01 * v.y, this.m10 * v.x + this.m11 * v.y)
 
 /** Matrix multiplication is not commutative that means matrix*vect is not the same as vec*matrix. */
 public function vec2.op_mult(mat2 m) returns vec2
-    return vec2(this.x*m.m00 + this.y*m.m10, this.x*m.m01 + this.y*m.m11)
+    return vec2(this.x * m.m00 + this.y * m.m10, this.x * m.m01 + this.y * m.m11)
 
 public function mat2.op_mult(mat2 m) returns mat2
-    return mat2(this.m00*m.m00 + this.m01*m.m10,    this.m00*m.m01 + this.m01*m.m11, 
-                this.m10*m.m00 + this.m11*m.m10,    this.m10*m.m01 + this.m11*m.m11)
+    return mat2(this.m00 * m.m00 + this.m01 * m.m10,    this.m00 * m.m01 + this.m01 * m.m11, 
+                this.m10 * m.m00 + this.m11 * m.m10,    this.m10 * m.m01 + this.m11 * m.m11)
 
 /** Returns matrix' column by id as a vector or zero-vector if doesn't exist. */
 public function mat2.col(int id) returns vec2
@@ -102,7 +101,7 @@ public function mat2.row(int id) returns vec2
     return result
 
 public function mat2.determinant() returns real
-    return this.m00*this.m11 - this.m01*this.m10
+    return this.m00 * this.m11 - this.m01 * this.m10
 
 /** Flips the matrix over its main diagonale.
 Result of transposing for rotation matrix is its inverse matrix. */
@@ -118,10 +117,10 @@ public function mat2.inverse() returns inverseresult22
     var inverse = inverseresult22(d.abs() > 0.002, ZERO22)
     if d.abs().isBetween(0.998, 1.002)
         inverse.matrix = this.transpose()
-    else if d.abs() > 0.002
+    else if inverse.success
         let tmp = mat2( this.m11, -this.m01,
                         -this.m10, this.m00)
-        inverse.matrix = 1/d*tmp
+        inverse.matrix = 1 / d * tmp
     return inverse
 
 public function mat2.toString() returns string
@@ -162,37 +161,37 @@ public function mat3.op_minus(real scalar) returns mat3
                 this.m20 - scalar,    this.m21 - scalar,    this.m22 - scalar)
 
 public function mat3.op_mult(real scalar) returns mat3
-    return mat3(this.m00*scalar,    this.m01*scalar,    this.m02*scalar,
-                this.m10*scalar,    this.m11*scalar,    this.m12*scalar,
-                this.m20*scalar,    this.m21*scalar,    this.m22*scalar)
+    return mat3(this.m00 * scalar,    this.m01 * scalar,    this.m02 * scalar,
+                this.m10 * scalar,    this.m11 * scalar,    this.m12 * scalar,
+                this.m20 * scalar,    this.m21 * scalar,    this.m22 * scalar)
 
 public function real.op_mult(mat3 m) returns mat3
     return m*this
 
 /** Matrix multiplication is not commutative that means matrix*vect is not the same as vec*matrix. */
 public function mat3.op_mult(vec3 v) returns vec3
-    return vec3(this.m00*v.x + this.m01*v.y + this.m02*v.z,
-                this.m10*v.x + this.m11*v.y + this.m12*v.z,
-                this.m20*v.x + this.m21*v.y + this.m22*v.z)
+    return vec3(this.m00 * v.x + this.m01 * v.y + this.m02 * v.z,
+                this.m10 * v.x + this.m11 * v.y + this.m12 * v.z,
+                this.m20 * v.x + this.m21 * v.y + this.m22 * v.z)
 
 public function vec3.op_mult(mat3 m) returns vec3
-    return vec3(this.x*m.m00 + this.y*m.m10 + this.z*m.m20,
-                this.x*m.m01 + this.y*m.m11 + this.z*m.m21,
-                this.x*m.m02 + this.y*m.m12 + this.z*m.m22)
+    return vec3(this.x * m.m00 + this.y * m.m10 + this.z * m.m20,
+                this.x * m.m01 + this.y * m.m11 + this.z * m.m21,
+                this.x * m.m02 + this.y * m.m12 + this.z * m.m22)
 
 public function mat3.op_mult(mat3 m) returns mat3
     // row by row
-    return mat3(this.m00*m.m00 + this.m01*m.m10 + this.m02*m.m20,
-                this.m00*m.m01 + this.m01*m.m11 + this.m02*m.m21,
-                this.m00*m.m02 + this.m01*m.m12 + this.m02*m.m22,
+    return mat3(this.m00 * m.m00 + this.m01 * m.m10 + this.m02 * m.m20,
+                this.m00 * m.m01 + this.m01 * m.m11 + this.m02 * m.m21,
+                this.m00 * m.m02 + this.m01 * m.m12 + this.m02 * m.m22,
 
-                this.m10*m.m00 + this.m11*m.m10 + this.m12*m.m20,
-                this.m10*m.m01 + this.m11*m.m11 + this.m12*m.m21,
-                this.m10*m.m02 + this.m11*m.m12 + this.m12*m.m22,
+                this.m10 * m.m00 + this.m11 * m.m10 + this.m12 * m.m20,
+                this.m10 * m.m01 + this.m11 * m.m11 + this.m12 * m.m21,
+                this.m10 * m.m02 + this.m11 * m.m12 + this.m12 * m.m22,
 
-                this.m20*m.m00 + this.m21*m.m10 + this.m22*m.m20,
-                this.m20*m.m01 + this.m21*m.m11 + this.m22*m.m21,
-                this.m20*m.m02 + this.m21*m.m12 + this.m22*m.m22)
+                this.m20 * m.m00 + this.m21 * m.m10 + this.m22 * m.m20,
+                this.m20 * m.m01 + this.m21 * m.m11 + this.m22 * m.m21,
+                this.m20 * m.m02 + this.m21 * m.m12 + this.m22 * m.m22)
     
 /** Returns matrix' column by id as a vector or zero-vector if doesn't exist. */
 public function mat3.col(int id) returns vec3
@@ -223,9 +222,9 @@ public function mat3.row(int id) returns vec3
     return result
         
 public function mat3.determinant() returns real
-    return this.m00*(this.m11*this.m22 - this.m12*this.m21)
-         - this.m01*(this.m10*this.m22 - this.m12*this.m20)
-         + this.m02*(this.m10*this.m21 - this.m11*this.m20)
+    return this.m00 * (this.m11 * this.m22 - this.m12 * this.m21)
+         - this.m01 * (this.m10 * this.m22 - this.m12 * this.m20)
+         + this.m02 * (this.m10 * this.m21 - this.m11 * this.m20)
 
 /** Flips the matrix over its main diagonale.
 Result of transposing for rotation matrix is its inverse matrix. */
@@ -239,22 +238,22 @@ Returns tuple inverseresult33(bool success, mat3 matrix) where 'success' is true
 If there's no inverse matrix 'success' is false and 'matrix' is zero matrix. */
 public function mat3.inverse() returns inverseresult33
     let d = this.determinant()
-    var inverse = inverseresult33(false, ZERO33)
+    var inverse = inverseresult33(d.abs() > 0.002, ZERO33)
     if d.abs().isBetween(0.998, 1.002)
         inverse.matrix = this.transpose()
-    else if d.abs() > 0.002
-        let tmp = mat3( this.m11*this.m22 - this.m12*this.m21,
-                        this.m02*this.m21 - this.m01*this.m22,
-                        this.m01*this.m12 - this.m02*this.m11,
+    else if inverse.success
+        let tmp = mat3( this.m11 * this.m22 - this.m12 * this.m21,
+                        this.m02 * this.m21 - this.m01 * this.m22,
+                        this.m01 * this.m12 - this.m02 * this.m11,
         
-                        this.m12*this.m20 - this.m10*this.m22,
-                        this.m00*this.m22 - this.m20*this.m02,
-                        this.m02*this.m10 - this.m00*this.m12,
+                        this.m12 * this.m20 - this.m10 * this.m22,
+                        this.m00 * this.m22 - this.m20 * this.m02,
+                        this.m02 * this.m10 - this.m00 * this.m12,
 
-                        this.m10*this.m21 - this.m11*this.m20,
-                        this.m01*this.m20 - this.m00*this.m21,
-                        this.m00*this.m11 - this.m01*this.m10)
-        inverse.matrix = 1/d*tmp
+                        this.m10 * this.m21 - this.m11 * this.m20,
+                        this.m01 * this.m20 - this.m00 * this.m21,
+                        this.m00 * this.m11 - this.m01 * this.m10)
+        inverse.matrix = 1 / d * tmp
     return inverse
 
 /** Extracts Euler-angles (Tait-Bryan) from rotation matrix. Order of result angles is X-Y-Z.*/
@@ -264,11 +263,11 @@ public function mat3.toEuler() returns vec3
     real roll
     var cosY = Cos(pitch)
     if cosY.abs() > 0.005
-        var cosX = this.m22/cosY
-        var sinX = -this.m12/cosY
+        var cosX = this.m22 / cosY
+        var sinX = -this.m12 / cosY
         yaw  = Atan2(sinX, cosX)
-        var cosZ =  this.m00/cosY
-        var sinZ = -this.m01/cosY
+        var cosZ =  this.m00 / cosY
+        var sinZ = -this.m01 / cosY
         roll = Atan2(sinZ, cosZ)
     else
         yaw = 0.
@@ -291,9 +290,9 @@ public function vec3.toMatrix(angle angl) returns mat3
     var z = v.z
     var mcos = 1 - angl.cos()
     var sin = angl.sin()
-    return mat3(1 + mcos*(x*x - 1),    -z*sin + mcos*x*y,     y*sin + mcos*x*z,
-                z*sin + mcos*x*y,      1 + mcos*(y*y - 1),    -x*sin + mcos*y*z,
-                -y*sin + mcos*x*z,     x*sin + mcos*y*z,      1 + mcos*(z*z - 1))
+    return mat3(1 + mcos * (x * x - 1),     -z * sin + mcos * x * y,     y * sin + mcos * x * z,
+                z * sin + mcos * x * y,      1 + mcos * (y * y - 1),    -x * sin + mcos * y * z,
+                -y * sin + mcos * x * z,     x * sin + mcos * y * z,     1 + mcos * (z * z - 1))
 
 /** Creates 3x3 rotation matrix from axis and angle. */
 public function angle.toMatrix(vec3 axis) returns mat3
