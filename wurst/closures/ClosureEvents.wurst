@@ -298,6 +298,9 @@ init
 			..registerPlayerEvent(players[i], EVENT_PLAYER_ARROW_RIGHT_DOWN)
 			..registerPlayerEvent(players[i], EVENT_PLAYER_ARROW_RIGHT_UP)
 			..registerPlayerEvent(players[i], EVENT_PLAYER_END_CINEMATIC)
-			..registerPlayerChatEvent(players[i], "", false)
+		  ..registerPlayerEvent(players[i], EVENT_PLAYER_MOUSE_UP)
+		  ..registerPlayerEvent(players[i], EVENT_PLAYER_MOUSE_DOWN)
+		  ..registerPlayerEvent(players[i], EVENT_PLAYER_MOUSE_MOVE)
+    	..registerPlayerChatEvent(players[i], "", false)
 
 		registerPlayerUnitEvent(EVENT_PLAYER_UNIT_SPELL_EFFECT, null, () -> EventListener.onSpellEffect(), null)
