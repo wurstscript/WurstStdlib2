@@ -2,7 +2,7 @@ package Matrices
 import NoWurst
 import public Vectors
 import _Primitives
-
+import Wurstunit
 
 /* Great thanks to euclideanspace.com for wide explanations. */
 
@@ -307,5 +307,46 @@ public function vec3.toScaling() returns mat3
     return mat3(this.x, 0,      0,
                 0,      this.y, 0,
                 0,      0,      this.z)
+            
+/* =========== TESTING =========== */
 
-                
+public function mat2.assertEquals(mat2 expected)
+    let delta = 0.002
+    let compare = mat2( (this.m00 - expected.m00).abs(), (this.m01 - expected.m01).abs(),
+                        (this.m10 - expected.m10).abs(), (this.m11 - expected.m11).abs())
+    let msg = "Expected {0} <{1}>, Actual <{2} with delta {3}>"
+    if compare.m00 > delta
+        testFail(msg.format("m00", expected.m00.toString(), this.m00.toString(), delta.toString()))
+    if compare.m01 > delta
+        testFail(msg.format("m01", expected.m01.toString(), this.m01.toString(), delta.toString()))
+    if compare.m10 > delta
+        testFail(msg.format("m10", expected.m10.toString(), this.m10.toString(), delta.toString()))
+    if compare.m11 > delta
+        testFail(msg.format("m11", expected.m11.toString(), this.m11.toString(), delta.toString()))
+
+public function mat3.assertEquals(mat3 expected)
+    let delta = 0.002
+    let compare = mat3( (this.m00 - expected.m00).abs(), (this.m01 - expected.m01).abs(), (this.m02 - expected.m02).abs(),
+                        (this.m10 - expected.m10).abs(), (this.m11 - expected.m11).abs(), (this.m12 - expected.m12).abs(),
+                        (this.m20 - expected.m20).abs(), (this.m21 - expected.m21).abs(), (this.m22 - expected.m22).abs())
+    let msg = "Expected {0} <{1}>, Actual <{2} with delta {3}>"
+    if compare.m00 > delta
+        testFail(msg.format("m00", expected.m00.toString(), this.m00.toString(), delta.toString()))
+    if compare.m01 > delta
+        testFail(msg.format("m01", expected.m01.toString(), this.m01.toString(), delta.toString()))
+    if compare.m02 > delta
+        testFail(msg.format("m02", expected.m02.toString(), this.m02.toString(), delta.toString()))
+
+    if compare.m10 > delta
+        testFail(msg.format("m10", expected.m10.toString(), this.m10.toString(), delta.toString()))
+    if compare.m11 > delta
+        testFail(msg.format("m11", expected.m11.toString(), this.m11.toString(), delta.toString()))
+    if compare.m12 > delta
+        testFail(msg.format("m12", expected.m12.toString(), this.m12.toString(), delta.toString()))
+
+    if compare.m20 > delta
+        testFail(msg.format("m20", expected.m20.toString(), this.m20.toString(), delta.toString()))
+    if compare.m21 > delta
+        testFail(msg.format("m21", expected.m21.toString(), this.m21.toString(), delta.toString()))
+    if compare.m22 > delta
+        testFail(msg.format("m22", expected.m22.toString(), this.m22.toString(), delta.toString()))
