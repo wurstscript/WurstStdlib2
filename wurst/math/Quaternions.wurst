@@ -56,11 +56,11 @@ public function quat.norm() returns quat
     return length > 0.002 ? quat(this.x / length, this.y / length, this.z / length, this.w / length) : ZEROQ
 
 public function quat.toMatrix() returns mat3
-    var q = this.norm()
-    var x = q.x
-    var y = q.y
-    var z = q.z
-    var w = q.w
+    let q = this.norm()
+    let x = q.x
+    let y = q.y
+    let z = q.z
+    let w = q.w
     return mat3(1 - 2 * y * y - 2 * z * z,      2 * x * y - 2 * z * w,      2 * x * z + 2 * y * w,
                 2 * x * y + 2 * z * w,          1 - 2 * x * x - 2 * z * z,  2 * y * z - 2 * x * w,
                 2 * x * z - 2 * y * w,          2 * y * z + 2 * x * w,      1 - 2 * x * x - 2 * y * y)
@@ -109,11 +109,11 @@ q - targeted quaternion. p - progress from 0 to 1. */
 @deprecated("Slerp is the least efficient approach in performance so try to avoid using it, unless you need constant angular velocity. Nlerp is better solution in most cases.")
 public function quat.slerp(quat q, real p) returns quat
     quat result
-    var dot = this.dot(q)
+    let dot = this.dot(q)
     if dot.abs() < 0.002
         result = q
     else
-        var theta = dot.acos()
+        let theta = dot.acos()
         result = ((1 - p) * theta).sin() / theta.sin() * this + (p * theta).sin() / theta.sin() * q
     return result
 
