@@ -220,7 +220,11 @@ public function mat3.row(int id) returns vec3
         default
             result = ZERO3
     return result
-        
+
+/** The sum of the main diagonal terms. */
+public function mat3.trace() returns real
+    return this.m00 + this.m11 + this.m22
+
 public function mat3.determinant() returns real
     return this.m00 * (this.m11 * this.m22 - this.m12 * this.m21)
          - this.m01 * (this.m10 * this.m22 - this.m12 * this.m20)
@@ -256,7 +260,7 @@ public function mat3.inverse() returns inverseresult33
         inverse.matrix = 1 / d * tmp
     return inverse
 
-/** Extracts Euler-angles (Tait-Bryan) from rotation matrix. Order of result angles is X-Y-Z.*/
+/** Extracts Euler-angles (Tait-Bryan) from rotation matrix. Order of the result is X-Y-Z.*/
 public function mat3.toEuler() returns vec3
     real yaw
     real pitch = Asin(this.m02)
@@ -303,3 +307,5 @@ public function vec3.toScaling() returns mat3
     return mat3(this.x, 0,      0,
                 0,      this.y, 0,
                 0,      0,      this.z)
+
+                
