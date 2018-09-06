@@ -2,7 +2,6 @@ package Quaternions
 import NoWurst
 import String
 import Matrices
-import Wurstunit
 
 
 /* Great thanks to euclideanspace.com for wide explanations. */
@@ -16,11 +15,23 @@ public constant ZEROQ = quat(0, 0, 0, 0)
 public function quat.op_plus(quat q) returns quat
     return quat(this.x + q.x, this.y + q.y, this.z + q.z, this.w + q.w)
 
+public function quat.op_plus(real scalar) returns quat
+    return quat(this.x + scalar, this.y + scalar, this.z + scalar, this.w + scalar)
+
+public function real.op_plus(quat q) returns quat
+    return q + this
+
 public function quat.op_minus(quat q) returns quat
     return quat(this.x - q.x, this.y - q.y, this.z - q.z, this.w - q.w)
 
+public function quat.op_minus(real scalar) returns quat
+    return quat(this.x - scalar, this.y - scalar, this.z - scalar, this.w - scalar)
+
 public function quat.op_mult(real scalar) returns quat
     return quat(this.x * scalar, this.y * scalar, this.z * scalar, this.w * scalar)
+
+public function real.op_mult(quat q) returns quat
+    return q * this
 
 public function quat.dot(quat q) returns real
     return this.x * q.x + this.y * q.y + this.z * q.z + this.w * q.w
@@ -140,5 +151,3 @@ public function vec3.rotate(quat q) returns vec3
     let result = q.cross(tmp).cross(q.conj())
     return vec3(result.x, result.y, result.z)
 
-public function real.op_mult(quat q) returns quat
-    return q * this
