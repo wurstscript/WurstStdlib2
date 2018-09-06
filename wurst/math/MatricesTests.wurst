@@ -1,32 +1,11 @@
 package MatricesTests
 import NoWurst
-import _Primitives
 import Wurstunit
 
 import Matrices
 
 
 /* =========== 2X2 MATRIX =========== */
-
-function mat2.assertEquals(mat2 expected)
-    let delta = 0.002
-    let compare = mat2( (this.m00 - expected.m00).abs(), (this.m01 - expected.m01).abs(),
-                        (this.m10 - expected.m10).abs(), (this.m11 - expected.m11).abs())
-    let msg = "Expected {0} <{1}>, Actual <{2} with delta {3}>"
-    if compare.m00 > delta
-        testFail(msg.format("m00", expected.m00.toString(), this.m00.toString(), delta.toString()))
-    if compare.m01 > delta
-        testFail(msg.format("m01", expected.m01.toString(), this.m01.toString(), delta.toString()))
-    if compare.m10 > delta
-        testFail(msg.format("m10", expected.m10.toString(), this.m10.toString(), delta.toString()))
-    if compare.m11 > delta
-        testFail(msg.format("m11", expected.m11.toString(), this.m11.toString(), delta.toString()))
-
-function vec2.assertEquals(vec2 expected)
-    let delta = 0.002
-    let compare = vec2((this.x - expected.x).abs(), (this.y - expected.y).abs())
-    if compare.x > delta or compare.y > delta
-        testFail("Expected <{0}, Actual <{1} with delta {2}>".format(expected.toString(), this.toString(), delta.toString()))
     
 @Test function test22PlusMat()
     let test = mat2(1, 2, 3, 4)
@@ -110,39 +89,6 @@ function vec2.assertEquals(vec2 expected)
     (vec2(2, 2).toScaling() * vec2(5, 16)).assertEquals(vec2(10, 32))
     
 /* =========== 3X3 MATRIX =========== */
-
-function mat3.assertEquals(mat3 expected)
-    let delta = 0.002
-    let compare = mat3( (this.m00 - expected.m00).abs(), (this.m01 - expected.m01).abs(), (this.m02 - expected.m02).abs(),
-                        (this.m10 - expected.m10).abs(), (this.m11 - expected.m11).abs(), (this.m12 - expected.m12).abs(),
-                        (this.m20 - expected.m20).abs(), (this.m21 - expected.m21).abs(), (this.m22 - expected.m22).abs())
-    let msg = "Expected {0} <{1}>, Actual <{2} with delta {3}>"
-    if compare.m00 > delta
-        testFail(msg.format("m00", expected.m00.toString(), this.m00.toString(), delta.toString()))
-    if compare.m01 > delta
-        testFail(msg.format("m01", expected.m01.toString(), this.m01.toString(), delta.toString()))
-    if compare.m02 > delta
-        testFail(msg.format("m02", expected.m02.toString(), this.m02.toString(), delta.toString()))
-
-    if compare.m10 > delta
-        testFail(msg.format("m10", expected.m10.toString(), this.m10.toString(), delta.toString()))
-    if compare.m11 > delta
-        testFail(msg.format("m11", expected.m11.toString(), this.m11.toString(), delta.toString()))
-    if compare.m12 > delta
-        testFail(msg.format("m12", expected.m12.toString(), this.m12.toString(), delta.toString()))
-
-    if compare.m20 > delta
-        testFail(msg.format("m20", expected.m20.toString(), this.m20.toString(), delta.toString()))
-    if compare.m21 > delta
-        testFail(msg.format("m21", expected.m21.toString(), this.m21.toString(), delta.toString()))
-    if compare.m22 > delta
-        testFail(msg.format("m22", expected.m22.toString(), this.m22.toString(), delta.toString()))
-
-function vec3.assertEquals(vec3 expected)
-    let delta = 0.002
-    let compare = vec3((this.x - expected.x).abs(), (this.y - expected.y).abs(), (this.z - expected.z).abs())
-    if compare.x > delta or compare.y > delta or compare.z > delta
-        testFail("Expected <{0}, Actual <{1} with delta {2}>".format(expected.toString(), this.toString(), delta.toString()))
 
 @Test function test33PlusMat()
     let test = mat3(1, 2, 3, 
@@ -293,5 +239,3 @@ function vec3.assertEquals(vec3 expected)
     let aroundY = angle(euler.y).toMatrix(vec3(0, 1, 0))
     let aroundZ = angle(euler.z).toMatrix(vec3(0, 0, 1))
     (aroundX * aroundY * aroundZ).assertEquals(test)
-
-    
