@@ -227,6 +227,9 @@ function vec3.assertEquals(vec3 expected)
                         3, 6, 9)
     test.transpose().assertEquals(expected)
 
+@Test function test33Trace()
+    mat3(1, 2, 3, 4, 5, 6, 7, 8, 9).trace().assertEquals(15)
+
 @Test function test33Determinant()
     mat3(1, 2, 3, 4, 5, 6, 7, 8, 9).determinant().assertEquals(0, 0.002)
     mat3(5, 3, 6, 9, 12, 1, 0, 4, 8).determinant().assertEquals(460, 0.002)
