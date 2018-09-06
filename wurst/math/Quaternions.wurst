@@ -2,6 +2,7 @@ package Quaternions
 import NoWurst
 import String
 import Matrices
+import Wurstunit
 
 
 /* Great thanks to euclideanspace.com for wide explanations. */
@@ -24,21 +25,21 @@ public function quat.op_mult(real scalar) returns quat
 public function quat.dot(quat q) returns real
     return this.x * q.x + this.y * q.y + this.z * q.z + this.w * q.w
 
-/**Represents the composition of two rotations. */
+/** Represents the composition of two rotations. */
 public function quat.cross(quat q) returns quat
     return quat(this.x * q.w + this.y * q.z - this.z * q.y + this.w * q.x,
                 -this.x * q.z + this.y * q.w + this.z * q.x + this.w * q.y,
                 this.x * q.y - this.y * q.x + this.z * q.w + this.w * q.z,
                 -this.x * q.x - this.y * q.y - this.z * q.z + this.w * q.w)
 
-/**Represents the same rotation in opposite direction. */
+/** Represents the same rotation in opposite direction. */
 public function quat.conj() returns quat
     return quat(-this.x, -this.y, -this.z, this.w)
 
 public function quat.length() returns real
     return SquareRoot(this.x.squared() + this.y.squared() + this.z.squared() + this.w.squared())
 
-/**Returns zero quaternion if lenght is zero. */
+/** Returns zero quaternion if lenght is zero. */
 public function quat.norm() returns quat
     let length = this.length()
     return length > 0.002 ? quat(this.x / length, this.y / length, this.z / length, this.w / length) : ZEROQ
@@ -78,7 +79,7 @@ public function quat.lerpLong(quat q, real p) returns quat
 /** Normalized Linear intERPolation.
 q - targeted quaternion. p - progress from 0 to 1. */
 public function quat.nlerp(quat q, real p) returns quat
-    return this.slerp(q, p).norm()
+    return this.lerp(q, p).norm()
 
 /** Normalized Linear intERPolation.
 Always chooses the SHORTEST way between rotations.
@@ -93,8 +94,8 @@ public function quat.nlerpLong(quat q, real p) returns quat
     return this.dot(q) < 0 ? this.nlerp(q, p) : this.nlerp(quat(-q.x, -q.y, -q.z, -q.w), p)
 
 /**Spherical Linear intERPolation. Interpolates between two rotations.
-q - targeted quaternion. p - progress from 0 to 1.
-WARNING: Slerp is least efficient in performance so try to avoid using it, unless you need constant angular velocity. Nlerp is better solution in most cases.*/
+q - targeted quaternion. p - progress from 0 to 1. */
+@deprecated("Slerp is the least efficient approach in performance so try to avoid using it, unless you need constant angular velocity. Nlerp is better solution in most cases.")
 public function quat.slerp(quat q, real p) returns quat
     quat result
     var dot = this.dot(q)
@@ -107,33 +108,33 @@ public function quat.slerp(quat q, real p) returns quat
 
 /**Spherical Linear intERPolation. Interpolates between two rotations.
 Always chooses the SHORTEST way between rotations.
-q - targeted quaternion. p - progress from 0 to 1.
-WARNING: Slerp is least efficient in performance so try to avoid using it, unless you need constant angular velocity. Nlerp is better solution in most cases. */
+q - targeted quaternion. p - progress from 0 to 1. */
+@deprecated("Slerp is the least efficient approach in performance so try to avoid using it, unless you need constant angular velocity. Nlerp is better solution in most cases.")
 public function quat.slerpShort(quat q, real p) returns quat
     return this.dot(q) > 0 ? this.slerp(q, p) : this.slerp(quat(-q.x, -q.y, -q.z, -q.w), p)
 
 /**Spherical Linear intERPolation. Interpolates between two rotations.
 Always chooses the LONGEST way between rotations.
-q - targeted quaternion. p - progress from 0 to 1.
-WARNING: Slerp is least efficient in performance so try to avoid using it, unless you need constant angular velocity. Nlerp is better solution in most cases.*/
+q - targeted quaternion. p - progress from 0 to 1. */
+@deprecated("Slerp is the least efficient approach in performance so try to avoid using it, unless you need constant angular velocity. Nlerp is better solution in most cases.")
 public function quat.slerpLong(quat q, real p) returns quat
     return this.dot(q) < 0 ? this.slerp(q, p) : this.slerp(quat(-q.x, -q.y, -q.z, -q.w), p)
     
 public function quat.toString() returns string
     return "Quaternion [X {0}, Y {1}, Z {2}, W {3}]".format(this.x.toString(), this.y.toString(), this.z.toString(), this.w.toString())
 
-/**Extracts Euler-angles (Tait-Bryan) from a quaternion. Order of result angles is X-Y-Z.
+/** Extracts Euler-angles (Tait-Bryan) from a quaternion. Order of the result is X-Y-Z.
 There's no universal way for quaternions thus we have to use quat-matrix conversion first. */
 public function quat.toEuler() returns vec3
     return this.norm().toMatrix().toEuler()
 
-/**Creates a quaternion from rotation axis and angle. */
+/** Creates a quaternion from rotation axis and angle. */
 public function vec3.toQuat(angle angl) returns quat
     let v = this.norm()
     let sin = (angl / 2).sin()
     return quat(v.x * sin, v.y * sin, v.z * sin,  (angl / 2).cos())
 
-/**Rotate a vector by a quaternion. */
+/** Rotates a vector by a quaternion. */
 public function vec3.rotate(quat q) returns vec3
     let tmp = quat(this.x, this.y, this.z, 0)
     let result = q.cross(tmp).cross(q.conj())
