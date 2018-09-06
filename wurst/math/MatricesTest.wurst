@@ -282,9 +282,9 @@ function vec3.assertEquals(vec3 expected)
                     1, 0,  0)
     let euler = test.toEuler()
     /* The same rotation can be represented by lots different Euler
-    angels thus the best way to check if mat3.toEuler convertation
+    angles thus the best way to check if mat3.toEuler convertation
     works is producing backward convertation by sequence of rotations
-    acording to the order in the angels. Obtained result must be 
+    acording to the order in the angles. Obtained result must be 
     the rotation matrix we've started from. */ 
     let aroundX = angle(euler.x).toMatrix(vec3(1, 0, 0))
     let aroundY = angle(euler.y).toMatrix(vec3(0, 1, 0))
