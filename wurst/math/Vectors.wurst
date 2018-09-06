@@ -3,7 +3,9 @@ import NoWurst
 import Wurstunit
 import public Real
 import public Angle
+import String
 import initlater Printing
+import initlater Matrices
 
 /** A vector is a geometric object that has a length and direction. 
 	Vectors can be added to other vectors according to vector algebra.
@@ -380,6 +382,18 @@ public function angle.direction(real dist) returns vec2
 /** returns the angle of this vector */	
 public function vec2.getAngle() returns angle
 	return angle(Atan2(this.y, this.x))
+
+public function vec2.assertEquals(vec2 expected)
+	let delta = 0.002
+	let compare = vec2((this.x - expected.x).abs(), (this.y - expected.y).abs())
+	if compare.x > delta or compare.y > delta
+		testFail("Expected <{0}, Actual <{1} with delta {2}>".format(expected.toString(), this.toString(), delta.toString()))
+
+public function vec3.assertEquals(vec3 expected)
+	let delta = 0.002
+	let compare = vec3((this.x - expected.x).abs(), (this.y - expected.y).abs(), (this.z - expected.z).abs())
+	if compare.x > delta or compare.y > delta or compare.z > delta
+		testFail("Expected <{0}, Actual <{1} with delta {2}>".format(expected.toString(), this.toString(), delta.toString()))
 
 @Test
 function vectorTests()
