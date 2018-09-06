@@ -1,0 +1,147 @@
+package QuaternionsTests
+import NoWurst
+import Wurstunit
+import _Primitives
+
+import Quaternions
+import Matrices
+
+function quat.assertEquals(quat expected)
+    let delta = 0.002
+    let compare = quat((this.x - expected.x).abs(), (this.y - expected.y).abs(), (this.z - expected.z).abs(), (this.w - expected.w).abs())
+    let msg = "Expected <{0}>, Actual <{1} with delta {2}>"
+    if compare.x > delta or compare.y > delta or compare.z > delta or compare.w > delta
+        testFail(msg.format(expected.toString(), this.toString(), delta.toString()))
+
+function mat3.assertEquals(mat3 expected)
+    let delta = 0.002
+    let compare = mat3( (this.m00 - expected.m00).abs(), (this.m01 - expected.m01).abs(), (this.m02 - expected.m02).abs(),
+                        (this.m10 - expected.m10).abs(), (this.m11 - expected.m11).abs(), (this.m12 - expected.m12).abs(),
+                        (this.m20 - expected.m20).abs(), (this.m21 - expected.m21).abs(), (this.m22 - expected.m22).abs())
+    let msg = "Expected {0} <{1}>, Actual <{2} with delta {3}>"
+    if compare.m00 > delta
+        testFail(msg.format("m00", expected.m00.toString(), this.m00.toString(), delta.toString()))
+    if compare.m01 > delta
+        testFail(msg.format("m01", expected.m01.toString(), this.m01.toString(), delta.toString()))
+    if compare.m02 > delta
+        testFail(msg.format("m02", expected.m02.toString(), this.m02.toString(), delta.toString()))
+
+    if compare.m10 > delta
+        testFail(msg.format("m10", expected.m10.toString(), this.m10.toString(), delta.toString()))
+    if compare.m11 > delta
+        testFail(msg.format("m11", expected.m11.toString(), this.m11.toString(), delta.toString()))
+    if compare.m12 > delta
+        testFail(msg.format("m12", expected.m12.toString(), this.m12.toString(), delta.toString()))
+
+    if compare.m20 > delta
+        testFail(msg.format("m20", expected.m20.toString(), this.m20.toString(), delta.toString()))
+    if compare.m21 > delta
+        testFail(msg.format("m21", expected.m21.toString(), this.m21.toString(), delta.toString()))
+    if compare.m22 > delta
+        testFail(msg.format("m22", expected.m22.toString(), this.m22.toString(), delta.toString()))
+
+function vec3.assertEquals(vec3 expected)
+    let delta = 0.002
+    let compare = vec3((this.x - expected.x).abs(), (this.y - expected.y).abs(), (this.z - expected.z).abs())
+    if compare.x > delta or compare.y > delta or compare.z > delta
+        testFail("Expected <{0}, Actual <{1} with delta {2}>".format(expected.toString(), this.toString(), delta.toString()))
+
+@Test function testPlusQuat()
+    (quat(1, 2, 3, 4) + quat(6, 7, 8, 9)).assertEquals(quat(7, 9, 11, 13))
+    (quat(0, 0, 0, 1) + quat(0, 0, 0, -1)).assertEquals(ZEROQ)
+
+@Test function testPlusScalar()
+    (quat(1, 2, 3, 4) + 13).assertEquals(quat(14, 15, 16, 17))
+    (13 + quat(1, 2, 3, 4)).assertEquals(quat(14, 15, 16, 17))
+
+@Test function testMinusQuat()
+    (quat(1, 2, 3, 4) - quat(6, 7, 8, 9)).assertEquals(quat(-5, -5, -5, -5))
+    (quat(0, 0, 0, 1) - quat(0, 0, 0, 1)).assertEquals(ZEROQ)
+
+@Test function testMinusScalar()
+    (quat(1, 2, 3, 4) - 13).assertEquals(quat(-12, -11, -10, -9))
+
+@Test function testMultScalar()
+    (quat(1, 2, 3, 4) * 5).assertEquals(quat(5, 10, 15, 20))
+    (5 * quat(1, 2, 3, 4)).assertEquals(quat(5, 10, 15, 20))
+
+@Test function testConjugate()
+    quat(1, 2, 3, 4).conj().assertEquals(quat(-1, -2, -3, 4))
+
+@Test function testCross()
+    quat(1, 2, 3, 4).cross(quat(5, 6, 7, 8)).assertEquals(quat(24, 48, 48, -6))
+    
+@Test function testDot()
+    quat(1, 2, 3, 4).dot(quat(5, 6, 7, 8)).assertEquals(70, 0.002)
+
+@Test function testNorm()
+    IDENTITYQ.norm().assertEquals(IDENTITYQ)
+    ZEROQ.norm().assertEquals(ZEROQ)
+    quat(2, 2, 2, 2).norm().assertEquals(quat(0.5, 0.5, 0.5, 0.5))
+
+@Test function testLength()
+    IDENTITYQ.length().assertEquals(1., 0.002)
+    ZEROQ.length().assertEquals(0, 0.002)
+    quat(2, 2, 2, 2).length().assertEquals(4, 0.002)
+
+@Test function testQuat2Mat()
+    IDENTITYQ.toMatrix().assertEquals(IDENTITY33)
+    let compare = mat3( 1, 0, 0,
+                        0, 0, -1,
+                        0, 1, 0)
+    vec3(1, 0, 0).toQuat(90 .asAngleDegrees()).toMatrix().assertEquals(compare)
+
+@Test function testVec2Quat()
+    vec3(1, 0, 0).toQuat(angle(0)).assertEquals(IDENTITYQ)
+    vec3(0, 1, 0).toQuat(angle(0)).assertEquals(IDENTITYQ)
+    vec3(0, 0, 1).toQuat(angle(0)).assertEquals(IDENTITYQ)
+    vec3(0, 0, 1).toQuat(90 .asAngleDegrees()).assertEquals(quat(0, 0, 0.707, 0.707))
+
+@Test function testQuat2Euler()
+    let test = vec3(2, 8, 5).norm().toQuat(38 .asAngleDegrees())
+    let euler = test.toEuler()
+    let aroundX = vec3(1, 0, 0).toQuat(angle(euler.x))
+    let aroundY = vec3(0, 1, 0).toQuat(angle(euler.y))
+    let aroundZ = vec3(0, 0, 1).toQuat(angle(euler.z))
+    /* The same rotation can be represented by lots different Euler
+    angels thus the best way to check if quat.toEuler convertation
+    works is producing backward convertation by sequence of rotations
+    acording to the order in the angels. Obtained result must be 
+    the quaternion we've started from. */ 
+    aroundX.cross(aroundY).cross(aroundZ).assertEquals(test)
+
+@Test function testVec3Rotate()
+    let rot = vec3(0, 0, 1).toQuat((-90) .asAngleDegrees())
+    vec3(4, 2, 1).rotate(rot).assertEquals(vec3(2, -4, 1))
+
+@Test function testLerp()
+    let start = IDENTITYQ
+    let finish = vec3(0, 0, 1).toQuat(270 .asAngleDegrees())
+    var actual = start.nlerp(finish, 0.5)
+    var length = actual.length()
+    var expected = vec3(0, 0, 1).toQuat(135 .asAngleDegrees()) * length
+    actual.assertEquals(expected)
+    actual = start.nlerpLong(finish, 0.5)
+    actual.assertEquals(expected)
+    actual = start.nlerpShort(finish, 0.5)
+    length = actual.length()
+    expected = vec3(0, 0, 1).toQuat((-45) .asAngleDegrees()) * length
+    actual.assertEquals(expected)
+
+@Test function testNlerp()
+    let start = IDENTITYQ
+    let finish = vec3(0, 0, 1).toQuat(270 .asAngleDegrees())
+    var expected = vec3(0, 0, 1).toQuat(135 .asAngleDegrees())
+    start.nlerp(finish, 0.5).assertEquals(expected)
+    start.nlerpLong(finish, 0.5).assertEquals(expected)
+    expected = vec3(0, 0, 1).toQuat((-45) .asAngleDegrees())
+    start.nlerpShort(finish, 0.5).assertEquals(expected)
+
+@Test function testSlerp()
+    let start = IDENTITYQ
+    let finish = vec3(0, 0, 1).toQuat(270 .asAngleDegrees())
+    var expected = vec3(0, 0, 1).toQuat(135 .asAngleDegrees())
+    start.slerp(finish, 0.5).assertEquals(expected)
+    start.slerpLong(finish, 0.5).assertEquals(expected)
+    expected = vec3(0, 0, 1).toQuat((-45) .asAngleDegrees())
+    start.slerpShort(finish, 0.5).assertEquals(expected)
