@@ -141,18 +141,18 @@ public function quat.toEuler() returns vec3
     real yaw
     real pitch = Asin(2 * this.x * this.z + 2 * this.y * this.w)
     real roll
-    var cosY = Cos(pitch)
+    let cosY = Cos(pitch)
     if cosY.abs() > 0.005
-        var cosX = (1 - 2 * this.x * this.x - 2 * this.y * this.y) / cosY
-        var sinX = -(2 * this.y * this.z - 2 * this.x * this.w) / cosY
+        let cosX = (1 - 2 * this.x * this.x - 2 * this.y * this.y) / cosY
+        let sinX = -(2 * this.y * this.z - 2 * this.x * this.w) / cosY
         yaw  = Atan2(sinX, cosX)
-        var cosZ =  (1 - 2 * this.y * this.y - 2 * this.z * this.z) / cosY
-        var sinZ = -(2 * this.x * this.y - 2 * this.z * this.w) / cosY
+        let cosZ =  (1 - 2 * this.y * this.y - 2 * this.z * this.z) / cosY
+        let sinZ = -(2 * this.x * this.y - 2 * this.z * this.w) / cosY
         roll = Atan2(sinZ, cosZ)
     else
         yaw = 0.
-        var cosZ = 1 - 2 * this.x * this.x - 2 * this.z * this.z
-        var sinZ = 2 * this.x * this.y + 2 * this.z * this.w
+        let cosZ = 1 - 2 * this.x * this.x - 2 * this.z * this.z
+        let sinZ = 2 * this.x * this.y + 2 * this.z * this.w
         roll  = Atan2(sinZ, cosZ) 
     return vec3(yaw, pitch, roll)
 
