@@ -265,18 +265,18 @@ public function mat3.toEuler() returns vec3
     real yaw
     real pitch = Asin(this.m02)
     real roll
-    var cosY = Cos(pitch)
+    let cosY = Cos(pitch)
     if cosY.abs() > 0.005
-        var cosX = this.m22 / cosY
-        var sinX = -this.m12 / cosY
+        let cosX = this.m22 / cosY
+        let sinX = -this.m12 / cosY
         yaw  = Atan2(sinX, cosX)
-        var cosZ =  this.m00 / cosY
-        var sinZ = -this.m01 / cosY
+        let cosZ =  this.m00 / cosY
+        let sinZ = -this.m01 / cosY
         roll = Atan2(sinZ, cosZ)
     else
         yaw = 0.
-        var cosZ = this.m11
-        var sinZ = this.m10
+        let cosZ = this.m11
+        let sinZ = this.m10
         roll  = Atan2(sinZ, cosZ) 
     return vec3(yaw, pitch, roll)
 
