@@ -1,6 +1,7 @@
 package Effect
 import NoWurst
 import Vectors
+import Quaternions
 import Colors
 import Wurstunit
 
@@ -45,6 +46,10 @@ public function effect.setTime(real time)
 
 public function effect.setOrientation(real yaw, real pitch, real roll)
 	BlzSetSpecialEffectOrientation(this, yaw, pitch, roll)
+
+public function effect.setOrientation(quat quaternion)
+	let euler = quaternion.toEuler()
+	BlzSetSpecialEffectOrientation(this, euler.x, euler.y, euler.z)
 
 public function effect.setYaw(real yaw)
 	BlzSetSpecialEffectYaw(this, yaw)
