@@ -1,11 +1,10 @@
 package Matrices
 import NoWurst
 import public Vectors
-import _Primitives
+import ErrorHandling
 import Wurstunit
 
 /* Great thanks to euclideanspace.com for wide explanations. */
-
 
 /** Matrix 2x2
 00 01
@@ -76,28 +75,28 @@ public function mat2.op_mult(mat2 m) returns mat2
     return mat2(this.m00 * m.m00 + this.m01 * m.m10,    this.m00 * m.m01 + this.m01 * m.m11, 
                 this.m10 * m.m00 + this.m11 * m.m10,    this.m10 * m.m01 + this.m11 * m.m11)
 
-/** Returns matrix' column by id as a vector or zero-vector if doesn't exist. */
-public function mat2.col(int id) returns vec2
-    vec2 result
-    switch id
+/** Returns matrix' column by index as a vector or rises an error if doesn't exist. */
+public function mat2.col(int index) returns vec2
+    vec2 result = ZERO2
+    switch index
         case 0
             result = vec2(this.m00, this.m10)
         case 1
             result = vec2(this.m01, this.m11)
         default
-            result = ZERO2
+            error("Invalid call mat2.col. Index out of range.")
     return result
 
-/** Returns matrix' row by id as a vector or zero-vector if doesn't exist. */
-public function mat2.row(int id) returns vec2
-    vec2 result
-    switch id
+/** Returns matrix' row by index as a vector or rises an error if doesn't exist. */
+public function mat2.row(int index) returns vec2
+    vec2 result = ZERO2
+    switch index
         case 0
             result = vec2(this.m00, this.m01)
         case 1
             result = vec2(this.m10, this.m11)
         default
-            result = ZERO2
+            error("Invalid call mat2.row. Index out of range.")
     return result
 
 public function mat2.determinant() returns real
@@ -193,10 +192,10 @@ public function mat3.op_mult(mat3 m) returns mat3
                 this.m20 * m.m01 + this.m21 * m.m11 + this.m22 * m.m21,
                 this.m20 * m.m02 + this.m21 * m.m12 + this.m22 * m.m22)
     
-/** Returns matrix' column by id as a vector or zero-vector if doesn't exist. */
-public function mat3.col(int id) returns vec3
-    vec3 result
-    switch id
+/** Returns matrix' column by index as a vector or rises an error if doesn't exist. */
+public function mat3.col(int index) returns vec3
+    vec3 result = ZERO3
+    switch index
         case 0
             result = vec3(this.m00, this.m10, this.m20)
         case 1
@@ -204,13 +203,13 @@ public function mat3.col(int id) returns vec3
         case 2
             result = vec3(this.m02, this.m12, this.m22)
         default
-            result = ZERO3
+            error("Invalid call mat3.col. Index out of range.")
     return result
 
-/** Returns matrix' row by id as a vector or zero-vector if doesn't exist. */
-public function mat3.row(int id) returns vec3
-    vec3 result
-    switch id
+/** Returns matrix' row by index as a vector or rises an error if doesn't exist. */
+public function mat3.row(int index) returns vec3
+    vec3 result = ZERO3
+    switch index
         case 0
             result = vec3(this.m00, this.m01, this.m02)
         case 1
@@ -218,7 +217,7 @@ public function mat3.row(int id) returns vec3
         case 2
             result = vec3(this.m20, this.m21, this.m22)
         default
-            result = ZERO3
+            error("Invalid call mat3.row. Index out of range.")
     return result
 
 /** The sum of the main diagonal terms. */
