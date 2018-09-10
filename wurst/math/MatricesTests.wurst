@@ -79,9 +79,9 @@ import Matrices
     test.assertEquals(inverse.matrix)
 
 @Test function test22Angle2Mat()
-    90 .asAngleDegrees().toMatrix().assertEquals(mat2(0, -1, 1, 0))
-    (-90).asAngleDegrees().toMatrix().assertEquals(mat2(0, 1, -1, 0))
-    (225).asAngleDegrees().toMatrix().assertEquals(mat2(-0.707, 0.707, -0.707, -0.707))
+    90 .asAngleDegrees().toRotation().assertEquals(mat2(0, -1, 1, 0))
+    (-90).asAngleDegrees().toRotation().assertEquals(mat2(0, 1, -1, 0))
+    (225).asAngleDegrees().toRotation().assertEquals(mat2(-0.707, 0.707, -0.707, -0.707))
 
 @Test function test22Scaling()
     vec2(0.5, 0.5).toScaling().assertEquals(mat2(0.5, 0, 0, 0.5))
@@ -198,21 +198,21 @@ import Matrices
     var expected = mat3(0, -1, 0,
                         1, 0, 0,
                         0, 0, 1)
-    vec3(0, 0, 1).toMatrix(90 .asAngleDegrees()).assertEquals(expected)
+    vec3(0, 0, 1).toRotation(90 .asAngleDegrees()).assertEquals(expected)
     expected = mat3(1, 0,       0,
                     0, -0.707,  0.707,
                     0, -0.707,  -0.707)
-    vec3(1, 0, 0).toMatrix(225 .asAngleDegrees()).assertEquals(expected)
+    vec3(1, 0, 0).toRotation(225 .asAngleDegrees()).assertEquals(expected)
 
 @Test function test33Angle2Mat()
     var expected = mat3(0, -1, 0,
                         1, 0, 0,
                         0, 0, 1)
-    90 .asAngleDegrees().toMatrix(vec3(0, 0, 1)).assertEquals(expected)
+    90 .asAngleDegrees().toRotation(vec3(0, 0, 1)).assertEquals(expected)
     expected = mat3(1, 0,       0,
                     0, -0.707,  0.707,
                     0, -0.707,  -0.707)
-    225 .asAngleDegrees().toMatrix(vec3(1, 0, 0)).assertEquals(expected)
+    225 .asAngleDegrees().toRotation(vec3(1, 0, 0)).assertEquals(expected)
 
 @Test function test33Scaling()
     var expected = mat3(0.5,    0,     0,
@@ -235,7 +235,7 @@ import Matrices
     works is producing backward convertation by sequence of rotations
     acording to the order in the angels. Obtained result must be 
     the rotation matrix we've started from. */ 
-    let aroundX = angle(euler.x).toMatrix(vec3(1, 0, 0))
-    let aroundY = angle(euler.y).toMatrix(vec3(0, 1, 0))
-    let aroundZ = angle(euler.z).toMatrix(vec3(0, 0, 1))
+    let aroundX = angle(euler.x).toRotation(vec3(1, 0, 0))
+    let aroundY = angle(euler.y).toRotation(vec3(0, 1, 0))
+    let aroundZ = angle(euler.z).toRotation(vec3(0, 0, 1))
     (aroundX * aroundY * aroundZ).assertEquals(test)
