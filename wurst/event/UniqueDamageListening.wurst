@@ -105,19 +105,19 @@ public function removeSourceDamageListener(unit u, DamageListener cb)
 
 init
 	addDamageModifier() d ->
-		if targetUniqueModifiers.has(d.target)
-			for cb in targetUniqueModifiers.get(d.target)
+		if targetUniqueModifiers.has(d.getTarget())
+			for cb in targetUniqueModifiers.get(d.getTarget())
 				cb.modify(d)
-		if sourceUniqueModifiers.has(d.source)
-			for cb in sourceUniqueModifiers.get(d.source)
+		if sourceUniqueModifiers.has(d.getSource())
+			for cb in sourceUniqueModifiers.get(d.getSource())
 				cb.modify(d)
 
 	addDamageListener() d ->
-		if targetUniqueListeners.has(d.target)
-			for cb in targetUniqueListeners.get(d.target)
+		if targetUniqueListeners.has(d.getTarget())
+			for cb in targetUniqueListeners.get(d.getTarget())
 				cb.listen(d)
-		if sourceUniqueListeners.has(d.source)
-			for cb in sourceUniqueListeners.get(d.source)
+		if sourceUniqueListeners.has(d.getSource())
+			for cb in sourceUniqueListeners.get(d.getSource())
 				cb.listen(d)
 				
 	onLeave() ->
