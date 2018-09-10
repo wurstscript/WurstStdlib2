@@ -32,7 +32,7 @@ public constant EVENT_PLAYER_CHAT_FILTER = ConvertPlayerEvent(96)
 	>	 <some non target spell event for all units>
 
 	> EventListener.onCast(myUnit, MY_SPELL_ID) (caster) ->
-	>	 <some non target spell for 'myUnit'>
+	>	 <some non target spell for 'myUnit'> 
 
 	> EventListener.onPointCast(myUnit, MY_SPELL_ID) (caster, target) ->
 	>	 <actions for a point cast spell. 'target' is the vec2 target point>
@@ -276,14 +276,14 @@ public function unregisterEvents(int id)
 		
 
 init
-	nullTimer() ->
+  	nullTimer() ->
 		// Register Events when unit enters map
 		onUnitIndex(() -> registerEventsForUnit(getIndexedUnit()))
-		// Delete 
+		// Delete
 		onUnitDeindex(() -> unregisterEventsForUnit(getDeindexedUnit()))
-		
+
 		// Register Actions
-		unitTrig.addAction(() -> EventListener.generalEventCallback())	
+		unitTrig.addAction(() -> EventListener.generalEventCallback())
 		leaveTrig.addAction(() -> EventListener.generalEventCallback())
 		keyTrig.addAction(() -> EventListener.generalEventCallback())
 
@@ -298,6 +298,9 @@ init
 			..registerPlayerEvent(players[i], EVENT_PLAYER_ARROW_RIGHT_DOWN)
 			..registerPlayerEvent(players[i], EVENT_PLAYER_ARROW_RIGHT_UP)
 			..registerPlayerEvent(players[i], EVENT_PLAYER_END_CINEMATIC)
+			..registerPlayerEvent(players[i], EVENT_PLAYER_MOUSE_UP)
+			..registerPlayerEvent(players[i], EVENT_PLAYER_MOUSE_DOWN)
+			..registerPlayerEvent(players[i], EVENT_PLAYER_MOUSE_MOVE)
 			..registerPlayerChatEvent(players[i], "", false)
 
 		registerPlayerUnitEvent(EVENT_PLAYER_UNIT_SPELL_EFFECT, null, () -> EventListener.onSpellEffect(), null)
