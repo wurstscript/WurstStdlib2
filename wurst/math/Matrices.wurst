@@ -128,7 +128,7 @@ public function mat2.toString() returns string
         this.m10.toString(), this.m11.toString())
 
 /** Creates rotation matrix from angle. */
-public function angle.toMatrix() returns mat2
+public function angle.toRotation() returns mat2
     return mat2(this.cos(), -this.sin(),
                 this.sin(), this.cos())
 
@@ -259,7 +259,7 @@ public function mat3.inverse() returns inverseresult33
         inverse.matrix = 1 / d * tmp
     return inverse
 
-/** Extracts Euler-angles (Tait-Bryan) from rotation matrix. Order of the result is X-Y-Z.*/
+/** Extracts Euler-angles (Tait-Bryan) in radians from rotation matrix. Order of the result is X-Y-Z. */
 public function mat3.toEuler() returns vec3
     real yaw
     real pitch = Asin(this.m02)
@@ -286,7 +286,7 @@ public function mat3.toString() returns string
         this.m20.toString(), this.m21.toString(), this.m22.toString())
 
 /** Creates 3x3 rotation matrix from axis and angle. */
-public function vec3.toMatrix(angle angl) returns mat3
+public function vec3.toRotation(angle angl) returns mat3
     var v = this.norm()
     var x = v.x
     var y = v.y
@@ -298,7 +298,7 @@ public function vec3.toMatrix(angle angl) returns mat3
                 -y * sin + mcos * x * z,     x * sin + mcos * y * z,     1 + mcos * (z * z - 1))
 
 /** Creates 3x3 rotation matrix from axis and angle. */
-public function angle.toMatrix(vec3 axis) returns mat3
+public function angle.toRotation(vec3 axis) returns mat3
     return axis.toMatrix(this)
 
 /** Creates scaling 3x3 matrix from a vector. */
