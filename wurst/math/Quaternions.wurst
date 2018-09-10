@@ -82,7 +82,7 @@ public function quat.getZ() returns vec3
                 2 * this.y * this.z - 2 * this.x * this.w,
                 1 - 2 * this.x * this.x - 2 * this.y * this.y)
                 
-/** Linear intERPolation.
+/** Linear interpolation.
 q - targeted quaternion. p - progress from 0 to 1. */
 public function quat.lerp(quat q, real p) returns quat
     quat result
@@ -92,36 +92,36 @@ public function quat.lerp(quat q, real p) returns quat
         result = this * (1 - p) + q * p
     return result
 
-/** Linear intERPolation.
+/** Linear interpolation.
 Always chooses the SHORTEST way between rotations.
 q - targeted quaternion. p - progress from 0 to 1. */
 public function quat.lerpShort(quat q, real p) returns quat
     return this.dot(q) > 0 ? this.lerp(q, p) : this.lerp(quat(-q.x, -q.y, -q.z, -q.w), p)
 
-/** Linear intERPolation.
+/** Linear interpolation.
 Always chooses the LONGEST way between rotations.
 q - targeted quaternion. p - progress from 0 to 1. */
 public function quat.lerpLong(quat q, real p) returns quat
     return this.dot(q) < 0 ? this.lerp(q, p) : this.lerp(quat(-q.x, -q.y, -q.z, -q.w), p)
 
-/** Normalized Linear intERPolation.
+/** Normalized linear interpolation.
 q - targeted quaternion. p - progress from 0 to 1. */
 public function quat.nlerp(quat q, real p) returns quat
     return this.lerp(q, p).norm()
 
-/** Normalized Linear intERPolation.
+/** Normalized linear interpolation.
 Always chooses the SHORTEST way between rotations.
 q - targeted quaternion. p - progress from 0 to 1. */
 public function quat.nlerpShort(quat q, real p) returns quat
     return this.dot(q) > 0 ? this.nlerp(q, p) : this.nlerp(quat(-q.x, -q.y, -q.z, -q.w), p)
 
-/** Normalized Linear intERPolation.
+/** Normalized linear interpolation.
 Always chooses the LONGEST way between rotations.
 q - targeted quaternion. p - progress from 0 to 1. */
 public function quat.nlerpLong(quat q, real p) returns quat
     return this.dot(q) < 0 ? this.nlerp(q, p) : this.nlerp(quat(-q.x, -q.y, -q.z, -q.w), p)
 
-/**Spherical Linear intERPolation. Interpolates between two rotations.
+/**Spherical linear interpolation. Interpolates between two rotations.
 q - targeted quaternion. p - progress from 0 to 1. */
 @deprecated("Slerp is the least efficient approach in performance so try to avoid using it, unless you need constant angular velocity. Nlerp is better solution in most cases.")
 public function quat.slerp(quat q, real p) returns quat
@@ -134,14 +134,14 @@ public function quat.slerp(quat q, real p) returns quat
         result = ((1 - p) * theta).sin() / theta.sin() * this + (p * theta).sin() / theta.sin() * q
     return result
 
-/**Spherical Linear intERPolation. Interpolates between two rotations.
+/**Spherical linear interpolation. Interpolates between two rotations.
 Always chooses the SHORTEST way between rotations.
 q - targeted quaternion. p - progress from 0 to 1. */
 @deprecated("Slerp is the least efficient approach in performance so try to avoid using it, unless you need constant angular velocity. Nlerp is better solution in most cases.")
 public function quat.slerpShort(quat q, real p) returns quat
     return this.dot(q) > 0 ? this.slerp(q, p) : this.slerp(quat(-q.x, -q.y, -q.z, -q.w), p)
 
-/**Spherical Linear intERPolation. Interpolates between two rotations.
+/**Spherical linear interpolation. Interpolates between two rotations.
 Always chooses the LONGEST way between rotations.
 q - targeted quaternion. p - progress from 0 to 1. */
 @deprecated("Slerp is the least efficient approach in performance so try to avoid using it, unless you need constant angular velocity. Nlerp is better solution in most cases.")
