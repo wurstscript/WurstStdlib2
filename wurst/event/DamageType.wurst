@@ -75,7 +75,7 @@ public function getDamageType() returns DamageType
 	conditions. */
 public function dealCodeDamage(unit attacker, unit target, real damage)
 	let prevType   = lastDamageType
-	let hp         = target.getHP() - .405
+	let hp		 = target.getHP() - .405
 	lastDamageType = DamageType.CODE
 
 	if hp > damage
@@ -87,13 +87,13 @@ public function dealCodeDamage(unit attacker, unit target, real damage)
 		// would otherwise block all damage. The ATTACK_TYPE_MAGIC case affect
 		// ethereal units, whereas other attack types do not.
 		UnitDamageTarget(attacker, target, 1000000. + damage, true, false, ATTACK_TYPE_UNIVERSAL, DAMAGE_TYPE_UNIVERSAL, null)
-		UnitDamageTarget(attacker, target, 1000000. + damage, true, false, ATTACK_TYPE_MAGIC,     DAMAGE_TYPE_UNIVERSAL, null)
+		UnitDamageTarget(attacker, target, 1000000. + damage, true, false, ATTACK_TYPE_MAGIC,	 DAMAGE_TYPE_UNIVERSAL, null)
 
 	lastDamageType = prevType
 
 
 function after()
-	let      time    = GetExpiredTimer()
+	let	  time	= GetExpiredTimer()
 	DelayDat tempDat = time.getData() castTo DelayDat
 
 	dealCodeDamage(tempDat.source, tempDat.target, tempDat.damage)
@@ -104,8 +104,8 @@ function after()
 
 function getUnitBonusSpellResistance(unit u) returns real
 	let prevType = lastDamageType
-	let life     = u.getHP()
-	var scale    = u.getMaxHP()
+	let life	 = u.getHP()
+	var scale	= u.getMaxHP()
 
 	u.setHP(scale)
 	lastDamageType = CODE
@@ -124,7 +124,7 @@ function getUnitBonusSpellResistance(unit u) returns real
 function handler() returns bool
 	if getDamageType() == DamageType.SPELL
 		var attemptedDamage = -1.*GetEventDamage()
-		let tU              = GetTriggerUnit()
+		let tU			  = GetTriggerUnit()
 
 		if useBonusCalculator
 			let scale = getUnitBonusSpellResistance(tU)

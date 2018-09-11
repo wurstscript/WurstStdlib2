@@ -9,7 +9,7 @@ import Wurstunit
 	
 	Example use:
 	| doAfter(10.0) ->
-	|     print("10 seconds later")		
+	|	 print("10 seconds later")		
 */			
 public function doAfter(real timeToWait, CallbackSingle cb) returns CallbackSingle
 	cb.start(timeToWait)
@@ -27,7 +27,7 @@ public function nullTimer(CallbackSingle cb) returns CallbackSingle
 	
 	Example use:
 	| doPeriodically(0.5) cb ->
-	|     if i > 10
+	|	 if i > 10
 			destroy cb
 */
 
@@ -41,7 +41,7 @@ public function doPeriodically(real time, CallbackPeriodic cb) returns CallbackP
 	
 	Example use:
 	| doPeriodicallyCounted(0.5, 100) cb ->
-	|     doSomething()	
+	|	 doSomething()	
 	
 */
 public function doPeriodicallyCounted(real time, int callAmount, CallbackCounted cb) returns CallbackCounted
@@ -52,7 +52,7 @@ public function doPeriodicallyCounted(real time, int callAmount, CallbackCounted
 	
 	Example use:
 	| doPeriodicallyCounted(0.5, 10.) ->
-	|     doSomething()		
+	|	 doSomething()		
 	
 */	
 public function doPeriodicallyTimed(real interval, real timerDuration, CallbackCounted cb) returns CallbackCounted
