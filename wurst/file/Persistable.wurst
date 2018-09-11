@@ -4,7 +4,6 @@ import MultifileIO
 import PreloadIO
 import BufferAdapters
 import public Buffer
-import LocalFiles
 
 /**
 	Represents the various states of a persistable class load.
@@ -133,10 +132,6 @@ class PersistentStore
 		entity.onLoaded(status)
 
 	function load(PersistableLoadCallback callback)
-		if not LocalFiles.isEnabled(owner)
-			finishWithStatus(LoadStatus.FAIL_NOT_ENABLED, callback)
-			return
-
 		// synchronizer used to proceed when the owner has finished loading data
 		let synchronizer = new SimpleSynchronizer()
 		let network = new Network(owner)
