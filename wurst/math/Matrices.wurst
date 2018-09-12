@@ -328,7 +328,7 @@ public function vec3.toScaling() returns mat3
                 0,      0,      this.z)
 
 /** Creates translation 3x3 matrix from a vector that represents an offset.
-Use with vec3 that represents 2D point*/
+Use it with vec3 that represents 2D point. */
 public function vec2.toTranslation() returns mat3
     return mat3(1, 0, this.x,
                 0, 1, this.y,
