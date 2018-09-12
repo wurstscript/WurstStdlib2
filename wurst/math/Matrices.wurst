@@ -1,6 +1,7 @@
 package Matrices
 import NoWurst
 import public Vectors
+import Maths
 import ErrorHandling
 import Wurstunit
 
@@ -9,6 +10,7 @@ import Wurstunit
 /** Matrix 2x2
 00 01
 10 11
+Each column represents an axis in a rotation matrix.
 */
 public tuple mat2(real m00, real m01, real m10, real m11)
 
@@ -24,6 +26,7 @@ tuple inverseresult22(bool success, mat2 matrix)
 00 01 02
 10 11 12
 20 21 22
+Each column represents an axis in a rotation matrix.
 */
 public tuple mat3(  real m00, real m01, real m02,
                     real m10, real m11, real m12,
@@ -264,19 +267,17 @@ public function mat3.toEuler() returns vec3
     real yaw
     real pitch = Asin(this.m02)
     real roll
-    let cosY = Cos(pitch)
-    if cosY.abs() > 0.005
-        let cosX = this.m22 / cosY
-        let sinX = -this.m12 / cosY
-        yaw  = Atan2(sinX, cosX)
-        let cosZ =  this.m00 / cosY
-        let sinZ = -this.m01 / cosY
-        roll = Atan2(sinZ, cosZ)
+    if this.m02 > 0.998
+        yaw = Atan2(this.m21, this.m11) 
+        pitch = PI/2
+        roll = 0
+    else if this.m02 < -0.998
+        yaw = Atan2(this.m21, this.m11) 
+        pitch = -PI/2
+        roll  = 0
     else
-        yaw = 0.
-        let cosZ = this.m11
-        let sinZ = this.m10
-        roll  = Atan2(sinZ, cosZ) 
+        yaw  = Atan2(-this.m12, this.m22)
+        roll = Atan2(-this.m01 , this.m00)        
     return vec3(yaw, pitch, roll)
 
 public function mat3.toString() returns string
@@ -299,7 +300,25 @@ public function vec3.toRotation(angle angl) returns mat3
 
 /** Creates 3x3 rotation matrix from axis and angle. */
 public function angle.toRotation(vec3 axis) returns mat3
-    return axis.toMatrix(this)
+    return axis.toRotation(this)
+
+/** Creates 3x3 rotation matrix around X-axis from angle. */
+public function angle.toRotationX() returns mat3
+    return mat3(1, 0,           0,
+                0, this.cos(), -this.sin(),
+                0, this.sin(), this.cos())
+
+/** Creates 3x3 rotation matrix around Y-axis from angle. */
+public function angle.toRotationY() returns mat3
+    return mat3(this.cos(),  0, this.sin(),
+                0,           1, 0,
+                -this.sin(), 0, this.cos())
+
+/** Creates 3x3 rotation matrix around Z-axis from angle. */
+public function angle.toRotationZ() returns mat3
+    return mat3(this.cos(), -this.sin(), 0,
+                this.sin(), this.cos(),  0,
+                0,          0,           1)
 
 /** Creates scaling 3x3 matrix from a vector. */
 public function vec3.toScaling() returns mat3
