@@ -265,7 +265,7 @@ public function mat3.inverse() returns inverseresult33
 /** Extracts Euler-angles (Tait-Bryan) in radians from rotation matrix. Order of the result is X-Y-Z. */
 public function mat3.toEuler() returns vec3
     real yaw
-    real pitch = Asin(this.m02)
+    real pitch
     real roll
     if this.m02 > 0.998
         yaw = Atan2(this.m21, this.m11) 
@@ -277,7 +277,8 @@ public function mat3.toEuler() returns vec3
         roll  = 0
     else
         yaw  = Atan2(-this.m12, this.m22)
-        roll = Atan2(-this.m01 , this.m00)        
+        pitch = Asin(this.m02)
+        roll = Atan2(-this.m01 , this.m00)   
     return vec3(yaw, pitch, roll)
 
 public function mat3.toString() returns string
