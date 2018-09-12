@@ -2,6 +2,7 @@ package Quaternions
 import NoWurst
 import String
 import Matrices
+import Maths
 import Wurstunit
 
 /* Great thanks to euclideanspace.com for wide explanations. */
@@ -151,25 +152,34 @@ public function quat.slerpLong(quat q, real p) returns quat
 public function quat.toString() returns string
     return "Quaternion [X {0}, Y {1}, Z {2}, W {3}]".format(this.x.toString(), this.y.toString(), this.z.toString(), this.w.toString())
 
-/** Extracts Euler-angles (Tait-Bryan) from a quaternion. Order of the result is X-Y-Z. */
+/** Extracts Euler-angles (Tait-Bryan) in radians from a quaternion. Order of the result is X-Y-Z. */
 public function quat.toEuler() returns vec3
-    // There's no universal way for quaternions thus extracting has come from quat-matrix conversion.
     real yaw
-    real pitch = Asin(2 * this.x * this.z + 2 * this.y * this.w)
+    real pitch
     real roll
-    let cosY = Cos(pitch)
-    if cosY.abs() > 0.005
-        let cosX = (1 - 2 * this.x * this.x - 2 * this.y * this.y) / cosY
-        let sinX = -(2 * this.y * this.z - 2 * this.x * this.w) / cosY
-        yaw  = Atan2(sinX, cosX)
-        let cosZ =  (1 - 2 * this.y * this.y - 2 * this.z * this.z) / cosY
-        let sinZ = -(2 * this.x * this.y - 2 * this.z * this.w) / cosY
-        roll = Atan2(sinZ, cosZ)
+    real cos
+    real sin
+    let test = 2 * this.x * this.z + 2 * this.y * this.w
+    if test > 0.999
+        cos = 1 - 2 * this.x * this.x - 2 * this.z * this.z
+        sin = 2 * this.y * this.z + 2 * this.x * this.w
+        yaw = Atan2(sin, cos) 
+        pitch = PI/2
+        roll = 0
+    else if test < -0.999
+        cos = 1 - 2 * this.x * this.x - 2 * this.z * this.z
+        sin = 2 * this.y * this.z + 2 * this.x * this.w
+        yaw = Atan2(sin, cos) 
+        pitch = -PI/2
+        roll  = 0
     else
-        yaw = 0.
-        let cosZ = 1 - 2 * this.x * this.x - 2 * this.z * this.z
-        let sinZ = 2 * this.x * this.y + 2 * this.z * this.w
-        roll  = Atan2(sinZ, cosZ) 
+        cos = 1 - 2 * this.x * this.x - 2 * this.y * this.y
+        sin = -(2 * this.y * this.z - 2 * this.x * this.w)
+        yaw  = Atan2(sin, cos)
+        pitch = Asin(test)
+        cos = 1 - 2 * this.y * this.y - 2 * this.z * this.z
+        sin = -(2 * this.x * this.y - 2 * this.z * this.w)
+        roll = Atan2(sin , cos)   
     return vec3(yaw, pitch, roll)
 
 /** Creates a quaternion from rotation axis and angle. */
