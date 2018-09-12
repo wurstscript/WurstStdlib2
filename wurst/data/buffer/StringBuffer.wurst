@@ -5,6 +5,13 @@ import LinkedList
 import BufferInterface
 import SafetyChecks
 
+public abstract class AbstractStringChunkedBuffer extends AbstractBuffer
+	abstract function pushChunk(string chunk)
+	abstract function hasChunk() returns boolean
+	abstract function popChunk() returns string
+	function beforeChunkExtract()
+	function afterChunkInject()
+
 class ChunkElement
 	var content = ""
 
@@ -35,7 +42,7 @@ class ChunkElement
 	or elsewhere.
 	Use hasChunk() to check if there are any chunks left.
 **/
-public abstract class AbstractStringBuffer extends AbstractBuffer
+public abstract class AbstractStringBasedBuffer extends AbstractStringChunkedBuffer
 	protected static constant MAX_BACKBUFFER_SIZE = 1024
 	protected static constant MAX_BUFFER_SIZE = 2048
 
@@ -47,11 +54,11 @@ public abstract class AbstractStringBuffer extends AbstractBuffer
 	// this is the maximum size of each chunk element
 	// we should keep this below MAX_BACKBUFFER_SIZE so that currentBuffer can reliably
 	// fit at least two buffers of that size, while staying under MAX_BUFFER_SIZE characters
-	private int maxBufferSize
+	protected int maxBufferSize
 
 	construct(int maxSize)
 		if maxSize > MAX_BACKBUFFER_SIZE
-			Log.warn("Trying to instantiate an instance of AbstractStringBuffer with maxSize=" + maxSize.toString() +
+			Log.warn("Trying to instantiate an instance of AbstractStringBasedBuffer with maxSize=" + maxSize.toString() +
 			", but MAX_BACKBUFFER_SIZE is " + MAX_BACKBUFFER_SIZE.toString())
 			Log.warn("The value will be clamped to " + MAX_BACKBUFFER_SIZE.toString())
 
@@ -72,7 +79,7 @@ public abstract class AbstractStringBuffer extends AbstractBuffer
 	/**
 		Call this function once after you've finished writing to commit any pending data.
 	**/
-	function flush()
+	override function beforeChunkExtract()
 		if writeBuffer.length() > 0
 			flushBuffer()
 
@@ -85,7 +92,7 @@ public abstract class AbstractStringBuffer extends AbstractBuffer
 	protected function pushString(string data)
 		var remaining = data
 		if data.length() > MAX_BUFFER_SIZE
-			error("AbstractStringBuffer: trying to push a string above MAX_BUFFER_SIZE")
+			error("AbstractStringBasedBuffer: trying to push a string above MAX_BUFFER_SIZE")
 
 		var overflow = data.length() + writeBuffer.length() - maxBufferSize
 		while overflow > 0
@@ -183,13 +190,13 @@ public abstract class AbstractStringBuffer extends AbstractBuffer
 		Chunk manipulation.
 	*/
 
-	function pushChunk(string value)
+	override function pushChunk(string value)
 		chunks.push(new ChunkElement(value))
 
-	function hasChunk() returns boolean
+	override function hasChunk() returns boolean
 		return chunks.size() > 0
 
-	function popChunk() returns string
+	override function popChunk() returns string
 		if not hasChunk()
 			error("OrderedStringBuffer: trying to pop non-existent chunk")
 		let chunk = chunks.dequeue()
@@ -203,9 +210,3 @@ public abstract class AbstractStringBuffer extends AbstractBuffer
 		chunks.clear()
 		readBuffer = ""
 		writeBuffer = ""
-
-	/*
-		Adapters.
-	*/
-	abstract function moveTo(Buffer buffer)
-		

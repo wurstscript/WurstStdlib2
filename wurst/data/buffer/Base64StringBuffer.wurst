@@ -1,0 +1,95 @@
+package Base64StringBuffer
+
+import StringBuffer
+import Base64
+import StringUtils
+
+enum Base64Type
+    STRING
+    INT
+    SHORT
+    BYTE
+    REAL
+    BOOLEAN
+
+public class Base64StringBuffer extends AbstractStringChunkedBuffer
+    private Base64Encoder encoder
+    private Base64Decoder decoder
+
+    construct(int maxBufferSize)
+        this.encoder = new Base64Encoder(maxBufferSize)
+        this.decoder = new Base64Decoder
+
+    ondestroy
+        destroy encoder
+        destroy decoder
+
+    /** Read-flow only **/
+    override function pushChunk(string chunk)
+        decoder.pushChunk(chunk)
+
+    /** Write-flow only **/
+    override function hasChunk() returns boolean
+        return encoder.hasChunk()
+
+    /** Write-flow only **/
+    override function popChunk() returns string
+        return encoder.popChunk()
+
+    /** Write-flow only **/
+    override function beforeChunkExtract()
+        encoder.encode()
+    
+    /** Read-flow only **/
+    override function afterChunkInject()
+        decoder.decode()
+
+    override function readInt() returns int
+        return decoder.popInt()
+
+    override function readShort() returns int
+        return decoder.popShort()
+
+    override function readByte() returns int
+        return decoder.popByte()
+
+    override function readBoolean() returns boolean
+        return decoder.popByte().toBool()
+
+    override function readReal() returns real
+        let number = decoder.popInt()
+        let fractional = 1 / decoder.popShort()
+        return number + fractional
+
+    override function readString() returns string
+        let length = decoder.popShort()
+        var value = ""
+        for i = 1 to length
+            value += decoder.popByte().toChar().toString()
+        return value
+
+    override function writeInt(int value)
+        encoder.pushInt(value)
+
+    override function writeShort(int value)
+        encoder.pushShort(value)
+
+    override function writeByte(int value)
+        encoder.pushByte(value)
+
+    override function writeString(string value)
+        encoder.pushShort(value.length())
+
+        for i = 0 to value.length() - 1
+            encoder.pushByte(value.charAt(i).toChar().toInt())
+
+    override function writeReal(real value)
+        let number = value.toInt()
+        let fractional = (1 / (value % 1)).toInt().clamp(0, 0xFFFF)
+        encoder.pushInt(number)
+        encoder.pushShort(fractional)
+
+    override function writeBoolean(boolean value)
+        encoder.pushByte(value.toInt())
+
+    override function clear()

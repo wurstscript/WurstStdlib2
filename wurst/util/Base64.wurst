@@ -1,0 +1,373 @@
+package Base64
+
+import HashBuffer
+import Bitwise
+import StringUtils
+import Table
+import Execute
+
+// constants tuned to work on any optimization settings and with stacktraces
+// this is very pessimistic, and could be much higher on higher opts but whatever
+constant ENCODES_PER_ROUND = 500
+constant DECODES_PER_ROUND = 500
+
+int loopCounter = 0
+int loopActions = 0
+
+class ByteBuffer
+    private var buffer = new Table()
+
+    private var currentWriteBytes = byte4(0, 0, 0, 0)
+    private var currentWriteByteIndex = 0
+
+    private var currentReadBytes = byte4(0, 0, 0, 0)
+    private var currentReadByteIndex = 0
+
+    private var currentWriteIndex = -1
+    private var currentReadIndex = -1
+
+    private var byteCount = 0
+
+    ondestroy
+        destroy buffer
+
+    private function commitInt()
+        currentWriteIndex++
+        buffer.saveInt(currentWriteIndex, currentWriteBytes.toInt())
+        currentWriteBytes = byte4(0, 0, 0, 0)
+        byteCount += currentWriteByteIndex
+        currentWriteByteIndex = 0
+
+    private function loadInt()
+        currentReadIndex++
+        currentReadBytes = buffer.loadInt(currentReadIndex).bytes()
+        currentReadByteIndex = 0
+
+    private function writeByteInternal(int n)
+        if currentWriteByteIndex > 3
+            commitInt()
+        currentWriteBytes = currentWriteBytes.put(currentWriteByteIndex, n)
+        currentWriteByteIndex++
+
+    private function readByteInternal() returns int
+        if currentReadByteIndex > 3
+            loadInt()
+        let n = currentReadBytes.select(currentReadByteIndex)
+        currentReadByteIndex++
+        return n
+
+    function writeByte(int n)
+        writeByteInternal(n)
+
+    function writeShort(int n)
+        writeByteInternal(n.byte1())
+        writeByteInternal(n.byte2())
+
+    function writeInt(int n)
+        let bytes = n.bytes()
+        writeByteInternal(bytes.b1)
+        writeByteInternal(bytes.b2)
+        writeByteInternal(bytes.b3)
+        writeByteInternal(bytes.b4)
+
+    function readByte() returns int
+        return readByteInternal()
+
+    function readShort() returns int
+        return readByteInternal() + readByteInternal().shiftl(8)
+
+    function readInt() returns int
+        return readByteInternal() + readByteInternal().shiftl(8) + readByteInternal().shiftl(16) + readByteInternal().shiftl(24)
+
+    function toReadMode()
+        if currentWriteByteIndex > 0
+            commitInt()
+        loadInt()
+
+    function getByteCount() returns int
+        return byteCount
+
+@test function byteBufferTests()
+    let byteBuffer = new ByteBuffer
+    byteBuffer.writeByte(3)
+    byteBuffer.writeByte(200)
+    byteBuffer.writeByte(15)
+    byteBuffer.writeByte(7)
+
+    byteBuffer.writeByte(128)
+
+    byteBuffer.writeShort(0x4a2f)
+    byteBuffer.writeShort(0xfabc)
+    byteBuffer.writeShort(0x002a)
+
+    byteBuffer.writeInt(0xffaabbcc)
+
+    byteBuffer.toReadMode()
+
+    assertTrue(byteBuffer.readByte() == 3)
+    assertTrue(byteBuffer.readByte() == 200)
+    assertTrue(byteBuffer.readByte() == 15) 
+    assertTrue(byteBuffer.readByte() == 7)
+
+    assertTrue(byteBuffer.readByte() == 128)
+
+    assertTrue(byteBuffer.readShort() == 0x4a2f)
+    assertTrue(byteBuffer.readShort() == 0xfabc)
+    assertTrue(byteBuffer.readShort() == 0x002a)
+
+    assertTrue(byteBuffer.readInt() == 0xffaabbcc)
+
+constant CHARMAP = [
+    "A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P",
+    "Q","R","S","T","U","V","W","X","Y","Z","a","b","c","d","e","f",
+    "g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v",
+    "w","x","y","z","0","1","2","3","4","5","6","7","8","9","+","/"
+]
+
+constant REVERSE_CHARMAP = [
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, 62, -1, -1, -1, 63, 52, 53, 54,
+    55, 56, 57, 58, 59, 60, 61, -1, -1, -1, -1, -1, -1, -1, 0, 1, 2,
+    3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+    20, 21, 22, 23, 24, 25, -1, -1, -1, -1, -1, -1, 26, 27, 28, 29, 30,
+    31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
+    48, 49, 50, 51, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1
+]
+
+public class Base64Encoder
+    private var byteBuffer = new ByteBuffer
+    private var stringBuffer = new HashBuffer
+    private var stringCount = 0
+    private var currentChunk = ""
+
+    private int maxChunkLength
+
+    construct(int maxChunkLength)
+        this.maxChunkLength = maxChunkLength
+
+    ondestroy
+        destroy stringBuffer
+        destroy byteBuffer
+
+    private function flushChunk()
+        stringBuffer.writeString(currentChunk)
+        stringCount++
+        currentChunk = ""
+
+    private function append(string c)
+        if currentChunk.length() >= maxChunkLength
+            flushChunk()
+        currentChunk += c
+
+    private function encodeSingle(int byte, int count)
+        var b = byte
+
+        for i = 0 to count
+            let c = b.and32(compiletime(fromBitString("11111100 00000000 00000000"))).shiftr(18)
+            append(CHARMAP[c])
+            b = b.shiftl(6)
+
+    private function encode3()
+        let b1 = byteBuffer.readByte()
+        let b2 = byteBuffer.readByte()
+        let b3 = byteBuffer.readByte()
+        let b = b1.shiftl(16) + b2.shiftl(8) + b3
+        encodeSingle(b, 3)
+
+    private function encode2()
+        let b1 = byteBuffer.readByte()
+        let b2 = byteBuffer.readByte()
+        let b = b1.shiftl(16) + b2.shiftl(8)
+        encodeSingle(b, 2)
+        append("=")
+
+    private function encode1()
+        let b1 = byteBuffer.readByte()
+        var b = b1.shiftl(16)
+        encodeSingle(b, 1)
+        append("=")
+        append("=")
+
+    function encode()
+        execute() ->
+            byteBuffer.toReadMode()
+
+            let byteCount = byteBuffer.getByteCount()
+
+            let noPaddingWrites = (byteBuffer.getByteCount() div 3) - 1
+            let padding = byteCount mod 3
+
+            loopActions = noPaddingWrites
+            loopCounter = 0
+            
+            executeWhile(ENCODES_PER_ROUND, () -> loopCounter <= loopActions) ->
+                encode3()
+                loopCounter++
+
+            if padding == 2
+                encode2()
+
+            if padding == 1
+                encode1()
+
+            if currentChunk.length() > 0
+                flushChunk()
+
+    function pushByte(int b)
+        byteBuffer.writeByte(b)
+
+    function pushShort(int n)
+        byteBuffer.writeShort(n)
+
+    function pushInt(int n)
+        byteBuffer.writeInt(n)
+
+    function hasChunk() returns boolean
+        return stringCount > 0
+
+    function popChunk() returns string
+        stringCount--
+        let val = stringBuffer.readString()
+        return val
+
+function int.removeLastOctet() returns int
+    return (this - (this div 0x1000000) * 0x1000000)
+
+public class Base64Decoder
+    private var stringBuffer = new HashBuffer
+    private var byteBuffer = new ByteBuffer
+    private var charCount = 0
+    private var currentChunk = ""
+    private var currentChunkIndex = 0
+
+    ondestroy
+        destroy stringBuffer
+        destroy byteBuffer
+
+    private function loadNextChunk()
+        currentChunk = stringBuffer.readString()
+        currentChunkIndex = 0
+
+    private function nextChar() returns int
+        if currentChunkIndex >= currentChunk.length()
+            loadNextChunk()
+        let c = currentChunk.charAt(currentChunkIndex).toChar().toInt()
+        currentChunkIndex++
+        return c
+
+    private function next3Bytes()
+        var c = nextChar()
+        var b = 0
+        var num = 0
+
+        if REVERSE_CHARMAP[c] != -1
+            b = REVERSE_CHARMAP[c].shiftl(18)
+
+        c = nextChar()
+        if REVERSE_CHARMAP[c] != -1
+            b = b + REVERSE_CHARMAP[c].shiftl(12)
+            num++
+
+        c = nextChar()
+        if REVERSE_CHARMAP[c] != -1
+            b = b + REVERSE_CHARMAP[c].shiftl(6)
+            num++
+
+        c = nextChar()
+        if REVERSE_CHARMAP[c] != -1
+            b = b + REVERSE_CHARMAP[c]
+            num++
+        
+        while num > 0
+            byteBuffer.writeByte(b.toUnsigned().removeLastOctet().shiftr(16))
+            b = b.shiftl(8)
+            num--
+
+    function decode()
+        let count = (charCount div 4) - 1
+
+        loopCounter = 0
+        loopActions = count
+
+        executeWhile(DECODES_PER_ROUND, () -> loopCounter <= loopActions) ->
+            next3Bytes()
+            loopCounter++
+        byteBuffer.toReadMode()
+
+    function pushChunk(string chunk)
+        charCount += chunk.length()
+        stringBuffer.writeString(chunk)
+
+    function popByte() returns int
+        return byteBuffer.readByte()
+
+    function popShort() returns int
+        return byteBuffer.readShort()
+
+    function popInt() returns int
+        return byteBuffer.readInt()
+
+    function getByteCount() returns int
+        return byteBuffer.getByteCount()
+    
+@test function base64EncoderTest1()
+    let encoder = new Base64Encoder(128)
+
+    encoder.pushByte(0x48)
+    encoder.pushByte(0x65)
+    encoder.pushByte(0x6c)
+    encoder.pushByte(0x6c)
+    //
+    encoder.pushByte(0x6f)
+    encoder.pushByte(0x2c)
+    encoder.pushByte(0x20)
+    encoder.pushByte(0x77)
+    //
+    encoder.pushByte(0x6f)
+    encoder.pushByte(0x72)
+    encoder.pushByte(0x6c)
+    encoder.pushByte(0x64)
+    //
+    encoder.pushByte(0x21)
+    encoder.encode()
+
+    assertTrue(encoder.popChunk() == "SGVsbG8sIHdvcmxkIQ==")
+
+@test function base64EncoderTest2()
+    let encoder = new Base64Encoder(16)
+    encoder.pushInt(byte4(0x48, 0x65, 0x6c, 0x6c).toInt())
+    encoder.pushInt(byte4(0x6f, 0x2c, 0x20, 0x77).toInt())
+    encoder.pushInt(byte4(0x6f, 0x72, 0x6c, 0x64).toInt())
+    encoder.pushInt(byte4(0x21, 0x20, 0x20, 0x20).toInt())    
+    encoder.encode()
+
+    assertTrue(encoder.popChunk() == "SGVsbG8sIHdvcmxk")
+    assertTrue(encoder.popChunk() == "ISAgIA==")
+
+@test function base64DecoderTest()
+    let decoder = new Base64Decoder
+
+    decoder.pushChunk("SGVsbG8sIHdvcmxkIQ==")
+    decoder.decode()
+
+    assertTrue(decoder.popByte() == 0x48)
+    assertTrue(decoder.popByte() == 0x65)
+    assertTrue(decoder.popByte() == 0x6c)
+    assertTrue(decoder.popByte() == 0x6c)
+    assertTrue(decoder.popByte() == 0x6f)
+    assertTrue(decoder.popByte() == 0x2c)
+    assertTrue(decoder.popByte() == 0x20)
+    assertTrue(decoder.popByte() == 0x77)
+    assertTrue(decoder.popByte() == 0x6f)
+    assertTrue(decoder.popByte() == 0x72)
+    assertTrue(decoder.popByte() == 0x6c)
+    assertTrue(decoder.popByte() == 0x64)
+    assertTrue(decoder.popByte() == 0x21)
