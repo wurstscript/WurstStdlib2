@@ -152,6 +152,12 @@ public function quat.slerpLong(quat q, real p) returns quat
 public function quat.toString() returns string
     return "Quaternion [X {0}, Y {1}, Z {2}, W {3}]".format(this.x.toString(), this.y.toString(), this.z.toString(), this.w.toString())
 
+/** Gimbal lock detection.
+Returns 1 for north, -1 for south, 0 if no gimbal lock. */
+public function quat.getGimbalPole() returns int
+    let pole = this.x * this.z + this.y * this.w
+    return pole > 0.499 ? 1 : (pole < -0.499 ? -1 : 0)
+
 /** Extracts Euler-angles (Tait-Bryan) in radians from a quaternion. Order of the result is X-Y-Z. */
 public function quat.toEuler() returns vec3
     real yaw
@@ -159,14 +165,14 @@ public function quat.toEuler() returns vec3
     real roll
     real cos
     real sin
-    let test = 2 * this.x * this.z + 2 * this.y * this.w
-    if test > 0.999
+    let pole = this.x * this.z + this.y * this.w
+    if pole > 0.499
         cos = 1 - 2 * this.x * this.x - 2 * this.z * this.z
         sin = 2 * this.y * this.z + 2 * this.x * this.w
         yaw = Atan2(sin, cos) 
         pitch = PI/2
         roll = 0
-    else if test < -0.999
+    else if pole < -0.499
         cos = 1 - 2 * this.x * this.x - 2 * this.z * this.z
         sin = 2 * this.y * this.z + 2 * this.x * this.w
         yaw = Atan2(sin, cos) 
@@ -176,7 +182,7 @@ public function quat.toEuler() returns vec3
         cos = 1 - 2 * this.x * this.x - 2 * this.y * this.y
         sin = -(2 * this.y * this.z - 2 * this.x * this.w)
         yaw  = Atan2(sin, cos)
-        pitch = Asin(test)
+        pitch = Asin(2 * pole)
         cos = 1 - 2 * this.y * this.y - 2 * this.z * this.z
         sin = -(2 * this.x * this.y - 2 * this.z * this.w)
         roll = Atan2(sin , cos)   
