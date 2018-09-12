@@ -1,0 +1,52 @@
+package DebugFile
+import NoWurst
+import Table
+import Integer
+boolean bufferWasCleared = false
+int outputcoutner = 0
+constant liveDebugFiletype = ".livedebug"
+
+init
+	PreloadGenClear()
+
+public class DebugFile
+	static constant string path = "C:\\Users\\Frotty\\crigshot\\"
+	static constant string filetype = ".debug"
+	static thistype lastSavedFile = null
+	string filename
+	string buffer = ""
+	Table content = new Table()
+	int currentLine = 0
+	
+	construct(string filename)
+		this.filename = filename
+							
+	/** Saves the File. If the map crashes all onsaved changes will be lost.*/
+	function save()
+		if lastSavedFile != this and lastSavedFile != null or bufferWasCleared
+			PreloadGenClear()	
+			bufferWasCleared = false
+			for int i = 1 to currentLine
+				Preload(content.loadString(i))
+		PreloadGenEnd(path + "\\" + filename + filetype)
+		lastSavedFile = this
+	
+		
+	function writeln(string s)
+		buffer += s
+		currentLine++
+		content.saveString(currentLine,("\")\r\n" + buffer + "\r\n"))
+		if lastSavedFile == this or lastSavedFile == null
+			Preload("\")\r\n" + s + "\r\n")
+		buffer = ""
+
+	function write(string s)
+		buffer += s
+
+public function sendLineToConsole(string s)
+	bufferWasCleared = true
+	PreloadGenClear()
+	Preload("\")\r\n" + s + "\r\n")
+	PreloadGenEnd(".\\" + outputcoutner.toString() + liveDebugFiletype)
+	outputcoutner++
+		

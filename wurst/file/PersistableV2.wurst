@@ -1,0 +1,147 @@
+package PersistableV2
+
+import PacketIO
+import Encryptor
+import Network
+
+string fileReadData
+function AbstractStringChunkedBuffer.readFromFile(string path, Encryptor encryptor)
+    PacketReader.open(path)
+    if encryptor != null
+        fileReadData = PacketReader.read()
+        executeWhile(64, () -> fileReadData != "") ->
+            this.pushChunk(encryptor.decode(fileReadData))
+            fileReadData = PacketReader.read()
+    else
+        fileReadData = PacketReader.read()
+        executeWhile(64, () -> fileReadData != "") ->
+            this.pushChunk(fileReadData)
+            fileReadData = PacketReader.read()
+
+function AbstractStringChunkedBuffer.writeToFile(string path, Encryptor encryptor)
+    print("writeToFile called")
+    PacketWriter.createFolder(path)
+    PacketWriter.initialize()
+    if encryptor != null
+        executeWhile(256, () -> this.hasChunk()) ->
+            PacketWriter.write(encryptor.encode(this.popChunk()))
+    else
+        executeWhile(256, () -> this.hasChunk()) ->
+            let c = this.popChunk()
+            print("chunk written " + c)
+            PacketWriter.write(c)
+    PacketWriter.commit(path)
+    print("writeToFile finished")
+
+public enum LoadStatus
+    SUCCESS
+    FAIL_LOAD
+    FAIL_TRANSFER
+    FAIL_DESERIALIZE
+    FAIL_NO_PLAYER
+
+public interface PersistableLoadCallback
+    function onLoaded(LoadStatus status)
+
+public interface PersistableSaveCallback
+    function onSaved()
+
+public abstract class PersistableV2 implements BufferSerializable
+    protected player owner
+    private Encryptor encryptor
+
+    construct(player owner)
+        this.owner = owner
+    
+    construct(player owner, Encryptor encryptor)
+        this.owner = owner
+        this.encryptor = encryptor
+
+    ondestroy
+        if encryptor != null
+            destroy encryptor
+
+    abstract function getPath() returns string
+    protected function onLoaded(LoadStatus _status)
+    protected function onSaved()
+    protected function getStringBuffer() returns AbstractStringChunkedBuffer
+        return new Base64StringBuffer(MAX_PACKET_LENGTH)
+
+    private function readIntoNetwork(Network network) returns boolean
+        let buffer = getStringBuffer()
+
+        let readSuccess = try() ->
+            buffer.readFromFile(getPath(), encryptor)
+            buffer.afterChunkInject()
+
+        if readSuccess
+            network.getData().writeInt(LoadStatus.SUCCESS castTo int)
+
+            let deserializeSuccess = try() ->
+                buffer.read(this)
+
+            if deserializeSuccess
+                let transferSuccess = try() ->
+                    network.getData().write(this)
+                
+                if transferSuccess
+                    destroy buffer
+                    return true
+                else
+                    network.getData().clear()
+                    network.getData().writeInt(LoadStatus.FAIL_TRANSFER castTo int)
+            else
+                network.getData().clear()
+                network.getData().writeInt(LoadStatus.FAIL_DESERIALIZE castTo int)
+        else
+            network.getData().clear()
+            network.getData().writeInt(LoadStatus.FAIL_LOAD castTo int)
+
+        destroy buffer
+        return false
+
+    private function finishLoad(LoadStatus status, PersistableLoadCallback callback)
+        onLoaded(status)
+        if callback != null
+            callback.onLoaded(status)
+            destroy callback
+
+    private function finishSave(PersistableSaveCallback callback)
+        onSaved()
+        if callback != null
+            callback.onSaved()
+            destroy callback
+
+    function load(PersistableLoadCallback callback)
+        let network = new Network(owner)
+
+        if localPlayer == owner
+            readIntoNetwork(network)
+
+        network.start() (status, buffer) ->
+            if status == NetworkResult.ABORTED
+                finishLoad(LoadStatus.FAIL_NO_PLAYER, callback)
+            else
+                let loadStatus = buffer.readInt() castTo LoadStatus
+
+                if loadStatus == LoadStatus.SUCCESS
+                    if localPlayer != owner
+                        this.deserialize(buffer)
+                    finishLoad(LoadStatus.SUCCESS, callback)
+                else
+                    finishLoad(loadStatus, callback)
+
+    function load()
+        load(null)
+
+    function save(PersistableSaveCallback callback)
+        if localPlayer == owner
+            let buffer = getStringBuffer()
+            buffer.write(this)
+            buffer.beforeChunkExtract()
+            buffer.writeToFile(getPath(), encryptor)
+            destroy buffer
+        finishSave(callback)
+    
+    function save()
+        save(null)
