@@ -241,7 +241,7 @@ import Matrices
     (aroundX * aroundY * aroundZ).assertEquals(test)
 
 @test function test33rotationsXYZ()
-     let test = vec3(1, 2, 3)
+    let test = vec3(1, 2, 3)
     let a = 90 .asAngleDegrees()
     let x = a.toRotationX()
     let y = a.toRotationY()
@@ -249,3 +249,8 @@ import Matrices
     (x * test).assertEquals(vec3(1, -3, 2))
     (y * test).assertEquals(vec3(3, 2, -1))
     (z * test).assertEquals(vec3(-2, 1, 3)) 
+
+@test function testMat3Translation()
+    let point = vec3(2, 5, 1)
+    let trans = vec2(5, 10).toTranslation()
+    (trans * point).assertEquals(vec3(7, 15, 1))
