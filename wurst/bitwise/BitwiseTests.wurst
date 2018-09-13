@@ -1,0 +1,55 @@
+package BitwiseTests
+
+import Bitwise
+
+@test
+function byteTestsNegative()
+    let bytes = 0xFABCDE10.bytes()
+
+    bytes.b1.assertEquals(0x10)
+    bytes.b2.assertEquals(0xDE)
+    bytes.b3.assertEquals(0xBC)
+    bytes.b4.assertEquals(0xFA)
+
+@test
+function byteTestsPositive()
+    let bytes = 0x0FBCDE10.bytes()
+
+    bytes.b1.assertEquals(0x10)
+    bytes.b2.assertEquals(0xDE)
+    bytes.b3.assertEquals(0xBC)
+    bytes.b4.assertEquals(0x0F)
+    
+@test
+function bitStringTests()
+    fromBitString("1").assertEquals(1)
+    fromBitString("01").assertEquals(1)
+    fromBitString("0001").assertEquals(1)
+    fromBitString("1000").assertEquals(8)
+    fromBitString("1001").assertEquals(9)
+    fromBitString("10000000 00000000 00000000 00000000").assertEquals(-2147483648)
+    fromBitString("11111111 11111111 11111111 11111111").assertEquals(-1)
+
+@test
+function shiftTests()
+    0xFF.shiftl(4).assertEquals(0xFF0)
+    0xFF.shiftl(8).assertEquals(0xFF00)
+    0xFF.shiftl(12).assertEquals(0xFF000)
+    0xFF.shiftl(16).assertEquals(0xFF0000)
+    0xFF.shiftl(24).assertEquals(0xFF000000)
+    0xFF00FF.shiftr(4).assertEquals(0xFF00F)
+    0xFF00FF.shiftr(8).assertEquals(0xFF00)
+    0xFF00FF.shiftr(12).assertEquals(0xFF0)
+    0xFF00FF.shiftr(16).assertEquals(0xFF)
+    0xFF0000FF.shiftr(16).assertEquals(0xFF00)
+    0xFF0000FF.shiftr(24).assertEquals(0xFF)
+
+@test
+function tests32()
+    fromBitString("1001 0001 0100 0010").and32(fromBitString("1000 0100 0010 0110")).assertEquals(fromBitString("1000 0000 0000 0010"))
+    fromBitString("1000 0000 0000 0000 1001 0001 0100 0010").and32(fromBitString("1000 0000 0000 0000 1000 0100 0010 0110")).assertEquals(fromBitString("1000 0000 0000 0000 1000 0000 0000 0010"))
+    fromBitString("1001 0001 0100 0010").or32(fromBitString("1000 0100 0010 0110")).assertEquals(fromBitString("1001 0101 0110 0110"))
+    fromBitString("1000 0000 0000 0000 1001 0001 0100 0010").or32(fromBitString("1000 0000 0000 0000 1000 0100 0010 0110")).assertEquals(fromBitString("1000 0000 0000 0000 1001 0101 0110 0110"))
+    fromBitString("1001 0001 0100 0010").xor32(fromBitString("1000 0100 0010 0110")).assertEquals(fromBitString("0001 0101 0110 0100"))
+    fromBitString("1000 0000 0000 0000 1001 0001 0100 0010").xor32(fromBitString("1000 0000 0000 0000 1000 0100 0010 0110")).assertEquals(fromBitString("0000 0000 0000 0000 0001 0101 0110 0100"))
+    fromBitString("1000 0000 0000 0000 1001 0001 0100 0010").xor32(fromBitString("0000 0000 0000 0000 1000 0100 0010 0110")).assertEquals(fromBitString("1000 0000 0000 0000 0001 0101 0110 0100"))

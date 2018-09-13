@@ -1,41 +1,41 @@
-package Bitwise
+package BitwiseInit
 
-int array lbyte
-int array rbyte
-int array andData
-int array orData
-int array xorData
-int array powShift
+public int array lbyte
+public int array rbyte
+public int array andData
+public int array orData
+public int array xorData
+public int array powShift
 
-function initLbyte()
-    integer i16 = 0x0
-    integer i256 = 0x0
-    integer i
+public function initLbyte()
+    var i16 = 0x0
+    var i256 = 0x0
     while i256 < 0x100
-        i = 0
+        var i = 0
         while i < 0x10
             lbyte[i256] = i16
-            i256 = i256 + 1
-            i = i + 1
-        i16 = i16 + 1
+            i256++
+            i++
+        i16++
 
-function initRbyte()
-    integer i256 = 0x0
-    integer i16
+public function initRbyte()
+    var i256 = 0x0
     while i256 < 0x100
-        i16 = 0
+        var i16 = 0
         while i16 < 0x10
             rbyte[i256] = i16
-            i256 = i256 + 1
-            i16 = i16 + 1
+            i256++
+            i16++
 
-function initShift()
-    integer bit = 0
+public function initShift()
+    var bit = 0
+    var pow = 1
     while bit <= 0x20
-        powShift[bit] = R2I(Pow(2, I2R(bit)))
-        bit = bit + 1
+        powShift[bit] = pow
+        pow *= 2
+        bit++
 
-function initAnd()
+public function initAnd()
     andData[0x00] = 0x0
     andData[0x01] = 0x0
     andData[0x02] = 0x0
@@ -293,7 +293,7 @@ function initAnd()
     andData[0xfe] = 0xe
     andData[0xff] = 0xf
 
-function initOr()
+public function initOr()
     orData[0x00] = 0x0
     orData[0x01] = 0x1
     orData[0x02] = 0x2
@@ -551,7 +551,7 @@ function initOr()
     orData[0xfe] = 0xf
     orData[0xff] = 0xf
 
-function initXor()
+public function initXor()
     xorData[0x0] = 0x0
     xorData[0x1] = 0x1
     xorData[0x2] = 0x2
@@ -820,354 +820,3 @@ function initBitwise()
 
 init
     initBitwise()
-
-/**
-    A tuple containing 4 bytes comprising a 4-byte integer.
-    b1 is the least significant byte, b4 is the most significant byte.
-    All functions operating on this are LSB first.
-    The bytes are always unsigned, from 0 to 255.
-    
-    WARNING: This library contains no safety bound checks to guarantee
-    that these bytes stay in the 0-255 range. If these values go out of bounds,
-    the behaviour is undefined.
-**/
-public tuple byte4(int b1, int b2, int b3, int b4)
-
-/**
-    Selects the n-th byte from these bytes, starting from
-    0 for the least significant byte and ending with
-    3 for the most significant byte.
-**/
-public function byte4.select(int n) returns int
-    int b
-    if n > 1
-        if n == 3
-            b = this.b4
-        else
-            b = this.b3
-    else
-        if n == 1
-            b = this.b2
-        else
-            b = this.b1
-    return b
-
-/**
-    Replaces the byte in the n-th position with the provided one.
-**/
-public function byte4.put(int n, int b) returns byte4
-    if n > 1
-        if n == 3
-            return byte4(this.b1, this.b2, this.b3, b)
-        else
-            return byte4(this.b1, this.b2, b, this.b4)
-    else
-        if n == 1
-            return byte4(this.b1, b, this.b3, this.b4)
-        else
-            return byte4(b, this.b2, this.b3, this.b4)
-
-/** Re-assembles these bytes into an integer. **/
-public function byte4.toInt() returns int
-    return this.b1 + this.b2 * 0x100 + this.b3 * 0x10000 + this.b4 * 0x1000000 
-
-/**
-    Turns this signed integer into an unsigned one if it is negative,
-    removing the first (sign) bit
-**/
-public function int.toUnsigned() returns int
-    int result
-    if this < 0
-        result = -2147483648 + this
-    else
-        result = this
-    return result
-
-public function int.byte1() returns int
-    return this mod 0x100
-
-public function int.byte2() returns int
-    return (this - (this div 0x10000) * 0x10000) div 0x100
-
-public function int.byte3() returns int
-    return (this - (this div 0x1000000) * 0x1000000) div 0x10000
-
-public function int.byte4(int isNegative) returns int
-    return isNegative * 128 + this div 0x1000000
-
-/** De-composes an integer into 4 unsigned bytes. **/
-public function int.bytes() returns byte4
-    int s = this
-    int n
-    if 0 > s
-        s = -2147483648 + s
-        n = 1
-    else
-        n = 0
-
-    let b1 = s mod 0x100
-    let b2 = (s - (s div 0x10000) * 0x10000) div 0x100
-    let b3 = (s - (s div 0x1000000) * 0x1000000) div 0x10000
-    let b4 = n * 128 + s div 0x1000000
-
-    return byte4(b1, b2, b3, b4)
-
-@test
-function byteTestsNegative()
-    let bytes = 0xFABCDE10.bytes()
-
-    assertTrue(bytes.b1 == 0x10)
-    assertTrue(bytes.b2 == 0xDE)
-    assertTrue(bytes.b3 == 0xBC)
-    assertTrue(bytes.b4 == 0xFA)
-
-@test
-function byteTestsPositive()
-    let bytes = 0x0FBCDE10.bytes()
-
-    assertTrue(bytes.b1 == 0x10)
-    assertTrue(bytes.b2 == 0xDE)
-    assertTrue(bytes.b3 == 0xBC)
-    assertTrue(bytes.b4 == 0x0F)
-
-/**
-    Produces a signed integer from the bitstring.
-    May contain whitespace for padding.
-**/
-public function fromBitString(string bitstring) returns int
-    let l = bitstring.length() - 1
-
-    var pow = 1
-    var num = 0
-    for i = l downto 0
-        let char = bitstring.charAt(i)
-        if char != " "
-            if char == "1"
-                num += pow
-            pow *= 2
-
-    return num
-
-/**
-    Produces a bistring from this integer.
-**/ 
-public function toBitString(int n) returns string
-    var s = ""
-    var b = n
-
-    while b != 0
-        s = (b mod 2).toString() + s 
-        b = bwShiftr32(b, 1)
-
-    return s
-
-@test
-function bitStringTests()
-    assertTrue(compiletime(fromBitString("1")) == 1)
-    assertTrue(compiletime(fromBitString("01")) == 1)
-    assertTrue(compiletime(fromBitString("0001")) == 1)
-    assertTrue(compiletime(fromBitString("1000")) == 8)
-    assertTrue(compiletime(fromBitString("1001")) == 9)
-    assertTrue(compiletime(fromBitString("10000000 00000000 00000000 00000000")) == -2147483648)
-    assertTrue(compiletime(fromBitString("11111111 11111111 11111111 11111111")) == -1)
-
-/** 4-bit AND operator **/
-function bwAnd4(int s1, int s2) returns int
-    return andData[s1 * 0x10 + s2]
-
-/** 4-bit OR operator **/
-function bwOr4(int s1, int s2) returns int
-    return orData[s1 * 0x10 + s2]
-
-/** 4-bit XOR operator **/
-function bwXor4(int s1, int s2) returns int
-    return xorData[s1 * 0x10 + s2]
-
-/** 8-bit NOT operator **/
-function bNot8(int s) returns int
-    return 0xff - s
-
-/** 8-bit AND operator **/
-function bwAnd8(int s1, int s2) returns int
-    return bwAnd4(lbyte[s1], lbyte[s2]) * 0x10 + bwAnd4(rbyte[s1], rbyte[s2])
-
-/** 8-bit OR operator **/
-function bwOr8(int s1, int s2) returns int
-    return bwOr4(lbyte[s1], lbyte[s2]) * 0x10 + bwOr4(rbyte[s1], rbyte[s2])
-
-/** 8-bit XOR operator **/
-function bwXor8(int s1, int s2) returns int
-    return bwXor4(lbyte[s1], lbyte[s2]) * 0x10 + bwXor4(rbyte[s1], rbyte[s2])
-
-/** 32-bit SHIFTL operator **/
-function bwShiftl32(int s, int shift) returns int
-    return s * powShift[shift]
-
-/** 32-bit SHIFTR operator **/
-function bwShiftr32(int s, int shift) returns int
-    var b = s
-    int n
-    if b < 0
-        b = -2147483648 + b
-        n = 1
-    else
-        n = 0
-    return n*powShift[31-shift] + b div powShift[shift]
-
-@test
-function shiftTests()
-    assertTrue(bwShiftl32(0xFF, 4) == 0xFF0)
-    assertTrue(bwShiftl32(0xFF, 8) == 0xFF00)
-    assertTrue(bwShiftl32(0xFF, 12) == 0xFF000)
-    assertTrue(bwShiftl32(0xFF, 16) == 0xFF0000)
-    assertTrue(bwShiftl32(0xFF, 24) == 0xFF000000)
-    assertTrue(bwShiftr32(0xFF00FF, 4) == 0xFF00F)
-    assertTrue(bwShiftr32(0xFF00FF, 8) == 0xFF00)
-    assertTrue(bwShiftr32(0xFF00FF, 12) == 0xFF0)
-    assertTrue(bwShiftr32(0xFF00FF, 16) == 0xFF)
-    assertTrue(bwShiftr32(0xFF0000FF, 16) == 0xFF00)
-    assertTrue(bwShiftr32(0xFF0000FF, 24) == 0xFF)
-
-// function bwRotl32(int s, int shift) returns int
-//     return bwOr32(bwShiftl32(s, shift), bwShiftr32(s, 4*8 - shift))
-
-// function bwRotr32(int s, int shift) returns int
-//     return bwOr32(bwShiftr32(s, shift), bwShiftl32(s, 4*8 - shift))
-
-// @test function testRotations()
-//     assertTrue(bwRotl32(fromBitString("0000 0000 0000 0000 0000 0000 0000 0000"), 1) == fromBitString("0000 0000 0000 0000 0000 0000 0000 0000"))
-//     assertTrue(bwRotl32(fromBitString("1000 0000 0000 0000 0000 0000 0000 0000"), 1) == fromBitString("0000 0000 0000 0000 0000 0000 0000 0001"))
-//     assertTrue(bwRotl32(fromBitString("1000 0000 0000 0000 0000 0000 0000 0000"), 1) == fromBitString("0000 0000 0000 0000 0000 0000 0000 0001"))
-//     assertTrue(bwRotl32(fromBitString("1111 0000 0000 0000 0000 0000 0000 0000"), 1) == fromBitString("1110 0000 0000 0000 0000 0000 0000 0001"))
-//     assertTrue(bwRotl32(fromBitString("1111 0000 0000 0000 0000 0000 0000 0000"), 6) == fromBitString("0000 0000 0000 0000 0000 0000 0011 1100"))
-//     assertTrue(bwRotl32(fromBitString("1111 0000 0000 1111 0000 0000 0000 0000"), 7) == fromBitString("0000 0111 1000 0000 0000 0000 0111 1000"))
-
-//     assertTrue(bwRotr32(fromBitString("0000 0000 0000 0000 0000 0000 0000 0000"), 1) == fromBitString("0000 0000 0000 0000 0000 0000 0000 0000"))
-//     assertTrue(bwRotr32(fromBitString("1000 0000 0000 0000 0000 0000 0000 0000"), 1) == fromBitString("0100 0000 0000 0000 0000 0000 0000 0000"))
-//     assertTrue(bwRotr32(fromBitString("0000 0000 0000 0000 0000 0000 0000 0001"), 1) == fromBitString("1000 0000 0000 0000 0000 0000 0000 0000"))
-//     assertTrue(bwRotr32(fromBitString("0000 0000 0000 0000 0000 0000 0000 1111"), 1) == fromBitString("1000 0000 0000 0000 0000 0000 0000 0111"))
-//     assertTrue(bwRotr32(fromBitString("1111 0000 0000 0000 0000 0000 0000 0000"), 6) == fromBitString("0000 0011 1100 0000 0000 0000 0000 0000"))
-//     assertTrue(bwRotr32(fromBitString("0000 0000 0000 1111 0000 0000 0000 1111"), 7) == fromBitString("0001 1110 1000 0000 0000 0001 1110 0000"))
-
-/** 32-bit NOT operator **/
-function bwNot32(int s) returns int
-    return -s - 1
-
-/** 32-bit AND operator **/
-function bwAnd32(int s1, int s2) returns int
-    let bytes1 = s1.bytes()
-    let bytes2 = s2.bytes()
-
-    return byte4(
-        bwAnd8(bytes1.b1, bytes2.b1),
-        bwAnd8(bytes1.b2, bytes2.b2),
-        bwAnd8(bytes1.b3, bytes2.b3),
-        bwAnd8(bytes1.b4, bytes2.b4)
-    ).toInt()
-
-/** 32-bit OR operator **/
-function bwOr32(int s1, int s2) returns int
-    let bytes1 = s1.bytes()
-    let bytes2 = s2.bytes()
-
-    return byte4(
-        bwOr8(bytes1.b1, bytes2.b1),
-        bwOr8(bytes1.b2, bytes2.b2),
-        bwOr8(bytes1.b3, bytes2.b3),
-        bwOr8(bytes1.b4, bytes2.b4)
-    ).toInt()
-
-/** 32-bit XOR operator **/
-function bwXor32(int s1, int s2) returns int
-    let bytes1 = s1.bytes()
-    let bytes2 = s2.bytes()
-
-    return byte4(
-        bwXor8(bytes1.b1, bytes2.b1),
-        bwXor8(bytes1.b2, bytes2.b2),
-        bwXor8(bytes1.b3, bytes2.b3),
-        bwXor8(bytes1.b4, bytes2.b4)
-    ).toInt()
-
-@test
-function tests32()
-    assertTrue(bwAnd32(
-        compiletime(fromBitString("1001 0001 0100 0010")),
-        compiletime(fromBitString("1000 0100 0010 0110"))
-    ) == compiletime(fromBitString("1000 0000 0000 0010")))
-
-    assertTrue(bwAnd32(
-        compiletime(fromBitString("1000 0000 0000 0000 1001 0001 0100 0010")),
-        compiletime(fromBitString("1000 0000 0000 0000 1000 0100 0010 0110"))
-    ) == compiletime(fromBitString("1000 0000 0000 0000 1000 0000 0000 0010")))
-
-    assertTrue(bwOr32(
-        compiletime(fromBitString("1001 0001 0100 0010")),
-        compiletime(fromBitString("1000 0100 0010 0110"))
-    ) == compiletime(fromBitString("1001 0101 0110 0110")))
-
-    assertTrue(bwOr32(
-        compiletime(fromBitString("1000 0000 0000 0000 1001 0001 0100 0010")),
-        compiletime(fromBitString("1000 0000 0000 0000 1000 0100 0010 0110"))
-    ) == compiletime(fromBitString("1000 0000 0000 0000 1001 0101 0110 0110")))
-
-    assertTrue(bwXor32(
-        compiletime(fromBitString("1001 0001 0100 0010")),
-        compiletime(fromBitString("1000 0100 0010 0110"))
-    ) == compiletime(fromBitString("0001 0101 0110 0100")))
-
-    assertTrue(bwXor32(
-        compiletime(fromBitString("1000 0000 0000 0000 1001 0001 0100 0010")),
-        compiletime(fromBitString("1000 0000 0000 0000 1000 0100 0010 0110"))
-    ) == compiletime(fromBitString("0000 0000 0000 0000 0001 0101 0110 0100")))
-
-    assertTrue(bwXor32(
-        compiletime(fromBitString("1000 0000 0000 0000 1001 0001 0100 0010")),
-        compiletime(fromBitString("0000 0000 0000 0000 1000 0100 0010 0110"))
-    ) == compiletime(fromBitString("1000 0000 0000 0000 0001 0101 0110 0100")))
-
-/** 8-bit NOT **/
-public function int.not8() returns int
-    return bNot8(this)
-
-/** 32-bit NOT **/
-public function int.not32() returns int
-    return bwNot32(this)
-
-/** 8-bit AND **/
-public function int.and8(int other) returns int
-    return bwAnd8(this, other)
-
-/** 32-bit AND **/
-public function int.and32(int other) returns int
-    return bwAnd32(this, other)
-
-/** 8-bit OR **/
-public function int.or8(int other) returns int
-    return bwOr8(this, other)
-
-/** 32-bit OR **/
-public function int.or32(int other) returns int
-    return bwOr32(this, other)
-
-/** 8-bit XOR **/
-public function int.xor8(int other) returns int
-    return bwXor8(this, other)
-
-/** 32-bit XOR **/
-public function int.xor32(int other) returns int
-    return bwXor32(this, other)
-
-/** 32-bit SHIFTL **/
-public function int.shiftl(int amount) returns int
-    return bwShiftl32(this, amount)
-
-/** 32-bit SHIFTR **/
-public function int.shiftr(int amount) returns int
-    return bwShiftr32(this, amount)
-
-// public function int.rotl(int amount) returns int
-//     return bwRotl32(this, amount)
-
-// public function int.rotr(int amount) returns int
-//     return bwRotr32(this, amount)
