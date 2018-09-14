@@ -55,6 +55,25 @@ public function quat.norm() returns quat
     let length = this.length()
     return length > 0.002 ? quat(this.x / length, this.y / length, this.z / length, this.w / length) : ZEROQ
 
+/** Quaternion to power of alpha. */
+public function quat.exp(real alpha) returns quat
+    var result = ZEROQ
+    let norm = this.length()
+    if norm > 0.002 // zero is zero...
+        var n = vec3(this.x, this.y, this.z)
+        if n.length() > 0.002
+            let theta = (this.w / norm).acos()
+            let cos = Cos(theta * alpha)
+            let sin = Sin(theta * alpha)
+            let normPow = norm.pow(alpha)
+            n = n.norm() * sin
+            result = normPow * quat(n.x, n.y, n.z, cos)
+        else
+            /* There's no imaginary part in the quaternion
+            hence the quaternion is a real number. */
+            result = quat(0, 0, 0, this.w.pow(alpha))
+    return result
+    
 public function quat.toMatrix() returns mat3
     let q = this.norm()
     let x = q.x
