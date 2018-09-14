@@ -127,7 +127,7 @@ import Quaternion
     expected = vec3(0, 0, 1).toQuat((-45) .asAngleDegrees())
     start.slerpShort(finish, 0.5).assertEquals(expected)
 
-@Test function tetGetGimbalPole()
+@Test function testGetGimbalPole()
     let north = vec3(0, 1, 0).toQuat(90 .asAngleDegrees())
     let south = vec3(0, 1, 0).toQuat(270 .asAngleDegrees())
     let clear = vec3(1, 1, 1).norm().toQuat(90 .asAngleDegrees())
