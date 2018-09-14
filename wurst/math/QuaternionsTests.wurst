@@ -1,7 +1,6 @@
 package QuaternionsTests
 import NoWurst
 import Wurstunit
-
 import Matrices
 import Quaternions
 
@@ -92,7 +91,7 @@ import Quaternions
 @Test function test33Mat2Quat()
     let axis = vec3(1, 1, 1).norm()
     let angl = 30 .asAngleDegrees()
-    let actual = axis.toMatrix(angl).toQuat()
+    let actual = axis.toRotation(angl).toQuat()
     let expected = axis.toQuat(angl)
     actual.assertEquals(expected)
 
@@ -127,3 +126,23 @@ import Quaternions
     start.slerpLong(finish, 0.5).assertEquals(expected)
     expected = vec3(0, 0, 1).toQuat((-45) .asAngleDegrees())
     start.slerpShort(finish, 0.5).assertEquals(expected)
+
+@Test function tetGetGimbalPole()
+    let north = vec3(0, 1, 0).toQuat(90 .asAngleDegrees())
+    let south = vec3(0, 1, 0).toQuat(270 .asAngleDegrees())
+    let clear = vec3(1, 1, 1).norm().toQuat(90 .asAngleDegrees())
+    north.getGimbalPole().assertEquals(1)
+    south.getGimbalPole().assertEquals(-1)
+    clear.getGimbalPole().assertEquals(0)
+
+
+@Test function testExp()
+    /* A test through a sequence of rotations around
+    an arbitrary axis by an arbitrary angle. */
+    let axis = vec3(1, -0.5, 3).norm()
+    let angl = 38 .asAngleDegrees()
+    let power = 8.
+    let point = vec3(4, 5, 1)
+    let actual =  axis.toQuat(angl).exp(power)
+    let expected = axis.toQuat(angl * power)
+    point.rotate(actual).assertEquals(point.rotate(expected))
