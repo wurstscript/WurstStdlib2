@@ -63,11 +63,10 @@ public function quat.exp(real alpha) returns quat
         var n = vec3(this.x, this.y, this.z)
         if n.length() > 0.002
             let theta = (this.w / norm).acos()
-            let cos = Cos(theta * alpha)
-            let sin = Sin(theta * alpha)
+            let x = theta * alpha
             let normPow = norm.pow(alpha)
-            n = n.norm() * sin
-            result = normPow * quat(n.x, n.y, n.z, cos)
+            n = n.norm() * x.sin()
+            result = normPow * quat(n.x, n.y, n.z, x.cos())
         else
             /* There's no imaginary part in the quaternion
             hence the quaternion is a real number. */
