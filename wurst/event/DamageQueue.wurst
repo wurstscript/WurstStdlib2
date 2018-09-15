@@ -65,7 +65,7 @@ import TimerUtils
 	As you can see, in second case damage processing follows the order given
 */
 
-@configurable constant RECURSION_TRESHOLD = 128
+@configurable constant RECURSION_TRESHOLD = 32
 
 /** This is a replacement for .damageTarget() in case of nested damage call that
 	delays new damage event to run after previous damage was dealt.
@@ -94,7 +94,7 @@ let queue = new LinkedList<Damage>
 	
 	More info on that in DamageQueue package. */
 public function Damage.dealQueued()
-	if queue.size() < 128
+	if queue.size() < RECURSION_TRESHOLD
 		if queue.isEmpty()
 			getTimer()..start(0., function queueFlush)
 		this.saveInstance()
