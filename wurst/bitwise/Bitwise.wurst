@@ -164,27 +164,6 @@ function bwShiftr32(int num, int shift) returns int
         isNegative = 1
     return isNegative * powShift[31-shift] + value div powShift[shift]
 
-// function bwRotl32(int val, int shift) returns int
-//     return bwOr32(bwShiftl32(val, shift), bwShiftr32(val, 4*8 - shift))
-
-// function bwRotr32(int val, int shift) returns int
-//     return bwOr32(bwShiftr32(val, shift), bwShiftl32(val, 4*8 - shift))
-
-// @test function testRotations()
-//     assertTrue(bwRotl32(fromBitString("0000 0000 0000 0000 0000 0000 0000 0000"), 1) == fromBitString("0000 0000 0000 0000 0000 0000 0000 0000"))
-//     assertTrue(bwRotl32(fromBitString("1000 0000 0000 0000 0000 0000 0000 0000"), 1) == fromBitString("0000 0000 0000 0000 0000 0000 0000 0001"))
-//     assertTrue(bwRotl32(fromBitString("1000 0000 0000 0000 0000 0000 0000 0000"), 1) == fromBitString("0000 0000 0000 0000 0000 0000 0000 0001"))
-//     assertTrue(bwRotl32(fromBitString("1111 0000 0000 0000 0000 0000 0000 0000"), 1) == fromBitString("1110 0000 0000 0000 0000 0000 0000 0001"))
-//     assertTrue(bwRotl32(fromBitString("1111 0000 0000 0000 0000 0000 0000 0000"), 6) == fromBitString("0000 0000 0000 0000 0000 0000 0011 1100"))
-//     assertTrue(bwRotl32(fromBitString("1111 0000 0000 1111 0000 0000 0000 0000"), 7) == fromBitString("0000 0111 1000 0000 0000 0000 0111 1000"))
-
-//     assertTrue(bwRotr32(fromBitString("0000 0000 0000 0000 0000 0000 0000 0000"), 1) == fromBitString("0000 0000 0000 0000 0000 0000 0000 0000"))
-//     assertTrue(bwRotr32(fromBitString("1000 0000 0000 0000 0000 0000 0000 0000"), 1) == fromBitString("0100 0000 0000 0000 0000 0000 0000 0000"))
-//     assertTrue(bwRotr32(fromBitString("0000 0000 0000 0000 0000 0000 0000 0001"), 1) == fromBitString("1000 0000 0000 0000 0000 0000 0000 0000"))
-//     assertTrue(bwRotr32(fromBitString("0000 0000 0000 0000 0000 0000 0000 1111"), 1) == fromBitString("1000 0000 0000 0000 0000 0000 0000 0111"))
-//     assertTrue(bwRotr32(fromBitString("1111 0000 0000 0000 0000 0000 0000 0000"), 6) == fromBitString("0000 0011 1100 0000 0000 0000 0000 0000"))
-//     assertTrue(bwRotr32(fromBitString("0000 0000 0000 1111 0000 0000 0000 1111"), 7) == fromBitString("0001 1110 1000 0000 0000 0001 1110 0000"))
-
 /** 32-bit NOT operator **/
 function bwNot32(int num) returns int
     return -num - 1
