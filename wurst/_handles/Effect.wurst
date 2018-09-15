@@ -2,6 +2,7 @@ package Effect
 import NoWurst
 import Vectors
 import Matrices
+import Quaternion
 import Colors
 import Wurstunit
 
@@ -49,6 +50,10 @@ public function effect.setOrientation(real yaw, real pitch, real roll)
 
 public function effect.setOrientation(mat3 matrix)
 	let euler = matrix.toEuler()
+	BlzSetSpecialEffectOrientation(this, euler.x, euler.y, euler.z)
+
+public function effect.setOrientation(quat quaternion)
+	let euler = quaternion.toEuler()
 	BlzSetSpecialEffectOrientation(this, euler.x, euler.y, euler.z)
 
 public function effect.setYaw(real yaw)
