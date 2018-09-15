@@ -75,23 +75,23 @@ import DamageType
 /** Describes default way to create Damage instance if damage event doesn't
 	correspond to any Damage instance. */
 @configurable function getDamageFromEvent() returns Damage
-	return new Damage(GetEventDamageSource(), GetTriggerUnit(), GetEventDamage(), false, false, getDamageType() == DamageType.SPELL ? ATTACK_TYPE_NORMAL : ATTACK_TYPE_CHAOS, null, null, DAMAGE_NONTRIGGERED_DATA)
+	return new Damage(GetEventDamageSource(), GetTriggerUnit(), GetEventDamage(), false, false, getDamageType() == DamageType.SPELL ? ATTACK_TYPE_NORMAL : ATTACK_TYPE_CHAOS, null, null, DAMAGE_NONTRIGGERED_DATA, false)
 
 // Wrappers for unit.damageTarget with data attachment
 
 /** Deals triggered damage from unit to target. Additional data can be specified.
-	Damage instance with all arguments is saved and returned after being dealt,
-	so don't forget to call .releaseInstance() on it.
 
-	Is a helper for `new Damage(*args*)..saveInstance()..modify()..deal()` */
-public function unit.damageTarget(unit target, real amount, bool attack, bool ranged, attacktype attackType, damagetype damageType, weapontype weaponType, int data) returns Damage
-	return new Damage(this, target, amount, attack, ranged, attackType, damageType, weaponType, data)..saveInstance()..modify()..deal()
+	Is a helper for `new Damage(*args*, false)..modify()..deal()`, where last
+	arg specifies whether the instance should not be destroyed during the event.
+	If you need instance after it has been dealt, create it manually. */
+public function unit.damageTarget(unit target, real amount, bool attack, bool ranged, attacktype attackType, damagetype damageType, weapontype weaponType, int data)
+	new Damage(this, target, amount, attack, ranged, attackType, damageType, weaponType, data, false)..deal()
 
-public function unit.damageTarget(unit target, real amount, attacktype attackType, int data) returns Damage
-	return this.damageTarget(target, amount, false, false, attackType, DAMAGE_TYPE_UNIVERSAL, WEAPON_TYPE_WHOKNOWS, data)
+public function unit.damageTarget(unit target, real amount, attacktype attackType, int data)
+	this.damageTarget(target, amount, false, false, attackType, DAMAGE_TYPE_UNIVERSAL, WEAPON_TYPE_WHOKNOWS, data)
 
-public function unit.damageTarget(unit target, real amount, int data) returns Damage
-	return this.damageTarget(target, amount, false, false, ATTACK_TYPE_CHAOS, DAMAGE_TYPE_UNIVERSAL, WEAPON_TYPE_WHOKNOWS, data)
+public function unit.damageTarget(unit target, real amount, int data)
+	this.damageTarget(target, amount, false, false, ATTACK_TYPE_CHAOS, DAMAGE_TYPE_UNIVERSAL, WEAPON_TYPE_WHOKNOWS, data)
 
 Damage previousDamage = null
 
@@ -188,6 +188,8 @@ public class Damage
 	private real amount
 	/** Final amount of damage event */
 	protected real actualAmount = 0
+	/** Amount of times that each DamageModifier is applied to this damage. */
+	protected int modifyCount = 1
 
 	protected bool doPreventDeath = false
 	protected bool doDeflect = false
@@ -197,8 +199,7 @@ public class Damage
 	/** It is set to true if the damage, when it was dealt, killed the target */
 	protected bool killedTarget = false
 
-	/** The counter inside saveInstance() and releaseInstance() */
-	protected int wantSave = 0
+	protected bool isReturned = false
 
 	function getSource() returns unit
 		return source
@@ -245,14 +246,15 @@ public class Damage
 		return getAmount()
 	function getAmount() returns real
 		return amount
-
-	// Manual instance creation
+	/** Returns amount of times that each DamageModifier is applied to this damage.
+		
+		Defaults to 1, but can be set to range [0, 32]. */
+	function getModifyCount() returns int
+		return modifyCount
 	
-	/** Allows manual creation of Damage instance, which is then dealt
-		through .deal() call, guaranteed passing it to modifiers and listeners.
+	// Manual instance creation
 
-		Consider also .saveInstance() and .modify() before it's call. */
-	construct(unit source, unit target, real amount, bool ranged, bool attack, attacktype attackType, damagetype damageType, weapontype weaponType, int data)
+	private function set(unit source, unit target, real amount, bool ranged, bool attack, attacktype attackType, damagetype damageType, weapontype weaponType, int data, bool isReturned)
 		this.source = source
 		this.target = target
 		this.initialAmount = amount
@@ -263,6 +265,21 @@ public class Damage
 		this.damageType = damageType
 		this.weaponType = weaponType
 		this.data = data
+		this.isReturned = isReturned
+
+	/** Allows manual creation of Damage instance, which is then dealt
+		through .deal() call, guaranteed passing it to modifiers and listeners.
+
+		You can attach anything to Damage instance with .data field.
+		isReturned specifies whether the Damage should not be destroyed during the event. */
+	construct(unit source, unit target, real amount, bool ranged, bool attack, attacktype attackType, damagetype damageType, weapontype weaponType, int data, bool isReturned)
+		set(source, target, amount, ranged, attack, attackType, damageType, weaponType, data, isReturned)
+
+	construct(unit source, unit target, real amount, attacktype attackType, int data, bool isReturned)
+		set(source, target, amount, false, false, attackType, DAMAGE_TYPE_UNIVERSAL, WEAPON_TYPE_WHOKNOWS, data, isReturned)
+	
+	construct(unit source, unit target, real amount, int data, bool isReturned)
+		set(source, target, amount, false, false, ATTACK_TYPE_CHAOS, DAMAGE_TYPE_UNIVERSAL, WEAPON_TYPE_WHOKNOWS, data, isReturned)
 			
 	/** applies user-created Damage instance, instantly processing it through
 		all damage events. After this function is called, the Damage will be
@@ -270,7 +287,6 @@ public class Damage
 	function deal()
 		if state == DamageState.CREATED
 			state = DamageState.FIRING
-			saveInstance() // will be released after processing
 			let temp = dealingInstance
 			dealingInstance = this
 			Log.trace("deal d" + I2S(this castTo int))
@@ -279,45 +295,12 @@ public class Damage
 			dealingInstance = temp
 			if state != DamageState.FIRED
 				Log.debug("Damage.deal() returned not fully processed damage! (state: " + state.toString() + ")")
-				releaseInstance()
+				if not isReturned
+					destroy this
 		else
 			Log.debug("Damage.deal() called on already dealt damage!")
-
-	/** Damage instances are automatically destroyed.
-		Use this to protect them if you need an instance anyhow.
-		
-		You need then to use `releaseInstance()`
-		in order to destroy the instance.
-
-		This means that the instance will be destroyed
-		when the last `releaseInstance()` is called on it */
-	function saveInstance()
-		wantSave += 1
-
-	/** Releases Damage instance so it can be destroyed.
-		It is destroyed immediately if nobody else had saved it */
-	function releaseInstance()
-		wantSave -= 1
-		if wantSave <= 0
-			destroy this
 			
-	ondestroy
-		if wantSave > 0
-			Log.error("Damage instance was destroyed unsafely! Use .releaseInstance() instead!")
-
 	// Event modification
-
-	/** applies all modifiers to the damage instance once */
-	function modify()
-		if state != DamageState.FIRED and state != DamageState.LISTENING and state != DamageState.MODIFYING
-			let tempState = state
-			state = DamageState.MODIFYING
-			for i in damageModifiers
-				i.modify(this)
-			state = tempState
-		else
-			Log.debug("Damage.modify() is used in the wrong damage state:" + state.toString())
-			
 
 	/** Make actual amount leave target at at least 0.406 hp left */
 	function preventDeath()
@@ -346,7 +329,19 @@ public class Damage
 		if state != DamageState.FIRED and state != DamageState.LISTENING
 			this.amount = amount
 		else
-			Log.debug("Damage.setAmount() is used in the wrong damage state:" + state.toString())			
+			Log.debug("Damage.setAmount() is used in the wrong damage state:" + state.toString())
+
+	/** Sets the amount of times that each DamageModifier is applied to this damage.
+		Should be in range [0, 32]. */
+	function setModifyCount(int val)
+		if state != DamageState.FIRED and state != DamageState.LISTENING
+			if val >= 0 and val <= 32
+				modifyCount = val
+			else
+				Log.debug("Damage.setModifyCount() is used with wrong value: " + val.toString())
+		else
+			Log.debug("Damage.setModifyCount() is used in the wrong damage state:" + state.toString())
+				
 
 // Handler of the event
 
@@ -366,12 +361,17 @@ function handler() returns bool
 		
 	var d = retrieve()
 	if d == null
-		d = getDamageFromEvent()..saveInstance()
-			..modify() // So basically all non-triggered damage is modified once
+		d = getDamageFromEvent()
 	else
 		d.setAmount(damage)
 	
 	d.state = DamageState.ACQUIRED
+	
+	for i = 0 to d.modifyCount
+		d.state = DamageState.MODIFYING
+		for modifier in damageModifiers
+			modifier.modify(d)
+		d.state = DamageState.ACQUIRED
 	
 	if d.doDeflect
 		d.actualAmount = 0
@@ -392,12 +392,12 @@ function handler() returns bool
 	BlzSetEventDamage(d.actualAmount)
 
 	d.state = DamageState.LISTENING
-	for i in damageListeners
-		i.listen(d)
+	for listener in damageListeners
+		listener.listen(d)
 	d.state = DamageState.FIRED
 
-	if previousDamage != null
-		previousDamage.releaseInstance()
+	if previousDamage != null and not previousDamage.isReturned
+		destroy previousDamage
 	previousDamage = d
 	
 	Log.trace("finish d" + I2S(d castTo int))
