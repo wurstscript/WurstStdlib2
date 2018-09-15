@@ -81,6 +81,10 @@ public class IterableMap<K,V> extends HashMap<K, V>
 			keys.clear()
 		super.flush()
 
+	/** Returns the length of this IterableMap **/
+	function size() returns int
+		return keys.size()
+
 	construct()
 
 	/** Create a new map by copying all elements from another list into it */

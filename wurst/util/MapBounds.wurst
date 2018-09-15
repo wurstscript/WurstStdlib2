@@ -47,14 +47,14 @@ public function randomPointOnMap() returns vec2
 @compiletime function initMapBounds()
 	playableMapRect   = compiletime ? Rect(-1024, -1024, 1024, 1024) : GetPlayableMapRect() 
 	playableMapRegion = CreateRegion()..addRect(playableMapRect)
-	boundRect         = compiletime ? Rect(-1536, -1536, 1536, 1536) : GetWorldBounds()
-	boundRegion       = CreateRegion()..addRect(boundRect)
-	playableMin       = vec2(playableMapRect.getMinX(), playableMapRect.getMinY())
-	playableMax       = vec2(playableMapRect.getMaxX(), playableMapRect.getMaxY())
-	boundMin          = vec2(boundRect.getMinX(),       boundRect.getMinY())
-	boundMax          = vec2(boundRect.getMaxX(),       boundRect.getMaxY())
-	playableCenter    = (playableMin + playableMax) * .5
-	boundCenter       = (boundMin    + boundMax)    * .5
+	boundRect		 = compiletime ? Rect(-1536, -1536, 1536, 1536) : GetWorldBounds()
+	boundRegion	   = CreateRegion()..addRect(boundRect)
+	playableMin	   = vec2(playableMapRect.getMinX(), playableMapRect.getMinY())
+	playableMax	   = vec2(playableMapRect.getMaxX(), playableMapRect.getMaxY())
+	boundMin		  = vec2(boundRect.getMinX(),	   boundRect.getMinY())
+	boundMax		  = vec2(boundRect.getMaxX(),	   boundRect.getMaxY())
+	playableCenter	= (playableMin + playableMax) * .5
+	boundCenter	   = (boundMin	+ boundMax)	* .5
 
 init
 	initMapBounds()

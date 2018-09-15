@@ -8,17 +8,17 @@ import Execute
 import Maths
 
 /*
-    Groups are a necessary evil that exists in warcraft 3, and sometimes their use
-    cannot be easily replicated or avoided, especially with nested enums.
+	Groups are a necessary evil that exists in warcraft 3, and sometimes their use
+	cannot be easily replicated or avoided, especially with nested enums.
 
-    However, for most purposes, if you want to keep a list of units and iterate over them
-    often, you should use LinkedList<unit> instead of the group, since LinkedList<unit>
-    provides more predictable and consistent functionalities that can be extended more easily.
+	However, for most purposes, if you want to keep a list of units and iterate over them
+	often, you should use LinkedList<unit> instead of the group, since LinkedList<unit>
+	provides more predictable and consistent functionalities that can be extended more easily.
 */
 
 /** The max number of recyclable groups. Even if this number is reached, 
-    the system will create new groups on following requests, but they won't be recyclable.
-    The maximum number for this setting is 8191. */
+	the system will create new groups on following requests, but they won't be recyclable.
+	The maximum number for this setting is JASS_MAX_ARRAY_SIZE - 1. */
 @configurable constant GROUP_NUMBER_LIMIT = 1024
 
 /** The number of groups created when more are needed */
@@ -35,104 +35,104 @@ var numTotal = 0
 /* API */
 
 /** Returns a reusable group from the GroupUtils stack is possible.
-    Creates new groups if none are found on the reusable stack.
-    If that is not possible, returns a non-recyclable group and displays a warning. */
+	Creates new groups if none are found on the reusable stack.
+	If that is not possible, returns a non-recyclable group and displays a warning. */
 public function getGroup() returns group
-    group retVal
-    if numStack > 0
-        retVal = pop()
-    else if numStack <= 0 and numTotal < GROUP_NUMBER_LIMIT 
-        createGroups(NEED_CREATE_GROUPS)
-        retVal = pop()
-    else
-        retVal = CreateGroup()
-    return retVal
+	group retVal
+	if numStack > 0
+		retVal = pop()
+	else if numStack <= 0 and numTotal < GROUP_NUMBER_LIMIT 
+		createGroups(NEED_CREATE_GROUPS)
+		retVal = pop()
+	else
+		retVal = CreateGroup()
+	return retVal
 
 /** Recycles a group if it is created through GroupUtils, otherwise just destroys it. 
-    Doesn't affect ENUM_GROUP. */
+	Doesn't affect ENUM_GROUP. */
 public function group.release()
-    if this == ENUM_GROUP
-        Log.warn("Attemping to release ENUM_GROUP!")
-    else
-        if this.isRecyclable()
-            if this.isUsed()
-                this.recycle()
-            else
-                Log.warn("Attemping to release an already released group!")
-        else
-            this.clear()
-            this.destr()
+	if this == ENUM_GROUP
+		Log.warn("Attemping to release ENUM_GROUP!")
+	else
+		if this.isRecyclable()
+			if this.isUsed()
+				this.recycle()
+			else
+				Log.warn("Attemping to release an already released group!")
+		else
+			this.clear()
+			this.destr()
 
 /* Recyclable iterator */
 
 group iterGroup
 
 public function group.recyclableIterator() returns group
-    iterGroup = getGroup()
-    ForGroup(this, () -> iterGroup.addUnit(GetEnumUnit()))
-    return iterGroup
+	iterGroup = getGroup()
+	ForGroup(this, () -> iterGroup.addUnit(GetEnumUnit()))
+	return iterGroup
 
 /* Group instantiation */
 
 var shownMaxError = false
 
 function createGroups(int number)
-    let maxCreatePerCycle = 256
-    let actualLimit = max(8191, GROUP_NUMBER_LIMIT)
-    let numTarget = numTotal + number 
-    let overflow  = max(0, numTarget - actualLimit)
-    var toCreate  = max(0, numTarget - overflow)
+	let maxCreatePerCycle = 256
+	let actualLimit = max(JASS_MAX_ARRAY_SIZE - 1, GROUP_NUMBER_LIMIT)
+	let numTarget = numTotal + number 
+	let overflow  = max(0, numTarget - actualLimit)
+	var toCreate  = max(0, numTarget - overflow)
 
-    while toCreate > 0
-        let createNow = min(toCreate, maxCreatePerCycle)
-        toCreate -= createNow
+	while toCreate > 0
+		let createNow = min(toCreate, maxCreatePerCycle)
+		toCreate -= createNow
 
-        execute() -> 
-            numTotal += createNow
-            for i = 1 to createNow
-                push(CreateGroup())
-        
-    if numTotal >= GROUP_NUMBER_LIMIT and not shownMaxError
-        Log.warn("Maximum number of GroupUtils groups (" + GROUP_NUMBER_LIMIT.toString() + ") created. "
-            + "All newly created groups will be non-recyclable.")
-        shownMaxError = true
+		execute() -> 
+			numTotal += createNow
+			for i = 1 to createNow
+				push(CreateGroup())
+		
+	if numTotal >= GROUP_NUMBER_LIMIT and not shownMaxError
+		Log.warn("Maximum number of GroupUtils groups (" + GROUP_NUMBER_LIMIT.toString() + ") created. "
+			+ "All newly created groups will be non-recyclable.")
+		shownMaxError = true
 
 @compiletime function initialize()
-    createGroups(START_CREATE_GROUPS)
+	createGroups(START_CREATE_GROUPS)
 
 init
-    initialize()
+	initialize()
 
 /** Returns whether this group was created through GroupUtils. */
 function group.isRecyclable() returns bool
-    return used.has(this)
+	return used.has(this)
 
 /** Returns whether this group is currently being used */
 function group.isUsed() returns bool
-    return used.get(this)
+	return used.get(this)
 
 /* Stack operations */
 
 function push(group g)
-    stack[numStack] = g
-    used.put(stack[numStack], false)
-    numStack++
+	stack[numStack] = g
+	used.put(stack[numStack], false)
+	numStack++
 
 bool shownDestrWarning = false
 
 function pop() returns group
-    numStack--
-    var retVal = stack[numStack]
-    
-    if stack[numStack] != null
-        used.put(stack[numStack], true)
-    else
-        if not shownDestrWarning
-            Log.warn("Groups on the GroupUtils stack shouldn't be destroyed! Use .release() instead.")
-            shownDestrWarning = true
-        retVal = getGroup()
-    return retVal
+	numStack--
+	var retVal = stack[numStack]
+	
+	if stack[numStack] != null
+		used.put(stack[numStack], true)
+	else
+		if not shownDestrWarning
+			Log.warn("Groups on the GroupUtils stack shouldn't be destroyed! Use .release() instead.")
+			shownDestrWarning = true
+		retVal = getGroup()
+	return retVal
 
 function group.recycle()
-    this.clear()
-    push(this)
+	this.clear()
+	push(this)

@@ -185,6 +185,7 @@ import ErrorHandling
 import public Execute
 import public Buffer
 
+import SafetyChecks
 import NetworkConfig
 import Metadata
 import GamecacheKeys
@@ -221,8 +222,8 @@ public class Network
 	private var stringEncoder = new StringEncoder
 
 	// gamecache buffers to sync data in rounds
-	private var gcIntBuffer     = new GamecacheBuffer(DATA_CACHE, mkey, BufferType.INTEGER)
-	private var gcRealBuffer    = new GamecacheBuffer(DATA_CACHE, mkey, BufferType.REAL)
+	private var gcIntBuffer	 = new GamecacheBuffer(DATA_CACHE, mkey, BufferType.INTEGER)
+	private var gcRealBuffer	= new GamecacheBuffer(DATA_CACHE, mkey, BufferType.REAL)
 	private var gcBooleanBuffer = new GamecacheBuffer(DATA_CACHE, mkey, BufferType.BOOLEAN)
 	private var gcStringBuffer  = new GamecacheBuffer(STRING_CACHE, mkey, BufferType.INTEGER)
 
@@ -290,8 +291,8 @@ public class Network
 		dataBuffer.setMode(BufferMode.LOCKED)
 
 		// get the amount of individual entities to be synced for each type
-		let intCount      = dataBuffer.getIntCount()
-		let realCount     = dataBuffer.getRealCount()
+		let intCount	  = dataBuffer.getIntCount()
+		let realCount	 = dataBuffer.getRealCount()
 		let booleanCount  = dataBuffer.getBooleanCount()
 		let asciiIntCount = stringEncoder.getIntCount()
 		

@@ -2,50 +2,50 @@ package Dialog
 import NoWurst
 
 /**
-    Dialogs are big dialog boxes at the center of the screen. The player can choose one button to click.
-    WARNING: Dialogs cannot be displayed at map init! Dialogs pause the game in single player mode!
-    In multiplayer mode dialogs do not pause the game, but prevent players, who see the dialog from playing the game.
+	Dialogs are big dialog boxes at the center of the screen. The player can choose one button to click.
+	WARNING: Dialogs cannot be displayed at map init! Dialogs pause the game in single player mode!
+	In multiplayer mode dialogs do not pause the game, but prevent players, who see the dialog from playing the game.
 **/
 
 public function createDialog() returns dialog
-    return DialogCreate()
+	return DialogCreate()
 
 public function dialog.addButton(string buttonText) returns button
-    return this.addButton(buttonText, 0)
+	return this.addButton(buttonText, 0)
 
 /** Hotkey: use ASCII numbers of the capital letter. */
 public function dialog.addButton(string buttonText, int hotkey) returns button
-    return DialogAddButton(this, buttonText, hotkey)
+	return DialogAddButton(this, buttonText, hotkey)
 
 /** Adds a quit button to this dialog. If it is clicked, it ends the game for that player. */
 public function dialog.addQuitButton(boolean doScoreScreen, string buttonText) returns button
-    return this.addQuitButton(doScoreScreen, buttonText, 0)
+	return this.addQuitButton(doScoreScreen, buttonText, 0)
 
 /** Adds a quit button to this dialog. If it is clicked, it ends the game for that player.
 Hotkey: use ASCII numbers of the capital letter. */
 public function dialog.addQuitButton(boolean doScoreScreen, string buttonText, int hotkey) returns button
-    return DialogAddQuitButton(this, doScoreScreen, buttonText, hotkey)
+	return DialogAddQuitButton(this, doScoreScreen, buttonText, hotkey)
 
 /** Removes all buttons from a dialog */
 public function dialog.clear()
-    DialogClear(this)
+	DialogClear(this)
 
 public function dialog.destr()
-    DialogDestroy(this)
+	DialogDestroy(this)
 
 /** Toggles visibility of the dialog for a player. Dialogs are invisible by default
 Dialogs cannot be shown at map initialization */
 public function dialog.display(player whichPlayer, boolean flag)
-    DialogDisplay(whichPlayer, this, flag)
+	DialogDisplay(whichPlayer, this, flag)
 
 public function dialog.setMessage(string messageText)
-    DialogSetMessage(this, messageText)
+	DialogSetMessage(this, messageText)
 
 @Test
 function testDialog()
-    let dia = createDialog()
-    dia..addButton("text")
-    ..addQuitButton(true, "test")
-    ..display(Player(0), true)
-    ..clear()
-    ..destr()
+	let dia = createDialog()
+	dia..addButton("text")
+	..addQuitButton(true, "test")
+	..display(Player(0), true)
+	..clear()
+	..destr()

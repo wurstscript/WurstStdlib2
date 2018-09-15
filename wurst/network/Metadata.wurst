@@ -13,10 +13,10 @@ public class MetadataStore
 	private static constant META_CACHE = InitGameCache("m.w3v")
 
 	// keys used for metadata about the transmission
-	private static constant META_INTEGER_KEY     = GamecacheKeys.get(0)
-	private static constant META_REAL_KEY        = GamecacheKeys.get(1)
-	private static constant META_BOOLEAN_KEY     = GamecacheKeys.get(2)
-	private static constant META_STRING_KEY      = GamecacheKeys.get(3)
+	private static constant META_INTEGER_KEY	 = GamecacheKeys.get(0)
+	private static constant META_REAL_KEY		= GamecacheKeys.get(1)
+	private static constant META_BOOLEAN_KEY	 = GamecacheKeys.get(2)
+	private static constant META_STRING_KEY	  = GamecacheKeys.get(3)
 	private static constant META_SYNC_ROUNDS_KEY = GamecacheKeys.get(4)
 	// total amount of metadata keys
 	private static constant META_COUNT = 5
@@ -33,10 +33,10 @@ public class MetadataStore
 		return META_CACHE.loadInt(mkey, key)
 
 	function setCounts(metadata data)
-		saveValue(META_INTEGER_KEY,     data.ints)
-		saveValue(META_REAL_KEY,        data.reals)
-		saveValue(META_BOOLEAN_KEY,     data.booleans)
-		saveValue(META_STRING_KEY,      data.asciiInts)
+		saveValue(META_INTEGER_KEY,	 data.ints)
+		saveValue(META_REAL_KEY,		data.reals)
+		saveValue(META_BOOLEAN_KEY,	 data.booleans)
+		saveValue(META_STRING_KEY,	  data.asciiInts)
 		saveValue(META_SYNC_ROUNDS_KEY, data.syncs)
 
 	function getCounts() returns metadata
