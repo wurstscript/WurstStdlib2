@@ -93,6 +93,17 @@ public function unit.damageTarget(unit target, real amount, attacktype attackTyp
 public function unit.damageTarget(unit target, real amount, int data) returns Damage
 	return this.damageTarget(target, amount, false, false, ATTACK_TYPE_CHAOS, DAMAGE_TYPE_UNIVERSAL, WEAPON_TYPE_WHOKNOWS, data)
 
+Damage previousDamage = null
+
+/** Returns the damage instance that was created on last Damage event.
+	For both listeners and modifiers it is previous to callback argument.
+
+	Allows to retrieve the instance right after unit.damageTarget() call,
+	but it is not guaranteed. */
+public function getPreviousDamage() returns Damage
+	return previousDamage
+
+
 // Callbacks with direct Damage instance acquirement
 
 /** These callbacks are used to modify the damage.
@@ -153,7 +164,9 @@ public function DamageState.toString() returns string
 			return "fired"
 
 	return "error"
-	
+
+Damage dealingInstance
+
 public class Damage
 
 	// Event info
@@ -175,11 +188,17 @@ public class Damage
 	private real amount
 	/** Final amount of damage event */
 	protected real actualAmount = 0
+
+	protected bool doPreventDeath = false
+	protected bool doDeflect = false
 	
 	/** Holds info about damage event state */
 	protected DamageState state = DamageState.CREATED
 	/** It is set to true if the damage, when it was dealt, killed the target */
-	protected bool killingBlow = false
+	protected bool killedTarget = false
+
+	/** The counter inside saveInstance() and releaseInstance() */
+	protected int wantSave = 0
 
 	function getSource() returns unit
 		return source
@@ -204,25 +223,28 @@ public class Damage
 
 	/** Returns true if the damage is going to kill or already have killed target */
 	function isKillingBlow() returns bool
-		return (state == DamageState.FIRED and killingBlow) or (state != DamageState.FIRED and target.getHP() - .406 < amount)
+		return (state == DamageState.FIRED and killedTarget) or (state != DamageState.FIRED and target.getHP() - .406 < amount)
+
+	/** Returns true if the damage have killed target
+		Is valid only for listeners and after the event. */
+	function hasKilledTarget() returns bool
+		if state == DamageState.FIRED or state == DamageState.LISTENING
+			return killedTarget
+		else
+			Log.debug("Damage.hasKilledTarget() is used on not dealt instance!")
+			return false
 
 	function getInitial() returns real
 		return initialAmount
 	/** Returns the actual damage that was withdrawn from the unit.
 		Becomes valid only for listeners and after the event. */
 	function getActual() returns real
-		return actualAmount
+		if state == DamageState.FIRED or state == DamageState.LISTENING
+			return actualAmount
+		Log.debug("Damage.getActual() is used on not dealt instance!")
+		return getAmount()
 	function getAmount() returns real
 		return amount
-
-	protected static Damage previousDamage = null
-	/** Returns the damage instance that was created on last Damage event.
-		For both listeners and modifiers it is previous to callback argument.
-
-		Allows to retrieve the instance right after unit.damageTarget() call,
-		but it is not guaranteed. */
-	static function getPrevious() returns Damage
-		return previousDamage
 
 	// Manual instance creation
 	
@@ -230,21 +252,21 @@ public class Damage
 		through .deal() call, guaranteed passing it to modifiers and listeners.
 
 		Consider also .saveInstance() and .modify() before it's call. */
-	construct(unit _source, unit _target, real _amount, bool _ranged, bool _attack, attacktype _attackType, damagetype _damageType, weapontype _weaponType, int _data)
-		source = _source
-		target = _target
-		initialAmount = _amount
-		amount = _amount
-		ranged = _ranged
-		attack = _attack
-		attackType = _attackType
-		damageType = _damageType
-		weaponType = _weaponType
-		data = _data
+	construct(unit source, unit target, real amount, bool ranged, bool attack, attacktype attackType, damagetype damageType, weapontype weaponType, int data)
+		this.source = source
+		this.target = target
+		this.initialAmount = amount
+		this.amount = amount
+		this.ranged = ranged
+		this.attack = attack
+		this.attackType = attackType
+		this.damageType = damageType
+		this.weaponType = weaponType
+		this.data = data
 			
-	protected static Damage dealingInstance = null
-	/** applies user-created Damage instance, allowing it to be retrieved
-		through Damage.retrieve() funciton. */
+	/** applies user-created Damage instance, instantly processing it through
+		all damage events. After this function is called, the Damage will be
+		in 'fired' state. */
 	function deal()
 		if state == DamageState.CREATED
 			state = DamageState.FIRING
@@ -278,21 +300,10 @@ public class Damage
 		wantSave -= 1
 		if wantSave <= 0
 			destroy this
-
-	/** The counter inside saveInstance() and releaseInstance() */
-	protected int wantSave = 0
+			
 	ondestroy
 		if wantSave > 0
 			Log.error("Damage instance was destroyed unsafely! Use .releaseInstance() instead!")
-
-	protected static function retrieve() returns Damage
-		var d = Damage.dealingInstance
-		if d == null or d.source != GetEventDamageSource() or d.target != GetTriggerUnit()
-			if d != null
-				Log.debug("Damage.handler() was ignored a damage due to incorrect target/source!")
-		else
-			Damage.dealingInstance = null // let no one else retrieve the same instance
-		return d
 
 	// Event modification
 
@@ -304,46 +315,56 @@ public class Damage
 			for i in damageModifiers
 				i.modify(this)
 			state = tempState
+		else
+			Log.debug("Damage.modify() is used in the wrong damage state:" + state.toString())
+			
 
 	/** Make actual amount leave target at at least 0.406 hp left */
 	function preventDeath()
 		doPreventDeath = true
-	protected bool doPreventDeath = false
 
 	/** Nullifies actual amount no matter what. */
 	function deflect()
 		doDeflect = true
-	protected bool doDeflect = false
 
 	/** Increases `amount` of the damage by `initialAmount * magnitude` */
 	function addMultiplier(real magnitude)
 		if state != DamageState.FIRED and state != DamageState.LISTENING
 			amount += initialAmount * (magnitude - 1)
 		else
-			Log.debug("Damage.addMultiplier() cannot modify fired instances!")
+			Log.debug("Damage.addMultiplier() is used in the wrong damage state:" + state.toString())			
 
 	/** Increases `amount` of the damage with given amount */
 	function addAmount(real amount)
 		if state != DamageState.FIRED and state != DamageState.LISTENING
 			this.amount += amount
 		else
-			Log.debug("Damage.addAmount() cannot modify fired instances!")
+			Log.debug("Damage.addAmount() is used in the wrong damage state:" + state.toString())			
 
 	/** Sets `amount` of the damage to given amount */
 	function setAmount(real amount)
 		if state != DamageState.FIRED and state != DamageState.LISTENING
 			this.amount = amount
 		else
-			Log.debug("Damage.setAmount() cannot modify fired instances!")
+			Log.debug("Damage.setAmount() is used in the wrong damage state:" + state.toString())			
 
 // Handler of the event
+
+function retrieve() returns Damage
+	var d = dealingInstance
+	if d == null or d.getSource() != GetEventDamageSource() or d.getTarget() != GetTriggerUnit()
+		if d != null
+			Log.debug("Damage.handler() was ignored a damage due to incorrect target/source!")
+	else
+		dealingInstance = null // let no one else retrieve the same instance
+	return d
 
 function handler() returns bool
 	let damage = GetEventDamage()
 	if damage == 0
 		return false
 		
-	var d = Damage.retrieve()
+	var d = retrieve()
 	if d == null
 		d = getDamageFromEvent()..saveInstance()
 			..modify() // So basically all non-triggered damage is modified once
@@ -356,10 +377,10 @@ function handler() returns bool
 		d.actualAmount = 0
 	else
 		let life = d.getTarget().getHP()
-		d.killingBlow = life - .406 < d.getAmount()
-		if d.killingBlow 
+		d.killedTarget = life - .406 < d.getAmount()
+		if d.killedTarget 
 			if d.doPreventDeath
-				d.killingBlow = false
+				d.killedTarget = false
 				d.actualAmount = life - .406
 			else
 				d.actualAmount = life
@@ -375,9 +396,9 @@ function handler() returns bool
 		i.listen(d)
 	d.state = DamageState.FIRED
 
-	if Damage.previousDamage != null
-		Damage.previousDamage.releaseInstance()
-	Damage.previousDamage = d
+	if previousDamage != null
+		previousDamage.releaseInstance()
+	previousDamage = d
 	
 	Log.trace("finish d" + I2S(d castTo int))
 	return false
