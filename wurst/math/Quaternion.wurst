@@ -140,9 +140,9 @@ q - targeted quaternion. p - progress from 0 to 1. */
 public function quat.nlerpLong(quat q, real p) returns quat
     return this.dot(q) < 0 ? this.nlerp(q, p) : this.nlerp(quat(-q.x, -q.y, -q.z, -q.w), p)
 
-/**Spherical linear interpolation. Interpolates between two rotations.
-q - targeted quaternion. p - progress from 0 to 1. */
-@deprecated("Slerp is the least efficient approach in performance so try to avoid using it, unless you need constant angular velocity. Nlerp is better solution in most cases.")
+/** Spherical linear interpolation. Interpolates between two rotations.
+q - targeted quaternion. p - progress from 0 to 1. 
+Slerp is the least efficient approach in performance so try to avoid using it, unless you need constant angular velocity. Nlerp is better solution in most cases. */
 public function quat.slerp(quat q, real p) returns quat
     quat result
     let dot = this.dot(q)
@@ -153,17 +153,17 @@ public function quat.slerp(quat q, real p) returns quat
         result = ((1 - p) * theta).sin() / theta.sin() * this + (p * theta).sin() / theta.sin() * q
     return result
 
-/**Spherical linear interpolation. Interpolates between two rotations.
+/** Spherical linear interpolation. Interpolates between two rotations.
 Always chooses the SHORTEST way between rotations.
-q - targeted quaternion. p - progress from 0 to 1. */
-@deprecated("Slerp is the least efficient approach in performance so try to avoid using it, unless you need constant angular velocity. Nlerp is better solution in most cases.")
+q - targeted quaternion. p - progress from 0 to 1.
+Slerp is the least efficient approach in performance so try to avoid using it, unless you need constant angular velocity. Nlerp is better solution in most cases. */
 public function quat.slerpShort(quat q, real p) returns quat
     return this.dot(q) > 0 ? this.slerp(q, p) : this.slerp(quat(-q.x, -q.y, -q.z, -q.w), p)
 
-/**Spherical linear interpolation. Interpolates between two rotations.
+/** Spherical linear interpolation. Interpolates between two rotations.
 Always chooses the LONGEST way between rotations.
-q - targeted quaternion. p - progress from 0 to 1. */
-@deprecated("Slerp is the least efficient approach in performance so try to avoid using it, unless you need constant angular velocity. Nlerp is better solution in most cases.")
+q - targeted quaternion. p - progress from 0 to 1.
+Slerp is the least efficient approach in performance so try to avoid using it, unless you need constant angular velocity. Nlerp is better solution in most cases. */
 public function quat.slerpLong(quat q, real p) returns quat
     return this.dot(q) < 0 ? this.slerp(q, p) : this.slerp(quat(-q.x, -q.y, -q.z, -q.w), p)
     
