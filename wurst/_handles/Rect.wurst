@@ -50,5 +50,17 @@ public function rect.moveTo(vec2 newCenter)
 public function rect.moveTo(real newCenterX, real newCenterY)
 	MoveRectTo(this, newCenterX, newCenterY)
 
+public function rect.resize(vec2 min, vec2 max)
+	SetRect(this, min.x, min.y, max.x, max.y)
+
+public function rect.width() returns real
+	return this.getMaxX() - this.getMinX()
+
+public function rect.height() returns real
+	return this.getMaxY() - this.getMinY()
+
 public function rect.remove()
 	RemoveRect(this)
+
+public function rect.copy() returns rect
+	return Rect(this.getMinX(), this.getMinY(), this.getMaxX(), this.getMaxY())

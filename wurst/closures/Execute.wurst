@@ -104,10 +104,10 @@ public function try(ForForceCallback c) returns boolean
 
 interface LimitedExecuteCondition 
 	function check() returns boolean 
- 
+
 interface LimitedExecuteAction 
 	function run() 
- 
+
 function executeWhileInternal(int resetCount, LimitedExecuteCondition condition, LimitedExecuteAction action) 
 	execute() -> 
 		var i = 0 
@@ -118,11 +118,11 @@ function executeWhileInternal(int resetCount, LimitedExecuteCondition condition,
 		// restart the execute if necessary 
 		if condition.check() 
 			executeWhileInternal(resetCount, condition, action)  
- 
+
 /** 
-  This is an utility function which you can use to process arbitrarily large loops. 
-  It functions like a while loop that will run action.run() while condition.check() == true, 
-  however it will reset the OP limit each time after the specified amount of resetCount.
+	This is a utility function which you can use to process arbitrarily large loops. 
+	It functions like a while loop that will run action.run() while condition.check() == true, 
+	however it will reset the OP limit each time after the specified amount of resetCount.
 **/ 
 public function executeWhile(int resetCount, LimitedExecuteCondition condition, LimitedExecuteAction action) 
 	executeWhileInternal(resetCount, condition, action) 

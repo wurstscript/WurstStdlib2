@@ -19,8 +19,8 @@ public enum DamageType
 
 // ConvertAttackType(7) is a hidden attack type with some unique properties. For
 // more information see goo.gl/9k8tn .
-constant ATTACK_TYPE_UNIVERSAL = ConvertAttackType(7)
-constant DAMAGE_TYPE_CHECK_ID  = compiletime(ABIL_ID_GEN.next())
+constant ATTACK_TYPE_UNIVERSAL	= ConvertAttackType(7)
+constant DAMAGE_TYPE_CHECK_ID	= compiletime(ABIL_ID_GEN.next())
 
 var lastDamageType = DamageType.NULLED
 
@@ -78,9 +78,9 @@ function determineDamageType() returns DamageType
 	`DamageDetection` also `import DamageType`, or you may experience race
 	conditions. */
 public function dealCodeDamage(unit attacker, unit target, real damage)
-	let prevType   = lastDamageType
-	let hp		 = target.getHP() - .405
-	lastDamageType = DamageType.CODE
+	let prevType	= lastDamageType
+	let hp			= target.getHP() - .405
+	lastDamageType	= DamageType.CODE
 
 	if hp > damage
 		target.setHP(hp - damage + .405)
@@ -91,7 +91,7 @@ public function dealCodeDamage(unit attacker, unit target, real damage)
 		// would otherwise block all damage. The ATTACK_TYPE_MAGIC case affect
 		// ethereal units, whereas other attack types do not.
 		UnitDamageTarget(attacker, target, 1000000. + damage, true, false, ATTACK_TYPE_UNIVERSAL, DAMAGE_TYPE_UNIVERSAL, null)
-		UnitDamageTarget(attacker, target, 1000000. + damage, true, false, ATTACK_TYPE_MAGIC,     DAMAGE_TYPE_UNIVERSAL, null)
+		UnitDamageTarget(attacker, target, 1000000. + damage, true, false, ATTACK_TYPE_MAGIC,	 DAMAGE_TYPE_UNIVERSAL, null)
 
 	lastDamageType = prevType
 
@@ -103,9 +103,9 @@ function after()
 	GetExpiredTimer().release()
 	
 function getUnitBonusSpellResistance(unit u) returns real
-	let prevType = lastDamageType
-	let life     = u.getHP()
-	var scale    = u.getMaxHP()
+	let prevType	= lastDamageType
+	let life		= u.getHP()
+	var scale		= u.getMaxHP()
 
 	u.setHP(scale)
 	lastDamageType = CODE
@@ -132,7 +132,7 @@ function handler() returns bool
 
 	if getDamageType() == DamageType.SPELL
 		var attemptedDamage = -1.*GetEventDamage()
-		let tU			  = GetTriggerUnit()
+		let tU				= GetTriggerUnit()
 
 		if useBonusCalculator
 			let scale = getUnitBonusSpellResistance(tU)

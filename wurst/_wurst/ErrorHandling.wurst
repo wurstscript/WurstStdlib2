@@ -60,7 +60,7 @@ You can also use try() from package Execute to handle an error happening in a ca
 					HT.saveBoolean(PRIMARY_ERROR_KEY, hash, true)	
 			else
 				HT.saveInt(PRIMARY_ERROR_KEY, hash, currentTime.toInt())
-				Log.error("|cffFF3A29Error:|r " + msg + getStackTraceString())
+				Log.error("Message: " + msg + getStackTraceString())
 		// crash the thread:
 		lastError = msg
 		I2S(1 div 0)

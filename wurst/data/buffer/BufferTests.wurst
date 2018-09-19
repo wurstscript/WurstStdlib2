@@ -51,7 +51,7 @@ class TestSerializable implements BufferSerializable
 
 @test
 function stringBufferEmptyStringTest()
-	let sBuffer = new StringBuffer(4)
+	let sBuffer = new OrderedStringBuffer(4)
 	Buffer buffer = sBuffer
 
 	buffer.writeInt(1)
@@ -65,7 +65,7 @@ function stringBufferEmptyStringTest()
 
 @test
 function stringBufferShortSerializationTest()
-	let sBuffer = new StringBuffer(4)
+	let sBuffer = new OrderedStringBuffer(4)
 	Buffer buffer = sBuffer
 
 	buffer.writeInt(1)
@@ -87,7 +87,7 @@ function stringBufferShortSerializationTest()
 
 @test
 function stringBufferLongSerializationTest()
-	let buffer = new StringBuffer(256)
+	let buffer = new OrderedStringBuffer(256)
 
 	for i = 0 to 127
 		buffer.writeInt(i)
@@ -117,7 +117,7 @@ function stringBufferSerializableTest()
 		element.value = i
 		original.elements.add(element)
 
-	let buffer = new StringBuffer(16)
+	let buffer = new OrderedStringBuffer(16)
 	buffer.write(original)
 	buffer.flush()
 
