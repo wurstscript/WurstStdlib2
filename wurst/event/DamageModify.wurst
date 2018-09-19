@@ -403,6 +403,7 @@ function handler() returns bool
 	if damage == 0
 		return false
 
+	real damage_ratio = 1
 	var d = retrieve()
 	if d == null
 		d = getDamageFromEvent()
@@ -412,12 +413,13 @@ function handler() returns bool
 		else
 			Log.warn("Non-triggered damage recursion detected.")
 	else
-		d.setAmount(damage)
+		damage_ratio = damage / d.getInitial()
 	
 	recursionAmount += 1
 	d.state = DamageState.ACQUIRED
 	
 	for i = 0 to d.modifyCount
+		d.addMultiplier(damage_ratio)
 		d.state = DamageState.MODIFYING
 		for modifier in damageModifiers
 			modifier.modify(d)
