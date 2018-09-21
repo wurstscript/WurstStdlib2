@@ -3,18 +3,19 @@ import NoWurst
 import TypeCasting
 import Integer
 import String
+import ClosureForGroups
 import Real
 
 /**
 Doubly-linked list implementation that implements all common list, stack and queue operations.
-Permits all elements (including null). 
+Permits all elements (including null).
 Use the Typecasting package if you require lists of warcraft handles.
 */
 public class LinkedList<T>
 	private var dummy = new LLEntry<T>(null, null, null)
 	protected var size = 0
 
-	private LLIterator<T> staticItr = null 
+	private LLIterator<T> staticItr = null
 	private LLBackIterator<T> staticBackItr = null
 
 	/** Create a new list by copying all elements from another list into it */
@@ -60,7 +61,7 @@ public class LinkedList<T>
 	/** Sets the element at the specified index */
 	function set(int index, T elem)
 		getEntry(index).elem = elem
-		
+
 	/** Add an element to the end of the list (top of stack, beginning of queue) */
 	function push(T elem)
 		add(elem)
@@ -77,7 +78,7 @@ public class LinkedList<T>
 			result = top.elem
 			removeEntry(top)
 		return result
-		
+
 	/** Returns and removes the last added Element (LIFO) */
 	function pop() returns T
 		let top = dummy.prev
@@ -86,7 +87,7 @@ public class LinkedList<T>
 			result = top.elem
 			removeEntry(top)
 		return result
-		
+
 	/** Returns the lastly added Element */
 	function peek() returns T
 		return dummy.prev.elem
@@ -99,16 +100,16 @@ public class LinkedList<T>
 				return true
 			entry = entry.next
 		return false
-		
+
 	/** Removes the element and it's entry at the given index */
 	function removeAt(int index) returns T
 		let entry = getEntry(index)
 		entry.prev.next = entry.next
 		entry.next.prev = entry.prev
-		destroy entry	
+		destroy entry
 		size--
 		return entry.elem
-		
+
 	/** Removes the first occurence of t from this list */
 	function remove(T elem)
 		var entry = dummy.next
@@ -117,7 +118,7 @@ public class LinkedList<T>
 				removeEntry(entry)
 				return
 			entry = entry.next
-	
+
 	/** gets the size of the list */
 	@deprecated("Use .size() instead.") function getSize() returns int
 		return size
@@ -129,7 +130,7 @@ public class LinkedList<T>
 	/** checks whether this list is empty */
 	function isEmpty() returns boolean
 		return size == 0
-		
+
 	/** Returns a shallow copy of this map */
 	function copy() returns LinkedList<T>
 		let list = new LinkedList<T>
@@ -154,20 +155,20 @@ public class LinkedList<T>
 	/** get an iterator for this list */
 	function iterator() returns LLIterator<T>
 		return new LLIterator(this)
-	
+
 	/** get a backiterator for this list */
 	function backiterator() returns LLBackIterator<T>
-		return new LLBackIterator(dummy)	
-		
-	/** adds an element to the beginning of the list */	
+		return new LLBackIterator(dummy)
+
+	/** adds an element to the beginning of the list */
 	function addtoStart(T elem)
 		let entry = new LLEntry<T>(elem, dummy, dummy.next)
 		dummy.next.prev = entry
 		dummy.next = entry
 		size++
-		
-	/** replaces the first occurence of 'whichElement' with 'newElement' 
-		returns true when an element has been replaced, 
+
+	/** replaces the first occurence of 'whichElement' with 'newElement'
+		returns true when an element has been replaced,
 		false if 'whichelement' is not contained in the list
 	*/
 	function replace(T whichElement, T newElement) returns boolean
@@ -192,8 +193,8 @@ public class LinkedList<T>
 		itr.close()
 
 		destroy predicate
-		
-	/** Executes the closure for each element */	
+
+	/** Executes the closure for each element */
 	function forEach(LLItrClosure<T> itr) returns LinkedList<T>
 		var r = dummy.next
 		while r != dummy
@@ -201,12 +202,12 @@ public class LinkedList<T>
 			r = r.next
 		destroy itr
 		return this
-	
-	/** Updates all elements */	
+
+	/** Updates all elements */
 	function updateAll(LinkedListUpdater<T> f)
 		var r = dummy.next
 		while r != dummy
-			r.elem = f.update(r.elem) 
+			r.elem = f.update(r.elem)
 			r = r.next
 		destroy f
 
@@ -233,7 +234,7 @@ public class LinkedList<T>
 				last = last.next
 			dummy.prev = last
 
-	/** Returns the list obtained by applying the given closure to each element of the original list */ 
+	/** Returns the list obtained by applying the given closure to each element of the original list */
 	function map<Q>(MapClosure<T, Q> itr) returns LinkedList<Q>
 		let output = new LinkedList<Q>()
 		forEach(t -> output.add(itr.run(t)))
@@ -247,7 +248,7 @@ public class LinkedList<T>
 		destroy predicate
 		return result
 
-	/** 'Folds' this list into a single value of type Q 
+	/** 'Folds' this list into a single value of type Q
 		Example int-list sum: `list.foldl<int>(0, (i, q) -> q + i)` */
 	function foldl<Q>(Q startValue, FoldClosure<T, Q> predicate) returns Q
 		var result = startValue
@@ -323,7 +324,7 @@ public class LinkedList<T>
 	function toString() returns string
 		let fold = foldl<string>("[", (i, q) -> q + (i castTo int).toString() + ",")
 		return fold.substring(0, fold.length()-1) + "]"
-	
+
 	/** Removes all elements from the list */
 	function clear()
 		var current = dummy.next
@@ -333,17 +334,17 @@ public class LinkedList<T>
 		dummy.next = dummy
 		dummy.prev = dummy
 		size = 0
-		
+
 	protected function getDummy() returns LLEntry<T>
 		return dummy
-		
+
 	/** Returns the entry at the given index */
 	private function getEntry(int index) returns LLEntry<T>
 		var entry = dummy
 		for i = 0 to index
 			entry = entry.next
 		return entry
-		
+
 	/** Removes an entry */
 	protected function removeEntry(LLEntry<T> entry)
 		entry.prev.next = entry.next
@@ -372,7 +373,7 @@ class LLEntry<T>
 	T elem
 	LLEntry<T> prev
 	LLEntry<T> next
-	
+
 	construct(T elem, LLEntry<T> prev, LLEntry<T> next)
 		this.elem = elem
 		this.prev = prev
@@ -437,7 +438,7 @@ public class LLBackIterator<T>
 	construct(LLEntry<T> dummy)
 		this.dummy = dummy
 		reset()
-			
+
 	function reset()
 		this.current = dummy
 
@@ -445,22 +446,22 @@ public class LLBackIterator<T>
 		return current.prev != dummy
 
 	function next() returns T
-		current = current.prev 
-		return current.elem 
-		 
+		current = current.prev
+		return current.elem
+
 	function lookahead() returns T
 		T retVal = null
 		if hasNext()
 			retVal = current.prev.elem
 		return retVal
 
-	function close() 
+	function close()
 		if destroyOnClose
 			destroy this
 
 public interface LinkedListPredicate<T>
 	function isTrueFor(T t) returns boolean
-	
+
 public interface LLItrClosure<T>
 	function run(T t)
 
@@ -483,6 +484,12 @@ public function LinkedList<real>.sort()
 constant Comparator<int> intComparator = (i1, i2) -> i1 - i2
 public function LinkedList<int>.sort()
 	this.sortWith(intComparator)
+
+public function group.asList() returns LinkedList<unit>
+	let result = new LinkedList<unit>()
+	this.forEachFrom() u ->
+		result.add(u)
+	return result
 
 init
 	realToIndex(0.)
