@@ -9,10 +9,10 @@ import OnUnitEnterLeave
 import ObjectIdGenerator
 
 public enum DamageType
-    NULLED
-    ATTACK
-    SPELL
-    CODE
+	NULLED
+	ATTACK
+	SPELL
+	CODE
 
 @configurable var useBonusCalculator = false
 
@@ -29,92 +29,90 @@ int dtstack_counter = 0
 int dtstack_decay = 0
 bool dtstack_reset = false
 /** In the context of a damage detection handler, get the type of damage dealt.
-    Returns one of:
+	Returns one of:
 
-        DamageType.CODE
-        DamageType.ATTACK
-        DamageType.SPELL
-        DamageType.NULLED
-        
-    Brokes after .damageTarget invokation within same event.
+		DamageType.CODE
+		DamageType.ATTACK
+		DamageType.SPELL
+		DamageType.NULLED
+		
+	Brokes after .damageTarget invokation within same event.
 
-    Be sure that if you use the `DamageType` package, that all subscribers of
-    `DamageDetection` also `import DamageType`, or you may experience race
-    conditions.
+	Be sure that if you use the `DamageType` package, that all subscribers of
+	`DamageDetection` also `import DamageType`, or you may experience race
+	conditions.
 
-    Example Usage:
+	Example Usage:
 
-        import DamageDetection
-        import DamageType
+		import DamageDetection
+		import DamageType
 
-        init
-            addOnDamageFunc() ->
-                switch getDamageType()
-                    case ATTACK
-                        print(GetEventDamageSource().getName() + " attacked " + GetTriggerUnit().getName())
-                    case SPELL
-                        print(GetEventDamageSource().getName() + " used a spell on " + GetTriggerUnit().getName())
-                    default
+		init
+			addOnDamageFunc() ->
+				switch getDamageType()
+					case ATTACK
+						print(GetEventDamageSource().getName() + " attacked " + GetTriggerUnit().getName())
+					case SPELL
+						print(GetEventDamageSource().getName() + " used a spell on " + GetTriggerUnit().getName())
+					default
 */
 public function getDamageType() returns DamageType
-    return dtstack[dtstack_counter]
+	return dtstack[dtstack_counter]
 
 function determineDamageType() returns DamageType
-    let sourceDamage = GetEventDamage()
-    if lastDamageType == DamageType.CODE
-        return DamageType.CODE
-    else if sourceDamage > 0.
-        return DamageType.ATTACK
-    else if sourceDamage < 0.
-        return DamageType.SPELL
+	let sourceDamage = GetEventDamage()
+	if lastDamageType == DamageType.CODE
+		return DamageType.CODE
+	else if sourceDamage > 0.
+		return DamageType.ATTACK
+	else if sourceDamage < 0.
+		return DamageType.SPELL
 
-    return DamageType.NULLED
+	return DamageType.NULLED
 
 
 /** Deal an exact amount of damage to `target`, crediting kill experience and
-    gold bounty to `attacker`.
+	gold bounty to `attacker`.
 
-    Be sure that if you use the `DamageType` package, that all subscribers of
-    `DamageDetection` also `import DamageType`, or you may experience race
-    conditions. */
+	Be sure that if you use the `DamageType` package, that all subscribers of
+	`DamageDetection` also `import DamageType`, or you may experience race
+	conditions. */
 public function dealCodeDamage(unit attacker, unit target, real damage)
-    let prevType    = lastDamageType
-    let hp          = target.getHP() - .405
-    lastDamageType  = DamageType.CODE
-
-    if hp > damage
-        target.setHP(hp - damage + .405)
-        UnitDamageTarget(attacker, target, 0. , true, false, ATTACK_TYPE_UNIVERSAL, DAMAGE_TYPE_UNIVERSAL, null)
-    else
-        // Deal damage using two separate components. The ATTACK_TYPE_UNIVERSAL
-        // case will deal damage to units of all armor types, even if that armor
-        // would otherwise block all damage. The ATTACK_TYPE_MAGIC case affect
-        // ethereal units, whereas other attack types do not.
-        UnitDamageTarget(attacker, target, 1000000. + damage, true, false, ATTACK_TYPE_UNIVERSAL, DAMAGE_TYPE_UNIVERSAL, null)
-        UnitDamageTarget(attacker, target, 1000000. + damage, true, false, ATTACK_TYPE_MAGIC,     DAMAGE_TYPE_UNIVERSAL, null)
-
-    lastDamageType = prevType
+	let prevType   = lastDamageType
+	let hp		 = target.getHP() - .405
+	lastDamageType = DamageType.CODE
+ 	if hp > damage
+		target.setHP(hp - damage + .405)
+		UnitDamageTarget(attacker, target, 0. , true, false, ATTACK_TYPE_UNIVERSAL, DAMAGE_TYPE_UNIVERSAL, null)
+	else
+		// Deal damage using two separate components. The ATTACK_TYPE_UNIVERSAL
+		// case will deal damage to units of all armor types, even if that armor
+		// would otherwise block all damage. The ATTACK_TYPE_MAGIC case affect
+		// ethereal units, whereas other attack types do not.
+		UnitDamageTarget(attacker, target, 1000000. + damage, true, false, ATTACK_TYPE_UNIVERSAL, DAMAGE_TYPE_UNIVERSAL, null)
+		UnitDamageTarget(attacker, target, 1000000. + damage, true, false, ATTACK_TYPE_MAGIC,	 DAMAGE_TYPE_UNIVERSAL, null)
+ 	lastDamageType = prevType
 
 function after()
-    dtstack_counter -= dtstack_decay
-    dtstack_decay = 0
-    dtstack_reset = false
+	dtstack_counter -= dtstack_decay
+	dtstack_decay = 0
+	dtstack_reset = false
 
-    GetExpiredTimer().release()
-    
+	GetExpiredTimer().release()
+	
 function getUnitBonusSpellResistance(unit u) returns real
-    let prevType    = lastDamageType
-    let life        = u.getHP()
-    var scale       = u.getMaxHP()
+	let prevType = lastDamageType
+	let life	 = u.getHP()
+	var scale	= u.getMaxHP()
 
-    u.setHP(scale)
-    lastDamageType = CODE
-    UnitDamageTarget(u, u, -scale/2., false, false, null, DAMAGE_TYPE_UNIVERSAL, null)
-    scale = 2.*(scale - u.getHP())/scale
-    u.setHP(life)
+	u.setHP(scale)
+	lastDamageType = CODE
+	UnitDamageTarget(u, u, -scale/2., false, false, null, DAMAGE_TYPE_UNIVERSAL, null)
+	scale = 2.*(scale - u.getHP())/scale
+	u.setHP(life)
 
-    lastDamageType = prevType
-    return scale
+	lastDamageType = prevType
+	return scale
 
 
 // This is the method that will invert any negative spell damage. To function
@@ -122,38 +120,38 @@ function getUnitBonusSpellResistance(unit u) returns real
 // ensure this, simply import DamageType in any package where you also import
 // DamageDetection (so long as you require the DamageType feature).
 function handler() returns bool
-    dtstack_counter += 1
-    dtstack[dtstack_counter] = determineDamageType()
-    dtstack_decay += 1
+	dtstack_counter += 1
+	dtstack[dtstack_counter] = determineDamageType()
+	dtstack_decay += 1
 
-    if not dtstack_reset
-        getTimer().start(0., function after)
-        dtstack_reset = true
+	if not dtstack_reset
+		getTimer().start(0., function after)
+		dtstack_reset = true
 
-    if getDamageType() == DamageType.SPELL
-        var attemptedDamage = -1.*GetEventDamage()
-        let tU                = GetTriggerUnit()
+	if getDamageType() == DamageType.SPELL
+		var attemptedDamage = -1.*GetEventDamage()
+		let tU				= GetTriggerUnit()
 
-        if useBonusCalculator
-            let scale = getUnitBonusSpellResistance(tU)
+		if useBonusCalculator
+			let scale = getUnitBonusSpellResistance(tU)
 
-            if scale > 1.
-                attemptedDamage = attemptedDamage*(scale + 1.)/2.
+			if scale > 1.
+				attemptedDamage = attemptedDamage*(scale + 1.)/2.
 
-        BlzSetEventDamage(attemptedDamage)
+		BlzSetEventDamage(attemptedDamage)
 
-    return false
+	return false
 
 
 init
-    dtstack[0] = DamageType.NULLED
-    onEnter() ->
-        getEnterLeaveUnit()..addAbility(DAMAGE_TYPE_CHECK_ID)..makeAbilityPermanent(DAMAGE_TYPE_CHECK_ID, true)
-    addOnDamageFunc(Condition(function handler))
+	dtstack[0] = DamageType.NULLED
+	onEnter() ->
+		getEnterLeaveUnit()..addAbility(DAMAGE_TYPE_CHECK_ID)..makeAbilityPermanent(DAMAGE_TYPE_CHECK_ID, true)
+	addOnDamageFunc(Condition(function handler))
 
 @compiletime function generateAbility()
-    new AbilityDefinitionRunedBracers(DAMAGE_TYPE_CHECK_ID)
-        ..setName("Runed Bracer Dummy")
-        ..setEditorSuffix("(DamageType)")
-        ..setItemAbility(false)
-        ..setDamageReduction(1, 2.)
+	new AbilityDefinitionRunedBracers(DAMAGE_TYPE_CHECK_ID)
+		..setName("Runed Bracer Dummy")
+		..setEditorSuffix("(DamageType)")
+		..setItemAbility(false)
+		..setDamageReduction(1, 2.)
