@@ -97,11 +97,11 @@ public function int.bytes() returns byte4
     Produces a signed integer from the bitstring.
     Input string may contain whitespace for padding.
 **/
-public function fromBitString(string bitstring) returns int
+public function string.fromBitString() returns int
     var pow = 1
     var result = 0
-    for i = (bitstring.length() - 1) downto 0
-        let char = bitstring.charAt(i)
+    for i = (this.length() - 1) downto 0
+        let char = this.charAt(i)
         if char != " "
             if char == "1"
                 result += pow
@@ -112,9 +112,9 @@ public function fromBitString(string bitstring) returns int
 /**
     Produces a bistring from this integer.
 **/ 
-public function toBitString(int num) returns string
+public function int.toBitString() returns string
     var result = ""
-    var value = num
+    var value = this
 
     while value != 0
         result = (value mod 2).toString() + result 
@@ -173,36 +173,30 @@ function bwAnd32(int lhs, int rhs) returns int
     let bytes1 = lhs.bytes()
     let bytes2 = rhs.bytes()
 
-    return byte4(
-        bwAnd8(bytes1.b1, bytes2.b1),
-        bwAnd8(bytes1.b2, bytes2.b2),
-        bwAnd8(bytes1.b3, bytes2.b3),
-        bwAnd8(bytes1.b4, bytes2.b4)
-    ).toInt()
+    return byte4(bwAnd8(bytes1.b1, bytes2.b1),
+                 bwAnd8(bytes1.b2, bytes2.b2),
+                 bwAnd8(bytes1.b3, bytes2.b3),
+                 bwAnd8(bytes1.b4, bytes2.b4)).toInt()
 
 /** 32-bit OR operator **/
 function bwOr32(int lhs, int rhs) returns int
     let bytes1 = lhs.bytes()
     let bytes2 = rhs.bytes()
 
-    return byte4(
-        bwOr8(bytes1.b1, bytes2.b1),
-        bwOr8(bytes1.b2, bytes2.b2),
-        bwOr8(bytes1.b3, bytes2.b3),
-        bwOr8(bytes1.b4, bytes2.b4)
-    ).toInt()
+    return byte4(bwOr8(bytes1.b1, bytes2.b1),
+                 bwOr8(bytes1.b2, bytes2.b2),
+                 bwOr8(bytes1.b3, bytes2.b3),
+                 bwOr8(bytes1.b4, bytes2.b4)).toInt()
 
 /** 32-bit XOR operator **/
 function bwXor32(int lhs, int rhs) returns int
     let bytes1 = lhs.bytes()
     let bytes2 = rhs.bytes()
 
-    return byte4(
-        bwXor8(bytes1.b1, bytes2.b1),
-        bwXor8(bytes1.b2, bytes2.b2),
-        bwXor8(bytes1.b3, bytes2.b3),
-        bwXor8(bytes1.b4, bytes2.b4)
-    ).toInt()
+    return byte4(bwXor8(bytes1.b1, bytes2.b1),
+                 bwXor8(bytes1.b2, bytes2.b2),
+                 bwXor8(bytes1.b3, bytes2.b3),
+                 bwXor8(bytes1.b4, bytes2.b4)).toInt()
 
 /** 
     8-bit NOT (~)
