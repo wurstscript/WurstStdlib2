@@ -3,120 +3,18 @@ package Base64
 import HashBuffer
 import Bitwise
 import StringUtils
-import Table
+import ByteBuffer
 import Execute
 
 // constants tuned to work on any optimization settings and with stacktraces
-// this is very pessimistic, and could be much higher on higher opts but whatever
+// this is very pessimistic, and could be much higher on higher opts, but we are conservative
 constant ENCODES_PER_ROUND = 500
 constant DECODES_PER_ROUND = 500
 
 int loopCounter = 0
 int loopActions = 0
 
-class ByteBuffer
-    private var buffer = new Table()
-
-    private var currentWriteBytes = byte4(0, 0, 0, 0)
-    private var currentWriteByteIndex = 0
-
-    private var currentReadBytes = byte4(0, 0, 0, 0)
-    private var currentReadByteIndex = 0
-
-    private var currentWriteIndex = -1
-    private var currentReadIndex = -1
-
-    private var byteCount = 0
-
-    ondestroy
-        destroy buffer
-
-    private function commitInt()
-        currentWriteIndex++
-        buffer.saveInt(currentWriteIndex, currentWriteBytes.toInt())
-        currentWriteBytes = byte4(0, 0, 0, 0)
-        byteCount += currentWriteByteIndex
-        currentWriteByteIndex = 0
-
-    private function loadInt()
-        currentReadIndex++
-        currentReadBytes = buffer.loadInt(currentReadIndex).bytes()
-        currentReadByteIndex = 0
-
-    private function writeByteInternal(int n)
-        if currentWriteByteIndex > 3
-            commitInt()
-        currentWriteBytes = currentWriteBytes.put(currentWriteByteIndex, n)
-        currentWriteByteIndex++
-
-    private function readByteInternal() returns int
-        if currentReadByteIndex > 3
-            loadInt()
-        let n = currentReadBytes.select(currentReadByteIndex)
-        currentReadByteIndex++
-        return n
-
-    function writeByte(int n)
-        writeByteInternal(n)
-
-    function writeShort(int n)
-        writeByteInternal(n.byte1())
-        writeByteInternal(n.byte2())
-
-    function writeInt(int n)
-        let bytes = n.bytes()
-        writeByteInternal(bytes.b1)
-        writeByteInternal(bytes.b2)
-        writeByteInternal(bytes.b3)
-        writeByteInternal(bytes.b4)
-
-    function readByte() returns int
-        return readByteInternal()
-
-    function readShort() returns int
-        return readByteInternal() + readByteInternal().shiftl(8)
-
-    function readInt() returns int
-        return readByteInternal() + readByteInternal().shiftl(8) + readByteInternal().shiftl(16) + readByteInternal().shiftl(24)
-
-    function toReadMode()
-        if currentWriteByteIndex > 0
-            commitInt()
-        loadInt()
-
-    function getByteCount() returns int
-        return byteCount
-
-@test function byteBufferTests()
-    let byteBuffer = new ByteBuffer
-    byteBuffer.writeByte(3)
-    byteBuffer.writeByte(200)
-    byteBuffer.writeByte(15)
-    byteBuffer.writeByte(7)
-
-    byteBuffer.writeByte(128)
-
-    byteBuffer.writeShort(0x4a2f)
-    byteBuffer.writeShort(0xfabc)
-    byteBuffer.writeShort(0x002a)
-
-    byteBuffer.writeInt(0xffaabbcc)
-
-    byteBuffer.toReadMode()
-
-    assertTrue(byteBuffer.readByte() == 3)
-    assertTrue(byteBuffer.readByte() == 200)
-    assertTrue(byteBuffer.readByte() == 15) 
-    assertTrue(byteBuffer.readByte() == 7)
-
-    assertTrue(byteBuffer.readByte() == 128)
-
-    assertTrue(byteBuffer.readShort() == 0x4a2f)
-    assertTrue(byteBuffer.readShort() == 0xfabc)
-    assertTrue(byteBuffer.readShort() == 0x002a)
-
-    assertTrue(byteBuffer.readInt() == 0xffaabbcc)
-
+// RFC 4648 compliant Base64 charmap.
 constant CHARMAP = [
     "A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P",
     "Q","R","S","T","U","V","W","X","Y","Z","a","b","c","d","e","f",
@@ -124,6 +22,7 @@ constant CHARMAP = [
     "w","x","y","z","0","1","2","3","4","5","6","7","8","9","+","/"
 ]
 
+// RFC 4648 compliant Base64 reverse charmap.
 constant REVERSE_CHARMAP = [
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
@@ -142,6 +41,28 @@ constant REVERSE_CHARMAP = [
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1
 ]
 
+/**
+    This is a class implementing a Base64 encoder compliant with RFC 4648.
+    https://en.wikipedia.org/wiki/Base64
+
+    Internally, it chunks data into strings of `maxChunkLength`. All produced
+    strings will be of this length or less.
+
+    To write data, use these provided methods:
+        `Base64Encoder.pushByte()`
+        `Base64Encoder.pushShort()`
+        `Base64Encoder.pushInt()`
+
+    After you are done writing, call:
+        `Base64Encoder.encode()`
+    This will run the encoding process of producing Base64-encoded strings.
+
+    To extract these strings, use these provided methods:
+        `Base64Encoder.hasChunk()`
+        `Base64Encoder.popChunk()`
+
+    For usage examples, look at tests in `Base64Tests.wurst`.
+**/
 public class Base64Encoder
     private var byteBuffer = new ByteBuffer
     private var stringBuffer = new HashBuffer
@@ -162,40 +83,43 @@ public class Base64Encoder
         stringCount++
         currentChunk = ""
 
-    private function append(string c)
+    private function append(string character)
         if currentChunk.length() >= maxChunkLength
             flushChunk()
-        currentChunk += c
+        currentChunk += character
 
     private function encodeSingle(int byte, int count)
-        var b = byte
+        var remaining = byte
 
         for i = 0 to count
-            let c = b.and32(compiletime(fromBitString("11111100 00000000 00000000"))).shiftr(18)
+            let c = remaining.and32(compiletime("11111100 00000000 00000000".fromBitString())).shiftr(18)
             append(CHARMAP[c])
-            b = b.shiftl(6)
+            remaining = remaining.shiftl(6)
 
     private function encode3()
         let b1 = byteBuffer.readByte()
         let b2 = byteBuffer.readByte()
         let b3 = byteBuffer.readByte()
-        let b = b1.shiftl(16) + b2.shiftl(8) + b3
-        encodeSingle(b, 3)
+        let data = b1.shiftl(16) + b2.shiftl(8) + b3
+        encodeSingle(data, 3)
 
     private function encode2()
         let b1 = byteBuffer.readByte()
         let b2 = byteBuffer.readByte()
-        let b = b1.shiftl(16) + b2.shiftl(8)
-        encodeSingle(b, 2)
+        let data = b1.shiftl(16) + b2.shiftl(8)
+        encodeSingle(data, 2)
         append("=")
 
     private function encode1()
         let b1 = byteBuffer.readByte()
-        var b = b1.shiftl(16)
-        encodeSingle(b, 1)
+        var data = b1.shiftl(16)
+        encodeSingle(data, 1)
         append("=")
         append("=")
 
+    /**
+        Runs the encoding process of converting the provided data into Base64-encoded strings.
+    **/
     function encode()
         execute() ->
             byteBuffer.toReadMode()
@@ -221,18 +145,23 @@ public class Base64Encoder
             if currentChunk.length() > 0
                 flushChunk()
 
-    function pushByte(int b)
-        byteBuffer.writeByte(b)
+    /** Pushes an unsigned byte to be serialized into Base64. **/
+    function pushByte(int byte)
+        byteBuffer.writeByte(byte)
 
-    function pushShort(int n)
-        byteBuffer.writeShort(n)
+    /** Pushes an unsigned short to be serialized into Base64. **/
+    function pushShort(int short)
+        byteBuffer.writeShort(short)
 
-    function pushInt(int n)
-        byteBuffer.writeInt(n)
+    /** Pushes a signed int to be serialized into Base64. **/
+    function pushInt(int num)
+        byteBuffer.writeInt(num)
 
+    /** Checks if there are any unextracted chunks. **/
     function hasChunk() returns boolean
         return stringCount > 0
 
+    /** Extracts a Base64-encoded string chunk. **/
     function popChunk() returns string
         stringCount--
         let val = stringBuffer.readString()
@@ -241,6 +170,21 @@ public class Base64Encoder
 function int.removeLastOctet() returns int
     return (this - (this div 0x1000000) * 0x1000000)
 
+/**
+    This is a class implementing a Base64 decoder almost compliant with RFC 4648.
+    The only difference is that it will discard any unrecognized characters.
+    https://en.wikipedia.org/wiki/Base64
+
+    It takes chunks of Base64-encoded data with `Base64Decoder.pushChunk()`
+
+    After you have populated the decoder with Base64 data, call `Base64Decoder.decode()`,
+    this will process the input and put the decoder into read-mode.
+
+    After this, you can extract your data using:
+        `Base64Decoder.popByte()`
+        `Base64Decoder.popShort()`
+        `Base64Decoder.popInt()`
+**/
 public class Base64Decoder
     private var stringBuffer = new HashBuffer
     private var byteBuffer = new ByteBuffer
@@ -264,33 +208,34 @@ public class Base64Decoder
         return c
 
     private function next3Bytes()
-        var c = nextChar()
-        var b = 0
-        var num = 0
+        var nextCharacter = nextChar()
+        var data = 0
+        var charAmount = 0
 
-        if REVERSE_CHARMAP[c] != -1
-            b = REVERSE_CHARMAP[c].shiftl(18)
+        if REVERSE_CHARMAP[nextCharacter] != -1
+            data = REVERSE_CHARMAP[nextCharacter].shiftl(18)
 
-        c = nextChar()
-        if REVERSE_CHARMAP[c] != -1
-            b = b + REVERSE_CHARMAP[c].shiftl(12)
-            num++
+        nextCharacter = nextChar()
+        if REVERSE_CHARMAP[nextCharacter] != -1
+            data = data + REVERSE_CHARMAP[nextCharacter].shiftl(12)
+            charAmount++
 
-        c = nextChar()
-        if REVERSE_CHARMAP[c] != -1
-            b = b + REVERSE_CHARMAP[c].shiftl(6)
-            num++
+        nextCharacter = nextChar()
+        if REVERSE_CHARMAP[nextCharacter] != -1
+            data = data + REVERSE_CHARMAP[nextCharacter].shiftl(6)
+            charAmount++
 
-        c = nextChar()
-        if REVERSE_CHARMAP[c] != -1
-            b = b + REVERSE_CHARMAP[c]
-            num++
+        nextCharacter = nextChar()
+        if REVERSE_CHARMAP[nextCharacter] != -1
+            data = data + REVERSE_CHARMAP[c]
+            charAmount++
         
-        while num > 0
-            byteBuffer.writeByte(b.toUnsigned().removeLastOctet().shiftr(16))
-            b = b.shiftl(8)
-            num--
+        while charAmount > 0
+            byteBuffer.writeByte(data.toUnsigned().removeLastOctet().shiftr(16))
+            data = data.shiftl(8)
+            charAmount--
 
+    /** Runs the decode process on provided input. **/
     function decode()
         let count = (charCount div 4) - 1
 
@@ -302,72 +247,24 @@ public class Base64Decoder
             loopCounter++
         byteBuffer.toReadMode()
 
+    /** Pushes a string of Base64-encoded data into the decoder to be decoded. **/
     function pushChunk(string chunk)
         charCount += chunk.length()
         stringBuffer.writeString(chunk)
 
+    /** Returns the next 1 byte from the decoder as an unsigned byte. **/
     function popByte() returns int
         return byteBuffer.readByte()
 
+    /** Returns the next 2 bytes from the decoder as an unsigned short. **/
     function popShort() returns int
         return byteBuffer.readShort()
 
+    /** Returns the next 4 bytes from the decoder as a signed int. **/
     function popInt() returns int
         return byteBuffer.readInt()
 
+    /** Returns the total amount of bytes in this decoder after the decoding process. **/
     function getByteCount() returns int
         return byteBuffer.getByteCount()
-    
-@test function base64EncoderTest1()
-    let encoder = new Base64Encoder(128)
-
-    encoder.pushByte(0x48)
-    encoder.pushByte(0x65)
-    encoder.pushByte(0x6c)
-    encoder.pushByte(0x6c)
-    //
-    encoder.pushByte(0x6f)
-    encoder.pushByte(0x2c)
-    encoder.pushByte(0x20)
-    encoder.pushByte(0x77)
-    //
-    encoder.pushByte(0x6f)
-    encoder.pushByte(0x72)
-    encoder.pushByte(0x6c)
-    encoder.pushByte(0x64)
-    //
-    encoder.pushByte(0x21)
-    encoder.encode()
-
-    assertTrue(encoder.popChunk() == "SGVsbG8sIHdvcmxkIQ==")
-
-@test function base64EncoderTest2()
-    let encoder = new Base64Encoder(16)
-    encoder.pushInt(byte4(0x48, 0x65, 0x6c, 0x6c).toInt())
-    encoder.pushInt(byte4(0x6f, 0x2c, 0x20, 0x77).toInt())
-    encoder.pushInt(byte4(0x6f, 0x72, 0x6c, 0x64).toInt())
-    encoder.pushInt(byte4(0x21, 0x20, 0x20, 0x20).toInt())    
-    encoder.encode()
-
-    assertTrue(encoder.popChunk() == "SGVsbG8sIHdvcmxk")
-    assertTrue(encoder.popChunk() == "ISAgIA==")
-
-@test function base64DecoderTest()
-    let decoder = new Base64Decoder
-
-    decoder.pushChunk("SGVsbG8sIHdvcmxkIQ==")
-    decoder.decode()
-
-    assertTrue(decoder.popByte() == 0x48)
-    assertTrue(decoder.popByte() == 0x65)
-    assertTrue(decoder.popByte() == 0x6c)
-    assertTrue(decoder.popByte() == 0x6c)
-    assertTrue(decoder.popByte() == 0x6f)
-    assertTrue(decoder.popByte() == 0x2c)
-    assertTrue(decoder.popByte() == 0x20)
-    assertTrue(decoder.popByte() == 0x77)
-    assertTrue(decoder.popByte() == 0x6f)
-    assertTrue(decoder.popByte() == 0x72)
-    assertTrue(decoder.popByte() == 0x6c)
-    assertTrue(decoder.popByte() == 0x64)
-    assertTrue(decoder.popByte() == 0x21)
+   
