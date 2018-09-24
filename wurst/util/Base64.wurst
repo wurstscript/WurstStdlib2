@@ -227,7 +227,7 @@ public class Base64Decoder
 
         nextCharacter = nextChar()
         if REVERSE_CHARMAP[nextCharacter] != -1
-            data = data + REVERSE_CHARMAP[c]
+            data = data + REVERSE_CHARMAP[nextCharacter]
             charAmount++
         
         while charAmount > 0
