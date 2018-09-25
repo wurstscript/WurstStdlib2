@@ -5,6 +5,22 @@ import LinkedList
 import BufferInterface
 import SafetyChecks
 
+/**
+	This is an abstract class providing an interface to reading/writing chunked
+	string data.
+
+    Typical decode flow:
+        1. Create an instance of an implementing class.
+        2. Push encoded strings using `AbstractStringChunkedBuffer.pushChunk()`
+        3. Call `AbstractStringChunkedBuffer.afterChunkInject()` This will prepare the class for reading.
+        4. Use the `read` methods to extract data.
+
+    Typical encode flow:
+        1. Create an instance of an implementing class.
+        2. Write data using `write` methods.
+        3. Call `AbstractStringChunkedBuffer.beforeChunkExtract()` This will prepare the class for exctracting chunks.
+        4. Use `AbstractStringChunkedBuffer.popChunk()` and `AbstractStringChunkedBuffer.hasChunk()` to extract encoded strings.
+**/
 public abstract class AbstractStringChunkedBuffer extends AbstractBuffer
 	abstract function pushChunk(string chunk)
 	abstract function hasChunk() returns boolean

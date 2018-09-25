@@ -4,14 +4,23 @@ import StringBuffer
 import Base64
 import StringUtils
 
-enum Base64Type
-    STRING
-    INT
-    SHORT
-    BYTE
-    REAL
-    BOOLEAN
+/**
+    This is a StringBuffer using the Base64 encoder as the backing for it's
+    serialization strategy.
+    
+    It is much more compact and performant than the old `OrderedStringBuffer`
 
+    Some caveats:
+        Booleans are encoded as a single byte. If you are using many booleans in your
+        serialization, it may be beneficial to use a `bitset` instead and serialize it
+        as an integer.
+
+        Reals cannot be directly converted to their bitwise representation in WC3, so
+        we save them as a pair of a 4-byte int for the integer part, and a 2-byte short
+        for the fractional part, consuming 6 bytes in total. This should be sufficient
+        for most scenarios, but if you need more precision, you can implement your own
+        method as an extension function over this.
+**/
 public class Base64StringBuffer extends AbstractStringChunkedBuffer
     private Base64Encoder encoder
     private Base64Decoder decoder
