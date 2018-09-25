@@ -403,11 +403,8 @@ public function vec3.assertEquals(vec3 expected)
 
 /** Checks whether the point is in a 2D triangle defined by 3 points.
 Works as for vec2.isInTriangle, Z-coords are discarded. */
-public function vec3.isInTriangle2d(vec3 p1, vec3 p2, vec3 p3) returns bool
-	let a = this.x * (p1.y - p2.y) + this.y * (p2.x - p1.x) + (p1.x * p2.y - p2.x * p1.y)
-	let b = this.x * (p2.y - p3.y) + this.y * (p3.x - p2.x) + (p2.x * p3.y - p3.x * p2.y)
-	let c = this.x * (p3.y - p1.y) + this.y * (p1.x - p3.x) + (p3.x * p1.y - p1.x * p3.y)
-	return (a <= 0 and b <= 0 and c <= 0) or (a >= 0 and b >= 0 and c >= 0)
+@inline public function vec3.isInTriangle2d(vec3 p1, vec3 p2, vec3 p3) returns bool
+	return this.toVec2().isInTriangle(p1.toVec2(), p2.toVec2(), p3.toVec2())
 
 @Test
 function vectorTests()
