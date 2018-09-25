@@ -12,12 +12,12 @@ import initlater Printing
 	can be represented as a vector as well as a knockback force acting on it.
 */
 
-public constant ZERO2 = vec2(0,0)
-public constant ZERO3 = vec3(0,0,0)
-public constant RIGHT = vec2(1,0)
-public constant UP = vec2(0,1)
-public constant LEFT = vec2(-1,0)
-public constant DOWN = vec2(0,-1)
+public constant ZERO2 = vec2(0, 0)
+public constant ZERO3 = vec3(0, 0, 0)
+public constant RIGHT = vec2(1, 0)
+public constant UP = vec2(0, 1)
+public constant LEFT = vec2(-1, 0)
+public constant DOWN = vec2(0, -1)
 
 /** 2d Vector tuple */
 public tuple vec2(real x, real y)
@@ -37,19 +37,19 @@ public function vec2.op_minus(vec2 v)	returns vec2
 
 /** * Operator */
 public function vec2.op_mult(real factor) returns vec2
-	return vec2(this.x*factor, this.y*factor) 
+	return vec2(this.x * factor, this.y * factor) 
 
 /** * Operator */
 public function real.op_mult(vec2 vec) returns vec2
-	return vec2(vec.x*this, vec.y*this) 
+	return vec2(vec.x * this, vec.y * this) 
 	
 /** dot product Operator */
 public function vec2.op_mult(vec2 v) returns vec2
-	return vec2(this.x*v.x, this.y*v.y) 
+	return vec2(this.x * v.x, this.y * v.y) 
 
 /** * Operator */	
 public function vec2.op_div(real factor) returns vec2
-	return vec2(this.x/factor, this.y/factor)
+	return vec2(this.x / factor, this.y / factor)
 
 /** Add two reals to the coordiantes of this vector */	
 public function vec2.add(real x, real y)	returns vec2
@@ -57,17 +57,17 @@ public function vec2.add(real x, real y)	returns vec2
 
 /** Get the dot-product */
 public function vec2.dot(vec2 v) returns real
-	return this.x*v.x+this.y*v.y
+	return this.x * v.x + this.y * v.y
 	
 /** Normalize this vector */
 public function vec2.norm() returns vec2
 	let len = this.length()
 	var x = 0.
 	var y = 0.
-	if (len != 0.0)
+	if len > 0.0
 		x = (this.x / len)
 		y = (this.y / len)
-	return vec2(x,y)
+	return vec2(x, y)
 
 /** Rotate this vector */
 public function vec2.rotate(angle angl) returns vec2
@@ -109,15 +109,15 @@ public function vec2.withTerrainZ(real zoffset) returns vec3
 	
 /** Set the length of this vector */
 public function vec2.setLength(real length) returns vec2
-	real l = SquareRoot(this.x*this.x + this.y*this.y)
-	if l == 0.0
-		return vec2(0.,0.)
+	real l = SquareRoot(this.x * this.x + this.y * this.y)
+	if l == 0.
+		return vec2(0, 0)
 	l = length/l
-	return vec2(this.x*l, this.y*l)
+	return vec2(this.x * l, this.y * l)
 	
 /** Get the length of this vector */
 public function vec2.length() returns real
-	return SquareRoot(this.x*this.x+this.y*this.y)
+	return SquareRoot(this.x * this.x + this.y * this.y)
 
 /** Get the squared length of this vector */
 public function vec2.lengthSq() returns real
@@ -180,6 +180,13 @@ public function vec2.distanceToSegmentSq(vec2 v1, vec2 v2) returns real
 	if (t > 1) 
 		return this.distanceToSq(v2)
 	return this.distanceToSq(vec2(v1.x + t * (v2.x - v1.x), v1.y + t * (v2.y - v1.y)))
+
+/** Checks whether the point is in a triangle defined by 3 points. */
+public function vec2.isInTriangle(vec2 p1, vec2 p2, vec2 p3) returns bool
+	let a = this.x * (p1.y - p2.y) + this.y * (p2.x - p1.x) + (p1.x * p2.y - p2.x * p1.y)
+	let b = this.x * (p2.y - p3.y) + this.y * (p3.x - p2.x) + (p2.x * p3.y - p3.x * p2.y)
+	let c = this.x * (p3.y - p1.y) + this.y * (p1.x - p3.x) + (p3.x * p1.y - p1.x * p3.y)
+	return (a <= 0 and b <= 0 and c <= 0) or (a >= 0 and b >= 0 and c >= 0)
 	
   /////////////////////////////////////////////////////////////////////////////////////////////
  //////////////////////////////////// 3D vector //////////////////////////////////////////////
@@ -207,11 +214,11 @@ public function vec3.op_minus(vec2 v)	returns vec3
 
 /** * Operator */	
 public function vec3.op_mult(real factor) returns vec3
-	return vec3(this.x*factor, this.y*factor, this.z*factor) 
+	return vec3(this.x * factor, this.y * factor, this.z * factor) 
 
 /** dot Operator */	
 public function real.op_mult(vec3 v) returns vec3
-	return vec3(v.x*this, v.y*this, v.z*this) 
+	return vec3(v.x * this, v.y * this, v.z * this) 
 
 /** add 3 realvalues to the coordinates of this Vector */
 public function vec3.add(real x, real y, real z)	returns vec3
@@ -219,7 +226,7 @@ public function vec3.add(real x, real y, real z)	returns vec3
 
 /** Get the dot-product */
 public function vec3.dot(vec3 v) returns real
-	return this.x*v.x + this.y*v.y + this.z*v.z
+	return this.x * v.x + this.y * v.y + this.z * v.z
 	
 /** Normalize this Vector */
 public function vec3.norm() returns vec3
@@ -227,72 +234,72 @@ public function vec3.norm() returns vec3
 	var x = 0.
 	var y = 0.
 	var z = 0.
-	if (len != 0.0)
+	if len != 0.0
 		x = (this.x / len)
 		y = (this.y / len)
 		z = (this.z / len)
-	return vec3(x,y,z)
+	return vec3(x, y, z)
 	
 /** Rotate this vector around an axis */
 public function vec3.rotate(vec3 axis, real radians) returns vec3
-	var al = axis.x*axis.x+axis.y*axis.y+axis.z*axis.z //axis length^2
+	var al = axis.x * axis.x + axis.y * axis.y + axis.z * axis.z //axis length^2
 	var c = Cos(radians)
 	var s = Sin(radians)
 	if al == 0.0
 		Log.warn("vector.rotate error: The length of the axis vector is 0.0!")
-		return vec3(0,0,0)
+		return vec3(0, 0, 0)
 
-	var f = (this.x*axis.x+this.y*axis.y+this.z*axis.z) / al
-	var zx = axis.x*f
-	var zy = axis.y*f
-	var zz = axis.z*f //axis component of rotated vector
-	var xx = this.x-zx
-	var xy = this.y-zy
-	var xz = this.z-zz //component of vector perpendicular to axis
+	var f = (this.x * axis.x + this.y * axis.y + this.z * axis.z) / al
+	var zx = axis.x * f
+	var zy = axis.y * f
+	var zz = axis.z * f //axis component of rotated vector
+	var xx = this.x - zx
+	var xy = this.y - zy
+	var xz = this.z - zz //component of vector perpendicular to axis
 	al = SquareRoot(al)
-	var yx = (axis.y*xz - axis.z*xy)/al
-	var yy = (axis.z*xx - axis.x*xz)/al //y same length as x by using cross product and dividing with axis length
-	var yz = (axis.x*xy - axis.y*xx)/al //x,y - coordinate system in which we rotate
-	return vec3(xx*c+yx*s+zx, xy*c+yy*s+zy, xz*c+yz*s+zz)
+	var yx = (axis.y * xz - axis.z * xy)/al
+	var yy = (axis.z * xx - axis.x * xz)/al //y same length as x by using cross product and dividing with axis length
+	var yz = (axis.x * xy - axis.y * xx)/al //x,y - coordinate system in which we rotate
+	return vec3(xx * c + yx * s + zx, xy * c + yy * s + zy, xz * c + yz * s + zz)
 
 /** Sets the length of the given Vector */
 public function vec3.setLengthSq(real lengthSq) returns vec3
 	real l = this.lengthSquared()
 	if l == 0.0
 		Log.warn("vector.setLength error: The length of the vector is 0.0!")
-		return vec3(0.,0.,0.)
-	l = lengthSq/l
-	return vec3(this.x*l, this.y*l, this.z*l)
+		return vec3(0, 0, 0)
+	l = lengthSq / l
+	return vec3(this.x * l, this.y * l, this.z * l)
 	
 /** Sets the length of the given Vector */
 public function vec3.setLength(real length) returns vec3
 	real l = this.length()
 	if l == 0.0
 		Log.warn("vector.setLength error: The length of the vector is 0.0!")
-		return vec3(0.,0.,0.)
-	l = length/l
-	return vec3(this.x*l, this.y*l, this.z*l)
+		return vec3(0, 0, 0)
+	l = length / l
+	return vec3(this.x * l, this.y * l, this.z * l)
 	
 /** Get the length of this Vector */
 public function vec3.length() returns real
-	return SquareRoot(this.x*this.x+this.y*this.y+this.z*this.z)
+	return SquareRoot(this.x * this.x + this.y * this.y + this.z * this.z)
 
 /** Get the squared length of this Vector */
 public function vec3.lengthSquared() returns real
-	return this.x*this.x+this.y*this.y+this.z*this.z
+	return this.x * this.x + this.y * this.y + this.z * this.z
 
 /** Get the cross-product */
 public function vec3.cross(vec3 v) returns vec3
-	return vec3(this.y*v.z-this.z*v.y, this.z*v.x-this.x*v.z, this.x*v.y-this.y*v.x) 
+	return vec3(this.y * v.z - this.z * v.y, this.z * v.x - this.x * v.z, this.x * v.y - this.y * v.x) 
 	
 /** Project this vector onto the given directional vector */		
 public function vec3.project(vec3 direction) returns vec3
 	real l = direction.lengthSquared()
 	if l == 0.0
-		return vec3(0.,0.,0.)
+		return vec3(0, 0, 0)
 		
 	l = this.dot(direction) / l
-	return vec3(direction.x*l, direction.y*l, direction.z*l)
+	return vec3(direction.x * l, direction.y * l, direction.z * l)
 	
 /** Convert a vec3 to a vec2 (z-coordinate gets removed) */
 public function vec3.toVec2() returns vec2
@@ -300,7 +307,7 @@ public function vec3.toVec2() returns vec2
 		
 /** Is this vector inside the given circle */
 public function vec3.inRange(vec3 v2, real radius) returns boolean
-	return (this.x-v2.x).squared() + (this.y-v2.y).squared() <= radius*radius
+	return (this.x - v2.x).squared() + (this.y - v2.y).squared() <= radius * radius
 	
 /** Get the distance to another Vector */
 public function vec3.distanceTo(vec3 v) returns real
@@ -356,7 +363,7 @@ public function vec3.normalizedPointerTo(vec3 target) returns vec3
 	if len > 0
 		diff = diff * (1. / len)
 	else
-		diff = vec3(1,0,0)
+		diff = vec3(1, 0, 0)
 	return diff
 
 /** move a vector towards a given other vector, if the current vector
@@ -368,7 +375,7 @@ public function vec3.moveTowards(vec3 target, real dist) returns vec3
 	
 /** returns a vector of the given length pointing into the direction of this angle */
 public function angle.toVec(real len) returns vec2
-	return vec2(Cos(this.radians)*len, Sin(this.radians)*len)
+	return vec2(Cos(this.radians) * len, Sin(this.radians) * len)
 
 /** returns a vector of length 1 pointing into the direction of this angle */
 public function angle.direction() returns vec2
@@ -394,6 +401,11 @@ public function vec3.assertEquals(vec3 expected)
 	if compare.x > delta or compare.y > delta or compare.z > delta
 		testFail("Expected <{0}, Actual <{1} with delta {2}>".format(expected.toString(), this.toString(), delta.toString()))
 
+/** Checks whether the point is in a 2D triangle defined by 3 points.
+Works as for vec2.isInTriangle, Z-coords are discarded. */
+@inline public function vec3.isInTriangle2d(vec3 p1, vec3 p2, vec3 p3) returns bool
+	return this.toVec2().isInTriangle(p1.toVec2(), p2.toVec2(), p3.toVec2())
+
 @Test
 function vectorTests()
 	let v1 = vec2(1,2)
@@ -404,3 +416,13 @@ function vectorTests()
 	((v1 - v2) == (vec2(-1,1))).assertTrue()
 
 	((v1.moveTowards(vec2(1,0), 10.) == (vec2(1,-8)))).assertTrue()
+
+@Test function testIsInTriangle()
+	let point2d = vec2(10, 15)
+	point2d.isInTriangle(vec2(9, 8), vec2(3, 5), vec2(4, 6)).assertFalse()
+	point2d.isInTriangle(vec2(10, 15), vec2(3, 5), vec2(4, 6)).assertTrue()
+	point2d.isInTriangle(vec2(48, 45), vec2(-35, 0), vec2(46, -6)).assertTrue()
+	let point3d = vec3(10, 15, -25)
+	point3d.isInTriangle2d(vec3(9, 8, 23), vec3(3, 5, 0), vec3(4, 6, 15)).assertFalse()
+	point3d.isInTriangle2d(vec3(10, 15, -124), vec3(3, 5, 0), vec3(4, 6, -16)).assertTrue()
+	point3d.isInTriangle2d(vec3(48, 45, 85), vec3(-35, 0, 11), vec3(46, -6, 22)).assertTrue()
