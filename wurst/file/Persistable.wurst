@@ -201,7 +201,7 @@ class PersistentStore
 			// write the entity into the buffer
 			execute(() -> buffer.write(entity))
 			// flush any remaining data into buffer (mandatory for OrderedStringBuffer)
-			buffer.flush()
+			buffer.beforeChunkExtract()
 			// transfer the data into the writer and destroy the buffer
 			writer.populateFromBuffer(buffer)
 			destroy buffer
