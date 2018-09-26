@@ -1,15 +1,61 @@
+/**
+    This package provides an Encoder/Decoder pair for the RFC 4648 flavour
+    of the Base64 format, allowing you to serialize and deserialize arbitrary data.
+
+    For more information about Base64, refer to:
+    https://en.wikipedia.org/wiki/Base64
+
+    For usage examples of these classes, you can look in `Base64Tests.wurst`.
+
+    Base64Encoder:
+        Internally, this class chunks data into strings of `maxChunkLength`.
+        All produced strings will be of this length or less.
+
+        To write data, use these provided methods:
+            `pushByte()`
+            `pushShort()`
+            `pushInt()`
+
+        After you are done writing, call:
+            `encode()`
+        This will run the encoding process of producing Base64-encoded strings.
+
+        To extract these strings, use these provided methods:
+            `hasChunk()`
+            `popChunk()`
+
+    Base64Decoder:
+        This class takes chunks of Base64-encoded data with `pushChunk()`
+
+        After you have populated the decoder with Base64 data, call `decode()`,
+        this will process the input and put the decoder into read-mode.
+
+        After this, you can extract your data using:
+            `popByte()`
+            `popShort()`
+            `popInt()`
+**/
 package Base64
 
-import HashBuffer
+import LinkedList
 import Bitwise
 import StringUtils
 import ByteBuffer
 import Execute
+import BigString
 
-// constants tuned to work on any optimization settings and with stacktraces
-// this is very pessimistic, and could be much higher on higher opts, but we are conservative
-constant ENCODES_PER_ROUND = 500
-constant DECODES_PER_ROUND = 500
+/**
+    Specifies how many characters to encode per a single `execute()` call.
+    This value has been tuned to work under all optimization settings and
+    with stacktraces included.
+**/
+@configurable public constant ENCODES_PER_ROUND = 500
+/**
+    Specifies how many characters to decode per a single `execute()` call.
+    This value has been tuned to work under all optimization settings and
+    with stacktraces included.
+**/
+@configurable public constant DECODES_PER_ROUND = 500
 
 int loopCounter = 0
 int loopActions = 0
@@ -41,52 +87,20 @@ constant REVERSE_CHARMAP = [
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1
 ]
 
-/**
-    This is a class implementing a Base64 encoder compliant with RFC 4648.
-    https://en.wikipedia.org/wiki/Base64
-
-    Internally, it chunks data into strings of `maxChunkLength`. All produced
-    strings will be of this length or less.
-
-    To write data, use these provided methods:
-        `Base64Encoder.pushByte()`
-        `Base64Encoder.pushShort()`
-        `Base64Encoder.pushInt()`
-
-    After you are done writing, call:
-        `Base64Encoder.encode()`
-    This will run the encoding process of producing Base64-encoded strings.
-
-    To extract these strings, use these provided methods:
-        `Base64Encoder.hasChunk()`
-        `Base64Encoder.popChunk()`
-
-    For usage examples, look at tests in `Base64Tests.wurst`.
-**/
 public class Base64Encoder
+    private BigString stringBuffer
     private var byteBuffer = new ByteBuffer
-    private var stringBuffer = new HashBuffer
-    private var stringCount = 0
-    private var currentChunk = ""
-
-    private int maxChunkLength
 
     construct(int maxChunkLength)
-        this.maxChunkLength = maxChunkLength
+        this.stringBuffer = new BigString(maxChunkLength)
 
     ondestroy
-        destroy stringBuffer
+        if stringBuffer != null
+            destroy stringBuffer
         destroy byteBuffer
 
-    private function flushChunk()
-        stringBuffer.writeString(currentChunk)
-        stringCount++
-        currentChunk = ""
-
     private function append(string character)
-        if currentChunk.length() >= maxChunkLength
-            flushChunk()
-        currentChunk += character
+        stringBuffer.appendChar(character)
 
     private function encodeSingle(int byte, int count)
         var remaining = byte
@@ -142,9 +156,6 @@ public class Base64Encoder
             if padding == 1
                 encode1()
 
-            if currentChunk.length() > 0
-                flushChunk()
-
     /** Pushes an unsigned byte to be serialized into Base64. **/
     function pushByte(int byte)
         byteBuffer.writeByte(byte)
@@ -159,53 +170,45 @@ public class Base64Encoder
 
     /** Checks if there are any unextracted chunks. **/
     function hasChunk() returns boolean
-        return stringCount > 0
+        return stringBuffer.hasData()
 
     /** Extracts a Base64-encoded string chunk. **/
     function popChunk() returns string
-        stringCount--
-        let val = stringBuffer.readString()
-        return val
+        return stringBuffer.read()
+
+    /** Consumes this encoder and returns the underlying data as a BigString. **/
+    function intoData() returns BigString
+        let temp = stringBuffer
+        stringBuffer = null
+        destroy this
+        return temp
 
 function int.removeLastOctet() returns int
     return (this - (this div 0x1000000) * 0x1000000)
 
-/**
-    This is a class implementing a Base64 decoder almost compliant with RFC 4648.
-    The only difference is that it will discard any unrecognized characters.
-    https://en.wikipedia.org/wiki/Base64
-
-    It takes chunks of Base64-encoded data with `Base64Decoder.pushChunk()`
-
-    After you have populated the decoder with Base64 data, call `Base64Decoder.decode()`,
-    this will process the input and put the decoder into read-mode.
-
-    After this, you can extract your data using:
-        `Base64Decoder.popByte()`
-        `Base64Decoder.popShort()`
-        `Base64Decoder.popInt()`
-**/
 public class Base64Decoder
-    private var stringBuffer = new HashBuffer
+    private BigString stringBuffer
+    private var chunkList = new LinkedList<BigStringElement> 
     private var byteBuffer = new ByteBuffer
     private var charCount = 0
-    private var currentChunk = ""
-    private var currentChunkIndex = 0
+
+    construct()
+
+    construct(BigString data)
+        this.stringBuffer = data
 
     ondestroy
-        destroy stringBuffer
-        destroy byteBuffer
+        if byteBuffer != null
+            destroy byteBuffer
 
-    private function loadNextChunk()
-        currentChunk = stringBuffer.readString()
-        currentChunkIndex = 0
+        if stringBuffer != null
+            destroy stringBuffer
+
+        if chunkList != null
+            destroy chunkList
 
     private function nextChar() returns int
-        if currentChunkIndex >= currentChunk.length()
-            loadNextChunk()
-        let c = currentChunk.charAt(currentChunkIndex).toChar().toInt()
-        currentChunkIndex++
-        return c
+        return stringBuffer.readSome(1).toChar().toInt()
 
     private function next3Bytes()
         var nextCharacter = nextChar()
@@ -242,6 +245,9 @@ public class Base64Decoder
         loopCounter = 0
         loopActions = count
 
+        stringBuffer = new BigString(chunkList, BIGSTRING_MAX_CHUNK_LENGTH)
+        chunkList = null
+
         executeWhile(DECODES_PER_ROUND, () -> loopCounter <= loopActions) ->
             next3Bytes()
             loopCounter++
@@ -249,8 +255,7 @@ public class Base64Decoder
 
     /** Pushes a string of Base64-encoded data into the decoder to be decoded. **/
     function pushChunk(string chunk)
-        charCount += chunk.length()
-        stringBuffer.writeString(chunk)
+        chunkList.push(new BigStringElement(chunk))
 
     /** Returns the next 1 byte from the decoder as an unsigned byte. **/
     function popByte() returns int
@@ -268,3 +273,9 @@ public class Base64Decoder
     function getByteCount() returns int
         return byteBuffer.getByteCount()
    
+    /** Consumes this decoder and returns the underlying data as a ByteBuffer. **/
+    function intoData() returns ByteBuffer
+        let temp = byteBuffer
+        byteBuffer = null
+        destroy this
+        return temp

@@ -3,6 +3,8 @@ package Base64StringBuffer
 import StringBuffer
 import Base64
 import StringUtils
+import ByteBuffer
+import BigString
 
 /**
     This is a StringBuffer using the Base64 encoder as the backing for it's
@@ -24,57 +26,79 @@ import StringUtils
 public class Base64StringBuffer extends AbstractStringChunkedBuffer
     private Base64Encoder encoder
     private Base64Decoder decoder
+    private ByteBuffer byteBuffer
+    private BigString stringBuffer
 
     construct(int maxBufferSize)
         this.encoder = new Base64Encoder(maxBufferSize)
         this.decoder = new Base64Decoder
 
     ondestroy
-        destroy encoder
-        destroy decoder
+        if encoder != null
+            destroy encoder
 
-    /** Read-flow only **/
+        if decoder != null
+            destroy decoder
+
+        if byteBuffer != null
+            destroy byteBuffer
+
+        if stringBuffer != null
+            destroy stringBuffer
+
+    /** Decode flow only **/
     override function pushChunk(string chunk)
         decoder.pushChunk(chunk)
 
-    /** Write-flow only **/
+    /** Encode flow only **/
     override function hasChunk() returns boolean
         return encoder.hasChunk()
 
-    /** Write-flow only **/
+    /** Encode flow only **/
     override function popChunk() returns string
         return encoder.popChunk()
 
-    /** Write-flow only **/
-    override function beforeChunkExtract()
+    /** Encode flow only **/
+    override function encode()
         encoder.encode()
+        stringBuffer = encoder.intoData()
+        encoder = null
     
-    /** Read-flow only **/
-    override function afterChunkInject()
+    /** Decode flow only **/
+    override function decode()
         decoder.decode()
+        byteBuffer = decoder.intoData()
+        decoder = null
+
+    /** Decode flow only **/
+    override function intoBigString() returns BigString
+        let temp = stringBuffer
+        stringBuffer = null
+        destroy this
+        return temp
 
     override function readInt() returns int
-        return decoder.popInt()
+        return byteBuffer.readInt()
 
     override function readShort() returns int
-        return decoder.popShort()
+        return byteBuffer.readShort()
 
     override function readByte() returns int
-        return decoder.popByte()
+        return byteBuffer.readByte()
 
     override function readBoolean() returns boolean
-        return decoder.popByte().toBool()
+        return byteBuffer.readByte().toBool()
 
     override function readReal() returns real
-        let number = decoder.popInt()
-        let fractional = 1 / decoder.popShort()
+        let number = byteBuffer.readInt()
+        let fractional = 1 / byteBuffer.readShort()
         return number + fractional
 
     override function readString() returns string
-        let length = decoder.popShort()
+        let length = byteBuffer.readShort()
         var value = ""
         for i = 1 to length
-            value += decoder.popByte().toChar().toString()
+            value += byteBuffer.readByte().toChar().toString()
         return value
 
     override function writeInt(int value)
