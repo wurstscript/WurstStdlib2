@@ -1,0 +1,59 @@
+package Base64Tests
+
+import Base64
+import Bitwise
+
+@test function base64EncoderTest1()
+    let encoder = new Base64Encoder(128)
+
+    // Hell
+    encoder.pushByte(0x48)
+    encoder.pushByte(0x65)
+    encoder.pushByte(0x6c)
+    encoder.pushByte(0x6c)
+    // o, w
+    encoder.pushByte(0x6f)
+    encoder.pushByte(0x2c)
+    encoder.pushByte(0x20)
+    encoder.pushByte(0x77)
+    // orld
+    encoder.pushByte(0x6f)
+    encoder.pushByte(0x72)
+    encoder.pushByte(0x6c)
+    encoder.pushByte(0x64)
+    // !
+    encoder.pushByte(0x21)
+    encoder.encode()
+
+    encoder.popChunk().assertEquals("SGVsbG8sIHdvcmxkIQ==")
+
+@test function base64EncoderTest2()
+    let encoder = new Base64Encoder(16)
+    encoder.pushInt(byte4(0x48, 0x65, 0x6c, 0x6c).toInt())
+    encoder.pushInt(byte4(0x6f, 0x2c, 0x20, 0x77).toInt())
+    encoder.pushInt(byte4(0x6f, 0x72, 0x6c, 0x64).toInt())
+    encoder.pushInt(byte4(0x21, 0x20, 0x20, 0x20).toInt())    
+    encoder.encode()
+
+    encoder.popChunk().assertEquals("SGVsbG8sIHdvcmxk")
+    encoder.popChunk().assertEquals("ISAgIA==")
+
+@test function base64DecoderTest()
+    let decoder = new Base64Decoder
+
+    decoder.pushChunk("SGVsbG8sIHdvcmxkIQ==")
+    decoder.decode()
+
+    decoder.popByte().assertEquals(0x48)
+    decoder.popByte().assertEquals(0x65)
+    decoder.popByte().assertEquals(0x6c)
+    decoder.popByte().assertEquals(0x6c)
+    decoder.popByte().assertEquals(0x6f)
+    decoder.popByte().assertEquals(0x2c)
+    decoder.popByte().assertEquals(0x20)
+    decoder.popByte().assertEquals(0x77)
+    decoder.popByte().assertEquals(0x6f)
+    decoder.popByte().assertEquals(0x72)
+    decoder.popByte().assertEquals(0x6c)
+    decoder.popByte().assertEquals(0x64)
+    decoder.popByte().assertEquals(0x21)

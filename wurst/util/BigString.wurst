@@ -1,0 +1,190 @@
+package BigString
+
+import LinkedList
+import ErrorHandling
+
+public constant BIGSTRING_MAX_CHUNK_LENGTH = 4096
+
+/**
+    Single element of a BigString.
+
+    You may manually construct a LinkedList of these
+    to provide to BigString in a constructor to instantly
+    populate it.
+**/
+public class BigStringElement
+    construct(string data)
+        this.data = data
+
+    string data
+
+/**
+    Due to a limitation of Warcraft 3, strings are limited to ~4099 characters.
+    https://www.hiveworkshop.com/threads/documentation-string-type.240473/
+
+    It is occasionally required to manipulate data that is bigger than that,
+    and also to keep individual strings under a certain length.
+
+    This class provides a wrapper over a list of strings, which are
+    internally kept under the specified length, and provides
+    a convenient API to push/extract strings to/from the class.
+
+    The strings are guaranteed to be kept under the specified limit,
+    but may be individually shorter if inserting strings directly.
+
+    Generally, this class should only be used for a single round of writing, and then
+    a single round of reading. It is not meant for long, continuous use where reads
+    and writes are intermittent.
+**/
+public class BigString
+    private LinkedList<BigStringElement> data
+    private var currentWriteString = ""
+    private var currentReadString = ""
+    private int maxLength
+    private var length = 0
+
+    construct(int maxLength)
+        if maxLength > BIGSTRING_MAX_CHUNK_LENGTH
+            error("BigString: maxLength needs to be under BIGSTRING_MAX_CHUNK_LENGTH.")
+    
+        this.maxLength = maxLength
+        this.data = new LinkedList<BigStringElement>
+    
+    construct(LinkedList<BigStringElement> data, int maxLength)
+        for elem in data
+            if elem.data.length() > maxLength
+                error("BigString: trying to construct a BigString with one of the elements above the requested max size.") 
+            length += elem.data.length()
+
+        this.maxLength = maxLength
+        this.data = data
+
+    construct()
+        this.maxLength = BIGSTRING_MAX_CHUNK_LENGTH
+        this.data = new LinkedList<BigStringElement>
+
+    ondestroy
+        for elem in data
+            destroy elem
+
+        destroy data
+
+    /**
+        This will append a string to this BigString, splitting it into smaller
+        chunks of maxLength size if necessary.
+    **/
+    function append(string toAppend)
+        if toAppend.length() > BIGSTRING_MAX_CHUNK_LENGTH
+            error("BigString: trying to append a string larger than BIGSTRING_MAX_CHUNK_LENGTH.")
+
+        length += toAppend.length()
+
+        var remaining = toAppend
+        var remainingLength = remaining.length()
+
+        while remainingLength > 0
+            if remainingLength + currentWriteString.length() > maxLength
+                let cutPoint = maxLength - currentWriteString.length()
+                data.push(new BigStringElement(currentWriteString + remaining.substring(0, cutPoint)))
+                remaining = remaining.substring(cutPoint)
+                remainingLength = remaining.length()
+                currentWriteString = ""
+            else
+                currentWriteString += remaining
+                remainingLength = 0
+
+
+    /**
+        Specialized, more light-weight function for appending a single character
+        to this BigString.
+
+        WARNING: This won't check if the string is actually a single char or not,
+        to avoid this overhead in very tight loops.
+    **/
+    function appendChar(string toAppend)
+        length++
+
+        if currentWriteString.length() >= maxLength
+            data.push(new BigStringElement(currentWriteString))
+            currentWriteString = toAppend
+        else
+            currentWriteString += toAppend
+
+    /**
+        Reads an unspecified amount of data from this BigString, returning it is a string.
+        The length of the returned string is guaranteed to be under `maxLength`
+    **/
+    function read() returns string
+        string result
+
+        if currentReadString.length() > 0
+            let temp = currentReadString
+            currentReadString = ""
+            result = temp
+        else if not data.isEmpty()
+            let elem = data.dequeue()
+            result = elem.data
+            destroy elem
+        else if currentWriteString.length() > 0
+            result = currentWriteString
+        else
+            result = null
+
+        return result
+
+    /**
+        Reads the specified amount of data from this BigString, returning it as a string.
+        The length of the returned string will always be `amount` or less, depending on
+        how much data is remaining in the BigString.
+    **/
+    function readSome(int amount) returns string
+        if amount > BIGSTRING_MAX_CHUNK_LENGTH
+            error("BigString: trying to read a string larger than BIGSTRING_MAX_CHUNK_LENGTH")
+
+        var remainingAmount = amount
+        string result
+
+        // first try the readString
+        if currentReadString.length() < amount
+            // if we don't have enough data, then append it and move on
+            result = currentReadString
+            remainingAmount -= currentReadString.length()
+            currentReadString = ""
+        else
+            // if we have enough data, then we need to remove it from the readString and move it to the result and we're done
+            result = currentReadString.substring(0, amount)
+            remainingAmount = 0
+            currentReadString = currentReadString.substring(amount)
+
+        // if we're not done, then try the backlog
+        while data.size() > 0 and remainingAmount > 0
+            let elem = data.dequeue()
+            let temp = elem.data
+            destroy elem
+            
+            if temp.length() > remainingAmount
+                // if we have enough data, then just append it to the result, and set the new readString
+                let cutPoint = min(temp.length(), remainingAmount)
+                result += temp.substring(0, cutPoint)
+                currentReadString = temp.substring(cutPoint)
+                remainingAmount = 0 
+                break
+            else
+                // if we don't have enough data, then we just append the whole chunk
+                result += temp
+                remainingAmount -= temp.length()
+
+        // if we're still not done, then we need to check the writeString...
+        if remainingAmount > 0
+            let cutPoint = min(remainingAmount, currentWriteString.length())
+            result += currentWriteString.substring(0, cutPoint)
+            currentWriteString = currentWriteString.substring(cutPoint)
+
+        return result
+                    
+    /** Checks if there is any data to be read in this BigString **/
+    function hasData() returns boolean
+        return currentReadString.length() > 0 or not data.isEmpty() or currentWriteString.length() > 0
+
+    function length() returns int
+        return length

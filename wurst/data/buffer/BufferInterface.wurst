@@ -56,6 +56,10 @@ public enum BufferFailureMode
 	integers, booleans, reals and strings in sequential order.
 **/
 public interface Buffer
+	/** Reads a byte from the buffer **/
+	function readByte() returns int
+	/** Reads a short from the buffer **/
+	function readShort() returns int
 	/** Reads an int from the buffer **/
 	function readInt() returns int
 	/** Reads a boolean from the buffer **/
@@ -65,6 +69,10 @@ public interface Buffer
 	/** Reads a string from the buffer **/
 	function readString() returns string
 
+	/** Writes a byte to the buffer **/
+	function writeByte(int value)
+	/** Writes a short to the buffer **/
+	function writeShort(int value)
 	/** Writes an int to the buffer **/
 	function writeInt(int value)
 	/** Writes a boolean to the buffer **/
@@ -149,6 +157,18 @@ public abstract class AbstractBuffer implements Buffer
 
 	override function getErrorMessage() returns string
 		return failureMessage
+
+	override function writeShort(int value)
+		writeInt(value)
+
+	override function writeByte(int value)
+		writeInt(value)
+
+	override function readShort() returns int
+		return readInt()
+
+	override function readByte() returns int
+		return readInt()
 
 	/**
 		Extending classes should call this in write methods.

@@ -1,0 +1,50 @@
+package BigStringTests
+
+import LinkedList
+import BigString
+
+@test
+function testBigStringReadWriteSimple()
+    let bs = new BigString(16)
+
+    bs.append("0123456789")
+    bs.append("0123456789")
+    bs.append("0123456789")
+    bs.append("0123456789")
+    bs.append("012")
+
+    bs.read().assertEquals("0123456789012345")
+    bs.read().assertEquals("6789012345678901")
+    bs.read().assertEquals("23456789012")
+
+@test
+function testBigStringDirectInject()
+    let el = asList(
+        new BigStringElement("0123456789012345"),
+        new BigStringElement("asdfghjk"),
+        new BigStringElement("3330001202300300"),
+        new BigStringElement("0120303020000300")
+    )
+
+    let bs = new BigString(el, 16)
+
+    bs.read().assertEquals("0123456789012345")
+    bs.read().assertEquals("asdfghjk")
+    bs.read().assertEquals("3330001202300300")
+    bs.read().assertEquals("0120303020000300")
+
+@test
+function testBigStringReadSome()
+    let bs = new BigString(16)
+
+    bs.append("ABCD")
+    bs.append("EFGHIJKLMN")
+    bs.append("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+    bs.append("Oppopop")
+    bs.append("1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111")
+
+    bs.readSome(4).assertEquals("ABCD")
+    bs.readSome(10).assertEquals("EFGHIJKLMN")
+    bs.readSome(34).assertEquals("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+    bs.readSome(7).assertEquals("Oppopop")
+    bs.readSome(97).assertEquals("1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111")

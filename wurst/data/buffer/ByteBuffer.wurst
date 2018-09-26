@@ -1,0 +1,127 @@
+package ByteBuffer
+
+import Table
+import Bitwise
+
+/**
+    This is a utility class that acts like a byte-based buffer.
+
+    It has a simple API which allows you to write/read bytes, shorts and integers to/from it.
+    Useful for compacting data into integers.
+
+    The class is created by default in write-mode. To read from it, you need to call
+    `ByteBuffer.toReadMode()` before doing any read calls.
+**/
+public class ByteBuffer
+    private var buffer = new Table()
+
+    private var currentWriteBytes = byte4(0, 0, 0, 0)
+    private var currentWriteByteIndex = 0
+
+    private var currentReadBytes = byte4(0, 0, 0, 0)
+    private var currentReadByteIndex = 0
+
+    private var currentWriteIndex = -1
+    private var currentReadIndex = -1
+
+    private var byteCount = 0
+
+    ondestroy
+        destroy buffer
+
+    private function commitInt()
+        currentWriteIndex++
+        buffer.saveInt(currentWriteIndex, currentWriteBytes.toInt())
+        currentWriteBytes = byte4(0, 0, 0, 0)
+        byteCount += currentWriteByteIndex
+        currentWriteByteIndex = 0
+
+    private function loadInt()
+        currentReadIndex++
+        currentReadBytes = buffer.loadInt(currentReadIndex).bytes()
+        currentReadByteIndex = 0
+
+    private function writeByteInternal(int n)
+        if currentWriteByteIndex > 3
+            commitInt()
+        currentWriteBytes = currentWriteBytes.put(currentWriteByteIndex, n)
+        currentWriteByteIndex++
+
+    private function readByteInternal() returns int
+        if currentReadByteIndex > 3
+            loadInt()
+        let n = currentReadBytes.select(currentReadByteIndex)
+        currentReadByteIndex++
+        return n
+
+    /** Writes a single unsigned byte into this buffer. n must be in the range (0, 255] **/
+    function writeByte(int n)
+        writeByteInternal(n)
+
+    /** Writes a single unsigned short into this buffer. n must be in the range (0, 65535] **/
+    function writeShort(int n)
+        writeByteInternal(n.byte1())
+        writeByteInternal(n.byte2())
+
+    /** Writes a single signed integer into this buffer. n can be any value **/
+    function writeInt(int n)
+        let bytes = n.bytes()
+        writeByteInternal(bytes.b1)
+        writeByteInternal(bytes.b2)
+        writeByteInternal(bytes.b3)
+        writeByteInternal(bytes.b4)
+
+    /** Reads a single unsigned byte from this buffer. The returned value will be in the range (0, 255] **/
+    function readByte() returns int
+        return readByteInternal()
+
+    /** Reads a single unsigned short from this buffer. The returned value will be in the range (0, 65535] **/
+    function readShort() returns int
+        return readByteInternal() + readByteInternal().shiftl(8)
+
+    /** Reads a single signed integer from this buffer. **/
+    function readInt() returns int
+        return readByteInternal() + readByteInternal().shiftl(8) + readByteInternal().shiftl(16) + readByteInternal().shiftl(24)
+
+    /** 
+        Moves this buffer into read-mode, allowing to correctly read bytes from it. 
+        Not calling this function before reading will result in undefined behaviour. 
+    **/
+    function toReadMode()
+        if currentWriteByteIndex > 0
+            commitInt()
+        loadInt()
+
+    /** Returns the amounts of bytes written to this buffer. **/
+    function getByteCount() returns int
+        return byteCount
+
+@test function byteBufferTests()
+    let byteBuffer = new ByteBuffer
+    byteBuffer.writeByte(3)
+    byteBuffer.writeByte(200)
+    byteBuffer.writeByte(15)
+    byteBuffer.writeByte(7)
+
+    byteBuffer.writeByte(128)
+
+    byteBuffer.writeShort(0x4a2f)
+    byteBuffer.writeShort(0xfabc)
+    byteBuffer.writeShort(0x002a)
+
+    byteBuffer.writeInt(0xffaabbcc)
+
+    byteBuffer.toReadMode()
+
+    byteBuffer.readByte().assertEquals(3)
+    byteBuffer.readByte().assertEquals(200)
+    byteBuffer.readByte().assertEquals(15) 
+    byteBuffer.readByte().assertEquals(7)
+
+    byteBuffer.readByte().assertEquals(128)
+
+    byteBuffer.readShort().assertEquals(0x4a2f)
+    byteBuffer.readShort().assertEquals(0xfabc)
+    byteBuffer.readShort().assertEquals(0x002a)
+
+    byteBuffer.readInt().assertEquals(0xffaabbcc)
