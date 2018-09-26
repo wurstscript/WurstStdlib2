@@ -41,6 +41,7 @@ public class BigString
     private var currentWriteString = ""
     private var currentReadString = ""
     private int maxLength
+    private var length = 0
 
     construct(int maxLength)
         if maxLength > BIGSTRING_MAX_CHUNK_LENGTH
@@ -53,6 +54,7 @@ public class BigString
         for elem in data
             if elem.data.length() > maxLength
                 error("BigString: trying to construct a BigString with one of the elements above the requested max size.") 
+            length += elem.data.length()
 
         this.maxLength = maxLength
         this.data = data
@@ -75,6 +77,8 @@ public class BigString
         if toAppend.length() > BIGSTRING_MAX_CHUNK_LENGTH
             error("BigString: trying to append a string larger than BIGSTRING_MAX_CHUNK_LENGTH.")
 
+        length += toAppend.length()
+
         var remaining = toAppend
         var remainingLength = remaining.length()
 
@@ -89,6 +93,7 @@ public class BigString
                 currentWriteString += remaining
                 remainingLength = 0
 
+
     /**
         Specialized, more light-weight function for appending a single character
         to this BigString.
@@ -97,6 +102,8 @@ public class BigString
         to avoid this overhead in very tight loops.
     **/
     function appendChar(string toAppend)
+        length++
+
         if currentWriteString.length() >= maxLength
             data.push(new BigStringElement(currentWriteString))
             currentWriteString = toAppend
@@ -178,3 +185,6 @@ public class BigString
     /** Checks if there is any data to be read in this BigString **/
     function hasData() returns boolean
         return currentReadString.length() > 0 or not data.isEmpty() or currentWriteString.length() > 0
+
+    function length() returns int
+        return length

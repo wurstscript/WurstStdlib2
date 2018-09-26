@@ -190,7 +190,6 @@ public class Base64Decoder
     private BigString stringBuffer
     private var chunkList = new LinkedList<BigStringElement> 
     private var byteBuffer = new ByteBuffer
-    private var charCount = 0
 
     construct()
 
@@ -240,14 +239,14 @@ public class Base64Decoder
 
     /** Runs the decode process on provided input. **/
     function decode()
-        let count = (charCount div 4) - 1
-
-        loopCounter = 0
-        loopActions = count
-
         stringBuffer = new BigString(chunkList, BIGSTRING_MAX_CHUNK_LENGTH)
         chunkList = null
 
+        let count = (stringBuffer.length() div 4) - 1
+
+        loopCounter = 0
+        loopActions = count
+        
         executeWhile(DECODES_PER_ROUND, () -> loopCounter <= loopActions) ->
             next3Bytes()
             loopCounter++
