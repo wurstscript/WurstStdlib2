@@ -3,11 +3,78 @@ import DamageDetection
 import LinkedList
 import HashSet
 import DamageType
-/*
-	The main objective of thLinkedListis system is to have same damage event-related object at all stages of damage event.
+/*	
+	// Overview
+	The main objective of this system is to have same damage event-related object at all stages of damage event.
 	It implements `Damage` class which contains all arguments of `UnitDamageTarget` native plus one integer for additional attachments.
-	Features custom instance lifetime.
-	Callbacks have Damage instance as an argument.
+	This allows to easily access and modify event data.
+
+	// Basic usage
+
+	There's Modifiers and Listeners that can be used to process damage events.
+	Modifiers are run before Listeners.
+
+	So here's some examples to demonstrate basic functional of this system.
+	Note: all getters are inlined.
+
+	Damage amplification debuff.
+	addDamageModifier() damage ->
+		if damage.getTarget().hasAbility(DEBUFF_ID)
+			damage.addMultiplier(1.25)
+	
+	Passive block ability.
+	addDamageModifier() damage ->
+		if damage.getTarget().hasAbility(BLOCK_ID)
+			damage.addAmount(-12) // Won't modify below 0.
+
+	Damage displaying snippet.
+	addDamageListener() damage ->
+		if IsUnitVisible(damage.getTarget(), localPlayer)
+			createCriticalStrikeTextTag(damage.getTarget(), damage.getActual())
+			..setColor(damage.getSource().getColor().toColor().withAlpha(255))
+
+	Spell that is modified twice.
+	registerSpellEffectEvent(ARCANE_BLAST_ID) ->
+		new Damage(GetTriggerUnit(), GetSpellTargetUnit(), BLAST_DAMAGE, ATTACK_TYPE_NORMAL, 0, false)..setModifyCount(2)..deal()
+
+	Spell with pure damage.
+	registerSpellEffectEvent(FINGER_ID) ->
+		new Damage(GetTriggerUnit(), GetSpellTargetUnit(), FINGER_DAMAGE, ATTACK_TYPE_NORMAL, 0, false)..setModifyCount(0)..deal()
+
+	Blast would do BLAST_DAMAGE * 1.25^2 - 24 damage to debuffed unit with block,
+	while Finger of Death would do FINGER_DAMAGE damage to the same unit.
+
+	Considering it had full health.
+	And still both of these damages would be displayed as a text tags.
+
+	// Advanced usage
+
+		// Instance lifetime manipulation
+	By default, any Damage instance is destroyed throughout the damage event.
+	But should user set the last argument in Damage constructor to `true`,
+	the Damage won't be destroyed and thus it would be possible to easily retrieve
+	damage outcome: whether exactly this has killed the target, how much HP did
+	it loss, how much the damage was modified.
+
+	This broadens possibilities in designing of unique abilities while creating
+	no overhead at all. Just don't forget to free the instance in the end.
+
+	Here's an example of a leeching ability that can't leech more than targets HP.
+	registerSpellEffectEvent(LEECH_ID) ->
+		let d = new Damage(GetTriggerUnit(), GetSpellTargetUnit(), LEECH_DAMAGE, ATTACK_TYPE_NORMAL, 0, true)
+
+		d.getSource().addHP(d.getActual()) // Heal is capped at target's hp
+		d.getSource().addEffect(Abilities.vampiricAuraTarget, "origin").destr()
+
+		destroy d
+
+		// Damage recursion
+	It is strongly recommended to use system's functions to 
+
+		// Data carrying
+	There's one additional integer field for the damage.
+
+	// Specification
 
 	Damage instance can be created before damage invokation, thus it can be modified anyhow before the event.
 	It is guaranteed to be passed to modifiers and listeners during the event invoked through `.deal()` method.
@@ -28,17 +95,6 @@ import DamageType
 	Examples:
 	
 	// Leech implementation #1
-	function onLeechEffect1()
-		// Using wrapper from the package, event data is retrieved easily.
-		let d = GetTriggerUnit().damageTarget(GetSpellTargetUnit(), LEECH_DAMAGE, ATTACK_TYPE_NORMAL, 0)
-
-		d.source.addHP(d.getActual()) // Heal is capped at target's hp
-		d.source.addEffect(Abilities.vampiricAuraTarget, "origin").destr()
-
-		d.releaseInstance() // Don't forget to free the instance
-
-	init
-		registerSpellEffectEvent(LEECH_ID, function onLeechEffect1)
 
 	// Leech implementation #2
 	function onLeechEffect2()
@@ -292,6 +348,10 @@ public class Damage
 	
 	construct(unit source, unit target, real amount, int data, bool isReturned)
 		set(source, target, amount, false, false, ATTACK_TYPE_CHAOS, DAMAGE_TYPE_UNIVERSAL, WEAPON_TYPE_WHOKNOWS, data, isReturned)
+
+	ondestroy
+		if state != DamageState.CREATED or state != DamageState.FIRED
+			Log.debug("destroy Damage is used in the wrong damage state:" + state.toString())
 
 	/** applies user-created Damage instance, instantly processing it through
 		all damage events. After this function is called, the Damage will be
