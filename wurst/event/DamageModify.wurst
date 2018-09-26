@@ -1,10 +1,10 @@
 package DamageModify
 import DamageDetection
 import LinkedList
+import HashSet
 import DamageType
-import TimerUtils
 /*
-	The main objective of this system is to have same damage event-related object at all stages of damage event.
+	The main objective of thLinkedListis system is to have same damage event-related object at all stages of damage event.
 	It implements `Damage` class which contains all arguments of `UnitDamageTarget` native plus one integer for additional attachments.
 	Features custom instance lifetime.
 	Callbacks have Damage instance as an argument.
@@ -79,13 +79,18 @@ import TimerUtils
 /** Describes default way to create Damage instance if damage event doesn't
 	correspond to any Damage instance. */
 @configurable function getDamageFromEvent() returns Damage
-	return new Damage(GetEventDamageSource(), GetTriggerUnit(), GetEventDamage(), false, false, getDamageType() == DamageType.SPELL ? ATTACK_TYPE_NORMAL : ATTACK_TYPE_CHAOS, null, null, DAMAGE_NONTRIGGERED_DATA, false)
+	return GetEventDamage() == 0 ? null : new Damage(GetEventDamageSource(), GetTriggerUnit(), GetEventDamage(), false, false, getDamageType() == DamageType.SPELL ? ATTACK_TYPE_NORMAL : ATTACK_TYPE_CHAOS, null, null, DAMAGE_NONTRIGGERED_DATA, false)
+
+/** Should return whether retrieved Damage data matches event data. Is used to
+	check triggered damage  */
+@configurable function Damage.compareWithEventData() returns bool
+	return this.getSource() == GetEventDamageSource() or this.getTarget() == GetTriggerUnit()
 
 // Wrappers for unit.damageTarget with data attachment
 
 /** Deals triggered damage from unit to target. Additional data can be specified.
 
-	Is a helper for `new Damage(*args*, false)..modify()..deal()`, where last
+	Is a helper for `new Damage(*args*, false)..deal()`, where last
 	arg specifies whether the instance should not be destroyed during the event.
 	If you need instance after it has been dealt, create it manually. */
 public function unit.damageTarget(unit target, real amount, bool attack, bool ranged, attacktype attackType, damagetype damageType, weapontype weaponType, int data)
@@ -98,6 +103,13 @@ public function unit.damageTarget(unit target, real amount, int data)
 	this.damageTarget(target, amount, false, false, ATTACK_TYPE_CHAOS, DAMAGE_TYPE_UNIVERSAL, WEAPON_TYPE_WHOKNOWS, data)
 
 Damage previousDamage = null
+Damage dealingInstance = null
+
+let queue = new LinkedList<Damage>
+int recursionAmount = 0
+bool needTimer = false
+bool dequeueRunning = false
+timer nullTimer = CreateTimer()
 
 /** Returns the damage instance that was created on last Damage event.
 	For both listeners and modifiers it is previous to callback argument.
@@ -106,7 +118,6 @@ Damage previousDamage = null
 	but it is not guaranteed. */
 public function getPreviousDamage() returns Damage
 	return previousDamage
-
 
 // Callbacks with direct Damage instance acquirement
 
@@ -124,9 +135,9 @@ public interface DamageModifier
 public interface DamageListener
 	function listen(Damage d)
 
-let damageModifiers = new LinkedList<DamageModifier>
+let damageModifiers = new HashSet<DamageModifier>
 
-let damageListeners = new LinkedList<DamageListener>
+let damageListeners = new HashSet<DamageListener>
 
 public function addDamageModifier(DamageModifier cb) returns DamageModifier
 	damageModifiers.add(cb)
@@ -141,8 +152,6 @@ public function addDamageListener(DamageListener cb) returns DamageListener
 
 public function removeDamageListener(DamageListener cb)
 	damageListeners.remove(cb)
-
-// The wrapper class
 
 enum DamageState
 	CREATED // Initial state after creation
@@ -172,11 +181,7 @@ public function DamageState.toString() returns string
 
 	return "error"
 
-Damage dealingInstance
-
 public class Damage
-
-	// Event info
 
 	/** Custom field which can be pinned damage event */
 	integer data
@@ -301,9 +306,9 @@ public class Damage
 			state = DamageState.QUEUED
 			queue.push(this)
 			if not dequeueRunning
+				dequeueRunning = true
 				if needTimer
-					if nullTimer == null
-						nullTimer = getTimer()..start(0, function dequeue)
+					nullTimer.start(0, function dequeue)
 				else
 					dequeue()
 		else
@@ -313,9 +318,9 @@ public class Damage
 		state = DamageState.FIRING
 		let temp = dealingInstance
 		dealingInstance = this
-		Log.trace("deal d" + I2S(this castTo int))
+		Log.trace("deal d" + (this castTo int).toString())
 		UnitDamageTarget(source, target, amount, attack, ranged, attackType, damageType, weaponType)
-		Log.trace("completed d" + I2S(this castTo int))
+		Log.trace("completed d" + (this castTo int).toString())
 		dealingInstance = temp
 		if state != DamageState.FIRED
 			Log.error("Damage.deal() returned not fully processed damage! (state: " + state.toString() + ")")
@@ -367,95 +372,82 @@ public class Damage
 
 // Handler of the event
 
-let queue = new LinkedList<Damage>
-var recursionAmount = 0
-var needTimer = false
-var dequeueRunning = false
-timer nullTimer = null
-
 function dequeue()
-	if dequeueRunning
-		return
-	if nullTimer != null
-		nullTimer.release()
-		nullTimer = null
-	dequeueRunning = true
 	while true
-		let e = queue.dequeue()
-		if e == null
+		let next = queue.dequeue()
+		if next == null
 			break
-		e.invoke()
+		next.invoke()
 	dequeueRunning = false
 	recursionAmount = 0
 	needTimer = false
 
 function retrieve() returns Damage
 	var d = dealingInstance
-	if d == null or d.getSource() != GetEventDamageSource() or d.getTarget() != GetTriggerUnit()
-		if d != null
-			Log.debug("Damage.handler() was ignored a damage due to incorrect target/source!")
-	else
+	if not d.compareWithEventData()
+		Log.debug("Damage.retrieve() has ignored a damage due to incorrect data!")
+		d = null
+	if d != null
 		dealingInstance = null // let no one else retrieve the same instance
 	return d
 
 function handler() returns bool
-	let damage = GetEventDamage()
-	if damage == 0
-		return false
-
 	real damage_ratio = 1
-	var d = retrieve()
-	if d == null
-		d = getDamageFromEvent()
+	var damage = retrieve()
+	if damage == null
+		damage = getDamageFromEvent()
+
+		if damage == null
+			return false
 
 		if recursionAmount == 0
 			needTimer = true
 		else
 			Log.warn("Non-triggered damage recursion detected.")
 	else
-		damage_ratio = damage / d.getInitial()
+		damage_ratio = GetEventDamage() / damage.getInitial()
 	
 	recursionAmount += 1
-	d.state = DamageState.ACQUIRED
+	damage.state = DamageState.ACQUIRED
 	
-	for i = 0 to d.modifyCount
-		d.addMultiplier(damage_ratio)
-		d.state = DamageState.MODIFYING
+	for i = 0 to damage.modifyCount
+		damage.addMultiplier(damage_ratio)
+		damage.state = DamageState.MODIFYING
 		for modifier in damageModifiers
-			modifier.modify(d)
-		d.state = DamageState.ACQUIRED
+			modifier.modify(damage)
+		damage.state = DamageState.ACQUIRED
 	
-	if d.doDeflect
-		d.actualAmount = 0
+	if damage.doDeflect
+		damage.actualAmount = 0
 	else
-		let life = d.getTarget().getHP()
-		d.killedTarget = life - .406 < d.getAmount()
-		if d.killedTarget 
-			if d.doPreventDeath
-				d.killedTarget = false
-				d.actualAmount = life - .406
+		let life = damage.getTarget().getHP()
+		damage.killedTarget = life - .406 < damage.getAmount()
+		if damage.killedTarget 
+			if damage.doPreventDeath
+				damage.killedTarget = false
+				damage.actualAmount = life - .406
 			else
-				d.actualAmount = life
+				damage.actualAmount = life
 		else
-			d.actualAmount = d.getAmount()
+			damage.actualAmount = damage.getAmount()
 
-		if d.actualAmount < 0
-			d.actualAmount = 0
-	BlzSetEventDamage(d.actualAmount)
+		if damage.actualAmount < 0
+			damage.actualAmount = 0
+	BlzSetEventDamage(damage.actualAmount)
 
-	d.state = DamageState.LISTENING
+	damage.state = DamageState.LISTENING
 	for listener in damageListeners
-		listener.listen(d)
-	d.state = DamageState.FIRED
+		listener.listen(damage)
+	damage.state = DamageState.FIRED
 
 	if previousDamage != null and not previousDamage.isReturned
 		destroy previousDamage
-	previousDamage = d
+	previousDamage = damage
 
 	if not dequeueRunning
 		recursionAmount = 0
 	
-	Log.trace("finish d" + I2S(d castTo int))
+	Log.trace("finish damage" + (damage castTo int).toString())
 	return false
 
 init

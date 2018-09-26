@@ -2,7 +2,7 @@ package UniqueDamageListening
 import DamageModify
 import HashMap
 import OnUnitEnterLeave
-import LinkedList
+import HashSet
 
 /*
 	This snippet aims to improve perfomance of unit-unique listeners,
@@ -30,17 +30,17 @@ import LinkedList
 	Callbacks passed into this snipped is not destroyed automatically.
 */
 
-let targetUniqueModifiers = new HashMap<unit, LinkedList<DamageModifier>>
-let sourceUniqueModifiers = new HashMap<unit, LinkedList<DamageModifier>>
-let targetUniqueListeners = new HashMap<unit, LinkedList<DamageListener>>
-let sourceUniqueListeners = new HashMap<unit, LinkedList<DamageListener>>
+let targetUniqueModifiers = new HashMap<unit, HashSet<DamageModifier>>
+let sourceUniqueModifiers = new HashMap<unit, HashSet<DamageModifier>>
+let targetUniqueListeners = new HashMap<unit, HashSet<DamageListener>>
+let sourceUniqueListeners = new HashMap<unit, HashSet<DamageListener>>
 
 /** The modifier would be called only if damage target equals to given unit.
 	This allows to save perfomance with unit-unique modifiers. 
 	Remember to destroy the modifier after it's used.*/
 public function addTargetDamageModifier(unit u, DamageModifier cb) returns DamageModifier
 	if not targetUniqueModifiers.has(u)
-		targetUniqueModifiers.put(u, new LinkedList<DamageModifier>)
+		targetUniqueModifiers.put(u, new HashSet<DamageModifier>)
 	targetUniqueModifiers.get(u).add(cb)
 	return cb
 			
@@ -49,7 +49,7 @@ public function addTargetDamageModifier(unit u, DamageModifier cb) returns Damag
 	Remember to destroy the modifier after it's used.*/
 public function addSourceDamageModifier(unit u, DamageModifier cb) returns DamageModifier
 	if not sourceUniqueModifiers.has(u)
-		sourceUniqueModifiers.put(u, new LinkedList<DamageModifier>)
+		sourceUniqueModifiers.put(u, new HashSet<DamageModifier>)
 	sourceUniqueModifiers.get(u).add(cb)
 	return cb
 
@@ -58,7 +58,7 @@ public function addSourceDamageModifier(unit u, DamageModifier cb) returns Damag
 	Remember to destroy the listener after it's used.*/
 public function addTargetDamageListener(unit u, DamageListener cb) returns DamageListener
 	if not targetUniqueListeners.has(u)
-		targetUniqueListeners.put(u, new LinkedList<DamageListener>)
+		targetUniqueListeners.put(u, new HashSet<DamageListener>)
 	targetUniqueListeners.get(u).add(cb)
 	return cb
 			
@@ -67,7 +67,7 @@ public function addTargetDamageListener(unit u, DamageListener cb) returns Damag
 	Remember to destroy the listener after it's used.*/
 public function addSourceDamageListener(unit u, DamageListener cb) returns DamageListener
 	if not sourceUniqueListeners.has(u)
-		sourceUniqueListeners.put(u, new LinkedList<DamageListener>)
+		sourceUniqueListeners.put(u, new HashSet<DamageListener>)
 	sourceUniqueListeners.get(u).add(cb)
 	return cb
 
