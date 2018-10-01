@@ -48,3 +48,21 @@ function testBigStringReadSome()
     bs.readSome(34).assertEquals("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
     bs.readSome(7).assertEquals("Oppopop")
     bs.readSome(97).assertEquals("1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111")
+
+@test
+function testBigStringReadWhile()
+    let bs = new BigString(16)
+
+    bs.append("ABCD")
+    bs.append("EFGHIJKLMN")
+    bs.append("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+    bs.append("Oppopop")
+    bs.append("1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111")
+
+    var i = 0
+    while i < 100 and bs.hasData()
+        bs.read()
+        i++
+
+    bs.hasData().assertFalse()
+    i.assertLessThan(100)

@@ -52,76 +52,82 @@ function testCollisions()
 init
 	execute(() -> precomputeLookup())
 	execute(() -> testCollisions())
+
 /**
-	Utility class to convert a string to/from a series of ints corellating to positions in STRING_ALPHABET.
+	Utility class to convert a to a series of integers corresponding to positions in STRING_ALPHABET
 **/
 public class StringEncoder
-	private var asciiIntCount = 0
-	private var stringCount = 0
-
 	private var currentValue = ""
 	private var counter = 0
 
-	private var dataWriter = new HashWriter()
-	private HashReader dataReader
+	private var inputWriter = new HashWriter()
+	private HashReader inputReader
 
+	private var outputWriter = new HashWriter()
+	private HashReader outputReader	
+	
 	ondestroy
-		if dataWriter != null
-			destroy dataWriter
+		if inputReader != null
+			destroy inputReader
 
-		if dataReader != null
-			destroy dataReader
+		if inputWriter != null
+			destroy inputWriter
+
+		if outputReader != null
+			destroy outputReader
+
+		if outputWriter != null
+			destroy outputWriter
 
 	private function encodeString(string value)
 		let length = value.length()
 		counter = 0
-		dataWriter.writeInt(length)
-		asciiIntCount++
+		outputWriter.writeInt(length)
 		
 		executeWhile(CHARS_PER_ENCODE_DECODE, () -> counter < length) ->
-			dataWriter.writeInt(getIndexFromChar(value.charAt(counter)))
+			outputWriter.writeInt(getIndexFromChar(value.charAt(counter)))
 			counter++
-			asciiIntCount++
 
 	private function decodeString() returns string
 		currentValue = ""
-		let length = dataReader.readIntUnchecked()
-		asciiIntCount--
+		let length = inputReader.readIntUnchecked()
 		counter = 0
 
 		executeWhile(CHARS_PER_ENCODE_DECODE, () -> counter < length) ->
-			currentValue += getCharFromIndex(dataReader.readIntUnchecked())
+			currentValue += getCharFromIndex(inputReader.readIntUnchecked())
 			counter++
-			asciiIntCount--
 		
 		return currentValue
 
 	function encode()
-		executeWhile(DATA_PER_EXECUTE, () -> stringCount > 0, () -> encodeString(popString()))
+		inputReader = inputWriter.intoReader()
+		inputWriter = null
+		executeWhile(DATA_PER_EXECUTE, () -> inputReader.hasString(), () -> encodeString(inputReader.readString()))
+		outputReader = outputWriter.intoReader()
+		outputWriter = null
 
 	function decode()
-		dataReader = dataWriter.intoReader()
-		dataWriter = null
-		executeWhile(DATA_PER_EXECUTE, () -> asciiIntCount > 0, () -> pushString(decodeString()))
+		inputReader = inputWriter.intoReader()
+		inputWriter = null
+		executeWhile(DATA_PER_EXECUTE, () -> inputReader.hasInt(), () -> outputWriter.writeString(decodeString()))
+		outputReader = outputWriter.intoReader()
+		outputWriter = null
 
 	function pushString(string value)
-		stringCount++
-		dataWriter.writeString(value)
+		inputWriter.writeString(value)
 
 	function popString() returns string
-		stringCount--
-		return dataReader.readString()
+		return outputReader.readString()
 
 	function pushInt(int value)
-		asciiIntCount++
-		dataWriter.writeInt(value)
+		inputWriter.writeInt(value)
 
 	function popInt() returns int
-		asciiIntCount--
-		return dataReader.readIntUnchecked()
+		return outputReader.readIntUnchecked()
 
 	function getIntCount() returns int
-		return asciiIntCount
+		return outputReader.getIntCount()
 
 	function getStringCount() returns int
-		return stringCount
+		return outputReader.getStringCount()
+

@@ -127,6 +127,7 @@ public class BigString
             destroy elem
         else if currentWriteString.length() > 0
             result = currentWriteString
+            currentWriteString = ""
         else
             result = null
 
@@ -179,6 +180,20 @@ public class BigString
             let cutPoint = min(remainingAmount, currentWriteString.length())
             result += currentWriteString.substring(0, cutPoint)
             currentWriteString = currentWriteString.substring(cutPoint)
+
+        return result
+
+    /**
+        Convenience function for returning the contents of this BigString as a single string.
+        Will throw an error if the size of the BigString is larger than the BIGSTRING_MAX_CHUNK_LENGTH.
+    **/
+    function readAll() returns string
+        if length > BIGSTRING_MAX_CHUNK_LENGTH
+            error("BigString: trying to call readAll() when length > BIGSTRING_MAX_CHUNK_LENGTH")
+        
+        var result = ""
+        while hasData()
+            result += read()
 
         return result
                     

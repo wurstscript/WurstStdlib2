@@ -297,22 +297,21 @@ public class Network
 			// encode all strings into ints
 			stringEncoder.encode()
 
-		// get the amount of individual entities to be synced for each type
-		let intCount	  = dataReader.getIntCount()
-		let realCount	  = dataReader.getRealCount()
-		let booleanCount  = dataReader.getBooleanCount()
-		let asciiIntCount = stringEncoder.getIntCount()
-		
-		// calculate max length in each entity buffer
-		let maxLength = max(intCount, realCount, booleanCount, asciiIntCount)
+			// get the amount of individual entities to be synced for each type
+			let intCount	  = dataReader.getIntCount()
+			let realCount	  = dataReader.getRealCount()
+			let booleanCount  = dataReader.getBooleanCount()
+			let asciiIntCount = stringEncoder.getIntCount()
+			
+			// calculate max length in each entity buffer
+			let maxLength = max(intCount, realCount, booleanCount, asciiIntCount)
 
-		// calculate the amount of required sync rounds
-		// we can only send up to GamecacheKeys.count in each sync round, 
-		// so we need to do it multiple times if there's more data than that
-		let syncRounds = maxLength div GamecacheKeys.count + 1
+			// calculate the amount of required sync rounds
+			// we can only send up to GamecacheKeys.count in each sync round, 
+			// so we need to do it multiple times if there's more data than that
+			let syncRounds = maxLength div GamecacheKeys.count + 1
 
-		// save the amount of sync rounds required so that other players know how many times they need to read
-		if localPlayer == sender
+			// save the amount of sync rounds required so that other players know how many times they need to read
 			meta = metadata(intCount, realCount, booleanCount, asciiIntCount, syncRounds)
 			metaReceived = true
 			metadataStore.setCounts(meta)
@@ -375,7 +374,7 @@ public class Network
 		executeWhile(DATA_PER_EXECUTE, () -> counters.asciiInts < meta.asciiInts and gcStringBuffer.getRemainingWrite() > 0) ->
 			gcStringBuffer.writeInt(stringEncoder.popInt())
 			counters.asciiInts++
-		
+
 
 	private function readStrings()
 		executeWhile(DATA_PER_EXECUTE, () -> counters.asciiInts < meta.asciiInts and gcStringBuffer.getRemainingRead() > 0) ->

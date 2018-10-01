@@ -69,6 +69,7 @@ public class Base64DataEncoder implements DataEncoder
         let temp = encoder
         encoder = null
         destroy this
+        temp.encode()
         return temp.intoData()
 
 public class Base64DataReader implements DataReader

@@ -2,6 +2,8 @@ package Base64Tests
 
 import Base64
 import Bitwise
+import LinkedList
+import BigString
 
 @test function base64EncoderTest1()
     let encoder = new Base64Encoder(128)
@@ -25,7 +27,7 @@ import Bitwise
     encoder.pushByte(0x21)
     encoder.encode()
 
-    encoder.popChunk().assertEquals("SGVsbG8sIHdvcmxkIQ==")
+    encoder.intoData().readAll().assertEquals("SGVsbG8sIHdvcmxkIQ==")
 
 @test function base64EncoderTest2()
     let encoder = new Base64Encoder(16)
@@ -35,13 +37,15 @@ import Bitwise
     encoder.pushInt(byte4(0x21, 0x20, 0x20, 0x20).toInt())    
     encoder.encode()
 
-    encoder.popChunk().assertEquals("SGVsbG8sIHdvcmxk")
-    encoder.popChunk().assertEquals("ISAgIA==")
+    let bs = encoder.intoData()
+    bs.readSome(16).assertEquals("SGVsbG8sIHdvcmxk")
+    bs.readSome(16).assertEquals("ISAgIA==")
 
 @test function base64DecoderTest()
-    let decoder = new Base64Decoder
 
-    decoder.pushChunk("SGVsbG8sIHdvcmxkIQ==")
+    let data = asList(new BigStringElement("SGVsbG8sIHdvcmxkIQ=="))
+
+    let decoder = new Base64Decoder(new BigString(data, BIGSTRING_MAX_CHUNK_LENGTH))
     decoder.decode()
 
     decoder.popByte().assertEquals(0x48)

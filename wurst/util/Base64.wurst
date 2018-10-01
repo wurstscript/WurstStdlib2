@@ -188,10 +188,8 @@ function int.removeLastOctet() returns int
 
 public class Base64Decoder
     private BigString stringBuffer
-    private var chunkList = new LinkedList<BigStringElement> 
+    private LinkedList<BigStringElement> chunkList
     private var byteBuffer = new ByteBuffer
-
-    construct()
 
     construct(BigString data)
         this.stringBuffer = data
@@ -204,6 +202,9 @@ public class Base64Decoder
             destroy stringBuffer
 
         if chunkList != null
+            for elem in chunkList
+                destroy elem
+
             destroy chunkList
 
     private function nextChar() returns int
@@ -239,7 +240,11 @@ public class Base64Decoder
 
     /** Runs the decode process on provided input. **/
     function decode()
-        stringBuffer = new BigString(chunkList, BIGSTRING_MAX_CHUNK_LENGTH)
+        if stringBuffer == null
+            stringBuffer = new BigString(chunkList, BIGSTRING_MAX_CHUNK_LENGTH)
+        else
+            if chunkList != null
+                destroy chunkList
         chunkList = null
 
         let count = (stringBuffer.length() div 4) - 1
@@ -251,10 +256,6 @@ public class Base64Decoder
             next3Bytes()
             loopCounter++
         byteBuffer.toReadMode()
-
-    /** Pushes a string of Base64-encoded data into the decoder to be decoded. **/
-    function pushChunk(string chunk)
-        chunkList.push(new BigStringElement(chunk))
 
     /** Returns the next 1 byte from the decoder as an unsigned byte. **/
     function popByte() returns int
