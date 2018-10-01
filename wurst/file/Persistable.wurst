@@ -3,35 +3,9 @@ package Persistable
 import PacketIO
 import Encryptor
 import Network
-
-string fileReadData
-function AbstractStringChunkedBuffer.readFromFile(string path, Encryptor encryptor)
-    PacketReader.open(path)
-    if encryptor != null
-        fileReadData = PacketReader.read()
-        executeWhile(64, () -> fileReadData != "") ->
-            this.pushChunk(encryptor.decode(fileReadData))
-            fileReadData = PacketReader.read()
-    else
-        fileReadData = PacketReader.read()
-        executeWhile(64, () -> fileReadData != "") ->
-            this.pushChunk(fileReadData)
-            fileReadData = PacketReader.read()
-
-function AbstractStringChunkedBuffer.writeToFile(string path, Encryptor encryptor)
-    print("writeToFile called")
-    PacketWriter.createFolder(path)
-    PacketWriter.initialize()
-    if encryptor != null
-        executeWhile(256, () -> this.hasChunk()) ->
-            PacketWriter.write(encryptor.encode(this.popChunk()))
-    else
-        executeWhile(256, () -> this.hasChunk()) ->
-            let c = this.popChunk()
-            print("chunk written " + c)
-            PacketWriter.write(c)
-    PacketWriter.commit(path)
-    print("writeToFile finished")
+import DataInterfaces
+import Base64Data
+import Box
 
 public enum LoadStatus
     SUCCESS
@@ -46,7 +20,7 @@ public interface PersistableLoadCallback
 public interface PersistableSaveCallback
     function onSaved()
 
-public abstract class Persistable implements BufferSerializable
+public abstract class Persistable implements DataSerializable
     protected player owner
     private Encryptor encryptor
 
@@ -64,40 +38,53 @@ public abstract class Persistable implements BufferSerializable
     abstract function getPath() returns string
     protected function onLoaded(LoadStatus _status)
     protected function onSaved()
-    protected function getStringBuffer() returns AbstractStringChunkedBuffer
-        return new Base64StringBuffer(MAX_PACKET_LENGTH)
+
+    protected function getWriter() returns DataWriter
+        return new Base64DataWriter(MAX_PACKET_LENGTH)
+
+    protected function getReader(BigString data) returns DataReader
+        return new Base64DataDecoder().decode(data)
 
     private function readIntoNetwork(Network network) returns boolean
-        let buffer = getStringBuffer()
+        Box<DataReader> readerBox = new Box<DataReader>(null)
 
         let readSuccess = try() ->
-            buffer.readFromFile(getPath(), encryptor)
-            buffer.decode()
+            PacketReader.open(getPath())
+            let data = PacketReader.readBigString()
+            readerBox.inner = getReader(data)
 
-        if readSuccess
-            network.getData().writeInt(LoadStatus.SUCCESS castTo int)
+        let reader = readerBox.inner
+        destroy readerBox
+
+        if readSuccess and reader != null
+            network.write() (writer) ->
+                writer.writeInt(LoadStatus.SUCCESS castTo int)
 
             let deserializeSuccess = try() ->
-                buffer.read(this)
+                reader.readSerializable(this)
 
             if deserializeSuccess
                 let transferSuccess = try() ->
-                    network.getData().write(this)
+                    network.write() (writer) ->
+                        writer.writeSerializable(this)
                 
                 if transferSuccess
-                    destroy buffer
+                    destroy reader
                     return true
                 else
-                    network.getData().clear()
-                    network.getData().writeInt(LoadStatus.FAIL_TRANSFER castTo int)
+                    network.write() (writer) ->
+                        writer.clear()
+                        writer.writeInt(LoadStatus.FAIL_TRANSFER castTo int)
             else
-                network.getData().clear()
-                network.getData().writeInt(LoadStatus.FAIL_DESERIALIZE castTo int)
+                network.write() (writer) ->
+                    writer.clear()
+                    writer.writeInt(LoadStatus.FAIL_DESERIALIZE castTo int)
         else
-            network.getData().clear()
-            network.getData().writeInt(LoadStatus.FAIL_LOAD castTo int)
+            network.write() (writer) ->
+                writer.clear()
+                writer.writeInt(LoadStatus.FAIL_LOAD castTo int)
 
-        destroy buffer
+        destroy reader
         return false
 
     private function finishLoad(LoadStatus status, PersistableLoadCallback callback)
@@ -118,15 +105,15 @@ public abstract class Persistable implements BufferSerializable
         if localPlayer == owner
             readIntoNetwork(network)
 
-        network.start() (status, buffer) ->
+        network.start() (status, reader) ->
             if status == NetworkResult.ABORTED
                 finishLoad(LoadStatus.FAIL_NO_PLAYER, callback)
             else
-                let loadStatus = buffer.readInt() castTo LoadStatus
+                let loadStatus = reader.readInt() castTo LoadStatus
 
                 if loadStatus == LoadStatus.SUCCESS
                     if localPlayer != owner
-                        this.deserialize(buffer)
+                    this.deserialize(reader)
                     finishLoad(LoadStatus.SUCCESS, callback)
                 else
                     finishLoad(loadStatus, callback)
@@ -136,11 +123,12 @@ public abstract class Persistable implements BufferSerializable
 
     function save(PersistableSaveCallback callback)
         if localPlayer == owner
-            let buffer = getStringBuffer()
-            buffer.write(this)
-            buffer.encode()
-            buffer.writeToFile(getPath(), encryptor)
-            destroy buffer
+            let writer = getWriter()
+            writer.writeSerializable(this)
+            let data = writer.intoEncoder().encode()
+            PacketWriter.initialize()
+            PacketWriter.write(data)
+            PacketWriter.commit(getPath())
         finishSave(callback)
     
     function save()

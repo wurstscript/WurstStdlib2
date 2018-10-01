@@ -179,7 +179,6 @@ import ErrorHandling
 import public Execute
 import public HashData
 
-import SafetyChecks
 import NetworkConfig
 import Metadata
 import GamecacheKeys
@@ -261,7 +260,7 @@ public class Network
 		if dataWriter != null
 			destroy dataWriter
 
-	@deprecated
+	@deprecated("use write() instead")
 	function getData() returns HashWriter
 		return dataWriter
 

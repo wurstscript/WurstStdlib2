@@ -52,6 +52,9 @@ public class HashWriter implements DataWriter
     override function intoEncoder() returns DataEncoder
         return null
 
+    function clear()
+        data.flush()
+
 enum HashType
     INTEGER
     REAL

@@ -1,0 +1,18 @@
+package Box
+
+/**
+    A simple utility class for modifying an outer variable inside a closure.
+
+    Example:
+        SomeType myVar = ...
+        Box<SomeType> myBox = new Box<SomeType>(myVar)
+        insideClosure() ->
+            myBox.inner = new SomeType()
+
+        myBox.inner.doSomeAction()
+**/
+public class Box<T>
+    T inner
+
+    construct(T inner)
+        this.inner = inner

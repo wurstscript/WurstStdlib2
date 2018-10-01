@@ -95,6 +95,8 @@ public class PacketWriter
     /**
         Writes the entire contents of this BigString as packets.
         The BigString's max length should be under MAX_PACKET_LENGTH.
+
+        Destroys the BigString in the process.
     **/
     static function write(BigString data)
         if data.maxLength() > MAX_PACKET_LENGTH
@@ -102,6 +104,8 @@ public class PacketWriter
 
         while data.hasData()
             write(data.read())
+
+        destroy data
 
     /**
         Commits the previously written packets into the specified file.
