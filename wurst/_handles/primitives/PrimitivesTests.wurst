@@ -42,3 +42,15 @@ function testBoolean()
 	("true".toBool()).assertEquals(true)
 	("1".toBool()).assertEquals(true)
 	("nottrue".toBool()).assertEquals(false)
+
+@Test
+function testToHex()
+	let a1 = 0x1000.toHex(4)
+	let a2 = 0xABCD.toHex(4)
+	let a3 = 0xAAAABBB.toHex(7)
+	let a4 = 0xFDEABB.toHex(6)
+
+	a1.assertEquals("1000")
+	a2.assertEquals("ABCD")
+	a3.assertEquals("AAAABBB")
+	a4.assertEquals("FDEABB")

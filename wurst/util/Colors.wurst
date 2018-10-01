@@ -135,11 +135,11 @@ public function unit.setVertexColor(color col)
 	
 /** Returns a string that is in the wc3 hexcolor format (|caarrggbb) */
 public function colorA.toColorString() returns string
-	return "|c" + toHex(this.alpha) + toHex(this.red) + toHex(this.green) + toHex(this.blue)
+	return "|c" + this.alpha.toHex(2) + this.red.toHex(2) + this.green.toHex(2) + this.blue.toHex(2)
 	
 /** Returns a string that is in the wc3 hexcolor format (|crrggbb) */
 public function color.toColorString() returns string
-	return "|cff" + toHex(this.red) + toHex(this.green) + toHex(this.blue)
+	return "|cff" + this.red.toHex(2) + this.green.toHex(2) + this.blue.toHex(2)
 	
 /** Returns the tuple in string format color(r,g,b) */
 public function color.toString() returns string
@@ -154,6 +154,7 @@ public constant hexs = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "
 constant decs = new Table()
 
 /** Converts and int to a hexnumber */
+@deprecated("use int.toHex() instead")
 public function toHex(int number) returns string
 	var firstpart = number div 16
 	var secondpart = number - firstpart * 16

@@ -43,3 +43,15 @@ public function int.lerp(int target, real alpha) returns int
 /** Checks if this int is between low and high value */
 public function int.isBetween(int low, int high) returns bool
 	return this >= low and this <= high
+
+/** Hexadecimal numbers */
+public constant hexs = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F"]
+
+/** Converts an int to its hex representation and pads to the specified length */
+public function int.toHex(int length) returns string
+	var temp = this
+	var result = ""
+	for i = 1 to length
+		result = hexs[temp mod 16] + result
+		temp = temp div 16
+	return result
