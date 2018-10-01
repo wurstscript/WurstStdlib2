@@ -1,3 +1,22 @@
+/**
+    Exposes a number of interfaces to facilitate efficient data delivery
+    between various Stdlib components and to enable easy serialization
+    of data into strings for usage in File I/O.
+
+    DataWriter/DataReader interfaces define several methods to
+    write and read primitives, along with a convenience method
+    to invoke and implementation of DataSerializable to quickly
+    serialize/deserialize an entire class.
+
+    Keep in mind, that the implementations are only required to be
+    well-behaved if you read the data in the same order it is written.
+
+    This means, that if you write 2 bytes using `writeByte()`, and then
+    read a short using `readShort()`, this won't necessarily mean that
+    the 2 previously written bytes will be re-interpreted as a short.
+    For purposes such as this, you can use ByteBuffer, which includes
+    this semantic.
+**/
 package DataInterfaces
 
 import public BufferInterface
