@@ -21,9 +21,9 @@
 			strings
 
 		each of which can be written/read to using the relevant 
-		methods of the HashBuffer class.
+		methods of the HashWriter class.
 
-		Before sending the data, the sender populates the HashBuffer with the data that
+		Before sending the data, the sender populates the HashWriter with the data that
 		they want to send, then Network.start() is called, and data is received from 
 		the same buffer inside the callback when it has all been transferred.
 
@@ -54,9 +54,9 @@
 					var string = buffer.readString()
 					...
 
-		Sending objects implementing BufferSerializable:
+		Sending objects implementing DataSerializable:
 			You may find yourself sending not simply raw data, but some
-			class objects. In this case, your class can implement BufferSerializable
+			class objects. In this case, your class can implement DataSerializable
 			to make your life easier.
 
 			The serialize method takes a buffer and should write the representation
@@ -67,8 +67,8 @@
 
 			0. Everything else is the same as previous example, only writing/reading is different.
 
-			1. Make your class implement BufferSerializable:
-				class MyClass implements BufferSerializable
+			1. Make your class implement DataSerializable:
+				class MyClass implements DataSerializable
 					var field1 = 0
 					var field2 = 1
 					var field3 = true
@@ -76,20 +76,20 @@
 
 					// this constructor is optional, however you
 					// can use it to make new instances of a class easier
-					construct(HashBuffer buffer)
-						deserialize(buffer)
+					construct(DataWriter writer)
+						deserialize(writer)
 
-					function serialize(buffer)
-						buffer.writeInt(field1)
-						buffer.writeInt(field2)
-						buffer.writeBoolean(field3)
-						buffer.writeString(field4)
+					function serialize(DataWriter writer)
+						writer.writeInt(field1)
+						writer.writeInt(field2)
+						writer.writeBoolean(field3)
+						writer.writeString(field4)
 
-					function deserialize(buffer)
-						field1 = buffer.readInt()
-						field2 = buffer.readInt()
-						field3 = buffer.readBoolean()
-						field4 = buffer.readString()
+					function deserialize(DataReader reader)
+						field1 = reader.readInt()
+						field2 = reader.readInt()
+						field3 = reader.readBoolean()
+						field4 = reader.readString()
 
 			2. Write instances of MyClass:
 				if localPlayer == sender
@@ -116,18 +116,11 @@
 				
 
 		Important notes:
-			1. Upon creation, the HashBuffer object is locked in a write-only state.
-			Attempts to read from it will result in an error.
-			Upon calling Network.start(), the buffer will be locked in an immutable
-			state, and attempts to read/write to it will also result in an error.
-			After finishing the transmission, it is locked in a read-only state,
-			and likewise attempts to write to it will result in an error.
-
-			2. You should always read and write to the buffer in the same order,
+			1. You should always read and write to the buffer in the same order,
 			otherwise you are risking improperly reading your data.
 
-			3. You should read all received data immediately as it is received,
-			because the Network and associated HashBuffer objects get destroyed
+			2. You should read all received data immediately as it is received,
+			because the Network and associated HashReader objects get destroyed
 			after the callback finishes.
 
 	Implementation overview:
@@ -136,23 +129,26 @@
 		Original research by TriggerHappy.
 
 		There are several core classes here:
-			HashBuffer
+			HashWriter/HashReader
 			GamecacheBuffer
 			StringEncoder
 			GamecacheKeys
 			Network
 
-		HashBuffer is a hashtable-based container with buffer semantics for writing
+		HashWriter/HashReader are a hashtable-based container with buffer semantics for writing
 		integers, reals, booleans, strings and serializables.
 		Longer gamecache keys take a longer time to synchronize (for each value synced,
 		we also send it's keys), so we use keys of fixed length and send data in multiple
 		rounds. Because of this, we can't store all data immediately in the gamecache.
 		We also need to know the size of data being sent prior to starting the transmission,
-		so we have to store all of it in an intermediate buffer, which is HashBuffer.
+		so we have to store all of it in an intermediate buffer, which is HashWriter.
 
-		Prior to sending, all strings in the HashBuffer are encoded into a buffer
-		of integers, because SyncStoredString doesn't work. The responsible class is StringEncoder.
-		After sending, they are decoded back into strings and written to the HashBuffer.
+		Prior to sending, the HashWriter is converted into a HashReader, on the sending player, and all strings 
+		in the HashReader are encoded into a buffer of integers, because SyncStoredString 
+		doesn't work. The responsible class is StringEncoder.
+
+		After sending, they are decoded back into strings and written to the HashWriter on other players,
+		after which the HashWriter is converted into a HashReader.
 
 		GamecacheKeys provides int-string conversion for keys for usage in gamecaches.
 
@@ -160,30 +156,28 @@
 		integers, reals and booleans. There is a GamecacheBuffer for each primitive type,
 		int, bool, real and asciiInts.
 
-		Network is the main class that coordinates HashBuffer and GamecacheBuffer and does
+		Network is the main class that coordinates HashWriter/HashReader and GamecacheBuffer and does
 		all the heavy lifting.
 
-		Before starting the transmission, the HashBuffer is locked into an immutable state, in
-		which incorrect mutation attempts will print warnings, as long as safety checks are not disabled.
-		The maximum amount of data across all primitive buffers is calculated, and the amount of 
-		required 'sync rounds' is calculated - that is, the amount of times we need to flush/sync
-		data out of the gamecaches to keep key sizes short.
+		Before starting the transmission, the maximum amount of data across all primitive buffers
+		is calculated, and the amount of required 'sync rounds' is calculated - that is, 
+		the amount of times we need to flush/sync data out of the gamecaches to keep key sizes short.
 
 		Since only the local player has any knowledge about the amount of data needed to be sent,
 		and consequently, the amount of sync rounds required, we first send a pre-fetch "metadata"
 		payload with the amount of data in each buffer and the amount of sync rounds, using fixed
 		keys. At the same time, we also send the first payload.
 
-		When a round is received, we write data to the HashBuffer, using the metadata to know when
+		When a round is received, we write data to the HashWriter, using the metadata to know when
 		to stop, and start another sync round if necessary. If it is not necessary,
-		we open the HashBuffer for reading and call the finish callback, and destroy the instance.
+		we convert the HashWriter into a HashReader and call the finish callback, and destroy the instance.
 ********************************************************************************/
 package Network
 
 import public SyncSimple
 import ErrorHandling
 import public Execute
-import public Buffer
+import public HashData
 
 import SafetyChecks
 import NetworkConfig
@@ -202,7 +196,10 @@ public enum NetworkResult
 	ABORTED
 
 interface NetworkFinishedCallback
-	function onFinish(NetworkResult status, HashBuffer buffer)
+	function onFinish(NetworkResult status, HashReader buffer)
+
+interface NetworkWriteCallback
+	function onWrite(HashWriter writer)
 
 public class Network
 	// gamecache used for syncing integers, reals and booleans
@@ -215,8 +212,11 @@ public class Network
 	// mission key to be used for this instance in all game caches
 	private var mkey = GamecacheKeys.get(this castTo int)
 
-	// data buffer to store data before syncing and to read after syncing
-	private var dataBuffer = new HashBuffer
+	// data writer to store data before syncing
+	private var dataWriter = new HashWriter
+
+	// data reader to read data after writing
+	private HashReader dataReader
 
 	// encoder to send strings over the network
 	private var stringEncoder = new StringEncoder
@@ -241,7 +241,7 @@ public class Network
 	private var counters = EMPTY_META
 
 	// finish callback
-	private NetworkFinishedCallback finishCallback = (NetworkResult _result, Buffer _buffer) -> error("Network: did not specify any callback function")
+	private NetworkFinishedCallback finishCallback = (NetworkResult _result, HashReader _buffer) -> error("Network: did not specify any callback function")
 
 	construct(player sender)
 		this.sender = sender
@@ -252,48 +252,56 @@ public class Network
 		destroy gcBooleanBuffer
 		destroy gcStringBuffer
 		destroy stringEncoder
-		destroy dataBuffer
 		destroy metadataStore
 		destroy finishCallback
 
-	function getData() returns HashBuffer
-		return dataBuffer
+		if dataReader != null
+			destroy dataReader
+
+		if dataWriter != null
+			destroy dataWriter
+
+	@deprecated
+	function getData() returns HashWriter
+		return dataWriter
+
+	function write(NetworkWriteCallback callback)
+		// double-execute wrap to avoid desyncs
+		execute() ->
+			if localPlayer == sender
+				execute() ->
+					callback.onWrite(dataWriter)
 
 	/** aborts the current transmission **/
 	private function abort()
 		currentState = NetworkState.FINISHED
-		finishCallback.onFinish(NetworkResult.ABORTED, dataBuffer)
+		finishCallback.onFinish(NetworkResult.ABORTED, null)
 		destroy this
 
 	/** sends info about the amount of data to be expected to each player **/
 	private function sendMetadata()
-		// we should only send the metadata once
-		if SAFETY_CHECKS_ENABLED and currentState != NetworkState.PREPARING
-			error("Network: trying to send duplicate metadata")
-
 		// if the sender disconnected, we can't expect any valid data, so immediately return
 		if not sender.isIngame()
 			abort()
 			return
 
 		if localPlayer == sender
+			// initialize the reader
+			dataReader = dataWriter.intoReader()
+			dataWriter = null
+
 			// push all strings into the string encoder
 
-			executeWhile(DATA_PER_EXECUTE, () -> dataBuffer.hasString()) ->
-				stringEncoder.pushString(dataBuffer.readString())
-			
+			executeWhile(DATA_PER_EXECUTE, () -> dataReader.hasString()) ->
+				stringEncoder.pushString(dataReader.readString())
 
 			// encode all strings into ints
 			stringEncoder.encode()
 
-		// lock the data buffer so that no players can read or write to it while
-		// the transmission hasn't finished
-		dataBuffer.setMode(BufferMode.LOCKED)
-
 		// get the amount of individual entities to be synced for each type
-		let intCount	  = dataBuffer.getIntCount()
-		let realCount	 = dataBuffer.getRealCount()
-		let booleanCount  = dataBuffer.getBooleanCount()
+		let intCount	  = dataReader.getIntCount()
+		let realCount	  = dataReader.getRealCount()
+		let booleanCount  = dataReader.getBooleanCount()
 		let asciiIntCount = stringEncoder.getIntCount()
 		
 		// calculate max length in each entity buffer
@@ -320,10 +328,6 @@ public class Network
 		if localPlayer == sender
 			return
 		
-		// check that we are transitioning from the correct state
-		if SAFETY_CHECKS_ENABLED and currentState != NetworkState.SENDING_ROUND
-			error("Network: trying to receive metadata at a wrong time")
-		
 		// save the metadata
 		meta = metadataStore.getCounts()
 		metaReceived = true
@@ -334,37 +338,37 @@ public class Network
 
 	private function writeInts()
 		executeWhile(DATA_PER_EXECUTE, () -> counters.ints < meta.ints and gcIntBuffer.getRemainingWrite() > 0) ->
-			gcIntBuffer.writeInt(dataBuffer.readIntUnsafe())
+			gcIntBuffer.writeInt(dataReader.readIntUnchecked())
 			counters.ints++
 		
 
 	private function readInts()
 		executeWhile(DATA_PER_EXECUTE, () -> counters.ints < meta.ints and gcIntBuffer.getRemainingRead() > 0) ->
-			dataBuffer.writeInt(gcIntBuffer.readInt())
+			dataWriter.writeInt(gcIntBuffer.readInt())
 			counters.ints++
 		
 
 	private function writeReals()
 		executeWhile(DATA_PER_EXECUTE, () -> counters.reals < meta.reals and gcRealBuffer.getRemainingWrite() > 0) ->
-			gcRealBuffer.writeReal(dataBuffer.readRealUnsafe())
+			gcRealBuffer.writeReal(dataReader.readRealUnchecked())
 			counters.reals++
 		
 
 	private function readReals()
 		executeWhile(DATA_PER_EXECUTE, () -> counters.reals < meta.reals and gcRealBuffer.getRemainingRead() > 0) ->
-			dataBuffer.writeReal(gcRealBuffer.readReal())
+			dataWriter.writeReal(gcRealBuffer.readReal())
 			counters.reals++
 		
 
 	private function writeBooleans()
 		executeWhile(DATA_PER_EXECUTE, () -> counters.booleans < meta.booleans and gcBooleanBuffer.getRemainingWrite() > 0) ->
-			gcBooleanBuffer.writeBoolean(dataBuffer.readBooleanUnsafe())
+			gcBooleanBuffer.writeBoolean(dataReader.readBooleanUnchecked())
 			counters.booleans++
 		
 
 	private function readBooleans()
 		executeWhile(DATA_PER_EXECUTE, () -> counters.booleans < meta.booleans and gcBooleanBuffer.getRemainingRead() > 0) ->
-			dataBuffer.writeBoolean(gcBooleanBuffer.readBoolean())
+			dataWriter.writeBoolean(gcBooleanBuffer.readBoolean())
 			counters.booleans++
 		
 
@@ -381,9 +385,6 @@ public class Network
 		
 
 	private function sendRound()
-		if SAFETY_CHECKS_ENABLED and currentState != NetworkState.SENDING_ROUND
-			error("Network: trying to send round at the wrong time")
-
 		let synchronizer = new SimpleSynchronizer()
 
 		// prepare the gamecaches for a new transmission
@@ -397,17 +398,11 @@ public class Network
 		STRING_CACHE.flushMission(mkey)
 
 		if localPlayer == sender
-			// unlock the data buffer for reading
-			dataBuffer.setMode(BufferMode.READ)
-		
 			// write as much queued data as we can
 			writeInts()
 			writeBooleans()
 			writeReals()
 			writeStrings()
-
-			// lock the data buffer again
-			dataBuffer.setMode(BufferMode.LOCKED)
 
 			// send all data
 			gcIntBuffer.sync()
@@ -420,9 +415,6 @@ public class Network
 		synchronizer.onSynced(() -> receiveRound())
 
 	private function receiveRound()
-		if SAFETY_CHECKS_ENABLED and currentState != NetworkState.SENDING_ROUND
-			error("Network: trying to receive round at the wrong time")
-
 		if not sender.isIngame()
 			abort()
 			return
@@ -434,15 +426,10 @@ public class Network
 		// receive for all non-senders, since sender already has the data
 		if localPlayer != sender
 			// unlock the data buffer for writing
-			dataBuffer.setMode(BufferMode.WRITE)
-
 			readInts()
 			readReals()
 			readBooleans()
 			readStrings()
-
-			// lock the buffer again
-			dataBuffer.setMode(BufferMode.LOCKED)
 
 		// advance to next round and send it if necessary
 		counters.syncs++
@@ -455,19 +442,20 @@ public class Network
 				// decode strings
 				stringEncoder.decode()
 
-				dataBuffer.setMode(BufferMode.WRITE)
-
 				executeWhile(DATA_PER_EXECUTE, () -> stringEncoder.getStringCount() > 0) ->
-					dataBuffer.writeString(stringEncoder.popString())
+					dataWriter.writeString(stringEncoder.popString())
 				
+				dataReader = dataWriter.intoReader()
+				dataWriter = null
 
-			dataBuffer.setMode(BufferMode.READ)
-			dataBuffer.resetRead()
+			dataReader.reset()
 			currentState = NetworkState.FINISHED
-			finishCallback.onFinish(NetworkResult.SUCCESS, dataBuffer)
+			finishCallback.onFinish(NetworkResult.SUCCESS, dataReader)
 			destroy this
 
-	/** this is the function to start sending all data in the intermediate dataBuffer buffer, as well as specifying a callback **/
+	/** this is the function to start sending all data in the intermediate dataWriter buffer, as well as specifying a callback **/
 	function start(NetworkFinishedCallback callback)
 		finishCallback = callback
 		sendMetadata()
+
+		

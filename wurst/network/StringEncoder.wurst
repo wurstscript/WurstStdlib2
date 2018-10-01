@@ -1,5 +1,5 @@
 package StringEncoder
-import Buffer
+import HashData
 import Execute
 import HashMap
 import ErrorHandling
@@ -62,30 +62,35 @@ public class StringEncoder
 	private var currentValue = ""
 	private var counter = 0
 
-	private var buffer = new HashBuffer()
+	private var dataWriter = new HashWriter()
+	private HashReader dataReader
 
 	ondestroy
-		destroy buffer
+		if dataWriter != null
+			destroy dataWriter
+
+		if dataReader != null
+			destroy dataReader
 
 	private function encodeString(string value)
 		let length = value.length()
 		counter = 0
-		buffer.writeInt(length)
+		dataWriter.writeInt(length)
 		asciiIntCount++
 		
 		executeWhile(CHARS_PER_ENCODE_DECODE, () -> counter < length) ->
-			buffer.writeInt(getIndexFromChar(value.charAt(counter)))
+			dataWriter.writeInt(getIndexFromChar(value.charAt(counter)))
 			counter++
 			asciiIntCount++
 
 	private function decodeString() returns string
 		currentValue = ""
-		let length = buffer.readIntUnsafe()
+		let length = dataReader.readIntUnchecked()
 		asciiIntCount--
 		counter = 0
 
 		executeWhile(CHARS_PER_ENCODE_DECODE, () -> counter < length) ->
-			currentValue += getCharFromIndex(buffer.readIntUnsafe())
+			currentValue += getCharFromIndex(dataReader.readIntUnchecked())
 			counter++
 			asciiIntCount--
 		
@@ -95,23 +100,25 @@ public class StringEncoder
 		executeWhile(DATA_PER_EXECUTE, () -> stringCount > 0, () -> encodeString(popString()))
 
 	function decode()
+		dataReader = dataWriter.intoReader()
+		dataWriter = null
 		executeWhile(DATA_PER_EXECUTE, () -> asciiIntCount > 0, () -> pushString(decodeString()))
 
 	function pushString(string value)
 		stringCount++
-		buffer.writeString(value)
+		dataWriter.writeString(value)
 
 	function popString() returns string
 		stringCount--
-		return buffer.readString()
+		return dataReader.readString()
 
 	function pushInt(int value)
 		asciiIntCount++
-		buffer.writeInt(value)
+		dataWriter.writeInt(value)
 
 	function popInt() returns int
 		asciiIntCount--
-		return buffer.readIntUnsafe()
+		return dataReader.readIntUnchecked()
 
 	function getIntCount() returns int
 		return asciiIntCount

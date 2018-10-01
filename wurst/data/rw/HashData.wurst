@@ -1,0 +1,223 @@
+package HashData
+
+import DataInterfaces
+import Table
+import SafetyChecks
+import ErrorHandling
+
+public class HashWriter implements DataWriter
+    private var data = new Table()
+
+    private var integerWriteIndex = 0
+    private var realWriteIndex = 0
+    private var stringWriteIndex = 0
+    private var booleanWriteIndex = 0
+
+    ondestroy
+        if data != null
+            destroy data
+
+    override function writeByte(int number)
+        writeInt(number)
+
+    override function writeShort(int number)
+        writeInt(number)
+
+    override function writeInt(int number)
+        data.saveInt(integerWriteIndex, number)
+        integerWriteIndex++
+
+    override function writeReal(real number)
+        data.saveReal(realWriteIndex, number)
+        realWriteIndex++
+
+    override function writeBoolean(boolean b)
+        data.saveBoolean(booleanWriteIndex, b)
+        booleanWriteIndex++
+
+    override function writeString(string s)
+        data.saveString(stringWriteIndex, s)
+        stringWriteIndex++
+
+    override function writeSerializable(DataSerializable bs)
+        bs.serialize(this)
+
+    override function intoReader() returns HashReader
+        let reader = new HashReader(data, integerWriteIndex, realWriteIndex, stringWriteIndex, booleanWriteIndex)
+        data = null
+        destroy this
+        return reader
+
+    @deprecated("unsupported in this DataWriter")
+    override function intoEncoder() returns DataEncoder
+        return null
+
+enum HashType
+    INTEGER
+    REAL
+    STRING
+    BOOLEAN
+
+function HashType.toString() returns string
+    string result
+    switch this
+        case INTEGER
+            result = "integer"
+        case REAL
+            result = "real"
+        case STRING
+            result = "string"
+        default
+            result = "boolean"
+    return result
+
+public class HashReader implements DataReader
+    private Table data
+
+    private var integerReadIndex = 0
+    private var realReadIndex = 0
+    private var stringReadIndex = 0
+    private var booleanReadIndex = 0
+
+    private var integerCount = 0
+    private var realCount = 0
+    private var stringCount = 0
+    private var booleanCount = 0
+    
+    construct(Table data, int integerCount, int realCount, int stringCount, int booleanCount)
+        this.data = data
+
+        this.integerCount = integerCount
+        this.realCount = realCount
+        this.stringCount = stringCount
+        this.booleanCount = booleanCount
+
+    ondestroy
+        destroy data
+
+    @inline
+    private function hasRemainingData(HashType t) returns boolean
+        boolean result
+        switch t
+            case INTEGER
+                result = integerCount > integerReadIndex
+            case REAL
+                result = realCount > realReadIndex
+            case STRING
+                result = stringCount > stringReadIndex
+            default
+                result = booleanCount > booleanReadIndex
+        return result
+
+    @inline
+    private function getReadIndex(HashType t) returns int
+        int result
+        switch t
+            case INTEGER
+                result = integerReadIndex
+            case REAL
+                result = realReadIndex
+            case STRING
+                result = stringReadIndex
+            default
+                result = booleanReadIndex
+        return result
+        
+    @inline
+    private function getCount(HashType t) returns int
+        int result
+        switch t
+            case INTEGER
+                result = integerCount
+            case REAL
+                result = realCount
+            case STRING
+                result = stringCount
+            default
+                result = booleanCount
+        return result
+
+    // when checked dispatch is disabled and all opts are on, this will compile down to very simple checks
+    @inline
+    private function validateType(HashType t)
+        if SAFETY_CHECKS_ENABLED and not hasRemainingData(t)
+            error("trying to read " + t.toString() + " at position " + getReadIndex(t).toString() + " out of " + getCount(t).toString())
+
+    override function readByte() returns int
+        return readInt()
+        
+    override function readShort() returns int
+        return readInt()
+
+    override function readInt() returns int
+        validateType(HashType.INTEGER)
+        return readIntUnchecked()
+
+    @inline
+    function readIntUnchecked() returns int
+        let temp = data.loadInt(integerReadIndex)
+        integerReadIndex++
+        return temp
+
+    override function readReal() returns real
+        validateType(HashType.REAL)
+        return readRealUnchecked()
+
+    @inline
+    function readRealUnchecked() returns real
+        let temp = data.loadReal(realReadIndex)
+        realReadIndex++
+        return temp
+
+    override function readBoolean() returns boolean
+        validateType(HashType.BOOLEAN)
+        return readBooleanUnchecked()
+
+    @inline
+    function readBooleanUnchecked() returns boolean
+        let temp = data.loadBoolean(booleanReadIndex)
+        booleanReadIndex++
+        return temp
+
+    override function readString() returns string
+        validateType(HashType.STRING)
+        return readStringUnchecked()
+
+    @inline
+    function readStringUnchecked() returns string
+        let temp = data.loadString(stringReadIndex)
+        stringReadIndex++
+        return temp
+
+    override function readSerializable(DataSerializable bs)
+        bs.deserialize(this)
+
+    function getIntCount() returns int
+        return getCount(HashType.INTEGER)
+
+    function getRealCount() returns int
+        return getCount(HashType.REAL)
+
+    function getBooleanCount() returns int
+        return getCount(HashType.BOOLEAN)
+
+    function getStringCount() returns int
+        return getCount(HashType.STRING)
+
+    function hasInt() returns boolean
+        return hasRemainingData(HashType.INTEGER)
+
+    function hasReal() returns boolean
+        return hasRemainingData(HashType.BOOLEAN)
+
+    function hasString() returns boolean
+        return hasRemainingData(HashType.STRING)
+
+    function hasBoolean() returns boolean
+        return hasRemainingData(HashType.BOOLEAN)
+
+    function reset()
+        integerReadIndex = 0
+        realReadIndex = 0
+        stringReadIndex = 0
+        booleanReadIndex = 0
