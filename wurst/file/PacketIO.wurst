@@ -5,10 +5,17 @@ import ObjectIds
 import ErrorHandling
 import StringUtils
 import Execute
+import BigString
+import LinkedList
 
-// only works in 1.30+
-// because fuck you
+/**
+    This is the maximum amount of "packets" that can fit into a file.
+    You can increase this number if you need, but keep in mind that it
+    can severely impact map loading times at very high values.
 
+    Internally, this sets the amount of levels of an internal ability
+    which is used for reading/writing data.
+**/
 @configurable public constant DATA_PACKETS_PER_FILE = 64
 
 constant DATA_DUMMY_ID = 'AXDT'
@@ -24,48 +31,54 @@ constant DATA_PADDING_2 = "\",$"
 constant DATA_PADDING_3 = ")\r\n//"
 constant DATA_FOOTER = "\" )\r\nendfunction\r\nfunction AAA takes nothing returns nothing \r\n//"
 
-public constant hexs = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F"]
+/** This is the maximum amount of data that can be squeezed into a single packet. **/
+public constant MAX_PACKET_LENGTH = compiletime(DATA_PER_PRELOAD - 
+                                                // static padding
+                                                DATA_PADDING_1.length() - 
+                                                DATA_PADDING_2.length() - 
+                                                DATA_PADDING_3.length() -
+                                                // dummy id
+                                                DATA_DUMMY_RAWCODE.length() -
+                                                // $ + 4 hex digits
+                                                5)
 
-public function toHex(int number, int length) returns string
-    var t = number
-    var result = ""
-    for i = 1 to length
-        result = hexs[t mod 16] + result
-        t = t div 16
-    return result
+/**
+    Static class for writing readable data into files.
+    It arranges this data as "packets" of no more MAX_PACKET_LENGTH.
 
-@test function hexTests()
-    let a1 = toHex($1000, 4)
-    let a2 = toHex($ABCD, 4)
-    let a3 = toHex($AAAABBB, 7)
-    let a4 = toHex($FDEABB, 6)
+    Depending on how much data you're writing, you may need 
+    to configure the DATA_PACKETS_PER_FILE constant.
 
-    assertTrue(a1 == "1000")
-    assertTrue(a2 == "ABCD")
-    assertTrue(a3 == "AAAABBB")
-    assertTrue(a4 == "FDEABB")
+    First, make sure that the folder you're writing to exists, using:
+        `createFolder(path)`
 
+    You can use the filename of the file you're writing as the folder path,
+    you don't need to construct a separate string.
 
-// max amount of usable payload we can get per preload call...
-public constant MAX_PACKET_LENGTH = compiletime(
-    DATA_PER_PRELOAD - 
-    // static padding
-    DATA_PADDING_1.length() - 
-    DATA_PADDING_2.length() - 
-    DATA_PADDING_3.length() -
-    // dummy id
-    DATA_DUMMY_RAWCODE.length() -
-    // $ + 4 hex digits
-    5)
+    Then call `initialize()`, then write data using either:
+        a) `write(string)`
+        b) `write(BigString)`
 
+    After you are done writing, commit to a file using:
+        `commit(path)`
+**/
 public class PacketWriter
     private static var currentPacket = 1
 
+    /**
+        Prepares the class for writing.
+        You should always call this when starting a new file.
+    **/
     static function initialize()
         currentPacket = 1
         PreloadGenClear()
         PreloadGenStart()
 
+    /**
+        Writes a single packet.
+        Packets must be under MAX_PACKET_LENGTH in size,
+        and you can write no more than DATA_PACKETS_PER_FILE in a single file.
+    **/
     static function write(string packet)
         if packet.length() > MAX_PACKET_LENGTH
             error("exceeded max packet length")
@@ -73,16 +86,33 @@ public class PacketWriter
         if currentPacket > DATA_PACKETS_PER_FILE
             error("exceeded max packets per file")
 
-        let packetHex = toHex(currentPacket, 4)
+        let packetHex = currentPacket.toHex(4)
 
         Preload(DATA_PADDING_1 + packet + DATA_PADDING_2 + packetHex + DATA_PADDING_3)        
 
         currentPacket++
 
+    /**
+        Writes the entire contents of this BigString as packets.
+        The BigString's max length should be under MAX_PACKET_LENGTH.
+    **/
+    static function write(BigString data)
+        if data.maxLength() > MAX_PACKET_LENGTH
+            error("PacketWriter: trying to write a BigString with maxLength > MAX_PACKET_LENGTH")
+
+        while data.hasData()
+            write(data.read())
+
+    /**
+        Commits the previously written packets into the specified file.
+    **/
     static function commit(string path)
         Preload(DATA_FOOTER)
         PreloadGenEnd(path)
         
+    /**
+        Creates a folder at the specified path.
+    **/
     static function createFolder(string path)
         var current = ""
         for folder in path.split("/")
@@ -92,9 +122,23 @@ public class PacketWriter
             initialize()
             commit(current + "touch.txt")
 
+/**
+    Static class for reading data written by PacketWriter.
+
+    First, open the file you want to read using `open(path)`.
+
+    Then, use `read()` to read data. The function will return an
+    empty string to indicate End of File.
+
+    Alternatively, you can read the entire contents of the file
+    using `readBigString()`
+**/
 public class PacketReader
     private static var currentPacket = 1
 
+    /**
+        Opens the specified file for reading.
+    **/
     static function open(string path)
         PreloadGenClear()
         PreloadGenStart()
@@ -105,12 +149,31 @@ public class PacketReader
 
         currentPacket = 1
 
+    /**
+        Reads a single packet as previously written by PacketWriter.
+        Packets are read in the same order they are written in.
+
+        Will return an empty string to indicate End of File.
+    **/
     static function read() returns string
         var data = BlzGetAbilityTooltip(DATA_DUMMY_ID, currentPacket)
         if data == "END OF FILE"
             return ""
         currentPacket++
         return data
+
+    /**
+        Reads all remaining packets from the file as a BigString.
+    **/
+    static function readBigString() returns BigString
+        let bigStringData = new LinkedList<BigStringElement>
+
+        var data = read()
+        while data != ""
+            bigStringData.push(new BigStringElement(data))
+            data = read()
+
+        return new BigString(bigStringData, BIGSTRING_MAX_CHUNK_LENGTH)
 
 @compiletime function generateDummy()
     let dummy = new AbilityDefinitionIllidanChannel(DATA_DUMMY_ID)
