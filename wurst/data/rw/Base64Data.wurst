@@ -1,0 +1,116 @@
+package Base64Data
+
+import DataInterfaces
+import ErrorHandling
+import Base64
+import StringUtils
+import ByteBuffer
+
+public class Base64DataWriter implements DataWriter
+    protected Base64Encoder encoder
+
+    construct(int maxLength)
+        encoder = new Base64Encoder(maxLength)
+
+    ondestroy
+        if encoder != null
+            destroy encoder
+
+    override function writeByte(int number)
+        encoder.pushByte(number)
+
+    override function writeShort(int number)
+        encoder.pushShort(number)
+
+    override function writeInt(int number)
+        encoder.pushInt(number)
+
+    override function writeReal(real number)
+        let value = number.toInt()
+        let fractional = (1 / (number % 1)).toInt().clamp(0, 0xFFFF)
+        encoder.pushInt(value)
+        encoder.pushShort(fractional)
+
+    override function writeBoolean(boolean b)
+        encoder.pushByte(b.toInt())
+
+    override function writeString(string s)
+        encoder.pushShort(s.length())
+
+        for i = 0 to s.length() - 1
+            encoder.pushByte(s.charAt(i).toChar().toInt())
+
+    override function writeSerializable(DataSerializable bs)
+        bs.serialize(this)
+
+    @deprecated("unsupported in this DataWriter")
+    override function intoReader() returns DataReader
+        destroy this
+        error("Base64Writer: intoReader() is unsupported")
+        return null
+
+    override function intoEncoder() returns Base64DataEncoder
+        let temp = encoder
+        encoder = null
+        destroy this
+        return new Base64DataEncoder(temp)
+
+public class Base64DataEncoder implements DataEncoder
+    private Base64Encoder encoder
+
+    construct(Base64Encoder encoder)
+        this.encoder = encoder
+
+    ondestroy
+        if encoder != null
+            destroy encoder
+
+    override function encode() returns BigString
+        let temp = encoder
+        encoder = null
+        destroy this
+        return temp.intoData()
+
+public class Base64DataReader implements DataReader
+    private ByteBuffer buffer
+
+    construct(ByteBuffer buffer)
+        this.buffer = buffer
+
+    ondestroy
+        if buffer != null
+            destroy buffer
+
+    override function readByte() returns int
+        return buffer.readByte()
+
+    override function readShort() returns int
+        return buffer.readShort()
+
+    override function readInt() returns int
+        return buffer.readInt()
+
+    override function readReal() returns real
+        let number = buffer.readInt()
+        let fractional = 1 / buffer.readShort()
+        return number + fractional
+
+    override function readBoolean() returns boolean
+        return buffer.readByte().toBool()
+
+    override function readString() returns string
+        let length = buffer.readShort()
+        var value = ""
+        for i = 1 to length
+            value += buffer.readByte().toChar().toString()
+        return value
+
+    override function readSerializable(DataSerializable bs)
+        bs.deserialize(this)
+
+public class Base64DataDecoder implements DataDecoder
+    override function decode(BigString data) returns DataReader
+        destroy this
+        let decoder = new Base64Decoder(data)
+        decoder.decode()
+        return new Base64DataReader(decoder.intoData())

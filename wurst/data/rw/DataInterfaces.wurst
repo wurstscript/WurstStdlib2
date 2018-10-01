@@ -1,0 +1,102 @@
+package DataInterfaces
+
+import public BufferInterface
+import public BigString
+
+public interface DataSerializable
+    function serialize(DataWriter dw)
+    function deserialize(DataReader dr)
+
+/**
+    A generic Writer interface, allowing to write arbitrary
+    data to it, either to be later used in a DataEncoder for
+    serializing into a BigString, or in a DataReader for direct
+    extraction of the data.
+**/
+public interface DataWriter
+    /** Writes a byte **/
+    function writeByte(int number)
+
+    /** Writes a short (2 byte integer) **/
+    function writeShort(int number)
+
+    /** Writes an int (4 byte integer) **/
+    function writeInt(int number)
+
+    /** Writes a real **/
+    function writeReal(real number)
+
+    /** Writes a boolean **/
+    function writeBoolean(boolean b)
+
+    /** Writes a string **/
+    function writeString(string s)
+
+    /** Invokes the implementation of this DataSerializable, writing it to this Writer **/
+    function writeSerializable(DataSerializable bs)
+
+    /**
+        Consumes this DataWriter, destroying it and returning
+        a DataReader object that can be used to read back previously
+        written data.
+
+        May be unsupported, in which case, this method should throw
+        an error with the relevant message.
+    **/
+    function intoReader() returns DataReader
+
+    /**
+        Consumes this DataWriter, destroying it and returning
+        a DataEncoder object that can be used to serialize previously
+        written data into a BigString.
+
+        May be unsupported, in which case, this method should throw
+        an error with the relevant message.
+    **/
+    function intoEncoder() returns DataEncoder
+
+/**
+    A generic Reader interface containing some data obtained previously
+    from either a DataWriter or a DataDecoder.
+
+    Generally, data must be read in the same order that it was written in.
+**/
+public interface DataReader
+    /** Reads a byte **/
+    function readByte() returns int
+
+    /** Reads a short (2-byte integer) **/
+    function readShort() returns int
+
+    /** Reads an int (4-byte integer) **/
+    function readInt() returns int
+
+    /** Reads a real **/
+    function readReal() returns real
+
+    /** Reads a boolean **/
+    function readBoolean() returns boolean
+
+    /** Reads a string **/
+    function readString() returns string
+
+    /** Invokes the implementation of this DataSerializable, initializing it using the data from this DataReader **/
+    function readSerializable(DataSerializable bs)
+    
+public interface DataEncoder
+    /**
+        Consumes this DataEncoder, destroying it and returning
+        a BigString object that contains serialized data from
+        this encoder, encoded in accordance its serialization format.
+        The BigString can be later passed on to a PacketWriter for storage in a file.
+    **/
+    function encode() returns BigString
+
+public interface DataDecoder
+    /**
+        Consumes this DataDecoder and BigString, destroying both
+        in the process and returning a DataReader object that
+        contains deserialized data from the BigString in accordance
+        to this DataDecoder's serialization format.
+    **/
+    function decode(BigString bs) returns DataReader
