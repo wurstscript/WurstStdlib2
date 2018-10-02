@@ -1,12 +1,30 @@
 package Persistable
 
 import PacketIO
-import PersistableMiddleware
 import Network
 import DataInterfaces
 import Base64Data
 import Box
 import ErrorHandling
+
+/**
+    A simple interface allowing to insert custom user code
+    during the serialization and deserialization phases
+    of Persistable, for example, to introduce encryption
+    to the output.
+**/
+public interface PersistableMiddleware
+    /**
+        Called right before the data is written to a file.
+        The returned BigString will be used instead.
+    **/
+    function encode(BigString input) returns BigString
+    
+    /**
+        Called right before the data is deserialized from a file.
+        The returned BigString will be used instead.
+    **/
+    function decode(BigString input) returns BigString
 
 /**
     Represents various failures that can occur during loading.
