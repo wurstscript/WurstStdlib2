@@ -206,3 +206,17 @@ public class BigString
 
     function maxLength() returns int
         return maxLength
+
+    function checksum() returns int
+        var sum = 0
+
+        if currentReadString != ""
+            sum += currentReadString.getHash()
+
+        for elem in data
+            sum += elem.data.getHash()
+
+        if currentWriteString != ""
+            sum += currentWriteString.getHash()
+
+        return sum

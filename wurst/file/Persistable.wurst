@@ -1,15 +1,25 @@
 package Persistable
 
 import PacketIO
-import Encryptor
+import PersistableMiddleware
 import Network
 import DataInterfaces
 import Base64Data
 import Box
+import ErrorHandling
 
+/**
+    Represents various failures that can occur during loading.
+
+    SUCCESS - No error has occured.
+    FAIL_READ - Error while trying to read data. Could be due to a programming error, or failing checksum, which means the file is missing or has been tampered with.
+    FAIL_TRANSFER - Error while trying to transfer data to/from Network.
+    FAIL_DESERIALIZE - Error while trying to deserialize the class.
+    FAIL_NO_PLAYER - Error due to the owner not being present in the game anymore.
+**/
 public enum LoadStatus
     SUCCESS
-    FAIL_LOAD
+    FAIL_READ
     FAIL_TRANSFER
     FAIL_DESERIALIZE
     FAIL_NO_PLAYER
@@ -22,18 +32,18 @@ public interface PersistableSaveCallback
 
 public abstract class Persistable implements DataSerializable
     protected player owner
-    private Encryptor encryptor
+    private PersistableMiddleware middleware
 
     construct(player owner)
         this.owner = owner
     
-    construct(player owner, Encryptor encryptor)
+    construct(player owner, PersistableMiddleware middleware)
         this.owner = owner
-        this.encryptor = encryptor
+        this.middleware = middleware
 
     ondestroy
-        if encryptor != null
-            destroy encryptor
+        if middleware != null
+            destroy middleware
 
     abstract function getPath() returns string
     protected function onLoaded(LoadStatus _status)
@@ -45,12 +55,19 @@ public abstract class Persistable implements DataSerializable
     protected function getReader(BigString data) returns DataReader
         return new Base64DataDecoder().decode(data)
 
-    private function readIntoNetwork(Network network) returns boolean
+    private function readIntoNetwork(Network network)
+        Box<LoadStatus> statusBox = new Box<LoadStatus>(LoadStatus.SUCCESS)
         Box<DataReader> readerBox = new Box<DataReader>(null)
 
         let readSuccess = try() ->
             PacketReader.open(getPath())
-            let data = PacketReader.readBigString()
+            let checksum = PacketReader.read().toInt()
+            var data = PacketReader.readBigString()
+            if checksum != data.checksum()
+                destroy data
+                error("Persistable: checksum failed to validate")
+            if middleware != null
+                data = middleware.decode(data)
             readerBox.inner = getReader(data)
 
         let reader = readerBox.inner
@@ -70,22 +87,20 @@ public abstract class Persistable implements DataSerializable
                 
                 if transferSuccess
                     destroy reader
-                    return true
+                    return
                 else
-                    network.write() (writer) ->
-                        writer.clear()
-                        writer.writeInt(LoadStatus.FAIL_TRANSFER castTo int)
+                    statusBox.inner = FAIL_TRANSFER
             else
-                network.write() (writer) ->
-                    writer.clear()
-                    writer.writeInt(LoadStatus.FAIL_DESERIALIZE castTo int)
+                statusBox.inner = FAIL_DESERIALIZE
         else
-            network.write() (writer) ->
-                writer.clear()
-                writer.writeInt(LoadStatus.FAIL_LOAD castTo int)
+            statusBox.inner = FAIL_READ
 
+        network.write() (writer) ->
+            writer.clear()
+            writer.writeInt(statusBox.inner castTo int)
+        
+        destroy statusBox
         destroy reader
-        return false
 
     private function finishLoad(LoadStatus status, PersistableLoadCallback callback)
         onLoaded(status)
@@ -125,8 +140,11 @@ public abstract class Persistable implements DataSerializable
         if localPlayer == owner
             let writer = getWriter()
             writer.writeSerializable(this)
-            let data = writer.intoEncoder().encode()
+            var data = writer.intoEncoder().encode()
+            if middleware != null
+                data = middleware.encode(data)
             PacketWriter.initialize()
+            PacketWriter.write(data.checksum().toString())
             PacketWriter.write(data)
             PacketWriter.commit(getPath())
         finishSave(callback)
