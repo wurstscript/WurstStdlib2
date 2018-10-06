@@ -796,6 +796,9 @@ public class UnitOrHeroDefinition extends UnitOrBuildingOrHeroDefinition
 	
 	function setFormationRank(int data)
 		def.setInt("ufor", data)
+
+	function setStructuresBuilt(string data)
+		def.setString("ubui", data)
 	
 public class HeroDefinition extends UnitOrHeroDefinition						
 
@@ -878,9 +881,6 @@ public class UnitDefinition extends UnitOrHeroDefinition
 	construct(int newId, int origId)
 		super(newId, origId)
 		
-	function setStructuresBuilt(string data)
-		def.setString("ubui", data)
-	
 	function setCasterUpgradeTips(string data)
 		def.setString("ucut", data)
 	
