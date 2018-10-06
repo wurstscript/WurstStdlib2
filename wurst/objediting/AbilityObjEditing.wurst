@@ -259,7 +259,8 @@ public class AbilityDefinition
 		setHotkeyNormal(value)
 		setHotkeyLearn(value)
 		setHotkeyTurnOff(value)
-		addTooltipProperty("Hotkey", lc)
+		StringLevelClosure clr = lvl -> value
+		addTooltipProperty("Hotkey", clr)
 
 	function setRequirements(string value)
 		def.setLvlDataString("areq", 0, 0, value)
