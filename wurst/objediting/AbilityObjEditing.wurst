@@ -62,7 +62,7 @@ public class AbilityDefinition
 	function addTooltipProperty(string pName, BooleanLevelClosure lc)
 		addTooltipProperty(pName, (int lvl) -> lc.run(lvl).toString())
 		
-	function registerTooltipGegenrator(TooltipGenerator tgen)
+	function registerTooltipGenerator(TooltipGenerator tgen)
 		tooltipGen = tgen
 		
 	function tooltipStartListen()
