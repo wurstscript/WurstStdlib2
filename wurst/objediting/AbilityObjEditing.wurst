@@ -74,6 +74,8 @@ public class AbilityDefinition
 		
 	function setName(string value)
 		def.setLvlDataString("anam", 0, 0, value)
+		StringLevelClosure clr = lvl -> value
+		addTooltipProperty("Name", clr)
 
 	function setEditorSuffix(string value)
 		def.setLvlDataString("ansf", 0, 0, value)
