@@ -64,6 +64,7 @@ public class AbilityDefinition
 		
 	function registerTooltipGenerator(TooltipGenerator tgen)
 		tooltipGen = tgen
+		tooltipStartListen()
 		
 	function tooltipStartListen()
 		listen = true
@@ -295,6 +296,8 @@ public class AbilityDefinition
 	function setLevels(int value)
 		def.setLvlDataInt("alev", 0, 0, value)
 		lvls = value
+		StringLevelClosure clr = lvl -> value.toString()
+		addTooltipProperty("Levels", clr)
 
 	function setRequiredLevel(int value)
 		def.setLvlDataInt("arlv", 0, 0, value)

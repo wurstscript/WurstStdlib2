@@ -23,31 +23,58 @@ public class HashMap<K,V> extends Table
 	function remove(K key)
 		removeInt(key castTo int)
 
+	/** Retrieves the value saved under the given key and removes it */
+	function getAndRemove(K key) returns V
+		let result = get(key)
+		remove(key)
+		return result
+
 	
 /** Iterable generic Table Wrapper */
 public class IterableMap<K,V> extends HashMap<K, V> 
 	protected let keys = new HashList<K>
 	private bool _destroyed = false
 
-	/** Returns an iterator that iterates over the map's keys */
-	function iterator() returns HLIterator<K>
-		return keys.iterator()
+	construct()
+
+	/** Create a new map by copying all elements from another list into it */
+	construct(thistype base)
+		for key in base
+			put(key, base.get(key))
+
 
 	/** Saves the given value under the given key */
 	override function put(K key, V value)
 		super.put(key, value)
 		if not hasKey(key)
 			keys.add(key)
-	
-	/** Returns whether this map uses the given key */
-	function hasKey(K key) returns bool
-		return keys.has(key)
 
 	/** Removes the key-value pair saved under the given key */
 	override function remove(K key)
 		super.remove(key)
 		if hasKey(key)
 			keys.remove(key)
+
+	/** Remove all data from this map */
+	override function flush()
+		if not _destroyed 
+			keys.clear()
+		super.flush()
+		
+	/** Retrieves the value saved under the given key and removes it */
+	override function getAndRemove(K key) returns V
+		let result = super.getAndRemove(key)
+		keys.remove(key)
+		return result
+
+	/** Returns an iterator that iterates over the map's keys */
+	function iterator() returns HLIterator<K>
+		return keys.iterator()
+	
+	/** Returns whether this map uses the given key */
+	function hasKey(K key) returns bool
+		return keys.has(key)
+
 
 	/** Removes either a single occurence or all occurences from of the value from the map */
 	function removeValue(V val, bool all)
@@ -75,22 +102,11 @@ public class IterableMap<K,V> extends HashMap<K, V>
 			map.put(key, get(key))
 		return map
 
-	/** Remove all data from this map */
-	override function flush()
-		if not _destroyed 
-			keys.clear()
-		super.flush()
 
 	/** Returns the length of this IterableMap **/
 	function size() returns int
 		return keys.size()
 
-	construct()
-
-	/** Create a new map by copying all elements from another list into it */
-	construct(thistype base)
-		for key in base
-			put(key, base.get(key))
 
 	ondestroy
 		destroy keys
