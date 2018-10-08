@@ -70,7 +70,8 @@ public class AbilityDefinition
 		
 	function tooltipStopListen()
 		listen = false
-		tooltipGen.applyToDef(this)
+		if tooltipGen != null
+			tooltipGen.applyToDef(this)
 		
 	function setName(string value)
 		def.setLvlDataString("anam", 0, 0, value)
