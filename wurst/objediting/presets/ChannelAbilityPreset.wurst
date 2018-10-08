@@ -46,8 +46,16 @@ public class ChannelAbilityPreset extends AbilityDefinitionIllidanChannel
 	function getOrderString() returns string
 		return orderString
 
+	construct(int newId, int lvls, boolean removeChannelProperties, TooltipGenerator tgen)
+		super(newId)
+		registerTooltipGenerator(tgen)
+		setup(lvls, removeChannelProperties)
+
 	construct(int newId, int lvls, boolean removeChannelProperties)
 		super(newId)
+		setup(lvls, removeChannelProperties)
+
+	function setup(int lvls, boolean removeChannelProperties)
 		this.lvls = lvls
 		setLevels(lvls)
 		orderString = odf.getOrderString(true)
