@@ -59,7 +59,7 @@ public class ChannelAbilityPreset extends AbilityDefinitionIllidanChannel
 		this.lvls = lvls
 		tooltipStartListen()
 		setLevels(lvls)
-		tooltipStopListen()
+		tooltipStopListen(false)
 		orderString = odf.getOrderString(true)
 		presetBaseOrderID(_lvl -> orderString)
 		if removeChannelProperties

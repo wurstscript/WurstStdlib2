@@ -67,10 +67,13 @@ public class AbilityDefinition
 		
 	function tooltipStartListen()
 		listen = true
-		
+
 	function tooltipStopListen()
+		tooltipStopListen(true)
+		
+	function tooltipStopListen(boolean build)
 		listen = false
-		if tooltipGen != null
+		if tooltipGen != null and build
 			tooltipGen.applyToDef(this)
 		
 	function setName(string value)
