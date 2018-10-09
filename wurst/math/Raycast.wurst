@@ -3,24 +3,45 @@ import NoWurst
 import Vectors
 import Wurstunit
 
+/* The package defines such geometry as 'ray' for 2D and 3D separately.
+Both can find the intersection point with another geometry objects.
+
+Most 2D functions return result2d(success, point, distance) tuple which contains
+information about intersection where
+'success' is 'true' if the ray intersects the given object
+'point' is the intersection point or zero-vector
+'distance' is the distance between the ray's origin and the intersection point
+
+A ray can intersect a convex object (e.g. a circle) zero, one or two times at once.
+In this case the function returns doubleresult2d tuple that contains a couple of result2d
+tuples.
+
+Functions that find 3D intersection work similarly and return result3d tuple.
+result3d(success, point, distance, backface) also contains 'backface' boolean value that's
+true in case the object is faced away from  the ray's origin. Functions which find the
+intersection point with a convex object (e.g. a sphere) return doubleresult3d tuple.
+
+Also you can project a vector onto a ray to obtain the point on the ray that's nearest
+to the vector. */
+
 constant FAIL_2D = result2d(false, ZERO2, 0)
 constant FAIL_3D = result3d(false, ZERO3, 0, false)
 constant EPSILON = 0.0001
 
 /** An infinite 2D ray
 origin - the point which the ray comes from
-direction - unit directional vector */
+direction - directional vector */
 public tuple ray2d(vec2 origin, vec2 direction)
 
 /** An infinite 3D ray
 origin - the point which the ray comes from
-direction - unit directional vector */
+direction - directional vector */
 public tuple ray3d(vec3 origin, vec3 direction)
 
 /** 2D intersection result
 success - 'true' if the intersection point exists
 point - the intersection point or ZERO2
-distance - distance between the ray's origin and the intersection point or 0 */
+distance - distance between the ray's origin and the intersection point */
 tuple result2d(bool success, vec2 point, real distance)
 
 /** Double 2D intersection result.
@@ -34,7 +55,7 @@ tuple doubleresult3d(result3d first, result3d second)
 /** 3D intersection result
 success - 'true' if the intersection point exists
 point - the intersection point or ZERO2
-distance - distance between the ray's origin and the intersection point or 0
+distance - distance between the ray's origin and the intersection point 
 backface - `true` if the surface at the intersection point is faced away from the ray's origin  */
 tuple result3d(bool success, vec3 point, real distance, bool backface)
 
@@ -43,7 +64,7 @@ tuple result3d(bool success, vec3 point, real distance, bool backface)
 function vec2.cross(vec2 v) returns real
     return this.x * v.y - this.y * v.x
 
-/** Projects the point onto a ray. The point coincides with the ray's origin if it behind the ray.
+/** Projects the point onto a ray.
 Returns tuple result2d(success, point, distance). */
 public function vec2.project(ray2d ray) returns result2d
     var result = FAIL_2D
@@ -154,7 +175,7 @@ public function ray2d.castToCircle(vec2 center, real radius) returns doubleresul
 
 /* =============== 3D =============== */
 
-/** Projects the point onto a ray. The point coincides with the ray's origin if it behind the ray.
+/** Projects the point onto a ray.
 Returns tuple result3d(success, point, distance, backface) where 'backface' is always false. */
 public function vec3.project(ray3d ray) returns result3d
     var result = FAIL_3D
@@ -172,7 +193,7 @@ public function vec3.project(ray3d ray) returns result3d
             result.distance = dot
     return result
 
-/** Finds the intersection point of the ray and a plane
+/** Finds the intersection point of the ray and a plane where
 point - a point on the plane
 normal - a vector perpendicular to the plane
 Returns tuple result3d(success, point, distance, backface). */ 
@@ -192,7 +213,7 @@ public function ray3d.castToPlane(vec3 point, vec3 normal) returns result3d
                 result.backface = dot < 0
     return result
 
-/** Finds the intersection point of the ray and a plane disk
+/** Finds the intersection point of the ray and a plane disk where
 center - the center of the disk
 normal - a vector perpendicular to the disk's plane
 radius - the disk's radius
@@ -237,7 +258,7 @@ public function ray3d.castToSphere(vec3 center, real radius) returns doubleresul
                 result.first.backface = true
     return result
 
-/** Finds the intersection point of the ray and a line segment defined by 2 points.
+/** Finds the intersection point of the ray and a triangle in 3D space defined by 3 points.
 Returns tuple result3d(success, point, distance, backface) where 'backface' depends on the order of the given points. */
 public function ray3d.castToTriangle(vec3 p1, vec3 p2, vec3 p3) returns result3d
     var result = FAIL_3D
