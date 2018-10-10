@@ -22,7 +22,10 @@ true in case the object is faced away from  the ray's origin. Functions which fi
 intersection point with a convex object (e.g. a sphere) return doubleresult3d tuple.
 
 Also you can project a vector onto a ray to obtain the point on the ray that's nearest
-to the vector. */
+to the vector.
+
+Interacting beams, projectile collision, protective fields and many more can be created
+via raycast. */
 
 constant FAIL_2D = result2d(false, ZERO2, 0)
 constant FAIL_3D = result3d(false, ZERO3, 0, false)
