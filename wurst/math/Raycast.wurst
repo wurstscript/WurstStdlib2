@@ -281,10 +281,11 @@ public function ray3d.castToTriangle(vec3 p1, vec3 p2, vec3 p3) returns result3d
                 let v = dir.dot(qv) * invDet
                 if v >= 0 and u + v <= 1
                     let t = v2.dot(qv) * invDet
-                    result.success = true
-                    result.point = this.origin + dir * t
-                    result.distance = t
-                    result.backface = det < 0
+                    if t >= 0
+                        result.success = true
+                        result.point = this.origin + dir * t
+                        result.distance = t
+                        result.backface = det < 0
     return result
 
 /* ============== TEST ============== */
