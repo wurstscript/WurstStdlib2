@@ -13,12 +13,18 @@ public function flashEffect(string path, vec3 pos)
 
 public function flashEffect(string path, vec2 pos)
 	flashEffect(path, pos.toVec3())
+
+public function flashEffect(string path, widget target, string attachPointName) 
+	addEffect(path, target, attachPointName).destr()
 	
 public function addEffect(string path, vec2 pos) returns effect
 	return AddSpecialEffect(path, pos.x, pos.y)
 	
 public function addEffect(string path, vec3 pos) returns effect
 	return AddSpecialEffect(path, pos.x, pos.y)
+
+public function addEffect(string path, widget target, string attachPointName) returns effect
+	return AddSpecialEffectTarget(path, target, attachPointName)
 
 public function effect.setColorByPlayer(player whichPlayer)
 	BlzSetSpecialEffectColorByPlayer(this, whichPlayer)
