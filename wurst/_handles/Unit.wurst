@@ -606,3 +606,15 @@ public function unit.getLocalZ() returns real
 
 public function unit.isIllusion() returns bool
 	return IsUnitIllusion(this)
+
+public function unit.toGroup(group g)
+	GroupAddUnit(g, this)
+
+public function unit.isInGroup(group g) returns boolean
+	return IsUnitInGroup(this, g)
+
+public function unit.incAbilityLevel(int abilityId)
+	IncUnitAbilityLevel(this, abilityId)
+
+public function unit.decAbilityLevel(int abilityId)
+	DecUnitAbilityLevel(this, abilityId)
