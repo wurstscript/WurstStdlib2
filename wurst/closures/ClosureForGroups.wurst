@@ -61,7 +61,9 @@ public function forUnitsAll(ForGroupCallback c)
 	for i = 0 to bj_MAX_PLAYER_SLOTS - 1
 		pushCallback(c)
 		GroupEnumUnitsOfPlayer(DUMMY_GROUP, players[i], filter)
-		popCallback()
+		DUMMY_GROUP.clear()
+		tempCallbacksCount--
+	destroy c
 
 /** Executes the given closure for every unit in the given rect */	
 public function forUnitsInRect(rect r, ForGroupCallback c)
