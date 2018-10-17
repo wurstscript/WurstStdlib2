@@ -299,21 +299,24 @@ public class Damage
 	function hasKilledTarget() returns bool
 		if state == DamageState.FIRED or state == DamageState.LISTENING
 			return killedTarget
-		else
-			Log.debug("Damage.hasKilledTarget() is used on not dealt instance!")
-			return false
+
+		Log.error("Damage.hasKilledTarget() is used in the wrong damage state:" + state.toString())
+		return false
 
 	function getInitial() returns real
 		return initialAmount
+	
 	/** Returns the actual damage that was withdrawn from the unit.
 		Becomes valid only for listeners and after the event. */
 	function getActual() returns real
 		if state == DamageState.FIRED or state == DamageState.LISTENING
 			return actualAmount
-		Log.debug("Damage.getActual() is used on not dealt instance!")
+		Log.error("Damage.getActual() is used in the wrong damage state:" + state.toString())
 		return getAmount()
+
 	function getAmount() returns real
 		return amount
+	
 	/** Returns amount of times that each DamageModifier is applied to this damage.
 		
 		Defaults to 1, but can be set to range [0, 32]. */
@@ -351,7 +354,7 @@ public class Damage
 
 	ondestroy
 		if state != DamageState.CREATED or state != DamageState.FIRED
-			Log.debug("destroy Damage is used in the wrong damage state:" + state.toString())
+			Log.error("destroy Damage is used in the wrong damage state:" + state.toString())
 
 	/** applies user-created Damage instance, instantly processing it through
 		all damage events. After this function is called, the Damage will be
@@ -361,7 +364,7 @@ public class Damage
 			// What is described in hotdoc happens in .invoke()
 			// While this is a wrapper to handle recursive damage properly
 			if recursionAmount > RECURSION_TRESHOLD
-				Log.debug("Damage.deal(): Recursion treshold has been hit.")
+				Log.warn("Damage.deal(): Recursion treshold has been hit.")
 				return
 			state = DamageState.QUEUED
 			queue.push(this)
@@ -372,7 +375,7 @@ public class Damage
 				else
 					dequeue()
 		else
-			Log.debug("Damage.deal() called on already dealt damage!")
+			Log.error("Damage.deal() is used in the wrong damage state:" + state.toString())			
 
 	protected function invoke()
 		state = DamageState.FIRING
@@ -402,21 +405,21 @@ public class Damage
 		if state != DamageState.FIRED and state != DamageState.LISTENING
 			amount += initialAmount * (magnitude - 1)
 		else
-			Log.debug("Damage.addMultiplier() is used in the wrong damage state:" + state.toString())			
+			Log.error("Damage.addMultiplier() is used in the wrong damage state:" + state.toString())			
 
 	/** Increases `amount` of the damage with given amount */
 	function addAmount(real amount)
 		if state != DamageState.FIRED and state != DamageState.LISTENING
 			this.amount += amount
 		else
-			Log.debug("Damage.addAmount() is used in the wrong damage state:" + state.toString())			
+			Log.error("Damage.addAmount() is used in the wrong damage state:" + state.toString())			
 
 	/** Sets `amount` of the damage to given amount */
 	function setAmount(real amount)
 		if state != DamageState.FIRED and state != DamageState.LISTENING
 			this.amount = amount
 		else
-			Log.debug("Damage.setAmount() is used in the wrong damage state:" + state.toString())
+			Log.error("Damage.setAmount() is used in the wrong damage state:" + state.toString())
 
 	/** Sets the amount of times that each DamageModifier is applied to this damage.
 		Should be in range [0, 32]. */
@@ -425,9 +428,9 @@ public class Damage
 			if val >= 0 and val <= 32
 				modifyCount = val
 			else
-				Log.debug("Damage.setModifyCount() is used with wrong value: " + val.toString())
+				Log.error("Damage.setModifyCount() is used with wrong value: " + val.toString())
 		else
-			Log.debug("Damage.setModifyCount() is used in the wrong damage state:" + state.toString())
+			Log.error("Damage.setModifyCount() is used in the wrong damage state:" + state.toString())
 				
 
 // Handler of the event
@@ -445,7 +448,7 @@ function dequeue()
 function retrieve() returns Damage
 	var d = dealingInstance
 	if not d.compareWithEventData()
-		Log.debug("Damage.retrieve() has ignored a damage due to incorrect data!")
+		Log.warn("Damage.retrieve() has ignored a damage due to incorrect data!")
 		d = null
 	if d != null
 		dealingInstance = null // let no one else retrieve the same instance
@@ -463,7 +466,7 @@ function handler() returns bool
 		if recursionAmount == 0
 			needTimer = true
 		else
-			Log.warn("Non-triggered damage recursion detected.")
+			Log.error("Non-triggered damage recursion detected.")
 	else
 		damage_ratio = GetEventDamage() / damage.getInitial()
 	
