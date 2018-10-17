@@ -5,9 +5,22 @@ import HashSet
 import DamageType
 /*	
 	// Overview
-	The main objective of this system is to have same damage event-related object at all stages of damage event.
-	It implements `Damage` class which contains all arguments of `UnitDamageTarget` native plus one integer for additional attachments.
-	This allows to easily access and modify event data.
+	This system brings the best features from damage systems created in vJass
+	to wurst, while also adding own functionality and providing solutions to
+	several problems.
+
+	Features:
+	- class Damage, containing every argument of `UnitDamageTarget` native
+		- Most of them are unknown if damage is non-triggered, though
+		- instances have 
+	- Consistent access to Damage instance before, during and after the event
+	- additional `data` field 
+	- Listeners and Modifiers, a closure types to process the event
+		- Them are separate because listeners are disabled to modify, but are
+			guaranteed to process event once. 
+	- Access to initial, convieved and actual damage amount
+		- actual damage means how much HP target lost
+	- Fix to recursed event processing order
 
 	// Basic usage
 
@@ -41,17 +54,21 @@ import DamageType
 	registerSpellEffectEvent(FINGER_ID) ->
 		new Damage(GetTriggerUnit(), GetSpellTargetUnit(), FINGER_DAMAGE, ATTACK_TYPE_NORMAL, 0, false)..setModifyCount(0)..deal()
 
-	Blast would do BLAST_DAMAGE * 1.25^2 - 24 damage to debuffed unit with block,
-	while Finger of Death would do FINGER_DAMAGE damage to the same unit.
+	If these examples would be used together in one map, then blast would display
+	`BLAST_DAMAGE * 1.25^2 - 24` damage to debuffed unit with block,
+	while Finger of Death would display `FINGER_DAMAGE` damage to the same unit.
 
-	Considering it had full health.
-	And still both of these damages would be displayed as a text tags.
+	Considering it had enough health to withstand the damage, because actual
+	damage is capped. to target's HP.
 
 	// Advanced usage
 
+	Damage instance can be created before damage invokation,
+	thus it can be modified anyhow before the event.
+
 		// Instance lifetime manipulation
-	By default, any Damage instance is destroyed throughout the damage event.
-	But should user set the last argument in Damage constructor to `true`,
+	By default, any Damage instance is automatically destroyed throughout
+	the damage event. But should user invoke .deal() with argument `false`,
 	the Damage won't be destroyed and thus it would be possible to easily retrieve
 	damage outcome: whether exactly this has killed the target, how much HP did
 	it loss, how much the damage was modified.
@@ -61,7 +78,7 @@ import DamageType
 
 	Here's an example of a leeching ability that can't leech more than targets HP.
 	registerSpellEffectEvent(LEECH_ID) ->
-		let d = new Damage(GetTriggerUnit(), GetSpellTargetUnit(), LEECH_DAMAGE, ATTACK_TYPE_NORMAL, 0, true)
+		let d = new Damage(GetTriggerUnit(), GetSpellTargetUnit(), LEECH_DAMAGE, ATTACK_TYPE_NORMAL, 0)
 
 		d.getSource().addHP(d.getActual()) // Heal is capped at target's hp
 		d.getSource().addEffect(Abilities.vampiricAuraTarget, "origin").destr()
@@ -69,58 +86,53 @@ import DamageType
 		destroy d
 
 		// Damage recursion
-	It is strongly recommended to use system's functions to 
+	It is strongly recommended to use system's functionality in case you would
+	want to damage something during damage event. This system manages damage recursion
+	in such way that new damage events happen after it's origin has been processed,
+	while default way is to process new damage right where it has been called.
+
+	Damage 1 is calling damage 2 from inside it's own listeners.
+	
+	Default way:
+	1 is called
+	1 starts processing
+		2 is called
+		2 starts processing
+		2 ends processing
+	1 ends processing
+	
+	Fixed way:
+	1 is called
+	1 starts processing
+	1 ends processing
+
+	2 is called
+	2 starts processing
+	2 ends processing
 
 		// Data carrying
 	There's one additional integer field for the damage.
+	
+	An example usage would be to put spell id that caused the damage to track
+	exact sources of damage for unit, to mimic Dota 2's fight recaps.
 
 	// Specification
 
-	Damage instance can be created before damage invokation, thus it can be modified anyhow before the event.
-	It is guaranteed to be passed to modifiers and listeners during the event invoked through `.deal()` method.
-	And then the instance is still accessable (in case it was saved), allowing user to easily retrieve event data.
+	It is guaranteed that created Damage instance would be the same that will be
+	processed in event handler, thus same for modifiers and listeners; any changes
+	will reflect in original local variable accessable in case instance were not
+	autodestroyed.
 
-	System is guaranteed to work as in documentation only if there's no listeners in DamageDetection after this package's one.
-	The system does not handle 0 damage events.
+	System is guaranteed to work as in documentation only if there's no listeners
+	in DamageDetection after this package's one.
+	The system does not handle initial 0 damage events unless you change configuration.
+	You cannot modify damage amount below 0.
 	
 	Has several cases of possibly unexpected behavior:
 	- Actual amount can not go below zero or above target's HP.
 	- Event Damage is set to .actualAmount, not .amount.
 	- Damage instance can not be modified from inside listeners.
 
-	There will be output to debug log stream if anything would go wrong,
-	for example if system will fail to pass/catch Damage instance in between
-	damage instance creation and it's handling (.deal() and .handle()).
-	
-	Examples:
-	
-	// Leech implementation #1
-
-	// Leech implementation #2
-	function onLeechEffect2()
-		GetTriggerUnit().damageTarget(GetSpellTargetUnit(), LEECH_DAMAGE, ATTACK_TYPE_NORMAL, LEECH_ID)
-
-	init
-		registerSpellEffectEvent(LEECH_ID, function onLeechEffect2)
-		addDamageListener() d ->
-			if d.data == LEECH_ID
-				d.source.addHP(d.getActual())
-				d.source.addEffect(Abilities.vampiricAuraTarget, "origin").destr()
-
-	// Simple damage resistance buff
-	import UniqueDamageListening
-
-	function onBuffEffect()
-		let target = GetSpellTargetUnit()
-		let effect = target.addEffect(Abilities.voodooAuraTarget, "origin")
-		let cb = addTargetDamageModifier() d ->
-			d.amount -= d.initialAmount * .5
-		doAfter(BUFF_DURATION) ->
-			removeTargetDamageModifier(cb)
-			effect.destr()
-
-	init
-		registerSpellEffectEvent(BUFF_ID, function onLeechEffect2)
 */
 
 // Configuration
@@ -135,7 +147,7 @@ import DamageType
 /** Describes default way to create Damage instance if damage event doesn't
 	correspond to any Damage instance. */
 @configurable function getDamageFromEvent() returns Damage
-	return GetEventDamage() == 0 ? null : new Damage(GetEventDamageSource(), GetTriggerUnit(), GetEventDamage(), false, false, getDamageType() == DamageType.SPELL ? ATTACK_TYPE_NORMAL : ATTACK_TYPE_CHAOS, null, null, DAMAGE_NONTRIGGERED_DATA, false)
+	return GetEventDamage() == 0 ? null : new Damage(GetEventDamageSource(), GetTriggerUnit(), GetEventDamage(), false, false, getDamageType() == DamageType.SPELL ? ATTACK_TYPE_NORMAL : ATTACK_TYPE_CHAOS, null, null, DAMAGE_NONTRIGGERED_DATA)
 
 /** Should return whether retrieved Damage data matches event data. Is used to
 	check triggered damage  */
@@ -150,7 +162,7 @@ import DamageType
 	arg specifies whether the instance should not be destroyed during the event.
 	If you need instance after it has been dealt, create it manually. */
 public function unit.damageTarget(unit target, real amount, bool attack, bool ranged, attacktype attackType, damagetype damageType, weapontype weaponType, int data)
-	new Damage(this, target, amount, attack, ranged, attackType, damageType, weaponType, data, false)..deal()
+	new Damage(this, target, amount, attack, ranged, attackType, damageType, weaponType, data)..deal()
 
 public function unit.damageTarget(unit target, real amount, attacktype attackType, int data)
 	this.damageTarget(target, amount, false, false, attackType, DAMAGE_TYPE_UNIVERSAL, WEAPON_TYPE_WHOKNOWS, data)
@@ -267,7 +279,7 @@ public class Damage
 	/** It is set to true if the damage, when it was dealt, killed the target */
 	protected bool killedTarget = false
 
-	protected bool isReturned = false
+	protected bool autoDestroy = true
 
 	function getSource() returns unit
 		return source
@@ -309,10 +321,9 @@ public class Damage
 	/** Returns the actual damage that was withdrawn from the unit.
 		Becomes valid only for listeners and after the event. */
 	function getActual() returns real
-		if state == DamageState.FIRED or state == DamageState.LISTENING
-			return actualAmount
-		Log.error("Damage.getActual() is used in the wrong damage state:" + state.toString())
-		return getAmount()
+		if state != DamageState.FIRED and state != DamageState.LISTENING
+			Log.error("Damage.getActual() is used in the wrong damage state:" + state.toString())
+		return actualAmount
 
 	function getAmount() returns real
 		return amount
@@ -325,7 +336,7 @@ public class Damage
 	
 	// Manual instance creation
 
-	private function set(unit source, unit target, real amount, bool ranged, bool attack, attacktype attackType, damagetype damageType, weapontype weaponType, int data, bool isReturned)
+	private function set(unit source, unit target, real amount, bool ranged, bool attack, attacktype attackType, damagetype damageType, weapontype weaponType, int data)
 		this.source = source
 		this.target = target
 		this.initialAmount = amount
@@ -336,21 +347,19 @@ public class Damage
 		this.damageType = damageType
 		this.weaponType = weaponType
 		this.data = data
-		this.isReturned = isReturned
 
 	/** Allows manual creation of Damage instance, which is then dealt
 		through .deal() call, guaranteed passing it to modifiers and listeners.
 
-		You can attach anything to Damage instance with .data field.
-		isReturned specifies whether the Damage should not be destroyed during the event. */
-	construct(unit source, unit target, real amount, bool ranged, bool attack, attacktype attackType, damagetype damageType, weapontype weaponType, int data, bool isReturned)
-		set(source, target, amount, ranged, attack, attackType, damageType, weaponType, data, isReturned)
+		You can attach anything to Damage instance with .data field. */
+	construct(unit source, unit target, real amount, bool ranged, bool attack, attacktype attackType, damagetype damageType, weapontype weaponType, int data)
+		set(source, target, amount, ranged, attack, attackType, damageType, weaponType, data)
 
-	construct(unit source, unit target, real amount, attacktype attackType, int data, bool isReturned)
-		set(source, target, amount, false, false, attackType, DAMAGE_TYPE_UNIVERSAL, WEAPON_TYPE_WHOKNOWS, data, isReturned)
+	construct(unit source, unit target, real amount, attacktype attackType, int data)
+		set(source, target, amount, false, false, attackType, DAMAGE_TYPE_UNIVERSAL, WEAPON_TYPE_WHOKNOWS, data)
 	
-	construct(unit source, unit target, real amount, int data, bool isReturned)
-		set(source, target, amount, false, false, ATTACK_TYPE_CHAOS, DAMAGE_TYPE_UNIVERSAL, WEAPON_TYPE_WHOKNOWS, data, isReturned)
+	construct(unit source, unit target, real amount, int data)
+		set(source, target, amount, false, false, ATTACK_TYPE_CHAOS, DAMAGE_TYPE_UNIVERSAL, WEAPON_TYPE_WHOKNOWS, data)
 
 	ondestroy
 		if state != DamageState.CREATED or state != DamageState.FIRED
@@ -360,7 +369,17 @@ public class Damage
 		all damage events. After this function is called, the Damage will be
 		in 'fired' state. */
 	function deal()
+		deal(true)
+
+	/** applies user-created Damage instance, instantly processing it through
+		all damage events. After this function is called, the Damage will be
+		in 'fired' state.
+		
+		autoDestroy decides whether or not should the instance be destroyed
+		after event processing. */
+	function deal(bool autoDestroy)
 		if state == DamageState.CREATED
+			this.autoDestroy = autoDestroy
 			// What is described in hotdoc happens in .invoke()
 			// While this is a wrapper to handle recursive damage properly
 			if recursionAmount > RECURSION_TRESHOLD
@@ -387,7 +406,7 @@ public class Damage
 		dealingInstance = temp
 		if state != DamageState.FIRED
 			Log.error("Damage.deal() returned not fully processed damage! (state: " + state.toString() + ")")
-			if not isReturned
+			if autoDestroy
 				destroy this
 			
 	// Event modification
@@ -503,7 +522,7 @@ function handler() returns bool
 		listener.listen(damage)
 	damage.state = DamageState.FIRED
 
-	if previousDamage != null and not previousDamage.isReturned
+	if previousDamage != null and previousDamage.autoDestroy
 		destroy previousDamage
 	previousDamage = damage
 
