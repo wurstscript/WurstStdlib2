@@ -6,6 +6,10 @@ import Boolean
 // Wurst unit testing library
 
 
+@deprecated("Use 'println' instead")
+public function testPrint(string msg)
+	println(msg)
+@compiletimenative public function println(string msg)
 @compiletimenative public function testFail(string msg)
 @compiletimenative public function testSuccess()
 
