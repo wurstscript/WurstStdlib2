@@ -10,6 +10,7 @@ import Boolean
 public function testPrint(string msg)
 	println(msg)
 @compiletimenative public function println(string msg)
+	DisplayTimedTextToPlayer(GetLocalPlayer(), 0, 0, 60, msg)
 @compiletimenative public function testFail(string msg)
 @compiletimenative public function testSuccess()
 
