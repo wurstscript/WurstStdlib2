@@ -45,22 +45,22 @@ public tuple ray3d(vec3 origin, vec3 direction)
 success - 'true' if the intersection point exists
 point - the intersection point or ZERO2
 distance - distance between the ray's origin and the intersection point */
-tuple result2d(bool success, vec2 point, real distance)
+public tuple result2d(bool success, vec2 point, real distance)
 
 /** Double 2D intersection result.
 'first' is nearest to the ray's origin. */
-tuple doubleresult2d(result2d first, result2d second)
-
-/** Double 3D intersection result.
-'first' is nearest to the ray's origin. */
-tuple doubleresult3d(result3d first, result3d second)
+public tuple doubleresult2d(result2d first, result2d second)
 
 /** 3D intersection result
 success - 'true' if the intersection point exists
 point - the intersection point or ZERO2
 distance - distance between the ray's origin and the intersection point 
 backface - `true` if the surface at the intersection point is faced away from the ray's origin  */
-tuple result3d(bool success, vec3 point, real distance, bool backface)
+public tuple result3d(bool success, vec3 point, real distance, bool backface)
+
+/** Double 3D intersection result.
+'first' is nearest to the ray's origin. */
+public tuple doubleresult3d(result3d first, result3d second)
 
 /* =============== 2D =============== */
 
