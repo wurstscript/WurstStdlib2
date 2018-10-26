@@ -1,6 +1,9 @@
 package Force
-
 import NoWurst
+
+public constant allPlayers = CreateForce()
+/** Players in game and under user control. Automatically removes leavers. */
+public constant userPlayers = CreateForce()
 
 public function force.destr()
 	DestroyForce(this)
@@ -42,3 +45,55 @@ public function force.containsUnit(unit whichUnit) returns boolean
 
 public function force.containsPlayer(player whichPlayer) returns boolean
 	return IsPlayerInForce(whichPlayer, this)
+
+int size
+public function force.size() returns int
+	size = 0
+	this.forEach()->
+		size++
+	return size
+
+class ForceIterator
+	private int offset
+	private int count
+	private int current
+
+	private static player array players
+	private static int index
+
+	construct(force f)
+		offset = this castTo int * bj_MAX_PLAYER_SLOTS
+		index = offset
+		f.forEach() ->
+			players[index] = GetEnumPlayer()
+			index++
+		count = index - offset
+		current = 0
+
+	function hasNext() returns bool
+		return current < count
+
+	function next() returns player
+		let p = players[offset + current]
+		current++
+		return p
+
+	function close()
+		destroy this
+
+public function force.iterator() returns ForceIterator
+	return new ForceIterator(this)
+
+init
+	for i=0 to bj_MAX_PLAYER_SLOTS-1
+		let p = Player(i)
+		allPlayers.addPlayer(p)
+		if GetPlayerController(p) == MAP_CONTROL_USER and GetPlayerSlotState(p) == PLAYER_SLOT_STATE_PLAYING
+			userPlayers.addPlayer(p)
+
+	let trg = CreateTrigger()
+	TriggerAddAction(trg, ()->userPlayers.removePlayer(GetTriggerPlayer()))
+	for p in userPlayers
+		TriggerRegisterPlayerEvent(trg, p, EVENT_PLAYER_LEAVE)
+
+
