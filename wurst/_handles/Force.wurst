@@ -2,7 +2,7 @@ package Force
 import NoWurst
 
 public constant allPlayers = CreateForce()
-/** Players in game and under user control. Automatically removes leavers. */
+/** Players under the control of users which are in the game. Leavers will be removed from the force automatically. */
 public constant userPlayers = CreateForce()
 
 public function force.destr()
