@@ -74,7 +74,7 @@ class ForceIterator
 		return current < count
 
 	function next() returns player
-		let p = players[offset + current]
+		let p = current < count ? players[offset + current] : null
 		current++
 		return p
 
