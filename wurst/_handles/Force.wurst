@@ -1,5 +1,7 @@
 package Force
 import NoWurst
+import Player
+import Trigger
 
 public constant allPlayers = CreateForce()
 /** Players under the control of users which are in the game. Leavers will be removed from the force automatically. */
@@ -86,14 +88,14 @@ public function force.iterator() returns ForceIterator
 
 init
 	for i=0 to bj_MAX_PLAYER_SLOTS-1
-		let p = Player(i)
+		let p = players[i]
 		allPlayers.addPlayer(p)
-		if GetPlayerController(p) == MAP_CONTROL_USER and GetPlayerSlotState(p) == PLAYER_SLOT_STATE_PLAYING
+		if p.getController() == MAP_CONTROL_USER and p.getSlotState() == PLAYER_SLOT_STATE_PLAYING
 			userPlayers.addPlayer(p)
-
 	let trg = CreateTrigger()
-	TriggerAddAction(trg, ()->userPlayers.removePlayer(GetTriggerPlayer()))
+	..addAction()->
+		userPlayers.removePlayer(GetTriggerPlayer())
 	for p in userPlayers
-		TriggerRegisterPlayerEvent(trg, p, EVENT_PLAYER_LEAVE)
+		trg.registerPlayerEvent(p, EVENT_PLAYER_LEAVE)
 
 
