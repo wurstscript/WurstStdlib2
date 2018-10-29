@@ -4,7 +4,15 @@ import Vectors
 import Wurstunit
 
 /* The package defines such geometry as 'ray' for 2D and 3D separately.
-Both can find the intersection point with another geometry object.
+Both can find the intersection point with another geometry object. 
+For example:
+
+    let p1 = vec2(1000, 1000)
+    let p2 = vec2(-1000, -1000)
+    let ray = ray2d(GetTriggerUnit().getPos(), vec2(1, 1))
+    let cast = ray.castToSegment(p1 ,p2)
+    if cast.success
+        addEffect("something.mdl", cast.point).destr()
 
 Most 2D functions return result2d(success, point, distance) tuple which contains
 information about intersection where
