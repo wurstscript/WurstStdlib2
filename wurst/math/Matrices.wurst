@@ -64,11 +64,11 @@ public function mat2.op_mult(real scalar) returns mat2
 public function real.op_mult(mat2 m) returns mat2
     return m * this
 
-/** Matrix multiplication is not commutative that means matrix*vect is not the same as vec*matrix. */
+/** Matrix multiplication is not commutative that means matrix * vect is not the same as vec * matrix. */
 public function mat2.op_mult(vec2 v) returns vec2
     return vec2(this.m00 * v.x + this.m01 * v.y, this.m10 * v.x + this.m11 * v.y)
 
-/** Matrix multiplication is not commutative that means matrix*vect is not the same as vec*matrix. */
+/** Matrix multiplication is not commutative that means matrix * vect is not the same as vec * matrix. */
 public function vec2.op_mult(mat2 m) returns vec2
     return vec2(this.x * m.m00 + this.y * m.m10, this.x * m.m01 + this.y * m.m11)
 
@@ -166,9 +166,9 @@ public function mat3.op_mult(real scalar) returns mat3
                 this.m20 * scalar,    this.m21 * scalar,    this.m22 * scalar)
 
 public function real.op_mult(mat3 m) returns mat3
-    return m*this
+    return m * this
 
-/** Matrix multiplication is not commutative that means matrix*vect is not the same as vec*matrix. */
+/** Matrix multiplication is not commutative that means matrix * vect is not the same as vec * matrix. */
 public function mat3.op_mult(vec3 v) returns vec3
     return vec3(this.m00 * v.x + this.m01 * v.y + this.m02 * v.z,
                 this.m10 * v.x + this.m11 * v.y + this.m12 * v.z,
@@ -267,11 +267,11 @@ public function mat3.toEuler() returns vec3
     real roll
     if this.m02 > 0.999
         yaw = Atan2(this.m21, this.m11) 
-        pitch = PI/2
+        pitch = PI / 2
         roll = 0
     else if this.m02 < -0.999
         yaw = Atan2(this.m21, this.m11) 
-        pitch = -PI/2
+        pitch = -PI / 2
         roll  = 0
     else
         yaw  = Atan2(-this.m12, this.m22)

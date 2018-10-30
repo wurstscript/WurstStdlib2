@@ -287,7 +287,7 @@ init
 		leaveTrig.addAction(() -> EventListener.generalEventCallback())
 		keyTrig.addAction(() -> EventListener.generalEventCallback())
 
-		for i = 0 to bj_MAX_PLAYERS-1
+		for i = 0 to bj_MAX_PLAYERS - 1
 			leaveTrig.registerPlayerEvent(players[i], EVENT_PLAYER_LEAVE)
 			keyTrig..registerPlayerEvent(players[i], EVENT_PLAYER_ARROW_DOWN_DOWN)
 			..registerPlayerEvent(players[i], EVENT_PLAYER_ARROW_DOWN_UP)

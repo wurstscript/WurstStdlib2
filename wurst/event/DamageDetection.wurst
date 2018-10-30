@@ -59,12 +59,12 @@ function swap()
 
 	ENUM_GROUP.enumUnitsAll(filter)
 
-	for i = 0 to funcNext-1
+	for i = 0 to funcNext - 1
 		current.addCondition(func[i])
 
 init
 	current = CreateTrigger()
-	for i = 0 to funcNext-1
+	for i = 0 to funcNext - 1
 		current.addCondition(func[i])
 
 	onEnter(() -> addUnit(getEnterLeaveUnit()))

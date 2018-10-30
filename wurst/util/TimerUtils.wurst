@@ -14,7 +14,7 @@ constant HELD = 0x28829022
 
 /** Attach Data to this timer */
 public function timer.setData(int data)
-	timerData.saveInt(this.getHandleId(), data )
+	timerData.saveInt(this.getHandleId(), data)
 	
 /** Retrieve the data attached to this timer */
 public function timer.getData() returns int

@@ -30,8 +30,8 @@ public function hypot(real dx, real dy) returns real
 	return x * SquareRoot(1 + t * t)
 
 /** Returns the angle of a height-slope */	
-public function getSlopeAngle( real z1, real z2, real dist ) returns angle
-	return angle(Atan2(z2-z1, dist ))
+public function getSlopeAngle(real z1, real z2, real dist) returns angle
+	return angle(Atan2(z2 - z1, dist))
 	
 public function int.moduloInt(int divisor) returns int
 	return this - (this div divisor) * divisor
@@ -86,5 +86,5 @@ public function min(vararg real numbers) returns real
 	
 	
 function test_hypot_help(real x, real y)
-	hypot(x,y).assertEquals(SquareRoot(x*x + y*y), 0.0001)
+	hypot(x,y).assertEquals(SquareRoot(x * x + y * y), 0.0001)
 	

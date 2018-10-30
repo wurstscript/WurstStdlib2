@@ -53,7 +53,7 @@ public class HashList<T>
 		
 	/** Remove the first occurence of t from this list */
 	function remove(T t)
-		for i = 0 to size-1
+		for i = 0 to size - 1
 			if t castTo int == ht.loadInt(this castTo int, i)
 				removeAt(i)
 				break
@@ -118,7 +118,7 @@ public class HLIterator<Q>
 
 	function next() returns Q
 		i++
-		return list.get(i-1)
+		return list.get(i - 1)
 
 	function close()
 		destroy this

@@ -112,7 +112,7 @@ public function vec2.setLength(real length) returns vec2
 	real l = SquareRoot(this.x * this.x + this.y * this.y)
 	if l == 0.
 		return vec2(0, 0)
-	l = length/l
+	l = length / l
 	return vec2(this.x * l, this.y * l)
 	
 /** Get the length of this vector */
@@ -121,11 +121,11 @@ public function vec2.length() returns real
 
 /** Get the squared length of this vector */
 public function vec2.lengthSq() returns real
-	return this.x*this.x+this.y*this.y
+	return this.x * this.x + this.y * this.y
 
 /** Is this vector inside the given circle */
 public function vec2.inRange(vec2 v2, real radius) returns boolean
-	return (this.x-v2.x).squared() + (this.y-v2.y).squared() <= radius*radius
+	return (this.x - v2.x).squared() + (this.y - v2.y).squared() <= radius.squared()
 	
 /** Get a String-representation of this Vector (for debugging) */
 public function vec2.toString() returns string
@@ -204,7 +204,7 @@ public function vec2.isInPolygon(vararg vec2 args) returns bool
 		var test = 0
 		for i = 0 to count - 1
 			let p1 = points[i]
-			let p2 = points[i+1]
+			let p2 = points[i + 1]
 			let side = (p2.x - p1.x) * (this.y - p1.y) - (this.x - p1.x) * (p2.y - p1.y)
 			if this.y >= p1.y
 				if this.y < p2.y and side >= 0
@@ -398,7 +398,7 @@ public function vec3.normalizedPointerTo(vec3 target) returns vec3
 	(this emulated the behavior of using polarOffset for this task)
 	*/
 public function vec3.moveTowards(vec3 target, real dist) returns vec3
-	return this + dist*this.normalizedPointerTo(target)
+	return this + dist * this.normalizedPointerTo(target)
 	
 /** returns a vector of the given length pointing into the direction of this angle */
 public function angle.toVec(real len) returns vec2
@@ -410,7 +410,7 @@ public function angle.direction() returns vec2
 	
 /** returns a vector of length 'dist' pointing into the direction of this angle */
 public function angle.direction(real dist) returns vec2
-	return vec2(dist*Cos(this.radians), dist*Sin(this.radians))
+	return vec2(dist * Cos(this.radians), dist * Sin(this.radians))
 	
 /** returns the angle of this vector */	
 public function vec2.getAngle() returns angle

@@ -64,7 +64,7 @@ unit randomSelected = null
 	or null if the group is empty */
 public function group.getRandomUnit() returns unit
 	let size = this.size()
-	randomCounter = 1 + GetRandomInt(0, size-1)
+	randomCounter = 1 + GetRandomInt(0, size - 1)
 	randomSelected = null
 	ForGroup(this) ->
 		randomCounter--

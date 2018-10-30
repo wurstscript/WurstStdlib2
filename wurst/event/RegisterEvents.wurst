@@ -17,7 +17,7 @@ public function registerPlayerUnitEvent(playerunitevent p, code filter, code con
 	int hid = p.getHandleId()
 	if t[hid] == null
 		t[hid] = CreateTrigger()
-		for k = bj_MAX_PLAYER_SLOTS-1 downto 0
+		for k = bj_MAX_PLAYER_SLOTS - 1 downto 0
 			t[hid].registerPlayerUnitEvent(players[k], p, filter != null ? Filter(filter) : null)
 	if condition != null
 		t[hid].addCondition(Filter(condition))
@@ -43,7 +43,7 @@ public function registerPlayerEvent(playerevent p, code condition, code action)
 	int hid = p.getHandleId()
 	if t[hid] == null
 		t[hid] = CreateTrigger()
-		for k = bj_MAX_PLAYER_SLOTS-1 downto 0
+		for k = bj_MAX_PLAYER_SLOTS - 1 downto 0
 			t[hid].registerPlayerEvent(players[k], p)
 	if condition != null
 		t[hid].addCondition(Filter(condition))

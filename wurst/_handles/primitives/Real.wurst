@@ -9,9 +9,9 @@ public constant REAL_MIN = -340282366920938000000000000000000000000.
 public function real.abs() returns real
 	return this < 0 ? -this : this 
 
-/** Returns the result of this*this, i.e. the square */
+/** Returns the result of this * this, i.e. the square */
 public function real.squared() returns real
-	return this*this
+	return this * this
 
 /** Returns the sign of this real */
 public function real.sign() returns int
@@ -19,7 +19,7 @@ public function real.sign() returns int
 		
 /** Rounds the input real to the nearest int */
 public function real.round() returns int
-	return this > 0 ? (this+.5).toInt() : (this-.5).toInt()
+	return this > 0 ? (this + .5).toInt() : (this - .5).toInt()
 
 /** Rounds the input real towards zero to the nearest int */
 public function real.trunc() returns int
@@ -44,7 +44,7 @@ public function real.clamp(real lowerBound, real higherBound) returns real
 	return (this <= lowerBound ? lowerBound : (this >= higherBound ? higherBound : this))
 
 /** Converts the input real to an int. This cuts off
-	the decimal digits. (1.9->1) */
+	the decimal digits. (1.9 -> 1) */
 public function real.toInt() returns int
 	return R2I(this)
 
@@ -92,7 +92,7 @@ public function real.pow(real x) returns real
 	
 /** Linear Interpolation with alphafactor(smoothness) */
 public function real.lerp(real target, real alpha) returns real
-	return (this * (1.0-alpha)) + (target * alpha)
+	return (this * (1.0 - alpha)) + (target * alpha)
 
 /** Checks if this real is between low and high value */
 public function real.isBetween(real low, real high) returns bool

@@ -20,7 +20,7 @@ public function string.toCharsetInt() returns int
 		return -1
 	else
 		for i = 0 to charsetlength - 1
-			if charset.substring(i, i+1) == this
+			if charset.substring(i, i + 1) == this
 				return i
 		return -1
 		
@@ -34,7 +34,7 @@ public function string.toInt() returns int
 
 /** Converts an int to the representative char */
 public function int.toCharsetString() returns string
-	return charset.substring(this, this+1)
+	return charset.substring(this, this + 1)
 
 /** returns a substring specified by end and start position. */
 public function string.substring(int start, int stop) returns string
@@ -50,7 +50,7 @@ public function string.length() returns int
 	
 /** Returns the char at the given position. 0 = first char */
 public function string.charAt(int index) returns string
-	return SubString(this, index, index+1)
+	return SubString(this, index, index + 1)
 	
 /**	Converts a string to an ability id */
 public function string.toAbilityId() returns int
@@ -63,7 +63,7 @@ public function string.endsWith(string s) returns boolean
 	let len = this.length()
 	if s.length() > len
 		return false
-	return this.substring(len-s.length(), len) == s
+	return this.substring(len - s.length(), len) == s
 		
 /**	Returns if the given string starts with the specified string.	*/
 public function string.startsWith(string s) returns boolean
@@ -162,12 +162,12 @@ public function string.lastIndexOf(string s) returns int
 public function string.countOccurences(string findStr) returns int
 	int lastIndex = 0
 	int count = 0
-	while(lastIndex != -1)
-		lastIndex = this.indexOf(findStr,lastIndex)
+	while lastIndex != -1
+		lastIndex = this.indexOf(findStr, lastIndex)
 	
-		if( lastIndex != -1)
+		if lastIndex != -1
 			count++
-			lastIndex+=findStr.length()
+			lastIndex += findStr.length()
 	return count
 
 /** True if the string contains the given string */
@@ -224,7 +224,7 @@ public class StringIterator
 		return currentpos < stringLen
 		
 	function next() returns string
-		let val = s.substring(currentpos, currentpos+1)
+		let val = s.substring(currentpos, currentpos + 1)
 		currentpos++
 		return val
 		
@@ -260,4 +260,4 @@ public class StringLines
 	
 /** Returns a StringLines Object of the given string for iteration */
 public function string.toLines() returns StringLines
-	return new StringLines(this, 0, this.countOccurences("\n")+1)
+	return new StringLines(this, 0, this.countOccurences("\n") + 1)

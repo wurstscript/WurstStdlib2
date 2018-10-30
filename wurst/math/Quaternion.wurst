@@ -188,13 +188,13 @@ public function quat.toEuler() returns vec3
         cos = 1 - 2 * this.x * this.x - 2 * this.z * this.z
         sin = 2 * this.y * this.z + 2 * this.x * this.w
         yaw = Atan2(sin, cos) 
-        pitch = PI/2
+        pitch = PI / 2
         roll = 0
     else if pole < -0.499
         cos = 1 - 2 * this.x * this.x - 2 * this.z * this.z
         sin = 2 * this.y * this.z + 2 * this.x * this.w
         yaw = Atan2(sin, cos) 
-        pitch = -PI/2
+        pitch = -PI / 2
         roll  = 0
     else
         cos = 1 - 2 * this.x * this.x - 2 * this.y * this.y

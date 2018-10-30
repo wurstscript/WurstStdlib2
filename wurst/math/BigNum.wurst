@@ -11,7 +11,7 @@ public function log(real py, real pbase) returns real
 		return 0.0
 
 	if y < 1.
-		y = 1.0/y
+		y = 1.0 / y
 		sign = -1.0
 
 	//Chop out powers of the base
@@ -23,7 +23,7 @@ public function log(real py, real pbase) returns real
 			base = SquareRoot(base)	 //If you use just one base a lot, precompute its squareroots
 			factor = factor / 2.
 
-	return sign*logy
+	return sign * logy
 
 public class BigNum_l
 	int leaf = 0
@@ -103,7 +103,7 @@ public class BigNum
 		while carry != 0
 			sum = cur.leaf + carry
 			carry = sum div base
-			sum = sum - carry*base
+			sum = sum - carry * base
 			cur.leaf = sum
 			
 			if cur.next == null
@@ -112,7 +112,7 @@ public class BigNum
 			cur = cur.next
 
 	
-	//x*BASE() must be less than MAXINT()
+	// x * BASE() must be less than MAXINT()
 	function mulSmall(int x)
 		BigNum_l cur = list
 		int product

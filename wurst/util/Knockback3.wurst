@@ -85,7 +85,7 @@ public class Knockback3
 		Knockback3.add(u, 1000., angle(0.), angle(bj_PI / 4.))
 	*/
 	static function add(unit u, real velocity, angle groundAngle, angle airAngle)
-		let instVel = velocity*ANIMATION_PERIOD
+		let instVel = velocity * ANIMATION_PERIOD
 		let v	   = ZERO3.polarProject(instVel, groundAngle, airAngle)
 
 		if unitNodes.has(u)
@@ -128,7 +128,7 @@ public class Knockback3
 	static function setVel(unit u, real velocity, angle groundAngle, angle airAngle)
 		if unitNodes.has(u)
 			let knockback = unitNodes.get(u)
-			let instVel   = velocity*ANIMATION_PERIOD
+			let instVel   = velocity * ANIMATION_PERIOD
 
 			knockback.del = ZERO3.polarProject(instVel, groundAngle, airAngle)
 		else
@@ -151,7 +151,7 @@ public class Knockback3
 			if knockback.del.z <= isAirborneThreshold
 				knockback.del *= (1. - frictionCoefficientGround)
 
-				if velXySquared > frictionFxThreshold*frictionFxThreshold*ANIMATION_PERIOD
+				if velXySquared > frictionFxThreshold * frictionFxThreshold * ANIMATION_PERIOD
 					addEffect(frictionFxPath, pos3).destr()
 
 			if USE_MOVE_SPEED_MODIFIERS
@@ -163,16 +163,16 @@ public class Knockback3
 		else
 			knockback.del = knockback.del.project(vec3(0., 0., 1.))
 
-		if knockback.del.z < elasticityThreshold*ANIMATION_PERIOD
+		if knockback.del.z < elasticityThreshold * ANIMATION_PERIOD
 			knockback.del.z = knockback.del.z*-1.*restitutionCoefficientGround
 
-		if knockback.del.z > airborneThreshold*ANIMATION_PERIOD
+		if knockback.del.z > airborneThreshold * ANIMATION_PERIOD
 			knockback.u.setFlyHeight(pos3.z + knockback.del.z, 0.)
-			knockback.del.z = knockback.del.z - gravity*ANIMATION_PERIOD
+			knockback.del.z = knockback.del.z - gravity * ANIMATION_PERIOD
 
 
 	private static function tickAboveGround(Knockback3 knockback, vec3 newPos3, vec3 pos3)
-		knockback.del.z -= gravity*ANIMATION_PERIOD
+		knockback.del.z -= gravity * ANIMATION_PERIOD
 		let heightDifference = newPos3.getTerrainZ() - pos3.getTerrainZ()
 
 		knockback.u..setFlyHeight(newPos3.z - heightDifference, 0.)
@@ -186,7 +186,7 @@ public class Knockback3
 
 
 	private static bool hitDestructable
-	private static let destructableRect = Rect(-1*DESTRUCTABLE_ENUM_SIZE, -1*DESTRUCTABLE_ENUM_SIZE, DESTRUCTABLE_ENUM_SIZE, DESTRUCTABLE_ENUM_SIZE)
+	private static let destructableRect = Rect(-1 * DESTRUCTABLE_ENUM_SIZE, -1 * DESTRUCTABLE_ENUM_SIZE, DESTRUCTABLE_ENUM_SIZE, DESTRUCTABLE_ENUM_SIZE)
 
 	private static function tickTryDestructable(Knockback3 knockback, vec3 newPos3)
 		hitDestructable = false
@@ -228,10 +228,10 @@ public class Knockback3
 			else if newInMap
 				tickAboveGround(knockback, newPos3, pos3)
 
-			if velXySquared > destroyDestructableSpeedThreshold*ANIMATION_PERIOD and pos3.z < destroyDestructableHeightThreshold
+			if velXySquared > destroyDestructableSpeedThreshold * ANIMATION_PERIOD and pos3.z < destroyDestructableHeightThreshold
 				tickTryDestructable(knockback, newPos3)
 
-			if velXySquared < minimumSlideSpeed*ANIMATION_PERIOD and knockback.del.z > elasticityThreshold*ANIMATION_PERIOD and knockback.del.z < -1*elasticityThreshold*ANIMATION_PERIOD and pos3.z < isAirborneThreshold
+			if velXySquared < minimumSlideSpeed * ANIMATION_PERIOD and knockback.del.z > elasticityThreshold * ANIMATION_PERIOD and knockback.del.z < -1 * elasticityThreshold * ANIMATION_PERIOD and pos3.z < isAirborneThreshold
 				tickUnitDone(knockback)
 				knockback.remove()
 

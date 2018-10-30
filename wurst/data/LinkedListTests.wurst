@@ -28,7 +28,7 @@ function testForLoop()
 	for i in list
 		result += i
 
-	result.assertEquals(5+4+3+2)
+	result.assertEquals(5 + 4 + 3 + 2)
 
 @Test function testBackIter()
 	let list = new LinkedList<int>()
@@ -56,7 +56,7 @@ function testForLoop()
 	var result = 0
 	for i in list
 		result += i
-	result.assertEquals(1+2+3+4)
+	result.assertEquals(1 + 2 + 3 + 4)
 
 @Test function testAddVararg()
 	let list = new LinkedList<int>()
@@ -72,7 +72,7 @@ function testForLoop()
 	var result = 0
 	for i in list
 		result += i
-	result.assertEquals(1+2+3+4)
+	result.assertEquals(1 + 2 + 3 + 4)
 
 @Test
 function testClosures()
@@ -80,7 +80,7 @@ function testClosures()
 	list..add(1, 2, 3, 4)
 	
 	list.updateAll(i -> i * 2)
-	list.get(3).assertEquals(4*2)
+	list.get(3).assertEquals(4 * 2)
 
 	list.removeIf(i -> i > 4)
 	list.size().assertEquals(2)
@@ -104,7 +104,7 @@ function testGenerics()
 @Test function testSort()
 	let list = new LinkedList<int>()
 	for i = 0 to 400
-		list..add(GetRandomInt(-100, 100)*2 + 1)
+		list..add(GetRandomInt(-100, 100) * 2 + 1)
 	list.sort()
 	
 	let itr = list.iterator()

@@ -215,7 +215,7 @@ public class LinkedList<T>
 	/** Pseudo-randomly changes the position of each element */
 	function shuffle()
 		for i = 0 to size
-			add(removeAt(GetRandomInt(0, size-1)))
+			add(removeAt(GetRandomInt(0, size - 1)))
 
 	/** Adds the given element directly behind the element at the given index */
 	function addAt(T elem, int index)

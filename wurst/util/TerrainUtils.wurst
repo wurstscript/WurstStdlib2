@@ -34,11 +34,11 @@ public function vec2.isTerrainPathable(pathingtype ttype) returns bool
 	
 /** Returns center of the Tile which given vec2 belongs to. */
 public function vec2.toTileCenter() returns vec2
-	return vec2((this.x/128.).round() * 128., (this.y/128.).round() * 128.)
+	return vec2((this.x / 128.).round() * 128., (this.y / 128.).round() * 128.)
 
 /** Returns the (not normalised) terrain-normal at the given point */
 public function vec2.getTerrainNormal(real sampleRadius) returns vec3
-	return 2 * sampleRadius * vec3( (this.add(-sampleRadius, 0).getTerrainZ() - this.add(sampleRadius, 0).getTerrainZ()), (this.add(-sampleRadius, 0).getTerrainZ() - this.add(sampleRadius, 0).getTerrainZ()), 2*sampleRadius )
+	return 2 * sampleRadius * vec3((this.add(-sampleRadius, 0).getTerrainZ() - this.add(sampleRadius, 0).getTerrainZ()), (this.add(-sampleRadius, 0).getTerrainZ() - this.add(sampleRadius, 0).getTerrainZ()), 2 * sampleRadius)
 	
 public function vec2.isTerrainDeepWater() returns boolean
 	return not this.isTerrainPathable(PATHING_TYPE_FLOATABILITY) and this.isTerrainPathable(PATHING_TYPE_WALKABILITY)
@@ -52,7 +52,7 @@ public function vec2.isTerrainLand() returns boolean
 public function vec2.isTerrainPlatform() returns boolean
 	return not this.isTerrainPathable(PATHING_TYPE_FLOATABILITY) and not this.isTerrainPathable(PATHING_TYPE_WALKABILITY) and not this.isTerrainPathable(PATHING_TYPE_BUILDABILITY)
 
-constant MAX_RANGE_SQ = 10.*10.
+constant MAX_RANGE_SQ = 10. .squared()
 constant DUMMY_ITEM_ID = 'wolg'
 let dummyItem = createItem(DUMMY_ITEM_ID, ZERO2)..setVisible(false)
 let itemSearchRect = Rect(0., 0., 128., 128.)
@@ -78,7 +78,7 @@ public function vec2.isTerrainWalkable() returns boolean
 		hiddenItems[hiddenItemsCount].setVisible(true)		
 		hiddenItems[hiddenItemsCount] = null
 
-	return (tempPos.x-this.x)*(tempPos.x-this.x)+(tempPos.y-this.y)*(tempPos.y-this.y) <= MAX_RANGE_SQ and not this.isTerrainPathable(PATHING_TYPE_WALKABILITY)
+	return (tempPos.x - this.x) * (tempPos.x - this.x) + (tempPos.y-this.y) * (tempPos.y - this.y) <= MAX_RANGE_SQ and not this.isTerrainPathable(PATHING_TYPE_WALKABILITY)
 
 // Tile API
 /** represents a single terrain tile
@@ -147,7 +147,7 @@ public function tile.getVariance() returns int
 public function tile.setPathing(pathingtype ttype, bool flag)
 	for i = 0 to 3
 		for j = 0 to 3
-			(this.toVec2() + vec2(-48. + i*32,-48. + j*32)).setTerrainPathable(ttype, flag)
+			(this.toVec2() + vec2(-48. + i * 32,-48. + j * 32)).setTerrainPathable(ttype, flag)
 
 @test function testMapCorners()
 	boundMin.getTile().id.assertEquals(0)

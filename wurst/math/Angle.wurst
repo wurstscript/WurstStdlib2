@@ -13,7 +13,7 @@ public tuple angle(real radians)
 
 /** get the real representation of this angle in degrees */
 public function angle.degrees() returns real
-	return this.radians*RADTODEG
+	return this.radians * RADTODEG
 	
 /** get the real representation of this angle in radians */
 public function angle.radians() returns real
@@ -21,11 +21,11 @@ public function angle.radians() returns real
 
 /** interpret this real as an angle given in degrees */
 public function real.asAngleDegrees() returns angle
-	return angle(this*DEGTORAD)
+	return angle(this * DEGTORAD)
 
 /** interpret this real as an angle given in degrees */
 public function real.fromDeg() returns angle
-	return angle(this*DEGTORAD)
+	return angle(this * DEGTORAD)
 
 /** interpret this real as an angle given in degrees */
 public function real.fromRad() returns angle
@@ -33,11 +33,11 @@ public function real.fromRad() returns angle
 
 /** interpret this int as an angle given in degrees */
 public function int.fromRad() returns angle
-	return angle(this*1.)
+	return angle(this * 1.)
 
 /** interpret this int as an angle given in radians */
 public function int.asAngleRadians() returns angle
-	return angle(this*1.)
+	return angle(this * 1.)
 
 /** interpret this real as an angle given in radians*/
 public function real.asAngleRadians() returns angle
@@ -65,15 +65,15 @@ public function angle.op_minus(angle other) returns angle
 
 /** multiplies the angle with the given scalar */
 public function angle.op_mult(real scalar) returns angle
-	return angle(this.radians*scalar)
+	return angle(this.radians * scalar)
 
 /** multiplies with the given angle */
 public function real.op_mult(angle ang) returns angle
-	return angle(ang.radians*this)
+	return angle(ang.radians * this)
 
 /** divides the angle by the given scalar */
 public function angle.op_divReal(real scalar) returns angle
-	return angle(this.radians/scalar)
+	return angle(this.radians / scalar)
 
 @Test function testAngle()
 	(180 .fromDeg().radians).assertEquals(180 .fromDeg().degrees().fromDeg().radians)

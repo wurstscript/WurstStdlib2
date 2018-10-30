@@ -50,7 +50,7 @@ public function lightning.getColor() returns color
 /** Gets given lightning's color with alpha channel.
 	Uses approximation since it's stored in reals. */
 public function lightning.getColorWithA() returns colorA
-	return this.getColor().withAlpha( (255 * this.getColorA() + .5).toInt())
+	return this.getColor().withAlpha((255 * this.getColorA() + .5).toInt())
 	
 public function lightning.getColorR() returns real
 	return GetLightningColorR(this)
