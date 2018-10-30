@@ -11,12 +11,12 @@ For example:
     let p2 = vec2(-1000, -1000)
     let ray = ray2d(GetTriggerUnit().getPos(), vec2(1, 1))
     let cast = ray.castToSegment(p1 ,p2)
-    if cast.success
+    if cast.intersects
         addEffect("something.mdl", cast.point).destr()
 
-Most 2D functions return result2d(success, point, distance) tuple which contains
+Most 2D functions return result2d(intersects, point, distance) tuple which contains
 information about intersection where
-'success' is 'true' if the ray intersects the given object
+'intersects' is 'true' if the ray intersects the given object
 'point' is the intersection point or zero-vector
 'distance' is the distance between the ray's origin and the intersection point
 
@@ -25,7 +25,7 @@ In this case the function returns doubleresult2d tuple that contains a couple of
 tuples.
 
 Functions that find 3D intersection work similarly and return result3d tuple.
-result3d(success, point, distance, backface) also contains 'backface' boolean value that's
+result3d(intersects, point, distance, backface) also contains 'backface' boolean value that's
 true in case the object is faced away from  the ray's origin. Functions which find the
 intersection point with a convex object (e.g. a sphere) return doubleresult3d tuple.
 
@@ -50,21 +50,21 @@ direction - directional vector */
 public tuple ray3d(vec3 origin, vec3 direction)
 
 /** 2D intersection result
-success - 'true' if the intersection point exists
+intersects - 'true' if the intersection point exists
 point - the intersection point or ZERO2
 distance - distance between the ray's origin and the intersection point */
-public tuple result2d(bool success, vec2 point, real distance)
+public tuple result2d(bool intersects, vec2 point, real distance)
 
 /** Double 2D intersection result.
 'first' is nearest to the ray's origin. */
 public tuple doubleresult2d(result2d first, result2d second)
 
 /** 3D intersection result
-success - 'true' if the intersection point exists
+intersects - 'true' if the intersection point exists
 point - the intersection point or ZERO2
 distance - distance between the ray's origin and the intersection point 
 backface - `true` if the surface at the intersection point is faced away from the ray's origin  */
-public tuple result3d(bool success, vec3 point, real distance, bool backface)
+public tuple result3d(bool intersects, vec3 point, real distance, bool backface)
 
 /** Double 3D intersection result.
 'first' is nearest to the ray's origin. */
@@ -76,7 +76,7 @@ function vec2.cross(vec2 v) returns real
     return this.x * v.y - this.y * v.x
 
 /** Projects the point onto a ray.
-Returns tuple result2d(success, point, distance). */
+Returns tuple result2d(intersects, point, distance). */
 public function vec2.project(ray2d ray) returns result2d
     var result = FAIL_2D
     let lengthSq = ray.direction.lengthSq()
@@ -84,7 +84,7 @@ public function vec2.project(ray2d ray) returns result2d
         let length = SquareRoot(lengthSq)
         let dir = vec2(ray.direction.x / length, ray.direction.y / length)
         let dot = (this - ray.origin).dot(dir)
-        result.success = true
+        result.intersects = true
         if dot < EPSILON
             result.point = ray.origin
             result.distance = 0
@@ -94,7 +94,7 @@ public function vec2.project(ray2d ray) returns result2d
     return result
 
 /** Finds the intersection point of the ray and a line defined by 2 points.
-Returns tuple result2d(success, point, distance). */ 
+Returns tuple result2d(intersects, point, distance). */ 
 public function ray2d.castToLine(vec2 p1, vec2 p2) returns result2d
     var result = FAIL_2D
     let lengthSq = this.direction.lengthSq()
@@ -107,13 +107,13 @@ public function ray2d.castToLine(vec2 p1, vec2 p2) returns result2d
             if cross.abs() > EPSILON
                 let t = (p1 - this.origin).cross(v) / cross
                 if t >= 0
-                    result.success = true
+                    result.intersects = true
                     result.point = this.origin + dir * t
                     result.distance = t
     return result
 
 /** Finds the intersection point of the ray and another ray.
-Returns tuple result2d(success, point, distance). */ 
+Returns tuple result2d(intersects, point, distance). */ 
 public function ray2d.castToRay(vec2 origin, vec2 direction) returns result2d
     var result = FAIL_2D
     let lengthSq1 = this.direction.lengthSq()
@@ -125,13 +125,13 @@ public function ray2d.castToRay(vec2 origin, vec2 direction) returns result2d
             let t1 = (origin - this.origin).cross(direction) / cross
             let t2 = (this.origin - origin).cross(dir1) / -cross
             if t1 >= 0 and t2 >= 0
-                result.success = true
+                result.intersects = true
                 result.point = this.origin + dir1 * t1
                 result.distance = t1
     return result
 
 /** Finds the intersection point of the ray and a line segment defined by 2 points.
-Returns tuple result2d(success, point, distance). */ 
+Returns tuple result2d(intersects, point, distance). */ 
 public function ray2d.castToSegment(vec2 p1, vec2 p2) returns result2d
     var result = FAIL_2D
     let lengthSq = this.direction.lengthSq()
@@ -145,7 +145,7 @@ public function ray2d.castToSegment(vec2 p1, vec2 p2) returns result2d
                 let t1 = (p1 - this.origin).cross(sv) / cross
                 let t2 = (this.origin - p1).cross(dir) / -cross
                 if t1 >= 0 and t2.isBetween(0, 1)
-                    result.success = true
+                    result.intersects = true
                     result.point = this.origin + dir * t1
                     result.distance = t1
     return result
@@ -164,7 +164,7 @@ public function ray2d.castToCircle(vec2 center, real radius) returns doubleresul
         let dd = center.distanceToSq(tangent)
         let rr = radius.squared()
         if dd.isBetween(rr - EPSILON, rr + EPSILON)
-            result.first.success = true
+            result.first.intersects = true
             result.first.point = tangent
             result.first.distance = dot
         else if dd < rr
@@ -172,14 +172,14 @@ public function ray2d.castToCircle(vec2 center, real radius) returns doubleresul
             let first = dot - t
             let second = dot + t
             if first >= 0
-                result.first.success = true
+                result.first.intersects = true
                 result.first.point = this.origin + dir * first
                 result.first.distance = first
-                result.second.success = true
+                result.second.intersects = true
                 result.second.point = this.origin + dir * second
                 result.second.distance = second
             else if second >= 0
-                result.first.success = true
+                result.first.intersects = true
                 result.first.point = this.origin + dir * second
                 result.first.distance = second
     return result
@@ -187,7 +187,7 @@ public function ray2d.castToCircle(vec2 center, real radius) returns doubleresul
 /* =============== 3D =============== */
 
 /** Projects the point onto a ray.
-Returns tuple result3d(success, point, distance, backface) where 'backface' is always false. */
+Returns tuple result3d(intersects, point, distance, backface) where 'backface' is always false. */
 public function vec3.project(ray3d ray) returns result3d
     var result = FAIL_3D
     let lengthSq = ray.direction.lengthSquared()
@@ -195,7 +195,7 @@ public function vec3.project(ray3d ray) returns result3d
         let length = SquareRoot(lengthSq)
         let dir = vec3(ray.direction.x / length, ray.direction.y / length, ray.direction.z / length)
         let dot = (this - ray.origin).dot(dir)
-        result.success = true
+        result.intersects = true
         if dot < EPSILON
             result.point = ray.origin
             result.distance = 0
@@ -207,7 +207,7 @@ public function vec3.project(ray3d ray) returns result3d
 /** Finds the intersection point of the ray and a plane where
 point - a point on the plane
 normal - a vector perpendicular to the plane
-Returns tuple result3d(success, point, distance, backface). */ 
+Returns tuple result3d(intersects, point, distance, backface). */ 
 public function ray3d.castToPlane(vec3 point, vec3 normal) returns result3d
     var result = FAIL_3D
     let lengthSq = this.direction.lengthSquared()
@@ -218,7 +218,7 @@ public function ray3d.castToPlane(vec3 point, vec3 normal) returns result3d
         if dot.abs() > EPSILON
             let t = normal.dot(point - this.origin) / dot
             if t  >= 0
-                result.success = true
+                result.intersects = true
                 result.point = this.origin + dir * t
                 result.distance = t
                 result.backface = dot < 0
@@ -228,7 +228,7 @@ public function ray3d.castToPlane(vec3 point, vec3 normal) returns result3d
 center - the center of the disk
 normal - a vector perpendicular to the disk's plane
 radius - the disk's radius
-Returns tuple result3d(success, point, distance, backface). */ 
+Returns tuple result3d(intersects, point, distance, backface). */ 
 public function ray3d.castToDisk(vec3 center, vec3 normal, real radius) returns result3d
     let result = this.castToPlane(center, normal)
     return center.distanceTo(result.point) <= radius ? result : FAIL_3D
@@ -247,7 +247,7 @@ public function ray3d.castToSphere(vec3 center, real radius) returns doubleresul
         let dd = center.distanceToSq(tangent)
         let rr = radius.squared()
         if dd.isBetween(rr - EPSILON, rr + EPSILON)
-            result.first.success = true
+            result.first.intersects = true
             result.first.point = tangent
             result.first.distance = dot
         else if dd < rr
@@ -255,22 +255,22 @@ public function ray3d.castToSphere(vec3 center, real radius) returns doubleresul
             let first = dot - t
             let second = dot + t
             if first >= 0
-                result.first.success = true
+                result.first.intersects = true
                 result.first.point = this.origin + dir * first
                 result.first.distance = first
-                result.second.success = true
+                result.second.intersects = true
                 result.second.point = this.origin + dir * second
                 result.second.distance = second
                 result.second.backface = true
             else if second >= 0
-                result.first.success = true
+                result.first.intersects = true
                 result.first.point = this.origin + dir * second
                 result.first.distance = second
                 result.first.backface = true
     return result
 
 /** Finds the intersection point of the ray and a triangle in 3D space defined by 3 points.
-Returns tuple result3d(success, point, distance, backface) where 'backface' depends on the order of the given points. */
+Returns tuple result3d(intersects, point, distance, backface) where 'backface' depends on the order of the given points. */
 public function ray3d.castToTriangle(vec3 p1, vec3 p2, vec3 p3) returns result3d
     var result = FAIL_3D
     let lengthSq = this.direction.lengthSquared()
@@ -293,7 +293,7 @@ public function ray3d.castToTriangle(vec3 p1, vec3 p2, vec3 p3) returns result3d
                 if v >= 0 and u + v <= 1
                     let t = v2.dot(qv) * invDet
                     if t >= 0
-                        result.success = true
+                        result.intersects = true
                         result.point = this.origin + dir * t
                         result.distance = t
                         result.backface = det < 0
@@ -304,54 +304,54 @@ public function ray3d.castToTriangle(vec3 p1, vec3 p2, vec3 p3) returns result3d
 @Test function testProjection2d()
     let ray = ray2d(vec2(-5, 3), vec2(1, 1))
     var test = vec2(-4, 8).project(ray)
-    test.success.assertTrue()
+    test.intersects.assertTrue()
     test.point.assertEquals(vec2(-2, 6))
     test.distance.assertEquals(4.2426, EPSILON)
     test = vec2(-9, 0).project(ray)
-    test.success.assertTrue()
+    test.intersects.assertTrue()
     test.point.assertEquals(ray.origin)
     test.distance.assertEquals(0, EPSILON)
     test = vec2(-9, 0).project(ray2d(vec2(-5, 3), vec2(0, 0)))
-    test.success.assertFalse()
+    test.intersects.assertFalse()
 
 @Test function testLine()
     let ray = ray2d(vec2(4, 2), vec2(-1, 1))
     var test = ray.castToLine(vec2(-3, -2), vec2(2, 4))
-    test.success.assertTrue()
+    test.intersects.assertTrue()
     test.distance.assertEquals(2.8284, EPSILON)
     test.point.assertEquals(vec2(2, 4))
     test = ray.castToLine(vec2(-3, -2), vec2(5, 1))
-    test.success.assertFalse()
+    test.intersects.assertFalse()
     test = ray.castToLine(vec2(-3, -2), vec2(-4, -1))
-    test.success.assertFalse()
+    test.intersects.assertFalse()
     test = ray.castToLine(vec2(-3, -2), vec2(0.50001, 0.00001))
-    test.success.assertTrue()
+    test.intersects.assertTrue()
     test.distance.assertEquals(0, EPSILON)
 
 @Test function testRay()
     let ray = ray2d(vec2(4, 2), vec2(-1, 1))
     var test = ray.castToRay(vec2(-3, -2), vec2(1.5, 4))
-    test.success.assertTrue()
+    test.intersects.assertTrue()
     test.point.assertEquals(vec2(0, 6))
     test.distance.assertEquals(5.65685, EPSILON)
     test = ray.castToRay(vec2(-3, -2), vec2(-1, 1))
-    test.success.assertFalse()
+    test.intersects.assertFalse()
     test = ray.castToRay(vec2(-3, -2), vec2(3.50001, 2.00001))
-    test.success.assertTrue()
+    test.intersects.assertTrue()
     test.distance.assertEquals(0, EPSILON)
 
 @Test function testSegment()
     let ray = ray2d(vec2(4, 2), vec2(-1, 1))
     var test = ray.castToSegment(vec2(8, 5), vec2(-4, 3))
-    test.success.assertTrue()
+    test.intersects.assertTrue()
     test.point.assertEquals(vec2(2, 4))
     test.distance.assertEquals(2.8284, EPSILON)
     test = ray.castToSegment(vec2(0, 6), vec2(4, 2))
-    test.success.assertFalse()
+    test.intersects.assertFalse()
     test = ray.castToSegment(vec2(6, 25), vec2(5, -2))
-    test.success.assertFalse()
+    test.intersects.assertFalse()
     test = ray.castToSegment(vec2(3, 1), vec2(5, 3))
-    test.success.assertTrue()
+    test.intersects.assertTrue()
     test.point.assertEquals(vec2(4, 2))
     test.distance.assertEquals(0, EPSILON)
 
@@ -359,133 +359,133 @@ public function ray3d.castToTriangle(vec3 p1, vec3 p2, vec3 p3) returns result3d
     let ray = ray2d(vec2(0, 6), vec2(1, -1))
     var test = ray.castToCircle(vec2(2, 4), 1.414213)
     // Two
-    test.first.success.assertTrue()
+    test.first.intersects.assertTrue()
     test.first.point.assertEquals(vec2(1, 5))
     test.first.distance.assertEquals(1.414213, EPSILON)
-    test.second.success.assertTrue()
+    test.second.intersects.assertTrue()
     test.second.point.assertEquals(vec2(3, 3))
     test.second.distance.assertEquals(4.2426, EPSILON)
     // Tangent
     test = ray.castToCircle(vec2(-2, 4), 2.828427)
-    test.first.success.assertTrue()
+    test.first.intersects.assertTrue()
     test.first.point.assertEquals(vec2(0, 6))
     test.first.distance.assertEquals(0, EPSILON)
-    test.second.success.assertFalse()
+    test.second.intersects.assertFalse()
     // Inside
     test = ray.castToCircle(vec2(-1, 7), 2.828427)
-    test.first.success.assertTrue()
+    test.first.intersects.assertTrue()
     test.first.point.assertEquals(vec2(1, 5))
     test.first.distance.assertEquals(1.414213, EPSILON)
-    test.second.success.assertFalse()
+    test.second.intersects.assertFalse()
     // Origin on circle
     test = ray.castToCircle(vec2(-2, 8), 2.828427)
-    test.first.success.assertTrue()
+    test.first.intersects.assertTrue()
     test.first.point.assertEquals(vec2(0, 6))
     test.first.distance.assertEquals(0, EPSILON)
-    test.second.success.assertFalse()
+    test.second.intersects.assertFalse()
     // No intersections
     test = ray.castToCircle(vec2(-3, -2), 3.5)
-    test.first.success.assertFalse()
-    test.second.success.assertFalse()
+    test.first.intersects.assertFalse()
+    test.second.intersects.assertFalse()
     test = ray.castToCircle(vec2(-2, 8), 1)
-    test.first.success.assertFalse()
-    test.second.success.assertFalse()
+    test.first.intersects.assertFalse()
+    test.second.intersects.assertFalse()
 
 @Test function testProjection3d()
     let ray = ray3d(vec3(-5, 3, 0), vec3(1, 1, 0))
     var test = vec3(-4, 8, 12).project(ray)
-    test.success.assertTrue()
+    test.intersects.assertTrue()
     test.point.assertEquals(vec3(-2, 6, 0))
     test.distance.assertEquals(4.2426, EPSILON)
     test = vec3(-9, 0, -1).project(ray)
-    test.success.assertTrue()
+    test.intersects.assertTrue()
     test.point.assertEquals(ray.origin)
     test.distance.assertEquals(0, EPSILON)
     test = vec3(-9, 0, 45).project(ray3d(vec3(-5, 3, 8), vec3(0, 0, 0)))
-    test.success.assertFalse()
+    test.intersects.assertFalse()
 
 @Test function testPlane()
     let ray = ray3d(vec3(0, 0, 0), vec3(0, -1, 1))
     var test = ray.castToPlane(vec3(1, -5, 5), vec3(0, -1, 1))
-    test.success.assertTrue()
+    test.intersects.assertTrue()
     test.point.assertEquals(vec3(0, -5, 5))
     test.distance.assertEquals(7.071, EPSILON)
     test.backface.assertFalse()
     test = ray.castToPlane(vec3(1, -5, 5), vec3(0, 1, -1)) 
-    test.success.assertTrue()
+    test.intersects.assertTrue()
     test.backface.assertTrue()
     test = ray.castToPlane(vec3(1, -5, 5), vec3(0, 1, 1)) 
-    test.success.assertFalse()
+    test.intersects.assertFalse()
     test = ray.castToPlane(vec3(1, 5, 5), vec3(0, -1, 1)) 
-    test.success.assertTrue()
+    test.intersects.assertTrue()
     test.distance.assertEquals(0, EPSILON)
     test = ray.castToPlane(vec3(1, 6, 5), vec3(0, -1, 1)) 
-    test.success.assertFalse()
+    test.intersects.assertFalse()
 
 @Test function testDisk()
     let ray = ray3d(vec3(0, 0, 0), vec3(0, -1, 1))
     var test = ray.castToDisk(vec3(1, -5, 5), vec3(0, -1, 1), 25)
-    test.success.assertTrue()
+    test.intersects.assertTrue()
     test.point.assertEquals(vec3(0, -5, 5))
     test.distance.assertEquals(7.071, EPSILON)
     test.backface.assertFalse()
     test = ray.castToDisk(vec3(1, -5, 5), vec3(0, -1, 1), 0.5)
-    test.success.assertFalse()
+    test.intersects.assertFalse()
 
 @Test function testSphere()
     let ray = ray3d(vec3(2, 1, -6), vec3(1, 0, 1))
     // Tangent
     var test = ray.castToSphere(vec3(5, 4, -3), 3)
-    test.first.success.assertTrue()
+    test.first.intersects.assertTrue()
     test.first.point.assertEquals(vec3(5, 1, -3))
     test.first.distance.assertEquals(4.2426, EPSILON)
     test.first.backface.assertFalse()
-    test.second.success.assertFalse()
+    test.second.intersects.assertFalse()
     // Two 
     test = ray.castToSphere(vec3(3, 1, -2), 3)
-    test.first.success.assertTrue()
+    test.first.intersects.assertTrue()
     test.first.point.assertEquals(vec3(3, 1, -5))
     test.first.distance.assertEquals(1.4142, EPSILON)
     test.first.backface.assertFalse()
-    test.second.success.assertTrue()
+    test.second.intersects.assertTrue()
     // I have too much free time
     test.second.point.assertEquals(vec3(6, 1, -2))
     test.second.distance.assertEquals(5.6568, EPSILON)
-    test.second.success.assertTrue()
+    test.second.intersects.assertTrue()
     // Inside
     test = ray.castToSphere(vec3(3, 1, -5), 3)
-    test.first.success.assertTrue()
+    test.first.intersects.assertTrue()
     test.first.point.assertEquals(vec3(5.121321, 1, -2.87868))
     test.first.distance.assertEquals(4.4142, EPSILON)
     test.first.backface.assertTrue()
-    test.second.success.assertFalse()
+    test.second.intersects.assertFalse()
     // No intersections
     test = ray.castToSphere(vec3(-2, 1, -8), 3)
-    test.first.success.assertFalse()
-    test.second.success.assertFalse()
+    test.first.intersects.assertFalse()
+    test.second.intersects.assertFalse()
     test = ray.castToSphere(vec3(1, 5, -2), 3)
-    test.first.success.assertFalse()
-    test.second.success.assertFalse()
+    test.first.intersects.assertFalse()
+    test.second.intersects.assertFalse()
 
 @Test function testTriangle()
     let ray = ray3d(vec3(-2, 1, 3), vec3(-0.2, 0.7, 0.3))
     var test = ray.castToTriangle(vec3(1, 6, 8), vec3(-5, 9, 5), vec3(-7, 7, 7))
-    test.success.assertTrue()
+    test.intersects.assertTrue()
     test.point.assertEquals(vec3(-4, 8, 6))
     test.distance.assertEquals(7.874, EPSILON)
     test.backface.assertTrue()
     test = ray.castToTriangle(vec3(1, 6, 8), vec3(-7, 7, 7), vec3(-5, 9, 5))
-    test.success.assertTrue()
+    test.intersects.assertTrue()
     test.point.assertEquals(vec3(-4, 8, 6))
     test.distance.assertEquals(7.874, EPSILON)
     test.backface.assertFalse()
     test = ray.castToTriangle(vec3(-2, 1, 3), vec3(-4, 8, 5), vec3(-6, 15, 9))
-    test.success.assertFalse()
+    test.intersects.assertFalse()
     test = ray.castToTriangle(vec3(8, -1, 5), vec3(-2, 1, 3), vec3(-6, 0, 9))
-    test.success.assertTrue()
+    test.intersects.assertTrue()
     test.point.assertEquals(vec3(-2, 1, 3))
     test.distance.assertEquals(0, EPSILON)
     test.backface.assertTrue()
     test = ray.castToTriangle(vec3(0, 0, 0), vec3(1, 1, 1), vec3(-1, -1, -1))
-    test.success.assertFalse()
+    test.intersects.assertFalse()
 
