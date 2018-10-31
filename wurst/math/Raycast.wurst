@@ -26,8 +26,9 @@ tuples.
 
 Functions that find 3D intersection work similarly and return result3d tuple.
 result3d(intersects, point, distance, backface) also contains 'backface' boolean value that's
-true in case the object is faced away from  the ray's origin. Functions which find the
-intersection point with a convex object (e.g. a sphere) return doubleresult3d tuple.
+true in case the object's surface at the intersection point is faced away from  the ray's origin.
+Functions which find the intersection point with a convex object (e.g. a sphere) return
+doubleresult3d tuple.
 
 Also you can project a vector onto a ray to obtain the point on the ray that's nearest
 to the vector.
