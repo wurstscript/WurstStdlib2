@@ -95,6 +95,18 @@ public function unit.addAgi(int value)
 public function unit.addInt(int value)
 	SetHeroInt(this, this.getInt(false) + value, true)
 
+public function unit.addSkillPoints(int value) returns bool
+	return UnitModifySkillPoints(this, value)
+
+public function unit.setSkillPoints(int value) returns bool
+	return UnitModifySkillPoints(this, value - this.getSkillPoints())
+	 
+public function unit.getSkillPoints() returns int
+	return GetHeroSkillPoints(this)
+ 
+public function unit.selectSkill(int abilcode)
+	SelectHeroSkill(this, abilcode)
+
 public function unit.damageTarget(unit target, real amount)
 	UnitDamageTarget(this, target, amount, false, false, ATTACK_TYPE_CHAOS, DAMAGE_TYPE_UNIVERSAL, WEAPON_TYPE_WHOKNOWS)
 
