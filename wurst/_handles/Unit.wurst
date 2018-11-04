@@ -357,6 +357,9 @@ public function unit.lookAt(string bone, unit target, real offsetX, real offsetY
 public function unit.lookAt(string bone, unit target)
 	this.lookAt(bone, target, 0, 0, 0)
 
+public function unit.resetLookAt()
+	ResetUnitLookAt(this)
+
 public function unit.setColor(playercolor c)
 	SetUnitColor(this, c)
 
