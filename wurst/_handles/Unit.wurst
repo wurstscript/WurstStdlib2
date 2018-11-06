@@ -351,11 +351,11 @@ public function unit.setAnimation(string name)
 public function unit.setAnimation(int index)
 	SetUnitAnimationByIndex(this, index)
 
-public function unit.lookAt(string bone, unit target, real offsetX, real offsetY, real offsetZ)
-	SetUnitLookAt(this, bone, target, offsetX, offsetY, offsetZ)
+public function unit.lookAt(string bone, unit target, vec3 offset)
+	SetUnitLookAt(this, bone, target, offset.x, offset.y, offset.z)
 
 public function unit.lookAt(string bone, unit target)
-	this.lookAt(bone, target, 0, 0, 0)
+	this.lookAt(bone, target, ZERO3)
 
 public function unit.resetLookAt()
 	ResetUnitLookAt(this)
