@@ -659,7 +659,7 @@ class InventoryIterator
 	function close()
 		destroy this
 
-	function iterator() returns InventoryIterator
+	protected function iterator() returns InventoryIterator
 		return this
 
 /** Creates an inventory iterator that allows you to access each existing item in the unit's inventory via for-loop. An example 'for i in u.inventory()'. */
