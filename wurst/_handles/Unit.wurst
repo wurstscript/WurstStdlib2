@@ -95,6 +95,18 @@ public function unit.addAgi(int value)
 public function unit.addInt(int value)
 	SetHeroInt(this, this.getInt(false) + value, true)
 
+public function unit.addSkillPoints(int value) returns bool
+	return UnitModifySkillPoints(this, value)
+
+public function unit.setSkillPoints(int value) returns bool
+	return UnitModifySkillPoints(this, value - this.getSkillPoints())
+	 
+public function unit.getSkillPoints() returns int
+	return GetHeroSkillPoints(this)
+ 
+public function unit.selectSkill(int abilcode)
+	SelectHeroSkill(this, abilcode)
+
 public function unit.damageTarget(unit target, real amount)
 	UnitDamageTarget(this, target, amount, false, false, ATTACK_TYPE_CHAOS, DAMAGE_TYPE_UNIVERSAL, WEAPON_TYPE_WHOKNOWS)
 
@@ -339,11 +351,14 @@ public function unit.setAnimation(string name)
 public function unit.setAnimation(int index)
 	SetUnitAnimationByIndex(this, index)
 
-public function unit.lookAt(string bone, unit target, real offsetX, real offsetY, real offsetZ)
-	SetUnitLookAt(this, bone, target, offsetX, offsetY, offsetZ)
+public function unit.lookAt(string bone, unit target, vec3 offset)
+	SetUnitLookAt(this, bone, target, offset.x, offset.y, offset.z)
 
 public function unit.lookAt(string bone, unit target)
-	this.lookAt(bone, target, 0, 0, 0)
+	this.lookAt(bone, target, ZERO3)
+
+public function unit.resetLookAt()
+	ResetUnitLookAt(this)
 
 public function unit.setColor(playercolor c)
 	SetUnitColor(this, c)
