@@ -1,0 +1,37 @@
+package Weather
+import NoWurst
+
+public constant WEATHER_ASHENVALE_RAIN_HEAVY = 'RAhr'
+public constant WEATHER_ASHENVALE_RAIN_LIGHT = 'RAlr'
+public constant WEATHER_DALARAN_SHIELD = 'MEds'
+public constant WEATHER_DUNGEON_BLUE_FOG_HEAVY = 'FDbh'
+public constant WEATHER_DUNGEON_BLUE_FOG_LIGHT = 'FDbl'
+public constant WEATHER_DUNGEON_GREEN_FOG_HEAVY = 'FDgh'
+public constant WEATHER_DUNGEON_GREEN_FOG_LIGHT = 'FDgl'
+public constant WEATHER_DUNGEON_RED_FOG_HEAVY = 'FDrh'
+public constant WEATHER_DUNGEON_RED_FOG_LIGHT = 'FDrl'
+public constant WEATHER_DUNGEON_WHITE_FOG_HEAVY = 'FDwh'
+public constant WEATHER_DUNGEON_WHITE_FOG_LIGHT = 'FDwl'
+public constant WEATHER_LORDAERON_RAIN_HEAVY = 'RLhr'
+public constant WEATHER_LORDAERON_RAIN_LIGHT = 'RLlr'
+public constant WEATHER_NORTHREND_BLIZZARD = 'SNbs'
+public constant WEATHER_NORTHREND_SNOW_HEAVY = 'SNhs'
+public constant WEATHER_NORTHREND_SNOW_LIGHT = 'SNls'
+public constant WEATHER_RAYS_OF_LIGHT = 'LRaa'
+public constant WEATHER_RAYS_OF_MOONLIGHT = 'LRma'
+public constant WEATHER_WIND = 'WNcw'
+public constant WEATHER_OUTLAND_WIND = 'WOcw'
+public constant WEATHER_OUTLAND_WIND_LIGHT = 'WOlw'
+
+/** For some strange reason, weathereffect-variables always contain 'null' value and return '0' from GetHandleId function but they can still be used and compared. */
+public function addWeather(rect where, int effectID) returns weathereffect
+	return AddWeatherEffect(where, effectID)
+
+public function weathereffect.enable()
+	EnableWeatherEffect(this, true)
+
+public function weathereffect.disable()
+	EnableWeatherEffect(this, false)
+
+public function weathereffect.remove()
+	RemoveWeatherEffect(this)
