@@ -1,12 +1,36 @@
 package Fogmodifier
-
 import NoWurst
+import Vectors
+
+public function createFogModifier(player forWhichPlayer, fogstate whichState, vec2 center, real radius, bool useSharedVision, bool afterUnits) returns fogmodifier
+	return CreateFogModifierRadius(forWhichPlayer, whichState, center.x, center.y, radius, useSharedVision, afterUnits)
+
+public function createBlackMask(player forWhichPlayer, vec2 center, real radius, bool useSharedVision, bool afterUnits) returns fogmodifier
+	return CreateFogModifierRadius(forWhichPlayer, FOG_OF_WAR_MASKED, center.x, center.y, radius, useSharedVision, afterUnits)
+
+public function createFogOfWar(player forWhichPlayer, vec2 center, real radius, bool useSharedVision, bool afterUnits) returns fogmodifier
+	return CreateFogModifierRadius(forWhichPlayer, FOG_OF_WAR_FOGGED, center.x, center.y, radius, useSharedVision, afterUnits) 
+
+public function createVision(player forWhichPlayer, vec2 center, real radius, bool useSharedVision) returns fogmodifier
+	return CreateFogModifierRadius(forWhichPlayer, FOG_OF_WAR_VISIBLE, center.x, center.y, radius, useSharedVision, false)
+
+public function createFogModifier(player forWhichPlayer, fogstate whichState, rect where, bool useSharedVision, bool afterUnits) returns fogmodifier
+	return CreateFogModifierRect(forWhichPlayer, whichState, where, useSharedVision, afterUnits)
+
+public function createBlackMask(player forWhichPlayer, rect where, bool useSharedVision, bool afterUnits) returns fogmodifier
+	return CreateFogModifierRect(forWhichPlayer, FOG_OF_WAR_MASKED, where, useSharedVision, afterUnits)
+
+public function createFogOfWar(player forWhichPlayer, rect where, bool useSharedVision, bool afterUnits) returns fogmodifier
+	return CreateFogModifierRect(forWhichPlayer, FOG_OF_WAR_FOGGED, where, useSharedVision, afterUnits)
+
+public function createVision(player forWhichPlayer, rect where, bool useSharedVision) returns fogmodifier
+	return CreateFogModifierRect(forWhichPlayer, FOG_OF_WAR_VISIBLE, where, useSharedVision, false)
 
 public function fogmodifier.destr()
 	DestroyFogModifier(this)
-	
+
 public function fogmodifier.start()
 	FogModifierStart(this)
-	
+
 public function fogmodifier.stop()
 	FogModifierStop(this)
