@@ -633,3 +633,33 @@ public function unit.incAbilityLevel(int abilityId)
 
 public function unit.decAbilityLevel(int abilityId)
 	DecUnitAbilityLevel(this, abilityId)
+
+class InventoryIterator
+	private item array[6] items
+	private int count = 0
+
+	construct(unit u)
+		for slot = UnitInventorySize(u) - 1 downto 0
+			let i = UnitItemInSlot(u, slot)
+			if i != null
+				items[count] = i
+				count++
+	
+	function hasNext() returns bool
+		return count > 0
+	
+	function next() returns item
+		count--
+		let i = items[count]
+		items[count] = null
+		return i
+
+	function close()
+		destroy this
+
+	protected function iterator() returns InventoryIterator
+		return this
+
+/** Creates an inventory iterator that allows you to access each existing item in the unit's inventory via for-loop. An example 'for i in u.inventory()'. */
+public function unit.inventory() returns InventoryIterator
+	return new InventoryIterator(this)
