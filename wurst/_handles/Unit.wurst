@@ -216,12 +216,17 @@ public function unit.hasItem(item whichItem) returns boolean
 	return UnitHasItem(this, whichItem)
 
 public function unit.hasItemById(int itemId) returns boolean
-	var hasItem = false
+	return this.getItemById(itemId) != null
+
+/** Returns the first item of the specific type from the unit's inventory,
+	or null if none is present */
+public function unit.getItemById(int itemId) returns item
+	item itm = null
 	for slot = 0 to this.inventorySize() - 1
 		if this.itemInSlot(slot).getTypeId() == itemId
-			hasItem = true
+			itm = this.itemInSlot(slot)
 			break
-	return hasItem
+	return itm
 
 public function unit.hide()
 	ShowUnit(this, false)
