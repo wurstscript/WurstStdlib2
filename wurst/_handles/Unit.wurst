@@ -2,7 +2,6 @@ package Unit
 import NoWurst
 import public Vectors
 import Item
-import initlater HashMap
 
 native UnitAlive(unit id) returns boolean
 
@@ -338,18 +337,6 @@ public function unit.itemCount(int itemTypeId) returns int
 			count++
 	return count
 
-/** Returns a mapping from item type ID to the number of slots
-    containing an item of that type */
-public function unit.getInventoryItemCountMap() returns HashMap<int, int>
-	let map = new HashMap<int, int>()
-	for i = 0 to 5
-		let id = this.itemInSlot(i).getTypeId()
-		if map.has(id)
-			map.put(id, map.get(id) + 1)
-		else
-			map.put(id, 1)
-	return map
-
 public function unit.removeItemFromSlot(int slot) returns item
 	return UnitRemoveItemFromSlot(this, slot)
 
@@ -654,7 +641,8 @@ public function unit.endAbilityCooldown(int abilCode)
 public function unit.getAbilityManaCost(int abilId, int level) returns int
 	return BlzGetUnitAbilityManaCost(this, abilId, level)
 
-public function unit.getLoc() returns location
+	
+public @deprecated("Use getPos instead.") function unit.getLoc() returns location
 	return GetUnitLoc(this)
 
 public function unit.getLocalZ() returns real
