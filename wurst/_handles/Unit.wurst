@@ -642,7 +642,8 @@ public function unit.getAbilityManaCost(int abilId, int level) returns int
 	return BlzGetUnitAbilityManaCost(this, abilId, level)
 
 	
-public @deprecated("Use getPos instead.") function unit.getLoc() returns location
+@deprecated("Use getPos instead.")
+public function unit.getLoc() returns location
 	return GetUnitLoc(this)
 
 public function unit.getLocalZ() returns real
