@@ -28,10 +28,12 @@ public function vec2.addTerrainHeight(real val) returns terraindeformation
 /** Fills 32x32 rect around vec2 with given pathing type */
 public function vec2.setTerrainPathable(pathingtype ttype, bool flag)
 	SetTerrainPathable(this.x, this.y, ttype, flag)
-	
+
+/** Returns if a specific pathingtype is set at the location.
+	  Note: Returns true if the pathingtype is *not* set, false if it *is* set. */
 public function vec2.isTerrainPathable(pathingtype ttype) returns bool
 	return IsTerrainPathable(this.x, this.y, ttype)
-	
+
 /** Returns center of the Tile which given vec2 belongs to. */
 public function vec2.toTileCenter() returns vec2
 	return vec2((this.x / 128.).round() * 128., (this.y / 128.).round() * 128.)
@@ -39,7 +41,7 @@ public function vec2.toTileCenter() returns vec2
 /** Returns the (not normalised) terrain-normal at the given point */
 public function vec2.getTerrainNormal(real sampleRadius) returns vec3
 	return 2 * sampleRadius * vec3((this.add(-sampleRadius, 0).getTerrainZ() - this.add(sampleRadius, 0).getTerrainZ()), (this.add(-sampleRadius, 0).getTerrainZ() - this.add(sampleRadius, 0).getTerrainZ()), 2 * sampleRadius)
-	
+
 public function vec2.isTerrainDeepWater() returns boolean
 	return not this.isTerrainPathable(PATHING_TYPE_FLOATABILITY) and this.isTerrainPathable(PATHING_TYPE_WALKABILITY)
 
@@ -66,7 +68,7 @@ public function vec2.isTerrainWalkable() returns boolean
 			hiddenItems[hiddenItemsCount] = GetEnumItem()
 			hiddenItems[hiddenItemsCount].setVisible(false)
 			hiddenItemsCount++
-	
+
 	// Try to move the test item and get its coords
 	dummyItem.setPos(this) // Unhides the item
 	let tempPos = dummyItem.getPos()
@@ -75,7 +77,7 @@ public function vec2.isTerrainWalkable() returns boolean
 	// Unhide any items hidden at the start
 	while hiddenItemsCount > 0
 		hiddenItemsCount--
-		hiddenItems[hiddenItemsCount].setVisible(true)		
+		hiddenItems[hiddenItemsCount].setVisible(true)
 		hiddenItems[hiddenItemsCount] = null
 
 	return (tempPos.x - this.x) * (tempPos.x - this.x) + (tempPos.y-this.y) * (tempPos.y - this.y) <= MAX_RANGE_SQ and not this.isTerrainPathable(PATHING_TYPE_WALKABILITY)
@@ -139,7 +141,7 @@ public function tile.addHeight(real val) returns terraindeformation
 
 public function tile.getType() returns int
 	return this.toVec2().getTerrainType()
-	
+
 public function tile.getVariance() returns int
 	return this.toVec2().getTerrainVariance()
 
