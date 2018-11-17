@@ -5,8 +5,6 @@ import Maths
 import ErrorHandling
 import Wurstunit
 
-/* Great thanks to euclideanspace.com for wide explanations. */
-
 /** Matrix 2x2
 00 01
 10 11
@@ -40,7 +38,7 @@ public constant IDENTITY33 = mat3(  1, 0, 0,
 tuple inverseresult33(bool success, mat3 matrix)
 
 /* =========== 2X2 MATRIX =========== */
-			 
+
 public function mat2.op_plus(mat2 m) returns mat2
 	return mat2(this.m00 + m.m00,   this.m01 + m.m01,
 				this.m10 + m.m10,   this.m11 + m.m11)
@@ -56,7 +54,7 @@ public function mat2.op_minus(real scalar) returns mat2
 public function mat2.op_plus(real scalar) returns mat2
 	return mat2(this.m00 + scalar,  this.m01 + scalar,
 				this.m10 + scalar,  this.m11 + scalar)
-	
+
 public function mat2.op_mult(real scalar) returns mat2
 	return mat2(this.m00 * scalar,	this.m01 * scalar,
 				this.m10 * scalar,	this.m11 * scalar)
@@ -73,7 +71,7 @@ public function vec2.op_mult(mat2 m) returns vec2
 	return vec2(this.x * m.m00 + this.y * m.m10, this.x * m.m01 + this.y * m.m11)
 
 public function mat2.op_mult(mat2 m) returns mat2
-	return mat2(this.m00 * m.m00 + this.m01 * m.m10,	this.m00 * m.m01 + this.m01 * m.m11, 
+	return mat2(this.m00 * m.m00 + this.m01 * m.m10,	this.m00 * m.m01 + this.m01 * m.m11,
 				this.m10 * m.m00 + this.m11 * m.m10,	this.m10 * m.m01 + this.m11 * m.m11)
 
 /** Returns matrix' column by index as a vector or rises an error if doesn't exist. */
@@ -137,7 +135,7 @@ public function angle.toRotation() returns mat2
 public function vec2.toScaling() returns mat2
 	return mat2(this.x, 0,
 				0,	  this.y)
-	
+
 /* =========== 3X3 MATRIX =========== */
 
 public function mat3.op_plus(mat3 m) returns mat3
@@ -154,7 +152,7 @@ public function mat3.op_minus(mat3 m) returns mat3
 	return mat3(this.m00 - m.m00,	this.m01 - m.m01,	this.m02 - m.m02,
 				this.m10 - m.m10,	this.m11 - m.m11,	this.m12 - m.m12,
 				this.m20 - m.m20,	this.m21 - m.m21,	this.m22 - m.m22)
-		
+
 public function mat3.op_minus(real scalar) returns mat3
 	return mat3(this.m00 - scalar,	this.m01 - scalar,	this.m02 - scalar,
 				this.m10 - scalar,	this.m11 - scalar,	this.m12 - scalar,
@@ -192,7 +190,7 @@ public function mat3.op_mult(mat3 m) returns mat3
 				this.m20 * m.m00 + this.m21 * m.m10 + this.m22 * m.m20,
 				this.m20 * m.m01 + this.m21 * m.m11 + this.m22 * m.m21,
 				this.m20 * m.m02 + this.m21 * m.m12 + this.m22 * m.m22)
-	
+
 /** Returns matrix' column by index as a vector or rises an error if doesn't exist. */
 public function mat3.col(int index) returns vec3
 	vec3 result = ZERO3
@@ -249,7 +247,7 @@ public function mat3.inverse() returns inverseresult33
 		let tmp = mat3( this.m11 * this.m22 - this.m12 * this.m21,
 						this.m02 * this.m21 - this.m01 * this.m22,
 						this.m01 * this.m12 - this.m02 * this.m11,
-		
+
 						this.m12 * this.m20 - this.m10 * this.m22,
 						this.m00 * this.m22 - this.m20 * this.m02,
 						this.m02 * this.m10 - this.m00 * this.m12,
@@ -266,17 +264,17 @@ public function mat3.toEuler() returns vec3
 	real pitch
 	real roll
 	if this.m02 > 0.999
-		yaw = Atan2(this.m21, this.m11) 
+		yaw = Atan2(this.m21, this.m11)
 		pitch = PI / 2
 		roll = 0
 	else if this.m02 < -0.999
-		yaw = Atan2(this.m21, this.m11) 
+		yaw = Atan2(this.m21, this.m11)
 		pitch = -PI / 2
 		roll  = 0
 	else
 		yaw  = Atan2(-this.m12, this.m22)
 		pitch = Asin(this.m02)
-		roll = Atan2(-this.m01 , this.m00)   
+		roll = Atan2(-this.m01 , this.m00)
 	return vec3(yaw, pitch, roll)
 
 public function mat3.toString() returns string
@@ -331,7 +329,7 @@ public function vec2.toTranslation() returns mat3
 	return mat3(1, 0, this.x,
 				0, 1, this.y,
 				0, 0, 1)
-			
+
 /* =========== TESTING =========== */
 
 public function mat2.assertEquals(mat2 expected)

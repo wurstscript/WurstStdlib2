@@ -9,7 +9,7 @@ public function createBlackMask(player forWhichPlayer, vec2 center, real radius,
 	return CreateFogModifierRadius(forWhichPlayer, FOG_OF_WAR_MASKED, center.x, center.y, radius, useSharedVision, afterUnits)
 
 public function createFogOfWar(player forWhichPlayer, vec2 center, real radius, bool useSharedVision, bool afterUnits) returns fogmodifier
-	return CreateFogModifierRadius(forWhichPlayer, FOG_OF_WAR_FOGGED, center.x, center.y, radius, useSharedVision, afterUnits) 
+	return CreateFogModifierRadius(forWhichPlayer, FOG_OF_WAR_FOGGED, center.x, center.y, radius, useSharedVision, afterUnits)
 
 public function createVision(player forWhichPlayer, vec2 center, real radius, bool useSharedVision) returns fogmodifier
 	return CreateFogModifierRadius(forWhichPlayer, FOG_OF_WAR_VISIBLE, center.x, center.y, radius, useSharedVision, false)

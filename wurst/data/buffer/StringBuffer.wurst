@@ -1,5 +1,4 @@
 package StringBuffer
-
 import ErrorHandling
 import LinkedList
 import BufferInterface
@@ -196,7 +195,7 @@ public abstract class AbstractStringBuffer extends AbstractBuffer
 		let value = chunk.content
 		destroy chunk
 		return value
-	
+
 	override function clear()
 		for chunk in chunks
 			destroy chunk
@@ -208,4 +207,4 @@ public abstract class AbstractStringBuffer extends AbstractBuffer
 		Adapters.
 	*/
 	abstract function moveTo(Buffer buffer)
-		
+

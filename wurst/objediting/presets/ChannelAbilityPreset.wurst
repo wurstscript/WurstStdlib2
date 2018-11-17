@@ -6,7 +6,7 @@ import public ObjectIdGenerator
 import OrderStringFactory
 import BitSet
 
-OrderStringFactory odf = new OrderStringFactory()
+var odf = new OrderStringFactory()
 @compiletime function initOdf()
 	odf = new OrderStringFactory()
 
@@ -24,7 +24,7 @@ public enum Targettype
 	POINT
 	POINTUNIT
 	PASSIVE
-	
+
 public function Targettype.toString() returns string
 	switch this
 		case NONE
@@ -64,15 +64,15 @@ public class ChannelAbilityPreset extends AbilityDefinitionIllidanChannel
 		presetBaseOrderID(_lvl -> orderString)
 		if removeChannelProperties
 			removeChannelProperties(true)
-			
+
 	function makeUnitSpell(int mana, real cooldown)
 		setHeroAbility(false)
 		presetManaCost(lvl -> mana)
 		presetCooldown(lvl -> cooldown)
-		
+
 	function removeChannelProperties(boolean removeVisuals)
 		removeChannelProperties(removeVisuals, true)
-		
+
 	function removeChannelProperties(boolean removeVisuals, boolean makeVisible)
 		presetDisableOtherAbilities(lvl -> false)
 		presetFollowThroughTime(lvl -> 0.)
@@ -87,7 +87,7 @@ public class ChannelAbilityPreset extends AbilityDefinitionIllidanChannel
 
 	function presetTargetTypes(Targettype ttype)
 		presetTargetType(lvl -> ttype castTo int)
-					
+
 	function presetOption(Option opt, boolean flag)
 		let pow = opt castTo int
 		if optionSet.contains(pow)
@@ -97,7 +97,6 @@ public class ChannelAbilityPreset extends AbilityDefinitionIllidanChannel
 			optionSet = optionSet.add(pow)
 
 		presetOptions(lvl -> optionSet.val)
-	
+
 	function hasOption(Option option) returns boolean
 		return optionSet.contains(option castTo int)
-		

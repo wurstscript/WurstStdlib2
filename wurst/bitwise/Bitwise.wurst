@@ -1,5 +1,4 @@
 package Bitwise
-
 import BitwiseInit
 
 /**
@@ -7,7 +6,7 @@ import BitwiseInit
 	b1 is the least significant byte, b4 is the most significant byte.
 	All functions operating on this are LSB first.
 	The bytes are always unsigned, from 0 to 255.
-	
+
 	WARNING: This library contains no safety bound checks to guarantee
 	that these bytes stay in the 0-255 range. If these values go out of bounds,
 	the behaviour is undefined.
@@ -52,7 +51,7 @@ public function byte4.put(int pos, int value) returns byte4
 
 /** Re-assembles these bytes into an integer. **/
 public function byte4.toInt() returns int
-	return this.b1 + this.b2 * 0x100 + this.b3 * 0x10000 + this.b4 * 0x1000000 
+	return this.b1 + this.b2 * 0x100 + this.b3 * 0x10000 + this.b4 * 0x1000000
 
 /**
 	Turns this signed integer into an unsigned one if it is negative,
@@ -111,13 +110,13 @@ public function string.fromBitString() returns int
 
 /**
 	Produces a bistring from this integer.
-**/ 
+**/
 public function int.toBitString() returns string
 	var result = ""
 	var value = this
 
 	while value != 0
-		result = (value mod 2).toString() + result 
+		result = (value mod 2).toString() + result
 		value = bwShiftr32(value, 1)
 
 	return result
@@ -198,7 +197,7 @@ function bwXor32(int lhs, int rhs) returns int
 				 bwXor8(bytes1.b3, bytes2.b3),
 				 bwXor8(bytes1.b4, bytes2.b4)).toInt()
 
-/** 
+/**
 	8-bit NOT (~)
 	NOTE: Assumes number is in the range [0, 255]
 
@@ -207,15 +206,15 @@ function bwXor32(int lhs, int rhs) returns int
 public function int.not8() returns int
 	return bNot8(this)
 
-/** 
-	32-bit NOT (~) 
-	
+/**
+	32-bit NOT (~)
+
 	number.not32() equivalent to (~number)
 **/
 public function int.not32() returns int
 	return bwNot32(this)
 
-/** 
+/**
 	8-bit AND (&)
 	NOTE: Assumes both operands are in the range [0, 255]
 
@@ -224,7 +223,7 @@ public function int.not32() returns int
 public function int.and8(int other) returns int
 	return bwAnd8(this, other)
 
-/** 
+/**
 	32-bit AND (&)
 
 	number.and32(other) equivalent to (number & other)
@@ -232,8 +231,8 @@ public function int.and8(int other) returns int
 public function int.and32(int other) returns int
 	return bwAnd32(this, other)
 
-/** 
-	8-bit OR (|) 
+/**
+	8-bit OR (|)
 	NOTE: Assumes both operands are in the range [0, 255]
 
 	number.or8(other) equivalent to (number | other)
@@ -241,15 +240,15 @@ public function int.and32(int other) returns int
 public function int.or8(int other) returns int
 	return bwOr8(this, other)
 
-/** 
-	32-bit OR (|) 
+/**
+	32-bit OR (|)
 
 	number.or32(other) equivalent to (number | other)
 **/
 public function int.or32(int other) returns int
 	return bwOr32(this, other)
 
-/** 
+/**
 	8-bit XOR (^)
 	NOTE: Assumes both operands are in the range [0, 255]
 
@@ -258,15 +257,15 @@ public function int.or32(int other) returns int
 public function int.xor8(int other) returns int
 	return bwXor8(this, other)
 
-/** 
-	32-bit XOR (^) 
+/**
+	32-bit XOR (^)
 
 	number.xor32(other) equivalent to (number ^ other)
 **/
 public function int.xor32(int other) returns int
 	return bwXor32(this, other)
 
-/** 
+/**
 	32-bit SHIFTL (<<)
 
 	number.shiftl(amount) equivalent to (number << amount)
@@ -274,8 +273,8 @@ public function int.xor32(int other) returns int
 public function int.shiftl(int amount) returns int
 	return bwShiftl32(this, amount)
 
-/** 
-	32-bit SHIFTR (>>) 
+/**
+	32-bit SHIFTR (>>)
 
 	number.shiftr(amount) equivalent to (number >> amount)
 **/

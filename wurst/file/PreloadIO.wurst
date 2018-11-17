@@ -8,11 +8,10 @@
 	This functionality is provided in the LocalFiles package,
 	and is handled by other packages in the file subsystem.
 
-	If you want to read/write in 1.26 with local files, 
+	If you want to read/write in 1.26 with local files,
 	you will need to prepend "Logs\\" to your paths.
 **/
 package PreloadIO
-
 import ErrorHandling
 import StringUtils
 
@@ -24,8 +23,8 @@ public constant MAX_PACKET_LENGTH = 223
 /**
 	Low-level static writer wrapper around the Preload API
 	Supports writing directly to Preload, or can write
-	readable "packets", max PACKETS_PER_FILE for a file, 
-	each up to MAX_PACKET_LENGTH characters. 
+	readable "packets", max PACKETS_PER_FILE for a file,
+	each up to MAX_PACKET_LENGTH characters.
 
 	WARNING 1: Due to the way how WC3 handles file IO, you have to use
 	this class only in one place at once. Avoid using it over time, lest you
@@ -77,9 +76,9 @@ public class IOWriter
 		return getRemainingWrites() > 0
 
 	/**
-		Recursively creates the specified folder. 
-		Necessary because WC3 doesn't automatically 
-		create nested folders and fails silently. 
+		Recursively creates the specified folder.
+		Necessary because WC3 doesn't automatically
+		create nested folders and fails silently.
 	**/
 	static function createFolder(string path)
 		var current = ""
@@ -92,7 +91,7 @@ public class IOWriter
 
 /**
 	Low-level static reader wrapper around the Preload API
-	Supports reading packets written by IOWriter, 
+	Supports reading packets written by IOWriter,
 	up to PACKETS_PER_FILE packets per file,
 	up to MAX_PACKET_LENGTH characters per packet.
 **/
@@ -102,7 +101,7 @@ public class IOReader
 
 	private static var packetNumber = 0
 	private static var packetCount = 0
-	
+
 	private static function saveNames()
 		for i = 0 to PACKETS_PER_FILE - 1
 			playerNames[i] = players[i].getName()
@@ -112,7 +111,7 @@ public class IOReader
 		for i = 0 to PACKETS_PER_FILE - 1
 			players[i].setName(playerNames[i])
 
-	/** 
+	/**
 		Loads the content of the specified file into IOReader's buffer,
 		allowing it to be read with IOReader.readPacket() and IOReader.getPacket().
 	**/

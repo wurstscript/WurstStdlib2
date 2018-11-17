@@ -68,28 +68,28 @@ abstract class OnCastListener
 				EventListener.castMap.put(abilId, next)
 			else if prev != null
 				prev.next = next
-			
+
 		next.prev = prev
 
 		next = null
 		prev = null
 
 abstract class OnCast extends OnCastListener
-	
+
 	override function fire(unit caster)
 		fireEx(GetSpellAbilityId())
 
 	abstract function fireEx(int id)
 
 abstract class OnPointCast extends OnCastListener
-	
+
 	override function fire(unit caster)
 		fireEx(caster, getSpellTargetPos())
 
 	abstract function fireEx(unit caster, vec2 target)
 
 abstract class OnUnitCast extends OnCastListener
-	
+
 	override function fire(unit caster)
 		fireEx(caster, GetSpellTargetUnit())
 
@@ -106,7 +106,7 @@ public abstract class EventListener
 	EventListener prev = null
 
 	abstract function onEvent()
-	
+
 	static function add(eventid eventId, EventListener listener) returns EventListener
 		listener.eventId = eventId.toIntId()
 		if generalListenersFirsts[listener.eventId] != null
@@ -115,7 +115,7 @@ public abstract class EventListener
 
 		generalListenersFirsts[listener.eventId] = listener
 		return listener
-		
+
 	static function add(unit u, eventid eventId, EventListener listener) returns EventListener
 		let uid = u.getIndex()
 		if uid <= 0
@@ -163,25 +163,25 @@ public abstract class EventListener
 
 			castMap.put(abilId, listener)
 		return listener
-			
+
 	static function generalEventCallback()
 		let trigUnit = GetTriggerUnit()
 		let id = GetTriggerEventId().toIntId()
 		// Unit Listeners
 		if trigUnit != null and fireEvents(trigUnit) and trigUnit.getIndex() > 0
-			if unitListenersFirsts[trigUnit.getIndex()] != null 
+			if unitListenersFirsts[trigUnit.getIndex()] != null
 				var listener = unitListenersFirsts[trigUnit.getIndex()]
 				while listener != null
 					if listener.eventId == id
 						listener.onEvent()
 					listener = listener.next
-		// Global Listeners		
+		// Global Listeners
 		if generalListenersFirsts[id] != null
 			var listener = generalListenersFirsts[id]
 			while listener != null
 				listener.onEvent()
 				listener = listener.next
-		
+
 	static function onSpellEffect()
 		let trigUnit = GetTriggerUnit()
 		let abilId = GetSpellAbilityId()
@@ -197,14 +197,14 @@ public abstract class EventListener
 				if listener.eventUnit == null or listener.eventUnit == trigUnit
 					listener.fire(GetSpellAbilityUnit())
 				listener = listener.next
-		
+
 	ondestroy
 		var listener = generalListenersFirsts[this.eventId]
 		if listener == this
 			generalListenersFirsts[this.eventId] = next
 		else if prev != null
 			prev.next = next
-			
+
 		next.prev = prev
 
 		listener = unitListenersFirsts[this.eventId]
@@ -212,12 +212,12 @@ public abstract class EventListener
 			unitListenersFirsts[this.eventId] = next
 		else if prev != null
 			prev.next = next
-			
+
 		next.prev = prev
 
 		next = null
 		prev = null
-	
+
 let unitTrig = CreateTrigger()
 let leaveTrig = CreateTrigger()
 let keyTrig = CreateTrigger()
@@ -227,7 +227,7 @@ public function eventid.toIntId() returns int
 	if id == 0
 		id = registerEventId(this)
 	return id
-			
+
 int array eventidToIndex
 var eventTypeCounter = 0
 
@@ -241,7 +241,7 @@ function registerEventId(eventid evnt) returns int
 	else if evnt != EVENT_UNIT_DAMAGED and evnt != EVENT_PLAYER_LEAVE and evnt != EVENT_PLAYER_CHAT_FILTER and not evnt.isKeyboardEvent()
 		error("registering handleid: " + eventId.toString() + " non-playerunitevent. Except EVENT_UNIT_DAMAGED and EVENT_PLAYER_LEAVE these are not supported right now.")
 	return eventTypeCounter
-	
+
 function registerEventsForUnit(unit u)
 	if fireEvents(u)
 		unitTrig.registerUnitEvent(u, EVENT_UNIT_DAMAGED)
@@ -264,7 +264,7 @@ public function unregisterEventsForUnit(unit u)
 				destroy t
 
 public function unregisterEvents(int id)
-	if id > 0 
+	if id > 0
 		if EventListener.unitListenersFirsts[id] != null
 			Log.trace("unregister unit has listeners. startid: " + id.toString())
 			var listener = EventListener.unitListenersFirsts[id]
@@ -273,17 +273,17 @@ public function unregisterEvents(int id)
 				let t = listener
 				listener = listener.next
 				destroy t
-		
+
 
 init
 	nullTimer() ->
 		// Register Events when unit enters map
 		onUnitIndex(() -> registerEventsForUnit(getIndexedUnit()))
-		// Delete 
+		// Delete
 		onUnitDeindex(() -> unregisterEventsForUnit(getDeindexedUnit()))
-		
+
 		// Register Actions
-		unitTrig.addAction(() -> EventListener.generalEventCallback())	
+		unitTrig.addAction(() -> EventListener.generalEventCallback())
 		leaveTrig.addAction(() -> EventListener.generalEventCallback())
 		keyTrig.addAction(() -> EventListener.generalEventCallback())
 

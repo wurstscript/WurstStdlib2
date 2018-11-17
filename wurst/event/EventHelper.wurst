@@ -25,36 +25,36 @@ public function unit.clearRegister()
 	let trigHandleId = t.getHandleId()
 	t.destr()
 	triggerData..removeHandle(handleId)..removeHandle(trigHandleId)
-	
+
 public function getSpellTargetPos() returns vec2
 	return vec2(GetSpellTargetX(), GetSpellTargetY())
-	
+
 public function getOrderPos() returns vec2
 	return vec2(GetOrderPointX(), GetOrderPointY())
 
 public function getOrderTargetPos() returns vec2
 	return GetOrderTarget().getPos()
-	
+
 public function trigger.registerRectEnterEventSource(rect r)
 	TriggerRegisterEnterRectSimple(this, r)
 	rectMap.put(this, r)
-	
+
 public function trigger.registerRectLeaveEventSource(rect r)
 	TriggerRegisterLeaveRectSimple(this, r)
 	rectMap.put(this, r)
 
 public function trigger.getSourceRect() returns rect
 	return rectMap.get(this)
-	
+
 public function trigger.unregisterRectEvent()
 	rectMap.remove(this)
-	
+
 public function region.setRegionData(int data)
 	regionMap.put(this, data)
 
 public function region.loadRegionData() returns int
 	return regionMap.get(this)
-	
+
 public function region.removeRegionData()
 	regionMap.remove(this)
 

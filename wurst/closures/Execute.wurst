@@ -1,5 +1,4 @@
 package Execute
-
 import ErrorHandling
 
 /**
@@ -28,7 +27,7 @@ function pushCallback(ForForceCallback c)
 	tempCallbacks[tempCallbacksCount] = c
 	tempCallbacksSuccess[tempCallbacksCount] = false
 	tempCallbacksCount++
-	
+
 function popCallback()
 	tempCallbacksCount--
 	destroy tempCallbacks[tempCallbacksCount]
@@ -102,29 +101,29 @@ public function try(ForForceCallback c) returns boolean
 	popCallback()
 	return isLastCallbackSuccessful()
 
-interface LimitedExecuteCondition 
-	function check() returns boolean 
+interface LimitedExecuteCondition
+	function check() returns boolean
 
-interface LimitedExecuteAction 
-	function run() 
+interface LimitedExecuteAction
+	function run()
 
-function executeWhileInternal(int resetCount, LimitedExecuteCondition condition, LimitedExecuteAction action) 
-	execute() -> 
-		var i = 0 
-		while condition.check() and i < resetCount 
-			action.run() 
+function executeWhileInternal(int resetCount, LimitedExecuteCondition condition, LimitedExecuteAction action)
+	execute() ->
+		var i = 0
+		while condition.check() and i < resetCount
+			action.run()
 			i++
 
-		// restart the execute if necessary 
-		if condition.check() 
-			executeWhileInternal(resetCount, condition, action)  
+		// restart the execute if necessary
+		if condition.check()
+			executeWhileInternal(resetCount, condition, action)
 
-/** 
-	This is a utility function which you can use to process arbitrarily large loops. 
-	It functions like a while loop that will run action.run() while condition.check() == true, 
+/**
+	This is a utility function which you can use to process arbitrarily large loops.
+	It functions like a while loop that will run action.run() while condition.check() == true,
 	however it will reset the OP limit each time after the specified amount of resetCount.
-**/ 
-public function executeWhile(int resetCount, LimitedExecuteCondition condition, LimitedExecuteAction action) 
-	executeWhileInternal(resetCount, condition, action) 
-	destroy condition 
+**/
+public function executeWhile(int resetCount, LimitedExecuteCondition condition, LimitedExecuteAction action)
+	executeWhileInternal(resetCount, condition, action)
+	destroy condition
 	destroy action

@@ -5,7 +5,6 @@ import Trigger
 import Group
 import Player
 import MagicFunctions
-
 import AbilityObjEditing
 import RegisterEvents
 import ObjectIdGenerator
@@ -25,7 +24,7 @@ var tempUnitsCount = 0
 function pushUnit(unit u)
 	tempUnits[tempUnitsCount] = u
 	tempUnitsCount++
-	
+
 function popUnit()
 	tempUnitsCount--
 
@@ -68,7 +67,7 @@ init
 				pushUnit(leavingUnit)
 				eventTrigger.execute()
 				popUnit()
-		
+
 		// Process preplaced units
 		preplacedUnits.enumUnitsInRect(boundRect)
 		ForGroup(preplacedUnits, () -> prepareUnit(GetEnumUnit()))

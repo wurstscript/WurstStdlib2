@@ -20,11 +20,11 @@
 			booleans,
 			strings
 
-		each of which can be written/read to using the relevant 
+		each of which can be written/read to using the relevant
 		methods of the HashBuffer class.
 
 		Before sending the data, the sender populates the HashBuffer with the data that
-		they want to send, then Network.start() is called, and data is received from 
+		they want to send, then Network.start() is called, and data is received from
 		the same buffer inside the callback when it has all been transferred.
 
 		Read SyncSimple docs for a slightly more in-depth overview of this particular
@@ -95,7 +95,7 @@
 				if localPlayer == sender
 					let myClass = getMyClassInstance()
 					let buffer = network.getData()
-					
+
 					buffer.write(myClass)
 
 			3. Read instances of MyClass:
@@ -103,7 +103,7 @@
 					let myClass = new MyClass(buffer)
 
 					doSomethingWithMyClass(myClass)
-				
+
 
 				// or, without the constructor
 
@@ -113,7 +113,7 @@
 
 					// update it
 					myClass.deserialize(buffer)
-				
+
 
 		Important notes:
 			1. Upon creation, the HashBuffer object is locked in a write-only state.
@@ -165,7 +165,7 @@
 
 		Before starting the transmission, the HashBuffer is locked into an immutable state, in
 		which incorrect mutation attempts will print warnings, as long as safety checks are not disabled.
-		The maximum amount of data across all primitive buffers is calculated, and the amount of 
+		The maximum amount of data across all primitive buffers is calculated, and the amount of
 		required 'sync rounds' is calculated - that is, the amount of times we need to flush/sync
 		data out of the gamecaches to keep key sizes short.
 
@@ -281,7 +281,7 @@ public class Network
 
 			executeWhile(DATA_PER_EXECUTE, () -> dataBuffer.hasString()) ->
 				stringEncoder.pushString(dataBuffer.readString())
-			
+
 
 			// encode all strings into ints
 			stringEncoder.encode()
@@ -295,12 +295,12 @@ public class Network
 		let realCount	 = dataBuffer.getRealCount()
 		let booleanCount  = dataBuffer.getBooleanCount()
 		let asciiIntCount = stringEncoder.getIntCount()
-		
+
 		// calculate max length in each entity buffer
 		let maxLength = max(intCount, realCount, booleanCount, asciiIntCount)
 
 		// calculate the amount of required sync rounds
-		// we can only send up to GamecacheKeys.count in each sync round, 
+		// we can only send up to GamecacheKeys.count in each sync round,
 		// so we need to do it multiple times if there's more data than that
 		let syncRounds = maxLength div GamecacheKeys.count + 1
 
@@ -319,11 +319,11 @@ public class Network
 	private function receiveMetadata()
 		if localPlayer == sender
 			return
-		
+
 		// check that we are transitioning from the correct state
 		if SAFETY_CHECKS_ENABLED and currentState != NetworkState.SENDING_ROUND
 			error("Network: trying to receive metadata at a wrong time")
-		
+
 		// save the metadata
 		meta = metadataStore.getCounts()
 		metaReceived = true
@@ -336,49 +336,49 @@ public class Network
 		executeWhile(DATA_PER_EXECUTE, () -> counters.ints < meta.ints and gcIntBuffer.getRemainingWrite() > 0) ->
 			gcIntBuffer.writeInt(dataBuffer.readIntUnsafe())
 			counters.ints++
-		
+
 
 	private function readInts()
 		executeWhile(DATA_PER_EXECUTE, () -> counters.ints < meta.ints and gcIntBuffer.getRemainingRead() > 0) ->
 			dataBuffer.writeInt(gcIntBuffer.readInt())
 			counters.ints++
-		
+
 
 	private function writeReals()
 		executeWhile(DATA_PER_EXECUTE, () -> counters.reals < meta.reals and gcRealBuffer.getRemainingWrite() > 0) ->
 			gcRealBuffer.writeReal(dataBuffer.readRealUnsafe())
 			counters.reals++
-		
+
 
 	private function readReals()
 		executeWhile(DATA_PER_EXECUTE, () -> counters.reals < meta.reals and gcRealBuffer.getRemainingRead() > 0) ->
 			dataBuffer.writeReal(gcRealBuffer.readReal())
 			counters.reals++
-		
+
 
 	private function writeBooleans()
 		executeWhile(DATA_PER_EXECUTE, () -> counters.booleans < meta.booleans and gcBooleanBuffer.getRemainingWrite() > 0) ->
 			gcBooleanBuffer.writeBoolean(dataBuffer.readBooleanUnsafe())
 			counters.booleans++
-		
+
 
 	private function readBooleans()
 		executeWhile(DATA_PER_EXECUTE, () -> counters.booleans < meta.booleans and gcBooleanBuffer.getRemainingRead() > 0) ->
 			dataBuffer.writeBoolean(gcBooleanBuffer.readBoolean())
 			counters.booleans++
-		
+
 
 	private function writeStrings()
 		executeWhile(DATA_PER_EXECUTE, () -> counters.asciiInts < meta.asciiInts and gcStringBuffer.getRemainingWrite() > 0) ->
 			gcStringBuffer.writeInt(stringEncoder.popInt())
 			counters.asciiInts++
-		
+
 
 	private function readStrings()
 		executeWhile(DATA_PER_EXECUTE, () -> counters.asciiInts < meta.asciiInts and gcStringBuffer.getRemainingRead() > 0) ->
 			stringEncoder.pushInt(gcStringBuffer.readInt())
 			counters.asciiInts++
-		
+
 
 	private function sendRound()
 		if SAFETY_CHECKS_ENABLED and currentState != NetworkState.SENDING_ROUND
@@ -399,7 +399,7 @@ public class Network
 		if localPlayer == sender
 			// unlock the data buffer for reading
 			dataBuffer.setMode(BufferMode.READ)
-		
+
 			// write as much queued data as we can
 			writeInts()
 			writeBooleans()
@@ -414,7 +414,7 @@ public class Network
 			gcBooleanBuffer.sync()
 			gcRealBuffer.sync()
 			gcStringBuffer.sync()
-		
+
 		// sync to receive data
 		synchronizer.sync()
 		synchronizer.onSynced(() -> receiveRound())
@@ -446,7 +446,7 @@ public class Network
 
 		// advance to next round and send it if necessary
 		counters.syncs++
-		
+
 		if counters.syncs < meta.syncs
 			execute(() -> sendRound())
 		else
@@ -459,7 +459,7 @@ public class Network
 
 				executeWhile(DATA_PER_EXECUTE, () -> stringEncoder.getStringCount() > 0) ->
 					dataBuffer.writeString(stringEncoder.popString())
-				
+
 
 			dataBuffer.setMode(BufferMode.READ)
 			dataBuffer.resetRead()

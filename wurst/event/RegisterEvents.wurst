@@ -53,10 +53,10 @@ public function registerPlayerEvent(playerevent p, code condition, code action)
 /*****SpellEffectEvent*****/
 
 constant onCastMap = new HashMap<int, trigger>()
- 
+
 init
 	registerPlayerUnitEvent(EVENT_PLAYER_UNIT_SPELL_EFFECT, () -> (onCastMap.get(GetSpellAbilityId())).evaluate())
- 
+
 public function registerSpellEffectEvent(int abil, code onCast)
 	if not onCastMap.has(abil)
 		onCastMap.put(abil, CreateTrigger())

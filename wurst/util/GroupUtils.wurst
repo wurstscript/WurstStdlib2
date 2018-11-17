@@ -4,7 +4,6 @@ import Group
 import ErrorHandling
 import HashMap
 import Execute
-
 import Maths
 
 /*
@@ -16,7 +15,7 @@ import Maths
 	provides more predictable and consistent functionalities that can be extended more easily.
 */
 
-/** The max number of recyclable groups. Even if this number is reached, 
+/** The max number of recyclable groups. Even if this number is reached,
 	the system will create new groups on following requests, but they won't be recyclable.
 	The maximum number for this setting is JASS_MAX_ARRAY_SIZE - 1. */
 @configurable constant GROUP_NUMBER_LIMIT = 1024
@@ -41,14 +40,14 @@ public function getGroup() returns group
 	group retVal
 	if numStack > 0
 		retVal = pop()
-	else if numStack <= 0 and numTotal < GROUP_NUMBER_LIMIT 
+	else if numStack <= 0 and numTotal < GROUP_NUMBER_LIMIT
 		createGroups(NEED_CREATE_GROUPS)
 		retVal = pop()
 	else
 		retVal = CreateGroup()
 	return retVal
 
-/** Recycles a group if it is created through GroupUtils, otherwise just destroys it. 
+/** Recycles a group if it is created through GroupUtils, otherwise just destroys it.
 	Doesn't affect ENUM_GROUP. */
 public function group.release()
 	if this == ENUM_GROUP
@@ -79,7 +78,7 @@ var shownMaxError = false
 function createGroups(int number)
 	let maxCreatePerCycle = 256
 	let actualLimit = max(JASS_MAX_ARRAY_SIZE - 1, GROUP_NUMBER_LIMIT)
-	let numTarget = numTotal + number 
+	let numTarget = numTotal + number
 	let overflow  = max(0, numTarget - actualLimit)
 	var toCreate  = max(0, numTarget - overflow)
 
@@ -87,11 +86,11 @@ function createGroups(int number)
 		let createNow = min(toCreate, maxCreatePerCycle)
 		toCreate -= createNow
 
-		execute() -> 
+		execute() ->
 			numTotal += createNow
 			for i = 1 to createNow
 				push(CreateGroup())
-		
+
 	if numTotal >= GROUP_NUMBER_LIMIT and not shownMaxError
 		Log.warn("Maximum number of GroupUtils groups (" + GROUP_NUMBER_LIMIT.toString() + ") created. "
 			+ "All newly created groups will be non-recyclable.")
@@ -123,7 +122,7 @@ bool shownDestrWarning = false
 function pop() returns group
 	numStack--
 	var retVal = stack[numStack]
-	
+
 	if stack[numStack] != null
 		used.put(stack[numStack], true)
 	else

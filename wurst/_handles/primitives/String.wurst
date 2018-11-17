@@ -7,7 +7,7 @@ constant numberset = "0123456789"
 constant numbersetlength = numberset.length()
 constant charsetlength = charset.length()
 
-/** Returns true if this string is non-null and 
+/** Returns true if this string is non-null and
 	not empty or only consisting of whitespace. */
 public function string.isNotBlank() returns boolean
 	return this != null and this.trim().length() > 0
@@ -23,11 +23,11 @@ public function string.toCharsetInt() returns int
 			if charset.substring(i, i + 1) == this
 				return i
 		return -1
-		
+
 /** Creates a real from a string that only contains numbers (0-9) and a sign */
 public function string.toReal() returns real
 	return S2R(this)
-		
+
 /** Creates an int from a string that only contains numbers (0-9) and a sign */
 public function string.toInt() returns int
 	return S2I(this)
@@ -47,15 +47,15 @@ public function string.substring(int start) returns string
 /** Length of the string */
 public function string.length() returns int
 	return StringLength(this)
-	
+
 /** Returns the char at the given position. 0 = first char */
 public function string.charAt(int index) returns string
 	return SubString(this, index, index + 1)
-	
+
 /**	Converts a string to an ability id */
 public function string.toAbilityId() returns int
 	return AbilityId(this)
-	
+
 /**	Returns if the given string ends with the specified string.	*/
 public function string.endsWith(string s) returns boolean
 	if s == ""
@@ -64,7 +64,7 @@ public function string.endsWith(string s) returns boolean
 	if s.length() > len
 		return false
 	return this.substring(len - s.length(), len) == s
-		
+
 /**	Returns if the given string starts with the specified string.	*/
 public function string.startsWith(string s) returns boolean
 	let len = this.length()
@@ -79,7 +79,7 @@ public function string.toLowerCase() returns string
 /** Returns the string in uppercase letters */
 public function string.toUpperCase() returns string
 	return StringCase(this, true)
-	
+
 /** True when string contains only uppercase letters */
 public function string.isUpper() returns boolean
 	return this == StringCase(this,true)
@@ -113,14 +113,14 @@ public function string.rtrim() returns string
 public function string.ltrim(string val) returns string
 	if this.startsWith(val)
 		return this.substring(val.length(), this.length()).ltrim(val)
-	else 
+	else
 		return this
 
 /** Removes a string from the end of another string */
 public function string.rtrim(string val) returns string
 	if this.endsWith(val)
 		return this.substring(0, this.length() - val.length()).rtrim(val)
-	else 
+	else
 		return this
 
 /** Removes a string from both ends of another string */
@@ -157,14 +157,14 @@ public function string.lastIndexOf(string s) returns int
 		if this.substring(i, i + s.length()) == s
 			return i
 	return -1
-	
+
 /** Returns the occurences of a certain string within a string */
 public function string.countOccurences(string findStr) returns int
 	int lastIndex = 0
 	int count = 0
 	while lastIndex != -1
 		lastIndex = this.indexOf(findStr, lastIndex)
-	
+
 		if lastIndex != -1
 			count++
 			lastIndex += findStr.length()
@@ -177,7 +177,7 @@ public function string.contains(string s) returns boolean
 /** Returns if the given string is a whitespace (" ",\n,\t,\r) */
 public function string.isWhitespace() returns boolean
 	return this == " " or this == "\n" or this == "\t" or this == "\r"
-	
+
 /** Returns a new string with first letter is upper */
 public function string.firstUpper() returns string
 	if (this == "")
@@ -187,7 +187,7 @@ public function string.firstUpper() returns string
 /** Returns a new string in which all occurrences of a specified string in the current instance are replaced with another specified string */
 public function string.replace(string oldSubstring, string newSubstring) returns string
 	string s = this
-	
+
 	int i = this.indexOf(oldSubstring)
 	while (i != -1)
 		s = s.substring(0, i) + newSubstring + s.substring(i + oldSubstring.length(), s.length())
@@ -195,9 +195,9 @@ public function string.replace(string oldSubstring, string newSubstring) returns
 	return s
 
 public function string.getHash() returns int
-	return StringHash(this)		
-		
-/** Formats the given string replacing {x} delimiters with the passed replacements. 
+	return StringHash(this)
+
+/** Formats the given string replacing {x} delimiters with the passed replacements.
 	Example: "You got {0} gold".format(goldAmount) **/
 public function string.format(vararg string replacements) returns string
 	var result = this
@@ -209,55 +209,55 @@ public function string.format(vararg string replacements) returns string
 
 public function string.iterator() returns StringIterator
 	return new StringIterator(this, 0, this.length())
-	
+
 public class StringIterator
 	string s
 	int currentpos
 	int stringLen
-	
+
 	construct(string s, int currentpos, int stringLen)
 		this.s = s
 		this.currentpos = currentpos
 		this.stringLen = stringLen
-		
+
 	function hasNext() returns boolean
 		return currentpos < stringLen
-		
+
 	function next() returns string
 		let val = s.substring(currentpos, currentpos + 1)
 		currentpos++
 		return val
-		
+
 	function close()
 		destroy this
-		
+
 public class StringLines
 	string s
 	int currentLine = 0
 	int lineCount
 	int lastIndex
-	
+
 	construct(string s, int lastIndex, int lineCount)
 		this.s = s
 		this.lineCount = lineCount
 		this.lastIndex = lastIndex
-		
+
 	function iterator() returns thistype
 		return this
-		
+
 	function hasNext() returns boolean
 		return currentLine < lineCount
-	
+
 	function next() returns string
 		let idx = this.lastIndex
 		this.lastIndex = this.s.indexOf("\n", idx) + 1
 		currentLine++
 		return this.s.substring(idx, this.lastIndex)
-		
+
 	function close()
 		destroy this
-		
-	
+
+
 /** Returns a StringLines Object of the given string for iteration */
 public function string.toLines() returns StringLines
 	return new StringLines(this, 0, this.countOccurences("\n") + 1)

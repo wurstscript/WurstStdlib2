@@ -90,14 +90,14 @@ public function triggerFromIndex(int index) returns trigger
 
 public function triggerToIndex(trigger object) returns int
 	return object.getHandleId()
-	
+
 public function triggeractionFromIndex(int index) returns triggeraction
 	typecastdata.saveFogState(0,ConvertFogState(index))
 	return typecastdata.loadTriggerAction(0)
 
 public function triggeractionToIndex(triggeraction object) returns int
 	return object.getHandleId()
-	
+
 public function triggerconditionFromIndex(int index) returns triggercondition
 	typecastdata.saveFogState(0,ConvertFogState(index))
 	return typecastdata.loadTriggerCondition(0)
@@ -216,7 +216,7 @@ public function ubersplatFromIndex(int index) returns ubersplat
 
 public function ubersplatToIndex(ubersplat object) returns int
 	return object.getHandleId()
-	
+
 public function booleanToIndex(boolean u) returns int
 	return u ? 1 : 0
 

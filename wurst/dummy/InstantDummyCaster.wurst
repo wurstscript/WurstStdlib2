@@ -21,7 +21,7 @@ public class InstantDummyCaster
 	protected static unit caster
 
 	private construct()
-	
+
 	private static function prepare(player owner, int id, int lvl, vec3 pos)
 		caster..addAbility(id)..setMana(1000000)
 		if pos.inBounds()
@@ -30,25 +30,25 @@ public class InstantDummyCaster
 			caster.setAbilityLevel(id, lvl)
 		if owner != null
 			caster.setOwner(owner, false)
-			
+
 	private static function finish(int id)
 		caster.setOwner(DUMMY_PLAYER, false)
 		caster.removeAbility(id)
 		caster.setPos(boundMax)
-			
+
 	static function castImmediate(player owner, int abilityId, int lvl, int orderId, vec3 pos) returns boolean
 		prepare(owner, abilityId, lvl, pos)
 		boolean b = caster.issueImmediateOrderById(orderId)
 		finish(abilityId)
 		return b
-		
+
 	static function castTarget(player owner, int abilityId, int lvl, int orderId, widget target, vec3 casterPos) returns boolean
 		prepare(owner, abilityId, lvl, casterPos)
 		caster.setFacing(caster.getPos().angleTo(target.getPos()))
 		boolean b = caster.issueTargetOrderById(orderId, target)
 		finish(abilityId)
 		return b
-	
+
 	static function castPoint(player owner, int abilityId, int lvl, int orderId, vec2 targetPos, vec3 casterPos) returns boolean
 		prepare(owner, abilityId, lvl, casterPos)
 		caster.setFacing(caster.getPos().angleTo(targetPos))
@@ -94,7 +94,7 @@ constant DUMMY_CASTER_UNIT_ID = compiletime(UNIT_ID_GEN.next())
 init
 	InstantDummyCaster.caster = createUnit(DUMMY_PLAYER, DUMMY_CASTER_UNIT_ID, boundMax, angle(0))
 	..setPathing(false)..addAbility(HEIGHT_ENABLER)..removeAbility(HEIGHT_ENABLER)
-		
+
 @compiletime function generateObject()
 	new UnitDefinition(DUMMY_CASTER_UNIT_ID, 'ewsp')
 	..setName("Dummy Caster")

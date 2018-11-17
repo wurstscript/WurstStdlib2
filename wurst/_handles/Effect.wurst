@@ -14,12 +14,12 @@ public function flashEffect(string path, vec3 pos)
 public function flashEffect(string path, vec2 pos)
 	addEffect(path, pos).destr()
 
-public function flashEffect(string path, widget target, string attachPointName) 
+public function flashEffect(string path, widget target, string attachPointName)
 	addEffect(path, target, attachPointName).destr()
-	
+
 public function addEffect(string path, vec2 pos) returns effect
 	return AddSpecialEffect(path, pos.x, pos.y)
-	
+
 public function addEffect(string path, vec3 pos) returns effect
 	return AddSpecialEffect(path, pos.x, pos.y)..setPos(pos)
 
@@ -90,7 +90,7 @@ public function effect.getLocalY() returns real
 
 public function effect.getLocalZ() returns real
 	return BlzGetLocalSpecialEffectZ(this)
-	
+
 public function effect.setPos(vec3 pos)
 	BlzSetSpecialEffectPosition(this, pos.x, pos.y, pos.z)
 
@@ -99,7 +99,7 @@ public function effect.setPos(vec2 pos)
 
 public function effect.getPos3() returns vec3
 	return vec3(BlzGetLocalSpecialEffectX(this), BlzGetLocalSpecialEffectY(this), BlzGetLocalSpecialEffectZ(this))
-	
+
 public function effect.getPos() returns vec2
 	return vec2(BlzGetLocalSpecialEffectX(this), BlzGetLocalSpecialEffectY(this))
 
@@ -110,7 +110,7 @@ public function effect.setColor(colorA color)
 	BlzSetSpecialEffectColor(this, color.red, color.green, color.blue)
 	BlzSetSpecialEffectAlpha(this, color.alpha)
 
-/** 
+/**
 Change the orientation of the special effect.
 yaw  : x-axis
 pitch: y-axis
@@ -131,7 +131,7 @@ Warning: As of 1.29.2, setPitch has issues for values between 1.57-4.7 radians o
 */
 public function effect.setPitch(angle pitch)
 	BlzSetSpecialEffectPitch(this, pitch.radians())
-	
+
 /**
 Change the angle of the special effect around z-axis.
 */
@@ -141,7 +141,7 @@ public function effect.setRoll(angle roll)
 @Test
 function testEffect()
 	let eff = addEffect("testPath", vec2(12,32))
-	
+
 	eff.getLocalX().assertEquals(12.)
 	eff.getLocalY().assertEquals(32.)
 

@@ -40,12 +40,12 @@ public function fromRawCode(string value) returns int
 			let pos = CHARMAP.indexOf(value.charAt(3-i))
 			result += factor * pos
 			factor *= 256
-	
-	return result	
-	
+
+	return result
+
 public function string.fromRawCode() returns int
 	return fromRawCode(this)
-	
+
 public function int.toRawCode() returns string
 	return toRawCode(this)
 
@@ -82,7 +82,7 @@ public function commaList(vararg string values) returns string
 	fromRawCode("hfoo") .assertEquals('hfoo')
 	fromRawCode("abcd") .assertEquals('abcd')
 	fromRawCode("ABCD") .assertEquals('ABCD')
-	
+
 @Test function test_idInteger2IdString()
 	toRawCode('hfoo') .assertEquals("hfoo")
 	toRawCode('abcd') .assertEquals("abcd")

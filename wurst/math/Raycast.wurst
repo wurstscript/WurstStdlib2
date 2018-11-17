@@ -4,7 +4,7 @@ import Vectors
 import Wurstunit
 
 /* The package defines such geometry as 'ray' for 2D and 3D separately.
-Both can find the intersection point with another geometry object. 
+Both can find the intersection point with another geometry object.
 For example:
 
 	let p1 = vec2(1000, 1000)
@@ -63,7 +63,7 @@ public tuple doubleresult2d(result2d first, result2d second)
 /** 3D intersection result
 intersects - 'true' if the intersection point exists
 point - the intersection point or ZERO2
-distance - distance between the ray's origin and the intersection point 
+distance - distance between the ray's origin and the intersection point
 backface - `true` if the surface at the intersection point is faced away from the ray's origin  */
 public tuple result3d(bool intersects, vec3 point, real distance, bool backface)
 
@@ -95,7 +95,7 @@ public function vec2.project(ray2d ray) returns result2d
 	return result
 
 /** Finds the intersection point of the ray and a line defined by 2 points.
-Returns tuple result2d(intersects, point, distance). */ 
+Returns tuple result2d(intersects, point, distance). */
 public function ray2d.castToLine(vec2 p1, vec2 p2) returns result2d
 	var result = FAIL_2D
 	let lengthSq = this.direction.lengthSq()
@@ -114,7 +114,7 @@ public function ray2d.castToLine(vec2 p1, vec2 p2) returns result2d
 	return result
 
 /** Finds the intersection point of the ray and another ray.
-Returns tuple result2d(intersects, point, distance). */ 
+Returns tuple result2d(intersects, point, distance). */
 public function ray2d.castToRay(vec2 origin, vec2 direction) returns result2d
 	var result = FAIL_2D
 	let lengthSq1 = this.direction.lengthSq()
@@ -132,7 +132,7 @@ public function ray2d.castToRay(vec2 origin, vec2 direction) returns result2d
 	return result
 
 /** Finds the intersection point of the ray and a line segment defined by 2 points.
-Returns tuple result2d(intersects, point, distance). */ 
+Returns tuple result2d(intersects, point, distance). */
 public function ray2d.castToSegment(vec2 p1, vec2 p2) returns result2d
 	var result = FAIL_2D
 	let lengthSq = this.direction.lengthSq()
@@ -152,7 +152,7 @@ public function ray2d.castToSegment(vec2 p1, vec2 p2) returns result2d
 	return result
 
 /** Finds the intersection point(s) of the ray and a circle.
-Returns tuple doubleresult2d(first, second). */ 
+Returns tuple doubleresult2d(first, second). */
 public function ray2d.castToCircle(vec2 center, real radius) returns doubleresult2d
 	var result = doubleresult2d(FAIL_2D, FAIL_2D)
 	let lengthSq = this.direction.lengthSq()
@@ -208,7 +208,7 @@ public function vec3.project(ray3d ray) returns result3d
 /** Finds the intersection point of the ray and a plane where
 point - a point on the plane
 normal - a vector perpendicular to the plane
-Returns tuple result3d(intersects, point, distance, backface). */ 
+Returns tuple result3d(intersects, point, distance, backface). */
 public function ray3d.castToPlane(vec3 point, vec3 normal) returns result3d
 	var result = FAIL_3D
 	let lengthSq = this.direction.lengthSquared()
@@ -229,13 +229,13 @@ public function ray3d.castToPlane(vec3 point, vec3 normal) returns result3d
 center - the center of the disk
 normal - a vector perpendicular to the disk's plane
 radius - the disk's radius
-Returns tuple result3d(intersects, point, distance, backface). */ 
+Returns tuple result3d(intersects, point, distance, backface). */
 public function ray3d.castToDisk(vec3 center, vec3 normal, real radius) returns result3d
 	let result = this.castToPlane(center, normal)
 	return center.distanceTo(result.point) <= radius ? result : FAIL_3D
 
 /** Finds the intersection point(s) of the ray and a sphere.
-Returns tuple doubleresult3d(first, second). */ 
+Returns tuple doubleresult3d(first, second). */
 public function ray3d.castToSphere(vec3 center, real radius) returns doubleresult3d
 	var result = doubleresult3d(FAIL_3D, FAIL_3D)
 	let lengthSq = this.direction.lengthSquared()
@@ -412,15 +412,15 @@ public function ray3d.castToTriangle(vec3 p1, vec3 p2, vec3 p3) returns result3d
 	test.point.assertEquals(vec3(0, -5, 5))
 	test.distance.assertEquals(7.071, EPSILON)
 	test.backface.assertFalse()
-	test = ray.castToPlane(vec3(1, -5, 5), vec3(0, 1, -1)) 
+	test = ray.castToPlane(vec3(1, -5, 5), vec3(0, 1, -1))
 	test.intersects.assertTrue()
 	test.backface.assertTrue()
-	test = ray.castToPlane(vec3(1, -5, 5), vec3(0, 1, 1)) 
+	test = ray.castToPlane(vec3(1, -5, 5), vec3(0, 1, 1))
 	test.intersects.assertFalse()
-	test = ray.castToPlane(vec3(1, 5, 5), vec3(0, -1, 1)) 
+	test = ray.castToPlane(vec3(1, 5, 5), vec3(0, -1, 1))
 	test.intersects.assertTrue()
 	test.distance.assertEquals(0, EPSILON)
-	test = ray.castToPlane(vec3(1, 6, 5), vec3(0, -1, 1)) 
+	test = ray.castToPlane(vec3(1, 6, 5), vec3(0, -1, 1))
 	test.intersects.assertFalse()
 
 @Test function testDisk()
@@ -442,7 +442,7 @@ public function ray3d.castToTriangle(vec3 p1, vec3 p2, vec3 p3) returns result3d
 	test.first.distance.assertEquals(4.2426, EPSILON)
 	test.first.backface.assertFalse()
 	test.second.intersects.assertFalse()
-	// Two 
+	// Two
 	test = ray.castToSphere(vec3(3, 1, -2), 3)
 	test.first.intersects.assertTrue()
 	test.first.point.assertEquals(vec3(3, 1, -5))

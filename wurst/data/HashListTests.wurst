@@ -44,7 +44,7 @@ function testClear()
 function testRemoveAll()
 	let list = new HashList<int>
 		..add(5, 3, 4)
-	
+
 	list.clear()
 	list.size().assertEquals(0)
 
@@ -52,7 +52,7 @@ function testRemoveAll()
 function testRemoveAt()
 	let list = new HashList<int>
 		..add(3, 5)
-	
+
 	list.removeAt(1)
 	list.get(0).assertEquals(3)
 	list.get(1).assertEquals(0)
@@ -109,7 +109,7 @@ function testIterator()
 
 	list
 		..add(1, 3, 5)
-	
+
 	for val in list
 		val.assertEquals(vals[i])
 		i++
@@ -118,10 +118,10 @@ function testIterator()
 function testCopy()
 	let list = new HashList<int>
 		..add(1, 3, 5)
-	
-	let copy = list.copy()	
+
+	let copy = list.copy()
 	var i = 0
-	
+
 	for val in list
 		val.assertEquals(copy.get(i))
 		i++
@@ -130,10 +130,10 @@ function testCopy()
 function testCopyConstructor()
 	let list = new HashList<int>
 		..add(1, 3, 5)
-	
+
 	let copy = new HashList<int>(list)
 	var i = 0
-	
+
 	for val in list
 		val.assertEquals(copy.get(i))
 		i++

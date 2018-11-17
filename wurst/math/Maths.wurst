@@ -1,4 +1,4 @@
-package Maths	
+package Maths
 import NoWurst
 import public Angle
 import Real
@@ -13,8 +13,8 @@ public constant real PI			=  3.141592654
 public constant real PI2 		=  6.28318
 /** PI / 2 constant */
 public constant real PIHALF		=  1.570796326
-/** 
- * Returns the length of the hypotenuse of a right-angle triangle with the 
+/**
+ * Returns the length of the hypotenuse of a right-angle triangle with the
  * given side lengths. Does not overflow or underflow as fast as
  * SquareRoot(x^2 + y^2) does.
  */
@@ -29,10 +29,10 @@ public function hypot(real dx, real dy) returns real
 		x = y
 	return x * SquareRoot(1 + t * t)
 
-/** Returns the angle of a height-slope */	
+/** Returns the angle of a height-slope */
 public function getSlopeAngle(real z1, real z2, real dist) returns angle
 	return angle(Atan2(z2 - z1, dist))
-	
+
 public function int.moduloInt(int divisor) returns int
 	return this - (this div divisor) * divisor
 
@@ -40,7 +40,7 @@ public function int.moduloInt(int divisor) returns int
 	Example: max(6, 4, -12)  // Returns 6. */
 public function max(vararg int numbers) returns int
 	var maxNumber = INT_MIN
-	for number in numbers 
+	for number in numbers
 		maxNumber = number > maxNumber ? number : maxNumber
 	return maxNumber
 
@@ -48,7 +48,7 @@ public function max(vararg int numbers) returns int
 	Example: max(6.5, 4.5, -12.5)  // Returns 6.5. */
 public function max(vararg real numbers) returns real
 	var maxNumber = REAL_MIN
-	for number in numbers 
+	for number in numbers
 		maxNumber = number > maxNumber ? number : maxNumber
 	return maxNumber
 
@@ -56,7 +56,7 @@ public function max(vararg real numbers) returns real
 	Example: min(6, 4, -12)  // Returns -12. */
 public function min(vararg int numbers) returns int
 	var minNumber = INT_MAX
-	for number in numbers 
+	for number in numbers
 		minNumber = number < minNumber ? number : minNumber
 	return minNumber
 
@@ -64,18 +64,18 @@ public function min(vararg int numbers) returns int
 	Example: min(6.5, 4.5, -12.5)  // Returns -12,5. */
 public function min(vararg real numbers) returns real
 	var minNumber = REAL_MAX
-	for number in numbers 
+	for number in numbers
 		minNumber = number < minNumber ? number : minNumber
 	return minNumber
 
 @test function minmax()
 	int three = 3
-	max(three,4,21,43,51,30).assertEquals(51)	
-	max(3.,4.,5.).assertEquals(5)	
+	max(three,4,21,43,51,30).assertEquals(51)
+	max(3.,4.,5.).assertEquals(5)
 	max(-4,three).assertEquals(3)
 	min(three,4,0,-2,-1).assertEquals(-2)
 	min(3.,4.,-20.,-3.).assertEquals(-20.)
-	
+
 @test function test_hypot()
 	test_hypot_help(5,6)
 	test_hypot_help(5000000.,6)
@@ -83,8 +83,8 @@ public function min(vararg real numbers) returns real
 	test_hypot_help(543532403425324.,123456789.)
 	test_hypot_help(0.0000001,0.0000000000023)
 	test_hypot_help(0,0)
-	
-	
+
+
 function test_hypot_help(real x, real y)
 	hypot(x,y).assertEquals(SquareRoot(x * x + y * y), 0.0001)
-	
+
