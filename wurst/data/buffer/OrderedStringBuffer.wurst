@@ -1,5 +1,4 @@
 package OrderedStringBuffer
-
 import StringBuffer
 import BufferInterface
 import ErrorHandling
@@ -175,7 +174,7 @@ public class OrderedStringBuffer extends AbstractStringBuffer
 
 	private function transferValueTo(Buffer sink)
 		let valueType = this.peekType()
-	
+
 		switch valueType
 			case INTEGER
 				sink.writeInt(this.readInt())

@@ -13,14 +13,14 @@ function allToString() returns string
  	for x in TestClass
 		res += x.str
 	return res
-	
+
 @Test
 function test()
 	let a = new TestClass("a")
 	let b = new TestClass("b")
 	let c = new TestClass("c")
 	let d = new TestClass("d")
- 
+
  	allToString().assertEquals("abcd")
  	destroy c
  	allToString().assertEquals("abd")
@@ -30,7 +30,7 @@ function test()
  	allToString().assertEquals("b")
  	destroy b
  	allToString().assertEquals("")
- 	
+
  @Test
  function testDestroy()
  	new TestClass("a")

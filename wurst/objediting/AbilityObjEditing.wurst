@@ -17,15 +17,15 @@ public enum AllowWhenFull
 public interface TooltipGenerator
 	function addProperty(string title, StringLevelClosure lc)
 	function applyToDef(AbilityDefinition def)
-		
+
 public class AbilityDefinition
 	protected ObjectDefinition def
 	protected int lvls = 1
-	
+
 	TooltipGenerator tooltipGen = null
 	boolean listen = false
-	
-	protected int newId 
+
+	protected int newId
 	protected int baseId
 
 	function getNewId() returns int
@@ -41,7 +41,7 @@ public class AbilityDefinition
 		this.newId = newId
 		this.baseId = baseId
 		def = createObjectDefinition("w3a", newId, baseId)
-		
+
 	construct(int newId, int baseId, int lvls)
 		this.newId = newId
 		this.baseId = baseId
@@ -52,30 +52,30 @@ public class AbilityDefinition
 	function addTooltipProperty(string pName, StringLevelClosure lc)
 		if tooltipGen != null and listen
 			tooltipGen.addProperty(pName, lc)
-			
+
 	function addTooltipProperty(string pName, IntLevelClosure lc)
 		addTooltipProperty(pName, (int lvl) -> lc.run(lvl).toString())
-		
+
 	function addTooltipProperty(string pName, RealLevelClosure lc)
 		addTooltipProperty(pName, (int lvl) -> lc.run(lvl).toString())
-		
+
 	function addTooltipProperty(string pName, BooleanLevelClosure lc)
 		addTooltipProperty(pName, (int lvl) -> lc.run(lvl).toString())
-		
+
 	function registerTooltipGenerator(TooltipGenerator tgen)
 		tooltipGen = tgen
-		
+
 	function tooltipStartListen()
 		listen = true
 
 	function tooltipStopListen()
 		tooltipStopListen(true)
-		
+
 	function tooltipStopListen(boolean build)
 		listen = false
 		if tooltipGen != null and build
 			tooltipGen.applyToDef(this)
-		
+
 	function setName(string value)
 		def.setLvlDataString("anam", 0, 0, value)
 		StringLevelClosure clr = lvl -> value
@@ -110,19 +110,19 @@ public class AbilityDefinition
 
 	function setButtonPositionResearchY(int value)
 		def.setLvlDataInt("arpy", 0, 0, value)
-		
+
 	function presetButtonPosNormal(int x, int y)
 		setButtonPositionNormalX(x)
 		setButtonPositionNormalY(y)
-		
+
 	function presetButtonPosTurnOff(int x, int y)
 		setButtonPositionTurnOffX(x)
 		setButtonPositionTurnOffY(y)
-		
+
 	function presetButtonPosResearch(int x, int y)
 		setButtonPositionResearchX(x)
 		setButtonPositionResearchY(y)
-		
+
 	function setIconNormal(string value)
 		def.setLvlDataString("aart", 0, 0, value)
 
@@ -131,7 +131,7 @@ public class AbilityDefinition
 
 	function setIconResearch(string value)
 		def.setLvlDataString("arar", 0, 0, value)
-		
+
 	function presetIcon(string name)
 		string s = name
 		if name.length() < 20 or not name.startsWith("ReplaceableTextures")
@@ -235,7 +235,7 @@ public class AbilityDefinition
 	function presetTooltipTurnOffExtended(StringLevelClosure lc)
 		def.setLevelsDataString("auu1", lvls, 0, lc)
 		addTooltipProperty("TooltipTurnOffExtended", lc)
-		
+
 	function setTooltipLearn(string value)
 		def.setLvlDataString("aret", 0, 0, value)
 
@@ -252,13 +252,13 @@ public class AbilityDefinition
 
 	function setHotkeyLearn(string value)
 		def.setLvlDataString("arhk", 0, 0, value)
-		
+
 	function setHotkeyNormal(string value)
 		def.setLvlDataString("ahky", 0, 0, value)
 
 	function setHotkeyTurnOff(string value)
 		def.setLvlDataString("auhk", 0, 0, value)
-		
+
 	function presetHotkey(string value)
 		setHotkeyNormal(value)
 		setHotkeyLearn(value)

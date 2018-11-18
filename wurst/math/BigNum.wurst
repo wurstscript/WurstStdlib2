@@ -29,10 +29,10 @@ public class BigNum_l
 	int leaf = 0
 	BigNum_l next = null
 	static int count = 0
-	
+
 	construct()
 		count++
-		
+
 	ondestroy
 		count--
 
@@ -47,12 +47,12 @@ public class BigNum_l
 		else
 			return false
 
-	
+
 	function divSmall (int base, int denom) returns int
 		int remainder = 0
 		if next != null
 			remainder = next.divSmall(base,denom)
-		
+
 		let num = leaf + remainder * base
 		let quotient = num div denom
 		remainder = num - quotient * denom
@@ -63,7 +63,7 @@ public class BigNum_l
 public class BigNum
 	BigNum_l list = null
 	int base
-		
+
 	construct(int base)
 		this.base = base
 
@@ -83,35 +83,35 @@ public class BigNum
 			cur = cur.next
 		return true
 
-	
+
 	function clean()
 		list.clean()
 
-	
+
 	//fails if bignum is null
 	//BASE() + carry must be less than MAXINT()
 	function addSmall(int pcarry)
 		BigNum_l cur = list
 		int sum
 		int carry = pcarry
-		
+
 		if cur == null
 			cur = new BigNum_l()
 			list = cur
-		
-		
+
+
 		while carry != 0
 			sum = cur.leaf + carry
 			carry = sum div base
 			sum = sum - carry * base
 			cur.leaf = sum
-			
+
 			if cur.next == null
 				cur.next = new BigNum_l()
-			
+
 			cur = cur.next
 
-	
+
 	// x * BASE() must be less than MAXINT()
 	function mulSmall(int x)
 		BigNum_l cur = list
@@ -125,13 +125,13 @@ public class BigNum
 			cur.leaf = remainder
 			if cur.next == null and carry != 0
 				cur.next = new BigNum_l()
-			
+
 			cur = cur.next
-	
+
 	//Returns remainder
 	function divSmall(int denom) returns int
 		return list.divSmall(base,denom)
-	
+
 	function lastDigit() returns int
 		BigNum_l cur = list
 		BigNum_l next = cur.next
@@ -140,7 +140,7 @@ public class BigNum
 			next = cur.next
 
 		return cur.leaf
-		
+
 	function dump() returns string
 		BigNum_l cur = this.list
 		string s = ""
@@ -149,4 +149,3 @@ public class BigNum
 			cur = cur.next
 		return s
 
-		

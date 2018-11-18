@@ -80,7 +80,7 @@ function UpgradeEffectType.toIdentifierString() returns string
 			result = ""
 		case AbilityLevelBonus
 			result = "rlev"
-		case AddUltravision 
+		case AddUltravision
 			result = "rauv"
 		case ApplyAttackUpgradeBonus
 			result = "ratt"
@@ -88,7 +88,7 @@ function UpgradeEffectType.toIdentifierString() returns string
 			result = "rarm"
 		case AttackDamageBonus
 			result = "ratx"
-		case AttackDamageLoss 
+		case AttackDamageLoss
 			result = "radl"
 		case AttackDiceBonus
 			result = "ratd"
@@ -152,13 +152,13 @@ public class W3QDefinition
 	protected int newId
 	protected int baseId
 	protected int levels = 1
-	
+
 	function getNewId() returns int
 		return newId
 
 	function getBaseId() returns int
 		return baseId
-		
+
 	function getLevels() returns int
 		return levels
 
@@ -172,11 +172,11 @@ public class W3QDefinition
 		this.baseId = baseId
 		def = createObjectDefinition("w3q", newId, baseId)
 		setLevels(levels)
-		
+
 
 	function setButtonPositionX(int value)
 		def.setLvlDataInt("gbpx", 0, 0, value)
-		
+
 	function setButtonPositionY(int value)
 		def.setLvlDataInt("gbpy", 0, 0, value)
 
@@ -214,7 +214,7 @@ public class W3QDefinition
 
 	function setTransferWithUnitOwnership(bool value)
 		def.setLvlDataInt("ginh", 0, 0, value.toInt())
-	
+
 	function setIcon(int level, string value)
 		def.setLvlDataString("gar1", level, 0, value)
 
@@ -241,7 +241,7 @@ public class W3QDefinition
 
 	function setTooltipExtended(int level, string value)
 		def.setLvlDataString("gub1", level, 0, value)
-	
+
 	function presetIcon(StringLevelClosure lc)
 		def.setLevelsDataString("gar1", levels, 0, lc)
 
@@ -268,9 +268,9 @@ public class W3QDefinition
 
 	function presetTooltipExtended(StringLevelClosure lc)
 		def.setLevelsDataString("gub1", levels, 0, lc)
-	
+
 	function setEffectType(int effectIndex, UpgradeEffectType effectType)
-		def.setLvlDataString(EFFECT_TAG_PREFIX + effectIndex.toString(), 0, 0, 
+		def.setLvlDataString(EFFECT_TAG_PREFIX + effectIndex.toString(), 0, 0,
 			effectType.toIdentifierString())
 
 	function setEffectBase(int effectIndex, real value)
@@ -281,7 +281,7 @@ public class W3QDefinition
 
 	function setEffectCode(int effectIndex, string value)
 		def.setLvlDataString(CODE_TAG_PREFIX + effectIndex.toString(), 0, 0, value)
-	
+
 	function setEffect(int effectIndex, UpgradeEffectType effectType, real base)
 		setEffectType(effectIndex, effectType)
 		setEffectBase(effectIndex, base)
@@ -295,8 +295,8 @@ public class W3QDefinition
 		setEffectCode(effectIndex, codeId)
 
 /** Use this class to create upgrade definitions. Constructors provide a "Clean"
-	upgrade definition, without any research cost or effects. Using the 
-	addEffectXXX() methods will add additional effects, with a limit of 4 
+	upgrade definition, without any research cost or effects. Using the
+	addEffectXXX() methods will add additional effects, with a limit of 4
 	effects. Do not use the setEffect methods from the W3Q baseclass. */
 public class UpgradeDefinition extends W3QDefinition
 	int effectCount = 0
@@ -306,7 +306,7 @@ public class UpgradeDefinition extends W3QDefinition
 		if effectCount > 4
 			error("Upgrades cannot have more than 4 effects!")
 		return effectCount
-			
+
 	function getEffectCount() returns int
 		return effectCount
 
@@ -341,7 +341,7 @@ public class UpgradeDefinition extends W3QDefinition
 
 	override function setEffectCode(int effectIndex, string value)
 		error("Use addEffect methods for UpgradeDefinition!")
-	
+
 	override function setEffect(int effectIndex, UpgradeEffectType effectType, real base)
 		error("Use addEffect methods for UpgradeDefinition!")
 
@@ -350,7 +350,7 @@ public class UpgradeDefinition extends W3QDefinition
 
 	override function setEffect(int effectIndex, UpgradeEffectType effectType, real base, real increment, string codeId)
 		error("Use addEffect methods for UpgradeDefinition!")
-	
+
 	// Sinces the above overloads break the use of super.setEffect all together, we need a small helper
 	private function internalSetEffect(int effectIndex, UpgradeEffectType effectType, real base)
 		super.setEffectType(effectIndex, effectType)
@@ -359,12 +359,12 @@ public class UpgradeDefinition extends W3QDefinition
 	private function internalSetEffect(int effectIndex, UpgradeEffectType effectType, real base, real increment)
 		internalSetEffect(effectIndex, effectType, base)
 		super.setEffectIncrement(effectIndex, increment)
-	
+
 	private function internalSetEffect(int effectIndex, UpgradeEffectType effectType, real base, real increment, string codeId)
 		internalSetEffect(effectIndex, effectType, base, increment)
 		if codeId != null
 			super.setEffectCode(effectIndex, codeId)
-	
+
 	/** Increases the level of an ability */
 	function addEffectAbilityLevelBonus(int base, int increment, string abilCode)
 		internalSetEffect(addNewEffectCount(), UpgradeEffectType.AbilityLevelBonus, base.toReal(), increment.toReal(), abilCode)
@@ -384,7 +384,7 @@ public class UpgradeDefinition extends W3QDefinition
 	/** Bonus to base damage of attacks. Supports negative bonuses. */
 	function addEffectAttackDamageBonus(int base, int increment)
 		internalSetEffect(addNewEffectCount(), UpgradeEffectType.AttackDamageBonus, base.toReal(), increment.toReal())
-	
+
 	/**  Increases the unit's damage loss by a set amount. This effects line or bounce attacks! */
 	function addEffectAttackDamageLoss(int base, int increment)
 		internalSetEffect(addNewEffectCount(), UpgradeEffectType.AttackDamageLoss, base.toReal(), increment.toReal())
@@ -420,7 +420,7 @@ public class UpgradeDefinition extends W3QDefinition
 	function addEffectAuraDataBonus(real base, real increment)
 		internalSetEffect(addNewEffectCount(), UpgradeEffectType.AuraDataBonus, base, increment)
 
-	/** Changes the effected units' armor type by *adding or removing this value 
+	/** Changes the effected units' armor type by *adding or removing this value
 		from their current armor type*.The following table describes the index
 		for each armor type:
 			small = 0
@@ -431,11 +431,11 @@ public class UpgradeDefinition extends W3QDefinition
 			hero = 5
 			divine = 6
 			unarmored = 7
-		
-		Resulting armor type indexes under 0 or greater than 7 will result in 
+
+		Resulting armor type indexes under 0 or greater than 7 will result in
 		broken unit armors. Negative integers also do work.
 
-		Examples. Unit has "Large" armor. You upgrade a type change of 1, the unit 
+		Examples. Unit has "Large" armor. You upgrade a type change of 1, the unit
 		now has fortified armor (this is what Orc Reinforced Burrows does). Having
 		an armor type of large and applying 7 to it will give the unit an undefined,
 		breaking their armor type.
@@ -448,11 +448,11 @@ public class UpgradeDefinition extends W3QDefinition
 	/** Changes the attacks enabled for the effected units. */
 	function addEffectEnableAttacks(AttacksEnabled base)
 		internalSetEffect(addNewEffectCount(), UpgradeEffectType.EnableAttacks, base.toObjectInt().toReal())
-	
+
 	/** Changes the attacks enabled for the effected units when rooted. */
 	function addEffectEnableAttacksRooted(AttacksEnabled base)
 		internalSetEffect(addNewEffectCount(), UpgradeEffectType.EnableAttacksRooted, base.toObjectInt().toReal())
-	
+
 	/** Changes the attacks enabled for the effected units when rooted. */
 	function addEffectEnableAttacksUprooted(AttacksEnabled base)
 		internalSetEffect(addNewEffectCount(), UpgradeEffectType.EnableAttacksUprooted, base.toObjectInt().toReal())
@@ -469,7 +469,7 @@ public class UpgradeDefinition extends W3QDefinition
 	/** Flat increase to hitpoints. */
 	function addEffectHitPointBonus(int base, int increment)
 		internalSetEffect(addNewEffectCount(), UpgradeEffectType.HitPointBonus, base.toReal(), increment.toReal())
-	
+
 	/** Percent increase to base hitpoints. Note: 0.1 = 10% increase */
 	function addEffectHitPointBonusPercent(real base, real increment)
 		internalSetEffect(addNewEffectCount(), UpgradeEffectType.HitPointBonusPercent, base, increment)
@@ -481,7 +481,7 @@ public class UpgradeDefinition extends W3QDefinition
 	/** Increases lumber capcity on "gather" type abilities. */
 	function addEffectLumberHarvestBonus(int base, int increment)
 		internalSetEffect(addNewEffectCount(), UpgradeEffectType.LumberHarvestBonus, base.toReal(), increment.toReal())
-	
+
 	/** Adds magic immunity to unit's effected */
 	function addEffectMagicImmunity()
 		super.setEffectType(addNewEffectCount(), UpgradeEffectType.MagicImmunity)
@@ -489,11 +489,11 @@ public class UpgradeDefinition extends W3QDefinition
 	/** Flat bonus to max mana points. */
 	function addEffectManaPointBonus(int base, int increment)
 		internalSetEffect(addNewEffectCount(), UpgradeEffectType.ManaPointBonus, base.toReal(), increment.toReal())
-	
+
 	/** Percent bonus to max mana. Note: 0.1 = 10%. */
 	function addEffectManaPointBonusPercent(real base, real increment)
 		internalSetEffect(addNewEffectCount(), UpgradeEffectType.ManaPointBonusPercent, base, increment)
-	
+
 	/** Percent bonus to mana regeneration. Note: 0.1 = 10%. */
 	function addEffectManaRegeneration(real base, real increment)
 		internalSetEffect(addNewEffectCount(), UpgradeEffectType.ManaRegeneration, base, increment)
@@ -517,8 +517,8 @@ public class UpgradeDefinition extends W3QDefinition
 	/** Damage dealt by the Spiked Barricades ability to melee enemy attackers on attack. */
 	function addEffectSpikedBarricades(int base, int increment)
 		internalSetEffect(addNewEffectCount(), UpgradeEffectType.SpikedBarricades, base.toReal(), increment.toReal())
-	
-	/** Changes availabilty of units. Note: the unit MUST have this upgrade as 
+
+	/** Changes availabilty of units. Note: the unit MUST have this upgrade as
 		an "Upgrade Used" or it will have no effect. Look at Troll Berserker upgrade
 		for an example of this usage.*/
 	function addEffectUnitAvailabilityChange(bool available, string unitId)

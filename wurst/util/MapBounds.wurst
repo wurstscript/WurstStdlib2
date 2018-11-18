@@ -17,7 +17,6 @@ public vec2 boundMax
 public vec2 playableCenter
 public vec2 boundCenter
 
-
 // playable map area
 function inPlayableXY(real x, real y) returns boolean
 	return x > playableMin.x and x < playableMax.x and y > playableMin.y and y < playableMax.y
@@ -35,7 +34,7 @@ function inBoundsXY(real x, real y) returns boolean
 
 public function vec2.inBounds() returns boolean
 	return inBoundsXY(this.x, this.y)
-	
+
 public function vec3.inBounds() returns boolean
 	return inBoundsXY(this.x, this.y)
 
@@ -45,7 +44,7 @@ public function randomPointOnMap() returns vec2
 
 /** Must be at init because globals get initialized before map bounds */
 @compiletime function initMapBounds()
-	playableMapRect   = compiletime ? Rect(-1024, -1024, 1024, 1024) : GetPlayableMapRect() 
+	playableMapRect   = compiletime ? Rect(-1024, -1024, 1024, 1024) : GetPlayableMapRect()
 	playableMapRegion = CreateRegion()..addRect(playableMapRect)
 	boundRect		 = compiletime ? Rect(-1536, -1536, 1536, 1536) : GetWorldBounds()
 	boundRegion	   = CreateRegion()..addRect(boundRect)
@@ -67,4 +66,3 @@ init
 	playableMapRect.getMaxY().assertEquals(1024)
 
 	(playableMin + playableMax).toString().assertEquals(playableCenter.toString())
-	

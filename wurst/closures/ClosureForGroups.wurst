@@ -2,7 +2,7 @@ package ClosureForGroups
 
 public interface ForGroupCallback
 	function callback(unit u)
-		
+
 /** This is used as dummy in the GroupEnum calls and should not be used */
 constant DUMMY_GROUP = CreateGroup()
 
@@ -14,7 +14,7 @@ constant filter = Filter(() -> currentCallback().callback(GetFilterUnit()))
 function pushCallback(ForGroupCallback c)
 	tempCallbacks[tempCallbacksCount] = c
 	tempCallbacksCount++
-	
+
 function popCallback()
 	DUMMY_GROUP.clear()
 	tempCallbacksCount--
@@ -37,7 +37,7 @@ public function group.forEachIn(ForGroupCallback cb)
 		cb.callback(u)
 
 /** Executes the given closure for every unit of the given type.
-	Remember that names of custom units are "custom_[typeId]" */		
+	Remember that names of custom units are "custom_[typeId]" */
 public function forUnitsOfType(string unitname, ForGroupCallback c)
 	pushCallback(c)
 	GroupEnumUnitsOfType(DUMMY_GROUP, unitname, filter)
@@ -50,13 +50,13 @@ public function forUnitsOfTypeCounted(string unitname, int count, ForGroupCallba
 	GroupEnumUnitsOfTypeCounted(DUMMY_GROUP, unitname, filter, count)
 	popCallback()
 
-/** Executes the given closure for every unit of the given player */	
+/** Executes the given closure for every unit of the given player */
 public function forUnitsOfPlayer(player p, ForGroupCallback c)
 	pushCallback(c)
 	GroupEnumUnitsOfPlayer(DUMMY_GROUP, p, filter)
 	popCallback()
 
-/** Executes the given closure for every existing unit */	
+/** Executes the given closure for every existing unit */
 public function forUnitsAll(ForGroupCallback c)
 	for i = 0 to bj_MAX_PLAYER_SLOTS - 1
 		pushCallback(c)
@@ -65,20 +65,20 @@ public function forUnitsAll(ForGroupCallback c)
 		tempCallbacksCount--
 	destroy c
 
-/** Executes the given closure for every unit in the given rect */	
+/** Executes the given closure for every unit in the given rect */
 public function forUnitsInRect(rect r, ForGroupCallback c)
 	pushCallback(c)
 	GroupEnumUnitsInRect(DUMMY_GROUP, r, filter)
 	popCallback()
 
 /** Executes the given closure for every unit in the given rect.
-	Cancels itself after *count* iterations */	
+	Cancels itself after *count* iterations */
 public function forUnitsInRectCounted(rect r, int count, ForGroupCallback c)
 	pushCallback(c)
 	GroupEnumUnitsInRectCounted(DUMMY_GROUP, r, filter, count)
 	popCallback()
 
-/** Executes the given closure for every unit in range of the given position */	
+/** Executes the given closure for every unit in range of the given position */
 public function forUnitsInRange(vec2 pos, real radius, ForGroupCallback c)
 	pushCallback(c)
 	GroupEnumUnitsInRange(DUMMY_GROUP, pos.x, pos.y, radius, filter)
@@ -116,11 +116,11 @@ public function forNearestUnit(vec2 pos, real range, filterfunc filter, ForGroup
 // ====Callback stack for nested usage====
 public interface ForGroupCallbackD
 	function callback(destructable d)
-	
+
 function filterD() returns boolean
 	currentCallbackD().callback(GetEnumDestructable())
 	return false
-	
+
 ForGroupCallbackD array tempCallbacksD
 int tempCallbacksDCount = 0
 

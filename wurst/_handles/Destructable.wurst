@@ -14,16 +14,16 @@ public function destructable.getPos() returns vec2
 
 public function destructable.getX() returns real
 	return GetDestructableX(this)
-	
+
 public function destructable.getY() returns real
 	return GetDestructableY(this)
-	
+
 public function destructable.kill()
 	KillDestructable(this)
 
 public function destructable.getTypeId() returns int
 	return GetDestructableTypeId(this)
-	
+
 public function destructable.setAnimation(string anim)
 	SetDestructableAnimation(this, anim)
 
@@ -50,7 +50,7 @@ public function destructable.getMaxLife() returns real
 
 public function destructable.restoreLife(real life, boolean birth)
 	DestructableRestoreLife(this, life, birth)
-	
+
 public function destructable.queueAnimation(string anim)
 	QueueDestructableAnimation(this, anim)
 

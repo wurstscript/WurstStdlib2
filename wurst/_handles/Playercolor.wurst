@@ -10,17 +10,17 @@ public constant PLAYER_COLOR_UNKNOWN2 = ConvertPlayerColor(26)
 public constant PLAYER_COLOR_BLACK_PASSIVE = ConvertPlayerColor(27)
 
 constant LOOKUP = [
-	PLAYER_COLOR_RED, 
-	PLAYER_COLOR_BLUE, 
-	PLAYER_COLOR_CYAN, 
-	PLAYER_COLOR_PURPLE, 
-	PLAYER_COLOR_YELLOW, 
-	PLAYER_COLOR_ORANGE, 
-	PLAYER_COLOR_GREEN, 
-	PLAYER_COLOR_PINK, 
-	PLAYER_COLOR_LIGHT_GRAY, 
-	PLAYER_COLOR_LIGHT_BLUE, 
-	PLAYER_COLOR_AQUA, 
+	PLAYER_COLOR_RED,
+	PLAYER_COLOR_BLUE,
+	PLAYER_COLOR_CYAN,
+	PLAYER_COLOR_PURPLE,
+	PLAYER_COLOR_YELLOW,
+	PLAYER_COLOR_ORANGE,
+	PLAYER_COLOR_GREEN,
+	PLAYER_COLOR_PINK,
+	PLAYER_COLOR_LIGHT_GRAY,
+	PLAYER_COLOR_LIGHT_BLUE,
+	PLAYER_COLOR_AQUA,
 	PLAYER_COLOR_BROWN,
 	PLAYER_COLOR_MAROON,
 	PLAYER_COLOR_NAVY,
@@ -56,7 +56,7 @@ public function playercolor.toInt() returns int
 			break
 	return value
 
-	
+
 /** Returns the player that had this color *at the start of the game*. Does not
 	respect SetPlayerColor. */
 public function playercolor.getPlayer() returns player

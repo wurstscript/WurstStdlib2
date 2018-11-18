@@ -12,7 +12,7 @@ public function trigger.clearConditions()
 
 public function trigger.clearActions()
 	TriggerClearActions(this)
-	
+
 public function trigger.destr()
 	DestroyTrigger(this)
 
@@ -27,22 +27,22 @@ public function trigger.evaluate() returns boolean
 
 public function trigger.execute()
 	TriggerExecute(this)
-	
+
 public function trigger.executeWait()
 	TriggerExecuteWait(this)
 
 public function trigger.isEnabled() returns boolean
 	return IsTriggerEnabled(this)
-	
+
 public function trigger.waitOnSleeps(boolean flag)
 	TriggerWaitOnSleeps(this, flag)
-	
+
 public function trigger.isWaitOnSleeps() returns boolean
 	return IsTriggerWaitOnSleeps(this)
-	
+
 public function trigger.getEvalCount() returns int
 	return GetTriggerEvalCount(this)
-	
+
 public function trigger.getExecCount() returns int
 	return GetTriggerExecCount(this)
 
@@ -81,7 +81,7 @@ public function trigger.registerPlayerStateEvent(player whichPlayer, playerstate
 
 public function trigger.registerPlayerUnitEvent(player whichPlayer, playerunitevent whichPlayerUnitEvent, boolexpr filter) returns event
 	return TriggerRegisterPlayerUnitEvent(this, whichPlayer, whichPlayerUnitEvent, filter)
-	
+
 public function trigger.registerPlayerAllianceChange(player whichPlayer, alliancetype whichAlliance) returns event
 	return TriggerRegisterPlayerAllianceChange(this, whichPlayer, whichAlliance)
 
@@ -99,7 +99,7 @@ public function trigger.registerTrackableTrackEvent(trackable whichTrackable) re
 
 public function trigger.registerUnitEvent(unit whichUnit, unitevent whichEvent) returns event
 	return TriggerRegisterUnitEvent(this, whichUnit, whichEvent)
-	
+
 public function trigger.registerFilterUnitEvent(unit whichUnit, unitevent whichEvent, boolexpr filter) returns event
 	return TriggerRegisterFilterUnitEvent(this, whichUnit, whichEvent, filter)
 
@@ -108,7 +108,7 @@ public function trigger.registerUnitInRange(unit whichUnit, real range, boolexpr
 
 public function trigger.registerUnitStateEvent(unit whichUnit, unitstate whichState, limitop opcode, real limitval) returns event
 	return TriggerRegisterUnitStateEvent(this, whichUnit, whichState, opcode, limitval)
-	
+
 public function trigger.removeAction(triggeraction action)
 	TriggerRemoveAction(this, action)
 

@@ -10,15 +10,15 @@ public constant ENUM_GROUP = CreateGroup()
 
 public function group.enumUnitsInRange(vec2 pos, real range)
 	GroupEnumUnitsInRange(this, pos.x, pos.y, range, null)
-	
+
 public function group.enumUnitsInRange(vec2 pos, real range, boolexpr filter)
 	GroupEnumUnitsInRange(this, pos.x, pos.y, range, filter)
 
 public function group.enumUnitsInRect(rect rec)
-	this.enumUnitsInRect(rec, null) 
-	
-public function group.enumUnitsInRect(rect rec, boolexpr filter) 
-	GroupEnumUnitsInRect(this, rec, filter) 
+	this.enumUnitsInRect(rec, null)
+
+public function group.enumUnitsInRect(rect rec, boolexpr filter)
+	GroupEnumUnitsInRect(this, rec, filter)
 
 public function group.enumUnitsSelected(player p, boolexpr filter)
 	GroupEnumUnitsSelected(this, p, filter)
@@ -32,18 +32,18 @@ public function group.enumUnitsAll(boolexpr filter)
 
 public function group.clear()
 	GroupClear(this)
-	
+
 public function group.addUnit(vararg unit units)
 	for u in units
 		GroupAddUnit(this, u)
-	
+
 public function group.removeUnit(vararg unit units)
 	for u in units
 		GroupRemoveUnit(this, u)
-	
+
 public function group.destr()
 	DestroyGroup(this)
-	
+
 public function group.contains(unit u) returns boolean
 	return IsUnitInGroup(u, this)
 
@@ -91,7 +91,7 @@ public function group.targetOrder(string order, widget targetWidget) returns boo
 public function group.targetOrder(int order, widget targetWidget) returns boolean
 	return GroupTargetOrderById(this, order, targetWidget)
 
-	
+
 /* Group iterator */
 
 group iterGroup
@@ -109,9 +109,9 @@ public function group.hasNext() returns boolean
 /** Returns the next item from the iterator */
 public function group.next() returns unit
 	let iterUnit = FirstOfGroup(this)
-	GroupRemoveUnit(this, iterUnit) 
+	GroupRemoveUnit(this, iterUnit)
 	return iterUnit
-	
+
 /** Closes the iterator, releaseing the group */
 public function group.close()
 	this.clear()

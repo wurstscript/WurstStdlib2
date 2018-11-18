@@ -26,7 +26,7 @@ public function addLightning(string codeName, bool checkVisibility, vec2 start, 
 	(usually with z==0 the lightning spawns very low under ground) */
 public function addLightning(string codeName, bool checkVisibility, vec3 start, vec3 _end) returns lightning
 	return AddLightningEx(codeName, checkVisibility, start.x, start.y, start.z, _end.x, _end.y, _end.z)
-	
+
 /** Acts as with vec3 version but with z equal to terrain height. */
 public function lightning.move(bool checkVisibility, vec2 start, vec2 _end) returns bool
 	return MoveLightning(this, checkVisibility, start.x, start.y, _end.x, _end.y)
@@ -38,7 +38,7 @@ public function lightning.move(bool checkVisibility, vec3 start, vec3 _end) retu
 
 public function lightning.setColor(colorA c) returns boolean
 	return SetLightningColor(this, c.red / 255, c.green / 255, c.blue / 255, c.alpha / 255)
-	
+
 public function lightning.setColor(color c) returns boolean
 	return SetLightningColor(this, c.red / 255, c.green / 255, c.blue / 255, 1)
 
@@ -51,7 +51,7 @@ public function lightning.getColor() returns color
 	Uses approximation since it's stored in reals. */
 public function lightning.getColorWithA() returns colorA
 	return this.getColor().withAlpha((255 * this.getColorA() + .5).toInt())
-	
+
 public function lightning.getColorR() returns real
 	return GetLightningColorR(this)
 

@@ -51,7 +51,7 @@ public class GamecacheBuffer
 		if SAFETY_CHECKS_ENABLED and writeIndex + 1 >= GamecacheKeys.count
 			error("GamecacheBuffer: trying to write out of available keys bounds")
 		writeIndex++
-	
+
 	private function advanceReadIndex()
 		if SAFETY_CHECKS_ENABLED and readIndex + 1 >= GamecacheKeys.count
 			error("GamecacheBuffer: trying to read out of available keys bounds")
@@ -85,13 +85,13 @@ public class GamecacheBuffer
 		if not gc.hasReal(parentKey, GamecacheKeys.get(readIndex))
 			error("GamecacheBuffer: trying to read non-present real #" + readIndex.toString())
 		return gc.loadReal(parentKey, GamecacheKeys.get(readIndex))
-		
+
 	function readBoolean() returns bool
 		advanceReadIndex()
 		checkType(BufferType.BOOLEAN)
 		if not gc.hasBoolean(parentKey, GamecacheKeys.get(readIndex))
 			error("GamecacheBuffer: trying to read non-present bool #" + readIndex.toString())
-			
+
 		return gc.loadBoolean(parentKey, GamecacheKeys.get(readIndex))
 
 	function getSynchronizerFunction() returns SynchronizerFunction

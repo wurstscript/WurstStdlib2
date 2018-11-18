@@ -81,7 +81,7 @@ public function charToIndex(char c) returns int
 public function charFromIndex(int index) returns char
 	return char(index)
 
-/** Splits the string by another string 
+/** Splits the string by another string
 	"this..is..an..example" split by the string ".." splits into a list containing four strings ["this", "is", "an", "example"] */
 public function string.split(string splitBy) returns LinkedList<string>
 	let list = new LinkedList<string>
@@ -103,14 +103,14 @@ public function LinkedList<string>.joinBy(string separator) returns string
 	var joined = ""
 	var first = true
 	let iter = this.iterator()
-	
+
 	for str from iter
 		if iter.hasNext() or not first
 			joined += str + separator
 		else
 			joined += str
 			first = false
-			
+
 	iter.close()
 	return joined
 
@@ -129,14 +129,14 @@ public function LinkedList<T>.joinBy<T>(ToStringClosure<T> cls, string separator
 	destroy strings
 	return result
 
-/** Joins elements from a string list into one string */ 
+/** Joins elements from a string list into one string */
 public function LinkedList<string>.join() returns string
 	return this.joinBy("")
 
-/** Replaces consecutive repeats of the same string with a single instance 
+/** Replaces consecutive repeats of the same string with a single instance
 	Turns "strstr" into "str" */
 public function string.reduce(string reduced) returns string
-	var toReduce = reduced + reduced 
+	var toReduce = reduced + reduced
 	var oldString = this
 	string newString
 
@@ -149,7 +149,7 @@ public function string.reduce(string reduced) returns string
 
 	return newString
 
-/** Replaces consecutive repeats of the whitespace character with a single instance 
+/** Replaces consecutive repeats of the whitespace character with a single instance
 	Turns "  " into " " */
 public function string.reduce() returns string
 	return this.reduce(" ")
@@ -163,7 +163,7 @@ public function string.reduce() returns string
 init
 	initialize()
 	stringToIndex("") // just to remove the TypeCasting warning
-	
+
 function widthInit()
 	width[0] = 0
 	width[1] = 0

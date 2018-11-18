@@ -1,5 +1,4 @@
 package GamecacheKeys
-
 import Execute
 import ErrorHandling
 import NetworkConfig
@@ -29,7 +28,7 @@ public class GamecacheKeys
 
 	protected static function precompute(int length)
 		precompute("", length - 1)
-		
+
 init
 	for i = 1 to MAX_CHARACTERS_PER_KEY - 1
 		execute(() -> GamecacheKeys.precompute(i))

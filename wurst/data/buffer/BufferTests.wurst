@@ -1,12 +1,11 @@
 package BufferTests
-
 import Buffer
 import LinkedList
 
 class SerializableElement implements BufferSerializable
 	int id
 	int value
-	
+
 	construct()
 
 	construct(Buffer buffer)
@@ -30,7 +29,7 @@ class TestSerializable implements BufferSerializable
 
 	construct(Buffer buffer)
 		deserialize(buffer)
-	
+
 	override function serialize(Buffer buffer)
 		buffer.writeString(name)
 		buffer.writeInt(id)
@@ -110,7 +109,7 @@ function stringBufferSerializableTest()
 	original.name = "NewName"
 	original.id = 100
 	original.facing = 1.125
-	
+
 	for i = 0 to 5
 		let element = new SerializableElement()
 		element.id = i
@@ -141,4 +140,3 @@ function hashBufferTestSerialization()
 	buffer.readBoolean().assertEquals(true)
 	buffer.readString().assertEquals("abc")
 
-	

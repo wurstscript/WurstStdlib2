@@ -29,10 +29,10 @@ class SoundInstance
 	unit onUnit = null
 	player p = null
 	Sim3DSound s3s = null
-	
+
 public class SoundDefinition
 	constant soundStack = new LinkedList<SoundInstance>()
-	
+
 	string file
 	int duration = 10000
 	boolean looping
@@ -45,7 +45,7 @@ public class SoundDefinition
 	construct(string file, boolean looping)
 		this.file = file
 		this.looping = looping
-				
+
 	construct(string file, boolean looping, boolean is3D)
 		this.file = file
 		this.looping = looping
@@ -66,20 +66,20 @@ public class SoundDefinition
 			..setChannel(SOUND_CHANNEL)
 			..setVolume(DEFAULT_SOUND_VOLUME)
 			..setPitch(DEFAULT_SOUND_PITCH)
-			
+
 			if is3D
 				SetSoundDistances(sdata.snd, SOUND_MIN_DIST, SOUND_MAX_DIST)
 				SetSoundDistanceCutoff(sdata.snd, SOUND_DIST_CUT)
 				SetSoundConeAngles(sdata.snd, 0, 0, DEFAULT_SOUND_VOLUME)
 				SetSoundConeOrientation(sdata.snd, 0, 0, 0)
-				
+
 			return sdata
 
 	/** Plays this sound for all Players with a default duration.
 		Use this if you don't care when the SoundHandle gets recycled.	*/
 	function play() returns SoundInstance
 		return play(DEFAULT_SOUND_DURATION)
-			
+
 	/** Plays this sound for all Players with the given duration.
 		The duration should be close to the length of the soundfile.
 		Use this to recycle soundhandles immeditely when they finish,
@@ -105,7 +105,7 @@ public class SoundDefinition
 		snd.p = p
 		getTimer()
 			..setData(snd castTo int)
-			..start(0., function SoundDefinition.playSound)	
+			..start(0., function SoundDefinition.playSound)
 		return snd
 
 	function playOnPoint(vec3 target)  returns SoundInstance
@@ -117,7 +117,7 @@ public class SoundDefinition
 		snd.pos = target
 		getTimer()
 			..setData(snd castTo int)
-			..start(0., function SoundDefinition.playSound)	
+			..start(0., function SoundDefinition.playSound)
 		return snd
 
 	private static function playSound()
@@ -130,13 +130,13 @@ public class SoundDefinition
 		if sdata.p != null
 			if GetLocalPlayer() == sdata.p
 				StartSound(sdata.snd)
-		else 
+		else
 			StartSound(sdata.snd)
 		tm.release()
 		getTimer()
 			..setData(sdata castTo int)
 			..start(sdata.soundDef.duration * 0.001, function SoundDefinition.recycle)
-	
+
 	private static function recycle()
 		var tm = GetExpiredTimer()
 		var sdata = tm.getData() castTo SoundInstance
@@ -147,7 +147,7 @@ public class SoundDefinition
 			sdata.soundDef.soundStack.push(sdata)
 		else
 			destroy sdata
-			
+
 		tm.release()
 
 // WIP
@@ -157,22 +157,22 @@ public class DynamicSound
 	real currentPitch = 1.0
 	real smoothness = 0.015
 	real minimumLength = 0.5
-	
+
 	SoundInstance soundData = null
 	SoundDefinition soundHandle
-	
+
 	construct(SoundDefinition soundHandle)
 		this.soundHandle = soundHandle
 		this.minimumLength = soundHandle.duration * 0.001
 
 	function setTargetPitch(real pitch)
 		targetPitch = pitch
-		
+
 	function play()
 		soundData = soundHandle.play()
 		setAbsolutePitch(currentPitch)
 		startTimedLoop()
-		
+
 	function setAbsolutePitch(real pitch)
 		if soundData == null
 			error("Must play sound before setting pitch")
@@ -185,7 +185,7 @@ public class DynamicSound
 			soundData.snd.setPitch(1 / currentPitch)
 			soundData.snd.setPitch(pitch)
 		currentPitch = pitch
-		
+
 	override function onTimedLoop()
 		if soundData != null
 			setAbsolutePitch(currentPitch.lerp(targetPitch, smoothness))
@@ -197,5 +197,4 @@ public class DynamicSound
 		setAbsolutePitch(1)
 		soundData.snd.stop(false, false)
 		setAbsolutePitch(1)
-		
-	
+

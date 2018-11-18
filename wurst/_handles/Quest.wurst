@@ -1,5 +1,4 @@
 package Quest
-
 import QuestItem
 
 public function quest.setRequired(boolean req)
@@ -82,6 +81,6 @@ public class Quest
 
 	function addObjective(string text) returns QuestItem
 		return new QuestItem(q, text)
-		
+
 	ondestroy
 		q.remove()

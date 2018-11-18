@@ -26,7 +26,7 @@ public var lastError = ""
 public var suppressErrorMessages = false
 
 /** error handing function.
-This function is used by libraries and for internal Wurst errors like 
+This function is used by libraries and for internal Wurst errors like
 accessing a null-pointer. Overwrite this function to customize error handling.
 
 Outputs an error message and terminates the current thread.
@@ -54,10 +54,10 @@ You can also use try() from package Execute to handle an error happening in a ca
 				else if HT.hasBoolean(PRIMARY_ERROR_KEY, hash)
 					if not HT.loadBoolean(PRIMARY_ERROR_KEY, hash)
 						Log.error("|cffFF3A29Excessive repeating errors are being omitted")
-						HT.saveBoolean(PRIMARY_ERROR_KEY, hash, true)	
+						HT.saveBoolean(PRIMARY_ERROR_KEY, hash, true)
 				else
 					Log.error("|cffFF3A29Excessive repeating errors are being omitted")
-					HT.saveBoolean(PRIMARY_ERROR_KEY, hash, true)	
+					HT.saveBoolean(PRIMARY_ERROR_KEY, hash, true)
 			else
 				HT.saveInt(PRIMARY_ERROR_KEY, hash, currentTime.toInt())
 				Log.error("Message: " + msg + getStackTraceString())

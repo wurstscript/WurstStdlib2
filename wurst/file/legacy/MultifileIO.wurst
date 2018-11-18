@@ -1,5 +1,4 @@
 package MultifileIO
-
 import PreloadIO
 import ErrorHandling
 import Buffer
@@ -44,7 +43,7 @@ abstract class AbstractFile
 	protected var working = false
 
 	construct(string path, boolean multiMode, real delay)
-		initialize(path, multiMode, delay)		
+		initialize(path, multiMode, delay)
 
 	construct(string path, boolean multiMode)
 		initialize(path, multiMode, 0)
@@ -60,7 +59,7 @@ abstract class AbstractFile
 			executor = new TimedIOTaskExecutor(delay)
 		else
 			executor = new InstantIOTaskExecutor()
-		
+
 		this.path = path
 		this.multiMode = multiMode
 
@@ -83,7 +82,7 @@ abstract class AbstractFile
 	Usage:
 		1. Create a new instance of the class, using the constructor you need
 			let writer = new FileWriter("path/to/folder")
-		
+
 		2. Queue some data for writing
 			writer.writeLine("abc")
 			writer.writeLine("cba")
@@ -104,7 +103,7 @@ public class FileWriter extends AbstractFile
 		this if you expect to write a lot of data to prevent players from lagging out.
 	**/
 	construct(string path, boolean multiMode, real delay)
-		super(path, multiMode, delay)		
+		super(path, multiMode, delay)
 
 	construct(string path, boolean multiMode)
 		super(path, multiMode)
@@ -167,7 +166,7 @@ public class FileWriter extends AbstractFile
 			executor.onComplete() ->
 				working = false
 				callback.run()
-	
+
 		working = true
 		executor.start()
 
@@ -180,16 +179,16 @@ public class FileWriter extends AbstractFile
 	Usage:
 		1. Create a new instance of the class
 			let reader = new FileReader("path/to/folder")
-		
+
 		2. Load the data, and specify a callback when the file has loaded, and read the data
 			reader.load() ->
 				while reader.canRead()
 					doSomethingWithData(reader.readLine())
-	
-		
+
+
 		3. Destroy the instance
 			destroy reader
-**/	
+**/
 public class FileReader extends AbstractFile
 	/**
 		If multiMode is true, then path should be the path to a folder where the data will be read from.
@@ -199,7 +198,7 @@ public class FileReader extends AbstractFile
 		this if you expect to read a lot of data to prevent players from lagging out.
 	**/
 	construct(string path, boolean multiMode, real delay)
-		super(path, multiMode, delay)		
+		super(path, multiMode, delay)
 
 	construct(string path, boolean multiMode)
 		super(path, multiMode)
@@ -223,12 +222,12 @@ public class FileReader extends AbstractFile
 			if IOReader.getPacket(0) != TERMINATOR and IOReader.canRead()
 				while IOReader.canRead()
 					buffer.writeString(IOReader.readPacket())
-				
+
 				// start reading the next file if we're in multimode
 				if multiMode
 					readChunk(chunkId + 1)
 
-	
+
 	/**
 		Starts loading the file and specifies a callback to be called when all data has loaded
 	**/

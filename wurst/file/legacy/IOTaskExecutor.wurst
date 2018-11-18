@@ -1,5 +1,4 @@
 package IOTaskExecutor
-
 import LinkedList
 import LinkedListModule
 import Execute
@@ -11,7 +10,7 @@ import GameTimer
 public interface IOTask
 	function run()
 
-/** 
+/**
 	Interface for an IO task executor. Tasks are meant to run in the same
 	order that they are submitted. When there are no more tasks in the queue
 	to process, the callback specified in .onComplete() will be called
@@ -106,7 +105,7 @@ public class TimedIOTaskExecutor extends AbstractIOTaskExecutor
 
 	construct(real delay)
 		this.delay = delay
-			
+
 	protected static function updateInstances()
 		for executor in TimedIOTaskExecutor
 			executor.update()
@@ -130,7 +129,7 @@ public class TimedIOTaskExecutor extends AbstractIOTaskExecutor
 			if finished
 				runningCount--
 				onStop()
-				
+
 	override function start()
 		if not finished
 			error("TimedIOTaskExecutor: trying to start an executor that is already running")

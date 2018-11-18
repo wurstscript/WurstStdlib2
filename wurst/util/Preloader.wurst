@@ -21,7 +21,7 @@ public function preloadAbility(vararg int abilIds) returns boolean
 	var result = true
 	for abilId in abilIds
 		dum.addAbility(abilId)
-		if dum == null 
+		if dum == null
 			error("Do not load abilities after map init when autoFinish = true")
 		else if not dum.hasAbility(abilId)
 			Log.trace("PreloadAbility: Ability " + abilId.toRawCode() + " does not exist.")
@@ -30,7 +30,7 @@ public function preloadAbility(vararg int abilIds) returns boolean
 
 /** Preloads the given unittype */
 public function preloadUnit(vararg int unitIds) returns boolean
-	if dumg == null 
+	if dumg == null
 		error("PreloadUnit: Group dumg does not exist")
 	var valid = true
 	for unitId in unitIds

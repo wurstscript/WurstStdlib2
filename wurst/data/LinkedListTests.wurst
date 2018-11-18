@@ -5,10 +5,10 @@ import LinkedList
 function testAddRemove()
 	let list = new LinkedList<int>()
 	list.size().assertEquals(0)
-	
+
 	list..add(1, 2, 3, 4)
 	list.size().assertEquals(4)
-	
+
 	let itr = list.staticItr()
 	while itr.hasNext()
 		itr.next()
@@ -19,11 +19,11 @@ function testAddRemove()
 @Test
 function testForLoop()
 	let list = new LinkedList<int>()
-	
+
 	list..add(1, 2, 3, 4)
-	
+
 	list.updateAll(i -> i + 1)
-	
+
 	var result = 0
 	for i in list
 		result += i
@@ -33,19 +33,19 @@ function testForLoop()
 @Test function testBackIter()
 	let list = new LinkedList<int>()
 	let list2 = new LinkedList<int>()
-	
+
 	list..add(1, 2, 3, 4)
 	list2..add(4, 3, 2, 1)
-	
+
 	let bi = list.backiterator()
 	let i = list2.iterator()
 	while bi.hasNext() and i.hasNext()
-		bi.next().assertEquals(i.next())	
+		bi.next().assertEquals(i.next())
 
 @Test function testAddAll()
 	let list = new LinkedList<int>()
 	let list2 = new LinkedList<int>()
-	
+
 	list..add(1, 2)
 	list2..add(3, 4)
 	list.addAll(list2)
@@ -61,7 +61,7 @@ function testForLoop()
 @Test function testAddVararg()
 	let list = new LinkedList<int>()
 	let list2 = new LinkedList<int>()
-	
+
 	list.add(1, 2)
 	list2.add(3, 4)
 	list.addAll(list2)
@@ -78,7 +78,7 @@ function testForLoop()
 function testClosures()
 	let list = new LinkedList<int>()
 	list..add(1, 2, 3, 4)
-	
+
 	list.updateAll(i -> i * 2)
 	list.get(3).assertEquals(4 * 2)
 
@@ -106,7 +106,7 @@ function testGenerics()
 	for i = 0 to 400
 		list..add(GetRandomInt(-100, 100) * 2 + 1)
 	list.sort()
-	
+
 	let itr = list.iterator()
 	int i2 = 0
 	while itr.hasNext()

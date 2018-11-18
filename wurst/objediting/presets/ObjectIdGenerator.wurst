@@ -16,7 +16,7 @@ public class IdGenerator
 	private int i2
 	private int i3
 	private int i4
-	
+
 	construct(int start)
 		i1 = start mod 256
 		i2 = (start mod 65536) div 256
@@ -25,7 +25,7 @@ public class IdGenerator
 
 	function isInvalid(int char) returns boolean
 		return (char < 48 or (char > 57 and char < 97))
-		
+
 	function next() returns int
 		if i1 < '~'
 			i1++
@@ -56,7 +56,7 @@ public class IdGenerator
 		if not compiletime
 			preloadAbility(id)
 		return id
-		
-		
-		
-		
+
+
+
+

@@ -5,7 +5,7 @@ import ErrorHandling
 import Basics
 import public Timer
 
-/* Basic Timer Recycling and data attachment */	
+/* Basic Timer Recycling and data attachment */
 
 timer array freeTimers
 int freeTimersCount = 0
@@ -15,7 +15,7 @@ constant HELD = 0x28829022
 /** Attach Data to this timer */
 public function timer.setData(int data)
 	timerData.saveInt(this.getHandleId(), data)
-	
+
 /** Retrieve the data attached to this timer */
 public function timer.getData() returns int
 	return timerData.loadInt(this.getHandleId())
@@ -30,7 +30,7 @@ public function getTimer() returns timer
 		return freeTimers[freeTimersCount]
 	else
 		return CreateTimer()..setData(0)
-		
+
 /** Release the timer. Use this instead of "DestroyTimer" ! */
 public function timer.release()
 	if this == null
@@ -43,7 +43,7 @@ public function timer.release()
 	this.pause()
 	freeTimers[freeTimersCount] = this
 	freeTimersCount++
-	
+
 
 timer timedLoopTimer = CreateTimer()
 trigger timedLoopTrig = CreateTrigger()
@@ -53,7 +53,7 @@ function evaluateTimedLoopTrig()
 	TriggerEvaluate(timedLoopTrig)
 	if conditionCount == 0
 		timedLoopTimer.pause()
-		
+
 enum Mode
 	RUNNING
 	PAUSED
@@ -90,10 +90,10 @@ public module TimedLoop
 			triggerCond = null
 			conditionCount--
 		return false
-		
+
 	function stopTimedLoop()
 		mode = Mode.STOPPED
-		
+
 	function stopTimedLoopAndDestroy()
 		mode = Mode.STOPPED_FOR_GOOD
 
@@ -105,11 +105,11 @@ public module TimedLoop
 				triggerCond = TriggerAddCondition(timedLoopTrig, cond)
 				conditionCount++
 				if conditionCount == 1
-					timedLoopTimer.startPeriodic(ANIMATION_PERIOD, function evaluateTimedLoopTrig)	 
+					timedLoopTimer.startPeriodic(ANIMATION_PERIOD, function evaluateTimedLoopTrig)
 		mode = Mode.RUNNING
-		
+
 	ondestroy
 		if mode != Mode.PAUSED
 			stopTimedLoop()
 			Log.warn("Destroyed Instance using TimedLoop before stopping the Loop")
-			
+

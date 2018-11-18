@@ -72,7 +72,7 @@ public class StringEncoder
 		counter = 0
 		buffer.writeInt(length)
 		asciiIntCount++
-		
+
 		executeWhile(CHARS_PER_ENCODE_DECODE, () -> counter < length) ->
 			buffer.writeInt(getIndexFromChar(value.charAt(counter)))
 			counter++
@@ -88,7 +88,7 @@ public class StringEncoder
 			currentValue += getCharFromIndex(buffer.readIntUnsafe())
 			counter++
 			asciiIntCount--
-		
+
 		return currentValue
 
 	function encode()

@@ -5,8 +5,6 @@ import Matrices
 import Maths
 import Wurstunit
 
-/* Great thanks to euclideanspace.com for wide explanations. */
-
 public tuple quat(real x, real y, real z, real w)
 
 public constant IDENTITYQ = quat(0, 0, 0, 1)
@@ -72,7 +70,7 @@ public function quat.exp(real alpha) returns quat
 			hence the quaternion is a real number. */
 			result = quat(0, 0, 0, this.w.pow(alpha))
 	return result
-	
+
 public function quat.toMatrix() returns mat3
 	let q = this.norm()
 	let x = q.x
@@ -100,7 +98,7 @@ public function quat.getZ() returns vec3
 	return vec3(2 * this.x * this.z + 2 * this.y * this.w,
 				2 * this.y * this.z - 2 * this.x * this.w,
 				1 - 2 * this.x * this.x - 2 * this.y * this.y)
-				
+
 /** Linear interpolation.
 q - targeted quaternion. p - progress from 0 to 1. */
 public function quat.lerp(quat q, real p) returns quat
@@ -141,7 +139,7 @@ public function quat.nlerpLong(quat q, real p) returns quat
 	return this.dot(q) < 0 ? this.nlerp(q, p) : this.nlerp(quat(-q.x, -q.y, -q.z, -q.w), p)
 
 /** Spherical linear interpolation. Interpolates between two rotations.
-q - targeted quaternion. p - progress from 0 to 1. 
+q - targeted quaternion. p - progress from 0 to 1.
 Slerp is the least efficient approach in performance so try to avoid using it, unless you need constant angular velocity. Nlerp is better solution in most cases. */
 public function quat.slerp(quat q, real p) returns quat
 	quat result
@@ -166,7 +164,7 @@ q - targeted quaternion. p - progress from 0 to 1.
 Slerp is the least efficient approach in performance so try to avoid using it, unless you need constant angular velocity. Nlerp is better solution in most cases. */
 public function quat.slerpLong(quat q, real p) returns quat
 	return this.dot(q) < 0 ? this.slerp(q, p) : this.slerp(quat(-q.x, -q.y, -q.z, -q.w), p)
-	
+
 public function quat.toString() returns string
 	return "Quaternion [X {0}, Y {1}, Z {2}, W {3}]".format(this.x.toString(), this.y.toString(), this.z.toString(), this.w.toString())
 
@@ -187,13 +185,13 @@ public function quat.toEuler() returns vec3
 	if pole > 0.499
 		cos = 1 - 2 * this.x * this.x - 2 * this.z * this.z
 		sin = 2 * this.y * this.z + 2 * this.x * this.w
-		yaw = Atan2(sin, cos) 
+		yaw = Atan2(sin, cos)
 		pitch = PI / 2
 		roll = 0
 	else if pole < -0.499
 		cos = 1 - 2 * this.x * this.x - 2 * this.z * this.z
 		sin = 2 * this.y * this.z + 2 * this.x * this.w
-		yaw = Atan2(sin, cos) 
+		yaw = Atan2(sin, cos)
 		pitch = -PI / 2
 		roll  = 0
 	else
@@ -203,7 +201,7 @@ public function quat.toEuler() returns vec3
 		pitch = Asin(2 * pole)
 		cos = 1 - 2 * this.y * this.y - 2 * this.z * this.z
 		sin = -(2 * this.x * this.y - 2 * this.z * this.w)
-		roll = Atan2(sin , cos)   
+		roll = Atan2(sin , cos)
 	return vec3(yaw, pitch, roll)
 
 /** Creates a quaternion from rotation axis and angle. */
@@ -227,7 +225,7 @@ public function mat3.toQuat() returns quat
 	let trace = this.trace()
 	quat result
 	real s
-	if trace > 0 
+	if trace > 0
 		s = SquareRoot(trace + 1) * 2
 		result = quat((this.m21 - this.m12) / s, (this.m02 - this.m20) / s, (this.m10 - this.m01) / s, 0.25 * s)
 	else if this.m00 > this.m11 and this.m00 > this.m22
@@ -240,7 +238,7 @@ public function mat3.toQuat() returns quat
 		s = SquareRoot(1 + this.m22 - this.m00 - this.m11) * 2
 		result = quat((this.m02 + this.m20) / s, (this.m12 + this.m21) / s, 0.25 * s, (this.m10 - this.m01) / s)
 	return result
-	
+
 public function quat.assertEquals(quat expected)
 	let delta = 0.002
 	let compare = quat((this.x - expected.x).abs(), (this.y - expected.y).abs(), (this.z - expected.z).abs(), (this.w - expected.w).abs())

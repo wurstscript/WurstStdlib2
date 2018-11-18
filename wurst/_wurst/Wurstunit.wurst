@@ -51,14 +51,14 @@ public function int.assertLessThanOrEqual(int greater)
 
 /**
  * Asserts that two strings are equal. If they are not, an error is thrown with a message.
- */		
+ */
 public function string.assertEquals(string expected)
 	if this != expected
 		testFail("Expected <" + expected + ">, Actual <" + this + ">")
 
 /**
  * Asserts that two reals are equal. If they are not, an error is thrown with a message.
- */		
+ */
 public function real.assertEquals(real expected)
 	if this != expected
 		testFail("Expected <" + expected.toString() + ">, Actual <" + this.toString() + ">")
@@ -95,7 +95,7 @@ public function real.assertLessThanOrEqual(real greater)
 /**
  * Asserts that two reals are equal to within a positive delta. If they are not, an error is thrown
  * with a message.
- */		
+ */
 public function real.assertEquals(real expected, real delta)
 	if (this - expected > delta) or (expected - this > delta)
 		testFail("Expected <" + expected.toString() + ">, Actual <" + this.toString() + " with delta " + delta.toString() + ">")
@@ -111,7 +111,7 @@ public function boolean.assertEquals(boolean expected)
 public function boolean.assertTrue()
 	this.assertEquals(true)
 
-/** Asserts that this booleans is false. If it is not, an error is thrown with a message. */		
+/** Asserts that this booleans is false. If it is not, an error is thrown with a message. */
 public function boolean.assertFalse()
 	this.assertEquals(false)
 
@@ -125,7 +125,7 @@ public function assertTrue(boolean b, string msg)
 	if not b
 		testFail("Assertion failed: " + msg)
 
-/** Asserts that the reference t is not null */		
+/** Asserts that the reference t is not null */
 public function assertNotNull<T>(T t)
 	if t == null
 		testFail("Assertion failed: Reference was null.")

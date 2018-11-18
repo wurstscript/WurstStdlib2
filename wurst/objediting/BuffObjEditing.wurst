@@ -5,7 +5,7 @@ import ObjectIdGenerator
 
 /**  You should use 'createBuffObject' inside compiletime expressions:
 	let someBuff = compiletime(createBuffObject("Yes", "cool", Icons.bTNFarm))
-	
+
 	And then add the 'abilId' to the target to apply the buff.	*/
 public tuple buffTuple(int abilId, int buffId)
 
@@ -39,7 +39,7 @@ public function createDummyBuffObject(string name, string tooltip, string iconpa
 			..setArtTarget(effectPath)
 			..setTargetAttachmentPoint(attachmentPoint)
 			..setEditorSuffix("wurst")
-		
+
 	return buffTuple(abilId, buffId)
 
 public function compiletime(buffTuple buffT) returns buffTuple
@@ -47,8 +47,8 @@ public function compiletime(buffTuple buffT) returns buffTuple
 
 public class BuffDefinition
 	ObjectDefinition def
-	
-	protected int newId 
+
+	protected int newId
 	protected int baseId
 
 	function getNewId() returns int
@@ -73,7 +73,7 @@ public class BuffDefinition
 
 	function setIconNormal(int level, string value)
 		def.setLvlDataString("fart",  level, 0,  value)
-	
+
 	function setIcon(string name)
 		string s = name
 		if name.length() < 20 or not name.startsWith("ReplaceableTextures")
@@ -82,7 +82,7 @@ public class BuffDefinition
 			s += ".blp"
 
 		setIconNormal(1, s)
-		
+
 	function setCaster(int level, string value)
 		def.setLvlDataString("fcat",  level, 0,  value)
 

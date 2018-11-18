@@ -13,7 +13,7 @@ public module LinkedListModule
 		size++
 		if size == 1
 			first = this
-			prev = null	
+			prev = null
 		else
 			prev = last
 			last.next = this
@@ -23,7 +23,7 @@ public module LinkedListModule
 
 	static function getFirst() returns thistype
 		return first
-		
+
 	function getNext() returns thistype
 		if next == null
 			return first
@@ -33,7 +33,7 @@ public module LinkedListModule
 		if prev == null
 			return last
 		return prev
-		
+
 	function remove()
 		size--
 		if this != first
@@ -41,17 +41,17 @@ public module LinkedListModule
 		else
 			first = next
 		if this != last
-			next.prev = prev	
+			next.prev = prev
 		else
 			last = prev
-			
+
 	ondestroy
 		remove()
-	
+
 	/** An iterator which iterates over all instances of this class */
 	static function iterator() returns Iterator
 		return new Iterator(true)
-		
+
 	private static let staticItr = new Iterator(false)
 
 	/** An iterator which iterates over all instances of this class */
@@ -77,7 +77,7 @@ public module LinkedListModule
 
 		function hasNext() returns boolean
 			return current != null
-	
+
 		function next() returns LinkedListModule.thistype
 			let res = current
 			current = current.next
@@ -85,21 +85,21 @@ public module LinkedListModule
 
 		function reset()
 			current = first
-	 		
-		function close() 
+
+		function close()
 			if destroyOnClose
 				destroy this
-	
+
 	static class BackIterator
 		LinkedListModule.thistype current = last
 		protected bool destroyOnClose
 
 		construct(bool destroyOnClose)
 			this.destroyOnClose = destroyOnClose
-			
+
 		function hasNext() returns boolean
 			return current != null
-	
+
 		function next() returns LinkedListModule.thistype
 			let res = current
 			current = current.prev
@@ -107,8 +107,8 @@ public module LinkedListModule
 
 		function reset()
 			current = last
-	 		
-		function close() 
+
+		function close()
 			if destroyOnClose
 				destroy this
 

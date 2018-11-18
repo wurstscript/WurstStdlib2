@@ -1,5 +1,4 @@
 package HashBuffer
-
 import Table
 import ErrorHandling
 import BufferInterface
@@ -82,7 +81,7 @@ public class HashBuffer extends AbstractBuffer
 	/* 'Unsafe' variants that will have safety checks disabled when the config demands it.
 		These should be used when sending across network because we know we'll never hit
 		a non-existent value.
-		
+
 		You shoudln't use these in your code unless you absolutely know what you are doing.
 	*/
 
@@ -143,7 +142,7 @@ public class HashBuffer extends AbstractBuffer
 
 	function hasBoolean() returns boolean
 		return booleanReadIndex < booleanWriteIndex
-	
+
 	function hasString() returns boolean
 		return stringReadIndex < stringWriteIndex
 

@@ -28,7 +28,7 @@ import Quaternion
 
 @Test function testCross()
 	quat(1, 2, 3, 4).cross(quat(5, 6, 7, 8)).assertEquals(quat(24, 48, 48, -6))
-	
+
 @Test function testDot()
 	quat(1, 2, 3, 4).dot(quat(5, 6, 7, 8)).assertEquals(70, 0.002)
 
@@ -80,8 +80,8 @@ import Quaternion
 	/* The same rotation can be represented by lots different Euler
 	angles thus the best way to check if quat.toEuler convertation
 	works is producing backward convertation by sequence of rotations
-	acording to the order in the angles. Obtained result must be 
-	the quaternion we've started from. */ 
+	acording to the order in the angles. Obtained result must be
+	the quaternion we've started from. */
 	aroundX.cross(aroundY).cross(aroundZ).assertEquals(test)
 
 @Test function testVec3Rotate()

@@ -15,10 +15,10 @@ public interface DialogBoxButtonClosure
 		dBox.addButton("Yes") ->
 			players[0].addGold(500)
 			destroy dBox
-		
+
 		dBox.addButton("No", () -> destroy dBox)
 		// Make sure to not call display at map initialization
-		dBox.display(players[0], true) 
+		dBox.display(players[0], true)
 */
 public class DialogBox
 
@@ -28,7 +28,7 @@ public class DialogBox
 	private constant dialogHandle = createDialog()
 	private constant clickDialog = CreateTrigger()
 
-	private string title	
+	private string title
 
 	/** Creates a new DialogBox with a title. */
 	construct(string title)
@@ -67,7 +67,7 @@ public class DialogBox
 	/** Adds a quit button to this dialog. If it is clicked, it ends the game for that player. */
 	function addQuitButton(boolean doScoreScreen, string buttonText, DialogBoxButtonClosure cb)
 		this.addQuitButton(doScoreScreen, buttonText, 0, cb)
-	
+
 	/** Adds a quit button to this dialog. If it is clicked, it ends the game for that player.
 	Hotkey: use ASCII numbers of the capital letter. */
 	function addQuitButton(boolean doScoreScreen, string buttonText, int hotkey)
@@ -110,4 +110,4 @@ public class DialogBox
 		this.clickDialog
 			..clearActions()
 			..destr()
-		
+

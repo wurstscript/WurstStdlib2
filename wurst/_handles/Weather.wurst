@@ -1,0 +1,16 @@
+package Weather
+import NoWurst
+import public WeatherEffects
+
+/** For some strange reason, weathereffect-variables always contain 'null' value and return '0' from GetHandleId function but they can still be used and compared. */
+public function addWeather(rect where, int effectID) returns weathereffect
+	return AddWeatherEffect(where, effectID)
+
+public function weathereffect.enable()
+	EnableWeatherEffect(this, true)
+
+public function weathereffect.disable()
+	EnableWeatherEffect(this, false)
+
+public function weathereffect.remove()
+	RemoveWeatherEffect(this)
