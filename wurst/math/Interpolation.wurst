@@ -18,6 +18,12 @@ public function vec3.bezier3(vec3 mid, vec3 stop, real p) returns vec3
 
 public function vec2.bezier3(vec2 mid, vec2 stop, real p) returns vec2
 	return vec2(bezier_3(this.x, mid.x, stop.x, p), bezier_3(this.y, mid.y, stop.y, p))
+	
+public function vec3.bezier4(vec3 mid1, vec3 mid2, vec3 stop, real p) returns vec3
+	return vec3(bezier_4(this.x, mid1.x, mid2.x, stop.x, p), bezier_4(this.y, mid1.y, mid2.y, stop.y, p), bezier_4(this.z, mid1.z, mid2.z, stop.z, p))
+
+public function vec2.bezier4(vec2 mid1, vec2 mid2, vec2 stop, real p) returns vec2
+	return vec2(bezier_4(this.x, mid1.x, mid2.x, stop.x, p), bezier_4(this.y, mid1.y, mid2.y, stop.y, p))
 
 public function vec3.lerp(vec3 target, real alpha) returns vec3
 	return vec3(this.x.lerp(target.x, alpha), this.y.lerp(target.y, alpha), this.z.lerp(target.z, alpha))
@@ -46,7 +52,7 @@ public function derivBezier_3(real start, real mid, real stop, real p) returns r
 	Sample Usage:
 	AddSpecialEffect(TEST_SFX,bezier_4(P1X,P3X,P4X,P2X,t),bezier_4(P1Y,P3Y,P4Y,P2Y,t))
 */
-function bezier_4(real start, real mid1, real mid2, real stop, real p) returns real
+public function bezier_4(real start, real mid1, real mid2, real stop, real p) returns real
 	real m = p * p
 	return start + 3. * p * (mid1 - start) + 3. * m * (mid2 - 2. * mid1 + start) + m * p * (3. * (mid1 - mid2) + stop - start)
 
