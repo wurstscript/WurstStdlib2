@@ -7,10 +7,13 @@ import ClosureForGroups
 import Real
 
 /**
-Doubly-linked list implementation that implements all common list, stack and queue operations.
-Permits all elements (including null).
-Use the Typecasting package if you require lists of warcraft handles.
-*/
+ * Doubly-linked list implementation that implements all common list, stack and queue operations.
+ * Permits all elements (including null).
+ * Use the Typecasting package if you require lists of warcraft handles.
+ * LinkedLists should be generally used anywhere you need a list, because they are the most versatile
+ * and fast in common operations. If you need faster contains or access operations on big lists,
+ * use HashList. If you want to limit each element's occurance to one, consider HashSet.
+ */
 public class LinkedList<T>
 	private var dummy = new LLEntry<T>(null, null, null)
 	protected var size = 0
@@ -93,7 +96,11 @@ public class LinkedList<T>
 		return dummy.prev.elem
 
 	/** Returns whether the lists contains the specified element */
-	function contains(T elem) returns boolean
+	@deprecated("Use .has instead") function contains(T elem) returns boolean
+		return has(elem)
+
+	/** Returns whether the lists contains the specified element */
+	function has(T elem) returns boolean
 		var entry = dummy.next
 		while entry != dummy
 			if entry.elem == elem

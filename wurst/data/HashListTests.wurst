@@ -137,3 +137,20 @@ function testCopyConstructor()
 	for val in list
 		val.assertEquals(copy.get(i))
 		i++
+
+@Test
+function testHasAt()
+	let list = new HashList<int>
+		..add(1, 3, 5, 7, 9)
+
+	list.hasAt(4).assertTrue()
+	list.hasAt(5).assertFalse()
+
+	list.hasAt(-1).assertFalse()
+
+	list..remove(3)..remove(9)
+
+	list.hasAt(4).assertFalse()
+	list.hasAt(2).assertTrue()
+
+	list.hasAt(0).assertTrue()

@@ -1,5 +1,10 @@
 package HashList
 
+/**
+ * HashLists are used if you require quick contains operations
+ * on a large list object. LinkedLists should be generally used, but are slow in this regard.
+ * Removing elements from a HashList is slower than of LinkedLists.
+*/
 public class HashList<T>
 	private static hashtable ht = InitHashtable()
 	private static hashtable occurences = InitHashtable()
@@ -81,6 +86,10 @@ public class HashList<T>
 	/** Return whether the element exists in the list */
 	function has(T elem) returns bool
 		return count(elem) > 0
+
+	/** Return whether the element exists in the list */
+	function hasAt(int index) returns bool
+		return index > -1 and index < size
 
 	/** Get an iterator for this list */
 	function iterator() returns HLIterator<T>
