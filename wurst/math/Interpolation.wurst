@@ -57,6 +57,11 @@ public function derivBezier3(real start, real mid, real stop, real p) returns re
 public function derivBezier_3(real start, real mid, real stop, real p) returns real
 	return derivBezier3(start, mid, stop, p) 
 
+public function vec3.derivBezier3(vec3 mid, vec3 stop, real p) returns vec3
+	return vec3(derivBezier3(this.x, mid.x, stop.x, p), derivBezier3(this.y, mid.y, stop.y, p), derivBezier3(this.z, mid.z, stop.z, p))
+
+public function vec2.derivBezier3(vec2 mid, vec2 stop, real p) returns vec2
+	return vec2(derivBezier3(this.x, mid.x, stop.x, p), derivBezier3(this.y, mid.y, stop.y, p))
 
 /**
 	4-Point-Bezier Interpolation
@@ -78,6 +83,11 @@ public function derivBezier4(real start, real mid1, real mid2, real stop, real p
 public function derivBezier_4(real start, real mid1, real mid2, real stop, real p) returns real
 	return derivBezier4(start, mid1, mid2, stop, p)
 
+public function vec3.derivBezier4(vec3 mid1, vec3 mid2, vec3 stop, real p) returns vec3
+	return vec3(derivBezier4(this.x, mid1.x, mid2.x, stop.x, p), derivBezier4(this.y, mid1.y, mid2.y, stop.y, p), derivBezier4(this.z, mid1.z, mid2.z, stop.z, p))
+
+public function vec2.derivBezier4(vec2 mid1, vec2 mid2, vec2 stop, real p) returns vec2
+	return vec2(derivBezier4(this.x, mid1.x, mid2.x, stop.x, p), derivBezier4(this.y, mid1.y, mid2.y, stop.y, p))
 
 //You can use Bezier 3 to graphic perfect parabolas
 //bezier4(<Start Point>, <OutTan_of_StartPoint>, <InTan_of_EndPoint>, <EndPoint>)
@@ -91,8 +101,6 @@ public function hermite(real start, real stop, real tangent1, real tangent2, rea
 	real h4 = s2 * (s - 1.0)
 	h1++
 	return h1 * start + h2 * stop + h3 * tangent1 + h4 * tangent2
-
-
 
 // TCB functions for finding the tangents among 3 points
 // Most modellers may know TCB from 3dsmax, in which they are used to make rotations
@@ -127,6 +135,14 @@ function linearVecTest()
 	start.bezier3(mid, stop, 0).assertEquals(start)
 	start.bezier3(mid, stop, 1).assertEquals(stop)
 
+@Test function testVec2DerivBezier3()
+	let start = vec2(-1, 0)
+	let mid = vec2(0, 2)
+	let stop = vec2(1, 0)
+	let p = 0.75
+	let expected = vec2(2, -2)
+	start.derivBezier3(mid, stop, p).assertEquals(expected)
+
 @Test function testVec2Bezier4()
 	let start = vec2(-3, 0)
 	let mid1 = vec2(-2, 2)
@@ -138,6 +154,15 @@ function linearVecTest()
 	start.bezier4(mid1, mid2, stop, 0).assertEquals(start)
 	start.bezier4(mid1, mid2, stop, 1).assertEquals(stop)
 
+@Test function testVec2DerivBezier4()
+	let start = vec2(-3, 0)
+	let mid1 = vec2(-2, 2)
+	let mid2 = vec2(0, 0)
+	let stop = vec2(1, 1)
+	let p = 0.75
+	let expected = vec2(4.125, -0.1875)
+	start.derivBezier4(mid1, mid2, stop, p).assertEquals(expected)
+
 @Test function testVec3Bezier3()
 	let start = vec3(-1, 0, -2)
 	let mid = vec3(0, 2, 0.5)
@@ -147,6 +172,14 @@ function linearVecTest()
 	start.bezier3(mid, stop, p).assertEquals(expected)
 	start.bezier3(mid, stop, 0).assertEquals(start)
 	start.bezier3(mid, stop, 1).assertEquals(stop)
+
+@Test function testVec3DerivBezier3()
+	let start = vec3(-1, 0, -2)
+	let mid = vec3(0, 2, 0.5)
+	let stop = vec3(1, 0, 3)
+	let p = 0.75
+	let expected = vec3(2, -2, 5)
+	start.derivBezier3(mid, stop, p).assertEquals(expected)
 
 @Test function testVec3Bezier4()
 	let start = vec3(-3, 0, 0)
@@ -158,3 +191,12 @@ function linearVecTest()
 	start.bezier4(mid1, mid2, stop, p).assertEquals(expected)
 	start.bezier4(mid1, mid2, stop, 0).assertEquals(start)
 	start.bezier4(mid1, mid2, stop, 1).assertEquals(stop)
+
+@Test function testVec3DerivBezier4()
+	let start = vec3(-3, 0, 0)
+	let mid1 = vec3(-2, 2, -3)
+	let mid2 = vec3(0, 0, 0)
+	let stop = vec3(1, 1, 2)
+	let p = 0.75
+	let expected = vec3(4.125, -0.1875, 6.1875)
+	start.derivBezier4(mid1, mid2, stop, p).assertEquals(expected)
