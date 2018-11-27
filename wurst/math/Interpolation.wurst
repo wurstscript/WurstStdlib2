@@ -14,16 +14,16 @@ public function linear(real start, real stop, real p) returns real
 	return start + (stop - start) * p
 
 public function vec3.bezier3(vec3 mid, vec3 stop, real p) returns vec3
-	return vec3(bezier_3(this.x, mid.x, stop.x, p), bezier_3(this.y, mid.y, stop.y, p), bezier_3(this.z, mid.z, stop.z, p))
+	return vec3(bezier3(this.x, mid.x, stop.x, p), bezier3(this.y, mid.y, stop.y, p), bezier3(this.z, mid.z, stop.z, p))
 
 public function vec2.bezier3(vec2 mid, vec2 stop, real p) returns vec2
-	return vec2(bezier_3(this.x, mid.x, stop.x, p), bezier_3(this.y, mid.y, stop.y, p))
+	return vec2(bezier3(this.x, mid.x, stop.x, p), bezier3(this.y, mid.y, stop.y, p))
 	
 public function vec3.bezier4(vec3 mid1, vec3 mid2, vec3 stop, real p) returns vec3
-	return vec3(bezier_4(this.x, mid1.x, mid2.x, stop.x, p), bezier_4(this.y, mid1.y, mid2.y, stop.y, p), bezier_4(this.z, mid1.z, mid2.z, stop.z, p))
+	return vec3(bezier4(this.x, mid1.x, mid2.x, stop.x, p), bezier4(this.y, mid1.y, mid2.y, stop.y, p), bezier4(this.z, mid1.z, mid2.z, stop.z, p))
 
 public function vec2.bezier4(vec2 mid1, vec2 mid2, vec2 stop, real p) returns vec2
-	return vec2(bezier_4(this.x, mid1.x, mid2.x, stop.x, p), bezier_4(this.y, mid1.y, mid2.y, stop.y, p))
+	return vec2(bezier4(this.x, mid1.x, mid2.x, stop.x, p), bezier4(this.y, mid1.y, mid2.y, stop.y, p))
 
 public function vec3.lerp(vec3 target, real alpha) returns vec3
 	return vec3(this.x.lerp(target.x, alpha), this.y.lerp(target.y, alpha), this.z.lerp(target.z, alpha))
@@ -34,38 +34,50 @@ public function vec2.lerp(vec2 target, real alpha) returns vec2
 /**
 	3-Point-Bezier Interpolation
 	Sample Usage:
-	AddSpecialEffect(TEST_SFX,bezier_3(P1X,P3X,P2X,p),bezier_3(P1Y,P3Y,P2Y,p))
+	AddSpecialEffect(TEST_SFX,bezier3(P1X,P3X,P2X,p),bezier3(P1Y,P3Y,P2Y,p))
 */
+public function bezier3(real start, real mid, real stop, real p) returns real
+	return start + 2. * (mid - start) * p + (stop - 2. * mid + start) * p * p
+
+@deprecated("Use bezier3 instead.")
 public function bezier_3(real start, real mid, real stop, real p) returns real
-	return start + 2. * (mid - start) * p + (stop -2. * mid + start) * p * p
+	return bezier3(start, mid, stop, p) 
 
 /**
 	This function returns the derivate of the 3-Point-Bezier curve on certain point.
-	(d(bezier_3())/dt)
+	(d(bezier3())/dt)
 */
-public function derivBezier_3(real start, real mid, real stop, real p) returns real
+public function derivBezier3(real start, real mid, real stop, real p) returns real
 	return 2. * (mid - start) + 2. * (stop - 2. * mid + start) * p
+
+@deprecated("Use derivBezier3 instead.")
+public function derivBezier_3(real start, real mid, real stop, real p) returns real
+	return derivBezier3(start, mid, stop, p) 
 
 
 /**
 	4-Point-Bezier Interpolation
 	Sample Usage:
-	AddSpecialEffect(TEST_SFX,bezier_4(P1X,P3X,P4X,P2X,t),bezier_4(P1Y,P3Y,P4Y,P2Y,t))
+	AddSpecialEffect(TEST_SFX,bezier4(P1X,P3X,P4X,P2X,t),bezier4(P1Y,P3Y,P4Y,P2Y,t))
 */
-public function bezier_4(real start, real mid1, real mid2, real stop, real p) returns real
+public function bezier4(real start, real mid1, real mid2, real stop, real p) returns real
 	real m = p * p
 	return start + 3. * p * (mid1 - start) + 3. * m * (mid2 - 2. * mid1 + start) + m * p * (3. * (mid1 - mid2) + stop - start)
 
 /**
 	This function returns the derivate of the 4-Point-Bezier curve on certain point.
-	(d(bezier_4())/dt)
+	(d(bezier4())/dt)
 */
-public function derivBezier_4(real start, real mid1, real mid2, real stop, real p) returns real
+public function derivBezier4(real start, real mid1, real mid2, real stop, real p) returns real
 	return 3. * (mid1 - start) + 6. * (mid2 - 2. * mid1 + start) * p + 3. * (3. * (mid1 - mid2) + stop - start) * p * p
+
+@deprecated("Use derivBezier4 instead.")
+public function derivBezier_4(real start, real mid1, real mid2, real stop, real p) returns real
+	return derivBezier4(start, mid1, mid2, stop, p)
 
 
 //You can use Bezier 3 to graphic perfect parabolas
-//Bezier_4(<Start Point>, <OutTan_of_StartPoint>, <InTan_of_EndPoint>, <EndPoint>)
+//bezier4(<Start Point>, <OutTan_of_StartPoint>, <InTan_of_EndPoint>, <EndPoint>)
 
 /**	Hermite Interpolation */
 public function hermite(real start, real stop, real tangent1, real tangent2, real s) returns real
