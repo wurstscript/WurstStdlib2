@@ -50,6 +50,12 @@ public function unit.addState(unitstate state, real value)
 public function unit.addXp(int toAdd, boolean showEyeCandy)
 	AddHeroXP(this, toAdd, showEyeCandy)
 
+public function unit.getXp() returns int
+	return GetHeroXP(this)
+
+public function unit.setXp(int newXpVal, bool showEyeCandy)
+	SetHeroXP(this, newXpVal, showEyeCandy)
+
 public function unit.suspendXp(boolean suspend)
 	SuspendHeroXP(this, suspend)
 
@@ -322,6 +328,14 @@ public function unit.removeItemById(int itemId) returns boolean
 			item_found = true
 			break
 	return item_found
+
+/** Returns the number of slots containing the given item type */
+public function unit.itemCount(int itemTypeId) returns int
+	var count = 0
+	for i = 0 to 5
+		if this.itemInSlot(i).getTypeId() == itemTypeId
+			count++
+	return count
 
 public function unit.removeItemFromSlot(int slot) returns item
 	return UnitRemoveItemFromSlot(this, slot)
@@ -626,6 +640,11 @@ public function unit.endAbilityCooldown(int abilCode)
 
 public function unit.getAbilityManaCost(int abilId, int level) returns int
 	return BlzGetUnitAbilityManaCost(this, abilId, level)
+
+	
+@deprecated("Use getPos instead.")
+public function unit.getLoc() returns location
+	return GetUnitLoc(this)
 
 public function unit.getLocalZ() returns real
 	return BlzGetLocalUnitZ(this)
