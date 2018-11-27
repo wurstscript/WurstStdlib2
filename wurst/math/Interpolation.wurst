@@ -1,4 +1,7 @@
 package Interpolation
+import NoWurst
+import Vectors
+import Wurstunit
 
 // Credits to BlinkyBoy
 /**Look at linear*/
@@ -34,7 +37,7 @@ public function vec2.lerp(vec2 target, real alpha) returns vec2
 /**
 	3-Point-Bezier Interpolation
 	Sample Usage:
-	AddSpecialEffect(TEST_SFX,bezier3(P1X,P3X,P2X,p),bezier3(P1Y,P3Y,P2Y,p))
+	AddSpecialEffect(TEST_SFX, bezier3(P1X, P3X, P2X, p), bezier3(P1Y, P3Y, P2Y, p))
 */
 public function bezier3(real start, real mid, real stop, real p) returns real
 	return start + 2. * (mid - start) * p + (stop - 2. * mid + start) * p * p
@@ -113,3 +116,46 @@ function linearVecTest()
 	let v = linear(vec2(3, 4), vec2(6, 2), 0.5)
 	v.x.assertEquals(4.5)
 	v.y.assertEquals(3)
+
+@Test function testVec2Vezier3()
+	let start = vec2(-1, 0)
+	let mid = vec2(0, 2)
+	let stop = vec2(1, 0)
+	let p = 0.75
+	let expected = vec2(0.5, 0.75)
+	start.bezier3(mid, stop, p).assertEquals(expected)
+	start.bezier3(mid, stop, 0).assertEquals(start)
+	start.bezier3(mid, stop, 1).assertEquals(stop)
+
+@Test function testVec2Bezier4()
+	let start = vec2(-3, 0)
+	let mid1 = vec2(-2, 2)
+	let mid2 = vec2(0, 0)
+	let stop = vec2(1, 1)
+	let p = 0.75
+	let expected = vec2(0.09375, 0.703125)
+	start.bezier4(mid1, mid2, stop, p).assertEquals(expected)
+	start.bezier4(mid1, mid2, stop, 0).assertEquals(start)
+	start.bezier4(mid1, mid2, stop, 1).assertEquals(stop)
+
+@Test function testVec3Bezier3()
+	let start = vec3(-1, 0, -2)
+	let mid = vec3(0, 2, 0.5)
+	let stop = vec3(1, 0, 3)
+	let p = 0.75
+	let expected = vec3(0.5, 0.75, 1.75)
+	start.bezier3(mid, stop, p).assertEquals(expected)
+	start.bezier3(mid, stop, 0).assertEquals(start)
+	start.bezier3(mid, stop, 1).assertEquals(stop)
+	
+
+@Test function testVec3Bezier4()
+	let start = vec3(-3, 0, 0)
+	let mid1 = vec3(-2, 2, -3)
+	let mid2 = vec3(0, 0, 0)
+	let stop = vec3(1, 1, 2)
+	let p = 0.75
+	let expected = vec3(0.09375, 0.703125, 0.421875)
+	start.bezier4(mid1, mid2, stop, p).assertEquals(expected)
+	start.bezier4(mid1, mid2, stop, 0).assertEquals(start)
+	start.bezier4(mid1, mid2, stop, 1).assertEquals(stop)
