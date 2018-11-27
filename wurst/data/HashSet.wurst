@@ -15,12 +15,12 @@ public class HashSet<T> extends HashList<T>
 	/** Removes an element from this set if present */
 	override function remove(T elem)
 		if count(elem) > 0
-			let pos = position.loadInt(this castTo int, elem castTo int)
-			removeAt(pos)
+			removeAt(position.loadInt(this castTo int, elem castTo int))
 
 	/** Remove the element at the given index */
 	override function removeAt(int index)
-		position.removeInt(this castTo int, get(index) castTo int)
+		for i = index to size
+			position.saveInt(this castTo int, get(i) castTo int, position.loadInt(this castTo int, get(i) castTo int) - 1)
 		super.removeAt(index)
 
 	override function clear()

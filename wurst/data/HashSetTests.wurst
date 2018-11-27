@@ -31,3 +31,11 @@ function testHashSet()
 	hset..add(1, 2, 3)..remove(2)
 	hset.get(0).assertEquals(1)
 	hset.get(1).assertEquals(3)
+
+@Test function testRemoval()
+	let hset = new HashSet<int>
+	..add(4, 5, 6, 3, 5)
+	hset.removeAt(0)
+	hset.get(0).assertEquals(5)
+	hset.remove(5)
+	hset.get(0).assertEquals(6)
