@@ -25,3 +25,9 @@ function testHashSet()
 	set.get(0).assertEquals(5)
 	set.remove(3)
 	set.size().assertEquals(2)
+
+@Test function testFenixOrder()
+	let hset = new HashSet<int>
+	hset..add(1, 2, 3)..remove(2)
+	hset.get(0).assertEquals(1)
+	hset.get(1).assertEquals(3)

@@ -9,14 +9,19 @@ public class HashSet<T> extends HashList<T>
 	override function add(vararg T elems)
 		for elem in elems
 			if count(elem) <= 0
-				super.add(elem)
 				position.saveInt(this castTo int, elem castTo int, size())
+				super.add(elem)
 
 	/** Removes an element from this set if present */
 	override function remove(T elem)
 		if count(elem) > 0
 			let pos = position.loadInt(this castTo int, elem castTo int)
 			removeAt(pos)
+
+	/** Remove the element at the given index */
+	override function removeAt(int index)
+		position.removeInt(this castTo int, get(index) castTo int)
+		super.removeAt(index)
 
 	override function clear()
 		super.clear()
