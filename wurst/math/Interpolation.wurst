@@ -117,7 +117,7 @@ function linearVecTest()
 	v.x.assertEquals(4.5)
 	v.y.assertEquals(3)
 
-@Test function testVec2Vezier3()
+@Test function testVec2Bezier3()
 	let start = vec2(-1, 0)
 	let mid = vec2(0, 2)
 	let stop = vec2(1, 0)
@@ -147,7 +147,6 @@ function linearVecTest()
 	start.bezier3(mid, stop, p).assertEquals(expected)
 	start.bezier3(mid, stop, 0).assertEquals(start)
 	start.bezier3(mid, stop, 1).assertEquals(stop)
-	
 
 @Test function testVec3Bezier4()
 	let start = vec3(-3, 0, 0)
