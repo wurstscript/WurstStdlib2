@@ -173,6 +173,27 @@ Change the angle of the special effect around z-axis.
 public function effect.setRoll(angle roll)
 	BlzSetSpecialEffectRoll(this, roll.radians())
 
+/** Plays an animation such as birth/death/stand/etc. defined in constants ANIM_TYPE_BIRTH/ANIM_TYPE_DEATH/ANIM_TYPE_STAND/etc. (full list in common.j). */
+public function effect.playAnimation(animtype whichAnim)
+	BlzPlaySpecialEffect(this, whichAnim)
+
+/** Plays an animation such as birth/death/stand/etc. defined in constants ANIM_TYPE_BIRTH/ANIM_TYPE_DEATH/ANIM_TYPE_STAND/etc. (full list in common.j). */
+public function effect.playAnimation(animtype whichAnim, real timeScale)
+	BlzPlaySpecialEffectWithTimeScale(this, whichAnim, timeScale)
+
+/** Returns the name of the animation type. */
+public function animtype.getName() returns string
+	return BlzGetAnimName(this)
+
+public function effect.addSubAnimation(subanimtype whichSubAnim)
+	BlzSpecialEffectAddSubAnimation(this, whichSubAnim)
+
+public function effect.clearSubAnimations()
+	BlzSpecialEffectClearSubAnimations(this)
+
+public function effect.removeSubAnimation(subanimtype whichSubAnim)
+	BlzSpecialEffectRemoveSubAnimation(this, whichSubAnim)
+
 @Test
 function testEffect()
 	let eff = addEffect("testPath", vec2(12,32))
