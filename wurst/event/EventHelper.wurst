@@ -65,3 +65,7 @@ public function eventid.isPlayerunitEvent() returns boolean
 public function eventid.isKeyboardEvent() returns boolean
 	let eventId = this.getHandleId()
 	return (eventId >= 261 and eventId <= 268) or (eventId == 17)
+	
+public function eventid.isMouseEvent() returns boolean
+	let eventId = this.getHandleId()
+	return (eventId >= 305 and eventId <= 307)
