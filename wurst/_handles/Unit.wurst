@@ -566,9 +566,6 @@ public function unit.setMaxMana(int mana, boolean keepRatio)
 	else
 		BlzSetUnitMaxMana(this, mana)
 
-public function unit.deleteAbility(int abilCode)
-	BlzDeleteHeroAbility(this, abilCode)
-
 public function unit.setName(string name)
 	BlzSetUnitName(this, name)
 
@@ -641,6 +638,8 @@ public function unit.endAbilityCooldown(int abilCode)
 public function unit.getAbilityManaCost(int abilId, int level) returns int
 	return BlzGetUnitAbilityManaCost(this, abilId, level)
 
+public function unit.setAbilityManaCost(int abilId, int level, int manaCost)
+	BlzSetUnitAbilityManaCost(this, abilId, level, manaCost)
 	
 @deprecated("Use getPos instead.")
 public function unit.getLoc() returns location
