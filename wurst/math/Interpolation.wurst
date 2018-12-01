@@ -4,7 +4,7 @@ import Vectors
 import Wurstunit
 
 // Credits to BlinkyBoy
-/**Look at linear*/
+/** Look at linear */
 public function linear(vec2 start, vec2 stop, real p) returns vec2
 	return vec2(linear(start.x, stop.x, p), linear(start.y, stop.y, p))
 
@@ -89,10 +89,10 @@ public function vec3.derivBezier4(vec3 mid1, vec3 mid2, vec3 stop, real p) retur
 public function vec2.derivBezier4(vec2 mid1, vec2 mid2, vec2 stop, real p) returns vec2
 	return vec2(derivBezier4(this.x, mid1.x, mid2.x, stop.x, p), derivBezier4(this.y, mid1.y, mid2.y, stop.y, p))
 
-//You can use Bezier 3 to graphic perfect parabolas
-//bezier4(<Start Point>, <OutTan_of_StartPoint>, <InTan_of_EndPoint>, <EndPoint>)
+// You can use Bezier 3 to graphic perfect parabolas
+// bezier4(<Start Point>, <OutTan_of_StartPoint>, <InTan_of_EndPoint>, <EndPoint>)
 
-/**	Hermite Interpolation */
+/** Hermite Interpolation */
 public function hermite(real start, real stop, real tangent1, real tangent2, real s) returns real
 	real s2 = s * s
 	real h1 = 8.0 * s * s2 - 9.0 * s2
