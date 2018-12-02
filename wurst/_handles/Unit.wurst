@@ -237,6 +237,9 @@ public function unit.getItemById(int itemId) returns item
 public function unit.hide()
 	ShowUnit(this, false)
 
+public function unit.isHidden() returns bool
+	return IsUnitHidden(this)
+
 public function unit.inventorySize() returns int
 	return UnitInventorySize(this)
 
