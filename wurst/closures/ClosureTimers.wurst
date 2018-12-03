@@ -77,7 +77,8 @@ public abstract class CallbackSingle
 		destroy cb
 
 	ondestroy
-		t.release()
+		if t != null
+			t.release()
 
 
 public abstract class CallbackPeriodic
@@ -95,7 +96,8 @@ public abstract class CallbackPeriodic
 		cb.call(cb)
 
 	ondestroy
-		t.release()
+		if t != null
+			t.release()
 
 public abstract class CallbackCounted
 	private var count = 0
@@ -128,7 +130,8 @@ public abstract class CallbackCounted
 			destroy this
 
 	ondestroy
-		t.release()
+		if t != null
+			t.release()
 
 
 var x = 200
