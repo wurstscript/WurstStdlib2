@@ -61,7 +61,7 @@ public function doPeriodicallyTimed(real interval, real timerDuration, CallbackC
 
 //Timer Stuff
 public abstract class CallbackSingle
-	private timer t
+	private timer t = null
 	abstract function call()
 
 	function start(real time)
@@ -82,7 +82,7 @@ public abstract class CallbackSingle
 
 
 public abstract class CallbackPeriodic
-	private timer t
+	private timer t = null
 
 	protected abstract function call(thistype cb)
 
@@ -101,7 +101,7 @@ public abstract class CallbackPeriodic
 
 public abstract class CallbackCounted
 	private var count = 0
-	private timer t
+	private timer t = null
 
 	protected abstract function call(thistype cb)
 
