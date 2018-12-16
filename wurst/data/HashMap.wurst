@@ -41,6 +41,9 @@ public class HashMap<K,V> extends Table
 	function size()returns int
 		return size
 
+	ondestroy
+		size = 0
+
 
 /** Iterable generic Table Wrapper */
 public class IterableMap<K,V> extends HashMap<K, V>
