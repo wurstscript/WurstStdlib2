@@ -7,7 +7,6 @@ function testHas()
 	map.has(5).assertEquals(false)
 	map.put(5, 1)
 	map.has(5).assertEquals(true)
-	map.size().assertEquals(1)
 
 @Test
 function testPutGet()
@@ -17,7 +16,6 @@ function testPutGet()
 	map.get(5).assertEquals(0)
 	map.remove(3)
 	map.get(3).assertEquals(0)
-	map.size().assertEquals(0)
 
 @Test
 function testRemove()
@@ -27,18 +25,16 @@ function testRemove()
 	map.has(5).assertEquals(false)
 	map.remove(3)
 	map.has(3).assertEquals(false)
-	map.size().assertEquals(0)
 
 @Test
 function testBooleanHashmap()
 	let hm = new HashMap<int, boolean>
 	hm.put(1, true)
 	hm.get(1).assertEquals(true)
-	hm.size().assertEquals(1)
 
 @Test
 function testSize()
-	let hm = new HashMap<int, boolean>
+	let hm = new SizedMap<int, boolean>
 	hm.put(1, true)
 	hm.size().assertEquals(1)
 	hm.get(1).assertEquals(true)
@@ -83,7 +79,6 @@ function testIterableMap()
 	test.assertEquals("string1 string3")
 	otherMap.hasKey(2).assertFalse()
 	otherMap.hasKey(3).assertTrue()
-	map.size().assertEquals(map.mapSize())
 
 @Test
 function testIMIterator()
@@ -97,7 +92,6 @@ function testIMIterator()
 	for key in map
 		map.get(key).assertEquals(vals[i])
 		i++
-	map.size().assertEquals(map.mapSize())
 
 @Test
 function testIMGetPut()
@@ -111,7 +105,6 @@ function testIMGetPut()
 	map.get(5).assertEquals(1)
 	map.put(5, 2)
 	map.get(5).assertEquals(2)
-	map.size().assertEquals(map.mapSize())
 
 @Test
 function testIMHasKeyRemove()
@@ -124,7 +117,6 @@ function testIMHasKeyRemove()
 	map.hasKey(6).assertEquals(false)
 	map.remove(5)
 	map.hasKey(5).assertEquals(false)
-	map.size().assertEquals(map.mapSize())
 
 @Test
 function testIMRemoveValue()
@@ -140,7 +132,6 @@ function testIMRemoveValue()
 	map.get(6).assertEquals(1)
 	map.removeValue(1, true)
 	map.hasKey(3).assertEquals(false)
-	map.size().assertEquals(map.mapSize())
 
 @Test
 function testIMAddAll()
@@ -160,7 +151,6 @@ function testIMAddAll()
 	map.addAll(map2)
 	for i = 0 to 4
 		map.get(keys[i]).assertEquals(vals[i])
-	map.size().assertEquals(map.mapSize())
 
 @Test
 function testIMCopy()
@@ -173,7 +163,6 @@ function testIMCopy()
 
 	for key in map
 		map2.get(key).assertEquals(map.get(key))
-	map.size().assertEquals(map.mapSize())
 
 @Test
 function testIMCopyConstructor()
@@ -186,7 +175,6 @@ function testIMCopyConstructor()
 
 	for key in map
 		map2.get(key).assertEquals(map.get(key))
-	map.size().assertEquals(map.mapSize())
 
 @Test
 function testIMFlush()
@@ -198,5 +186,4 @@ function testIMFlush()
 	map.flush()
 	map.hasKey(5).assertEquals(false)
 	map.get(5).assertEquals(0)
-	map.size().assertEquals(map.mapSize())
 	destroy map

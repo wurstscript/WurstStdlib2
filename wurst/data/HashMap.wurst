@@ -6,15 +6,13 @@ import public Table
 
 /** Generic Table Wrapper */
 public class HashMap<K,V> extends Table
-	protected int size = 0
+
 	/** Whether a value exists under the given key or not */
 	function has(K key) returns boolean
 		return hasInt(key castTo int)
 
 	/** Saves the given value under the given key */
 	function put(K key, V value)
-		if not has(key)
-			size++
 		saveInt(key castTo int, value castTo int)
 
 	/** Retrieves the value saved under the given key */
@@ -23,8 +21,6 @@ public class HashMap<K,V> extends Table
 
 	/** Removes the value saved under the given key */
 	function remove(K key)
-		if has(key)
-			size--
 		removeInt(key castTo int)
 
 	/** Retrieves the value saved under the given key and removes it */
@@ -33,17 +29,28 @@ public class HashMap<K,V> extends Table
 		remove(key)
 		return result
 
-	/** Remove all data from this map */
+public class SizedMap<K,V> extends HashMap<K,V>
+	protected int size = 0
+
+	override function put(K key, V value)
+		if not has(key)
+			size++
+		saveInt(key castTo int, value castTo int)
+
+	override function remove(K key)
+		if has(key)
+			size--
+		removeInt(key castTo int)
+
 	override function flush()
 		size = 0
 		super.flush()
 
-	function size()returns int
+	function size() returns int
 		return size
-
+	
 	ondestroy
-		size = 0
-
+		flush()
 
 /** Iterable generic Table Wrapper */
 public class IterableMap<K,V> extends HashMap<K, V>
@@ -119,11 +126,8 @@ public class IterableMap<K,V> extends HashMap<K, V>
 
 
 	/** Returns the length of this IterableMap **/
-	override function size() returns int
+	function size() returns int
 		return keys.size()
-
-	function mapSize() returns int
-		return super.size
 
 	ondestroy
 		destroy keys
