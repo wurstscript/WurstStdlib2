@@ -26,6 +26,7 @@ public function item.getY() returns real
 public function item.getPos() returns vec2
 	return vec2(this.getX(), this.getY())
 
+@Deprecated("use vec2 variant")
 public function item.setPos(real x, real y)
 	SetItemPosition(this, x, y)
 
