@@ -16,6 +16,8 @@ By introducing a standard library, we offer the developers everything they need 
 
 # Usage Notes
 
+Documentation: https://wurstlang.org/stdlib
+
 ## Linked Lists
 
 ### The Linked List Module
@@ -68,9 +70,6 @@ for elem from list.staticItr()
 **Note** that it has to be a for .. *from* loop now.
 
 ## Object Editing
-
-The Stdlib provides natives as well as presets to easily generate wc3 object data such as units, abilities, buffs, as well as constants for all asset paths.
-
 
 
 
