@@ -154,7 +154,7 @@ public function forNearestDestructable(vec2 pos, real range, ForGroupCallbackD c
 	gpos = pos
 	nearestDDist = range.squared()
 	nearestD = null
-	let r = Rect(pos.x - range, pos.y - range, pos.x + range, pos.y + range)
+	let r = pos.withRadiusRect(range)
 	EnumDestructablesInRect(r, filterEnumDestructablesInCircleBJ) ->
 		let dist = gpos.distanceToSq(GetFilterDestructable().getPos())
 		if dist < nearestDDist
