@@ -181,6 +181,10 @@ public function vec2.distanceToSegmentSq(vec2 v1, vec2 v2) returns real
 		return this.distanceToSq(v2)
 	return this.distanceToSq(vec2(v1.x + t * (v2.x - v1.x), v1.y + t * (v2.y - v1.y)))
 
+/** Create a rect centered at `this` with side length 2 * `nominalRadius`. */
+public function vec2.withRadiusRect(real nominalRadius) returns rect
+	return Rect(this.x - nominalRadius, this.y - nominalRadius, this.x + nominalRadius, this.y + nominalRadius)
+
 /** Checks whether the point is in a triangle defined by 3 points. */
 public function vec2.isInTriangle(vec2 p1, vec2 p2, vec2 p3) returns bool
 	let a = (p2.x - p1.x) * (this.y - p1.y) - (this.x - p1.x) * (p2.y - p1.y)
