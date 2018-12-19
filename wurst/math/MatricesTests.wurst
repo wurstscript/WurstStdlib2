@@ -252,3 +252,13 @@ import Matrices
 	let point = vec3(2, 5, 1)
 	let trans = vec2(5, 10).toTranslation()
 	(trans * point).assertEquals(vec3(7, 15, 1))
+
+@test function testInverse22()
+	let m22 = mat2(1, 1, 0, 1)
+	let inverse = m22.inverse().matrix
+	inverse.assertEquals(mat2(1, -1, 0, 1))
+
+@test function testInverse33()
+	let m33 = mat3(1, 0, 1, 0, 1, 0, 0, 0, 1)
+	let inverse = m33.inverse().matrix
+	inverse.assertEquals(mat3(1, 0, -1, 0, 1, 0, 0, 0, 1))

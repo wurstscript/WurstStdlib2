@@ -113,9 +113,7 @@ If there's no inverse matrix 'success' is false and 'matrix' is zero matrix. */
 public function mat2.inverse() returns inverseresult22
 	let d = this.determinant()
 	var inverse = inverseresult22(d.abs() > 0.002, ZERO22)
-	if d.abs().isBetween(0.998, 1.002)
-		inverse.matrix = this.transpose()
-	else if inverse.success
+	if inverse.success
 		let tmp = mat2( this.m11, -this.m01,
 						-this.m10, this.m00)
 		inverse.matrix = 1 / d * tmp
@@ -241,9 +239,7 @@ If there's no inverse matrix 'success' is false and 'matrix' is zero matrix. */
 public function mat3.inverse() returns inverseresult33
 	let d = this.determinant()
 	var inverse = inverseresult33(d.abs() > 0.002, ZERO33)
-	if d.abs().isBetween(0.998, 1.002)
-		inverse.matrix = this.transpose()
-	else if inverse.success
+	if inverse.success
 		let tmp = mat3( this.m11 * this.m22 - this.m12 * this.m21,
 						this.m02 * this.m21 - this.m01 * this.m22,
 						this.m01 * this.m12 - this.m02 * this.m11,
