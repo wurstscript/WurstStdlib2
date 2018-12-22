@@ -1,4 +1,23 @@
-/** By default, this package allows units to collide with destructables and
+/**
+	Use the `Knockback3.add(..)` functions to apply 3D knockback to units.
+	Using angles:
+		import Knockback3
+		...
+		let u = ...
+		Knockback3.add(u, 1000., 0 .fromDeg(), 45 .fromDeg())
+
+	Using a target position:
+		let caster = GetSpellAbilityUnit()
+		let target = getSpellTargetPos()
+
+		Knockback3.add(caster, target, 500.)
+
+	Configure this system by overriding the @configurable globals and setting
+	the static class members:
+
+		Knockback3.gravity = 25.
+
+	By default, this package allows units to collide with destructables and
 	destroy them. To disable this feature, make the global
 	destroyDestructableSpeedThreshold a very high value:
 
@@ -31,9 +50,7 @@ Warning: this is not a lock-safe form of crowd control.
 public class Knockback3
 	use LinkedListModule
 
-	/**
-	Fraction of velocity retained after colliding with ground/destructable.
-	*/
+	/**	Fraction of velocity retained after colliding with ground/destructable.	*/
 	static var restitutionCoefficientGround	   = .2
 	static var restitutionCoefficientDestructable = .3
 
@@ -75,19 +92,13 @@ public class Knockback3
 	static var destroyDestructableHeightThreshold = 150.
 
 	/**
-	Apply a knockback vector to unit u. `velocity` is initial speed in units
-	per second. `groundAngle` and `airAngle` are the direction and trajectory
-	parameters, respectively. Example:
-
-		import Knockback3
-		...
-		unit u = ...
-		Knockback3.add(u, 1000., angle(0.), angle(bj_PI / 4.))
-	*/
+	 	Apply a knockback vector to unit u. `velocity` is initial speed in units
+	 	per second. `groundAngle` and `airAngle` are the direction and trajectory
+	 	parameters, respectively. Example:
+	 */
 	static function add(unit u, real velocity, angle groundAngle, angle airAngle)
 		let instVel = velocity * ANIMATION_PERIOD
 		let v	   = ZERO3.polarProject(instVel, groundAngle, airAngle)
-
 		if unitNodes.has(u)
 			unitNodes.get(u).del += v
 		else
@@ -103,17 +114,10 @@ public class Knockback3
 
 
 	/**
-	Apply a knockback vector to unit u. If the unit is stopped, this vector will
-	throw the unit to the position at vec2 `target`. Along the XY-plane, the
-	unit will move `groundSpeed` units per second. Note that the more vertical
-	angle will always be used from the pair of possible trajectories. Example:
-
-		import Knockback3
-		...
-		unit u	 = ...
-		let target = vec2(GetSpellTargetX(), GetSpellTargetY())
-
-		Knockback3.add(u, target, 500.)
+		Apply a knockback vector to unit u. If the unit is stopped, this vector will
+		throw the unit to the position at vec2 `target`. Along the XY-plane, the
+		unit will move `groundSpeed` units per second. Note that the more vertical
+		angle will always be used from the pair of possible trajectories. Example:
 	*/
 	static function add(unit u, vec2 target, real groundSpeed)
 		let t	 = (target - u.getPos()).length() / groundSpeed
