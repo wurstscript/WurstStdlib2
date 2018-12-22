@@ -144,8 +144,8 @@ public class Knockback3
 	private vec3 del
 
 
-	private static function tickNearGround(Knockback3 knockback, vec3 newPos3, vec3 pos3, bool newInMap, real velXySquared)
-		if newPos3.toVec2().isTerrainWalkable() and newInMap
+	private static function tickNearGround(Knockback3 knockback, vec3 newPos3, vec3 pos3, real velXySquared)
+		if newPos3.toVec2().isTerrainWalkable()
 			knockback.u.setXY(newPos3)
 
 			if knockback.del.z <= isAirborneThreshold
@@ -218,14 +218,20 @@ public class Knockback3
 
 	private static function tick()
 		for knockback from staticItr()
-			let pos3		 = knockback.u.getPos3Zero()
-			let newPos3	  = pos3 + knockback.del
-			let newInMap	 = newPos3.inPlayable()
+			let pos3		 = knockback.u.getPos3Real()
+			var newPos3	  = pos3 + knockback.del
+
+
+			if not newPos3.inPlayable()
+				newPos3.x = pos3.x
+				newPos3.y = pos3.y
+				knockback.del = ZERO2.withZ(knockback.del.z)
+
 			let velXySquared = knockback.del.toVec2().lengthSq()
 
 			if pos3.z < isAirborneThreshold
-				tickNearGround(knockback, newPos3, pos3, newInMap, velXySquared)
-			else if newInMap
+				tickNearGround(knockback, newPos3, pos3, velXySquared)
+			else
 				tickAboveGround(knockback, newPos3, pos3)
 
 			if velXySquared > destroyDestructableSpeedThreshold * ANIMATION_PERIOD and pos3.z < destroyDestructableHeightThreshold
