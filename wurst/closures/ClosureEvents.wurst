@@ -276,13 +276,11 @@ public function unregisterEvents(int id)
 
 
 init
-	nullTimer() ->
-		// Register Events when unit enters map
-		onUnitIndex(() -> registerEventsForUnit(getIndexedUnit()))
-		// Delete
-		onUnitDeindex(() -> unregisterEventsForUnit(getDeindexedUnit()))
+	// Un/Register Events when unit enters map
+	onUnitIndex(() -> registerEventsForUnit(getIndexedUnit()))
+	onUnitDeindex(() -> unregisterEventsForUnit(getDeindexedUnit()))
 
-		// Register Actions
+	nullTimer() ->
 		unitTrig.addAction(() -> EventListener.generalEventCallback())
 		leaveTrig.addAction(() -> EventListener.generalEventCallback())
 		keyTrig.addAction(() -> EventListener.generalEventCallback())
