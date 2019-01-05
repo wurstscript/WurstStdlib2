@@ -39,7 +39,7 @@ public function nullTimer(CallbackSingle cb) returns CallbackSingle
 	Example use:
 	| someTimer.doPeriodically(0.5) cb ->
 	|	 if i > 10
-			destroy cb
+	|		destroy cb
 */
 public function timer.doPeriodically(real time, CallbackPeriodic cb) returns CallbackPeriodic
 	cb.start(this, time)
@@ -51,7 +51,7 @@ public function timer.doPeriodically(real time, CallbackPeriodic cb) returns Cal
 	Example use:
 	| doPeriodically(0.5) cb ->
 	|	 if i > 10
-			destroy cb
+	|		destroy cb
 */
 public function doPeriodically(real time, CallbackPeriodic cb) returns CallbackPeriodic
 	return getTimer().doPeriodically(time, cb)
