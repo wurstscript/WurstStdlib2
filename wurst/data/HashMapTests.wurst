@@ -34,7 +34,7 @@ function testBooleanHashmap()
 
 @Test
 function testSize()
-	let hm = new SizedMap<int, boolean>
+	let hm = new HashMap<int, boolean>
 	hm.put(1, true)
 	hm.size().assertEquals(1)
 	hm.get(1).assertEquals(true)

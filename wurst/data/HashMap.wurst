@@ -13,6 +13,8 @@ public class HashMap<K,V> extends Table
 
 	/** Saves the given value under the given key */
 	function put(K key, V value)
+		if not has(key)
+			size ++
 		saveInt(key castTo int, value castTo int)
 
 	/** Retrieves the value saved under the given key */
@@ -21,6 +23,8 @@ public class HashMap<K,V> extends Table
 
 	/** Removes the value saved under the given key */
 	function remove(K key)
+		if has(key)
+			size --
 		removeInt(key castTo int)
 
 	/** Retrieves the value saved under the given key and removes it */
@@ -29,28 +33,16 @@ public class HashMap<K,V> extends Table
 		remove(key)
 		return result
 
-public class SizedMap<K,V> extends HashMap<K,V>
-	protected int size = 0
-
-	override function put(K key, V value)
-		if not has(key)
-			size++
-		saveInt(key castTo int, value castTo int)
-
-	override function remove(K key)
-		if has(key)
-			size--
-		removeInt(key castTo int)
+	function size() returns int
+		return size
 
 	override function flush()
 		size = 0
 		super.flush()
-
-	function size() returns int
-		return size
-	
+		
 	ondestroy
 		flush()
+
 
 /** Iterable generic Table Wrapper */
 public class IterableMap<K,V> extends HashMap<K, V>
