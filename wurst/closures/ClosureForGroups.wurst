@@ -9,11 +9,20 @@ constant DUMMY_GROUP = CreateGroup()
 // ====Callback stack for nested usage====
 ForGroupCallback array tempCallbacks
 var tempCallbacksCount = 0
-constant filter = Filter(() -> currentCallback().callback(GetFilterUnit()))
+var maxCount = INT_MAX
+var iterCount = 0
+constant filter = Filter(() -> filterCallback(GetFilterUnit()))
+
+function filterCallback(unit filter)
+	if iterCount < maxCount
+		currentCallback().callback(filter)
+	iterCount++
 
 function pushCallback(ForGroupCallback c)
 	tempCallbacks[tempCallbacksCount] = c
 	tempCallbacksCount++
+	iterCount = 0
+	maxCount = INT_MAX
 
 function popCallback()
 	DUMMY_GROUP.clear()
@@ -29,12 +38,14 @@ function currentCallback() returns ForGroupCallback
 public function group.forEachFrom(ForGroupCallback cb)
 	for u from this
 		cb.callback(u)
+	destroy cb
 
 /** Executes the given closure for every unit in this group,
 	keeping all units in the group */
 public function group.forEachIn(ForGroupCallback cb)
 	for u in this
 		cb.callback(u)
+	destroy cb
 
 /** Executes the given closure for every unit of the given type.
 	Remember that names of custom units are "custom_[typeId]" */
@@ -47,7 +58,8 @@ public function forUnitsOfType(string unitname, ForGroupCallback c)
 	Cancels itself after *count* iterations */
 public function forUnitsOfTypeCounted(string unitname, int count, ForGroupCallback c)
 	pushCallback(c)
-	GroupEnumUnitsOfTypeCounted(DUMMY_GROUP, unitname, filter, count)
+	maxCount = count
+	GroupEnumUnitsOfType(DUMMY_GROUP, unitname, filter)
 	popCallback()
 
 /** Executes the given closure for every unit of the given player */
@@ -75,7 +87,8 @@ public function forUnitsInRect(rect r, ForGroupCallback c)
 	Cancels itself after *count* iterations */
 public function forUnitsInRectCounted(rect r, int count, ForGroupCallback c)
 	pushCallback(c)
-	GroupEnumUnitsInRectCounted(DUMMY_GROUP, r, filter, count)
+	maxCount = count
+	GroupEnumUnitsInRect(DUMMY_GROUP, r, filter)
 	popCallback()
 
 /** Executes the given closure for every unit in range of the given position */
@@ -88,7 +101,8 @@ public function forUnitsInRange(vec2 pos, real radius, ForGroupCallback c)
 	Cancels itself after *count* iterations */
 public function forUnitsInRangeCounted(vec2 pos, real radius, int count, ForGroupCallback c)
 	pushCallback(c)
-	GroupEnumUnitsInRangeCounted(DUMMY_GROUP, pos.x, pos.y, radius, filter, count)
+	maxCount = count
+	GroupEnumUnitsInRange(DUMMY_GROUP, pos.x, pos.y, radius, filter)
 	popCallback()
 
 /** Executes the given closure for every unit selected by the given player */
