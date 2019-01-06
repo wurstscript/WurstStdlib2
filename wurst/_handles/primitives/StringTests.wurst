@@ -107,6 +107,7 @@ package StringTests
 @Test function testReplace()
 	"testtest".replace("es", "r").assertEquals("trttrt")
 	"test".replace("testy", "something").assertEquals("test")
+	"dfdf".replace("", "2").assertEquals("dfdf")
 
 @Test function testGetHash()
 	"test".getHash().assertEquals(StringHash("test"))

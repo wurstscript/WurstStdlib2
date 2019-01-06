@@ -186,12 +186,12 @@ public function string.firstUpper() returns string
 
 /** Returns a new string in which all occurrences of a specified string in the current instance are replaced with another specified string */
 public function string.replace(string oldSubstring, string newSubstring) returns string
-	string s = this
-
-	int i = this.indexOf(oldSubstring)
-	while (i != -1)
-		s = s.substring(0, i) + newSubstring + s.substring(i + oldSubstring.length(), s.length())
-		i = s.indexOf(oldSubstring, i + newSubstring.length())
+	var s = this
+	if oldSubstring.length() > 0
+		int i = this.indexOf(oldSubstring)
+		while (i != -1)
+			s = s.substring(0, i) + newSubstring + s.substring(i + oldSubstring.length(), s.length())
+			i = s.indexOf(oldSubstring, i + newSubstring.length())
 	return s
 
 public function string.getHash() returns int
