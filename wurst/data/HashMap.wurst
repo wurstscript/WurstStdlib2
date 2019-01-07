@@ -7,6 +7,8 @@ import public Table
 /** Generic Table Wrapper */
 public class HashMap<K,V> extends Table
 
+	private int size = 0
+	
 	/** Whether a value exists under the given key or not */
 	function has(K key) returns boolean
 		return hasInt(key castTo int)
@@ -118,7 +120,7 @@ public class IterableMap<K,V> extends HashMap<K, V>
 
 
 	/** Returns the length of this IterableMap **/
-	function size() returns int
+	override function size() returns int
 		return keys.size()
 
 	ondestroy
