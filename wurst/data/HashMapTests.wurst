@@ -32,8 +32,32 @@ function testBooleanHashmap()
 	hm.put(1, true)
 	hm.get(1).assertEquals(true)
 
-/* IterableMap */
 
+@Test
+function testSize()
+	let hm = new HashMap<int, boolean>
+	hm.put(1, true)
+	hm.size().assertEquals(1)
+	hm.get(1).assertEquals(true)
+	hm.size().assertEquals(1)
+	hm.put(1, false)
+	hm.size().assertEquals(1)
+	hm.put(2, true)
+	hm.size().assertEquals(2)
+	hm.put(3, true)
+	hm.put(4, true)
+	hm.size().assertEquals(4)
+	hm.remove(4)
+	hm.size().assertEquals(3)
+	hm.remove(3)
+	hm.remove(2)
+	hm.size().assertEquals(1)
+	hm.getAndRemove(2)
+	hm.size().assertEquals(1)
+	hm.getAndRemove(1)
+	hm.size().assertEquals(0)
+
+/* IterableMap */
 @Test
 function testIterableMap()
 	let map = new IterableMap<int, string>
