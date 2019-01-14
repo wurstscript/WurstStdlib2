@@ -47,7 +47,9 @@ public class Order
 		while e.prev != null
 			i++
 			if i > ORDERS_TO_HOLD
-				destroy e.prev
+				let tmp = e.prev
+				destroy tmp
+				e.prev = null
 				break
 			e = e.prev
 
