@@ -8,6 +8,7 @@ import MapBounds
 import GameTimer
 import UnitObjEditing
 import Colors
+import Assets
 
 /** Id of the dummy unit */
 public constant DUMMY_UNIT_ID 	   		= 'xdum'
@@ -141,7 +142,7 @@ init
 			DummyRecycler.angleQueues[i].enqueue(createDummy(boundMax, DUMMY_PLAYER, (i* ANGLE_DEGREE).asAngleDegrees()))
 
 @compiletime function generateDummyUnit()
-	let u = new UnitDefinition(DUMMY_UNIT_ID, 'ewsp')
+	let u = new UnitDefinition(DUMMY_UNIT_ID, UnitIds.wisp)
 	u..setName("Effect Dummy Unit")
 	..setUpgradesUsed("")
 	..setStructuresBuilt("")
@@ -152,7 +153,7 @@ init
 	..setRace(Race.Commoner)
 	..setFoodCost(0)
 	..setArmorType(ArmorType.Divine)
-	..setIconGameInterface("ReplaceableTextures\\CommandButtons\\BTNtemp.blp")
+	..setIconGameInterface(Icons.bTNTemp)
 	..setSpeedBase(522)
 	..setModelFile("dummy.mdl")
 	..setAnimationBlendTimeseconds(0.0)
