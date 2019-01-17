@@ -72,6 +72,7 @@ public class DummyCaster
 		dummy..addAbility(id)..setMana(1000000)
 		if lvl > 1
 			dummy.setAbilityLevel(id, lvl)
+		dummy.setOwner(owner, false)
 		return dummy
 
 	private function finish(unit dummy, int id)
