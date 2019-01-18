@@ -106,25 +106,16 @@ import OnUnitEnterLeave
 trigger onIndexTrigger = CreateTrigger()
 trigger onDeindexTrigger = CreateTrigger()
 
-/* Unit stacks for nested usage */
-unit array tempIndexedUnits
-unit array tempDeindexedUnits
-var tempIndexedCount   = 0
-var tempDeindexedCount = 0
+/* Unit stack for nested usage */
+unit array tempUnits
+var tempUnitsCount = 0
 
-function pushIndexedUnit(unit u)
-	tempIndexedUnits[tempIndexedCount] = u
-	tempIndexedCount++
+function pushUnit(unit u)
+	tempUnits[tempUnitsCount] = u
+	tempUnitsCount++
 
-function popIndexedUnit()
-	tempIndexedCount--
-
-function pushDeindexedUnit(unit u)
-	tempDeindexedUnits[tempDeindexedCount] = u
-	tempDeindexedCount++
-
-function popDeindexedUnit()
-	tempDeindexedCount--
+function popUnit()
+	tempUnitsCount--
 
 
 @configurable public function shouldIndex(unit _u) returns boolean
@@ -145,22 +136,27 @@ function popDeindexedUnit()
 
 	return instance
 
+/**	Returns the currently indexing unit.
+	That's the last indexed unit or 
+	the one about to be deindexed. */
+public function getIndexingUnit() returns unit
+	return tempUnits[tempUnitsCount - 1]
 
-/**  Returns the last indexed unit. */
+@deprecated("Use 'getIndexingUnit' instead")
 public function getIndexedUnit() returns unit
-	return tempIndexedUnits[tempIndexedCount - 1]
+	return getIndexingUnit()
 
-/**  Returns the unit about to be deindexed. */
+@deprecated("Use 'getIndexingUnit' instead")
 public function getDeindexedUnit() returns unit
-	return tempDeindexedUnits[tempDeindexedCount - 1]
+	return getIndexingUnit()
 
 /**  Adds a function to be called before a unit is deindexed.
-	Use the getDeindexedUnit() function to refer to the deindexing unit. */
+	Use the getIndexingUnit() function to refer to the deindexing unit. */
 public function onUnitDeindex(code func)
 	onDeindexTrigger.addCondition(Condition(func))
 
 /**  Adds a function to be called after a unit is indexed.
-	Use the getIndexedUnit() function to refer to the indexed unit. */
+	Use the getIndexingUnit() function to refer to the indexed unit. */
 public function onUnitIndex(code func)
 	onIndexTrigger.addCondition(Condition(func))
 
@@ -185,14 +181,14 @@ public class UnitIndex
 	construct(unit whichUnit)
 		this._unit = whichUnit
 		this._unit.setUserData(this castTo int)
-		pushIndexedUnit(whichUnit)
+		pushUnit(whichUnit)
 		onIndexTrigger.evaluate()
-		popIndexedUnit()
+		popUnit()
 
 	ondestroy
-		pushDeindexedUnit(this._unit)
+		pushUnit(this._unit)
 		onDeindexTrigger.evaluate()
-		popDeindexedUnit()
+		popUnit()
 		this._unit.setUserData(0)
 
 // Auto instanciation/destruction
