@@ -11,7 +11,7 @@ import OnUnitEnterLeave
 	BREAK THIS SYSTEM since it depends on being the only system to use it.
 	Conversely, it is very likely that this system is going to break them, too.
 	Always make sure you only have one system using SetUnitUserData.
-	The maximum number of indexed units at any time is 8190, so if you have more
+	The maximum number of indexed units at any time is 32760, so if you have more
 	units than that at any time, the system will not be able to index them.
 
 	----------------------------------------------------------------------------
@@ -105,8 +105,27 @@ import OnUnitEnterLeave
 
 trigger onIndexTrigger = CreateTrigger()
 trigger onDeindexTrigger = CreateTrigger()
-unit indexedUnit = null
-unit deindexedUnit = null
+
+/* Unit stacks for nested usage */
+unit array tempIndexedUnits
+unit array tempDeindexedUnits
+var tempIndexedCount   = 0
+var tempDeindexedCount = 0
+
+function pushIndexedUnit(unit u)
+	tempIndexedUnits[tempIndexedCount] = u
+	tempIndexedCount++
+
+function popIndexedUnit()
+	tempIndexedCount--
+
+function pushDeindexedUnit(unit u)
+	tempDeindexedUnits[tempDeindexedCount] = u
+	tempDeindexedCount++
+
+function popDeindexedUnit()
+	tempDeindexedCount--
+
 
 @configurable public function shouldIndex(unit _u) returns boolean
 	return true
@@ -129,11 +148,11 @@ unit deindexedUnit = null
 
 /**  Returns the last indexed unit. */
 public function getIndexedUnit() returns unit
-	return indexedUnit
+	return tempIndexedUnits[tempIndexedCount - 1]
 
 /**  Returns the unit about to be deindexed. */
 public function getDeindexedUnit() returns unit
-	return deindexedUnit
+	return tempDeindexedUnits[tempDeindexedCount - 1]
 
 /**  Adds a function to be called before a unit is deindexed.
 	Use the getDeindexedUnit() function to refer to the deindexing unit. */
@@ -166,12 +185,14 @@ public class UnitIndex
 	construct(unit whichUnit)
 		this._unit = whichUnit
 		this._unit.setUserData(this castTo int)
-		indexedUnit = this._unit
+		pushIndexedUnit(whichUnit)
 		onIndexTrigger.evaluate()
+		popIndexedUnit()
 
 	ondestroy
-		deindexedUnit = this._unit
+		pushDeindexedUnit(this._unit)
 		onDeindexTrigger.evaluate()
+		popDeindexedUnit()
 		this._unit.setUserData(0)
 
 // Auto instanciation/destruction
