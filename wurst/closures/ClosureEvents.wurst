@@ -277,8 +277,8 @@ public function unregisterEvents(int id)
 
 init
 	// Un/Register Events when unit enters map
-	onUnitIndex(() -> registerEventsForUnit(getIndexedUnit()))
-	onUnitDeindex(() -> unregisterEventsForUnit(getDeindexedUnit()))
+	onUnitIndex(() -> registerEventsForUnit(getIndexingUnit()))
+	onUnitDeindex(() -> unregisterEventsForUnit(getIndexingUnit()))
 
 	nullTimer() ->
 		unitTrig.addAction(() -> EventListener.generalEventCallback())
