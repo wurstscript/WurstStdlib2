@@ -91,12 +91,15 @@ public module TimedLoop
 			conditionCount--
 		return false
 
+	/* Just stops the periodic update of this object. */
 	function stopTimedLoop()
 		mode = Mode.STOPPED
 
+	/* Stops the periodic update and destroys the object. */
 	function stopTimedLoopAndDestroy()
 		mode = Mode.STOPPED_FOR_GOOD
 
+	/* Starts the periodic updates for this object */
 	function startTimedLoop()
 		instances[instanceCount] = this
 		instanceCount++
