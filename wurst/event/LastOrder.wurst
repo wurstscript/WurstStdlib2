@@ -2,10 +2,27 @@ package LastOrder
 import RegisterEvents
 import UnitIndexer
 import EventHelper
+/**
+	If you import this package in any of your packages, each order
+	any unit makes will be recorded and up to ORDERS_TO_HOLD will be saved.
+	You can access these old orders and reissue them using .getLastOrder()
+*/
 
 /** How many past orders to hold.
 	Should be at least 2 */
 @configurable constant ORDERS_TO_HOLD = 3
+
+/** Clears all recorded orders for this unit */
+public function unit.clearLastOrders()
+	let index = this.getIndex()
+	if lastOrder[index] != null
+		destroy lastOrder[index]
+		lastOrder[index] = null
+
+/** Returns the lasz recorded order for this unit.
+	To access further back orders, use .prev */
+public function unit.getLastOrder() returns Order
+	return lastOrder[this.getIndex()]
 
 public enum OrderType
 	TARGET
@@ -19,14 +36,14 @@ public class Order
 
 	OrderType orderType
 	unit orderedUnit = null
-	int orderId = -1
+	var orderId = -1
 
 	vec2 startPosition
 
 	widget target
 	vec2 targetPosition
 
-	boolean finished = false
+	var finished = false
 
 	construct(unit ordered, int orderId, OrderType ordtype, widget target, vec2 targetPos)
 		this.orderedUnit   = ordered
@@ -60,6 +77,15 @@ public class Order
 			destroy prev
 			prev = null
 
+	/** Reissues this order on the unit that originally received the order.
+		If you want the reissued order to be recorded as well,
+		in a response to another order, i.e. chained, you need to wrap
+		it inside using a nulltimer:
+
+			let ordr = caster.getLastOrder().prev
+			nullTimer() ->
+				ordr.issue()
+	*/
 	function issue() returns boolean
 		if orderedUnit.getTypeId() != 0 and not orderedUnit.isType(UNIT_TYPE_DEAD) and not finished
 			switch orderType
@@ -76,15 +102,6 @@ public class Order
 					return orderedUnit.issueImmediateOrderById(orderId)
 		return false
 
-
-public function unit.clearLastOrders()
-	let index = this.getIndex()
-	if lastOrder[index] != null
-		destroy lastOrder[index]
-		lastOrder[index] = null
-
-public function unit.getLastOrder() returns Order
-	return lastOrder[this.getIndex()]
 
 function badOrderList(int id) returns boolean
 	return (id==852055 or id==852056 or id==852064 or id==852065 or id==852067 or
