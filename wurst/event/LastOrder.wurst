@@ -1,12 +1,13 @@
-package LastOrder
-import RegisterEvents
-import UnitIndexer
-import EventHelper
 /**
 	If you import this package in any of your packages, each order
 	any unit makes will be recorded and up to ORDERS_TO_HOLD will be saved.
 	You can access these old orders and reissue them using .getLastOrder()
 */
+package LastOrder
+import RegisterEvents
+import UnitIndexer
+import EventHelper
+
 
 /** How many past orders to hold.
 	Should be at least 2 */
