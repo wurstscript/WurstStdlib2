@@ -160,15 +160,16 @@ public abstract class CallbackCounted
 		return count
 
 	function stop()
-		count = 1
+		count = 0
 
 	private static function staticCallback()
 		(GetExpiredTimer().getData() castTo thistype).callAndCount()
 
 	private function callAndCount()
-		call(this)
-		count--
-		if count <= 0
+		if count > 0
+			call(this)
+			count--
+		else
 			destroy this
 
 	ondestroy
