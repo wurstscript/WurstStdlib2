@@ -153,11 +153,14 @@ public abstract class CallbackCounted
 			..setData(this castTo int)
 			..startPeriodic(time, function staticCallback)
 
+	function isLast() returns boolean
+		return count == 1
+
 	function getCount() returns int
 		return count
 
 	function stop()
-		count = 0
+		count = 1
 
 	private static function staticCallback()
 		(GetExpiredTimer().getData() castTo thistype).callAndCount()
