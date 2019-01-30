@@ -12,7 +12,10 @@ import MapBounds
 import ClosureTimers
 
 /* 	Provides event API for units entering and leaving the map.
-	The event will also fire for preplaced units on the map. */
+	The event will also fire for preplaced units on the map.
+
+	NOTE: Any move applied to a unit as response to an enter event
+		will fire the enter event again. */
 
 let eventTrigger = CreateTrigger()
 let preplacedUnits = CreateGroup()
