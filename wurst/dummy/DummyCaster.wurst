@@ -29,9 +29,15 @@ public class DummyCaster
 	private var delay = 5.0
 	private var castCount = 0
 	private var origin = ZERO2
-	private var owner = DUMMY_PLAYER
+    private var owner = DUMMY_PLAYER
+    private unit dummy = null
 
 	construct()
+
+	/** Returns the DummyCaster unit
+	*/
+    function getDummy() returns unit
+        return this.dummy
 
 	function origin(vec2 pos)
 		this.origin = pos
@@ -43,30 +49,30 @@ public class DummyCaster
 	/** Delay after which the dummy is recycled. Increase this if your spell is longer.
 		Default 5 seconds. */
 	function delay(real delay)
-		this.delay = delay
+        this.delay = delay
 
 	function castImmediate(int abilityId, int lvl, int orderId) returns boolean
-		let dummy = prepare(abilityId, lvl)
+		this.dummy = prepare(abilityId, lvl)
 		let success = dummy.issueImmediateOrderById(orderId)
 		finish(dummy, abilityId)
 		return success
 
 	function castTarget(int abilityId, int lvl, int orderId, widget target) returns boolean
-		let dummy = prepare(abilityId, lvl)
+		this.dummy = prepare(abilityId, lvl)
 		dummy.setFacing(dummy.getPos().angleTo(target.getPos()))
 		let success = dummy.issueTargetOrderById(orderId, target)
 		finish(dummy, abilityId)
 		return success
 
 	function castPoint(int abilityId, int lvl, int orderId, vec2 targetPos) returns boolean
-		let dummy = prepare(abilityId, lvl)
+		this.dummy = prepare(abilityId, lvl)
 		dummy.setFacing(dummy.getPos().angleTo(targetPos))
 		let success = dummy.issuePointOrderById(orderId, targetPos)
 		finish(dummy, abilityId)
 		return success
 
 	private function prepare(int id, int lvl) returns unit
-		let dummy = DummyRecycler.get(origin, angle(0))
+		this.dummy = DummyRecycler.get(origin, angle(0))
 		if origin.inBounds()
 			dummy.setXY(origin)
 		dummy..addAbility(id)..setMana(1000000)
@@ -83,4 +89,3 @@ public class DummyCaster
 			castCount--
 			if castCount == 0
 				destroy this
-
