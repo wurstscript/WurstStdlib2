@@ -45,7 +45,7 @@ public class DummyCaster
 	function delay(real delay)
         this.delay = delay
 
-	/** Returns the casting dummy unit if cast order was succesful, or null if cast failed.*/
+	/** Returns the casting dummy unit if the cast order was successful, or null if cast failed.*/
 	function castImmediate(int abilityId, int lvl, int orderId) returns unit
 		var dummy = prepare(abilityId, lvl)
 		let success = dummy.issueImmediateOrderById(orderId)
@@ -54,7 +54,7 @@ public class DummyCaster
 			dummy = null
 		return dummy
 
-	/** Returns the casting dummy unit if cast order was succesful, or null if cast failed. */
+	/** Returns the casting dummy unit if the cast order was successful, or null if cast failed. */
 	function castTarget(int abilityId, int lvl, int orderId, widget target) returns unit
 		var dummy = prepare(abilityId, lvl)
 		dummy.setFacing(dummy.getPos().angleTo(target.getPos()))
@@ -64,7 +64,7 @@ public class DummyCaster
 			dummy = null
 		return dummy
 
-	/** Returns the casting dummy unit if cast order was succesful, or null if cast failed. */
+	/** Returns the casting dummy unit if the cast order was successful, or null if cast failed. */
 	function castPoint(int abilityId, int lvl, int orderId, vec2 targetPos) returns unit
 		var dummy = prepare(abilityId, lvl)
 		dummy.setFacing(dummy.getPos().angleTo(targetPos))
