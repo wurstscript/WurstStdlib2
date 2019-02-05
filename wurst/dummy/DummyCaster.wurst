@@ -30,14 +30,8 @@ public class DummyCaster
 	private var castCount = 0
 	private var origin = ZERO2
     private var owner = DUMMY_PLAYER
-    private unit dummy = null
 
 	construct()
-
-	/** Returns the DummyCaster unit
-	*/
-    function getDummy() returns unit
-        return this.dummy
 
 	function origin(vec2 pos)
 		this.origin = pos
@@ -51,28 +45,37 @@ public class DummyCaster
 	function delay(real delay)
         this.delay = delay
 
-	function castImmediate(int abilityId, int lvl, int orderId) returns boolean
-		this.dummy = prepare(abilityId, lvl)
+	function castImmediate(int abilityId, int lvl, int orderId) returns unit
+		let dummy = prepare(abilityId, lvl)
 		let success = dummy.issueImmediateOrderById(orderId)
 		finish(dummy, abilityId)
-		return success
+		if success
+			return dummy
+		else
+			return null
 
-	function castTarget(int abilityId, int lvl, int orderId, widget target) returns boolean
-		this.dummy = prepare(abilityId, lvl)
+	function castTarget(int abilityId, int lvl, int orderId, widget target) returns unit
+		let dummy = prepare(abilityId, lvl)
 		dummy.setFacing(dummy.getPos().angleTo(target.getPos()))
 		let success = dummy.issueTargetOrderById(orderId, target)
 		finish(dummy, abilityId)
-		return success
+		if success
+			return dummy
+		else
+			return null
 
-	function castPoint(int abilityId, int lvl, int orderId, vec2 targetPos) returns boolean
-		this.dummy = prepare(abilityId, lvl)
+	function castPoint(int abilityId, int lvl, int orderId, vec2 targetPos) returns unit
+		let dummy = prepare(abilityId, lvl)
 		dummy.setFacing(dummy.getPos().angleTo(targetPos))
 		let success = dummy.issuePointOrderById(orderId, targetPos)
 		finish(dummy, abilityId)
-		return success
+		if success
+			return dummy
+		else
+			return null
 
 	private function prepare(int id, int lvl) returns unit
-		this.dummy = DummyRecycler.get(origin, angle(0))
+		let dummy = DummyRecycler.get(origin, angle(0))
 		if origin.inBounds()
 			dummy.setXY(origin)
 		dummy..addAbility(id)..setMana(1000000)
