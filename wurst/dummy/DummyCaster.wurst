@@ -46,36 +46,34 @@ public class DummyCaster
         this.delay = delay
 
 	function castImmediate(int abilityId, int lvl, int orderId) returns unit
-		let dummy = prepare(abilityId, lvl)
+		var dummy = prepare(abilityId, lvl)
 		let success = dummy.issueImmediateOrderById(orderId)
 		finish(dummy, abilityId)
-		if success
-			return dummy
-		else
-			return null
+		if not success
+			dummy = null
+		return dummy
 
 	function castTarget(int abilityId, int lvl, int orderId, widget target) returns unit
-		let dummy = prepare(abilityId, lvl)
+		var dummy = prepare(abilityId, lvl)
 		dummy.setFacing(dummy.getPos().angleTo(target.getPos()))
 		let success = dummy.issueTargetOrderById(orderId, target)
 		finish(dummy, abilityId)
-		if success
-			return dummy
-		else
-			return null
+		if not success
+			dummy = null
+		return dummy
+
 
 	function castPoint(int abilityId, int lvl, int orderId, vec2 targetPos) returns unit
-		let dummy = prepare(abilityId, lvl)
+		var dummy = prepare(abilityId, lvl)
 		dummy.setFacing(dummy.getPos().angleTo(targetPos))
 		let success = dummy.issuePointOrderById(orderId, targetPos)
 		finish(dummy, abilityId)
-		if success
-			return dummy
-		else
-			return null
+		if not success
+			dummy = null
+		return dummy
 
 	private function prepare(int id, int lvl) returns unit
-		let dummy = DummyRecycler.get(origin, angle(0))
+		var dummy = DummyRecycler.get(origin, angle(0))
 		if origin.inBounds()
 			dummy.setXY(origin)
 		dummy..addAbility(id)..setMana(1000000)
