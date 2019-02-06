@@ -75,7 +75,7 @@ public class DummyCaster
 		return dummy
 
 	private function prepare(int id, int lvl) returns unit
-		var dummy = DummyRecycler.get(origin, angle(0))
+		let dummy = DummyRecycler.get(origin, angle(0))
 		if origin.inBounds()
 			dummy.setXY(origin)
 		dummy..addAbility(id)..setMana(1000000)
