@@ -29,7 +29,7 @@ public class DummyCaster
 	private var delay = 5.0
 	private var castCount = 0
 	private var origin = ZERO2
-    private var owner = DUMMY_PLAYER
+	private var owner = DUMMY_PLAYER
 
 	construct()
 
@@ -43,7 +43,7 @@ public class DummyCaster
 	/** Delay after which the dummy is recycled. Increase this if your spell is longer.
 		Default 5 seconds. */
 	function delay(real delay)
-        this.delay = delay
+		this.delay = delay
 
 	/** Returns the casting dummy unit if the cast order was successful, or null if cast failed.*/
 	function castImmediate(int abilityId, int lvl, int orderId) returns unit
