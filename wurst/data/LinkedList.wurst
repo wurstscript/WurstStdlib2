@@ -219,10 +219,26 @@ public class LinkedList<T>
 			r = r.next
 		destroy f
 
-	/** Pseudo-randomly changes the position of each element */
+	/** Performs a Fisher–Yates shuffle on this list */
 	function shuffle()
-		for i = 0 to size
-			add(removeAt(GetRandomInt(0, size - 1)))
+		T array _a
+		let n = size()
+		var i0 = 0
+
+		let itr = iterator()
+		while itr.hasNext()
+			itr.next()
+			_a[i0] = itr.remove()
+			i0++
+
+		for i = n-1 downto 1
+			let j = GetRandomInt(0, i)
+			let tmp = _a[i]
+			_a[i] = _a[j]
+			_a[j] = tmp
+
+		for i = 0 to n-1
+			add(_a[i])
 
 	/** Adds the given element directly behind the element at the given index */
 	function addAt(T elem, int index)

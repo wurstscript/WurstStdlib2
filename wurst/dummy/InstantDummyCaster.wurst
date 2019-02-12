@@ -38,23 +38,23 @@ public class InstantDummyCaster
 
 	static function castImmediate(player owner, int abilityId, int lvl, int orderId, vec3 pos) returns boolean
 		prepare(owner, abilityId, lvl, pos)
-		boolean b = caster.issueImmediateOrderById(orderId)
+		let success = caster.issueImmediateOrderById(orderId)
 		finish(abilityId)
-		return b
+		return success
 
 	static function castTarget(player owner, int abilityId, int lvl, int orderId, widget target, vec3 casterPos) returns boolean
 		prepare(owner, abilityId, lvl, casterPos)
 		caster.setFacing(caster.getPos().angleTo(target.getPos()))
-		boolean b = caster.issueTargetOrderById(orderId, target)
+		let success = caster.issueTargetOrderById(orderId, target)
 		finish(abilityId)
-		return b
+		return success
 
 	static function castPoint(player owner, int abilityId, int lvl, int orderId, vec2 targetPos, vec3 casterPos) returns boolean
 		prepare(owner, abilityId, lvl, casterPos)
 		caster.setFacing(caster.getPos().angleTo(targetPos))
-		boolean b = caster.issuePointOrderById(orderId, targetPos)
+		let success = caster.issuePointOrderById(orderId, targetPos)
 		finish(abilityId)
-		return b
+		return success
 
 	// Use with Orders package
 	static function castTarget(player owner, int abilityId, int lvl, int orderId, widget target) returns boolean

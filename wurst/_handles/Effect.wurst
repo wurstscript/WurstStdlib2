@@ -9,10 +9,22 @@ public function effect.destr()
 	DestroyEffect(this)
 
 public function flashEffect(string path, vec3 pos)
-	addEffect(path, pos).destr()
+	flashEffect(path, pos, 1.0)
 
 public function flashEffect(string path, vec2 pos)
-	addEffect(path, pos).destr()
+	flashEffect(path, pos, 1.0, GetRandomReal(0, 359).fromDeg())
+
+public function flashEffect(string path, vec2 pos, real scale)
+	flashEffect(path, pos, scale, GetRandomReal(0, 359).fromDeg())
+
+public function flashEffect(string path, vec3 pos, real scale)
+	flashEffect(path, pos, scale, GetRandomReal(0, 359).fromDeg())
+
+public function flashEffect(string path, vec2 pos, real scale, angle roll)
+	addEffect(path, pos)..setScale(scale)..setRoll(roll)..destr()
+
+public function flashEffect(string path, vec3 pos, real scale, angle roll)
+	addEffect(path, pos)..setScale(scale)..setRoll(roll)..destr()
 
 public function flashEffect(string path, widget target, string attachPointName)
 	addEffect(path, target, attachPointName).destr()
@@ -29,9 +41,9 @@ public function flashEffect(int abilityId, effecttype effType, vec2 pos)
 
 /** Creates and immediatly destroys an effect from the data defined in the ability's field "Art - Caster/Target/Missile/Ligtning/etc." (full list in common.j).
 Works for custom abilities. */
-public function flashEffect(int abilityId, effecttype effType, widget target, string attachPointName) 
-	addEffect(abilityId, effType, target, attachPointName).destr() 
-	
+public function flashEffect(int abilityId, effecttype effType, widget target, string attachPointName)
+	addEffect(abilityId, effType, target, attachPointName).destr()
+
 public function addEffect(string path, vec2 pos) returns effect
 	return AddSpecialEffect(path, pos.x, pos.y)
 
@@ -45,7 +57,7 @@ public function addEffect(string path, widget target, string attachPointName) re
 Works for custom abilities. */
 public function addEffect(int abilityId, effecttype effType, vec2 pos) returns effect
 	return AddSpellEffectById(abilityId, effType, pos.x, pos.y)
-	
+
 /** Creates an effect from the data defined in the ability's field "Art - Caster/Target/Missile/Ligtning/etc." (full list in common.j).
 Works for custom abilities. */
 public function addEffect(int abilityId, effecttype effType, vec3 pos) returns effect

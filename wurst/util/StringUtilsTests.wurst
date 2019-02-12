@@ -34,3 +34,8 @@ import LinkedList
 @Test function testReduce()
 	"reee      duu   cee".reduce("e").reduce("u").reduce(" ").assertEquals("re du ce")
 	"redu      ce".reduce().assertEquals("redu ce")
+
+@Test function testChar()
+	char("/").toInt().assertEquals(47)
+	char("\\").toInt().assertEquals(92)
+	char("|").toInt().assertEquals(124)
