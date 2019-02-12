@@ -1,0 +1,380 @@
+package Flexboxgrid
+import LinkedList
+import HashMap
+
+public class FlexboxBuilder
+	Flexboxgrid fbg = new Flexboxgrid()
+	FlexCol fc = fbg.firstColumn
+	FlexRow fr = null
+	bool isRow = false
+
+	private function insertRow(FlexRow fr)
+		fr.parent = fc
+		fc.rows.add(fr)
+	
+	private function insertCol(FlexCol fc)
+		fc.parent = fr
+		fr.cols.add(fc)
+
+	private function insertCell(Cell c)
+		let nr = new FlexRow()
+		nr.target = c
+		if isRow
+			col()
+			insertRow(nr)
+			close()
+		else
+			insertRow(nr)
+
+	function row() returns thistype
+		isRow = true
+		fr = new FlexRow()
+		insertRow(fr)
+		return this
+
+	function col() returns thistype
+		isRow = false
+		fc = new FlexCol()
+		insertCol(fc)
+		return this
+
+	function cell(string s, real w) returns thistype
+		let c = new Cell()
+		c.value = s
+		c.width = w
+		insertCell(c)
+		return this
+
+	function cell(real w, CellUpdater cu) returns thistype
+		let c = new Cell(cu)
+		c.width = w
+		insertCell(c)
+		return this
+
+	function progressBar(CellProgressbar progressBar) returns thistype
+		insertCell(progressBar)
+		return this
+
+	function close() returns thistype
+		if isRow
+			fr = fr.parent.parent
+		else
+			fc = fc.parent.parent
+		isRow = not isRow
+		return this
+
+	function finish() returns Flexboxgrid
+		let f = fbg
+		destroy this
+		return f
+
+public class Flexboxgrid
+	multiboard mb
+	private real width = 0.3
+	let firstColumn = new FlexCol()
+	let rowItemCount = new HashMap<int,int>
+	
+	protected function getRowNextItem(int row) returns multiboarditem
+		let count = rowItemCount.get(row)
+		rowItemCount.put(row, count + 1)
+		if count >= mb.getColumnCount()
+			mb.setColumnCount(count + 1)
+		return mb.getItem(row, count)
+
+	protected function reserveRowNextItems(int row, int itemCount) returns int
+		let count = rowItemCount.get(row)
+		rowItemCount.put(row, count + itemCount)
+		if count + itemCount > mb.getColumnCount()
+			mb.setColumnCount(count + itemCount)
+		return count
+
+	protected function getItem(int row, int count) returns multiboarditem
+		return mb.getItem(row, count)
+
+	function setWidth(real width)
+		if width > 0.001
+			this.width = width
+
+	function initialize()
+		mb = CreateMultiboard()
+		..display(false)
+
+	/** This function starts a recursive multiboard update */
+	function build()
+		rowItemCount.flush()
+		firstColumn.calculate()
+		mb
+		..setRowCount(firstColumn.height)
+		..setItemsStyle(true, false)
+		..setItemsWidth(0.01)
+		..setItemsValue("!error")
+		..setItemsValueColor(255, 0, 0, 255)
+		firstColumn.build(this, 0, firstColumn.height, width / firstColumn.width)
+
+		for y = 0 to firstColumn.height
+			for x = rowItemCount.get(y) to mb.getColumnCount() - 1
+				mb.getItem(y, x)
+				..setStyle(false, false)
+				..setWidth(0.0001)
+				..setValue("!")
+				.release()
+		mb..display(true)
+
+	function dump()
+		Log.info("fbg: " + firstColumn.width.toString() + "w " + firstColumn.height.toString() + "h")
+		firstColumn.dump()
+
+	function update()
+		firstColumn.update()
+
+	ondestroy
+		destroy rowItemCount
+
+class FlexRow
+	let cols = new LinkedList<FlexCol>
+	int height
+	real width
+	FlexCol parent = null
+	Cell target
+
+	function isContainer() returns bool
+		return target == null
+
+	/** Recursively calculates size of the element */
+	function calculate()
+		if isContainer()
+			height = 0
+			width = 0
+			for col in cols
+				col.calculate()
+				if col.height > height
+					height = col.height
+				width += col.width
+		else
+			height = 1
+			width = target.width
+
+	function build(Flexboxgrid fbg, int y, real w, real w2r)
+		let nw2r = w2r * w / width
+		if isContainer()
+			for col in cols
+				col.build(fbg, y, height, nw2r)
+		else
+			// pre: width <= w
+			target.build(fbg, y, nw2r * w)
+			// post: w2r' >= w2r
+			// post: w2r' stretches the object so that it will fill the width.
+
+	function dump()
+		if isContainer()
+			Log.info("Row: " + width.toString() + "w " + height.toString() + "h " + cols.size().toString() + "e.")
+			for col in cols
+				col.dump()
+		else
+			target.dump()
+
+	function update()
+		if isContainer()
+			for col in cols
+				col.update()
+		else
+			target.update()
+
+	ondestroy
+		for col in cols
+			destroy col
+		destroy cols
+
+class FlexCol
+	let rows = new LinkedList<FlexRow>
+	int height
+	real width
+	FlexRow parent = null
+	/** Recursively calculates size of the element */
+	function calculate()
+		height = 0
+		width = 0
+		for row in rows
+			row.calculate()
+			if row.width > width
+				width = row.width
+			height += row.height
+
+	function build(Flexboxgrid fbg, int y, int h, real w2r)
+		int py = y
+		for row in rows
+			row.build(fbg, py, width, w2r)
+			py += row.height
+
+		while py < y + h
+			fbg.getRowNextItem(py)
+			..setStyle(true, false)
+			..setWidth(width * w2r - 0.001)
+			..setValue("")
+			// ..setValue((width * w2r).toString())
+			// ..setValueColor(255,0,0,255)
+			.release()
+			py++
+
+	function dump()
+		Log.info("Col: " + width.toString() + "w " + height.toString() + "h " + rows.size().toString() + "e.")
+		for row in rows
+			row.dump()
+
+	function update()
+		for row in rows
+			row.update()
+
+	ondestroy
+		for row in rows
+			destroy row
+		destroy rows
+
+
+public interface CellUpdater
+	/** Returns whether the cell is needed to be updated */
+	function update(Cell c) returns bool
+
+public enum CellMode
+	None
+	Icon
+	Value
+	Both
+
+public class Cell
+	string value = ""
+	string icon = ""
+	colorA clr = COLOR_WHITE
+	CellMode mode = CellMode.Value
+	CellUpdater updater = null
+	protected real width = 1
+
+	protected multiboarditem i = null
+
+	construct()
+
+	construct(CellUpdater updater)
+		this.updater = updater
+
+	/** To update the change, a rebuild is required. */
+	function setWidth(real width)
+		this.width = width
+
+	protected function dump()
+		Log.info("Cell: " + width.toString() + "w '" + value + "'")
+
+	protected function build(Flexboxgrid fbg, int row, real w)
+		if not i != null
+			i.release()
+		
+		i = fbg.getRowNextItem(row)..setWidth(w - 0.001)
+		// value = w.toString()
+		update()
+
+	protected function update()
+		if updater != null
+			if not updater.update(this)
+				return
+		switch mode
+			case None
+				i..setStyle(false, false)
+			case Icon
+				i..setStyle(false, true)
+				..setIcon(icon)
+			case Value
+				i..setStyle(true, false)
+				..setValue(value)
+				..setValueColor(clr)
+			case Both
+				i..setStyle(true, true)
+				..setValue(value)
+				..setIcon(icon)
+				..setValueColor(clr)
+
+public interface ProgressBarUpdater
+	/** Returns whether the cell is needed to be updated */
+	function update(CellProgressbar c) returns bool
+
+public class CellProgressbar extends Cell
+	int bars
+	real progress
+
+	colorA bg = COLOR_WHITE
+	colorA bar1 = COLOR_GOLD
+	colorA bar2 = COLOR_GOLD
+	string barChar = "|"
+
+	string iconNo
+	string iconYes
+	bool iconic = false
+
+	protected Flexboxgrid fbg
+	protected int row
+	protected int s
+
+	construct(int bars, real width)
+		this.bars = bars
+		this.width = width
+
+	ProgressBarUpdater barupdater = null
+
+	function setProgressUpdater(ProgressBarUpdater pbu)
+		barupdater = pbu
+
+	function setupTextBar(string barChar, colorA background, colorA gradient1, colorA gradient2)
+		bg = background
+		this.barChar = barChar
+		bar1 = gradient1
+		bar2 = gradient2
+		iconic = false
+
+	function setupTextBar(string barChar, colorA background, colorA barColor)
+		bg = background
+		this.barChar = barChar
+		bar1 = barColor
+		bar2 = barColor
+		iconic = false
+
+	function setupIconBar(string iconNo, string iconYes)
+		this.iconNo = iconNo
+		this.iconYes = iconYes
+		iconic = true
+
+	protected override function dump()
+		Log.info("Bar: " + width.toString() + "w on "+bars.toString() +" bars '" + value + "'")
+
+	protected override function build(Flexboxgrid fbg, int row, real w)
+		this.row = row
+		this.fbg = fbg
+		s = fbg.reserveRowNextItems(row, bars)
+		
+		for i = 0 to bars - 1
+			let ite = fbg.getItem(row, s + i)
+			if iconic
+				ite..setStyle(false, true)
+				..setIcon(iconNo)
+			else
+				ite..setStyle(true, false)
+				..setValue(barChar)
+				..setValueColor(bar1.mix(bar2, i.toReal() / (bars - 1)))
+			ite
+			..setWidth(w / bars - 0.001)
+			.release()
+
+	protected override function update()
+		if barupdater != null
+			if not barupdater.update(this)
+				return
+		for i = 0 to bars - 1
+			let ite = fbg.getItem(row, s + i)
+			real bp = i / (bars - 1)
+			if iconic
+				ite..setStyle(false, true)
+				..setIcon(bp > progress ? iconNo : iconYes)
+			else
+				ite..setStyle(true, false)
+				..setValue(barChar)
+				..setValueColor(bp > progress ? bg : bar1.mix(bar2, i.toReal() / (bars - 1)))
+			ite.release()
+			
+		
