@@ -3,10 +3,10 @@ import LinkedList
 import HashMap
 
 public class FlexboxBuilder
-	Flexboxgrid fbg = new Flexboxgrid()
-	FlexCol fc = fbg.firstColumn
+	let fbg = new Flexboxgrid()
+	var fc = fbg.firstColumn
 	FlexRow fr = null
-	bool isRow = false
+	var isRow = false
 
 	private function insertRow(FlexRow fr)
 		fr.parent = fc
@@ -60,7 +60,7 @@ public class FlexboxBuilder
 		return this
 
 	function finish() returns Flexboxgrid
-		let f = fbg
+		let f = fbg..initialize()..build()
 		destroy this
 		return f
 
@@ -91,7 +91,7 @@ public class Flexboxgrid
 		if width > 0.001
 			this.width = width
 
-	function initialize()
+	protected function initialize()
 		mb = CreateMultiboard()
 		..display(false)
 
@@ -99,8 +99,7 @@ public class Flexboxgrid
 	function build()
 		rowItemCount.flush()
 		firstColumn.calculate()
-		mb
-		..setRowCount(firstColumn.height)
+		mb..setRowCount(firstColumn.height)
 		..setItemsStyle(true, false)
 		..setItemsWidth(0.01)
 		..setItemsValue("!error")
@@ -112,7 +111,7 @@ public class Flexboxgrid
 				mb.getItem(y, x)
 				..setStyle(false, false)
 				..setWidth(0.0001)
-				..setValue("!")
+				..setValue("")
 				.release()
 		mb..display(true)
 
@@ -127,11 +126,12 @@ public class Flexboxgrid
 		destroy rowItemCount
 
 class FlexRow
-	let cols = new LinkedList<FlexCol>
-	int height
-	real width
 	FlexCol parent = null
-	Cell target
+	let cols = new LinkedList<FlexCol>
+	var height = 0
+	var width = 0.0
+
+	Cell target = null
 
 	function isContainer() returns bool
 		return target == null
@@ -197,7 +197,7 @@ class FlexCol
 			height += row.height
 
 	function build(Flexboxgrid fbg, int y, int h, real w2r)
-		int py = y
+		var py = y
 		for row in rows
 			row.build(fbg, py, width, w2r)
 			py += row.height
@@ -207,8 +207,6 @@ class FlexCol
 			..setStyle(true, false)
 			..setWidth(width * w2r - 0.001)
 			..setValue("")
-			// ..setValue((width * w2r).toString())
-			// ..setValueColor(255,0,0,255)
 			.release()
 			py++
 
@@ -232,19 +230,20 @@ public interface CellUpdater
 	function update(Cell c) returns bool
 
 public enum CellMode
-	None
-	Icon
-	Value
-	Both
+	NONE
+	ICON
+	VALUE
+	BOTH
 
 public class Cell
-	string value = ""
-	string icon = ""
-	colorA clr = COLOR_WHITE
-	CellMode mode = CellMode.Value
+	var value = ""
+	var icon = ""
+	var clr = COLOR_WHITE
+	var mode = CellMode.VALUE
+	
 	CellUpdater updater = null
-	protected real width = 1
 
+	protected var width = 1.0
 	protected multiboarditem i = null
 
 	construct()
@@ -264,7 +263,6 @@ public class Cell
 			i.release()
 		
 		i = fbg.getRowNextItem(row)..setWidth(w - 0.001)
-		// value = w.toString()
 		update()
 
 	protected function update()
@@ -272,16 +270,16 @@ public class Cell
 			if not updater.update(this)
 				return
 		switch mode
-			case None
+			case NONE
 				i..setStyle(false, false)
-			case Icon
+			case ICON
 				i..setStyle(false, true)
 				..setIcon(icon)
-			case Value
+			case VALUE
 				i..setStyle(true, false)
 				..setValue(value)
 				..setValueColor(clr)
-			case Both
+			case BOTH
 				i..setStyle(true, true)
 				..setValue(value)
 				..setIcon(icon)
