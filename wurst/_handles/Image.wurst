@@ -11,6 +11,12 @@ public enum Layer
 	L2
 	L4
 
+/** ImageLayer influences the order in which the images are drawn above one another:
+L1 ("Selection") is drawn above all other ImageLayers.
+L2 ("Indicator") is drawn above ImageLayer 4, but below 1 and 3.
+L3 ("Occlusion Mask") is drawn above ImageLayer 4 and 2 and below ImageLayer 1.
+L4 ("Ubersplat") is drawn below every other layer. Images of this layer are additionally affected by time of day and the fog of war (only for tinting).
+Multiple images with the same layer are drawn in their order of creation - first image below all others, last image above all others.*/
 public enum ImageLayer
 	L1
 	L3
@@ -46,7 +52,7 @@ public function image.showForPlayer(player p)
 /** Hides the image for a specific player */
 public function image.hideForPlayer(player p)
 	if localPlayer == p
-		SetImageRenderAlways(this, true)
+		SetImageRenderAlways(this, false)
 
 /** Set the image 2D position */
 public function image.setPos(vec2 pos)
@@ -60,6 +66,10 @@ public function image.setPos(vec3 pos)
 /** Set the image height */
 public function image.setHeight(real z)
 	SetImageConstantHeight(this, true, z)
+
+/** Wrap the image on the terrain */
+public function image.wrap()
+	SetImageConstantHeight(this, false, 0)
 
 /** Set the image color by using the colorA tuple */
 public function image.setColor(colorA col)
