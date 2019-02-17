@@ -18,6 +18,15 @@ public interface TooltipGenerator
 	function addProperty(string title, StringLevelClosure lc)
 	function applyToDef(AbilityDefinition def)
 
+/** Makes an ability able to be cast by a dummy */
+public function AbilityDefinition.setDummyAbility() returns AbilityDefinition
+	this..setHeroAbility(false)
+	..setManaCost(1, 0)
+	..setCooldown(1, 0)
+	..setCastRange(1, 99999)
+	..setCheckDependencies(false)
+	return this
+
 public class AbilityDefinition
 	protected ObjectDefinition def
 	protected int lvls = 1
