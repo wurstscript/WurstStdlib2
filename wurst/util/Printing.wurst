@@ -92,6 +92,7 @@ public function print(string msg, real duration)
 @configurable public function printTimedToPlayer(string msg, real duration, player p)
 	DisplayTimedTextToPlayer(p, 0., 0., duration, msg)
 
+/** Prints a timed message that is shown to the player for the given duration */
 public function player.print(string msg, real duration)
 	printTimedToPlayer(msg, duration, this)
 
