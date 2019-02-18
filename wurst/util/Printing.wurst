@@ -12,7 +12,7 @@ public enum Loglevel
 	WARNING
 	ERROR
 
-public function Loglevel.getTag() returns string
+@configurable public function Loglevel.getTag() returns string
 	switch this
 		case TRACE
 			return "|cffADADADtrace|r"
@@ -52,42 +52,54 @@ public class Log
 		DEBUG_LEVEL = lvl
 
 /** Prints a simple message. */
-public function print(string msg)
+@configurable public function print(string msg)
 	DisplayTimedTextToPlayer(localPlayer, 0., 0., DEBUG_MSG_DURATION, msg)
 
 /** Prints a simple message. */
-public function print(int msg)
+@configurable public function print(int msg)
 	// Using JASS' original converter function
 	// in order not to mess up the structure of wurst's basic code
 	print(I2S(msg))
 
  /** Prints a simple message. */
-public function print(real msg)
+@configurable public function print(real msg)
 	print(R2S(msg))
 
  /** Prints a simple message. */
-public function print(bool msg)
+@configurable public function print(bool msg)
 	var msgString = "False"
 	if msg
 		msgString = "True"
 	print(msgString)
 
 /** Prints a special motification-message */
-public function printLog(Loglevel loglvl, string msg)
+@configurable public function printLog(Loglevel loglvl, string msg)
 	printLog(localPlayer, loglvl, msg)
 
-public function printLog(player showTo, Loglevel loglvl, string msg)
+@configurable public function printLog(player showTo, Loglevel loglvl, string msg)
 	if (DEBUG_LEVEL castTo int) <= (loglvl castTo int)
 		let compositeMsg = loglvl.getTag() + " - " + msg
 		DisplayTimedTextToPlayer(showTo, 0., 0., DEBUG_MSG_DURATION, compositeMsg)
 
 /** Prints a simple message that is shown for the given duration */
-public function printTimed(string msg, real duration)
+@configurable public function printTimed(string msg, real duration)
 	DisplayTimedTextToPlayer(localPlayer, 0., 0., duration, msg)
 
+/** Prints a simple message that is shown for the given duration */
+public function print(string msg, real duration)
+	printTimed(msg, duration)
+
 /** Prints a simple message that is shown to the player for the given duration */
-public function printTimedToPlayer(string msg, real duration, player p)
+@configurable public function printTimedToPlayer(string msg, real duration, player p)
 	DisplayTimedTextToPlayer(p, 0., 0., duration, msg)
+
+/** Prints a timed message that is shown to the player for the given duration */
+public function player.print(string msg, real duration)
+	printTimedToPlayer(msg, duration, this)
+
+/** Prints a simple message that is shown to the player */
+public function player.print(string msg)
+	printTimedToPlayer(msg, DEBUG_MSG_DURATION, this)
 
 /** Prints a simple message after clearing all messages that is shown to the player for the given duration */
 public function printTimedToPlayerClear(string msg, real duration, player p)
