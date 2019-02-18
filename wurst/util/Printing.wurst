@@ -85,6 +85,7 @@ public class Log
 @configurable public function printTimed(string msg, real duration)
 	DisplayTimedTextToPlayer(localPlayer, 0., 0., duration, msg)
 
+/** Prints a simple message that is shown for the given duration */
 public function print(string msg, real duration)
 	printTimed(msg, duration)
 
@@ -95,6 +96,10 @@ public function print(string msg, real duration)
 /** Prints a timed message that is shown to the player for the given duration */
 public function player.print(string msg, real duration)
 	printTimedToPlayer(msg, duration, this)
+
+/** Prints a simple message that is shown to the player */
+public function player.print(string msg)
+	printTimedToPlayer(msg, DEBUG_MSG_DURATION, this)
 
 /** Prints a simple message after clearing all messages that is shown to the player for the given duration */
 public function printTimedToPlayerClear(string msg, real duration, player p)
