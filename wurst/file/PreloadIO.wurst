@@ -12,13 +12,16 @@
 	you will need to prepend "Logs\\" to your paths.
 **/
 package PreloadIO
+
 import ErrorHandling
 import StringUtils
+import AbilityObjEditing
+import ObjectIds
 
 /** Maximum amount of packets per single readable file. */
-public constant PACKETS_PER_FILE = bj_MAX_PLAYER_SLOTS
+@configurable public constant PACKETS_PER_FILE = 50
 /** Maximum payload size of a single readable packet. */
-public constant MAX_PACKET_LENGTH = 223
+public constant MAX_PACKET_LENGTH 			   = 200
 
 /**
 	Low-level static writer wrapper around the Preload API
@@ -33,12 +36,25 @@ public constant MAX_PACKET_LENGTH = 223
 	If you are creating a file that is nested deeper than one folder, e.g.
 	"a/b/c", make sure to use IOWriter.createFolder("a/b/c") before that.
 **/
-public class IOWriter
-	private static constant DATA_PADDING_1 = "\")\r\n\tcall SetPlayerName(Player("
-	private static constant DATA_PADDING_2 = "), \""
-	private static constant DATA_PADDING_3 = "\")\r\n//"
-	private static constant DATA_FOOTER = "\" )\r\nendfunction\r\nfunction AAA takes nothing returns nothing \r\n//"
 
+let preloadAbilityId = 'Azzz'
+@compiletime function createAbility()
+	let a = new AbilityDefinitionAuraSlow(preloadAbilityId)
+	..setName("PreloadAbility")
+	..presetIcon("")
+	..setArtTarget("")
+	..setTargetAttachmentPoint("")
+	..setEditorSuffix("wurst")
+	..setLevels(PACKETS_PER_FILE)
+
+	for i = 1 to PACKETS_PER_FILE
+		a.setTooltipNormal(i, "PreloadAbility") 
+
+public class IOWriter
+	private static constant DATA_PADDING_1 = "\")\r\n\tcall BlzSetAbilityTooltip('" + preloadAbilityId.toRawCode() + "',\""
+	private static constant DATA_PADDING_2 = "\","
+	private static constant DATA_PADDING_3 = ")\r\n//"
+	private static constant DATA_FOOTER    = "\")\r\nendfunction\r\nfunction AAA takes nothing returns nothing\r\n//"
 	private static var packetNumber = 0
 
 	/** This function prepares a new file for writing. */
@@ -59,7 +75,7 @@ public class IOWriter
 		if packet.length() > MAX_PACKET_LENGTH
 			error("IOWriter: tried to write more than max packet length")
 
-		write(DATA_PADDING_1 + packetNumber.toString() + DATA_PADDING_2 + packet + DATA_PADDING_3)
+		write(DATA_PADDING_1 + packet + DATA_PADDING_2 + (packetNumber+1).toString() + DATA_PADDING_3)
 		packetNumber++
 
 	/** Flushes a file and all written content to disk under the specified path. */
@@ -96,20 +112,20 @@ public class IOWriter
 	up to MAX_PACKET_LENGTH characters per packet.
 **/
 public class IOReader
-	private static string array playerNames
+	private static string array originData
 	private static string array packets
 
 	private static var packetNumber = 0
 	private static var packetCount = 0
 
-	private static function saveNames()
-		for i = 0 to PACKETS_PER_FILE - 1
-			playerNames[i] = players[i].getName()
-			packets[i] = null
+	private static function saveOriginData()
+		for i = 1 to PACKETS_PER_FILE
+			originData[i-1] = BlzGetAbilityTooltip(preloadAbilityId, i)
+			packets[i-1] = null
 
-	private static function restoreNames()
-		for i = 0 to PACKETS_PER_FILE - 1
-			players[i].setName(playerNames[i])
+	private static function restoreOriginData()
+		for i = 1 to PACKETS_PER_FILE
+			BlzSetAbilityTooltip(preloadAbilityId, originData[i-1], i)
 
 	/**
 		Loads the content of the specified file into IOReader's buffer,
@@ -118,17 +134,18 @@ public class IOReader
 	static function load(string path)
 		packetNumber = 0
 		packetCount = 0
-		saveNames()
+		saveOriginData()
 		Preloader(path)
 
-		for i = 0 to PACKETS_PER_FILE - 1
-			if playerNames[i] != players[i].getName()
-				packets[i] = players[i].getName()
+		for i = 1 to PACKETS_PER_FILE
+			let output = BlzGetAbilityTooltip(preloadAbilityId, i)
+			if originData[i-1] != output
+				packets[i-1] = output
 				packetCount++
 			else
 				break
 
-		restoreNames()
+		restoreOriginData()
 
 	/** Returns the specified packet from the current loaded file. */
 	static function getPacket(int i) returns string
