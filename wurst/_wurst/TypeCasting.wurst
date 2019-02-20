@@ -20,9 +20,15 @@ public function realFromIndex(int index) returns real
 	return (index / R2I_PRECISION)
 
 public function stringToIndex(string s) returns int
-	let hash = s.getHash()
-	if not typecastdata.hasString(hash)
-		typecastdata.saveString(hash, s)
+	var hash = s.getHash()
+	while true
+		if typecastdata.hasString(hash)
+			if typecastdata.loadString(hash) == s
+				break
+		else
+			typecastdata.saveString(hash, s)
+			break
+		hash++
 	return hash
 
 public function stringFromIndex(int index) returns string
