@@ -255,6 +255,7 @@ public class AbilityDefinition
 	function setTooltipLearnExtended(string value)
 		def.setLvlDataString("arut", 0, 0, value)
 
+	@Deprecated("Use setTooltipLearnExtended instead. Warcraft only has 1 learn tooltip and expects you to reference field data using <AHad,DataA1,.> e.g.")
 	function presetTooltipLearnExtended(StringLevelClosure lc)
 		def.setLevelsDataString("arut", lvls, 0, lc)
 		addTooltipProperty("TooltipLearnExtended", lc)
