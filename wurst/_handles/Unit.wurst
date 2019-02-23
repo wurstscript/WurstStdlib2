@@ -259,10 +259,6 @@ public function unit.isInventoryFull() returns boolean
 public function unit.isAlive() returns boolean
 	return UnitAlive(this)
 
-/** Checks if the unit is alive by testing current HP > .405 */
-public function unit.isAliveTrick() returns boolean
-	return this.getHP() > .405
-
 public function unit.issueImmediateOrder(string order) returns boolean
 	return IssueImmediateOrder(this, order)
 
