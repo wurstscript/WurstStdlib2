@@ -113,10 +113,10 @@ public function unit.getSkillPoints() returns int
 public function unit.selectSkill(int abilcode)
 	SelectHeroSkill(this, abilcode)
 
-public function unit.damageTarget(unit target, real amount)
+public function unit.damageTarget(widget target, real amount)
 	UnitDamageTarget(this, target, amount, false, false, ATTACK_TYPE_CHAOS, DAMAGE_TYPE_UNIVERSAL, WEAPON_TYPE_WHOKNOWS)
 
-public function unit.damageTarget(unit target, real amount, attacktype attacktyp)
+public function unit.damageTarget(widget target, real amount, attacktype attacktyp)
 	UnitDamageTarget(this, target, amount, false, false, attacktyp, DAMAGE_TYPE_UNIVERSAL, WEAPON_TYPE_WHOKNOWS)
 
 /** Kills a unit by blowing it up */
