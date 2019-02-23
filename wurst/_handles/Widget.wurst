@@ -19,3 +19,7 @@ public function widget.getY() returns real
 
 public function widget.addEffect(string modelName, string attachment) returns effect
 	return AddSpecialEffectTarget(modelName, this, attachment)
+
+/** Checks if the widget is alive by testing current life > .405 */
+function widget.isAliveTrick() returns bool
+	return .405 < this.getLife()
