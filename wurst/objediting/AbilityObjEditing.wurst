@@ -10175,7 +10175,7 @@ public class AbilityDefinitionPoisonAttack extends AbilityDefinition
 		else if flag
 			stackingTypesSet = stackingTypesSet.add(pow)
 
-		presetStackingTypes(lvl -> optionSet.val)
+		presetStackingTypes(lvl -> stackingTypesSet.val)
 		
 	function hasStackingType(StackingType stackingType) returns boolean
 		return stackingTypesSet.contains(stackingType castTo int)
