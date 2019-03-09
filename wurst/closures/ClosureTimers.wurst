@@ -145,9 +145,9 @@ public abstract class CallbackCounted
 	private var count = 0
 	private timer t
 
-	protected protected abstract function call(thistype cb)
+	protected abstract function call(thistype cb)
 
-	function start(timer whichTimer, real time, int callAmount)
+	protected function start(timer whichTimer, real time, int callAmount)
 		count = callAmount
 		t = whichTimer
 			..setData(this castTo int)
