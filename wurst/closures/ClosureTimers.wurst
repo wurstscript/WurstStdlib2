@@ -108,7 +108,7 @@ public abstract class CallbackSingle
 	private timer t
 	abstract function call()
 
-	function start(timer whichTimer, real time)
+	protected function start(timer whichTimer, real time)
 		t = whichTimer
 			..setData(this castTo int)
 			..start(time, () -> staticCallback())
@@ -129,7 +129,7 @@ public abstract class CallbackPeriodic
 
 	protected abstract function call(thistype cb)
 
-	function start(timer whichTimer, real time)
+	protected function start(timer whichTimer, real time)
 		t = whichTimer
 			..setData(this castTo int)
 			..startPeriodic(time, function staticCallback)
@@ -147,7 +147,7 @@ public abstract class CallbackCounted
 
 	protected abstract function call(thistype cb)
 
-	function start(timer whichTimer, real time, int callAmount)
+	protected function start(timer whichTimer, real time, int callAmount)
 		count = callAmount
 		t = whichTimer
 			..setData(this castTo int)
