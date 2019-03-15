@@ -273,7 +273,8 @@ public function unit.isInventoryFull() returns boolean
 public function unit.isAlive() returns boolean
 	return UnitAlive(this)
 
-/** Checks whether a unit is within a certain distance of a point **/
+/** Checks whether a unit is within range of a point.
+	Takes into account the units collision size **/
 public function unit.isInRange(vec2 pos, real distance) returns bool
 	return IsUnitInRangeXY(this, pos.x, pos.y, distance)
 
