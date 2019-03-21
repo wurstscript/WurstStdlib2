@@ -6,18 +6,18 @@ import UnitIndexer
 
 /* CONFIGURATION */
 
-@configurable constant DETECT_NATIVE_ABILITIES = false
+@configurable constant DETECT_NATIVE_ABILITIES = false // Not implemented
 
 @configurable public constant DAMAGE_ELEMENT_PHYSICAL = new DamageElement("Physical")
 
 
 /* DAMAGE TYPE */
 
-enum DamageType
+public enum DamageType
     UNKNOWN
-    PHYSICAL        //from auto attacks 
-    NATIVE_ABILITY    //from native spells 
-    CODE            //from user code 
+    PHYSICAL          // From auto attacks 
+    NATIVE_ABILITY    // From native spells 
+    CODE              // From user code 
 
 
 /* DAMAGE ELEMENT */
@@ -53,6 +53,7 @@ class DamageInstance
         this.source = source 
         this.target = target 
         this.amount = amount 
+        this.originalAmount = amount 
         this.damageType = damageType
         this.damageElement = damageElement
 
@@ -73,29 +74,78 @@ public class DamageEvent
     protected static DamageType nextDamageType = UNKNOWN 
     protected static DamageElement nextDamageElement = null 
 
+    protected static bool abort = false 
+
+    protected static DamageListener array firstListeners
+    protected static int maxPriority = 0 
+    
+
     /* ON DAMAGE */
     protected static function onDamage()
         if DETECT_NATIVE_ABILITIES 
-            //Runed brances shit that I don't want to add because fuck using native spells, just code your shit m8
-
+            // Runed brances shit that I don't want to add because fuck using native spells, just code your shit m8
         else 
-            //damage type isn't defined then it's not code damage 
+            // Damage type isn't defined then it's not code damage 
             if nextDamageType == DamageType.UNKNOWN 
                 nextDamageType = PHYSICAL
                 nextDamageElement = DAMAGE_ELEMENT_PHYSICAL 
 
         let dmg = new DamageInstance(nextDamageId, GetEventDamageSource(), GetTriggerUnit(), GetEventDamage(), nextDamageType, nextDamageElement)
-
+        
         nextDamageId = 0 
         nextDamageType = UNKNOWN
         nextDamageElement = null
-
-        //fire listener 
+        
+        for i=0 to maxPriority
+            var listener = firstListeners[i]
+            while listener != null
+                listener.onEvent()
+                if abort                    
+                    dmg.amount = 0
+                    break
+                else 
+                    listener = listener.next
+            if abort 
+                break 
 
         if dmg.amount != dmg.originalAmount
             BlzSetEventDamage(dmg.amount)
 
-        destroy dmg 
+        destroy dmg
+        abort = false  
+
+        
+    /* LISTENERS */
+    static function addListener(DamageListener listener) returns DamageListener
+        return addListener(0, listener)
+    static function addListener(int priority, DamageListener listener) returns DamageListener
+        listener.priority = priority
+        if firstListeners[priority] != null
+            firstListeners[priority].prev = listener
+            listener.next = firstListeners[priority]
+
+        firstListeners[priority] = listener
+
+        if maxPriority < priority 
+            maxPriority = priority 
+
+        return listener
+
+    protected static function removeListener(DamageListener listener)
+        var prio = listener.priority
+        if firstListeners[prio] != null
+
+        if firstListeners[prio] == listener
+            firstListeners[prio] = listener.next
+            if listener.next == null and maxPriority == prio 
+                while firstListeners[prio] == null and prio > 0 
+                    prio--
+                maxPriority = prio 
+
+        else if listener.prev != null
+            listener.prev.next = listener.next
+
+        listener.next.prev = listener.prev
 
 
     /* GETTERS */ 
@@ -124,7 +174,6 @@ public class DamageEvent
         return DamageInstance.count > 0
 
     /* SETTERS */
-
     static function setAmount(real amount) 
         DamageInstance.current.amount = amount
 
@@ -136,6 +185,23 @@ public class DamageEvent
 
     static function setNextDamageElement(DamageElement damageElement)
         nextDamageElement = damageElement
+
+    /* UTILS */
+    static function abortCurrent() 
+        abort = true 
+
+
+/* LISTENER */
+
+public abstract class DamageListener 
+    int priority = 0 
+    thistype prev = null 
+    thistype next = null
+
+    abstract function onEvent()
+
+    ondestroy
+        DamageEvent.removeListener(this)
 
 
 /* MISC */
@@ -165,8 +231,8 @@ public class DamageEvent
 
 /* INIT */
 
-init 
-    onUnitIndex() -> 
-        EventListener.add(getIndexingUnit(),EVENT_UNIT_DAMAGED, () -> DamageEvent.onDamage())
+public function initializeDamageEventSystem()
+    onUnitIndex( () -> EventListener.add(getIndexingUnit(), EVENT_UNIT_DAMAGED, () -> DamageEvent.onDamage()))
+   
 
        
