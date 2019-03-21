@@ -1,35 +1,96 @@
+/** 
+    This package provides a light-weight damage detection system with priority-ordered listeners. 
+
+    **IMPORTANT** 
+        The system **must** be initialized using: initializeDamageEventSystem()
+        This package **doesn't** provide protection from cyclic damage.
+        Damage from code **must** be declared by the user using DamageEvent.setNextDamageFromCode() before dealing damage.
+
+
+    To listen to any damage instance firing:
+
+        DamageEvent.addListener() -> 
+            print(DamageEvent.getSource.getName()+" dealt "+DamageEvent.getAmount().toString()+" damage to "+DamageEvent.getTarget().getName()+".")
+
+    If the order of firing of the listeners is important, you can give a priority to the listener:
+
+        DamageEvent.addListener(2) -> 
+            print("This fires after.")
+        DamageEvent.addListener(0) -> 
+            print("This fires before.")
+
+    Each damage instance has a DamageType associated to it.
+    CODE **must** be declared by the user using DamageEvent.setNextDamageFromCode() before dealing damage.
+    PHYSICAL and NATIVE_ABILITY are detected by the system (if DETECT_NATIVE_ABILITIES is false then native abilities will be detected as PHYSICAL)
+
+        DamageEvent.addListener() -> 
+            switch DamageEvent.getDamageType() 
+                case PHYSICAL 
+                    print("This damage is from an auto-attack.")
+                case NATIVE_ABILITY
+                    print("This damage is from a native ability.")
+                case CODE 
+                    print("This damage is from code.")
+                default
+
+    Each damage instance can have an id and/or an element:
+
+        DamageEvent.setNextDamageFromCode()
+        DamageEvent.setNextDamageId('A000')
+        DamageEvent.setNextDamageElement(FIRE_ELEMENT)
+        UnitDamageTarget(source, target, amount, [...])
+
+    Using globally defined priorities for your map can help you easily understand and use a damage pipeline:
+
+        public constant DAMAGE_EVENT_PRIO_START     = 0 // Abort damage at this priority
+        public constant DAMAGE_EVENT_PRIO_RELATIVE  = 1 // Apply relative changes (multiplication and division)
+        public constant DAMAGE_EVENT_PRIO_ABSOLUTE  = 2 // Apply absolute changes (addition and subtraction)
+        public constant DAMAGE_EVENT_PRIO_SHIELD    = 4 // Apply reduction from "shield" effects  
+        public constant DAMAGE_EVENT_PRIO_FINAL     = 5 // Final damage (won't be changed at this stage)
+*/
 package DamageEvent
 
 import ClosureEvents
-import UnitIndexer
-
 
 /* CONFIGURATION */
 
+/** If true native abilities that deal damage are passed with DamageType NATIVE_ABILITY. 
+    If false native abilities that deal damage are passed with DamageType PHYSICAL */
 @configurable constant DETECT_NATIVE_ABILITIES = false // Not implemented
 
+/** A damage instance can have an element. 
+    DAMAGE_ELEMENT_PHYSICAL is the defaut element added to any damage instances of DamageType PHYSICAL */
 @configurable public constant DAMAGE_ELEMENT_PHYSICAL = new DamageElement("Physical")
 
 
 /* DAMAGE TYPE */
 
+/** Each damage instance has a DamageType associated to it.
+    PHYSICAL and NATIVE_ABILITY are detected by the system.
+    CODE **must** be declared by the user using DamageEvent.setNextDamageFromCode() before dealing damage  */
 public enum DamageType
-    UNKNOWN
-    PHYSICAL          // From auto attacks 
-    NATIVE_ABILITY    // From native spells 
-    CODE              // From user code 
+    PHYSICAL          // From auto attacks or native abilities if DETECT_NATIVE_ABILITIES is false
+    NATIVE_ABILITY    // From native abilities 
+    CODE              // From user code
+    UNKNOWN          
 
 
 /* DAMAGE ELEMENT */
 
+/** Each damage instance can have a DamageElement associated to it. */
 public class DamageElement 
+    // Would be nice if we could @configurable a class 
     protected string name 
+    protected colorA color
     
     construct(string name)
         this.name = name 
 
     function getName() returns string 
         return name 
+
+    function getColor() returns colorA 
+        return color
 
 
 /* DAMAGE INSTANCE */
@@ -39,6 +100,8 @@ class DamageInstance
     protected unit source 
     protected unit target 
     protected real originalAmount 
+    
+    // Add damagetype, attacktype and weapontype when we will be able to access them
 
     protected real amount 
     protected DamageType damageType 
@@ -70,12 +133,13 @@ class DamageInstance
 
 public class DamageEvent 
 
-    protected static int nextDamageId = 0 
-    protected static DamageType nextDamageType = UNKNOWN 
-    protected static DamageElement nextDamageElement = null 
-
+    // Next damage instance
+    protected static int            nextDamageId      = 0 
+    protected static DamageType     nextDamageType    = UNKNOWN 
+    protected static DamageElement  nextDamageElement = null 
+    // Mid damage instance
     protected static bool abort = false 
-
+    // Damage listeners
     protected static DamageListener array firstListeners
     protected static int maxPriority = 0 
     
@@ -83,7 +147,7 @@ public class DamageEvent
     /* ON DAMAGE */
     protected static function onDamage()
         if DETECT_NATIVE_ABILITIES 
-            // Runed brances shit that I don't want to add because fuck using native spells, just code your shit m8
+            // Runed bracers that I don't want to add because why use native abilities when you can code them (:
         else 
             // Damage type isn't defined then it's not code damage 
             if nextDamageType == DamageType.UNKNOWN 
@@ -96,7 +160,7 @@ public class DamageEvent
         nextDamageType = UNKNOWN
         nextDamageElement = null
         
-        for i=0 to maxPriority
+        for i = 0 to maxPriority
             var listener = firstListeners[i]
             while listener != null
                 listener.onEvent()
@@ -116,8 +180,14 @@ public class DamageEvent
 
         
     /* LISTENERS */
+    /** Add a damage event listener.
+        If The order of firing is important, use addListener(priority, listener) */
     static function addListener(DamageListener listener) returns DamageListener
-        return addListener(0, listener)
+        return addListener(maxPriority, listener)
+
+    /** Add a damage event listener with a given priority.
+        Listeners of different priorities fire from the lowest priority to the highest priority added. 
+        Listeners of the same priority fire by order of addition (FIFO) */
     static function addListener(int priority, DamageListener listener) returns DamageListener
         listener.priority = priority
         if firstListeners[priority] != null
@@ -170,6 +240,7 @@ public class DamageEvent
     static function getElement() returns DamageElement 
         return DamageInstance.current.damageElement
 
+    /** Returns true if a damage instance is currently firing */
     static function isFiring() returns bool 
         return DamageInstance.count > 0
 
@@ -180,13 +251,17 @@ public class DamageEvent
     static function setNextDamageId(int id)
         nextDamageId = id 
 
-    static function setNextDamageType(DamageType damageType)
+    static function setNextDamageFromCode()
+        nextDamageType = DamageType.CODE
+
+    protected static function setNextDamageType(DamageType damageType)
         nextDamageType = damageType 
 
     static function setNextDamageElement(DamageElement damageElement)
         nextDamageElement = damageElement
 
     /* UTILS */
+    /** Nulls the damage amount and skip all remaining listeners for current damage instance */
     static function abortCurrent() 
         abort = true 
 
@@ -232,7 +307,7 @@ public abstract class DamageListener
 /* INIT */
 
 public function initializeDamageEventSystem()
-    onUnitIndex( () -> EventListener.add(getIndexingUnit(), EVENT_UNIT_DAMAGED, () -> DamageEvent.onDamage()))
+    EventListener.add(EVENT_UNIT_DAMAGED, () -> DamageEvent.onDamage())
    
 
        
