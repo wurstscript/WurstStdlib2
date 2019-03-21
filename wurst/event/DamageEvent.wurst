@@ -2,7 +2,6 @@
     This package provides a light-weight damage detection system with priority-ordered listeners. 
 
     **IMPORTANT** 
-        The system **must** be initialized using: initializeDamageEventSystem()
         This package **doesn't** provide protection from cyclic damage.
         Damage from code **must** be declared by the user using setNextEventDamageFromCode() before dealing damage.
         
@@ -29,13 +28,13 @@
 
     Each damage instance has a DamageType associated to it.
     CODE **must** be declared by the user using DamageEvent.setNextDamageFromCode() before dealing damage.
-    PHYSICAL and NATIVE_ABILITY are detected by the system (if DETECT_NATIVE_ABILITIES is false then native abilities will be detected as PHYSICAL)
+    ATTACK and SPELL are detected by the system (if DETECT_NATIVE_ABILITIES is false then native abilities will be detected as ATTACK)
 
         addDamageListener() -> 
             switch getEventDamageType() 
-                case PHYSICAL 
+                case ATTACK 
                     print("This damage is from an auto-attack.")
-                case NATIVE_ABILITY
+                case SPELL
                     print("This damage is from a native ability.")
                 case CODE 
                     print("This damage is from code.")
@@ -65,7 +64,7 @@ import OnUnitEnterLeave
 
 /* CONFIGURATION */
 
-/** If true, native abilities that deal damage are passed with DamageType NATIVE_ABILITY.
+/** If true, native abilities that deal damage are passed with DamageType SPELL.
     Also keep in mind if true:
         > Spell damage is converted into negative damage values without this system, so do not use any other damage detection method.
         > Spell reduction abilities like Runed bracers or Elunes Grace have to be coded.
@@ -73,12 +72,12 @@ import OnUnitEnterLeave
         > Locust Swarm needs its Damage Return Factor changed from 0.75 to -0.75.
         > Mana Shield abilities need their Damage Absorbed % reduced to 0.00 (and the damage absorbtion part has to be coded)
         > Anti-Magic Shell (amount-based) has to be coded.
-    If false, native abilities that deal damage are passed with DamageType PHYSICAL */
+    If false, native abilities that deal damage are passed with DamageType ATTACK */
 @configurable constant DETECT_NATIVE_ABILITIES = false
 
 /** A damage instance can have an element. 
-    DAMAGE_ELEMENT_PHYSICAL is the defaut element added to any damage instances of DamageType PHYSICAL */
-@configurable public constant DAMAGE_ELEMENT_PHYSICAL = new DamageElement("Physical", colorA(223, 59, 33, 255))
+    DAMAGE_ELEMENT_ATTACK is the defaut element added to any damage instances of DamageType ATTACK */
+@configurable public constant DAMAGE_ELEMENT_ATTACK = new DamageElement("Physical", colorA(223, 59, 33, 255))
 
 
 /* CONSTANTS */
@@ -89,13 +88,14 @@ constant DETECT_NATIVE_ABILITIES_ID  = compiletime(ABIL_ID_GEN.next())// Used if
 /* DAMAGE TYPE */
 
 /** Each damage instance has a DamageType associated to it.
-    PHYSICAL and NATIVE_ABILITY are detected by the system.
+    ATTACK and SPELL are detected by the system.
     CODE **must** be declared by the user using setNextEventDamageFromCode() before dealing damage  */
 public enum DamageType
-    PHYSICAL          // From auto attacks or native abilities if DETECT_NATIVE_ABILITIES is false
-    NATIVE_ABILITY    // From native abilities 
-    CODE              // From user code
-    UNKNOWN          
+    ATTACK  // From auto attacks or native abilities if DETECT_NATIVE_ABILITIES is false (PHYSICAL)
+    SPELL   // From native abilities (NATIVE_ABILITY)
+    CODE    // From user code
+    NULLED  // For backward compatibility -> has no utility
+    UNKNOWN         
 
 
 /* DAMAGE ELEMENT */
@@ -177,14 +177,14 @@ public class DamageEvent
             // Damage type hasn't been defined -> detect it
             if DETECT_NATIVE_ABILITIES 
                 if amount < 0.
-                    nextDamageType = NATIVE_ABILITY
+                    nextDamageType = SPELL
                     amount *= -1
                 else
-                    nextDamageType = PHYSICAL
-                    nextDamageElement = DAMAGE_ELEMENT_PHYSICAL 
+                    nextDamageType = ATTACK
+                    nextDamageElement = DAMAGE_ELEMENT_ATTACK 
             else 
-                nextDamageType = PHYSICAL
-                nextDamageElement = DAMAGE_ELEMENT_PHYSICAL 
+                nextDamageType = ATTACK
+                nextDamageElement = DAMAGE_ELEMENT_ATTACK 
 
         let dmg = new DamageInstance(nextDamageId, GetEventDamageSource(), GetTriggerUnit(), amount, nextDamageType, nextDamageElement)
         
@@ -327,9 +327,9 @@ public abstract class DamageListener
 /** Returns the name of the given DamageType */
 @configurable public function getDamageTypeName(DamageType t) returns string 
     switch t 
-        case PHYSICAL
+        case ATTACK
             return "Physical"
-        case NATIVE_ABILITY
+        case SPELL
             return "Ability"
         case CODE
             return "Ability"
@@ -339,7 +339,7 @@ public abstract class DamageListener
 /** Returns a damage designation given a DamageType and a DamageElement */
 @configurable public function getDamageDesignation(DamageType t, DamageElement e) returns string 
     if t != DamageType.UNKNOWN and e != null
-        if t==DamageType.PHYSICAL and e==DAMAGE_ELEMENT_PHYSICAL
+        if t==DamageType.ATTACK and e==DAMAGE_ELEMENT_ATTACK
             return "Pure Physical Damage"
         return e.getName() + " " + getDamageTypeName(t) + " Damage"
     else if t != DamageType.UNKNOWN
@@ -354,8 +354,8 @@ function getEventDamageDesignation() returns string
 
 
 /* INIT */
-/** Initialize the DamageEvent System. */
-public function initializeDamageEventSystem()
+
+init
     EventListener.add(EVENT_UNIT_DAMAGED, () -> DamageEvent.onDamage())
     if DETECT_NATIVE_ABILITIES
         onEnter(() -> getEnterLeaveUnit()..addAbility(DETECT_NATIVE_ABILITIES_ID)..makeAbilityPermanent(DETECT_NATIVE_ABILITIES_ID, true))
