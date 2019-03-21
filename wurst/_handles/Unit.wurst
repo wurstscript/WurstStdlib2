@@ -53,6 +53,14 @@ public function unit.addXp(int toAdd, boolean showEyeCandy)
 public function unit.getXp() returns int
 	return GetHeroXP(this)
 
+/** Share vision of that unit with a player **/
+public function unit.shareVision(player whichPlayer)
+	UnitShareVision(this, whichPlayer, true)
+
+/** Set sharing of vision with a player **/
+public function unit.shareVision(player whichPlayer, bool share)
+	UnitShareVision(this, whichPlayer, share)
+
 public function unit.setXp(int newXpVal, bool showEyeCandy)
 	SetHeroXP(this, newXpVal, showEyeCandy)
 
@@ -113,10 +121,16 @@ public function unit.getSkillPoints() returns int
 public function unit.selectSkill(int abilcode)
 	SelectHeroSkill(this, abilcode)
 
-public function unit.damageTarget(unit target, real amount)
+public function unit.damageTarget(widget target, real amount, bool attack, bool ranged, attacktype attackType, damagetype damageType, weapontype weaponType)
+	UnitDamageTarget(this, target, amount, attack, ranged, attackType, damageType, weaponType)
+
+public function unit.damageTarget(widget target, real amount, bool attack, bool ranged, attacktype attackType)
+	UnitDamageTarget(this, target, amount, attack, ranged, attackType, DAMAGE_TYPE_UNIVERSAL, WEAPON_TYPE_WHOKNOWS)
+
+public function unit.damageTarget(widget target, real amount)
 	UnitDamageTarget(this, target, amount, false, false, ATTACK_TYPE_CHAOS, DAMAGE_TYPE_UNIVERSAL, WEAPON_TYPE_WHOKNOWS)
 
-public function unit.damageTarget(unit target, real amount, attacktype attacktyp)
+public function unit.damageTarget(widget target, real amount, attacktype attacktyp)
 	UnitDamageTarget(this, target, amount, false, false, attacktyp, DAMAGE_TYPE_UNIVERSAL, WEAPON_TYPE_WHOKNOWS)
 
 /** Kills a unit by blowing it up */
@@ -259,9 +273,14 @@ public function unit.isInventoryFull() returns boolean
 public function unit.isAlive() returns boolean
 	return UnitAlive(this)
 
-/** Checks if the unit is alive by testing current HP > .405 */
-public function unit.isAliveTrick() returns boolean
-	return this.getHP() > .405
+/** Checks whether a unit is within range of a point.
+	Takes into account the units collision size **/
+public function unit.isInRange(vec2 pos, real distance) returns bool
+	return IsUnitInRangeXY(this, pos.x, pos.y, distance)
+
+/** Checks whether a unit is an enemy of the given player **/
+public function unit.isEnemyOf(player whichPlayer) returns bool
+	return IsUnitEnemy(this, whichPlayer)
 
 public function unit.issueImmediateOrder(string order) returns boolean
 	return IssueImmediateOrder(this, order)
@@ -520,6 +539,10 @@ public function unit.abortOrder() returns boolean
 public function unit.resetAbilityCooldown(int abilId)
 	let lvl = this.getAbilityLevel(abilId)
 	this..removeAbility(abilId)..addAbility(abilId)..setAbilityLevel(abilId, lvl)
+
+/** Reset all cooldowns of the unit **/
+public function unit.resetCooldown()
+	UnitResetCooldown(this)
 
 public function unit.getDefaultMovespeed() returns real
 	return GetUnitDefaultMoveSpeed(this)
