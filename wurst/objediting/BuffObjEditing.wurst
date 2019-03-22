@@ -83,6 +83,15 @@ public class BuffDefinition
 
 		setIconNormal(1, s)
 
+	function setIcon(string name, bool useCustomPath)
+		string s = name
+		if (name.length() < 20 or not name.startsWith("ReplaceableTextures")) and not useCustomPath
+			s = "ReplaceableTextures\\CommandButtons\\" + s
+		if not name.endsWith(".blp")
+			s += ".blp"
+
+		setIconNormal(1, s)
+
 	function setCaster(int level, string value)
 		def.setLvlDataString("fcat",  level, 0,  value)
 
