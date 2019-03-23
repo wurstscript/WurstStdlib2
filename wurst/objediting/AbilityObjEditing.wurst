@@ -3546,7 +3546,20 @@ public class AbilityDefinitionWindWalk extends AbilityDefinition
 		def.setLevelsDataBoolean("Owk4", lvls, 4, lc)
 		addTooltipProperty("BackstabDamageEnabled", lc)
 
-
+	function setMovementSpeedIncrease(int level, real value)
+		def.setLvlDataUnreal("Owk2", level, 2, value)
+	
+	function presetMovementSpeedIncrease(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Owk2", lvls, 2, lc)
+		addTooltipProperty("MovementSpeedIncrease", lc)
+	
+	function setTransitionTime(int level, real value)
+		def.setLvlDataUnreal("Owk1", level, 1, value)
+	
+	function presetTransitionTime(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Owk1", lvls, 1, lc)
+		addTooltipProperty("TransitionTime", lc)
+		
 
 public class AbilityDefinitionManaShieldCreep extends AbilityDefinition
 	construct(int newAbilityId)
