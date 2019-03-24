@@ -21,7 +21,7 @@ public enum BufferMode
 	LOCKED // no operations permitted
 
 public function BufferMode.toString() returns string
-	var value = ""
+	string value
 	switch this
 		case READ
 			value = "READ"
