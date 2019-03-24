@@ -95,7 +95,7 @@ public class GamecacheBuffer
 		return gc.loadBoolean(parentKey, GamecacheKeys.get(readIndex))
 
 	function getSynchronizerFunction() returns SynchronizerFunction
-		SynchronizerFunction synchronizer
+		SynchronizerFunction synchronizer = null
 
 		switch bufferType
 			case BufferType.INTEGER

@@ -20,7 +20,7 @@ public enum AttacksEnabled
 	Both
 
 public function Race.toObjectString() returns string
-	string result
+	string result = "unknown"
 	switch this
 		case Commoner
 			result = "commoner"
@@ -48,7 +48,7 @@ public function Race.toObjectString() returns string
 
 
 public function AttacksEnabled.toObjectInt() returns int
-	int result
+	var result = 0
 	switch this
 		case None
 			result = 0

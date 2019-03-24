@@ -57,7 +57,7 @@ public enum UpgradeEffectType
 	UnitAvailabilityChange
 
 function UpgradeClass.toObjectString() returns string
-	string result
+	var result = ""
 	switch this
 		case NONE
 			result = ""
@@ -74,7 +74,7 @@ function UpgradeClass.toObjectString() returns string
 	return result
 
 function UpgradeEffectType.toIdentifierString() returns string
-	string result
+	string result = ""
 	switch this
 		case NONE
 			result = ""
