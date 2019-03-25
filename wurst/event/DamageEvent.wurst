@@ -3,7 +3,7 @@
 
     **IMPORTANT** 
         This package **doesn't** provide protection from cyclic damage.
-        Damage from code **must** be declared by the user using setNextEventDamageFromCode() before dealing damage.
+        Damage from code **must** be declared by the user using DamageEvent.setNextDamageFromCode() before dealing damage.
         
         if DETECT_NATIVE_ABILITIES is true:
             > Spell damage is converted into negative damage values without this system, so do not use any other damage detection method.
@@ -16,22 +16,22 @@
 
     To listen to any damage instance firing:
 
-       addDamageListener() -> 
-            print(getEventDamageSource().getName()+" dealt "+getEventDamageAmount().toString()+" damage to "+getEventDamageTarget().getName()+".")
+       DamageEvent.addListener() -> 
+            print(DamageEvent.getSource().getName()+" dealt "+DamageEvent.getAmount().toString()+" damage to "+DamageEvent.getTarget().getName()+".")
 
     If the order of firing of the listeners is important, the user can give a priority to the listener:
 
-        addDamageListener(2) -> 
+        DamageEvent.addListener(2) -> 
             print("This fires after.")
-        addDamageListener(0) -> 
+        DamageEvent.addListener(0) -> 
             print("This fires before.")
 
     Each damage instance has a DamageType associated to it.
     CODE **must** be declared by the user using DamageEvent.setNextDamageFromCode() before dealing damage.
     ATTACK and SPELL are detected by the system (if DETECT_NATIVE_ABILITIES is false then native abilities will be detected as ATTACK)
 
-        addDamageListener() -> 
-            switch getEventDamageType() 
+        DamageEvent.addListener() -> 
+            switch DamageEvent.getType() 
                 case ATTACK 
                     print("This damage is from a unit's attack.")
                 case SPELL
@@ -43,9 +43,9 @@
     Each damage instance can have an id and/or an element.DamageEvent
     Allowing the user to easily categorize (DamageElement) or/and identify a damage instance (id):
 
-        setNextEventDamageFromCode()
-        setNextEventDamageId('A000') // This damage instance is from the spell 'A000'
-        setNextEventDamageElement(DAMAGE_ELEMENT_FIRE) // This damage instance will be categorized as a Fire damage instance.
+        DamageEvent.setNextDamageFromCode()
+        DamageEvent.setNextDamageId('A000') // This damage instance is from the spell 'A000'
+        DamageEvent.setNextDamageElement(DAMAGE_ELEMENT_FIRE) // This damage instance will be categorized as a Fire damage instance.
         UnitDamageTarget(source, target, amount, [...])
 
     Using globally defined priorities for a map can help easily understand and use a damage pipeline:
@@ -90,7 +90,7 @@ constant DETECT_NATIVE_ABILITIES_ID  = compiletime(ABIL_ID_GEN.next())// Used if
 
 /** Each damage instance has a DamageType associated to it.
     ATTACK and SPELL are detected by the system.
-    CODE **must** be declared by the user using setNextEventDamageFromCode() before dealing damage  */
+    CODE **must** be declared by the user using DamageEvent.setNextDamageFromCode() before dealing damage  */
 public enum DamageType
     ATTACK  // From units' attacks or native abilities if DETECT_NATIVE_ABILITIES is false (PHYSICAL)
     SPELL   // From native abilities (NATIVE_ABILITY)
@@ -109,7 +109,6 @@ public enum DamageType
      
     The user can extends from DamageElement to add his own settings.*/
 public class DamageElement 
-    // Would be nice if we could @configurable a class 
     protected string name 
     protected colorA color = COLOR_WHITE
     
@@ -384,68 +383,3 @@ init
             ..setEditorSuffix("(DamageEvent)")
             ..setItemAbility(false)
             ..setDamageReduction(1, 2.)
-
-
-/* WRAPPERS */
-/** Add a damage event listener.
-    If The order of firing is important, use addDamageListener(priority, listener) */
-public function addDamageListener(DamageListener listener) returns DamageListener
-    return DamageEvent.addListener(listener)
-
-/** Add a damage event listener with a given priority.
-    Listeners of different priorities fire from the lowest priority to the highest priority added. 
-    Listeners of the same priority fire by order of addition (FIFO) */
-public function addDamageListener(int priority, DamageListener listener) returns DamageListener
-    return DamageEvent.addListener(priority, listener)
-
-/** Returns the id of the damage instance being currently fired */
-public function getEventDamageId() returns int 
-    return DamageEvent.getId()
-
-/** Returns the source of the damage instance being currently fired */
-public function getEventDamageSource() returns unit 
-    return DamageEvent.getSource()
-
-/** Returns the target of the damage instance being currently fired */
-public function getEventDamageTarget() returns unit 
-    return DamageEvent.getTarget()
-
-/** Returns the damage amount of the damage instance being currently fired */
-public function getEventDamageAmount() returns real 
-    return DamageEvent.getAmount()
-
-/** Returns the original damage amount of the damage instance being currently fired */
-public function getEventDamageOriginalAmount() returns real 
-    return DamageEvent.getOriginalAmount()
-
-/** Returns the DamageType of the damage instance being currently fired */
-public function getEventDamageType() returns DamageType 
-    return DamageEvent.getType()
-
-/** Returns the DamageElement of the damage instance being currently fired */
-public function getEventDamageElement() returns DamageElement 
-    return DamageEvent.getElement()
-
-/** Sets the damage amount of the damage instance being currently fired */
-public function setEventDamageAmount(real amount)
-    DamageEvent.setAmount(amount)
-
-/** Sets the id for the next damage instance */
-public function setNextEventDamageId(int id)
-    DamageEvent.setNextDamageId(id)
-
-/** Sets the DamageType to CODE for the next damage instance */
-public function setNextEventDamageFromCode()
-    DamageEvent.setNextDamageType(DamageType.CODE)
-    
-/** Sets the DamageType for the next damage instance */
-public function setNextEventDamageType(DamageType damageType)
-    DamageEvent.setNextDamageType(damageType)
-
-/** Sets the DamageElement for the next damage instance */
-public function setNextEventDamageElement(DamageElement damageElement)
-    DamageEvent.setNextDamageElement(damageElement)
-
-/** Nulls the damage amount and skip all remaining listeners for the damage instance being currently fired */
-public function abortEventDamage()
-    DamageEvent.abortCurrent()
