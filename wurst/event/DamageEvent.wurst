@@ -294,6 +294,14 @@ public class DamageEvent
     static function setAmount(real amount) 
         DamageInstance.current.amount = amount
 
+    /** Adds to the damage amount of the damage instance being currently fired */
+    static function addAmount(real amount) 
+        DamageInstance.current.amount += amount
+
+    /** Substracts from the damage amount of the damage instance being currently fired */
+    static function subAmount(real amount) 
+        DamageInstance.current.amount -= amount
+
     /** Sets the id for the next damage instance */
     static function setNextDamageId(int id)
         nextDamageId = id 
