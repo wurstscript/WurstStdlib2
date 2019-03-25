@@ -140,7 +140,7 @@ public function ArmorSoundType.toString() returns string
 
 
 public function ArmorType.toObjectString() returns string
-	string result = "normal"
+	string result
 	switch this
 		case Normal
 			result = "normal"
@@ -161,7 +161,7 @@ public function ArmorType.toObjectString() returns string
 	return result
 
 public function AttackType.toObjectString() returns string
-	string result = "unknown"
+	string result
 	switch this
 		case Unknown
 			result = "unknown"
