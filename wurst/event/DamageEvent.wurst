@@ -19,7 +19,7 @@
        addDamageListener() -> 
             print(getEventDamageSource().getName()+" dealt "+getEventDamageAmount().toString()+" damage to "+getEventDamageTarget().getName()+".")
 
-    If the order of firing of the listeners is important, you can give a priority to the listener:
+    If the order of firing of the listeners is important, the user can give a priority to the listener:
 
         addDamageListener(2) -> 
             print("This fires after.")
@@ -33,21 +33,22 @@
         addDamageListener() -> 
             switch getEventDamageType() 
                 case ATTACK 
-                    print("This damage is from an auto-attack.")
+                    print("This damage is from a unit's attack.")
                 case SPELL
                     print("This damage is from a native ability.")
                 case CODE 
                     print("This damage is from code.")
                 default
 
-    Each damage instance can have an id and/or an element:
+    Each damage instance can have an id and/or an element.DamageEvent
+    Allowing the user to easily categorize (DamageElement) or/and identify a damage instance (id):
 
         setNextEventDamageFromCode()
-        setNextEventDamageId('A000')
-        setNextEventDamageElement(FIRE_ELEMENT)
+        setNextEventDamageId('A000') // This damage instance is from the spell 'A000'
+        setNextEventDamageElement(DAMAGE_ELEMENT_FIRE) // This damage instance will be categorized as a Fire damage instance.
         UnitDamageTarget(source, target, amount, [...])
 
-    Using globally defined priorities for your map can help you easily understand and use a damage pipeline:
+    Using globally defined priorities for a map can help easily understand and use a damage pipeline:
 
         public constant DAMAGE_EVENT_PRIO_START     = 0 // Abort damage at this priority
         public constant DAMAGE_EVENT_PRIO_RELATIVE  = 1 // Apply relative changes (multiplication and division)
@@ -66,12 +67,12 @@ import OnUnitEnterLeave
 
 /** If true, native abilities that deal damage are passed with DamageType SPELL.
     Also keep in mind if true:
-        > Spell damage is converted into negative damage values without this system, so do not use any other damage detection method.
-        > Spell reduction abilities like Runed bracers or Elunes Grace have to be coded.
+        > Spell damage is converted into negative damage values.
+        > Spell reduction abilities have to be coded.
         > Life Drain doesn't heal the caster.
-        > Locust Swarm needs its Damage Return Factor changed from 0.75 to -0.75.
-        > Mana Shield abilities need their Damage Absorbed % reduced to 0.00 (and the damage absorbtion part has to be coded)
-        > Anti-Magic Shell (amount-based) has to be coded.
+        > Locust Swarm's Damage Return Factor has to be changed from 0.75 to -0.75.
+        > Mana Shield abilities' Damage Absorbed % has to be reduced to 0.00
+        > Mana Shield's damage absorbtion part & Anti-Magic Shell (amount-based) have to be coded.
     If false, native abilities that deal damage are passed with DamageType ATTACK */
 @configurable constant DETECT_NATIVE_ABILITIES = false
 
@@ -91,7 +92,7 @@ constant DETECT_NATIVE_ABILITIES_ID  = compiletime(ABIL_ID_GEN.next())// Used if
     ATTACK and SPELL are detected by the system.
     CODE **must** be declared by the user using setNextEventDamageFromCode() before dealing damage  */
 public enum DamageType
-    ATTACK  // From auto attacks or native abilities if DETECT_NATIVE_ABILITIES is false (PHYSICAL)
+    ATTACK  // From units' attacks or native abilities if DETECT_NATIVE_ABILITIES is false (PHYSICAL)
     SPELL   // From native abilities (NATIVE_ABILITY)
     CODE    // From user code
     NULLED  // For backward compatibility -> has no utility
@@ -100,11 +101,17 @@ public enum DamageType
 
 /* DAMAGE ELEMENT */
 
-/** Each damage instance can have a DamageElement associated to it. */
+/** Each damage instance can have a DamageElement associated to it. 
+    Allowing for categories of damage instances:
+
+        DAMAGE_ELEMENT_FIRE  = new DamageElement("Fire", colorA(255, 0, 0, 255)) 
+        DAMAGE_ELEMENT_WATER = new DamageElement("Water", colorA(0, 0, 255, 255))
+     
+    The user can extends from DamageElement to add his own settings.*/
 public class DamageElement 
     // Would be nice if we could @configurable a class 
     protected string name 
-    protected colorA color = colorA(255, 255, 255, 255)
+    protected colorA color = COLOR_WHITE
     
     construct(string name, colorA color)
         this.name = name 
@@ -204,7 +211,6 @@ public class DamageEvent
             if abort 
                 break 
 
-        // if dmg.amount != dmg.originalAmount
         BlzSetEventDamage(dmg.amount)
 
         destroy dmg
