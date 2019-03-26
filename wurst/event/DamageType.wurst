@@ -9,5 +9,5 @@ public function getDamageType() returns DamageType
 
 @deprecated("Use the DamageEvent package instead.")
 public function dealCodeDamage(unit attacker, unit target, real damage)
-	DamageEVent.setNextDamageFromCode()
+	DamageEvent.setNextDamageFromCode()
 	UnitDamageTarget(attacker, target, damage, true, false, ConvertAttackType(7), DAMAGE_TYPE_UNIVERSAL, null)
