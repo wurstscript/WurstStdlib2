@@ -5,7 +5,7 @@ import public DamageEvent
 
 @deprecated("Use GetEventDamageType() instead.")
 public function getDamageType() returns DamageType
-	return getEventDamageType()
+	return DamageEvent.getType()
 
 @deprecated("Use the DamageEvent package instead.")
 public function dealCodeDamage(unit attacker, unit target, real damage)
