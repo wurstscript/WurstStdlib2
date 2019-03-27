@@ -8,7 +8,7 @@ before_install:
 install:
   - cd $HOME/.wurst
   - wget https://grill.wurstlang.org/hudson/job/WurstSetup/lastSuccessfulBuild/artifact/downloads/WurstSetup.jar
-  - java -jar WurstSetup.jar -silent -force -update
+  - java -jar WurstSetup.jar install wurstscript
 
 before_script: cd $TRAVIS_BUILD_DIR
 
