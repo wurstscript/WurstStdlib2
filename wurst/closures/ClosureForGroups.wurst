@@ -94,9 +94,9 @@ public function forUnitsInRectCounted(rect r, int count, ForGroupCallback c)
 /** Executes the given closure for every unit in range of the given position */
 public function forUnitsInRange(vec2 pos, real radius, ForGroupCallback c)
 	pushCallback(c)
-	GroupEnumUnitsInRange(ENUM_GROUP, pos.x, pos.y, radius+MAX_COLLISION_SIZE, null)
+	GroupEnumUnitsInRange(ENUM_GROUP, pos.x, pos.y, radius + MAX_COLLISION_SIZE, null)
 	for u from ENUM_GROUP
-		if IsUnitInRangeXY(u, pos.x, pos.y, radius) //u.isInRangeOf(pos, radius)
+		if IsUnitInRangeXY(u, pos.x, pos.y, radius)
 			c.callback(u)
 	popCallback()
 
