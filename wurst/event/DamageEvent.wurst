@@ -240,8 +240,6 @@ public class DamageEvent
 
     protected static function removeListener(DamageListener listener)
         var prio = listener.priority
-        if firstListeners[prio] != null
-
         if firstListeners[prio] == listener
             firstListeners[prio] = listener.next
             if listener.next == null and maxPriority == prio 
