@@ -27,6 +27,9 @@ import NoWurst
 /** Functions annotated with @inline will have a higher priority of being inlined by the optimizer. */
 @annotation public function inline()
 
+/** Functions annotated with @inline will have a lower priority of being inlined by the optimizer. */
+@annotation public function noinline()
+
 /** Elements annotated with @config configure an element in the correspoding package (i.e. replaced by a different implementation).  */
 @annotation public function config()
 
