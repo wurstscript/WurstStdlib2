@@ -3,11 +3,12 @@ services:
 
 before_install:
   - docker pull frotty/wurstscript
-  - docker run -it -d -w /home/wurstuser/$TRAVIS_REPO_SLUG --name build frotty/wurstscript /bin/sh -c "chown -R wurstuser /home/wurstuser/$TRAVIS_REPO_SLUG"
+  - docker run -it -d -w /home/wurstuser/$TRAVIS_REPO_SLUG --name build frotty/wurstscript /bin/sh
 
 install:
   - docker exec build grill update wurstscript
-  - docker exec build git clone https://github.com/$TRAVIS_REPO_SLUG.git .
+  - docker exec build git clone https://github.com/$TRAVIS_REPO_SLUG.git target
+  - docker exec build /bin/sh -c "mv target/* ."
   - docker exec build git checkout -qf $TRAVIS_COMMIT
 
 script:
