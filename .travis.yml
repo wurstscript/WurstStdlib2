@@ -8,7 +8,7 @@ before_install:
   - docker pull frotty/wurstscript
   - docker run -d -p 127.0.0.1:80:4567 frotty/wurstscript /bin/sh -c "grill update wurstscript"
   - docker ps -a
-  - docker run frotty/wurstscript /bin/sh -c "cd /root/frotty"
+  - docker run frotty/wurstscript /bin/sh -c "cd /root"
 
 install:
   - grill update
