@@ -8,10 +8,10 @@ before_install:
 install:
   - docker exec build grill update wurstscript
   - docker exec build git clone https://github.com/$TRAVIS_REPO_SLUG.git $TRAVIS_REPO_SLUG
-  - docker exec build cd $TRAVIS_REPO_SLUG
+  - docker exec build /bin/sh -c "cd $TRAVIS_REPO_SLUG"
   - docker exec build git checkout -qf $TRAVIS_COMMIT
   
 
 script:
   - docker exec build grill update
-  - grill test
+  - docker exec build grill test
