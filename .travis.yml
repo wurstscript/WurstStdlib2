@@ -3,7 +3,7 @@ services:
 
 before_install:
   - docker pull frotty/wurstscript
-  - docker run -it -d -w /home/wurstuser/$TRAVIS_REPO_SLUG --name build frotty/wurstscript /bin/sh 
+  - docker run -it -d -w /home/wurstuser/$TRAVIS_REPO_SLUG --name build frotty/wurstscript /bin/sh -c "chown -R wurstuser /home/wurstuser"
 
 install:
   - docker exec build grill update wurstscript
