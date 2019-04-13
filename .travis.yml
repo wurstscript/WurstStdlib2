@@ -11,7 +11,7 @@ install:
   - docker exec build /bin/sh -c "cd $TRAVIS_REPO_SLUG && git checkout -qf $TRAVIS_COMMIT"
 
 script:
-  - docker exec build -it /bin/bash
+  - docker exec -it build /bin/bash
   - cd $TRAVIS_REPO_SLUG
   - grill update
   - grill test
