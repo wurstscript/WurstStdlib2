@@ -1,16 +1,17 @@
 sudo: required
 jdk: oraclejdk8
 
+services:
+  - docker
+
 before_install:
-  - mkdir $HOME/.wurst/
-  - sudo apt-get install -y wine
+  - docker pull frotty/wurstscript
+  - docker run -d -p 127.0.0.1:80:4567 frotty/wurstscript /bin/sh -c "grill update wurstscript"
+  - docker ps -a
+  - docker run frotty/wurstscript /bin/sh -c "cd /root/frotty"
 
 install:
-  - cd $HOME/.wurst
-  - wget https://grill.wurstlang.org/hudson/job/WurstSetup/lastSuccessfulBuild/artifact/downloads/WurstSetup.jar
-  - java -jar WurstSetup.jar install wurstscript
-
-before_script: cd $TRAVIS_BUILD_DIR
+  - grill update
 
 script:
-  - java -jar $HOME/.wurst/wurstscript.jar $HOME/.wurst/common.j $HOME/.wurst/blizzard.j ./ -runcompiletimefunctions -runtests
+  - grill test
