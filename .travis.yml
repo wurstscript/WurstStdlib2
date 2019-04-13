@@ -3,12 +3,15 @@ services:
 
 before_install:
   - docker pull frotty/wurstscript
-  - docker run -d -p 127.0.0.1:80:4567 frotty/wurstscript /bin/sh -c "grill update wurstscript"
-  - docker ps -a
-  - docker run frotty/wurstscript /bin/sh -c "cd /home/wurstuser"
+  - docker run -it -d --name build frotty/wurstscript /bin/sh
 
 install:
-  - grill update
+  - docker exec build grill update wurstscript
+  - docker exec build git clone https://github.com/$TRAVIS_REPO_SLUG.git $TRAVIS_REPO_SLUG
+  - docker exec build cd $TRAVIS_REPO_SLUG
+  - docker exec build git checkout -qf $TRAVIS_COMMIT
+  
 
 script:
+  - docker exec build grill update
   - grill test
