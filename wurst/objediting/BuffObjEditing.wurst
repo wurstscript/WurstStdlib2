@@ -74,6 +74,10 @@ public class BuffDefinition
 	function setIconNormal(int level, string value)
 		def.setLvlDataString("fart",  level, 0,  value)
 
+	/** 
+	 * Set the icon's path for the buff obj
+     * @param string name - name of the icon file, add "@!!" as prefix to overide default path by custom path
+	*/
 	function setIcon(string name)
 		string s = name
 		if (name.length() < 20 or not name.startsWith("ReplaceableTextures")) and not name.startsWith("@!!")
