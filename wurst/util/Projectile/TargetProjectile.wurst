@@ -1,0 +1,72 @@
+package TargetProjectile
+import NoWurst
+import Unit
+import Projectile
+
+
+public class TargetProjectile extends Projectile
+	protected unit target = null
+	protected var impactPoint = ZERO3
+	protected var chasing = true
+	protected var forced = false
+
+	construct(unit owner, unit target, string model, vec3 launchPoint, vec3 impactPoint, real speed)
+		super(	owner,
+				model,
+				launchPoint.rotate(vec3(0, 0, 1), owner.getFacingAngle()) + owner.getPos3Real(),
+				target.getPos3Real() + impactPoint,
+				speed)
+		this.target = target
+		this.impactPoint = impactPoint
+
+	construct(unit owner, unit target, string model, vec3 launchPoint, vec3 impactPoint, real arc, real speed)
+		super(  owner,
+				model,
+				launchPoint.rotate(vec3(0, 0, 1), owner.getFacingAngle()) + owner.getPos3Real(),
+				target.getPos3Real() + impactPoint,
+				arc,
+				speed)
+		this.target = target
+		this.impactPoint = impactPoint
+
+	construct(unit owner, unit target, string model, real height, vec3 launchPoint, vec3 impactPoint, real speed)
+		super(  owner,
+				model,
+				launchPoint.rotate(vec3(0, 0, 1), owner.getFacingAngle()) + owner.getPos3Real(),
+				height,
+				target.getPos3Real() + impactPoint,
+				speed)
+		this.target = target
+		this.impactPoint = impactPoint
+
+	construct(unit owner, unit target, string model, vec3 launchPoint, vec3 impactPoint, vec3 mid, real speed)
+		super(  owner,
+				model,
+				launchPoint.rotate(vec3(0, 0, 1), owner.getFacingAngle()) + owner.getPos3Real(),
+				mid,
+				target.getPos3Real() + impactPoint,
+				speed)
+		this.target = target
+		this.impactPoint = impactPoint
+
+	override protected function update(real delay)
+		if chasing and finish.distanceTo2d(target.getPos()) > 5.
+			if not forced or (forced and remain/distance <= 0.5)
+				start = pos
+				finish = target.getPos3Real() + impactPoint
+				control = start.moveTowards(finish, start.distanceTo(finish)/2)
+				distance = start.distanceTo2d(finish)
+				remain = distance
+		super.update(delay)
+
+	/** If 'true' the projectile will not chase its target until it passes the path's middle point. Default value is 'false'. */
+	function forceMid(bool flag)
+		forced = flag
+
+	/** The projectile will chase its target. */
+	function enableChasing()
+		chasing = true
+
+	/** The projectile won't chase its target. */
+	function disableChasing()
+		chasing = false

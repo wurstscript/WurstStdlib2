@@ -1,0 +1,39 @@
+package TimedProjectile
+import NoWurst
+import Vectors
+
+import Projectile
+
+public class TimedProjectile extends Projectile
+	/** Do not forget to use proper coords of the points which include terrain's Z and unit's height. */
+	construct(unit owner, string model, vec3 start, vec3 finish, real duration)
+		super(owner, model, start, finish, 1.)
+		distance = duration
+		remain = duration
+
+	/** Do not forget to use proper coords of the points which include terrain's Z and unit's height. */
+	construct(unit owner, string model, vec3 start, vec3 finish, real arc, real duration)
+		super(owner, model, start, finish, arc, 1)
+		distance = duration
+		remain = duration
+
+	/** Do not forget to use proper coords of the points which include terrain's Z and unit's height.
+	Height parameter means the height of the point that's in the centre of the missile's way
+	and through which this missile will pass. */
+	construct(unit owner, string model, vec3 start, real height, vec3 finish, real duration)
+		super(owner, model, start, height, finish, 1.)
+		distance = duration
+		remain = duration
+
+	/** Do not forget to use proper coords of the points which include terrain's Z and unit's height.
+	Middle parameter means the point in the centre of the missile's path */
+	construct(unit owner, string model, vec3 start, vec3 mid, vec3 finish, real duration)
+		super(owner, model, start, mid, finish, 1.)
+		distance = duration
+		remain = duration
+
+	override function setSpeed(real newSpeed)
+		skip
+
+	override function getSpeed() returns real
+		return 0.
