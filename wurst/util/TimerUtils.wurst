@@ -85,7 +85,7 @@ public module TimedLoop
 					t.mode = Mode.PAUSED
 			else
 				t.onTimedLoop()
-				i--
+			i--
 		if instanceCount == 0
 			TriggerRemoveCondition(timedLoopTrig, triggerCond)
 			triggerCond = null
