@@ -1,4 +1,6 @@
-![](https://i.imgur.com/L3xfAs4.png) [![Build Status](https://travis-ci.org/wurstscript/WurstStdlib2.svg?branch=master)](https://travis-ci.org/wurstscript/WurstStdlib2)
+![](https://i.imgur.com/L3xfAs4.png)
+
+[![CircleCI](https://circleci.com/gh/wurstscript/WurstStdlib2.svg?style=svg)](https://circleci.com/gh/wurstscript/WurstStdlib2)
 # Wurst Standard Library
 
 This is the repository of the WurstScript standard library which provides a vast amount of useful packages to users starting out with Wurst.
