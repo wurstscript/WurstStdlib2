@@ -2,75 +2,87 @@ package Flexboxgrid
 import LinkedList
 import HashMap
 
-public class FlexboxBuilder
-	let fbg = new Flexboxgrid()
-	var fc = fbg.firstColumn
-	FlexRow fr = null
-	var isRow = false
+public class FlexboxgridBuilder
+	Container c = new Col() // invariant: c != null
+	/** Inserts a row, which aligns its contains' height. */
+	function row() returns FlexboxgridBuilder
+		addContainer(new Row())
+		return this
+	/** Inserts a column, which aligns its contains' width. */
+	function col() returns FlexboxgridBuilder
+		addContainer(new Col())
+		return this
+	/** Inserts a table, which aligns its contains in a grid.
+		
+		Use `.line()` to go to the next row
+		and `.stub()` to skip an element in the row. */
+	function table() returns FlexboxgridBuilder
+		addContainer(new Table())
+		return this
 
-	private function insertRow(FlexRow fr)
-		fr.parent = fc
-		fc.rows.add(fr)
-	
-	private function insertCol(FlexCol fc)
-		fc.parent = fr
-		fr.cols.add(fc)
-
-	private function insertCell(Cell c)
-		let nr = new FlexRow()
-		nr.target = c
-		if isRow
-			col()
-			insertRow(nr)
-			close()
+	/** Closes current container (row, col or table) and goes back to it's holder. */
+	function close() returns FlexboxgridBuilder
+		if c.parent == null
+			Log.error("close: Matching container opener not found")
 		else
-			insertRow(nr)
-
-	function row() returns thistype
-		isRow = true
-		fr = new FlexRow()
-		insertRow(fr)
+			c = c.parent
 		return this
 
-	function col() returns thistype
-		isRow = false
-		fc = new FlexCol()
-		insertCol(fc)
+	/** Adds a cell in the container with given parameters. */
+	function cell(real width, string value, string icon, colorA clr) returns FlexboxgridBuilder
+		addCell(new Cell(width, value, icon, clr))
+		return this
+	/** Adds a cell in the container with given parameters. */
+	function cell(real width, string value, colorA clr) returns FlexboxgridBuilder
+		addCell(new Cell(width, value, "", clr))
+		return this
+	/** Adds a cell in the container with given parameters. */
+	function cell(real width, string value) returns FlexboxgridBuilder
+		addCell(new Cell(width, value, "", COLOR_WHITE))
+		return this
+	/** Adds a cell in the container which parameters is defined by `updater`
+		through its `.update(Cell)` method. */
+	function cell(real width, CellUpdater updater) returns FlexboxgridBuilder
+		addCell(new Cell(width, updater))
+		return this
+	/** Adds an empty space in the container with 0 width and 1 line height.
+		Useful in Column or in Table. */
+	function stub() returns FlexboxgridBuilder
+		addCell(STUB)
 		return this
 
-	function cell(string s, real w) returns thistype
-		let c = new Cell()
-		c.value = s
-		c.width = w
-		insertCell(c)
-		return this
-
-	function cell(real w, CellUpdater cu) returns thistype
-		let c = new Cell(cu)
-		c.width = w
-		insertCell(c)
-		return this
-
-	function close() returns thistype
-		if isRow
-			fr = fr.parent.parent
-		else
-			fc = fc.parent.parent
-		isRow = not isRow
+	/** Use to insert new row in the table and switch to it. */
+	function line() returns FlexboxgridBuilder
+		c.line()
 		return this
 
 	function finish() returns Flexboxgrid
-		let f = fbg..initialize()..build()
+		while c.parent != null
+			c = c.parent
+		let fbx = Flexboxgrid.wrap(c)
 		destroy this
-		return f
+		return fbx
+
+	private function addContainer(Container c_)
+		c_.parent = c
+		c.insert(c_)
+		c = c_
+
+	private function addCell(Cell c_)
+		c.insert(c_)
 
 public class Flexboxgrid
-	multiboard mb
-	private real width = 0.3
-	let firstColumn = new FlexCol()
-	let rowItemCount = new HashMap<int,int>
-	
-	protected function getRowNextItem(int row) returns multiboarditem
+	protected static function wrap(Container c) returns Flexboxgrid
+		return new Flexboxgrid(c)
+	private construct(Flex o)
+		e = o
+		e.calc()
+	private multiboard mb = null
+	private var width = 0.3
+	private Flex e = null
+	private let rowItemCount = new HashMap<int, int>
+
+	protected function nextRowItem(int row) returns multiboarditem
 		let count = rowItemCount.get(row)
 		rowItemCount.put(row, count + 1)
 		if count >= mb.getColumnCount()
@@ -84,203 +96,230 @@ public class Flexboxgrid
 			mb.setColumnCount(count + itemCount)
 		return count
 
-	protected function getItem(int row, int count) returns multiboarditem
-		return mb.getItem(row, count)
+	protected function getItem(int row, int column) returns multiboarditem
+		return mb.getItem(row, column)
 
 	function setWidth(real width)
 		if width > 0.001
 			this.width = width
 
-	protected function initialize()
+	function initialize()
 		mb = CreateMultiboard()
 		..display(false)
 
 	/** This function starts a recursive multiboard update */
-	function build()
-		rowItemCount.flush()
-		firstColumn.calculate()
-		mb..setRowCount(firstColumn.height)
+	function update()
+		e.update()
+
+	function recalculate()
+		e.calc()
+
+	function draw()
+		mb
 		..setItemsStyle(true, false)
 		..setItemsWidth(0.01)
 		..setItemsValue("!error")
 		..setItemsValueColor(255, 0, 0, 255)
-		firstColumn.build(this, 0, firstColumn.height, width / firstColumn.width)
-
-		for y = 0 to firstColumn.height
-			for x = rowItemCount.get(y) to mb.getColumnCount() - 1
-				mb.getItem(y, x)
-				..setStyle(false, false)
-				..setWidth(0.0001)
-				..setValue("")
-				.release()
+		..setRowCount(e.height_)
+		rowItemCount.flush()
+		
+		let t = Flex.cfbx
+		Flex.cfbx = this
+		e.draw(0, width, e.height_)
+		Flex.cfbx = t
 		mb..display(true)
-
-	function dump()
-		Log.info("fbg: " + firstColumn.width.toString() + "w " + firstColumn.height.toString() + "h")
-		firstColumn.dump()
-
-	function update()
-		firstColumn.update()
 
 	ondestroy
 		destroy rowItemCount
+		destroy e
+		mb.destr()
 
-class FlexRow
-	FlexCol parent = null
-	let cols = new LinkedList<FlexCol>
-	var height = 0
-	var width = 0.0
+function multiboarditem.preset(real width, string value, string icon, colorA clr)
+	this
+	..setStyle(value != "", icon != "")
+	..setWidth(width - 0.001)
+	..setValue(value)
+	..setIcon(icon)
+	..setValueColor(clr)
+	.release()
 
-	Cell target = null
-
-	function isContainer() returns bool
-		return target == null
-
-	/** Recursively calculates size of the element */
-	function calculate()
-		if isContainer()
-			height = 0
-			width = 0
-			for col in cols
-				col.calculate()
-				if col.height > height
-					height = col.height
-				width += col.width
-		else
-			height = 1
-			width = target.width
-
-	function build(Flexboxgrid fbg, int y, real w, real w2r)
-		let nw2r = w2r * w / width
-		if isContainer()
-			for col in cols
-				col.build(fbg, y, height, nw2r)
-		else
-			// pre: width <= w
-			target.build(fbg, y, nw2r * w)
-			// post: w2r' >= w2r
-			// post: w2r' stretches the object so that it will fill the width.
-
-	function dump()
-		if isContainer()
-			Log.info("Row: " + width.toString() + "w " + height.toString() + "h " + cols.size().toString() + "e.")
-			for col in cols
-				col.dump()
-		else
-			target.dump()
-
-	function update()
-		if isContainer()
-			for col in cols
-				col.update()
-		else
-			target.update()
-
-	ondestroy
-		for col in cols
-			destroy col
-		destroy cols
-
-class FlexCol
-	let rows = new LinkedList<FlexRow>
-	int height
-	real width
-	FlexRow parent = null
-	/** Recursively calculates size of the element */
-	function calculate()
-		height = 0
-		width = 0
-		for row in rows
-			row.calculate()
-			if row.width > width
-				width = row.width
-			height += row.height
-
-	function build(Flexboxgrid fbg, int y, int h, real w2r)
-		var py = y
-		for row in rows
-			row.build(fbg, py, width, w2r)
-			py += row.height
-
-		while py < y + h
-			fbg.getRowNextItem(py)
-			..setStyle(true, false)
-			..setWidth(width * w2r - 0.001)
-			..setValue("")
-			.release()
-			py++
-
-	function dump()
-		Log.info("Col: " + width.toString() + "w " + height.toString() + "h " + rows.size().toString() + "e.")
-		for row in rows
-			row.dump()
-
-	function update()
-		for row in rows
-			row.update()
-
-	ondestroy
-		for row in rows
-			destroy row
-		destroy rows
-
+abstract class Flex // hello, ricardo
+	protected static Flexboxgrid cfbx = null // parent flexboxgrid during draw()
+	protected var width_ = 0.
+	protected var height_ = 1
+	protected abstract function draw(int y, real width_, int height_)
+	protected abstract function calc()
+	protected abstract function update()
 
 public interface CellUpdater
-	/** Returns whether the cell is needed to be updated */
-	function update(Cell c) returns bool
+	function update(Cell c)
 
-public enum CellMode
-	NONE
-	ICON
-	VALUE
-	BOTH
-
-public class Cell
+constant STUB = new Cell()
+public class Cell extends Flex
 	var value = ""
 	var icon = ""
 	var clr = COLOR_WHITE
-	var mode = CellMode.VALUE
-	
+	var width = 0.
 	CellUpdater updater = null
 
-	protected var width = 1.0
-	protected multiboarditem i = null
-
 	construct()
-
-	construct(CellUpdater updater)
-		this.updater = updater
-
-	/** To update the change, a rebuild is required. */
-	function setWidth(real width)
-		this.width = width
-
-	protected function dump()
-		Log.info("Cell: " + width.toString() + "w '" + value + "'")
-
-	protected function build(Flexboxgrid fbg, int row, real w)
-		if not i != null
-			i.release()
-		
-		i = fbg.getRowNextItem(row)..setWidth(w - 0.001)
+	
+	construct(real width_, CellUpdater updater_)
+		width = width_
+		updater = updater_
 		update()
 
-	protected function update()
+	construct(real width_, string value_, string icon_, colorA clr_)
+		width = width_
+		value = value_
+		icon = icon_
+		clr = clr_
+	
+	ondestroy
+		destroy updater
+
+	function clear()
+		value = ""
+		icon = ""
+		clr = COLOR_WHITE
+		width = 0.
+
+	override function calc()
+		height_ = 1
+		width_ = width
+
+	override function draw(int y, real width, int height)
+		cfbx.nextRowItem(y).preset(width, value, icon, clr)
+		var py = y + 1
+		while py < y + height
+			cfbx.nextRowItem(py).preset(width, "", "", COLOR_WHITE)
+			py++
+
+	override function update()
 		if updater != null
-			if not updater.update(this)
-				return
-		switch mode
-			case NONE
-				i..setStyle(false, false)
-			case ICON
-				i..setStyle(false, true)
-				..setIcon(icon)
-			case VALUE
-				i..setStyle(true, false)
-				..setValue(value)
-				..setValueColor(clr)
-			case BOTH
-				i..setStyle(true, true)
-				..setValue(value)
-				..setIcon(icon)
-				..setValueColor(clr)
+			updater.update(this)
+
+
+abstract class Container extends Flex
+	Container parent = null
+	abstract function insert(Flex o)
+	function line()
+		Log.error("[Flexboxgrid] called .line() on wrong container type!")
+
+abstract class LinearContainer extends Container
+	let objs = new LinkedList<Flex>
+
+	ondestroy
+		for o in objs
+			destroy o
+		destroy objs
+
+	override function insert(Flex o)
+		objs.add(o)
+
+	override function update()
+		for o in objs
+			o.update()
+
+class Row extends LinearContainer
+	override function calc()
+		height_ = 1
+		width_ = 0
+		for o in objs
+			o.calc()
+			height_ = max(height_, o.height_)
+			width_ += o.width_
+
+	override function draw(int y, real width, int height)
+		for o in objs
+			o.draw(y, width * o.width_ / width_, height)
+
+class Col extends LinearContainer
+	override function calc()
+		height_ = 0
+		width_ = 0
+		for o in objs
+			o.calc()
+			width_ = max(width_, o.width_)
+			height_ += o.height_
+
+	override function draw(int y, real width, int height)
+		var py = y
+		for o in objs
+			o.draw(py, width, o.height_)
+			py += o.height_
+
+		while py < y + height
+			cfbx.nextRowItem(py).preset(width, "", "", COLOR_WHITE)
+			py++
+
+class Table extends Container
+	let ls = new LinkedList<LinkedList<Flex>>..add(new LinkedList<Flex>)
+	let heights = new LinkedList<int>
+	let widths = new LinkedList<real>
+	var cols = 0
+
+	ondestroy
+		for l in ls
+			for o in l
+				destroy o
+			destroy l
+		destroy ls
+		destroy heights
+		destroy widths
+
+	override function insert(Flex o)
+		ls.peek().add(o)
+		if ls.peek().size() > cols
+			cols = ls.peek().size()
+
+	override function line()
+		ls.add(new LinkedList<Flex>)
+
+	override function update()
+		for l in ls
+			for o in l
+				o.update()
+
+	override function calc()
+		height_ = 0
+		width_ = 0
+		heights.clear()
+		widths.clear()
+		for l in ls
+			int h = 0
+			while widths.size() < l.size()
+				widths.add(0)
+			var i = widths.iterator()
+			for o in l
+				o.calc()
+				h = max(h, o.height_)
+				if i.hasNext()
+					i.modify(max(i.next(), o.width_))
+				else
+					widths.add(o.width_)
+			i.close()
+			heights.add(h)
+			height_ += h
+		for w in widths
+			width_ += w
+
+	override function draw(int y, real width, int height)
+		var py = y
+		var ih = heights.iterator()
+		for l in ls
+			var iw = widths.iterator()
+			ih.next()
+			int i = 0
+			for o in l
+				o.draw(py, width * iw.next() / this.width_, ih.current.elem)
+				i++
+			while i < cols
+				STUB.draw(py, width * iw.next() / this.width_, ih.current.elem)
+				i++
+			py += ih.current.elem
+			iw.close()
+		ih.close()
+		while py < y + height_
+			cfbx.nextRowItem(py).preset(width, "", "", COLOR_WHITE)
+			py++
