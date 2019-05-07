@@ -27,6 +27,29 @@ public class FlexboxgridBuilder
 		else
 			c = c.parent
 		return this
+	
+	/** Fixes height and relative width of current container
+		(by default it's defined by it's contains) */
+	function size(real w, int h) returns FlexboxgridBuilder
+		c.width_ = w
+		c.fixed_w = true
+		c.height_ = h
+		c.fixed_h = true
+		return this
+
+	/** Fixes relative width of current container
+		(by default it's defined by it's contains) */
+	function width(real w) returns FlexboxgridBuilder
+		c.width_ = w
+		c.fixed_w = true
+		return this
+	
+	/** Fixes height of current container
+		(by default it's defined by it's contains) */
+	function height(int h) returns FlexboxgridBuilder
+		c.height_ = h
+		c.fixed_h = true
+		return this
 
 	/** Adds a cell in the container with given parameters. */
 	function cell(real width, string value, string icon, colorA clr) returns FlexboxgridBuilder
@@ -147,6 +170,8 @@ abstract class Flex // hello, ricardo
 	protected static Flexboxgrid cfbx = null // parent flexboxgrid during draw()
 	protected var width_ = 0.
 	protected var height_ = 1
+	protected var fixed_h = false
+	protected var fixed_w = false
 	protected abstract function draw(int y, real width_, int height_)
 	protected abstract function calc()
 	protected abstract function update()
@@ -222,26 +247,36 @@ abstract class LinearContainer extends Container
 			o.update()
 
 class Row extends LinearContainer
+	real sum_width_ = 0.
 	override function calc()
-		height_ = 1
-		width_ = 0
+		var max_height_ = 1
+		sum_width_ = 0
 		for o in objs
 			o.calc()
-			height_ = max(height_, o.height_)
-			width_ += o.width_
+			max_height_ = max(max_height_, o.height_)
+			sum_width_ += o.width_
+		if not fixed_w
+			width_ = sum_width_
+		if not fixed_h or height_ < max_height_
+			height_ = max_height_
 
 	override function draw(int y, real width, int height)
 		for o in objs
-			o.draw(y, width * o.width_ / width_, height)
+			o.draw(y, width * o.width_ / sum_width_, height)
 
 class Col extends LinearContainer
+	int sum_height_ = 0
 	override function calc()
-		height_ = 0
-		width_ = 0
+		var max_width_ = 0.
+		sum_height_ = 0
 		for o in objs
 			o.calc()
-			width_ = max(width_, o.width_)
-			height_ += o.height_
+			max_width_ = max(max_width_, o.width_)
+			sum_height_ += o.height_
+		if not fixed_w
+			width_ = max_width_
+		if not fixed_h or height_ < sum_height_
+			height_ = sum_height_
 
 	override function draw(int y, real width, int height)
 		var py = y
@@ -258,6 +293,8 @@ class Table extends Container
 	let heights = new LinkedList<int>
 	let widths = new LinkedList<real>
 	var cols = 0
+	real sum_width_ = 0.
+	int sum_height_ = 0
 
 	ondestroy
 		for l in ls
@@ -282,8 +319,8 @@ class Table extends Container
 				o.update()
 
 	override function calc()
-		height_ = 0
-		width_ = 0
+		sum_height_ = 0
+		sum_width_ = 0
 		heights.clear()
 		widths.clear()
 		for l in ls
@@ -300,9 +337,13 @@ class Table extends Container
 					widths.add(o.width_)
 			i.close()
 			heights.add(h)
-			height_ += h
+			sum_height_ += h
 		for w in widths
-			width_ += w
+			sum_width_ += w
+		if not fixed_h or height_ < sum_height_
+			height_ = sum_height_
+		if not fixed_w
+			width_ = sum_width_
 
 	override function draw(int y, real width, int height)
 		var py = y
@@ -312,10 +353,10 @@ class Table extends Container
 			ih.next()
 			int i = 0
 			for o in l
-				o.draw(py, width * iw.next() / this.width_, ih.current.elem)
+				o.draw(py, width * iw.next() / this.sum_width_, ih.current.elem)
 				i++
 			while i < cols
-				STUB.draw(py, width * iw.next() / this.width_, ih.current.elem)
+				STUB.draw(py, width * iw.next() / this.sum_width_, ih.current.elem)
 				i++
 			py += ih.current.elem
 			iw.close()
