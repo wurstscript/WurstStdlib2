@@ -177,3 +177,15 @@ function testGenerics()
 @Test function testAsList()
 	asList(1,2,3,4).foldl<int>(0, (i, q) -> q + i)
 		.assertEquals(asList(4,3,2,1).foldl<int>(0, (i, q) -> q + i))
+
+
+@Test function testStringHashCollission()
+	let testlist = new LinkedList<string>
+	testlist.add("a")
+	testlist.add("b")
+	testlist.add("c")
+	testlist.has("a").assertTrue()
+	testlist.has("b").assertTrue()
+	testlist.has("c").assertTrue()
+	testlist.has("x").assertFalse()
+	testlist.has("A").assertFalse()

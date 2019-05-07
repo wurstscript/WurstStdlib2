@@ -243,7 +243,7 @@ public class Knockback3
 
 			if velXySquared < minimumSlideSpeed * ANIMATION_PERIOD and knockback.del.z > elasticityThreshold * ANIMATION_PERIOD and knockback.del.z < -1 * elasticityThreshold * ANIMATION_PERIOD and pos3.z < isAirborneThreshold
 				tickUnitDone(knockback)
-				knockback.remove()
+				destroy knockback
 
 		if size == 0
 			clock.pause()

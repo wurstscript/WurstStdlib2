@@ -3,8 +3,11 @@ import NoWurst
 import Integer
 import Real
 import Boolean
+import Annotations
 // Wurst unit testing library
 
+/** Functions annotated with @test can be executed as unit tests. */
+@annotation public function test()
 
 @deprecated("Use 'println' instead")
 public function testPrint(string msg)

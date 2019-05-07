@@ -75,7 +75,6 @@ public module TimedLoop
 		while i >= 0
 			thistype t = instances[i]
 
-			t.onTimedLoop()
 			if t.mode != Mode.RUNNING
 				instanceCount--
 				instances[i] = instances[instanceCount]
@@ -84,6 +83,8 @@ public module TimedLoop
 					destroy t
 				else
 					t.mode = Mode.PAUSED
+			else
+				t.onTimedLoop()
 			i--
 		if instanceCount == 0
 			TriggerRemoveCondition(timedLoopTrig, triggerCond)
