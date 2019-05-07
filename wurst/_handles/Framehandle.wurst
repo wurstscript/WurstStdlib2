@@ -1,0 +1,134 @@
+package Framehandle
+import NoWurst
+
+public function getOriginFrame(originframetype frameType, integer index) returns framehandle
+    return BlzGetOriginFrame(frameType,index)
+
+public function getFrameByName(string name, integer createContext) returns framehandle
+    return BlzGetFrameByName(name,createContext)
+
+public function createFrame(string name,framehandle owner,integer priority,integer createContext) returns framehandle
+    return BlzCreateFrame(name,owner,priority,createContext)
+    
+public function createSimpleFrame(string name,framehandle owner,integer createContext) returns framehandle
+    return BlzCreateSimpleFrame(name,owner,createContext)
+    
+public function createFrameByType(string typeName,string name,framehandle owner,string inherits,integer createContext) returns framehandle
+    return BlzCreateFrameByType(typeName,name,owner,inherits,createContext)
+
+public function framehandle.remove()
+    BlzDestroyFrame(this)
+
+public function framehandle.setPoint(framepointtype point,framehandle relative,framepointtype relativePoint,real x,real y)
+    BlzFrameSetPoint(this,point,relative,relativePoint,x,y)
+
+public function framehandle.setAbsPoint(framepointtype point,real x, real y)
+    BlzFrameSetAbsPoint(this,point,x,y)
+
+public function framehandle.clearAllPoints()
+    BlzFrameClearAllPoints(this)
+
+public function framehandle.setAllPoints(framehandle relative)
+    BlzFrameSetAllPoints(this,relative)
+
+public function framehandle.show()
+    BlzFrameSetVisible(this,true)
+
+public function framehandle.hide()
+    BlzFrameSetVisible(this,false)
+
+public function framehandle.isVisible() returns boolean
+    return BlzFrameIsVisible(this)
+
+public function framehandle.name() returns string
+    return BlzFrameGetName(this)
+
+public function framehandle.click()
+    BlzFrameClick(this)
+
+public function framehandle.text() returns string
+    return BlzFrameGetText(this)
+
+public function framehandle.text(string text)
+    BlzFrameSetText(this,text)
+
+public function framehandle.textSizeLimit() returns integer
+    return BlzFrameGetTextSizeLimit(this)
+
+public function framehandle.textSizeLimit(integer size)
+    BlzFrameSetTextSizeLimit(this,size)
+
+public function framehandle.textColor(integer color)
+    BlzFrameSetTextColor(this,color)
+
+public function framehandle.focus(boolean flag)
+    BlzFrameSetFocus(this,flag)
+
+public function framehandle.model(string modelFile, integer cameraIndex)
+    BlzFrameSetModel(this,modelFile,cameraIndex)
+
+public function framehandle.enable() returns boolean
+    return BlzFrameGetEnable(this)
+
+public function framehandle.enable(boolean enabled)
+    BlzFrameSetEnable(this,enabled)
+
+public function framehandle.alpha() returns int
+    return BlzFrameGetAlpha(this)
+
+public function framehandle.alpha(integer alpha)
+    BlzFrameSetAlpha(this,alpha)
+
+public function framehandle.spriteAnimate(integer primaryProp, integer flags)
+    BlzFrameSetSpriteAnimate(this,primaryProp,flags)
+
+public function framehandle.texture(string texFile, integer flag, boolean blend)
+    BlzFrameSetTexture(this,texFile,flag,blend) 
+
+public function framehandle.scale(real scale)
+    BlzFrameSetScale(this,scale)   
+
+public function framehandle.tooltip(framehandle tooltip)
+    BlzFrameSetTooltip(this,tooltip)   
+    
+public function framehandle.cageMouse(boolean enable)
+    BlzFrameCageMouse(this,enable)   
+
+public function framehandle.value() returns real
+    return BlzFrameGetValue(this)
+
+public function framehandle.value(real value)
+    BlzFrameSetValue(this,value)
+
+public function framehandle.minMax(real minValue, real maxValue)
+    BlzFrameSetMinMaxValue(this,minValue,maxValue)
+
+public function framehandle.stepSize(real stepSize)
+    BlzFrameSetStepSize(this,stepSize)
+
+public function framehandle.size(real width, real height)
+    BlzFrameSetSize(this,width,height)
+
+public function framehandle.vertexColor(integer color)
+    BlzFrameSetVertexColor(this,color)
+
+public function framehandle.level(integer level)
+    BlzFrameSetLevel(this,level)
+
+public function framehandle.parent() returns framehandle
+    return BlzFrameGetParent(this)
+
+public function framehandle.parent(framehandle parent)
+    BlzFrameSetParent(this,parent)
+
+public function framehandle.height() returns real
+    return BlzFrameGetHeight(this)
+
+public function framehandle.width() returns real
+    return BlzFrameGetWidth(this)
+
+public function framehandle.font(string fileName, real height, integer flags)
+    BlzFrameSetFont(this,fileName,height,flags)
+
+public function framehandle.textAlignment(textaligntype vert, textaligntype horz)
+    BlzFrameSetTextAlignment(this,vert,horz)

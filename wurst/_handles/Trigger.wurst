@@ -109,6 +109,9 @@ public function trigger.registerUnitInRange(unit whichUnit, real range, boolexpr
 public function trigger.registerUnitStateEvent(unit whichUnit, unitstate whichState, limitop opcode, real limitval) returns event
 	return TriggerRegisterUnitStateEvent(this, whichUnit, whichState, opcode, limitval)
 
+public function trigger.registerFrameEvent(framehandle frame, frameeventtype eventId) returns event
+	return BlzTriggerRegisterFrameEvent(this,frame,eventId)
+
 public function trigger.removeAction(triggeraction action)
 	TriggerRemoveAction(this, action)
 
