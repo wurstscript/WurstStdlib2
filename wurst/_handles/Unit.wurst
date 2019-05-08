@@ -327,7 +327,16 @@ public function unit.isPaused() returns boolean
 	return IsUnitPaused(this)
 
 public function unit.pause()
+	PauseUnit(this, true)
+
+public function unit.pauseEx()
 	BlzPauseUnitEx(this, true)
+
+public function unit.unpause()
+	PauseUnit(this, false)
+
+public function unit.unpauseEx()
+	BlzPauseUnitEx(this, false)
 
 public function unit.queueAnimation(string animation)
 	QueueUnitAnimation(this, animation)
@@ -526,9 +535,6 @@ public function unit.subMana(real val)
 
 public function unit.subState(unitstate state, real value)
 	SetUnitState(this, state, this.getState(state) - value)
-
-public function unit.unpause()
-	PauseUnit(this, false)
 
 public function vec2.withRealZ(unit u) returns vec3
 	return vec3(this.x, this.y, this.getTerrainZ() + u.getFlyHeight())
