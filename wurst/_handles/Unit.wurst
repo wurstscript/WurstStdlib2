@@ -584,7 +584,9 @@ public function unit.setMaxMana(int mana)
 	BlzSetUnitMaxMana(this, mana)
 
 /** Changes a unit's maximum mana, adjusting the
-	current mana to keep the same ratio.*/
+	current mana to keep the same ratio.
+	If the current unit's maximum mana is zero,
+	the ratio will be considered null.*/
 public function unit.setMaxMana(int mana, boolean keepRatio)
 	if keepRatio
 		let maxMana = this.getMaxMana()
