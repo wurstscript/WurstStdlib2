@@ -2,7 +2,7 @@ package AttachmentPoints
 import NoWurst
 
 /** Class that contains every known attachmentpoint in game */
-static class AttachmentPoints
+public class AttachmentPoints
 	/** The attachmentpoint 'overhead' floats over the unit's head, but doesn't sway with it */
 	static constant overhead             = "overhead"
 	/** The attachmentpoint 'head' sways with the unit's animation */
@@ -21,7 +21,7 @@ static class AttachmentPoints
 	static constant large                = "large"
 	
 /** Class that contains every known attachmentpointmodifier in game */	
-static class AttachmentPointModifiers
+public class AttachmentPointModifiers
 	static constant left 				 = "left"
 	static constant right 				 = "right"	
 	/** The attachmentpointmodifier 'mount' is for mounted units only */
@@ -44,7 +44,7 @@ static class AttachmentPointModifiers
 	static constant rallypoint 			 = "rallypoint"
 	
 /** Class that contains every known special attachmentpoint in game */	
-static class SpecialAttachmentPoints
+public class SpecialAttachmentPoints
 	static constant rightHand			 = "hand,right"
 	static constant leftHand			 = "hand,left"
 	static constant rightFoot			 = "foot,right"
