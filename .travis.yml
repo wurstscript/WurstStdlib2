@@ -1,16 +1,18 @@
-sudo: required
-jdk: oraclejdk8
+language: minimal
 
-before_install: 
-  - mkdir $HOME/.wurst/
-  - cd $HOME/.wurst
-  - sudo apt-get install -y wine
+services:
+  - docker
+
+before_install:
+  - docker pull frotty/wurstscript
+  - docker run -it -d --name build frotty/wurstscript /bin/sh
 
 install:
-  - wget http://peeeq.de/hudson/job/Wurst/lastSuccessfulBuild/artifact/downloads/wurstpack_compiler.zip
-  - unzip -qq -n wurstpack_compiler.zip -d $HOME/.wurst
-
-before_script: cd $TRAVIS_BUILD_DIR 
+  - docker exec build grill install wurstscript
+  - docker exec build git clone https://github.com/$TRAVIS_REPO_SLUG.git target
+  - docker exec build /bin/sh -c "mv -v target/* target/.* . 2>/dev/null; true"
+  - docker exec build git checkout -qf $TRAVIS_COMMIT
 
 script:
-  - java -jar $HOME/.wurst/wurstscript.jar $HOME/.wurst/common.j $HOME/.wurst/blizzard.j ./ -runcompiletimefunctions -runtests
+  - docker exec build grill install
+  - docker exec build grill test

@@ -5,6 +5,7 @@ import public ObjectIds
 import public ObjectIdGenerator
 import OrderStringFactory
 import BitSet
+import Annotations
 
 var odf = new OrderStringFactory()
 @compiletime function initOdf()
@@ -37,7 +38,6 @@ public function Targettype.toString() returns string
 			return "Point & Unit Target"
 		case PASSIVE
 			return "Passive"
-	return ""
 
 public class ChannelAbilityPreset extends AbilityDefinitionIllidanChannel
 	private bitset optionSet = bitset(0)

@@ -100,6 +100,7 @@ public abstract class EventListener
 	static constant castMapCasters = new HashMap<unit, OnCastListener>
 	static EventListener array generalListenersFirsts
 	static EventListener array unitListenersFirsts
+	static var useMouseEvents = false
 
 	int eventId = 0
 	EventListener next = null
@@ -240,6 +241,12 @@ function registerEventId(eventid evnt) returns int
 		registerPlayerUnitEvent(ConvertPlayerUnitEvent(eventId), function EventListener.generalEventCallback)
 	else if evnt != EVENT_UNIT_DAMAGED and evnt != EVENT_PLAYER_LEAVE and evnt != EVENT_PLAYER_CHAT_FILTER and not evnt.isKeyboardEvent() and not evnt.isMouseEvent()
 		error("registering handleid: " + eventId.toString() + " non-playerunitevent. Except EVENT_UNIT_DAMAGED and EVENT_PLAYER_LEAVE these are not supported right now.")
+	if evnt.isMouseEvent() and not EventListener.useMouseEvents
+		EventListener.useMouseEvents = true
+		for i = 0 to bj_MAX_PLAYERS - 1
+			keyTrig..registerPlayerEvent(players[i], EVENT_PLAYER_MOUSE_UP)
+			..registerPlayerEvent(players[i], EVENT_PLAYER_MOUSE_DOWN)
+			..registerPlayerEvent(players[i], EVENT_PLAYER_MOUSE_MOVE)
 	return eventTypeCounter
 
 function registerEventsForUnit(unit u)
@@ -296,9 +303,6 @@ init
 			..registerPlayerEvent(players[i], EVENT_PLAYER_ARROW_RIGHT_DOWN)
 			..registerPlayerEvent(players[i], EVENT_PLAYER_ARROW_RIGHT_UP)
 			..registerPlayerEvent(players[i], EVENT_PLAYER_END_CINEMATIC)
-			..registerPlayerEvent(players[i], EVENT_PLAYER_MOUSE_UP)
-			..registerPlayerEvent(players[i], EVENT_PLAYER_MOUSE_DOWN)
-			..registerPlayerEvent(players[i], EVENT_PLAYER_MOUSE_MOVE)
 			..registerPlayerChatEvent(players[i], "", false)
 
 		registerPlayerUnitEvent(EVENT_PLAYER_UNIT_SPELL_EFFECT, null, () -> EventListener.onSpellEffect(), null)

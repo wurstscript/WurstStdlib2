@@ -3,20 +3,37 @@ import NoWurst
 import Integer
 import Real
 import Boolean
+import BitSet
 import public ObjEditingNatives
 import String
 import public UnitObjEditing
 import Assets
+import Annotations
 
 public enum AllowWhenFull
 	NEVER
 	LIFE_ONLY
 	MANA_ONLY
 	ALWAYS
+	
+public enum StackingType
+	DAMAGE
+	MOVEMENT
+	ATTACK_RATE
+	KILL_UNIT
 
 public interface TooltipGenerator
 	function addProperty(string title, StringLevelClosure lc)
 	function applyToDef(AbilityDefinition def)
+
+/** Makes an ability able to be cast by a dummy */
+public function AbilityDefinition.setDummyAbility() returns AbilityDefinition
+	this..setHeroAbility(false)
+	..setManaCost(1, 0)
+	..setCooldown(1, 0)
+	..setCastRange(1, 99999)
+	..setCheckDependencies(false)
+	return this
 
 public class AbilityDefinition
 	protected ObjectDefinition def
@@ -246,6 +263,7 @@ public class AbilityDefinition
 	function setTooltipLearnExtended(string value)
 		def.setLvlDataString("arut", 0, 0, value)
 
+	@Deprecated("Use setTooltipLearnExtended instead. Warcraft only has 1 learn tooltip and expects you to reference field data using <AHad,DataA1,.> e.g.")
 	function presetTooltipLearnExtended(StringLevelClosure lc)
 		def.setLevelsDataString("arut", lvls, 0, lc)
 		addTooltipProperty("TooltipLearnExtended", lc)
@@ -3529,7 +3547,20 @@ public class AbilityDefinitionWindWalk extends AbilityDefinition
 		def.setLevelsDataBoolean("Owk4", lvls, 4, lc)
 		addTooltipProperty("BackstabDamageEnabled", lc)
 
-
+	function setMovementSpeedIncrease(int level, real value)
+		def.setLvlDataUnreal("Owk2", level, 2, value)
+	
+	function presetMovementSpeedIncrease(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Owk2", lvls, 2, lc)
+		addTooltipProperty("MovementSpeedIncrease", lc)
+	
+	function setTransitionTime(int level, real value)
+		def.setLvlDataUnreal("Owk1", level, 1, value)
+	
+	function presetTransitionTime(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Owk1", lvls, 1, lc)
+		addTooltipProperty("TransitionTime", lc)
+		
 
 public class AbilityDefinitionManaShieldCreep extends AbilityDefinition
 	construct(int newAbilityId)
@@ -10131,6 +10162,8 @@ public class AbilityDefinitionWardenBlink extends AbilityDefinition
 
 
 public class AbilityDefinitionPoisonAttack extends AbilityDefinition
+	private bitset stackingTypesSet = bitset(1)
+
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.poisonSting)
 
@@ -10141,12 +10174,25 @@ public class AbilityDefinitionPoisonAttack extends AbilityDefinition
 		def.setLevelsDataUnreal("Poi2", lvls, 2, lc)
 		addTooltipProperty("AttackSpeedFactor", lc)
 
-	function setStackingType(int level, string value)
-		def.setLvlDataString("Poi4", level, 4, value)
+	function setStackingType(int level, int value)
+		def.setLvlDataInt("Poi4", level, 4, value)
 
-	function presetStackingType(StringLevelClosure lc)
-		def.setLevelsDataString("Poi4", lvls, 4, lc)
+	function presetStackingTypes(IntLevelClosure lc)
+		def.setLevelsDataInt("Poi4", lvls, 4, lc)
 		addTooltipProperty("StackingType", lc)
+		
+	function presetStackingType(StackingType stackingType, boolean flag)
+		let pow = stackingType castTo int
+		if stackingTypesSet.contains(pow)
+			if not flag
+				stackingTypesSet = stackingTypesSet.remove(pow)
+		else if flag
+			stackingTypesSet = stackingTypesSet.add(pow)
+
+		presetStackingTypes(lvl -> stackingTypesSet.val)
+		
+	function hasStackingType(StackingType stackingType) returns boolean
+		return stackingTypesSet.contains(stackingType castTo int)
 
 	function setDamageperSecond(int level, real value)
 		def.setLvlDataUnreal("Poi1", level, 1, value)
