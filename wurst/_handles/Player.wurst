@@ -197,17 +197,17 @@ public function player.setTargetIndicator(bool enableTargetIndicator)
 	if localPlayer == this
 		BlzEnableTargetIndicator(enableTargetIndicator)
 
-/** Return if Target Indicator is enabled for local player. Returns false for non-local player.*/
+/** Enable or disable mouse cursor..*/
 public function player.setCursorEnabled(bool enableCursor)
 	if localPlayer == this
 		BlzEnableCursor(enableCursor)
 
-/** Return if Target Indicator is enabled for local player. Returns false for non-local player.*/
+/** Set cursor position on screen. Uses int values internally.*/
 public function player.setPosCursor(vec2 pos) 
 	if localPlayer == this
 		BlzSetMousePos(R2I(pos.x), R2I(pos.y))
 
-/** Return if Target Indicator is enabled for local player. Returns false for non-local player.*/
+/** Get unit focused by mouse cursor.*/
 public function player.getCursorFocus() returns unit 
 	if localPlayer == this
 		return BlzGetMouseFocusUnit()
