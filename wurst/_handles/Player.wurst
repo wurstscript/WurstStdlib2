@@ -35,6 +35,23 @@ public function player.clearSelection()
 	if localPlayer == this
 		ClearSelection()
 
+/** Get if Selection is enabled for local player. Returns always false for non-local player.*/
+public function player.isSelectionEnabled() returns bool
+	if localPlayer == this
+		return BlzIsSelectionEnabled()
+	return false
+
+/** Get if Selection Circle is enabled for local player. Returns always false for non-local player.*/
+public function player.isSelectionCircleEnabled() returns bool
+	if localPlayer == this
+		return BlzIsSelectionCircleEnabled()
+	return false
+
+/** Enable or disable player selections.*/
+public function player.setSelectionsEnabled(bool enableSelection, bool enableSelectionCircle)
+	if localPlayer == this
+		BlzEnableSelections(enableSelection, enableSelectionCircle)
+
 /** Disable UI control for the player */
 public function player.disableUserControl()
 	this.setUserControl(false)
@@ -151,8 +168,64 @@ public function player.getTaxRate(player otherPlayer, playerstate whichResource)
 public function player.isRacePrefSet(racepreference preference) returns bool
 	return IsPlayerRacePrefSet(this, preference)
 
+/** Get width and height of current Warcraft 3 client window. Returns vec2(0,0) for non-local player.*/
+public function player.getScreenSize() returns vec2
+	if localPlayer == this
+		return vec2(I2R(BlzGetLocalClientWidth()), I2R(BlzGetLocalClientHeight()))
+	return vec2(0,0)
+
+/** Check if client window is active. Will return false always for non-local player.*/
+public function player.isScreenActive() returns bool
+	if localPlayer == this
+		return BlzIsLocalClientActive()
+	return false
+
+/** Return language locale for local player. Returns null for non-local player.*/
+public function player.getLocale() returns string
+	if localPlayer == this
+		return BlzGetLocale()
+	return null
+
+/** Return if Target Indicator is enabled for local player. Returns false for non-local player.*/
+public function player.isTargetIndicatorEnabled() returns bool
+	if localPlayer == this
+		return BlzIsTargetIndicatorEnabled()
+	return false
+
+/** Set if Target Indicator is enabled for local player.*/
+public function player.setTargetIndicator(bool enableTargetIndicator)
+	if localPlayer == this
+		BlzEnableTargetIndicator(enableTargetIndicator)
+
+/** Return if Target Indicator is enabled for local player. Returns false for non-local player.*/
+public function player.setCursorEnabled(bool enableCursor)
+	if localPlayer == this
+		BlzEnableCursor(enableCursor)
+
+/** Return if Target Indicator is enabled for local player. Returns false for non-local player.*/
+public function player.setPosCursor(vec2 pos) 
+	if localPlayer == this
+		BlzSetMousePos(R2I(pos.x), R2I(pos.y))
+
+/** Return if Target Indicator is enabled for local player. Returns false for non-local player.*/
+public function player.getCursorFocus() returns unit 
+	if localPlayer == this
+		return BlzGetMouseFocusUnit()
+	return null
+
+public function player.setMinimapTerrainTex(string texFile) returns bool
+	if localPlayer == this
+		return BlzChangeMinimapTerrainTex(texFile)
+	return false
+
+public function player.sendSyncData(string prefix, string data) returns bool
+	return BlzSendSyncData(prefix, data)
+
+public function player.showChatMessage(int recipient, string message)
+	BlzDisplayChatMessage(this, recipient, message)
+
+
 @Test
 function testPlayer()
 	let p = Player(0)
 	assertTrue(p == Player(0))
-
