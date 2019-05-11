@@ -39,3 +39,32 @@ import LinkedList
 	char("/").toInt().assertEquals(47)
 	char("\\").toInt().assertEquals(92)
 	char("|").toInt().assertEquals(124)
+
+@Test function testCreateDelimitedString_ForEachIn()
+	let str = createDelimitedString("a", "b", "c")
+	str.assertEquals("a,b,c")
+
+	let ints = createDelimitedString('H000', 'H001')
+	ints.assertEquals("H000,H001")
+
+	let l = new LinkedList<string>()
+	str.forEachIn(",") (string str) ->
+		l.add(str)
+	l.has("a").assertTrue()
+	l.has("b").assertTrue()
+	l.has("c").assertTrue()
+
+
+@Test function testIsDigit_IsValidLength()
+	"a".isDigit().assertFalse()
+	"1".isDigit().assertTrue()
+	"259812".isDigit().assertTrue()
+	"251a52".isDigit().assertFalse()
+	"1251FDSFA".isValidLength().assertTrue()
+
+@Test function testContainsAllAndOnly()
+	"-tste".containsAllAndOnly("-test").assertTrue()
+	"-testin".containsAllAndOnly("-testing").assertFalse()
+
+@Test function testReplaceChars()
+	"abca".replaceChars("ca", "d").assertEquals("dbdd")

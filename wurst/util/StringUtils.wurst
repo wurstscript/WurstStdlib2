@@ -1,11 +1,12 @@
 package StringUtils
 import NoWurst
-import String
 import LinkedList
 import Texttag
 import Interpolation
 import TypeCasting
 import Annotations
+import ErrorHandling
+import ObjectIds
 
 /**
  * Credits go here: http://www.hiveworkshop.com/forums/jass-resources-412/snippet-ascii-190746/
@@ -17,6 +18,9 @@ int array width
 constant MAX_INDEX = '~' + 1
 constant DEFAULT_WIDTH = 0
 constant DEFAULT_STRING = ""
+constant int	 WC3LIMIT_FUNCTIONS_PARAMETER_COUNT  = 31 // Should be a global for whole WurstScript or StdLib at least
+constant int	 WC3LIMIT_OBJECTS_DESCRIPTION_LENGTH = 1023 // Should be a global for whole WurstScript or StdLib at least
+constant string  WC3LIMIT_FUNCTIONS_PARAMETER_COUNT_ERROR = "Maximum number of parameters reached!"
 
 public function texttag.center(vec3 pos, string message, real size) returns texttag
 	var str = message
@@ -101,41 +105,6 @@ public function string.split(string splitBy) returns LinkedList<string>
 		str = second
 	return list
 
-/** Joins elements from a string list into one string using a separator */
-public function LinkedList<string>.joinBy(string separator) returns string
-	var joined = ""
-	var first = true
-	let iter = this.iterator()
-
-	for str from iter
-		if iter.hasNext() or not first
-			joined += str + separator
-		else
-			joined += str
-			first = false
-
-	iter.close()
-	return joined
-
-interface ToStringClosure<T>
-	function toString(T elem) returns string
-
-public function LinkedList<T>.joinBy<T>(ToStringClosure<T> cls, string separator) returns string
-	let iter = this.iterator()
-	LinkedList<string> strings = new LinkedList<string>
-
-	for elem from iter
-		strings.add(cls.toString(elem))
-
-	iter.close()
-	let result = strings.joinBy(separator)
-	destroy strings
-	return result
-
-/** Joins elements from a string list into one string */
-public function LinkedList<string>.join() returns string
-	return this.joinBy("")
-
 /** Replaces consecutive repeats of the same string with a single instance
 	Turns "strstr" into "str" */
 public function string.reduce(string reduced) returns string
@@ -156,6 +125,101 @@ public function string.reduce(string reduced) returns string
 	Turns "  " into " " */
 public function string.reduce() returns string
 	return this.reduce(" ")
+
+public interface ForStringSplitCallback
+	function callback(string str)
+
+/** Custom Function which can split strings and runs callback for each string.
+	It can run even with no delimiter present (with single element).
+	Example usage:
+	"H001,H002".forEachIn(",") ->
+		doSomething()  */
+public function string.forEachIn(string delim, ForStringSplitCallback cb)
+	if this.length() > 0
+		int i = 0
+		int pos = this.indexOf(delim, i)
+
+		if pos == -1
+			cb.callback(this.substring(i, this.length()))
+
+		while pos != -1
+			cb.callback(this.substring(i, pos))
+			pos += 1
+			i = pos
+			pos = this.indexOf(delim, pos)
+			if pos == -1
+				cb.callback(this.substring(i, this.length()))
+
+/** Creates list of IDs converted from Int to their String value delimited by comma (using toRawCode).*/
+public function createDelimitedString(vararg int ids) returns string
+	string s = ""
+	var paramCount = 0
+	for id in ids
+		paramCount++
+		s += id.toRawCode()
+		s += ","
+	if s != ""
+		s = s.substring(0, s.length()-1)
+	if paramCount > WC3LIMIT_FUNCTIONS_PARAMETER_COUNT
+		error(WC3LIMIT_FUNCTIONS_PARAMETER_COUNT_ERROR)
+	return s
+
+/** Creates one long String from all Strings delimited by comma.*/
+public function createDelimitedString(vararg string ids) returns string
+	string s = ""
+	var paramCount = 0
+	for id in ids
+		paramCount++
+		if id != ""
+			s += id
+			s += ","
+	if s != ""
+		s = s.substring(0, s.length()-1)
+	if paramCount > WC3LIMIT_FUNCTIONS_PARAMETER_COUNT
+		error(WC3LIMIT_FUNCTIONS_PARAMETER_COUNT_ERROR)
+	return s
+
+/** Checks whether a string is representing a digit or not.*/
+public function string.isDigit() returns bool
+	bool isDigit = false
+	for int i = 0 to this.length()-1
+		if this.charAt(i) == "0" or this.charAt(i) == "1" or this.charAt(i) == "2" or this.charAt(i) == "3" or this.charAt(i) == "4"
+		or this.charAt(i) == "5" or this.charAt(i) == "6" or this.charAt(i) == "7" or this.charAt(i) == "8" or this.charAt(i) == "9"
+			isDigit = true
+		else
+			isDigit = false
+			return isDigit
+	return isDigit
+
+/** Checks if this string contains all characters in given string.
+	Can be useful for player commands as you can capture entered strings with typos.
+	If this string has different length than given string, it immediately returns false.
+	Example: "-etrne".containsAllAndOnly("-enter") == true */
+public function string.containsAllAndOnly(string chars) returns bool
+	bool containsAll = true
+	if this.length() == chars.length()
+		for char in chars
+			if not this.contains(char)
+				containsAll = false
+				break
+	else
+		containsAll = false
+	return containsAll
+
+/** Checks whether a string is valid in terms of max WC3 string length for various usages.*/
+public function string.isValidLength() returns bool
+	var isValid = true
+	if this.length() > WC3LIMIT_OBJECTS_DESCRIPTION_LENGTH
+		isValid = false
+		error("String |||"+this+"||| is too long. Length: "+this.length().toString())	
+	return isValid
+
+/** Replaces all occurences of any character from given charlist by a given replacement string.*/
+public function string.replaceChars(string charset, string replacementChar) returns string
+	var newString = this
+	for replaceChar in charset
+		newString = newString.contains(replaceChar) ? newString.replace(replaceChar, replacementChar) : newString
+	return newString
 
 
 @compiletime function initialize()
