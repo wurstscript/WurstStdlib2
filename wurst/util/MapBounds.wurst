@@ -39,9 +39,91 @@ public function vec2.inBounds() returns boolean
 public function vec3.inBounds() returns boolean
 	return inBoundsXY(this.x, this.y)
 
-
 public function randomPointOnMap() returns vec2
 	return vec2(GetRandomReal(playableMin.x, playableMax.x), GetRandomReal(playableMin.y, playableMax.y))
+
+// Extensions
+
+public function fourPointTuple.getMinX() returns real
+	var minx = boundMax.x
+	if this.p1.x < minx
+		minx = this.p1.x
+	if this.p2.x < minx
+		minx = this.p2.x
+	if this.p3.x < minx
+		minx = this.p3.x
+	if this.p4.x < minx
+		minx = this.p4.x
+	return minx
+
+public function fourPointTuple.getMinY() returns real
+	var miny = boundMax.y
+	if this.p1.y < miny
+		miny = this.p1.y
+	if this.p2.y < miny
+		miny = this.p2.y
+	if this.p3.y < miny
+		miny = this.p3.y
+	if this.p4.y < miny
+		miny = this.p4.y
+	return miny
+
+public function fourPointTuple.getMaxX() returns real
+	var maxx = boundMin.x
+	if this.p1.x > maxx
+		maxx = this.p1.x
+	if this.p2.x > maxx
+		maxx = this.p2.x
+	if this.p3.x > maxx
+		maxx = this.p3.x
+	if this.p4.x > maxx
+		maxx = this.p4.x
+	return maxx
+
+public function fourPointTuple.getMaxY() returns real
+	var maxy = boundMin.y
+	if this.p1.y > maxy
+		maxy = this.p1.y
+	if this.p2.y > maxy
+		maxy = this.p2.y
+	if this.p3.y > maxy
+		maxy = this.p3.y
+	if this.p4.y > maxy
+		maxy = this.p4.y
+	return maxy
+	
+/** checks if a specific vec2 is inside of the fourPointTuple using ray casting algorithm **/
+public function fourPointTuple.isPointInside(vec2 p) returns boolean
+	var isInside = false
+	
+	if (p.x < this.getMinX() or p.x > this.getMaxX() or p.y < this.getMinY() or p.y > this.getMaxY())
+		return false
+
+	// from http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
+	// in short we are generating a ray from outside the polygon going through are point wer are searching for (the position of the unit)
+	// and then count the amount of border crossing this ray has produced, the borders are obtained via point1 -> point2, point2 -> point3, .., point_last -> point1 
+		
+	var vi = this.p1
+	var vj = this.p4
+	if p.isCrossingLine(vi, vj)
+		isInside = not isInside
+	
+	vi = this.p2
+	vj = this.p1
+	if p.isCrossingLine(vi, vj)
+		isInside = not isInside
+
+	vi = this.p3
+	vj = this.p2
+	if p.isCrossingLine(vi, vj)
+		isInside = not isInside
+
+	vi = this.p4
+	vj = this.p3
+	if p.isCrossingLine(vi, vj)
+		isInside = not isInside
+
+	return isInside
 
 /** Must be at init because globals get initialized before map bounds */
 @compiletime function initMapBounds()

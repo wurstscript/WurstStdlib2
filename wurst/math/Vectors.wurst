@@ -23,6 +23,8 @@ public constant DOWN = vec2(0, -1)
 /** 2d Vector tuple */
 public tuple vec2(real x, real y)
 
+public tuple fourPointTuple(vec2 p1, vec2 p2, vec2 p3, vec2 p4)
+
 // Arithmetic Operators
 /** + Operator vec2 */
 public function vec2.op_plus(vec2 v) returns vec2
@@ -219,6 +221,39 @@ public function vec2.isInPolygon(vararg vec2 args) returns bool
 					test--
 		result = test != 0
 	return result
+
+/** used to cast location to vec2 */ 
+public function vec2.toLocation() returns location
+	return Location(this.x, this.y)
+
+/** used to cast vec2 to location */
+public function location.toVec2() returns vec2
+	return vec2(GetLocationX(this), GetLocationY(this))
+	
+/** returns the facing angle between 2 vec2*/
+public function vec2.getFacingTowards(vec2 b) returns angle
+	return angle(Atan2(b.y - this.y, b.x - this.x))
+	
+/** returns the line formular for 2 givend points */
+public function vec2.getLineFormular(vec2 p) returns lineFormular
+	return lineFormular((p.y-this.y)/(p.x-this.x), ((p.x*this.y)-(this.x*p.y))/(p.x-this.x))
+	
+/** returns a side point to a line with a specific distance*/
+public function vec2.getOrthognalSidePoint(lineFormular line, real d) returns vec2
+	let m		  = -1/(line.m)
+	let b		  = this.y-(m*this.x)
+	let orthLine   = lineFormular(m, b)
+	let targetLine = line.getParallelLineWithOrthognalDistance(d) 
+
+	let x = (orthLine.b - targetLine.b) / (targetLine.m - orthLine.m)
+	let y = targetLine.m * x + targetLine.b
+
+	return vec2(x, y)
+
+/** checks if a vec2 is crossing some border lines*/
+public function vec2.isCrossingLine(vec2 vi, vec2 vj) returns bool
+	return (vi.y > this.y) != (vj.y > this.y) and this.x < (vj.x - vi.x ) * (this.y - vi.y) / (vj.y - vi.y) + vi.x
+
 
   /////////////////////////////////////////////////////////////////////////////////////////////
  //////////////////////////////////// 3D vector //////////////////////////////////////////////
