@@ -69,6 +69,32 @@ public function destructable.setOccluderHeight(real height)
 public function destructable.getName() returns string
 	return GetDestructableName(this)
 
+// Extensions
+/** used to toggles a destructable gate open close state*/
+public function destructable.gateToggle()
+	if GetDestructableLife(this) > 0
+		ModifyGateBJ(bj_GATEOPERATION_CLOSE, this)
+	else
+		ModifyGateBJ(bj_GATEOPERATION_OPEN, this)
+
+/** used to open a destructable gate*/
+public function destructable.gateOpen()
+	ModifyGateBJ(bj_GATEOPERATION_OPEN, this)
+
+/** used to close a destructable gate*/
+public function destructable.gateClose()
+	ModifyGateBJ(bj_GATEOPERATION_DESTROY, this)
+	ModifyGateBJ(bj_GATEOPERATION_CLOSE, this)
+
+/** used to move a destructable elevator one step up*/
+public function destructable.elevatorUp()
+	ChangeElevatorHeight(this, GetElevatorHeight(this)+1)
+
+/** used to move a destructable elevator one step down*/
+public function destructable.elevatorDown()
+	ChangeElevatorHeight(this, GetElevatorHeight(this)-1)
+
+
 @Test function testDestructables()
 	let destr = createDestructable(0, ZERO2, 0 .fromDeg(), 1, -1)
 	destr.getX().assertEquals(0.)

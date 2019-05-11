@@ -178,6 +178,15 @@ public function unit.getMaxHP() returns real
 public function unit.getMaxMana() returns real
 	return this.getState(UNIT_STATE_MAX_MANA)
 
+/** Get units current missing helth. */
+public function unit.getMissingHP() returns real
+	return this.getMaxHP()-this.getHP()
+
+/** Get units current missing mana. */
+public function unit.getMissingMana() returns real
+	return this.getMaxMana()-this.getMana()
+
+
 public function unit.getMoveSpeed() returns real
 	return GetUnitMoveSpeed(this)
 
@@ -282,6 +291,18 @@ public function unit.isInRange(vec2 pos, real distance) returns bool
 /** Checks whether a unit is an enemy of the given player **/
 public function unit.isEnemyOf(player whichPlayer) returns bool
 	return IsUnitEnemy(this, whichPlayer)
+
+/** Checks whether two units are enemies */
+public function unit.isEnemyOf(unit u) returns bool
+	return this != null and u != null and IsUnitEnemy(this, u.getOwner())
+
+/** Checks whether a unit is an ally of the given player */
+public function unit.isAllyOf(player whichPlayer) returns bool
+	return this != null and IsUnitAlly(this, whichPlayer)
+
+/** Checks whether two units are allies */
+public function unit.isAllyOf(unit u) returns bool
+	return this != null and u != null and IsUnitAlly(this, u.getOwner())
 
 public function unit.issueImmediateOrder(string order) returns boolean
 	return IssueImmediateOrder(this, order)

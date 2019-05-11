@@ -15,6 +15,10 @@ public function item.remove()
 public function item.getTypeId() returns int
 	return GetItemTypeId(this)
 
+/** Returns "itemtype" of this item. Do not confuse it with itemTypeId. */
+public function item.getItemType() returns itemtype
+	return GetItemType(this)
+
 public function item.getLevel() returns int
 	return GetItemLevel(this)
 
@@ -122,3 +126,24 @@ public function item.getIconPath() returns string
 
 public function item.setIconPath(string path)
 	BlzSetItemIconPath(this, path)
+
+// Extensions
+/** Updates the item's name, tooltip, extendedtooltip, description or icon for the specific player.
+	If p == null, the item is updated for all players */
+public function item.updateItem(player p, string itemName, string itemTooltip, string itemExtendedTooltip, string itemDesc, string itemIcon) returns bool
+	var valid = false
+	if this != null and (itemName != "" or itemTooltip != "" or itemExtendedTooltip != "" or itemDesc != "" or itemIcon != "")
+		valid = true
+		if (p == null or p == GetLocalPlayer())
+			if itemName != ""
+				this.setName(itemName)
+			if itemTooltip != ""
+				this.setTooltip(itemTooltip)
+			if itemExtendedTooltip != ""
+				this.setExtendedTooltip(itemExtendedTooltip)
+			if itemDesc != ""
+				this.setDescription(itemDesc)
+			if itemIcon != ""
+				this.setIconPath(itemIcon)
+	return valid
+	
