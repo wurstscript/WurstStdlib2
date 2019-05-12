@@ -170,27 +170,19 @@ public function player.isRacePrefSet(racepreference preference) returns bool
 
 /** Get width and height of current Warcraft 3 client window. Returns vec2(0,0) for non-local player.*/
 public function player.getScreenSize() returns vec2
-	if localPlayer == this
-		return vec2(I2R(BlzGetLocalClientWidth()), I2R(BlzGetLocalClientHeight()))
-	return vec2(0,0)
+	return localPlayer == this ? vec2(I2R(BlzGetLocalClientWidth()), I2R(BlzGetLocalClientHeight())) : vec2(0,0)
 
 /** Check if client window is active. Will return false always for non-local player.*/
 public function player.isScreenActive() returns bool
-	if localPlayer == this
-		return BlzIsLocalClientActive()
-	return false
+	return localPlayer == this ? BlzIsLocalClientActive() : false
 
 /** Return language locale for local player. Returns null for non-local player.*/
 public function player.getLocale() returns string
-	if localPlayer == this
-		return BlzGetLocale()
-	return null
+	return localPlayer == this ? BlzGetLocale() : null
 
 /** Return if Target Indicator is enabled for local player. Returns false for non-local player.*/
 public function player.isTargetIndicatorEnabled() returns bool
-	if localPlayer == this
-		return BlzIsTargetIndicatorEnabled()
-	return false
+	return localPlayer == this ? BlzIsTargetIndicatorEnabled() : false
 
 /** Set if Target Indicator is enabled for local player.*/
 public function player.setTargetIndicator(bool enableTargetIndicator)
@@ -209,14 +201,10 @@ public function player.setPosCursor(vec2 pos)
 
 /** Get unit focused by mouse cursor.*/
 public function player.getCursorFocus() returns unit 
-	if localPlayer == this
-		return BlzGetMouseFocusUnit()
-	return null
+	return localPlayer == this ? BlzGetMouseFocusUnit() : null
 
 public function player.setMinimapTerrainTex(string texFile) returns bool
-	if localPlayer == this
-		return BlzChangeMinimapTerrainTex(texFile)
-	return false
+	return localPlayer == this ? BlzChangeMinimapTerrainTex(texFile) : false
 
 public function player.sendSyncData(string prefix, string data) returns bool
 	return BlzSendSyncData(prefix, data)
