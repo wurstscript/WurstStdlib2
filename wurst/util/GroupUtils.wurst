@@ -7,7 +7,6 @@ import Execute
 import Maths
 import Annotations
 import Unit
-import MapBounds
 import Boolexpr
 import Player
 
@@ -148,38 +147,6 @@ public function vec2.getUnitsInRangeEx(real minRange, real maxRange) returns gro
 	let g = this.getUnitsInRange(maxRange)
 	for u in g
 		if u.getPos().distanceTo(this) < minRange
-			g.removeUnit(u)
-	return g
-
-/** gets units in direction of a unit with a specific range and width ! caution group needs to be released using group.release() after usage !*/
-public function unit.getUnitsInDirection(real range, real width, real facingAngle, bool isCone, boolexpr filter) returns group
-	let pos  = this.getPos()
-	let a	= facingAngle
-	let p	= vec2(pos.x+range*Cos(a),  pos.y+range*Sin(a))
-	let line = pos.getLineFormular(p)
-	
-	vec2 rP1
-	vec2 rP2
-	vec2 rP3
-	vec2 rP4
-
-	if isCone
-		rP1 = pos
-		rP2 = pos
-		rP3 = p.getOrthognalSidePoint(line,	width/2) 
-		rP4 = p.getOrthognalSidePoint(line,   -width/2)
-	else
-		rP1 = pos.getOrthognalSidePoint(line, -width/2) 
-		rP2 = pos.getOrthognalSidePoint(line,  width/2) 
-		rP3 = p.getOrthognalSidePoint(line,	width/2) 
-		rP4 = p.getOrthognalSidePoint(line,   -width/2)
-
-	let fpt = fourPointTuple(rP1, rP2, rP3, rP4)
-	let r = Rect(fpt.getMinX(), fpt.getMinY(), fpt.getMaxX(), fpt.getMaxY())
-
-	let g = r.getUnitsInRect(filter)
-	for u in g
-		if not fpt.isPointInside(u.getPos()) or u == this
 			g.removeUnit(u)
 	return g
 
