@@ -2,19 +2,46 @@ package Framehandle
 import NoWurst
 import Player
 
+/* New custom Framehandle types can be defined in template files, thus called frame definition files (*.fdf),
+	these files needs to be listed inside of a toc file to be recognized by the wc3 engine.
+	Default toc filePath: war3.w3mod:ui\framedef\framedef.toc
+	Default fdf filePath: war3.w3mod:ui\framedef\ui\ || war3.w3mod:ui\framedef\glue\
+	
+	Following subframetypes can be used inside of the fdf files:
+	
+	BUTTON
+	GLUEBUTTON
+	TEXTBUTTON  		--> clickable Buttons with text
+	GLUETEXTBUTTON 		--> clickable TextButtons, mouse hovering glows.
+	TEXT 				--> visible text.
+	BACKDROP 			-->	backgrounds, borders or images.
+	EDITBOX 			-->	text input by user.
+	SLIDER 				-->	user can select a value between an upper and a lower Value.
+	TEXTAREA 			-->	ui-Frames for big Texts also include scrollbars on default.
+	CHECKBOX			--> checkable checkbox
+	GLUECHECKBOX		--> checkable checkbox, mouse hovering glows.
+	POPUPMENU
+	MENU
+	SCROLLBAR
+	CONTROL
+	SIMPLEFRAME
+	DIALOG
+	HIGHLIGHT
+*/
+
 /** Returns a framehandle to be used as custom frame based on a given originframetype as its parent:
 		originframetype					possible indexes are used for subclasses (defaults 0)
-			ORIGIN_FRAME_GAME_UI  --> default game ui frame
-			ORIGIN_FRAME_WORLD_FRAME  --> visible playground, units items effects fog, the world frame decribes all general objects in the world
-			ORIGIN_FRAME_HERO_BAR --> masterpanel of all ORIGIN_FRAME_HERO_BUTTON
-			ORIGIN_FRAME_HERO_BUTTON [0 to 6]   --> buttons of own/allied heroes potraits on the left of the screen
+			ORIGIN_FRAME_GAME_UI 				  --> default game ui frame
+			ORIGIN_FRAME_WORLD_FRAME 			  --> visible playground, units items effects fog, the world frame decribes all general objects in the world
+			ORIGIN_FRAME_HERO_BAR 				  --> masterpanel of all ORIGIN_FRAME_HERO_BUTTON
+			ORIGIN_FRAME_HERO_BUTTON [0 to 6]     --> buttons of own/allied heroes potraits on the left of the screen
 				ORIGIN_FRAME_HERO_HP_BAR, connected to HeroButtons
 				ORIGIN_FRAME_HERO_MANA_BAR
 				ORIGIN_FRAME_HERO_BUTTON_INDICATOR
 			ORIGIN_FRAME_ITEM_BUTTON [0 to 5]     --> items inventory. updates on selection
 			ORIGIN_FRAME_COMMAND_BUTTON [0 to 11] --> command buttons to order units, e.g. ITEM_BUTTON, updates on selection
-			ORIGIN_FRAME_SYSTEM_BUTTON [0 to 3] {Menu, allies, Log, Quest}
-			ORIGIN_FRAME_PORTRAIT --> portrait of the main selected Unit
+			ORIGIN_FRAME_SYSTEM_BUTTON [0 to 3]   --> Menu, allies, Log, Quest
+			ORIGIN_FRAME_PORTRAIT 	              --> portrait of the main selected Unit
 			ORIGIN_FRAME_MINIMAP
 			ORIGIN_FRAME_MINIMAP_BUTTON
 			ORIGIN_FRAME_TOOLTIP
@@ -25,7 +52,7 @@ import Player
 public function getOriginFrame(originframetype frameType, integer index) returns framehandle
     return BlzGetOriginFrame(frameType,index)
 
-/**	Returns a framehandle to be used as custom frame based on a given originframe anem as its parent:
+/**	Returns a framehandle to be used as custom frame based on a given originframe name as its parent:
 		names
 		ConsoleUI {most inbuilt UI-Elements are related to this one}.
 		UpperButtonBarFrame
@@ -35,6 +62,7 @@ public function getOriginFrame(originframetype frameType, integer index) returns
 public function getFrameByName(string name, integer createContext) returns framehandle
     return BlzGetFrameByName(name,createContext)
 
+/** Creates a custom frame by frame name, default native frames names are defined by asset class FramehandleNames */
 public function createFrame(string name,framehandle owner,integer priority,integer createContext) returns framehandle
     return BlzCreateFrame(name,owner,priority,createContext)
     
@@ -42,21 +70,7 @@ public function createFrame(string name,framehandle owner,integer priority,integ
 public function createSimpleFrame(string name,framehandle owner,integer createContext) returns framehandle
     return BlzCreateSimpleFrame(name,owner,createContext)
     
-/** Creates a custom frame with a predefined typename inside of a frame definition file (fdf) by a toc file listing
-	example toc file:
-		Frame "MENU" "StandardSmallPopupMenuTemplate" {
-			Height 0.048,
-			DecorateFileNames,
-			FrameFont "MasterFont",0.009,"",
-			MenuTextHighlightColor 0.99 0.827 0.0705 1.0,
-			MenuItemHeight 0.011,
-			MenuBorder 0.009,
-
-			ControlBackdrop "StandardPopupMenuBackdropTemplate",
-			Frame "BACKDROP" "StandardPopupMenuBackdropTemplate" INHERITS "StandardBorderedButtonBackdropTemplate" {
-			}
-		}
-		
+/** Creates a custom frame with a predefined typename inside of a frame definition file (fdf) and listed by a toc file		
 	example usage:
 		let mainFrame = createFrameByType("MENU", "My PopUpMenu", parentFrame, "StandardSmallPopupMenuTemplate", 0)
 		let subFrame  = createFrameByType("BACKDROP", "My PopUpMenu", mainFrame, "StandardPopupMenuBackdropTemplate", 0)
