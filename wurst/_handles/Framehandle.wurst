@@ -231,3 +231,15 @@ public function framehandle.font(string fileName, real height, integer flags)
 /** Set the used text alignment of a given frame */
 public function framehandle.textAlignment(textaligntype vert, textaligntype horz)
     BlzFrameSetTextAlignment(this,vert,horz)
+	
+/** En/disables auto positioning of ui elements */
+public function enableUIAutoPosition(boolean flag)
+    BlzEnableUIAutoPosition(flag)
+
+/** Hides or shows all origin frames */
+public function hideOriginFrames(boolean flag)
+    BlzHideOriginFrames(flag)
+
+/** Loads a toc file from a specific path, to include custom fdf files from, returns true on success */
+public function loadTOCFile(string tocFile) returns bool
+    return BlzLoadTOCFile(tocFile)
