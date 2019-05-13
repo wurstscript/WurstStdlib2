@@ -55,16 +55,14 @@ import LinkedList
 	l.has("c").assertTrue()
 
 
-@Test function testIsDigit_IsValidLength()
-	"a".isDigit().assertFalse()
-	"1".isDigit().assertTrue()
-	"259812".isDigit().assertTrue()
-	"251a52".isDigit().assertFalse()
-	"1251FDSFA".isValidLength().assertTrue()
-
-@Test function testContainsAllAndOnly()
-	"-tste".containsAllAndOnly("-test").assertTrue()
-	"-testin".containsAllAndOnly("-testing").assertFalse()
-
+@Test function testIsNumber_IsValidLength()
+	"a".isNumber().assertFalse()
+	"1".isNumber().assertTrue()
+	"259812".isNumber().assertTrue()
+	"251a52".isNumber().assertFalse()
+	"1251FDSFA".isValidDescription().assertTrue()
+	"-1232.32".isNumber().assertTrue()
+	"-1231.3a1".isNumber().assertFalse()
+	
 @Test function testReplaceChars()
 	"abca".replaceChars("ca", "d").assertEquals("dbdd")

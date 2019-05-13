@@ -18,9 +18,7 @@ int array width
 constant MAX_INDEX = '~' + 1
 constant DEFAULT_WIDTH = 0
 constant DEFAULT_STRING = ""
-constant int	 WC3LIMIT_FUNCTIONS_PARAMETER_COUNT  = 31 // Should be a global for whole WurstScript or StdLib at least
-constant int	 WC3LIMIT_OBJECTS_DESCRIPTION_LENGTH = 1023 // Should be a global for whole WurstScript or StdLib at least
-constant string  WC3LIMIT_FUNCTIONS_PARAMETER_COUNT_ERROR = "Maximum number of parameters reached!"
+constant let	 WC3LIMIT_OBJECTS_DESCRIPTION_LENGTH = 1023 // Should be a global for whole WurstScript or StdLib at least
 
 public function texttag.center(vec3 pos, string message, real size) returns texttag
 	var str = message
@@ -160,8 +158,6 @@ public function createDelimitedString(vararg int ids) returns string
 		s += ","
 	if s != ""
 		s = s.substring(0, s.length()-1)
-	if paramCount > WC3LIMIT_FUNCTIONS_PARAMETER_COUNT
-		error(WC3LIMIT_FUNCTIONS_PARAMETER_COUNT_ERROR)
 	return s
 
 /** Creates one long String from all Strings delimited by comma.*/
@@ -175,43 +171,28 @@ public function createDelimitedString(vararg string ids) returns string
 			s += ","
 	if s != ""
 		s = s.substring(0, s.length()-1)
-	if paramCount > WC3LIMIT_FUNCTIONS_PARAMETER_COUNT
-		error(WC3LIMIT_FUNCTIONS_PARAMETER_COUNT_ERROR)
 	return s
 
-/** Checks whether a string is representing a digit or not.*/
-public function string.isDigit() returns bool
-	bool isDigit = false
+/** Checks whether a string is a number or not.*/
+public function string.isNumber() returns bool
+	var isNumber = false
+	var hasDecimalPlaces = false
 	for int i = 0 to this.length()-1
-		if this.charAt(i) == "0" or this.charAt(i) == "1" or this.charAt(i) == "2" or this.charAt(i) == "3" or this.charAt(i) == "4"
+		if (this.charAt(i) == "-" and i == 0) or this.charAt(i) == "0" or this.charAt(i) == "1" or this.charAt(i) == "2" or this.charAt(i) == "3" or this.charAt(i) == "4"
 		or this.charAt(i) == "5" or this.charAt(i) == "6" or this.charAt(i) == "7" or this.charAt(i) == "8" or this.charAt(i) == "9"
-			isDigit = true
+			isNumber = true
+		else if this.charAt(i) == "." and not hasDecimalPlaces
+			hasDecimalPlaces = true
 		else
-			isDigit = false
-			return isDigit
-	return isDigit
+			return false
+	return isNumber
 
-/** Checks if this string contains all characters in given string.
-	Can be useful for player commands as you can capture entered strings with typos.
-	If this string has different length than given string, it immediately returns false.
-	Example: "-etrne".containsAllAndOnly("-enter") == true */
-public function string.containsAllAndOnly(string chars) returns bool
-	bool containsAll = true
-	if this.length() == chars.length()
-		for char in chars
-			if not this.contains(char)
-				containsAll = false
-				break
-	else
-		containsAll = false
-	return containsAll
-
-/** Checks whether a string is valid in terms of max WC3 string length for various usages.*/
-public function string.isValidLength() returns bool
+/** Checks whether a string is valid in terms of max WC3 string length for various usages (Ability Description, Quest Description,...).*/
+public function string.isValidDescription() returns bool
 	var isValid = true
 	if this.length() > WC3LIMIT_OBJECTS_DESCRIPTION_LENGTH
 		isValid = false
-		error("String |||"+this+"||| is too long. Length: "+this.length().toString())	
+		error("String <"+this+"> is too long. Length: "+this.length().toString())	
 	return isValid
 
 /** Replaces all occurences of any character from given charlist by a given replacement string.*/
