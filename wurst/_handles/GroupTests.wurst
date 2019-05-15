@@ -85,8 +85,8 @@ function testGroupForGroups()
 	let u2 = createUnit(Player(0), 'hfoo', vec2(0, 0), 0 .fromDeg())
 
 	let g = CreateGroup()
-	g.addUnit()
-	g.size().assertEquals(0)
+	g.addUnit(u)
+	g.size().assertEquals(1)
 
 	let g2 = CreateGroup()
 	g2.addGroup(g)
