@@ -9,9 +9,9 @@ import Player
 	
 	Following subframetypes can be used inside of the fdf files:
 	
-	BUTTON
-	GLUEBUTTON
-	TEXTBUTTON  		--> clickable Buttons with text
+	BUTTON				--> normal glickable button
+	GLUEBUTTON          --> clickable button, mouse hovering glows.
+	TEXTBUTTON  		--> clickable TextButtons with text
 	GLUETEXTBUTTON 		--> clickable TextButtons, mouse hovering glows.
 	TEXT 				--> visible text.
 	BACKDROP 			-->	backgrounds, borders or images.
@@ -20,13 +20,18 @@ import Player
 	TEXTAREA 			-->	ui-Frames for big Texts also include scrollbars on default.
 	CHECKBOX			--> checkable checkbox
 	GLUECHECKBOX		--> checkable checkbox, mouse hovering glows.
-	POPUPMENU
-	MENU
-	SCROLLBAR
-	CONTROL
-	SIMPLEFRAME
-	DIALOG
-	HIGHLIGHT
+	POPUPMENU			--> used for menus that is desinged for hovering over other frames
+	MENU				--> general menu frame designed to be displayed behind popupmenus
+	SCROLLBAR			--> scrollbar that can be added to backgrops do change content (e.g. for textareas)
+	CONTROL				--> special frame that is designed for handling several control elements like buttons, checkboxes etc.
+	SIMPLEFRAME			--> a less complex definition for frames, that does not allow different inherit types
+	DIALOG				--> nothing special, (origin SuspendDialogs will pause the game in singleplayer)
+	HIGHLIGHT			--> frame template to define how buttons/texts are hightlingt on hovering/click/enter/focus of the mouse
+	
+	Multiplayer notes:
+		Frames handling Player input won't sync their state. Player's input has only an effect on the localplayer.
+		For example when a checkbox or an input field is displayed and Player 0 checks it / writes some input into it, this event happens only for Player 0.
+		Therefore using BlzFrameGetText(Editbox) or BlzFrameGetValue(Slider) are likely to produce a desync, cause their values are local and differ, if some action is triggered based on these input values.
 */
 
 /** Returns a framehandle to be used as custom frame based on a given originframetype as its parent:
@@ -118,7 +123,7 @@ public function framehandle.hideFor(player p)
     if localPlayer == p
         BlzFrameSetVisible(this,false)
 
-/** Whether the given frame is visible or not */
+/** Obtains whether the given frame is visible or not */
 public function framehandle.isVisible() returns boolean
     return BlzFrameIsVisible(this)
 
@@ -156,28 +161,46 @@ public function framehandle.focus(boolean flag)
 
 public function framehandle.model(string modelFile, integer cameraIndex)
     BlzFrameSetModel(this,modelFile,cameraIndex)
-
+	
+/** Obtains enabled user interaction state of the frame */
 public function framehandle.enable() returns boolean
     return BlzFrameGetEnable(this)
 
+/** En/Disables user interaction with the frame */
 public function framehandle.enable(boolean enabled)
     BlzFrameSetEnable(this,enabled)
 
+/** Obtains the decimal alpha value of a frame (only for specific frames) */
 public function framehandle.alpha() returns int
     return BlzFrameGetAlpha(this)
 
+/** Sets the decimal alpha value of a frame (only for specific frames) */
 public function framehandle.alpha(integer alpha)
     BlzFrameSetAlpha(this,alpha)
 
+/** TODO */	
 public function framehandle.spriteAnimate(integer primaryProp, integer flags)
     BlzFrameSetSpriteAnimate(this,primaryProp,flags)
 
+/** Sets the texture definition for the frame, can be used generate backgrounds with alpha transparency or more other more complex definitions:
+	example: 
+	Texture {
+        File "ConsoleTexture05",
+        Width 0.256,
+        Height 0.032,
+        TexCoord 0, 1, 0, 0.125
+        AlphaMode "ALPHAKEY",
+        Anchor TOPLEFT,-0.256,0,
+    }
+ */
 public function framehandle.texture(string texFile, integer flag, boolean blend)
     BlzFrameSetTexture(this,texFile,flag,blend) 
 
+/** Sets the frames scaling value based on its current size */
 public function framehandle.scale(real scale)
     BlzFrameSetScale(this,scale)   
 
+/** Sets a frames tooltop frame, if it has some tooltip subframe */
 public function framehandle.tooltip(framehandle tooltip)
     BlzFrameSetTooltip(this,tooltip)   
     
@@ -185,15 +208,19 @@ public function framehandle.tooltip(framehandle tooltip)
 public function framehandle.cageMouse(boolean enable)
     BlzFrameCageMouse(this,enable)   
 
+/** Obtains the specific value of the frame (e.g. for sliders) */
 public function framehandle.value() returns real
     return BlzFrameGetValue(this)
 
+/** Sets the specific value of the frame (e.g. for sliders) */
 public function framehandle.value(real value)
     BlzFrameSetValue(this,value)
 
+/** Sets the specific minimum and maximum value of the frame (e.g. for sliders) *7
 public function framehandle.minMax(real minValue, real maxValue)
     BlzFrameSetMinMaxValue(this,minValue,maxValue)
 
+/** TODO */
 public function framehandle.stepSize(real stepSize)
     BlzFrameSetStepSize(this,stepSize)
 
