@@ -6,28 +6,7 @@ import Player
 	these files needs to be listed inside of a toc file to be recognized by the wc3 engine.
 	Default toc filePath: war3.w3mod:ui\framedef\framedef.toc
 	Default fdf filePath: war3.w3mod:ui\framedef\ui\ || war3.w3mod:ui\framedef\glue\
-	
-	Following subframetypes can be used inside of the fdf files:
-	
-	BUTTON				--> normal glickable button
-	GLUEBUTTON          --> clickable button, mouse hovering glows.
-	TEXTBUTTON  		--> clickable TextButtons with text
-	GLUETEXTBUTTON 		--> clickable TextButtons, mouse hovering glows.
-	TEXT 				--> visible text.
-	BACKDROP 			-->	backgrounds, borders or images.
-	EDITBOX 			-->	text input by user.
-	SLIDER 				-->	user can select a value between an upper and a lower Value.
-	TEXTAREA 			-->	ui-Frames for big Texts also include scrollbars on default.
-	CHECKBOX			--> checkable checkbox
-	GLUECHECKBOX		--> checkable checkbox, mouse hovering glows.
-	POPUPMENU			--> used for menus that is desinged for hovering over other frames
-	MENU				--> general menu frame designed to be displayed behind popupmenus
-	SCROLLBAR			--> scrollbar that can be added to backgrops do change content (e.g. for textareas)
-	CONTROL				--> special frame that is designed for handling several control elements like buttons, checkboxes etc.
-	SIMPLEFRAME			--> a less complex definition for frames, that does not allow different inherit types
-	DIALOG				--> nothing special, (origin SuspendDialogs will pause the game in singleplayer)
-	HIGHLIGHT			--> frame template to define how buttons/texts are hightlingt on hovering/click/enter/focus of the mouse
-	
+		
 	Multiplayer notes:
 		Frames handling Player input won't sync their state. Player's input has only an effect on the localplayer.
 		For example when a checkbox or an input field is displayed and Player 0 checks it / writes some input into it, this event happens only for Player 0.
@@ -57,17 +36,11 @@ import Player
 public function getOriginFrame(originframetype frameType, integer index) returns framehandle
     return BlzGetOriginFrame(frameType,index)
 
-/**	Returns a framehandle to be used as custom frame based on a given originframe name as its parent:
-		names
-		ConsoleUI {most inbuilt UI-Elements are related to this one}.
-		UpperButtonBarFrame
-		ResourceBarFrame {Gold, Lumber, Food, Upkeep, FPS, APM, PING}
-		...
-*/
+/**	Returns a framehandle to be used as custom frame based on a given originframe name (see FramehandleNames.FramhandleDefaultNames) */
 public function getFrameByName(string name, integer createContext) returns framehandle
     return BlzGetFrameByName(name,createContext)
 
-/** Creates a custom frame by frame name, default native frames names are defined by asset class FramehandleNames */
+/** Creates a custom frame by frame name (see (see FramehandleNames.FramhandleDefaultNames)) */
 public function createFrame(string name,framehandle owner,integer priority,integer createContext) returns framehandle
     return BlzCreateFrame(name,owner,priority,createContext)
     
