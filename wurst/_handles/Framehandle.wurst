@@ -36,11 +36,11 @@ import Player
 public function getOriginFrame(originframetype frameType, integer index) returns framehandle
     return BlzGetOriginFrame(frameType,index)
 
-/**	Returns a framehandle to be used as custom frame based on a given originframe name (see FramehandleNames.FramhandleDefaultNames) */
+/**	Returns a framehandle to be used as custom frame based on a given frame name (see FramehandleNames.FramhandleDefaultNames) */
 public function getFrameByName(string name, integer createContext) returns framehandle
     return BlzGetFrameByName(name,createContext)
 
-/** Creates a custom frame by frame name (see (see FramehandleNames.FramhandleDefaultNames)) */
+/** Creates a custom frame by frame name (see (see FramehandleNames.FramehandleDefaultNames)) */
 public function createFrame(string name,framehandle owner,integer priority,integer createContext) returns framehandle
     return BlzCreateFrame(name,owner,priority,createContext)
     
