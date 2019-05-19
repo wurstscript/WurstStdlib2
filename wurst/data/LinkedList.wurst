@@ -472,6 +472,11 @@ public class LLBackIterator<T>
 	function reset()
 		this.current = dummy
 
+	/** Modifies the last element that was returned by next() (optional operation). */
+	function modify(T newval)
+		if current != dummy
+			current.elem = newval
+
 	function hasNext() returns boolean
 		return current.prev != dummy
 
