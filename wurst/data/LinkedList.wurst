@@ -458,7 +458,6 @@ public class LLIterator<T>
 public class LLBackIterator<T>
 	LLEntry<T> dummy
 	LLEntry<T> current
-	LinkedList<T> parent = null
 	protected bool destroyOnClose = true
 
 	construct(LLEntry<T> dummy, bool destroyOnClose)
@@ -470,29 +469,8 @@ public class LLBackIterator<T>
 		this.dummy = dummy
 		reset()
 
-	construct(LinkedList<T> parent, bool destroyOnClose)
-		this.parent = parent
-		reset()
-		this.destroyOnClose = destroyOnClose
-
-	construct(LinkedList<T> parent)
-		this.parent = parent
-		reset()
-
 	function reset()
-		if parent != null
-			this.dummy   = parent.getDummy()
 		this.current = dummy
-
-	/** Removes from the list the last element that was returned by next() (optional operation).
-	 	This call can only be made once per call to next */
-	function remove() returns T
-		if current != dummy
-			parent.removeEntry(current)
-			let removed = current.elem
-			current = current.prev
-			return removed
-		return null
 
 	/** Modifies the last element that was returned by next() (optional operation). */
 	function modify(T newval)
