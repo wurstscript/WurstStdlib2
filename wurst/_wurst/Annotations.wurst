@@ -35,3 +35,6 @@ import NoWurst
 
 /** Functions annotated with @extern are assumed to be defined in external sources and are thus not included in the compilation output. */
 @annotation public function extern()
+
+/** Functions annotated with @ifNotDefined are only output into the mapscript if they don't already exist. */
+@annotation public function ifNotDefined()
