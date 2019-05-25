@@ -70,21 +70,28 @@ public function destructable.getName() returns string
 	return GetDestructableName(this)
 
 // Extensions
-/** used to toggles a destructable gate open close state*/
-public function destructable.gateToggle()
-	if GetDestructableLife(this) > 0
-		ModifyGateBJ(bj_GATEOPERATION_CLOSE, this)
-	else
-		ModifyGateBJ(bj_GATEOPERATION_OPEN, this)
-
 /** used to open a destructable gate*/
 public function destructable.gateOpen()
-	ModifyGateBJ(bj_GATEOPERATION_OPEN, this)
+	if (GetDestructableLife(this) > 0)
+		KillDestructable(this)
 
 /** used to close a destructable gate*/
 public function destructable.gateClose()
-	ModifyGateBJ(bj_GATEOPERATION_DESTROY, this)
-	ModifyGateBJ(bj_GATEOPERATION_CLOSE, this)
+	this.gateOpen()
+	DestructableRestoreLife(this, GetDestructableMaxLife(this), true)
+	SetDestructableAnimation(this, "stand")
+
+/** used to close a destructable gate*/
+public function destructable.gateDestroy()
+	this.gateOpen()
+	SetDestructableAnimation(this, "death")
+
+/** used to toggles a destructable gate open close state*/
+public function destructable.gateToggle()
+	if GetDestructableLife(this) > 0
+		this.gateClose()
+	else
+		this.gateOpen()
 
 /** used to move a destructable elevator one step up*/
 public function destructable.elevatorUp()

@@ -6,9 +6,6 @@ import HashMap
 import Execute
 import Maths
 import Annotations
-import Unit
-import Boolexpr
-import Player
 
 /*
 	Groups are a necessary evil that exists in warcraft 3, and sometimes their use
@@ -99,56 +96,6 @@ function createGroups(int number)
 		Log.warn("Maximum number of GroupUtils groups (" + GROUP_NUMBER_LIMIT.toString() + ") created. "
 			+ "All newly created groups will be non-recyclable.")
 		shownMaxError = true
-
-/** used to get units in rect with filter ! caution group needs to be released using group.release() after usage !*/
-public function rect.getUnitsInRect(boolexpr filter) returns group
-	let g = getGroup()
-	GroupEnumUnitsInRect(g, this, filter)
-	filter.destr()
-	return g
-
-/** used to get units in rect ! caution group needs to be released using group.release() after usage !*/
-public function rect.getUnitsInRect() returns group
-	return this.getUnitsInRect(null)
-	
-/** used to get units in rect without these from a given player ids ! caution group needs to be released using group.release() after usage !*/
-public function rect.getUnitsInRectExcept(vararg int pIds) returns group
-	let units = this.getUnitsInRect()
-	for u in units
-		for pId in pIds
-			if u.getOwner().getId() == pId
-				units.removeUnit(u)
-	return units
-
-/** used to get units in rect but only these from a specific player id ! caution group needs to be released using group.release() after usage !*/
-public function rect.getUnitsInRectOnly(vararg int pIds) returns group
-	let units = this.getUnitsInRect()
-	for u in units
-		for pId in pIds
-			if u.getOwner().getId() != pId
-				units.removeUnit(u)
-	return units
-
-/** used to get units in range of the point ! caution group needs to be released using group.release() after usage !*/
-public function vec2.getUnitsInRange(real range) returns group 
-	let g = getGroup()
-	GroupEnumUnitsInRange(g, this.x, this.y, range, null)
-	return g
-
-/** used to get units in range of the loc, removing caster from the group ! caution group needs to be released using group.release() after usage !*/
-public function vec2.getUnitsInRange(real range, unit caster) returns group 
-	let g = this.getUnitsInRange(range)
-	if caster != null
-		g.removeUnit(caster)
-	return g
-
-/** used to get units in range of the loc between min and max range ! caution group needs to be released using group.release() after usage !*/
-public function vec2.getUnitsInRangeEx(real minRange, real maxRange) returns group 
-	let g = this.getUnitsInRange(maxRange)
-	for u in g
-		if u.getPos().distanceTo(this) < minRange
-			g.removeUnit(u)
-	return g
 
 @compiletime function initialize()
 	createGroups(START_CREATE_GROUPS)

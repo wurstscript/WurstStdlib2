@@ -153,7 +153,7 @@ public function player.isRacePrefSet(racepreference preference) returns bool
 
 /** Sets the maximum allowed hero amount for a player */
 public function player.setHeroMaxAllowed(int amount)
-	SetPlayerMaxHeroesAllowed(amount, this)
+	SetPlayerTechMaxAllowed(this, 'HERO', amount)
 		
 /** Change tooltip (Name) of given ability for player locally.*/
 public function player.setAbilityTooltip(int abilityId, string abilityName, int abilityLevel)

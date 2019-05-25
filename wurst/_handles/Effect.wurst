@@ -5,7 +5,6 @@ import Quaternion
 import Colors
 import Wurstunit
 import MapBounds
-import ClosureTimers
 
 public function effect.destr()
 	DestroyEffect(this)
@@ -208,19 +207,6 @@ public function effect.clearSubAnimations()
 public function effect.removeSubAnimation(subanimtype whichSubAnim)
 	BlzSpecialEffectRemoveSubAnimation(this, whichSubAnim)
 
-
-// Extensions
-/** remove effect after "time" expires*/
-public function effect.destr(real time)
-	doAfter(time) ->	  
-		this.destr()
-
-/** After "time", move effect to invisible part of map before removing it (which plays death animation).
-	Does not work on effects attached to units!
-*/
-public function effect.destrEx(real time)
-	doAfter(time) ->
-		this.destrEx()
 
 /** Move effect to invisible part of map before removing it (which plays death animation).
 	Does not work on effects attached to units!
