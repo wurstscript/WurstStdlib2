@@ -93,14 +93,53 @@ public function destructable.gateToggle()
 	else
 		this.gateOpen()
 
+constant let ELEVATOR_HEIGHT_MIN = 1
+constant let ELEVATOR_HEIGHT_MAX = 3		
 /** used to move a destructable elevator one step up*/
 public function destructable.elevatorUp()
-	ChangeElevatorHeight(this, GetElevatorHeight(this)+1)
+	this.setElevatorHeight(this.elevatorGetHeight()+1)
 
 /** used to move a destructable elevator one step down*/
 public function destructable.elevatorDown()
-	ChangeElevatorHeight(this, GetElevatorHeight(this)-1)
+	this.setElevatorHeight(this.elevatorGetHeight()-1)
 
+/** used to move a destructable elevator one step down*/
+public function destructable.elevatorSetHeight(int height)
+	this.setElevatorHeight(height)
+
+/** used to move a destructable elevator one step down*/
+public function destructable.elevatorGetHeight() returns int
+	let height = ELEVATOR_HEIGHT_MIN + (this.getOccluderHeight() / bj_CLIFFHEIGHT).toInt()
+	return height < ELEVATOR_HEIGHT_MIN or height > ELEVATOR_HEIGHT_MAX ? ELEVATOR_HEIGHT_MIN : height
+
+/** Returns elevator adjusted height based on given bounds*/
+function isElevatorHeightInBounds(int height) returns bool
+	return height >= ELEVATOR_HEIGHT_MIN and height <= ELEVATOR_HEIGHT_MAX
+	
+/** Returns elevator adjusted height based on given bounds*/
+function getElevatorHeightBound(int height) returns int
+	return height < ELEVATOR_HEIGHT_MIN ? ELEVATOR_HEIGHT_MIN : (height > ELEVATOR_HEIGHT_MAX ? ELEVATOR_HEIGHT_MAX : height)
+
+function destructable.setElevatorHeight(int height)
+	let oldHeight = this.elevatorGetHeight()
+	let newHeight = getElevatorHeightBound(height)
+	this.setOccluderHeight(bj_CLIFFHEIGHT*(newHeight-ELEVATOR_HEIGHT_MIN))
+
+	var animationInstant = "stand"
+	var animationQueue = "stand"
+	switch (newHeight)
+		case ELEVATOR_HEIGHT_MIN
+			animationInstant = oldHeight == 2 ? "birth" : (oldHeight == ELEVATOR_HEIGHT_MAX ? "birth third" : animationInstant)
+		case ELEVATOR_HEIGHT_MAX
+			animationInstant = oldHeight == ELEVATOR_HEIGHT_MIN ? "death third" : (oldHeight == 2 ? "death second" : animationInstant + " third")
+			animationQueue += " third"
+		default
+			animationInstant = oldHeight == ELEVATOR_HEIGHT_MIN ? "death" : (oldHeight == ELEVATOR_HEIGHT_MAX ? "birth second" : animationInstant + " second")
+			animationQueue += " second"
+
+	this.setAnimation(animationInstant)
+	if newHeight != oldHeight
+		this.queueAnimation(animationQueue)
 
 @Test function testDestructables()
 	let destr = createDestructable(0, ZERO2, 0 .fromDeg(), 1, -1)

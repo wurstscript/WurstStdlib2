@@ -130,7 +130,7 @@ public function item.setIconPath(string path)
 // Extensions
 /** Updates the item's name, tooltip, extendedtooltip, description or icon for the specific player.
 	If p == null, the item is updated for all players */
-public function item.updateItem(player p, string itemName, string itemTooltip, string itemExtendedTooltip, string itemDesc, string itemIcon) returns bool
+function item.updateItem(player p, string itemName, string itemTooltip, string itemExtendedTooltip, string itemDesc, string itemIcon) returns bool
 	var valid = false
 	if this != null and (itemName != "" or itemTooltip != "" or itemExtendedTooltip != "" or itemDesc != "" or itemIcon != "")
 		valid = true
@@ -147,3 +147,14 @@ public function item.updateItem(player p, string itemName, string itemTooltip, s
 				this.setIconPath(itemIcon)
 	return valid
 	
+/** Updates the item's name, tooltip, extendedtooltip, description or icon for the specific player.
+	If p == null, the item is updated for all players 
+	Returns false if no player is given. */
+public function item.updateItemForPlayer(player p, string itemName, string itemTooltip, string itemExtendedTooltip, string itemDesc, string itemIcon) returns bool
+	return p != null ? this.updateItem(p, itemName, itemTooltip, itemExtendedTooltip, itemDesc, itemIcon) : false
+
+/** Updates the item's name, tooltip, extendedtooltip, description or icon for the specific player.
+	If p == null, the item is updated for all players 
+	Returns false if no player is given. */
+public function item.updateItemForAll(string itemName, string itemTooltip, string itemExtendedTooltip, string itemDesc, string itemIcon) returns bool
+	return this.updateItem(null, itemName, itemTooltip, itemExtendedTooltip, itemDesc, itemIcon)
