@@ -515,13 +515,7 @@ public function group.asList() returns LinkedList<unit>
 	this.forEachFrom() u ->
 		result.add(u)
 	return result
-
-public function LinkedList<T>.getLast<T>() returns T
-	T elem = null
-	if this.size() > 0
-		elem = this.get(this.size()-1)
-	return elem
-
+	
 /** Joins elements from a string list into one string using a separator */
 public function LinkedList<string>.joinBy(string separator) returns string
 	var joined = ""

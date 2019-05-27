@@ -2,6 +2,7 @@ package StringUtilsTests
 import StringUtils
 
 import LinkedList
+import ObjectIds
 
 @Test function testSplit()
 	var list = "this is a string".split(" ")
@@ -41,11 +42,7 @@ import LinkedList
 	char("|").toInt().assertEquals(124)
 
 @Test function testCreateDelimitedString_ForEachIn()
-	let str = createDelimitedString("a", "b", "c")
-	str.assertEquals("a,b,c")
-
-	let ints = createDelimitedString('H000', 'H001')
-	ints.assertEquals("H000,H001")
+	let str = commaList("a", "b", "c")
 
 	let l = new LinkedList<string>()
 	str.forEachIn(",") (string str) ->
