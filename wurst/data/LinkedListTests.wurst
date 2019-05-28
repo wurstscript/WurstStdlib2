@@ -189,3 +189,20 @@ function testGenerics()
 	testlist.has("c").assertTrue()
 	testlist.has("x").assertFalse()
 	testlist.has("A").assertFalse()
+
+@Test function testGetters()
+	let testlist = new LinkedList<string>
+	testlist.add("a")
+	testlist.add("c")
+	testlist.add("b")
+	testlist.getFirst().assertEquals("a")
+	testlist.get(1).assertEquals("c")
+
+@Test function testJoin()
+	let list = new LinkedList<string>()
+		..add("this", "is", "a", "string")
+
+	list.join().assertEquals("thisisastring")
+	list.joinBy(" ").assertEquals("this is a string")
+
+	destroy list

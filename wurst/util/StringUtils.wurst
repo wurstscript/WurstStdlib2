@@ -1,11 +1,11 @@
 package StringUtils
 import NoWurst
-import String
 import LinkedList
 import Texttag
 import Interpolation
 import TypeCasting
 import Annotations
+import ErrorHandling
 
 /**
  * Credits go here: http://www.hiveworkshop.com/forums/jass-resources-412/snippet-ascii-190746/
@@ -17,6 +17,7 @@ int array width
 constant MAX_INDEX = '~' + 1
 constant DEFAULT_WIDTH = 0
 constant DEFAULT_STRING = ""
+constant WC3LIMIT_OBJECTS_DESCRIPTION_LENGTH = 1023 // Should be a global for whole WurstScript or StdLib at least
 
 public function texttag.center(vec3 pos, string message, real size) returns texttag
 	var str = message
@@ -101,41 +102,6 @@ public function string.split(string splitBy) returns LinkedList<string>
 		str = second
 	return list
 
-/** Joins elements from a string list into one string using a separator */
-public function LinkedList<string>.joinBy(string separator) returns string
-	var joined = ""
-	var first = true
-	let iter = this.iterator()
-
-	for str from iter
-		if iter.hasNext() or not first
-			joined += str + separator
-		else
-			joined += str
-			first = false
-
-	iter.close()
-	return joined
-
-interface ToStringClosure<T>
-	function toString(T elem) returns string
-
-public function LinkedList<T>.joinBy<T>(ToStringClosure<T> cls, string separator) returns string
-	let iter = this.iterator()
-	LinkedList<string> strings = new LinkedList<string>
-
-	for elem from iter
-		strings.add(cls.toString(elem))
-
-	iter.close()
-	let result = strings.joinBy(separator)
-	destroy strings
-	return result
-
-/** Joins elements from a string list into one string */
-public function LinkedList<string>.join() returns string
-	return this.joinBy("")
-
 /** Replaces consecutive repeats of the same string with a single instance
 	Turns "strstr" into "str" */
 public function string.reduce(string reduced) returns string
@@ -156,6 +122,59 @@ public function string.reduce(string reduced) returns string
 	Turns "  " into " " */
 public function string.reduce() returns string
 	return this.reduce(" ")
+
+public interface ForStringSplitCallback
+	function callback(string str)
+
+/** Custom Function which can split strings and runs callback for each string.
+	It can run even with no delimiter present (with single element).
+	Example usage:
+	"H001,H002".forEachIn(",") ->
+		doSomething()  */
+public function string.forEachIn(string delim, ForStringSplitCallback cb)
+	if this.length() > 0
+		int i = 0
+		int pos = this.indexOf(delim, i)
+
+		if pos == -1
+			cb.callback(this.substring(i, this.length()))
+
+		while pos != -1
+			cb.callback(this.substring(i, pos))
+			pos += 1
+			i = pos
+			pos = this.indexOf(delim, pos)
+			if pos == -1
+				cb.callback(this.substring(i, this.length()))
+
+/** Checks whether a string is a number or not.*/
+public function string.isNumber() returns bool
+	var isNumber = false
+	var hasDecimalPlaces = false
+	for int i = 0 to this.length()-1
+		if (this.charAt(i) == "-" and i == 0) or this.charAt(i) == "0" or this.charAt(i) == "1" or this.charAt(i) == "2" or this.charAt(i) == "3" or this.charAt(i) == "4"
+		or this.charAt(i) == "5" or this.charAt(i) == "6" or this.charAt(i) == "7" or this.charAt(i) == "8" or this.charAt(i) == "9"
+			isNumber = true
+		else if this.charAt(i) == "." and not hasDecimalPlaces
+			hasDecimalPlaces = true
+		else
+			return false
+	return isNumber
+
+/** Checks whether a string is valid in terms of max WC3 string length for various usages (Ability Description, Quest Description,...).*/
+public function string.isValidDescription() returns bool
+	var isValid = true
+	if this.length() > WC3LIMIT_OBJECTS_DESCRIPTION_LENGTH
+		isValid = false
+		error("String <"+this+"> is too long. Length: "+this.length().toString())	
+	return isValid
+
+/** Replaces all occurences of any character from given charlist by a given replacement string.*/
+public function string.replaceChars(string charset, string replacementChar) returns string
+	var newString = this
+	for replaceChar in charset
+		newString = newString.contains(replaceChar) ? newString.replace(replaceChar, replacementChar) : newString
+	return newString
 
 
 @compiletime function initialize()
