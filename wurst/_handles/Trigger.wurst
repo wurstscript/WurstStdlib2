@@ -1,6 +1,16 @@
 package Trigger
 import NoWurst
 
+public enum OSKEY_META
+	NONE
+	SHIFT
+	CTRL
+	ALT
+
+public function OSKEY_META.toInt() returns int
+	return this == OSKEY_META.ALT ? 4 : this castTo int
+
+
 public function trigger.addAction(code actionFunc) returns triggeraction
 	return TriggerAddAction(this, actionFunc)
 
@@ -85,6 +95,12 @@ public function trigger.registerPlayerUnitEvent(player whichPlayer, playerunitev
 public function trigger.registerPlayerAllianceChange(player whichPlayer, alliancetype whichAlliance) returns event
 	return TriggerRegisterPlayerAllianceChange(this, whichPlayer, whichAlliance)
 
+public function trigger.registerPlayerSync(player whichPlayer, alliancetype whichAlliance) returns event
+	return TriggerRegisterPlayerAllianceChange(this, whichPlayer, whichAlliance)
+
+public function trigger.registerPlayerKeyPress(player whichPlayer, oskeytype key, OSKEY_META metaKey, bool onKeyDown) returns event
+	return BlzTriggerRegisterPlayerKeyEvent(this, whichPlayer, key, metaKey.toInt(), onKeyDown)
+
 public function trigger.registerTimerEvent(real timeout, boolean periodic) returns event
 	return TriggerRegisterTimerEvent(this, timeout, periodic)
 
@@ -118,7 +134,7 @@ public function trigger.registerUnitStateEvent(unit whichUnit, unitstate whichSt
 		GetTriggerPlayer        - the player causing the event
 **/
 public function trigger.registerFrameEvent(framehandle frame, frameeventtype eventId) returns event
-	return BlzTriggerRegisterFrameEvent(this,frame,eventId)
+	return BlzTriggerRegisterFrameEvent(this, frame, eventId)
 
 public function trigger.removeAction(triggeraction action)
 	TriggerRemoveAction(this, action)
