@@ -54,12 +54,13 @@ import LinkedList
 	l.has("b").assertTrue()
 	l.has("c").assertTrue()
 
-
-@Test function testIsDigit_IsValidLength()
-	"a".isDigit().assertFalse()
-	"1".isDigit().assertTrue()
-	"259812".isDigit().assertTrue()
-	"251a52".isDigit().assertFalse()
+@Test function testisNumber_IsValidLength()
+	"a".isNumber().assertFalse()
+	"1".isNumber().assertTrue()
+	"259812".isNumber().assertTrue()
+	"251a52".isNumber().assertFalse()
+	"-251a52".isNumber().assertFalse()
+	"-25152".isNumber().assertTrue()
 	"1251FDSFA".isValidLength().assertTrue()
 
 @Test function testContainsAllAndOnly()

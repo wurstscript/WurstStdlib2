@@ -179,17 +179,17 @@ public function createDelimitedString(vararg string ids) returns string
 		error(WC3LIMIT_FUNCTIONS_PARAMETER_COUNT_ERROR)
 	return s
 
-/** Checks whether a string is representing a digit or not.*/
-public function string.isDigit() returns bool
-	bool isDigit = false
-	for int i = 0 to this.length()-1
-		if this.charAt(i) == "0" or this.charAt(i) == "1" or this.charAt(i) == "2" or this.charAt(i) == "3" or this.charAt(i) == "4"
-		or this.charAt(i) == "5" or this.charAt(i) == "6" or this.charAt(i) == "7" or this.charAt(i) == "8" or this.charAt(i) == "9"
-			isDigit = true
+/** Checks whether a string is representing a number or not.*/
+public function string.isNumber() returns bool
+	bool isNumber = false
+	var index = 0
+	for char in this
+		if "0123456789".contains(char) or (index == 0 and char == "-")
+			isNumber = true
+			index++
 		else
-			isDigit = false
-			return isDigit
-	return isDigit
+			return false
+	return isNumber
 
 /** Checks if this string contains all characters in given string.
 	Can be useful for player commands as you can capture entered strings with typos.
