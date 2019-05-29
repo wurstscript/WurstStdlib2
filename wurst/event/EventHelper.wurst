@@ -74,13 +74,13 @@ public function eventid.isMouseEvent() returns boolean
 	let eventId = this.getHandleId()
 	return (eventId >= 305 and eventId <= 307)
 
-/** This static class contains all possible TRIGGER/EVENT Getters and Setters.
-	! Must be used inside trigger action/condition only!
-	! Do not use inside closures as it will misbehave, always declare results from these getters to variables! */
+/** This class exposes all Getters and Setters for trigger events.
+	Note: As these functions simply wrap natives, they will only return proper values during event callbacks (actions/conditions).
+	To use these values in a subsequent closure, save the event data in a variable at the time the event was fired. */
 public class EventData
 	private construct()
 	/** Get trigger event. */
-	static function getEvent() returns eventid
+	static function getEventId() returns eventid
 		return GetTriggerEventId()
 
 	static function getIsKeyDown() returns boolean
@@ -88,17 +88,17 @@ public class EventData
 
 	/** Check if current trigger event is Playerunit Event. */
 	static function isPlayerunitEvent() returns boolean
-		let eventId = EventData.getEvent().getHandleId()
+		let eventId = EventData.getEventId().getHandleId()
 		return (eventId >= 18 and eventId <= 51) or (eventId >= 269 and eventId <= 277)
 	
 	/** Check if current trigger event is Keyboard Event. */
 	static function isKeyboardEvent() returns boolean
-		let eventId = EventData.getEvent().getHandleId()
+		let eventId = EventData.getEventId().getHandleId()
 		return (eventId >= 261 and eventId <= 268) or (eventId == 17)
 		
 	/** Check if current trigger event is Mouse Event. */
 	static function isMouseEvent() returns boolean
-		let eventId = EventData.getEvent().getHandleId()
+		let eventId = EventData.getEventId().getHandleId()
 		return (eventId >= 305 and eventId <= 307)
 
 	static function getUnit() returns unit
