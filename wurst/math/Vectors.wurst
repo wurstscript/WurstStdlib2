@@ -23,17 +23,17 @@ public constant DOWN = vec2(0, -1)
 // Line Operations
 public tuple lineFormular(real m, real b)
 
-/** return f(y) for a given point on a line)*/
+/** Return f(y) for a given point on a line) */
 public function real.getXOnLine(lineFormular line) returns real
-	return (this-line.b)/line.m
+	return (this - line.b) / line.m
 
-/** return f(x) for a given point on a line)*/
+/** Return f(x) for a given point on a line) */
 public function real.getYOnLine(lineFormular line) returns real
 	return (line.m * this) + line.b
 	
-/** returns a parallel line with a giving getParallelLineWithOrthognalDistance(d) distance ot the original line */
+/** Returns a parallel line with a giving getParallelLineWithOrthognalDistance(d) distance ot the original line */
 public function lineFormular.getParallelLineWithOrthognalDistance(real d) returns lineFormular
-	return lineFormular(this.m, (this.b + d*SquareRoot(1+Pow(this.m, 2))))
+	return lineFormular(this.m, (this.b + d * SquareRoot(1 + Pow(this.m, 2))))
 
 
 // Vectors

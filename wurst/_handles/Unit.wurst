@@ -178,13 +178,13 @@ public function unit.getMaxHP() returns real
 public function unit.getMaxMana() returns real
 	return this.getState(UNIT_STATE_MAX_MANA)
 
-/** Get units current missing helth. */
+/** Get units current missing health. */
 public function unit.getMissingHP() returns real
-	return this.getMaxHP()-this.getHP()
+	return this.getMaxHP() - this.getHP()
 
 /** Get units current missing mana. */
 public function unit.getMissingMana() returns real
-	return this.getMaxMana()-this.getMana()
+	return this.getMaxMana() - this.getMana()
 
 
 public function unit.getMoveSpeed() returns real
@@ -214,7 +214,7 @@ public function unit.getPos3Zero() returns vec3
 public function unit.getPos3with(real z) returns vec3
 	return vec3(this.getX(), this.getY(), z)
 
-/** Returns the prop window of the unit as angle.*/
+/** Returns the prop window of the unit as angle. */
 public function unit.getPropWindow() returns angle
 	return angle(GetUnitPropWindow(this))
 

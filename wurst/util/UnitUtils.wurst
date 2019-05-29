@@ -4,14 +4,11 @@ import ClosureTimers
 
 
 
-/*
+/*	This file contains various utility functions for Unit, 
+	which require enhanced functionality like closures and cannot be defined in Unit.wurst */
 
-This file contains various utility functions for Unit, which require enhanced functionality like closures and cannot be defined in Unit.wurst
-
-*/
-
-@configurable public constant real FIELD_OF_VIEW_FRONT  = 115.00  // Real FoV is: 180 - 2x (FIELD_OF_VIEW-90)	Using a value of 115 generates a FoV of 130   (natural FoV is about 135 degrees)
-@configurable public constant real FIELD_OF_VIEW_BEHIND = 115.00 
+@configurable public real FIELD_OF_VIEW_FRONT  = 230.00
+@configurable public real FIELD_OF_VIEW_BEHIND = 115.00  // Real FoV is: 180 - 2x (FIELD_OF_VIEW-90)	Using a value of 115 generates a FoV of 130   (natural FoV is about 135 degrees)
 
 /** Apply Buff to this unit for duration.*/
 public function unit.applyBuffTimed(buffTuple buffApplied, real duration)
@@ -51,7 +48,6 @@ public function unit.applyDOTTimedFrom(unit damagingUnit, real duration, real in
 			if targetUnit == null or not targetUnit.isAlive() or cb.isLast()
 				targetUnit.setAbilityLevel(buffApplied.abilId, 0)
 				targetUnit.removeAbility(buffApplied.abilId)
-				cb.stop()
 				destroy cb
 			else
 				if damagingUnit == null
@@ -71,7 +67,6 @@ public function unit.restoreHpMpTimed(real duration, real interval, real hotVal,
 			if targetUnit == null or not targetUnit.isAlive() or cb.isLast()
 				targetUnit.setAbilityLevel(buffApplied.abilId, 0)
 				targetUnit.removeAbility(buffApplied.abilId)
-				cb.stop()
 				destroy cb
 			else 
 				if hotVal >= 1
@@ -101,18 +96,24 @@ public function unit.playAnimation(string anim) returns OnFinishUnitAnimation
 	return new OnFinishUnitAnimation(this)
 
 /** Returns true if this unit is behind target unit.
-	Uses configurable FIELD_OF_VIEW_BEHIND variable.*/
+    Uses configurable FIELD_OF_VIEW_BEHIND variable with default value of 115. */
 public function unit.isBehind(unit targetUnit) returns bool
 	let degreeDif = this.getFacingAngle().degrees() - targetUnit.getFacingAngle().degrees()
 	return -FIELD_OF_VIEW_BEHIND <= degreeDif and degreeDif <= FIELD_OF_VIEW_BEHIND
 
-/** Change unit attack cooldown by given percentage.*/
+/** Returns true if this unit is in front of target unit.
+	Uses configurable FIELD_OF_VIEW_FRONT variable with default value of 230. */
+public function unit.isInFront(unit targetUnit) returns bool
+	let degreeDif = this.getFacingAngle().degrees() - targetUnit.getFacingAngle().degrees()
+	return -FIELD_OF_VIEW_FRONT <= degreeDif and degreeDif <= FIELD_OF_VIEW_FRONT
+
+/** Change unit attack cooldown by given percentage. */
 public function unit.setAttackCooldownPercChange(real attackCooldownPercChange, int weaponIndex) returns real
 	let newSpeed = this.getAttackCooldown(weaponIndex)/(1+attackCooldownPercChange)
 	this.setAttackCooldown(newSpeed, weaponIndex)
 	return newSpeed
    
-/** Change unit movement speed by given percentage.*/
+/** Change unit movement speed by given percentage. */
 public function unit.setMoveSpeedPercChange(real movespeedPercChange) returns real
 	let newSpeed = this.getMoveSpeed() + (this.getMoveSpeed()*movespeedPercChange)
 	this.setMoveSpeed(newSpeed)
