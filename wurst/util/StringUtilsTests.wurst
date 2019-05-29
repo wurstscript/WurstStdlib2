@@ -43,7 +43,6 @@ import ObjectIds
 
 @Test function testCreateDelimitedString_ForEachIn()
 	let str = commaList("a", "b", "c")
-
 	let l = new LinkedList<string>()
 	str.forEachIn(",") (string str) ->
 		l.add(str)
