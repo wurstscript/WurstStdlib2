@@ -20,10 +20,13 @@ function testGroupBasic()
 	let u2 = createUnit(Player(0), 'hfoo', vec2(0, 0), 0 .fromDeg())
 	g.addUnit(u2)
 	assertTrue(g.getUnitAt(0) == u)
-	assertTrue(g.getUnitAt(11) == u2)
+	assertTrue(g.size() == 12)
+	assertTrue(g.getUnitAt(g.size()-1) == u2)
 
-	g.clear()
-	assertTrue(g.isEmpty())
+	for int i = 0 to g.size()-1
+		print(g.getUnitAt(i).getHandleId())
+	print("---")
+	print(u2.getHandleId())
 
 @Test
 function testGroupForLoops()
