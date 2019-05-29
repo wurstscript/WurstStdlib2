@@ -164,21 +164,6 @@ public function string.isNumber() returns bool
 			return false
 	return isNumber
 
-/** Checks if this string contains all characters in given string.
-	Can be useful for player commands as you can capture entered strings with typos.
-	If this string has different length than given string, it immediately returns false.
-	Example: "-etrne".containsAllAndOnly("-enter") == true */
-public function string.containsAllAndOnly(string chars) returns bool
-	bool containsAll = true
-	if this.length() == chars.length()
-		for char in chars
-			if not this.contains(char)
-				containsAll = false
-				break
-	else
-		containsAll = false
-	return containsAll
-
 /** Checks whether a string is valid in terms of max WC3 string length for various usages (Ability Description, Quest Description,...).*/
 public function string.isValidDescription() returns bool
 	var isValid = true
