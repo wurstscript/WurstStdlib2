@@ -126,9 +126,11 @@ public function trigger.registerUnitStateEvent(unit whichUnit, unitstate whichSt
 	return TriggerRegisterUnitStateEvent(this, whichUnit, whichState, opcode, limitval)
 
 /**
-	registers a frameevent with given type for given frame, the triggered callback will contain following informations:
+	Registers a frameevent with given type for given frame, the triggered callback will contain following informations:
 		BlzGetTriggerFrame      - the source frame of the event
 		BlzGetTriggerFrameEvent - the type of the frame event
+		BlzGetTriggerFrameValue - the value of the frame event (for sliders)    // not yet part of common.j
+		BlzGetTriggerFrameText  - the value of the frame event (for editfields) // not yet part of common.j
 		GetTriggerPlayer        - the player causing the event
 **/
 public function trigger.registerFrameEvent(framehandle frame, frameeventtype eventId) returns event
