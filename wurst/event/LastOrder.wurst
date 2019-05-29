@@ -144,9 +144,9 @@ function actions()
 		let oid = GetIssuedOrderId()
 		Log.trace("ordered: <" + OrderId2StringBJ(oid) + ">")
 		if GetTriggerEventId() == EVENT_PLAYER_UNIT_ISSUED_TARGET_ORDER
-			new Order(u, oid, OrderType.TARGET, t, getOrderTargetPos())
+			new Order(u, oid, OrderType.TARGET, t, EventData.getOrderTargetPos())
 		else if GetTriggerEventId() == EVENT_PLAYER_UNIT_ISSUED_POINT_ORDER
-			new Order(u, oid, OrderType.POINT, null, getOrderPos())
+			new Order(u, oid, OrderType.POINT, null, EventData.getOrderPos())
 		else if GetTriggerEventId() == EVENT_PLAYER_UNIT_ISSUED_ORDER
 			new Order(u, oid, OrderType.IMMEDIATE, null, u.getPos())
 

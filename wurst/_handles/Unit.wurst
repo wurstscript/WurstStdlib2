@@ -329,6 +329,15 @@ public function unit.isPaused() returns boolean
 public function unit.pause()
 	PauseUnit(this, true)
 
+public function unit.pauseEx()
+	BlzPauseUnitEx(this, true)
+
+public function unit.unpause()
+	PauseUnit(this, false)
+
+public function unit.unpauseEx()
+	BlzPauseUnitEx(this, false)
+
 public function unit.queueAnimation(string animation)
 	QueueUnitAnimation(this, animation)
 
@@ -383,6 +392,12 @@ public function unit.useItemTarget(item itm, widget target) returns boolean
 
 public function unit.revive(vec2 pos, boolean doEyecandy)
 	ReviveHero(this, pos.x, pos.y, doEyecandy)
+
+public function unit.getAbility(int abilId) returns ability
+	return BlzGetUnitAbility(this, abilId)
+
+public function unit.getAbilityByIndex(int index) returns ability
+	return BlzGetUnitAbility(this, index)
 
 public function unit.setAbilityLevel(int abilId, int lvl)
 	SetUnitAbilityLevel(this, abilId, lvl)
@@ -520,9 +535,6 @@ public function unit.subMana(real val)
 
 public function unit.subState(unitstate state, real value)
 	SetUnitState(this, state, this.getState(state) - value)
-
-public function unit.unpause()
-	PauseUnit(this, false)
 
 public function vec2.withRealZ(unit u) returns vec3
 	return vec3(this.x, this.y, this.getTerrainZ() + u.getFlyHeight())
@@ -716,3 +728,54 @@ class InventoryIterator
 /** Creates an inventory iterator that allows you to access each existing item in the unit's inventory via for-loop. An example 'for i in u.inventory()'. */
 public function unit.inventory() returns InventoryIterator
 	return new InventoryIterator(this)
+
+// Unit fields
+public function unit.getField(unitbooleanfield field) returns bool
+	return BlzGetUnitBooleanField(this, field)
+
+public function unit.getField(unitintegerfield field) returns int
+	return BlzGetUnitIntegerField(this, field)
+
+public function unit.getField(unitrealfield field) returns real
+	return BlzGetUnitRealField(this, field)
+
+public function unit.getField(unitstringfield field) returns string
+	return BlzGetUnitStringField(this, field)
+
+public function unit.setField(unitbooleanfield field, bool value) returns bool
+	return BlzSetUnitBooleanField(this, field, value)
+
+public function unit.setField(unitintegerfield field, int value) returns bool
+	return BlzSetUnitIntegerField(this, field, value)
+
+public function unit.setField(unitrealfield field, real value) returns bool
+	return BlzSetUnitRealField(this, field, value)
+
+public function unit.setField(unitstringfield field, string value) returns bool
+	return BlzSetUnitStringField(this, field, value)
+	
+// Unit Weapon fields
+public function unit.getFieldWeapon(unitweaponbooleanfield field, int weaponIndex) returns bool
+	return BlzGetUnitWeaponBooleanField(this, field, weaponIndex)
+
+public function unit.getFieldWeapon(unitweaponintegerfield field, int weaponIndex) returns int
+	return BlzGetUnitWeaponIntegerField(this, field, weaponIndex)
+
+public function unit.getFieldWeapon(unitweaponrealfield field, int weaponIndex) returns real
+	return BlzGetUnitWeaponRealField(this, field, weaponIndex)
+
+public function unit.getFieldWeapon(unitweaponstringfield field, int weaponIndex) returns string
+	return BlzGetUnitWeaponStringField(this, field, weaponIndex)
+
+public function unit.setFieldWeapon(unitweaponbooleanfield field, int weaponIndex, bool value) returns bool
+	return BlzSetUnitWeaponBooleanField(this, field, weaponIndex, value)
+
+public function unit.setFieldWeapon(unitweaponintegerfield field, int weaponIndex, int value) returns bool
+	return BlzSetUnitWeaponIntegerField(this, field, weaponIndex, value)
+
+public function unit.setFieldWeapon(unitweaponrealfield field, int weaponIndex, real value) returns bool
+	return BlzSetUnitWeaponRealField(this, field, weaponIndex, value)
+
+public function unit.setFieldWeapon(unitweaponstringfield field, int weaponIndex, string value) returns bool
+	return BlzSetUnitWeaponStringField(this, field, weaponIndex, value)
+	
