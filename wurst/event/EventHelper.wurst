@@ -380,6 +380,9 @@ public class EventData
 	static function getOrderPos() returns vec2
 		return vec2(GetOrderPointX(), GetOrderPointY())
 
+	static function getOrderTargetPos() returns vec2
+		return EventData.getUnitOrderTarget().getPos()
+
 	static function getAbilityTargetPos() returns vec2
 		return vec2(GetSpellTargetX(), GetSpellTargetY())
 	
