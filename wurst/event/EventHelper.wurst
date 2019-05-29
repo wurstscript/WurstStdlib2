@@ -82,9 +82,7 @@ public class EventData
 	/** Get trigger event. */
 	static function getEvent() returns eventid
 		return GetTriggerEventId()
-	/////////////////////
-	// boolean getters //
-	/////////////////////
+
 	static function getIsKeyDown() returns boolean
 		return BlzGetTriggerPlayerIsKeyDown()
 
@@ -103,9 +101,6 @@ public class EventData
 		let eventId = EventData.getEvent().getHandleId()
 		return (eventId >= 305 and eventId <= 307)
 
-	//////////////////
-	// Unit getters //
-	//////////////////
 	static function getUnit() returns unit
 		return GetTriggerUnit()
 
@@ -216,9 +211,6 @@ public class EventData
 	static function getDamageTarget() returns unit
 		return BlzGetEventDamageTarget()
 
-	//////////////////
-	// int getters  //
-	//////////////////
 	static function getAbilityIdLearned() returns int
 		return GetLearnedSkill()
 	
@@ -238,9 +230,6 @@ public class EventData
 	static function getAbilityIdSpell() returns int
 		return GetSpellAbilityId()
 	
-	//////////////////
-	// real getters //
-	//////////////////
 	/** Return damage done by Unit to another target unit. */
 	static function getDamage() returns real
 		return GetEventDamage()
@@ -265,9 +254,6 @@ public class EventData
 	static function getMouseScreenY() returns real
 		return BlzGetTriggerPlayerMouseY()
 
-	/////////////////////
-	// string getters ///
-	/////////////////////
 	static function getSaveFilename() returns string
 		return GetSaveBasicFilename()
 
@@ -283,9 +269,6 @@ public class EventData
 	static function getSyncData() returns string
 		return BlzGetTriggerSyncData()
 
-	///////////////////
-	// item getters ///
-	///////////////////
 	static function getItemSold() returns item
 		return GetSoldItem()
 
@@ -298,9 +281,6 @@ public class EventData
 	static function getItemAbilityTarget() returns item
 		return GetSpellTargetItem()
 
-	/////////////////////
-	// player getters ///
-	/////////////////////
 	static function getPlayer() returns player
 		return GetTriggerPlayer()
 		
@@ -319,10 +299,6 @@ public class EventData
 	static function getPlayerState() returns playerstate
 		return GetEventPlayerState()
 
-
-	////////////////////////////
-	// other handles getters ///
-	////////////////////////////
 	static function getAbility() returns ability
 		return GetSpellAbility()
 
