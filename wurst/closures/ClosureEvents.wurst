@@ -219,7 +219,7 @@ public abstract class EventListener
 		next = null
 		prev = null
 
-// let unitTrig = CreateTrigger()
+let unitTrig = CreateTrigger()
 let leaveTrig = CreateTrigger()
 let keyTrig = CreateTrigger()
 
@@ -251,7 +251,7 @@ function registerEventId(eventid evnt) returns int
 
 function registerEventsForUnit(unit u)
 	if fireEvents(u)
-		// unitTrig.registerUnitEvent(u, EVENT_UNIT_DAMAGED)
+		unitTrig.registerUnitEvent(u, EVENT_UNIT_DAMAGED)
 
 public function unregisterEventsForUnit(unit u)
 	if fireEvents(u)
@@ -288,7 +288,7 @@ init
 	onUnitDeindex(() -> unregisterEventsForUnit(getIndexingUnit()))
 
 	nullTimer() ->
-		// unitTrig.addAction(() -> EventListener.generalEventCallback())
+		unitTrig.addAction(() -> EventListener.generalEventCallback())
 		leaveTrig.addAction(() -> EventListener.generalEventCallback())
 		keyTrig.addAction(() -> EventListener.generalEventCallback())
 
