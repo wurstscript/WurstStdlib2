@@ -60,7 +60,7 @@ public function region.removeRegionData()
 
 public function eventid.isPlayerunitEvent() returns boolean
 	let eventId = this.getHandleId()
-	return (eventId >= 18 and eventId <= 51) or (eventId >= 269 and eventId <= 277)
+	return (eventId >= 18 and eventId <= 51) or (eventId >= 269 and eventId <= 277) or eventId == 315 or eventId == 308
 
 public function eventid.isKeyboardEvent() returns boolean
 	let eventId = this.getHandleId()
