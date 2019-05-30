@@ -7,7 +7,7 @@
         If you set damage amount to zero or less in the unreduced listeners, reduced listeners will not fire.
 
         if DETECT_NATIVE_ABILITIES is true:
-            > Any  damage instance of attacktype ATTACK_TYPE_NORMAL is passed with DamageType SPELL
+            > Any damage instance of attacktype ATTACK_TYPE_NORMAL is passed with DamageType SPELL
 
 
     To listen to any damage instance firing:
@@ -64,7 +64,7 @@ import ClosureEvents
 
 /* CONFIGURATION */
 
-/** If true, any  damage instance of attacktype ATTACK_TYPE_NORMAL is passed with DamageType SPELL */
+/** If true, any damage instance of attacktype ATTACK_TYPE_NORMAL is passed with DamageType SPELL */
 @configurable constant DETECT_NATIVE_ABILITIES = true
 
 /** A damage instance can have an element. 
@@ -150,11 +150,9 @@ class DamageInstance
         current = this 
 
     protected function setAmount(real amount)
+        this.amount = amount
         if unreduced
-            this.unreducedAmount = amount 
-            this.amount = amount
-        else
-            this.amount = amount            
+            this.unreducedAmount = amount    
 
     protected function setReducedAmount(real amount)
         this.amount = amount 
