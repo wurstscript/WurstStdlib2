@@ -147,16 +147,19 @@ public function string.forEachIn(string delim, ForStringSplitCallback cb)
 			if pos == -1
 				cb.callback(this.substring(i, this.length()))
 
-/** Checks whether a string is a number or not.*/
+/** Checks whether a string is representing a number or not.*/
 public function string.isNumber() returns bool
 	var isNumber = false
 	var hasDecimalPlaces = false
-	for int i = 0 to this.length()-1
-		if (this.charAt(i) == "-" and i == 0) or this.charAt(i) == "0" or this.charAt(i) == "1" or this.charAt(i) == "2" or this.charAt(i) == "3" or this.charAt(i) == "4"
-		or this.charAt(i) == "5" or this.charAt(i) == "6" or this.charAt(i) == "7" or this.charAt(i) == "8" or this.charAt(i) == "9"
+	var index = 0
+	for char in this
+		if "0123456789".contains(char) or (index == 0 and char == "-")
 			isNumber = true
-		else if this.charAt(i) == "." and not hasDecimalPlaces
+			index++
+		else if (not hasDecimalPlaces and char == ".")
+			isNumber = true
 			hasDecimalPlaces = true
+			index++
 		else
 			return false
 	return isNumber

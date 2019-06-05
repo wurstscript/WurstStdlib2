@@ -60,6 +60,8 @@ import ObjectIds
 	"1251FDSFA".isValidDescription().assertTrue()
 	"-1232.32".isNumber().assertTrue()
 	"-1231.3a1".isNumber().assertFalse()
+	"-251a52".isNumber().assertFalse()
+	"-25152".isNumber().assertTrue()
 	
 @Test function testReplaceChars()
 	"abca".replaceChars("ca", "d").assertEquals("dbdd")
