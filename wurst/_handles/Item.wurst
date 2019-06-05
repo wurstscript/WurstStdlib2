@@ -127,34 +127,42 @@ public function item.getIconPath() returns string
 public function item.setIconPath(string path)
 	BlzSetItemIconPath(this, path)
 
-// Extensions
-/** Updates the item's name, tooltip, extendedtooltip, description or icon for the specific player.
-	If p == null, the item is updated for all players */
-function item.updateItem(player p, string itemName, string itemTooltip, string itemExtendedTooltip, string itemDesc, string itemIcon) returns bool
-	var valid = false
-	if this != null and (itemName != "" or itemTooltip != "" or itemExtendedTooltip != "" or itemDesc != "" or itemIcon != "")
-		valid = true
-		if (p == null or p == GetLocalPlayer())
-			if itemName != ""
-				this.setName(itemName)
-			if itemTooltip != ""
-				this.setTooltip(itemTooltip)
-			if itemExtendedTooltip != ""
-				this.setExtendedTooltip(itemExtendedTooltip)
-			if itemDesc != ""
-				this.setDescription(itemDesc)
-			if itemIcon != ""
-				this.setIconPath(itemIcon)
-	return valid
+// Item-Ability Get/Setters
+public function item.getAbilityByIndex(int index) returns ability
+	return BlzGetItemAbilityByIndex(this, index)
 	
-/** Updates the item's name, tooltip, extendedtooltip, description or icon for the specific player.
-	If p == null, the item is updated for all players 
-	Returns false if no player is given. */
-public function item.updateItemForPlayer(player p, string itemName, string itemTooltip, string itemExtendedTooltip, string itemDesc, string itemIcon) returns bool
-	return p != null ? this.updateItem(p, itemName, itemTooltip, itemExtendedTooltip, itemDesc, itemIcon) : false
+public function item.getAbility(int abiId) returns ability
+	return BlzGetItemAbility(this, abiId)
 
-/** Updates the item's name, tooltip, extendedtooltip, description or icon for the specific player.
-	If p == null, the item is updated for all players 
-	Returns false if no player is given. */
-public function item.updateItemForAll(string itemName, string itemTooltip, string itemExtendedTooltip, string itemDesc, string itemIcon) returns bool
-	return this.updateItem(null, itemName, itemTooltip, itemExtendedTooltip, itemDesc, itemIcon)
+public function item.addAbility(int abiId) returns bool	
+	return BlzItemAddAbility(this, abiId)
+
+public function item.removeAbility(int abiId) returns bool	
+	return BlzItemRemoveAbility(this, abiId)
+
+// Item Field Getters	
+public function item.getField(itembooleanfield field) returns bool	
+	return BlzGetItemBooleanField(this, field)
+
+public function item.getField(itemintegerfield field) returns int	
+	return BlzGetItemIntegerField(this, field)
+
+public function item.getField(itemrealfield field) returns real	
+	return BlzGetItemRealField(this, field)
+
+public function item.getField(itemstringfield field) returns string	
+	return BlzGetItemStringField(this, field)
+
+// Item Field Setters
+public function item.setField(itembooleanfield field, bool value) returns bool	
+	return BlzSetItemBooleanField(this, field, value)
+
+public function item.setField(itemintegerfield field, int value) returns bool	
+	return BlzSetItemIntegerField(this, field, value)
+
+public function item.setField(itemrealfield field, real value) returns bool	
+	return BlzSetItemRealField(this, field, value)
+
+public function item.setField(itemstringfield field, string value) returns bool	
+	return BlzSetItemStringField(this, field, value)
+	
