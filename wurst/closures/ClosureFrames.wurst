@@ -4,6 +4,19 @@ import Trigger
 import HashMap
 import Unit
 
+/*  
+    Example usage:
+        createSimpleFrame("MySimpleButton", GAME_UI, 0)
+        ..onClick( () -> print("The button was clicked.") )
+        ..onEnter( () -> print("The mouse is on the button.") )
+        ..onLeave( () -> print("The mouse left the button.") )
+
+    Important:
+        * Most frametypes don't support only a few events (some might not support any)
+        * Registrating origin frames to event seems to override their default behaviour.
+        For instance using the origin menu button for a onClick() event will make it not prompt the menu.
+*/
+
 
 /* CONSTANTS */
 
