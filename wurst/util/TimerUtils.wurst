@@ -45,14 +45,7 @@ public function timer.release()
 	freeTimersCount++
 
 
-timer timedLoopTimer = CreateTimer()
-trigger timedLoopTrig = CreateTrigger()
-int conditionCount = 0
-
-function evaluateTimedLoopTrig()
-	TriggerEvaluate(timedLoopTrig)
-	if conditionCount == 0
-		timedLoopTimer.pause()
+/* TimedLoop for classes */
 
 enum Mode
 	RUNNING
@@ -63,12 +56,17 @@ enum Mode
 public module TimedLoop
 	static private thistype array instances		// The array
 	static private int instanceCount = 0	// The count
-	static private triggercondition triggerCond = null // the triggerCondition for this
-	static private conditionfunc cond = Condition(function onExpire)
 
-	private Mode mode = Mode.PAUSED
+	static private timer timedLoopTimer = CreateTimer()
+	static private trigger timedLoopTrig = null
+				
+	protected Mode mode = Mode.PAUSED
 
 	abstract function onTimedLoop()
+
+	/** Returns the period of the timed loop */
+	function getPeriod() returns real 
+		return ANIMATION_PERIOD
 
 	private static function onExpire() returns boolean
 		int i = instanceCount - 1
@@ -86,34 +84,33 @@ public module TimedLoop
 			else
 				t.onTimedLoop()
 			i--
-		if instanceCount == 0
-			TriggerRemoveCondition(timedLoopTrig, triggerCond)
-			triggerCond = null
-			conditionCount--
 		return false
 
-	/* Just stops the periodic update of this object. */
+	/** Stops the periodic update of this object. */
 	function stopTimedLoop()
 		mode = Mode.STOPPED
 
-	/* Stops the periodic update and destroys the object. */
+	/** Stops the periodic update and destroys the object. */
 	function stopTimedLoopAndDestroy()
 		mode = Mode.STOPPED_FOR_GOOD
 
-	/* Starts the periodic updates for this object */
+	/** Starts the periodic updates for this object */
 	function startTimedLoop()
 		instances[instanceCount] = this
 		instanceCount++
 		if instanceCount == 1
-			if triggerCond == null
-				triggerCond = TriggerAddCondition(timedLoopTrig, cond)
-				conditionCount++
-				if conditionCount == 1
-					timedLoopTimer.startPeriodic(ANIMATION_PERIOD, function evaluateTimedLoopTrig)
+			if timedLoopTrig == null
+				timedLoopTrig = CreateTrigger()
+				TriggerAddCondition(timedLoopTrig, Condition(function onExpire))
+			timedLoopTimer.startPeriodic(getPeriod(), function evaluateTimedLoopTrig)
 		mode = Mode.RUNNING
+
+	private static function evaluateTimedLoopTrig()
+		TriggerEvaluate(timedLoopTrig)
+		if instanceCount == 0
+			timedLoopTimer.pause()
 
 	ondestroy
 		if mode != Mode.PAUSED
 			stopTimedLoop()
 			Log.warn("Destroyed Instance using TimedLoop before stopping the Loop")
-
