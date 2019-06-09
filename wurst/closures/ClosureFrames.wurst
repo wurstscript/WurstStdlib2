@@ -1,0 +1,108 @@
+package ClosureFrames
+import NoWurst
+import Trigger
+import HashMap
+import Unit
+
+
+/* CONSTANTS */
+
+constant frameHandleTrigger = CreateTrigger()..addAction(function onEvent)
+constant frameMap = new HashMap<int,FrameHandleListener>
+
+
+/* CLOSURES */
+
+public function framehandle.onCheckboxCheck(FrameHandleListener listener) returns FrameHandleListener
+    return addListenerForFrame(listener, this, FRAMEEVENT_CHECKBOX_CHECKED)
+
+public function framehandle.onCheckboxUncheck(FrameHandleListener listener) returns FrameHandleListener
+    return addListenerForFrame(listener, this, FRAMEEVENT_CHECKBOX_UNCHECKED)
+
+public function framehandle.onClick(FrameHandleListener listener) returns FrameHandleListener
+    return addListenerForFrame(listener, this, FRAMEEVENT_CONTROL_CLICK)
+
+public function framehandle.onDialogAccept(FrameHandleListener listener) returns FrameHandleListener
+    return addListenerForFrame(listener, this, FRAMEEVENT_DIALOG_ACCEPT)
+
+public function framehandle.onDialogCancel(FrameHandleListener listener) returns FrameHandleListener
+    return addListenerForFrame(listener, this, FRAMEEVENT_DIALOG_CANCEL)
+
+public function framehandle.onEditboxEnter(FrameHandleListener listener) returns FrameHandleListener
+    return addListenerForFrame(listener, this, FRAMEEVENT_EDITBOX_ENTER)
+
+public function framehandle.onEditboxChange(FrameHandleListener listener) returns FrameHandleListener
+    return addListenerForFrame(listener, this, FRAMEEVENT_EDITBOX_TEXT_CHANGED)
+
+public function framehandle.onMouseDoubleClick(FrameHandleListener listener) returns FrameHandleListener
+    return addListenerForFrame(listener, this, FRAMEEVENT_MOUSE_DOUBLECLICK)
+
+public function framehandle.onMouseDown(FrameHandleListener listener) returns FrameHandleListener
+    return addListenerForFrame(listener, this, FRAMEEVENT_MOUSE_DOWN)
+
+public function framehandle.onMouseEnter(FrameHandleListener listener) returns FrameHandleListener
+    return addListenerForFrame(listener, this, FRAMEEVENT_MOUSE_ENTER) 
+
+public function framehandle.onMouseLeave(FrameHandleListener listener) returns FrameHandleListener
+    return addListenerForFrame(listener, this, FRAMEEVENT_MOUSE_LEAVE) 
+
+public function framehandle.onMouseUp(FrameHandleListener listener) returns FrameHandleListener
+    return addListenerForFrame(listener, this, FRAMEEVENT_MOUSE_UP)
+
+public function framehandle.onMouseWheel(FrameHandleListener listener) returns FrameHandleListener
+    return addListenerForFrame(listener, this, FRAMEEVENT_MOUSE_WHEEL)
+
+public function framehandle.onPopupMenuItemChange(FrameHandleListener listener) returns FrameHandleListener
+    return addListenerForFrame(listener, this, FRAMEEVENT_POPUPMENU_ITEM_CHANGED)
+
+public function framehandle.onSliderValueChange(FrameHandleListener listener) returns FrameHandleListener
+    return addListenerForFrame(listener, this, FRAMEEVENT_SLIDER_VALUE_CHANGED)
+
+public function framehandle.onSpriteAnimUpdate(FrameHandleListener listener) returns FrameHandleListener
+    return addListenerForFrame(listener, this, FRAMEEVENT_SPRITE_ANIM_UPDATE)
+    
+function addListenerForFrame(FrameHandleListener listener, framehandle frame, frameeventtype eventType) returns FrameHandleListener
+    frameHandleTrigger.registerFrameEvent(frame, eventType)
+    listener.frame = frame
+    listener.eventType = eventType
+    let id = frame.getHandleId()
+    let first = frameMap.get(id)
+    if first != null 
+        first.prev = listener 
+        listener.next = first 
+    frameMap.put(id, listener)
+    return listener 
+
+
+/* ON EVENT */
+
+function onEvent() 
+    FrameHandleListener listener = frameMap.get(BlzGetTriggerFrame().getHandleId())
+    let eventType = BlzGetTriggerFrameEvent()
+    while listener != null 
+        if listener.eventType == eventType 
+            listener.onEvent()
+        listener = listener.next 
+
+
+/* FRAME HANDLE LISTENER */
+
+abstract class FrameHandleListener
+    framehandle frame 
+    frameeventtype eventType 
+    thistype next = null 
+    thistype prev = null 
+
+    abstract function onEvent()
+
+    ondestroy
+        let id = frame.getHandleId() 
+        let first = frameMap.get(id)
+        if first == this 
+            if next == null 
+                frameMap.remove(id)
+            else 
+                frameMap.put(id, next)
+        else if prev != null
+            prev.next = next
+        next.prev = prev
