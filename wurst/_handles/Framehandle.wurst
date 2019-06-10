@@ -267,6 +267,14 @@ public function framehandle.minMax(real minValue, real maxValue)
 public function framehandle.setStepSize(real stepSize)
     BlzFrameSetStepSize(this, stepSize)
 
+/** Sets the width of the frame (sets the height to its current height) */
+public function framehandle.setWidth(real width)
+    BlzFrameSetSize(this, width, this.getHeight())
+
+/** Sets the height of the frame (sets the width to its current width) */
+public function framehandle.setHeight(real height)
+    BlzFrameSetSize(this, this.getWidth(), height)
+
 /** Sets the width and height of the frame */
 public function framehandle.setSize(real width, real height)
     BlzFrameSetSize(this, width, height)

@@ -7,12 +7,12 @@ import Unit
 /*  
     Example usage:
         createSimpleFrame("MySimpleButton", GAME_UI, 0)
-        ..onClick( () -> print("The button was clicked.") )
-        ..onEnter( () -> print("The mouse is on the button.") )
-        ..onLeave( () -> print("The mouse left the button.") )
+        ..onClick(() -> print("The button was clicked."))
+        ..onEnter(() -> print("The mouse is on the button."))
+        ..onLeave(() -> print("The mouse left the button."))
 
     Important:
-        * Most frametypes don't support only a few events (some might not support any)
+        * Most frametypes don't support most events (some might not support any)
         * Registrating origin frames to event seems to override their default behaviour.
         For instance using the origin menu button for a onClick() event will make it not prompt the menu.
 */
@@ -20,8 +20,8 @@ import Unit
 
 /* CONSTANTS */
 
-constant frameHandleTrigger = CreateTrigger()..addAction(function onEvent)
-constant frameMap = new HashMap<int,FrameHandleListener>
+constant FRAMEHANDLE_TRIGGER = CreateTrigger()..addAction(function onEvent)
+constant FRAME_MAP = new HashMap<int, FrameHandleListener>
 
 
 /* CLOSURES */
@@ -75,22 +75,22 @@ public function framehandle.onSpriteAnimUpdate(FrameHandleListener listener) ret
     return addListenerForFrame(listener, this, FRAMEEVENT_SPRITE_ANIM_UPDATE)
     
 function addListenerForFrame(FrameHandleListener listener, framehandle frame, frameeventtype eventType) returns FrameHandleListener
-    frameHandleTrigger.registerFrameEvent(frame, eventType)
+    FRAMEHANDLE_TRIGGER.registerFrameEvent(frame, eventType)
     listener.frame = frame
     listener.eventType = eventType
     let id = frame.getHandleId()
-    let first = frameMap.get(id)
+    let first = FRAME_MAP.get(id)
     if first != null 
         first.prev = listener 
         listener.next = first 
-    frameMap.put(id, listener)
+    FRAME_MAP.put(id, listener)
     return listener 
 
 
 /* ON EVENT */
 
 function onEvent() 
-    FrameHandleListener listener = frameMap.get(BlzGetTriggerFrame().getHandleId())
+    var listener = FRAME_MAP.get(BlzGetTriggerFrame().getHandleId())
     let eventType = BlzGetTriggerFrameEvent()
     while listener != null 
         if listener.eventType == eventType 
@@ -110,12 +110,12 @@ abstract class FrameHandleListener
 
     ondestroy
         let id = frame.getHandleId() 
-        let first = frameMap.get(id)
+        let first = FRAME_MAP.get(id)
         if first == this 
             if next == null 
-                frameMap.remove(id)
+                FRAME_MAP.remove(id)
             else 
-                frameMap.put(id, next)
+                FRAME_MAP.put(id, next)
         else if prev != null
             prev.next = next
         next.prev = prev
