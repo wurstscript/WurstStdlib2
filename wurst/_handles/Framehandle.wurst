@@ -144,7 +144,7 @@ public function framehandle.setAllPoints(framehandle relative)
 public function framehandle.setVisible(bool flag)
     BlzFrameSetVisible(this, flag)
 
-/** Shows or hides the frame for a specific player */
+/** Shows or hides the frame to the given player */
 public function framehandle.setVisibleFor(player p, bool flag)
     if localPlayer == p
         BlzFrameSetVisible(this, flag)
@@ -153,7 +153,7 @@ public function framehandle.setVisibleFor(player p, bool flag)
 public function framehandle.show()
     BlzFrameSetVisible(this, true)
 
-/** Shows the frame for a specific player */
+/** Shows the frame to the specific player */
 public function framehandle.showFor(player p)
     if localPlayer == p
         BlzFrameSetVisible(this, true)
@@ -162,7 +162,7 @@ public function framehandle.showFor(player p)
 public function framehandle.hide()
     BlzFrameSetVisible(this, false)
 
-/** Hides the frame for a specific player */
+/** Hides the frame to the specific player */
 public function framehandle.hideFor(player p)
     if localPlayer == p
         BlzFrameSetVisible(this, false)
@@ -326,6 +326,6 @@ public function enableUIAutoPosition(boolean flag)
 public function hideOriginFrames(boolean flag)
     BlzHideOriginFrames(flag)
 
-/** Loads a toc file from a specific path, to include custom fdf files from, returns true on success */
+/** Loads a toc file from the given path, to include custom fdf files from, returns true on success */
 public function loadTOCFile(string tocFile) returns bool
     return BlzLoadTOCFile(tocFile)
