@@ -217,29 +217,27 @@ public class DamageEvent
         BlzSetEventDamageType(dmg.nativeDamageType)
         BlzSetEventWeaponType(dmg.nativeWeaponType)
         BlzSetEventDamage(dmg.amount)
-        if dmg.amount <= 0. 
-            destroy dmg 
-            abort = false 
 
     protected static function onDamage()
         let dmg = DamageInstance.current
-        dmg.setReducedAmount(GetEventDamage())
-        for i = 0 to maxPriority
-            var listener = firstListeners[i]
-            while listener != null
-                listener.onEvent()
-                if abort                    
-                    dmg.amount = 0
-                    break
-                else 
-                    listener = listener.next
-            if abort 
-                break 
+        if not abort 
+            dmg.setReducedAmount(GetEventDamage())
+            for i = 0 to maxPriority
+                var listener = firstListeners[i]
+                while listener != null
+                    listener.onEvent()
+                    if abort                    
+                        dmg.amount = 0
+                        break
+                    else 
+                        listener = listener.next
+                if abort 
+                    break 
 
-        BlzSetEventAttackType(dmg.nativeAttackType)
-        BlzSetEventDamageType(dmg.nativeDamageType)
-        BlzSetEventWeaponType(dmg.nativeWeaponType)
-        BlzSetEventDamage(dmg.amount)
+            BlzSetEventAttackType(dmg.nativeAttackType)
+            BlzSetEventDamageType(dmg.nativeDamageType)
+            BlzSetEventWeaponType(dmg.nativeWeaponType)
+            BlzSetEventDamage(dmg.amount)
 
         destroy dmg
         abort = false  
