@@ -1,195 +1,257 @@
 package Framehandle
 import NoWurst
 import Player
+import Vectors
+import Colors
+import Annotations
 
-/* New custom Framehandle types can be defined in template files, thus called frame definition files (*.fdf),
-	these files needs to be listed inside of a toc file to be recognized by the wc3 engine.
-	Default toc filePath: war3.w3mod:ui\framedef\framedef.toc
-    Default fdf filePath: war3.w3mod:ui\framedef\ui\ || war3.w3mod:ui\framedef\glue\
+/* 
+    Custom Frames can be defined in frame definition files (*.fdf).
+    These files needs to be listed inside of a toc file and loaded to be used the toc file should always have an empty line at the end).
+    Default fdf can be found in: 
+        war3.w3mod:ui\framedef\ui\ 
+        war3.w3mod:ui\framedef\glue\
     
-    example parameters:
-        DecorateFileNames       - allows to lookup paths defined by game interface string constants
-        UseActiveContext        - disallows clicking through the frame into the world space, allows to  refer supframes
-        Height                  - defines a default height
-        Width                   - defines a default width
-        BackdropEdgeFile        - defines a default border texture file
-        ...
-		
-	Multiplayer notes:
-		Frames handling Player input won't sync their state. Player's input has only an effect on the localplayer.
-		For example when a checkbox or an input field is displayed and Player 0 checks it / writes some input into it, this event happens only for Player 0.
-		Therefore using BlzFrameGetText(Editbox) or BlzFrameGetValue(Slider) are likely to produce a desync, cause their values are local and differ, if some action is triggered based on these input values.
+	Synch notes:
+        A frame uses the default handlepool, hence it should be created for all players.
+        A Frameevent is a synced event, if a player presses the button and evokes the event, it will be sent to/happen for all players with TriggerPlayer being the player pressing the button. 
+        The frame state is not synced; i.e you can change the text, value, position, visibility or state (SetEnable) locally without having to fear any direct desync.
+        It still can desync, if you changed something locally and use that changed thing for something synched.
+
+    originframetype notes:
+        ORIGIN_FRAME_GAME_UI 				    --> Main parent frame
+        ORIGIN_FRAME_WORLD_FRAME 			    --> The game is displayed on this frame
+        ORIGIN_FRAME_HERO_BAR 				    --> Parent of all HERO_BUTTONS, HeroButons share the same visiblity.	
+        ORIGIN_FRAME_HERO_BUTTON [0 to 6]       --> The buttons of own/allied heroes on the left of the screen	
+            ORIGIN_FRAME_HERO_HP_BAR,
+            ORIGIN_FRAME_HERO_MANA_BAR
+            ORIGIN_FRAME_HERO_BUTTON_INDICATOR  --> The glowing when a hero has skillpoints; They reappear when a hero gains a new skillpoint even if all originframes are hidden.
+        
+        ORIGIN_FRAME_ITEM_BUTTON [0 to 5]       --> Items in the inventory. Reappear on unit's selection even if all originframes are hidden (when the parent's parent is shown)
+        ORIGIN_FRAME_COMMAND_BUTTON [0 to 11]   --> Buttons of the the command board. 0 is the (0,0) button, 11 is the (3,2) one. Reappear on unit's selection even if all originframes are hidden
+        ORIGIN_FRAME_SYSTEM_BUTTON [0 to 3]     --> Menu, allies, log, quest.
+        ORIGIN_FRAME_PORTRAIT 	                --> Portrait of the selected unit (this frame is not on the 4:3 screen but on the whole screen)
+        ORIGIN_FRAME_MINIMAP
+        ORIGIN_FRAME_MINIMAP_BUTTON [0 to 4]    --> 0 is the button at top, 4 the one at the bottom.
+        ORIGIN_FRAME_TOOLTIP
+        ORIGIN_FRAME_UBERTOOLTIP                --> Frame of the game's tooltips
+        ORIGIN_FRAME_CHAT_MSG                   --> Frame of the game's messages (e.g. from DisplayTextToPlayer()) 
+        ORIGIN_FRAME_UNIT_MSG                   --> Frame of the UpKeep change warning message, below the clock
 */
 
-/** Returns a framehandle to be used as custom frame based on a given originframetype as its parent:
-		originframetype					possible indexes are used for subclasses (defaults 0)
-			ORIGIN_FRAME_GAME_UI 				  --> default game ui frame
-			ORIGIN_FRAME_WORLD_FRAME 			  --> visible playground, units items effects fog, the world frame decribes all general objects in the world
-			ORIGIN_FRAME_HERO_BAR 				  --> masterpanel of all ORIGIN_FRAME_HERO_BUTTON
-			ORIGIN_FRAME_HERO_BUTTON [0 to 6]     --> buttons of own/allied heroes potraits on the left of the screen
-				ORIGIN_FRAME_HERO_HP_BAR, connected to HeroButtons
-				ORIGIN_FRAME_HERO_MANA_BAR
-				ORIGIN_FRAME_HERO_BUTTON_INDICATOR
-			ORIGIN_FRAME_ITEM_BUTTON [0 to 5]     --> items inventory. updates on selection
-			ORIGIN_FRAME_COMMAND_BUTTON [0 to 11] --> command buttons to order units, e.g. ITEM_BUTTON, updates on selection
-			ORIGIN_FRAME_SYSTEM_BUTTON [0 to 3]   --> Menu, allies, Log, Quest
-			ORIGIN_FRAME_PORTRAIT 	              --> portrait of the main selected Unit
-			ORIGIN_FRAME_MINIMAP
-			ORIGIN_FRAME_MINIMAP_BUTTON
-			ORIGIN_FRAME_TOOLTIP
-			ORIGIN_FRAME_UBERTOOLTIP
-			ORIGIN_FRAME_CHAT_MSG
-			ORIGIN_FRAME_UNIT_MSG                 --> container of the UpKeep change Warning Message, below the dayTime Clock
-*/
+public constant GAME_UI = BlzGetOriginFrame(ORIGIN_FRAME_GAME_UI, 0)
+
+public constant SCREEN_CENTER       = vec2(0.4, 0.3)
+public constant SCREEN_TOPRIGHT     = vec2(0.8, 0.6)
+public constant SCREEN_TOPLEFT      = vec2(0.0, 0.6)
+public constant SCREEN_BOTTOMRIGHT  = vec2(0.8, 0.0)
+public constant SCREEN_BOTTOMLEFT   = vec2(0.0, 0.0)
+public constant SCREEN_RIGHT        = vec2(0.8, 0.3)
+public constant SCREEN_LEFT         = vec2(0.0, 0.3)
+public constant SCREEN_TOP          = vec2(0.4, 0.6)
+public constant SCREEN_BOTTOM       = vec2(0.4, 0.0)
+
+
+/** Returns the orgin frame of the given type */
+public function getOriginFrame(originframetype frameType) returns framehandle
+    return BlzGetOriginFrame(frameType, 0)
+
+/** Returns the orgin frame of the given type and index */
 public function getOriginFrame(originframetype frameType, integer index) returns framehandle
     return BlzGetOriginFrame(frameType, index)
 
-/**	Returns a framehandle to be used as custom frame based on a given frame name (see FramehandleNames.FramhandleDefaultNames) */
+/**	Returns the framehandle of the given name */
+public function getFrameByName(string name) returns framehandle
+    return BlzGetFrameByName(name, 0)
+
+/**	Returns the framehandle of the given name and createContext index (children inherit the createContext value of their parent) */
 public function getFrameByName(string name, integer createContext) returns framehandle
     return BlzGetFrameByName(name, createContext)
 
-/** Creates a custom frame by frame name (see (see FramehandleNames.FramehandleDefaultNames)) */
+/** Creates a non simple frame of the given name (the name of the frame which must be defined in the imported fdf files). */ 
+public function createFrame(string name) returns framehandle
+    return BlzCreateFrame(name, GAME_UI, 0, 0)
+
+/** Creates a non simple frame:
+        name: the name of the frame which must be defined in the imported fdf files. 
+        owner: the parent of the frame
+        priority: unknown 
+        createContext: the unique id assigned to the frame and its children (useful for creating multiple frames of the same name) */
 public function createFrame(string name, framehandle owner, integer priority, integer createContext) returns framehandle
     return BlzCreateFrame(name, owner, priority, createContext)
     
-/** Creates a custom frame with limited options based on a given base frame name, see getFrameByName */
+/** Creates a simple frame of the given name (the name of the frame which must be defined in the imported fdf files.) */ 
+public function createSimpleFrame(string name) returns framehandle
+    return BlzCreateSimpleFrame(name, GAME_UI, 0)
+
+/** Creates a simple frame:
+        name: the name of the frame which must be defined in the imported fdf files. 
+        owner: the parent of the frame
+        createContext: the unique id assigned to the frame and its children (useful for creating multiple frames of the same name) */
 public function createSimpleFrame(string name, framehandle owner, integer createContext) returns framehandle
     return BlzCreateSimpleFrame(name, owner, createContext)
     
-/** Creates a custom frame with a predefined typename inside of a frame definition file (fdf) and listed by a toc file		
-	example usage:
-		let mainFrame = createFrameByType("MENU", "My PopUpMenu", parentFrame, "StandardSmallPopupMenuTemplate", 0)
-		let subFrame  = createFrameByType("BACKDROP", "My PopUpMenu", mainFrame, "StandardPopupMenuBackdropTemplate", 0)
-*/
+/** Creates a frame by type:
+        typeName: the name of the type (e.g. "SIMPLEFRAME", "MENU", "BUTTON") 
+        name: the name of the created frame 
+        owner: the parent of the frame 
+        inherits: the name of the frame frome which the created frame will be inhereting (which must be defined in the imported .fdf files)
+        createContext: the unique id assigned to the frame and its children (useful for creating multiple frames of the same name) */
 public function createFrameByType(string typeName, string name, framehandle owner, string inherits, integer createContext) returns framehandle
     return BlzCreateFrameByType(typeName, name, owner, inherits, createContext)
 
+/** Removes a frame */
 public function framehandle.remove()
     BlzDestroyFrame(this)
 
-/** Sets a frames position aligned on predefined framepoint of another frame, while the abosute position gets ignored */
-public function framehandle.setPoint(framepointtype point, framehandle relative, framepointtype relativePoint, real x, real y)
-    BlzFrameSetPoint(this, point, relative, relativePoint, x, y)
+/**	Places the frame at the center of the screen */
+public function framehandle.setCenter()
+    BlzFrameSetAbsPoint(this, FRAMEPOINT_CENTER, SCREEN_CENTER.x, SCREEN_CENTER.y)
 
-/**	Sets the frame position to an absolute x, y point ons the screen
-		0 -->   0% min screensize pos
-		1 --> 100% max screensize pos
-*/
+/**	Sets the frame position to an absolute x, y point on the screen.
+For the the x-axis, the value is between 0 and 0.8
+For the the y-axis, the value is between 0 and 0.6 */
 public function framehandle.setAbsPoint(framepointtype point, real x, real y)
     BlzFrameSetAbsPoint(this, point, x, y)
 
-/** TODO, unkown */
+/**	Sets the frame position to an absolute x, y point on the screen.
+    For the the x-axis, the value is between 0 and 0.8
+    For the the y-axis, the value is between 0 and 0.6 */
+public function framehandle.setAbsPoint(framepointtype point, vec2 pos)
+    BlzFrameSetAbsPoint(this, point, pos.x, pos.y)
+
+/** Sets the frame's anchor point position to the one of the given frame's anchor */
+public function framehandle.setPoint(framepointtype point, framehandle relative, framepointtype relativePoint)
+    BlzFrameSetPoint(this, point, relative, relativePoint, 0, 0)
+
+/** Sets the frame's anchor point position to the one of the given frame's anchor with an offset */
+public function framehandle.setPoint(framepointtype point, framehandle relative, framepointtype relativePoint, vec2 offset)
+    BlzFrameSetPoint(this, point, relative, relativePoint, offset.x, offset.y)
+
+/** Sets the frame's anchor point position to the one of the given frame's anchor with an offset */
+public function framehandle.setPoint(framepointtype point, framehandle relative, framepointtype relativePoint, real offsetX, real offsetY)
+    BlzFrameSetPoint(this, point, relative, relativePoint, offsetX, offsetY)
+
+/** Frees the frame from any relative or absolute anchor points */
 public function framehandle.clearAllPoints()
     BlzFrameClearAllPoints(this)
 
-/** TODO, unkown */
+/** Copy all the anchor points of the given frame */
 public function framehandle.setAllPoints(framehandle relative)
     BlzFrameSetAllPoints(this, relative)
 
-/** Shows the given frame */
+/** Shows or hides the frame */
+public function framehandle.setVisible(bool flag)
+    BlzFrameSetVisible(this, flag)
+
+/** Shows or hides the frame to the given player */
+public function framehandle.setVisibleFor(player p, bool flag)
+    if localPlayer == p
+        BlzFrameSetVisible(this, flag)
+
+/** Shows the frame */
 public function framehandle.show()
     BlzFrameSetVisible(this, true)
 
-/** Shows the given frame for a specific player */
+/** Shows the frame to the specific player */
 public function framehandle.showFor(player p)
     if localPlayer == p
         BlzFrameSetVisible(this, true)
 
-/** Hides the given frame */
+/** Hides the frame */
 public function framehandle.hide()
     BlzFrameSetVisible(this, false)
 
-/** Hides the given frame for a specific player */
+/** Hides the frame to the specific player */
 public function framehandle.hideFor(player p)
     if localPlayer == p
         BlzFrameSetVisible(this, false)
 
-/** Obtains whether the given frame is visible or not */
+/** Returns whether the frame is visible or not */
 public function framehandle.isVisible() returns boolean
     return BlzFrameIsVisible(this)
 
-/** Obtains the frames name */
+/** Returns the frame's name */
 public function framehandle.name() returns string
     return BlzFrameGetName(this)
 
-/** Evokes a click a event on a given frame */
+/** Fires a click a event on the frame */
 public function framehandle.click()
     BlzFrameClick(this)
 
-/** Obtains the text set of a given frame */
+/** Returns the text value of the text frame */
 public function framehandle.getText() returns string
     return BlzFrameGetText(this)
 
-/** Sets the text of a given frame */
+/** Sets the text value of the text frame */
 public function framehandle.setText(string text)
     BlzFrameSetText(this, text)
 
-/** Obtains the maximum allowed text size of a given frame */
+/** Returns the maximum allowed text size of the text frame */
 public function framehandle.getTextSizeLimit() returns integer
     return BlzFrameGetTextSizeLimit(this)
 
-/** Sets the maximum allowed text size of a given frame */
+/** Sets the maximum allowed text size of the text frame */
 public function framehandle.setTextSizeLimit(integer size)
     BlzFrameSetTextSizeLimit(this, size)
 
-/** Obtains the text color of a given frame */
+/** Sets the text color of the text frame */
+public function framehandle.setTextColor(colorA color)
+    BlzFrameSetTextColor(this, BlzConvertColor(color.alpha, color.red, color.green, color.blue))
+
+/** Sets the text color of the text frame */
 public function framehandle.setTextColor(integer color)
     BlzFrameSetTextColor(this, color)
 
-/** En/disables the input focus of a given frame */
+/** Enables or disables the user interaction for the frame */
 public function framehandle.setFocus(boolean flag)
     BlzFrameSetFocus(this, flag)
 
+/** Sets the model of the model frame */
 public function framehandle.setModel(string modelFile, integer cameraIndex)
     BlzFrameSetModel(this, modelFile, cameraIndex)
 
-/** Obtains enabled user interaction state of the frame */
+/** Returns the state of the frame */
 public function framehandle.isEnabled() returns boolean
     return BlzFrameGetEnable(this)
 
-/** En/Disables user interaction with the frame */
+/** Enables or disables the frame */
 public function framehandle.setEnabled(boolean enabled)
     BlzFrameSetEnable(this, enabled)
 
-/** Obtains the decimal alpha value of a frame (only for specific frames) */
+/** Returns the decimal alpha value of the frame (only for specific frames) */
 public function framehandle.getAlpha() returns int
     return BlzFrameGetAlpha(this)
 
-/** Sets the decimal alpha value of a frame (only for specific frames) */
+/** Sets the decimal alpha value of the frame (only for specific frames) */
 public function framehandle.setAlpha(integer alpha)
     BlzFrameSetAlpha(this, alpha)
 
-/** TODO */	
-public function framehandle.setSriteAnimate(integer primaryProp, integer flags)
+/** Unknown */	
+public function framehandle.setSpriteAnimate(integer primaryProp, integer flags)
     BlzFrameSetSpriteAnimate(this, primaryProp, flags)
 
-/** Sets the texture definition for the frame, can be used generate backgrounds with alpha transparency or more other more complex definitions:
-	example: 
-	Texture {
-        File "ConsoleTexture05",
-        Width 0.256,
-        Height 0.032,
-        TexCoord 0, 1, 0, 0.125
-        AlphaMode "ALPHAKEY",
-        Anchor TOPLEFT,-0.256,0,
-    }
- */
+/** Sets the texture of the frame 
+        texFile: the path of the texture
+        flags: unknown 
+        blend: true to keep transparency */
 public function framehandle.setTexture(string texFile, integer flag, boolean blend)
     BlzFrameSetTexture(this, texFile, flag, blend) 
 
-/** Sets the frames scaling value based on its current size */
+/** Sets the frame's scaling value. 
+    Frame's size, children frames and relative anchor points scale */
 public function framehandle.setScale(real scale)
     BlzFrameSetScale(this, scale)   
 
-/** Sets a frames tooltop frame, if it has some tooltip subframe */
+/** Sets a frame's tooltip frame, if it has some tooltip subframe */
 public function framehandle.setTooltip(framehandle tooltip)
     BlzFrameSetTooltip(this, tooltip)   
     
-/** Forces the mouse cursor to stay (caged) inside of the given frame */
+/** Forces the mouse cursor to stay (caged) inside of the frame */
 public function framehandle.cageMouse(boolean enable)
     BlzFrameCageMouse(this, enable)   
 
-/** Obtains the specific value of the frame (e.g. for sliders) */
+/** Returns the specific value of the frame (e.g. for sliders) */
 public function framehandle.getValue() returns real
     return BlzFrameGetValue(this)
 
@@ -201,46 +263,62 @@ public function framehandle.setValue(real value)
 public function framehandle.minMax(real minValue, real maxValue)
     BlzFrameSetMinMaxValue(this,minValue,maxValue)
 
-/** TODO */
+/** Sets the step size of the frame (e.g. for sliders) */
 public function framehandle.setStepSize(real stepSize)
     BlzFrameSetStepSize(this, stepSize)
 
-/** Sets the width and height of a given frame  */
+/** Sets the width of the frame (sets the height to its current height) */
+public function framehandle.setWidth(real width)
+    BlzFrameSetSize(this, width, this.getHeight())
+
+/** Sets the height of the frame (sets the width to its current width) */
+public function framehandle.setHeight(real height)
+    BlzFrameSetSize(this, this.getWidth(), height)
+
+/** Sets the width and height of the frame */
 public function framehandle.setSize(real width, real height)
     BlzFrameSetSize(this, width, height)
 
-/** Sets the vertex color of a given frame  */
+/** Sets the vertex color of the model frame */
 public function framehandle.setVertexColor(integer color)
     BlzFrameSetVertexColor(this, color)
 
+/** Unknown */
 public function framehandle.setLevel(integer level)
     BlzFrameSetLevel(this, level)
 
-/** Searches for the frames parent frame, should be used with caution as getting the parent of any top most frame will lead into a void crash */
+/** Searches for the frames parent frame. 
+    Should be used with caution as getting the parent of any top most frame will lead into a void crash */
 public function framehandle.getParent() returns framehandle
     return BlzFrameGetParent(this)
 
-/** Sets the parent frame for given custom created frame */
+/** Sets the parent frame of the frame */
 public function framehandle.setParent(framehandle parent)
     BlzFrameSetParent(this, parent)
 
-/** Obtains the qualified size of height of a given frame (0-1) */
-public function framehandle.height() returns real
+@deprecated("use getHeight() instead") public function framehandle.height() returns real
+    return this.getHeight()
+
+@deprecated("use getWidth() instead") public function framehandle.width() returns real
+    return this.getWidth()
+
+/** Returns the frame's height */
+public function framehandle.getHeight() returns real
     return BlzFrameGetHeight(this)
 
-/** Obtains the qualified size of width of a given frame (0-1) */
-public function framehandle.width() returns real
+/** Returns the frame's width */
+public function framehandle.getWidth() returns real
     return BlzFrameGetWidth(this)
 
-/** Sets the used text font of a given frame */
+/** Sets the text font of the text frame */
 public function framehandle.setFont(string fileName, real height, integer flags)
     BlzFrameSetFont(this, fileName, height, flags)
 
-/** Set the used text alignment of a given frame */
+/** Set the text alignment of the text frame */
 public function framehandle.setTextAlignment(textaligntype vert, textaligntype horz)
     BlzFrameSetTextAlignment(this, vert, horz)
 
-/** En/disables auto positioning of ui elements */
+/** Enables or disables auto positioning of ui elements */
 public function enableUIAutoPosition(boolean flag)
     BlzEnableUIAutoPosition(flag)
 
@@ -248,6 +326,6 @@ public function enableUIAutoPosition(boolean flag)
 public function hideOriginFrames(boolean flag)
     BlzHideOriginFrames(flag)
 
-/** Loads a toc file from a specific path, to include custom fdf files from, returns true on success */
+/** Loads a toc file from the given path, to include custom fdf files from, returns true on success */
 public function loadTOCFile(string tocFile) returns bool
     return BlzLoadTOCFile(tocFile)
