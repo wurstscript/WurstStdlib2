@@ -6,17 +6,19 @@ import Colors
 import Annotations
 
 /* 
-    Custom Frames can be defined in frame definition files (*.fdf).
-    These files needs to be listed inside of a toc file and loaded to be used the toc file should always have an empty line at the end).
-    Default fdf can be found in: 
+    Custom frames can be defined in a frame definition file (*.fdf).
+    These files need to be listed inside of a toc file and loaded using loadTOCFile() to be used.
+    The toc file *must* always have an empty line at the end.
+    Default .fdf files can be found in: 
         war3.w3mod:ui\framedef\ui\ 
         war3.w3mod:ui\framedef\glue\
     
 	Synch notes:
-        A frame uses the default handlepool, hence it should be created for all players.
-        A Frameevent is a synced event, if a player presses the button and evokes the event, it will be sent to/happen for all players with TriggerPlayer being the player pressing the button. 
-        The frame state is not synced; i.e you can change the text, value, position, visibility or state (SetEnable) locally without having to fear any direct desync.
-        It still can desync, if you changed something locally and use that changed thing for something synched.
+        A frame uses the default handlepool - it must not be created locally.
+        All frameeventtype are synced events. If a player presses a button, the associated event will fire for all players.
+        However, the frame's states are not synced; i.e you can change the text, value, position, visibility or state locally.
+
+        *IMPORTANT:* Always get the framehandle outside of the local scope
 
     originframetype notes:
         ORIGIN_FRAME_GAME_UI 				    --> Main parent frame
