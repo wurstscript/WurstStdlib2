@@ -84,7 +84,7 @@ abstract class OnCast extends OnCastListener
 abstract class OnPointCast extends OnCastListener
 
 	override function fire(unit caster)
-		fireEx(caster, getSpellTargetPos())
+		fireEx(caster, EventData.getSpellTargetPos())
 
 	abstract function fireEx(unit caster, vec2 target)
 

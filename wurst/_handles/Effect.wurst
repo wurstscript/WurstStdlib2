@@ -4,8 +4,6 @@ import Matrices
 import Quaternion
 import Colors
 import Wurstunit
-import MapBounds
-import ClosureTimers
 
 public function effect.destr()
 	DestroyEffect(this)
@@ -208,30 +206,18 @@ public function effect.clearSubAnimations()
 public function effect.removeSubAnimation(subanimtype whichSubAnim)
 	BlzSpecialEffectRemoveSubAnimation(this, whichSubAnim)
 
+/** Get effect scale.*/
+public function effect.getScale() returns real
+	return BlzGetSpecialEffectScale(this)
 
-// Extensions
-/** remove effect after "time" expires*/
-public function effect.destr(real time)
-	doAfter(time) ->	  
-		this.destr()
+/** Set effect 3D scale*/
+public function effect.setScale(vec3 scaleVector)
+	BlzSetSpecialEffectMatrixScale(this, scaleVector.x, scaleVector.y, scaleVector.z)
 
-/** After "time", move effect to invisible part of map before removing it (which plays death animation).
-	Does not work on effects attached to units!
-*/
-public function effect.destrEx(real time)
-	doAfter(time) ->
-		this.destrEx()
+/** Reset effect scale.*/
+public function effect.resetScale()
+	BlzResetSpecialEffectMatrix(this)
 
-/** Move effect to invisible part of map before removing it (which plays death animation).
-	Does not work on effects attached to units!
-*/
-public function effect.destrEx()
-	this..setColor(colorA(0, 0, 0, 0))
-		..setPos(vec3(boundMin.x, boundMin.y, 5000))
-		..setTime(1)
-		..setTimeScale(10)
-		..destr()
-		
 @Test
 function testEffect()
 	let eff = addEffect("testPath", vec2(12,32))

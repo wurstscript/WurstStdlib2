@@ -225,6 +225,12 @@ public class Table
 	function loadUbersplat(int parentKey) returns ubersplat
 		return ht.loadUbersplatHandle(this castTo int, parentKey)
 
+	function saveFrameHandle(int parentKey, framehandle value)
+		ht.saveFrameHandle(this castTo int, parentKey, value)
+
+	function loadFrameHandle(int parentKey) returns framehandle
+		return ht.loadFrameHandle(this castTo int, parentKey)
+
 	function saveUbersplat(int parentKey, ubersplat value)
 		ht.saveUbersplatHandle(this castTo int, parentKey, value)
 
