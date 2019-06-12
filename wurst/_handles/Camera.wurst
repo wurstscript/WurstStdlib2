@@ -99,6 +99,9 @@ public function camerasetup.apply(boolean doPan, player whichPlayer, real durati
 public function camerasetup.getFieldSwap(camerafield whichField) returns real
 	return CameraSetupGetFieldSwap(whichField, this)
 
+public function camerasetup.applyForceDurationSmooth(boolean doPan, real forcedDuration, real easeInDuration, real easeOutDuration, real smoothFactor)
+	BlzCameraSetupApplyForceDurationSmooth(this, doPan, forcedDuration, easeInDuration, easeOutDuration, smoothFactor)
+
 public function player.cameraSetupApply(boolean doPan, camerasetup whichSetup, real duration)
 	CameraSetupApplyForPlayer(doPan, whichSetup, this, duration)
 

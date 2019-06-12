@@ -35,6 +35,23 @@ public function player.clearSelection()
 	if localPlayer == this
 		ClearSelection()
 
+/** Get if Selection is enabled for local player. Returns always false for non-local player.*/
+public function player.isSelectionEnabled() returns bool
+	if localPlayer == this
+		return BlzIsSelectionEnabled()
+	return false
+
+/** Get if Selection Circle is enabled for local player. Returns always false for non-local player.*/
+public function player.isSelectionCircleEnabled() returns bool
+	if localPlayer == this
+		return BlzIsSelectionCircleEnabled()
+	return false
+
+/** Enable or disable player selections.*/
+public function player.setSelectionsEnabled(bool enableSelection, bool enableSelectionCircle)
+	if localPlayer == this
+		BlzEnableSelections(enableSelection, enableSelectionCircle)
+
 /** Disable UI control for the player */
 public function player.disableUserControl()
 	this.setUserControl(false)
@@ -97,8 +114,6 @@ public function player.setAbilityAvailable(int abilityId, boolean avail)
 
 public function player.setName(string name)
 	SetPlayerName(this, name)
-
-
 
 public function player.setState(playerstate state, int val)
 	SetPlayerState(this, state, val)

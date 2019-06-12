@@ -222,9 +222,8 @@ public class Knockback3
 
 	private static function tick()
 		for knockback from staticItr()
-			let pos3		 = knockback.u.getPos3Real()
+			let pos3		 = knockback.u.getPos3Fly()
 			var newPos3	  = pos3 + knockback.del
-
 
 			if not newPos3.inPlayable()
 				newPos3.x = pos3.x

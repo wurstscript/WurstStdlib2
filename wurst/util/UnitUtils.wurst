@@ -33,68 +33,6 @@ public function unit.addDamageTimed(int damageAdd, real duration)
 		if this != null
 			BlzSetUnitBaseDamage(this, this.getBaseDamage(1)-damageAdd, 1)
 
-/** Make unit take DMG over time for given duration with hard-coded interval of 1s so dmg per seconds as input*/
-public function unit.applyDOTTimedFrom(unit damagingUnit, real duration, real dotDamage, buffTuple buffApplied)
-	this.applyDOTTimedFrom(damagingUnit, duration, 1, dotDamage, buffApplied)
-
-/** Make unit take DMG over time for given duration.*/
-public function unit.applyDOTTimedFrom(unit damagingUnit, real duration, real interval, real dotDamage, buffTuple buffApplied)
-	if this != null and this.isAlive()
-		this.addAbility(buffApplied.abilId)
-		this.setAbilityLevel(buffApplied.abilId, 1)
-
-		let targetUnit = this // saveback for closure
-		doPeriodicallyCounted(interval,  (duration/interval).floor()+1) cb ->
-			if targetUnit == null or not targetUnit.isAlive() or cb.isLast()
-				targetUnit.setAbilityLevel(buffApplied.abilId, 0)
-				targetUnit.removeAbility(buffApplied.abilId)
-				destroy cb
-			else
-				if damagingUnit == null
-					targetUnit.damageTarget(targetUnit, dotDamage)
-				else
-					damagingUnit.damageTarget(targetUnit, dotDamage)
-					
-/** Make unit take mana and HP HEAL over time for given duration.*/
-public function unit.restoreHpMpTimed(real duration, real interval, real hotVal, real motVal, buffTuple buffApplied)
-	if this != null and this.isAlive()
-		this.addAbility(buffApplied.abilId)
-		this.setAbilityLevel(buffApplied.abilId, 1)
-
-		let targetUnit = this // saveback for closure
-		let maxCount   = (duration/interval).floor()+1	  //  last proc are is cut off 
-		doPeriodicallyCounted(interval, maxCount) cb ->	 // first proc will be applied after 1*interval
-			if targetUnit == null or not targetUnit.isAlive() or cb.isLast()
-				targetUnit.setAbilityLevel(buffApplied.abilId, 0)
-				targetUnit.removeAbility(buffApplied.abilId)
-				destroy cb
-			else 
-				if hotVal >= 1
-					this.setHP(this.getHP()+hotVal)
-				if motVal >= 1
-					this.setMana(this.getMana()+motVal)
-					
-/** Plays a unit animation for a specifc amount of time.
-	Duration of -1 == endless animation. */
-public function unit.playAnimation(string anim, real duration)
-	SetUnitAnimation(this, anim)
-	if duration != -1
-		doAfter(duration) ->
-			ResetUnitAnimation(this)
-
-public class OnFinishUnitAnimation
-	unit u = null
-	construct(unit u)
-		this.u = u
-	function onFinish()
-		if this.u != null
-			ResetUnitAnimation(u)
-
-/** plays a unit animation until a specific callback is called */
-public function unit.playAnimation(string anim) returns OnFinishUnitAnimation
-	SetUnitAnimation(this, anim)
-	return new OnFinishUnitAnimation(this)
-
 /** Returns true if this unit is behind target unit.
     Uses configurable FIELD_OF_VIEW_BEHIND variable with default value of 115. */
 public function unit.isBehind(unit targetUnit) returns bool
@@ -115,7 +53,8 @@ public function unit.setAttackCooldownPercChange(real attackCooldownPercChange, 
    
 /** Change unit movement speed by given percentage. */
 public function unit.setMoveSpeedPercChange(real movespeedPercChange) returns real
-	let newSpeed = this.getMoveSpeed() + (this.getMoveSpeed()*movespeedPercChange)
+	let oldSpeed = this.getMoveSpeed()
+	let newSpeed = oldSpeed + (oldSpeed*movespeedPercChange)
 	this.setMoveSpeed(newSpeed)
 	return newSpeed
 	

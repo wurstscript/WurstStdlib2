@@ -47,13 +47,8 @@ public function group.destr()
 public function group.contains(unit u) returns boolean
 	return IsUnitInGroup(u, this)
 
-var unitCounter = 0
 public function group.size() returns int
-	unitCounter = 0
-	ForGroup(this) ->
-		unitCounter++
-
-	return unitCounter
+	return BlzGroupGetSize(this)
 
 public function group.isEmpty() returns boolean
 	return not this.hasNext()
@@ -91,6 +86,14 @@ public function group.targetOrder(string order, widget targetWidget) returns boo
 public function group.targetOrder(int order, widget targetWidget) returns boolean
 	return GroupTargetOrderById(this, order, targetWidget)
 
+public function group.addGroup(group g) returns int
+	return BlzGroupAddGroupFast(this, g)
+
+public function group.removeGroup(group g) returns int
+	return BlzGroupRemoveGroupFast(this, g)
+
+public function group.getUnitAt(int index) returns unit
+	return BlzGroupUnitAt(this, index)
 
 /* Group iterator */
 

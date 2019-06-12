@@ -136,6 +136,9 @@ public function hashtable.loadUnitPoolHandle(int parentKey, int childKey) return
 public function hashtable.loadWidgetHandle(int parentKey, int childKey) returns widget
 	return LoadWidgetHandle(this, parentKey, childKey)
 
+public function hashtable.loadFrameHandle(int parentKey, int childKey) returns framehandle
+	return LoadFrameHandle(this, parentKey, childKey)
+
 public function hashtable.saveAbilityHandle(int parentKey, int childKey, ability value)
 	SaveAbilityHandle(this, parentKey, childKey, value)
 
@@ -255,6 +258,9 @@ public function hashtable.saveUnitPoolHandle(int parentKey, int childKey, unitpo
 
 public function hashtable.saveWidgetHandle(int parentKey, int childKey, widget value)
 	SaveWidgetHandle(this, parentKey, childKey, value)
+
+public function hashtable.saveFrameHandle(int parentKey, int childKey, framehandle value)
+	SaveFrameHandle(this, parentKey, childKey, value)
 
 public function hashtable.removeBoolean(int parentKey, int childKey)
 	RemoveSavedBoolean(this, parentKey, childKey)
