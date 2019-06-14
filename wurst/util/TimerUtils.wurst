@@ -1,8 +1,9 @@
 package TimerUtils
 import NoWurst
-import Table
 import ErrorHandling
 import Basics
+import HashMap
+import Trigger
 import public Timer
 
 /* Basic Timer Recycling and data attachment */
@@ -47,24 +48,64 @@ public function timer.release()
 
 /* TimedLoop for classes */
 
-enum Mode
+class TimedLoopTimer 
+
+	constant timer loopTimer = getTimer()..setData(this castTo int)
+	constant trigger loopTrigger = CreateTrigger()
+	int conditionsCount = 0 
+	
+	real period 
+
+	static constant timerMap = new HashMap<real,thistype>
+
+	construct(real period)
+		this.period = period 
+
+	static function get(real period) returns thistype 
+		var instance = timerMap.get(period)
+		if instance == null 
+			instance = new TimedLoopTimer(period) 
+			timerMap.put(period, instance)
+		return instance 
+
+	function add(conditionfunc condition) returns triggercondition
+		let triggerCondition = loopTrigger.addCondition(condition)
+		conditionsCount++ 
+		if conditionsCount == 1 
+			loopTimer.startPeriodic(period, function triggerEval)
+		return triggerCondition
+
+	static function triggerEval()
+		let instance = GetExpiredTimer().getData() castTo thistype 
+		instance.loopTrigger.evaluate()
+		if instance.conditionsCount == 0 
+			instance.loopTimer.pause()
+
+	function release(triggercondition condition) 
+		loopTrigger.removeCondition(condition)
+		conditionsCount--
+
+
+public enum TimedLoopState
 	RUNNING
 	PAUSED
 	STOPPED
 	STOPPED_FOR_GOOD
 
+
 public module TimedLoop
 	static private thistype array instances		// The array
 	static private int instanceCount = 0	// The count
-
-	static private timer timedLoopTimer = CreateTimer()
-	static private trigger timedLoopTrig = null
 				
-	protected Mode mode = Mode.PAUSED
+	static private TimedLoopTimer timedLoopTimer 
+	static private triggercondition condition 
+
+	protected TimedLoopState state = PAUSED
 
 	abstract function onTimedLoop()
 
-	/** Returns the period of the timed loop */
+	/** Returns the period of the timed loop.
+		Ovewrite this to set a custom period */
 	function getPeriod() returns real 
 		return ANIMATION_PERIOD
 
@@ -73,44 +114,42 @@ public module TimedLoop
 		while i >= 0
 			thistype t = instances[i]
 
-			if t.mode != Mode.RUNNING
+			if t.state != RUNNING
 				instanceCount--
 				instances[i] = instances[instanceCount]
-				if t.mode == Mode.STOPPED_FOR_GOOD
-					t.mode = Mode.PAUSED
+				if t.state == STOPPED_FOR_GOOD
+					t.state = PAUSED
 					destroy t
 				else
-					t.mode = Mode.PAUSED
+					t.state = PAUSED
 			else
 				t.onTimedLoop()
 			i--
+
+		if instanceCount == 0 
+			timedLoopTimer.release(condition)
+			condition = null 
 		return false
 
 	/** Stops the periodic update of this object. */
 	function stopTimedLoop()
-		mode = Mode.STOPPED
+		state = STOPPED
 
 	/** Stops the periodic update and destroys the object. */
 	function stopTimedLoopAndDestroy()
-		mode = Mode.STOPPED_FOR_GOOD
+		state = STOPPED_FOR_GOOD
 
 	/** Starts the periodic updates for this object */
 	function startTimedLoop()
 		instances[instanceCount] = this
 		instanceCount++
 		if instanceCount == 1
-			if timedLoopTrig == null
-				timedLoopTrig = CreateTrigger()
-				TriggerAddCondition(timedLoopTrig, Condition(function onExpire))
-			timedLoopTimer.startPeriodic(getPeriod(), function evaluateTimedLoopTrig)
-		mode = Mode.RUNNING
-
-	private static function evaluateTimedLoopTrig()
-		TriggerEvaluate(timedLoopTrig)
-		if instanceCount == 0
-			timedLoopTimer.pause()
+			if condition == null 
+				timedLoopTimer = TimedLoopTimer.get(getPeriod())
+				condition = timedLoopTimer.add(Condition(function onExpire))			
+		state = RUNNING
 
 	ondestroy
-		if mode != Mode.PAUSED
+		if state != PAUSED
 			stopTimedLoop()
 			Log.warn("Destroyed Instance using TimedLoop before stopping the Loop")
