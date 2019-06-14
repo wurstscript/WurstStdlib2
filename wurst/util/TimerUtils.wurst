@@ -100,7 +100,7 @@ public module TimedLoop
 	static private TimedLoopTimer timedLoopTimer 
 	static private triggercondition condition 
 
-	protected TimedLoopState state = PAUSED
+	protected TimedLoopState timedLoopState = PAUSED
 
 	abstract function onTimedLoop()
 
@@ -114,14 +114,14 @@ public module TimedLoop
 		while i >= 0
 			thistype t = instances[i]
 
-			if t.state != RUNNING
+			if t.timedLoopState != RUNNING
 				instanceCount--
 				instances[i] = instances[instanceCount]
-				if t.state == STOPPED_FOR_GOOD
-					t.state = PAUSED
+				if t.timedLoopState == STOPPED_FOR_GOOD
+					t.timedLoopState = PAUSED
 					destroy t
 				else
-					t.state = PAUSED
+					t.timedLoopState = PAUSED
 			else
 				t.onTimedLoop()
 			i--
@@ -133,11 +133,11 @@ public module TimedLoop
 
 	/** Stops the periodic update of this object. */
 	function stopTimedLoop()
-		state = STOPPED
+		timedLoopState = STOPPED
 
 	/** Stops the periodic update and destroys the object. */
 	function stopTimedLoopAndDestroy()
-		state = STOPPED_FOR_GOOD
+		timedLoopState = STOPPED_FOR_GOOD
 
 	/** Starts the periodic updates for this object */
 	function startTimedLoop()
@@ -147,9 +147,9 @@ public module TimedLoop
 			if condition == null 
 				timedLoopTimer = TimedLoopTimer.get(getPeriod())
 				condition = timedLoopTimer.add(Condition(function onExpire))			
-		state = RUNNING
+		timedLoopState = RUNNING
 
 	ondestroy
-		if state != PAUSED
+		if timedLoopState != PAUSED
 			stopTimedLoop()
 			Log.warn("Destroyed Instance using TimedLoop before stopping the Loop")
