@@ -11,7 +11,7 @@ import ClosureTimers
 @configurable public real FIELD_OF_VIEW_BEHIND = 115.00  // Real FoV is: 180 - 2x (FIELD_OF_VIEW-90)	Using a value of 115 generates a FoV of 130   (natural FoV is about 135 degrees)
 
 /** Apply Buff to this unit for duration.*/
-public function unit.applyBuffTimed(buffTuple buffApplied, real duration)
+@configurable public function unit.applyBuffTimed(buffTuple buffApplied, real duration)
 	this.addAbility(buffApplied.abilId)
 	this.setAbilityLevel(buffApplied.abilId, 1)
 	doAfter(duration) ->
@@ -20,14 +20,14 @@ public function unit.applyBuffTimed(buffTuple buffApplied, real duration)
 			this.removeAbility(buffApplied.abilId)
 			
 /** Increase Armor of a unit for a duration */
-public function unit.addArmorTimed(real armorAdd, real duration)
+@configurable public function unit.addArmorTimed(real armorAdd, real duration)
 	BlzSetUnitArmor(this, this.getArmor()+armorAdd)
 	doAfter(duration) ->
 		if this != null
 			BlzSetUnitArmor(this, this.getArmor()-armorAdd)
 			
 /** Increase Damage of a unit for a duration */		
-public function unit.addDamageTimed(int damageAdd, real duration)
+@configurable public function unit.addDamageTimed(int damageAdd, real duration)
 	BlzSetUnitBaseDamage(this, this.getBaseDamage(1)+damageAdd, 1)
 	doAfter(duration) ->
 		if this != null
@@ -46,13 +46,13 @@ public function unit.isInFront(unit targetUnit) returns bool
 	return -FIELD_OF_VIEW_FRONT <= degreeDif and degreeDif <= FIELD_OF_VIEW_FRONT
 
 /** Change unit attack cooldown by given percentage. */
-public function unit.setAttackCooldownPercChange(real attackCooldownPercChange, int weaponIndex) returns real
+@configurable public function unit.setAttackCooldownPercChange(real attackCooldownPercChange, int weaponIndex) returns real
 	let newSpeed = this.getAttackCooldown(weaponIndex)/(1+attackCooldownPercChange)
 	this.setAttackCooldown(newSpeed, weaponIndex)
 	return newSpeed
    
 /** Change unit movement speed by given percentage. */
-public function unit.setMoveSpeedPercChange(real movespeedPercChange) returns real
+@configurable public function unit.setMoveSpeedPercChange(real movespeedPercChange) returns real
 	let oldSpeed = this.getMoveSpeed()
 	let newSpeed = oldSpeed + (oldSpeed*movespeedPercChange)
 	this.setMoveSpeed(newSpeed)

@@ -16,7 +16,7 @@ public function item.getTypeId() returns int
 	return GetItemTypeId(this)
 
 /** Returns "itemtype" of this item. Do not confuse it with itemTypeId. */
-public function item.getItemType() returns itemtype
+public function item.getItemtype() returns itemtype
 	return GetItemType(this)
 
 public function item.getLevel() returns int
@@ -166,10 +166,9 @@ public function item.setField(itemrealfield field, real value) returns bool
 public function item.setField(itemstringfield field, string value) returns bool	
 	return BlzSetItemStringField(this, field, value)
 
-// Extensions
 /** Updates the item's name, tooltip, extendedtooltip, description or icon for the specific player.
 	If p == null, the item is updated for all players */
-function item.updateItem(player p, string itemName, string itemTooltip, string itemExtendedTooltip, string itemDesc, string itemIcon) returns bool
+function item.updateDetails(player p, string itemName, string itemTooltip, string itemExtendedTooltip, string itemDesc, string itemIcon) returns bool
 	var valid = false
 	if this != null and (itemName != "" or itemTooltip != "" or itemExtendedTooltip != "" or itemDesc != "" or itemIcon != "")
 		valid = true
@@ -189,11 +188,11 @@ function item.updateItem(player p, string itemName, string itemTooltip, string i
 /** Updates the item's name, tooltip, extendedtooltip, description or icon for the specific player.
 	If p == null, the item is updated for all players 
 	Returns false if no player is given. */
-public function item.updateItemForPlayer(player p, string itemName, string itemTooltip, string itemExtendedTooltip, string itemDesc, string itemIcon) returns bool
-	return p != null ? this.updateItem(p, itemName, itemTooltip, itemExtendedTooltip, itemDesc, itemIcon) : false
+public function item.updateDetailsForPlayer(player p, string itemName, string itemTooltip, string itemExtendedTooltip, string itemDesc, string itemIcon) returns bool
+	return p != null ? this.updateDetails(p, itemName, itemTooltip, itemExtendedTooltip, itemDesc, itemIcon) : false
 
 /** Updates the item's name, tooltip, extendedtooltip, description or icon for the specific player.
 	If p == null, the item is updated for all players 
 	Returns false if no player is given. */
-public function item.updateItemForAll(string itemName, string itemTooltip, string itemExtendedTooltip, string itemDesc, string itemIcon) returns bool
-	return this.updateItem(null, itemName, itemTooltip, itemExtendedTooltip, itemDesc, itemIcon)
+public function item.updateDetailsForAll(string itemName, string itemTooltip, string itemExtendedTooltip, string itemDesc, string itemIcon) returns bool
+	return this.updateDetails(null, itemName, itemTooltip, itemExtendedTooltip, itemDesc, itemIcon)

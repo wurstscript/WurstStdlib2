@@ -214,52 +214,6 @@ public function player.showChatMessage(int recipient, string message)
 public function player.setHeroMaxAllowed(int amount)
 	SetPlayerTechMaxAllowed(this, 'HERO', amount)
 		
-/** Change tooltip (Name) of given ability for player locally.*/
-public function player.setAbilityTooltip(int abilityId, string abilityName, int abilityLevel)
-	this.setAbilityAvailable(abilityId, false)
-	if localPlayer == this
-		BlzSetAbilityTooltip(abilityId, abilityName, abilityLevel)
-	this.setAbilityAvailable(abilityId, true)
-
-/** Change extended tooltip (Description) of given ability for player locally.*/
-public function player.setAbilityExtendedTooltip(int abilityId, string abilityDesc, int abilityLevel)
-	this.setAbilityAvailable(abilityId, false)
-	if localPlayer == this
-		BlzSetAbilityExtendedTooltip(abilityId, abilityDesc, abilityLevel)
-	this.setAbilityAvailable(abilityId, true)
-
-/** Change icon of given ability for player locally.*/
-public function player.setAbilityIcon(int abilityId, string abilityIcon)
-	this.setAbilityAvailable(abilityId, false)
-	if localPlayer == this
-		BlzSetAbilityIcon(abilityId, abilityIcon)
-	this.setAbilityAvailable(abilityId, true)
-
-/** Update the given ability changing ability name, tooltip and icon (all optional) for the player locally.*/
-public function player.updateAbility(int abilityId, int abilityLevel, string abilityName, string abilityDesc, string abilityIcon, bool allowEmpty)
-	this.setAbilityAvailable(abilityId, false)
-	if this != null and localPlayer == this
-		if abilityName != "" or allowEmpty
-			BlzSetAbilityTooltip(abilityId, abilityName, abilityLevel)
-			BlzSetAbilityActivatedTooltip(abilityId, abilityName, abilityLevel)
-		if abilityDesc != "" or allowEmpty
-			BlzSetAbilityExtendedTooltip(abilityId, abilityDesc, abilityLevel)
-			BlzSetAbilityActivatedExtendedTooltip(abilityId, abilityDesc, abilityLevel)
-		if abilityIcon != "" or allowEmpty
-			BlzSetAbilityIcon(abilityId, abilityIcon)
-			BlzSetAbilityActivatedIcon(abilityId, abilityIcon)
-	this.setAbilityAvailable(abilityId, true)
-
-/** Update the given ability changing ability learn name and learn tooltip (all optional) for the player locally.*/
-public function player.updateAbilityLearn(int abilityId, int abilityLevel, string abilityName, string abilityDesc, bool allowEmpty)
-	if this != null and localPlayer == this
-		this.setAbilityAvailable(abilityId, false)
-		if abilityName != "" or allowEmpty
-			BlzSetAbilityResearchTooltip(abilityId, abilityName, abilityLevel)
-		if abilityDesc != "" or allowEmpty
-			BlzSetAbilityResearchExtendedTooltip(abilityId, abilityDesc, abilityLevel)
-		this.setAbilityAvailable(abilityId, true)
-
 @Test
 function testPlayer()
 	let p = Player(0)

@@ -294,15 +294,15 @@ public function unit.isEnemyOf(player whichPlayer) returns bool
 
 /** Checks whether two units are enemies */
 public function unit.isEnemyOf(unit u) returns bool
-	return this != null and u != null and IsUnitEnemy(this, u.getOwner())
+	return this != null and u != null and this.isEnemyOf(u.getOwner())
 
 /** Checks whether a unit is an ally of the given player */
 public function unit.isAllyOf(player whichPlayer) returns bool
-	return this != null and IsUnitAlly(this, whichPlayer)
+	return this != null and this.isAllyOf(whichPlayer)
 
 /** Checks whether two units are allies */
 public function unit.isAllyOf(unit u) returns bool
-	return this != null and u != null and IsUnitAlly(this, u.getOwner())
+	return this != null and u != null and this.isAllyOf(u.getOwner())
 
 public function unit.issueImmediateOrder(string order) returns boolean
 	return IssueImmediateOrder(this, order)

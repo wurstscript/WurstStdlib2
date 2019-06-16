@@ -14,12 +14,12 @@ public function effect.destr(real time)
 */
 public function effect.destrEx(real time)
 	doAfter(time) ->
-		this.destrEx()
+		this.remove()
 
 /** Move effect to invisible part of map before removing it (which plays death animation).
 	Does not work on effects attached to units!
 */
-public function effect.destrEx()
+public function effect.remove()
 	this..setColor(colorA(0, 0, 0, 0))
 		..setPos(vec3(boundMin.x, boundMin.y, 5000))
 		..setTime(1)
