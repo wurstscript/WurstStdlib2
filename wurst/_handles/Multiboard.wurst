@@ -72,13 +72,15 @@ public function multiboarditem.release()
 	MultiboardReleaseItem(this)
 
 public function multiboarditem.setIcon(string iconFileName)
-	MultiboardSetItemIcon(this,iconFileName)
+	let v = iconFileName == null ? "" : iconFileName
+	MultiboardSetItemIcon(this, v)
 
 public function multiboarditem.setStyle(boolean showValue, boolean showIcon)
 	MultiboardSetItemStyle(this, showValue, showIcon)
 
 public function multiboarditem.setValue(string value)
-	MultiboardSetItemValue(this,value)
+	let v = value == null ? "" : value
+	MultiboardSetItemValue(this, v)
 
 public function multiboarditem.setValueColor(int r, int g, int b, int a)
 	MultiboardSetItemValueColor(this, r,g,b,a)

@@ -206,15 +206,14 @@ public abstract class EventListener
 		else if prev != null
 			prev.next = next
 
-		next.prev = prev
+		if next != null
+			next.prev = prev
 
 		listener = unitListenersFirsts[this.eventId]
 		if listener == this
 			unitListenersFirsts[this.eventId] = next
 		else if prev != null
 			prev.next = next
-
-		next.prev = prev
 
 		next = null
 		prev = null
