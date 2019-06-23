@@ -1,0 +1,106 @@
+package ClosureKeyPresses
+import HashMap
+
+/*  
+    Example usage:
+        onKeyPress(OSKEY_A) -> 
+            print("A player pressed on the A key.")
+
+        onKeyPress(OSKEY_B, OSKEY_META.SHIFT) -> 
+            print("A player pressed on the B key while holding a SHIFT key.")
+
+        onKeyPress(OSKEY_C, false) -> 
+            print("A player released the C key.")
+
+        onKeyPress(players[0], OSKEY_D, OSKEY_META.ALT, false) -> 
+            print("Player 0 released the D key while holding an ALT key.")
+
+    Important:
+        * When the metakey NONE is passed or when no metaKey is given like in `onKeyPress(OSKEY_A, () -> print("A"))`,
+          pressing or releasing the key will not fire an event while holding a metakey.
+*/
+
+
+/* CONSTANTS */
+
+constant KEY_TRIGGER = CreateTrigger()..addAction(function onEvent)
+constant KEY_MAP = new HashMap<int, KeyPressListener>
+    
+
+/* CLOSURES */
+
+public function onKeyPress(oskeytype key, KeyPressListener listener) returns KeyPressListener
+    return onKeyPress(key, OSKEY_META.NONE, true, listener)
+
+public function onKeyPress(oskeytype key, OSKEY_META metaKey, KeyPressListener listener) returns KeyPressListener
+    return onKeyPress(key, metaKey, true, listener)
+
+public function onKeyPress(oskeytype key,  bool onKeyDown, KeyPressListener listener) returns KeyPressListener
+    return onKeyPress(key, OSKEY_META.NONE, onKeyDown, listener)
+
+public function onKeyPress(oskeytype key, OSKEY_META metaKey, bool onKeyDown, KeyPressListener listener) returns KeyPressListener
+    for i=0 to bj_MAX_PLAYERS
+        if players[i].isIngame()
+            KEY_TRIGGER.registerPlayerKeyPress(players[i], key, metaKey, onKeyDown)
+    return registerListener(listener, key, metaKey, onKeyDown)
+
+public function onKeyPress(player whichPlayer, oskeytype key, KeyPressListener listener) returns KeyPressListener
+    return onKeyPress(whichPlayer, key, OSKEY_META.NONE, true, listener)
+
+public function onKeyPress(player whichPlayer, oskeytype key, OSKEY_META metaKey, KeyPressListener listener) returns KeyPressListener
+    return onKeyPress(whichPlayer, key, metaKey, true, listener)
+        
+public function onKeyPress(player whichPlayer, oskeytype key,  bool onKeyDown, KeyPressListener listener) returns KeyPressListener
+    return onKeyPress(whichPlayer, key, OSKEY_META.NONE, onKeyDown, listener)
+
+public function onKeyPress(player whichPlayer, oskeytype key, OSKEY_META metaKey, bool onKeyDown, KeyPressListener listener) returns KeyPressListener
+    KEY_TRIGGER.registerPlayerKeyPress(whichPlayer, key, metaKey, onKeyDown)
+    return registerListener(listener, key, metaKey, onKeyDown)
+
+function registerListener(KeyPressListener listener, oskeytype key, OSKEY_META metaKey, bool onKeyDown) returns KeyPressListener
+    listener.key = key
+    listener.metaKey = metaKey.toInt()
+    listener.onKeyDown = onKeyDown
+    let id = key.getHandleId()
+    let first = KEY_MAP.get(id)
+    if first != null 
+        first.prev = listener 
+        listener.next = first 
+    KEY_MAP.put(id, listener)
+    return listener 
+
+
+/* ON EVENT */
+
+function onEvent() 
+    var listener = KEY_MAP.get(BlzGetTriggerPlayerKey().getHandleId())
+    let metaKey = BlzGetTriggerPlayerMetaKey()
+    let onKeyDown = BlzGetTriggerPlayerIsKeyDown()
+    while listener != null 
+        if listener.metaKey == metaKey and listener.onKeyDown == onKeyDown
+            listener.onEvent()
+        listener = listener.next 
+
+
+/* KEY PRESSES LISTENER */
+
+abstract class KeyPressListener
+    oskeytype key 
+    int metaKey
+    bool onKeyDown
+    thistype next = null 
+    thistype prev = null 
+
+    abstract function onEvent()
+
+    ondestroy
+        let id = key.getHandleId() 
+        let first = KEY_MAP.get(id)
+        if first == this 
+            if next == null 
+                KEY_MAP.remove(id)
+            else 
+                KEY_MAP.put(id, next)
+        else if prev != null
+            prev.next = next
+        next.prev = prev
