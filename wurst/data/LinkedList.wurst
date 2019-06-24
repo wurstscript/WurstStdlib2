@@ -525,7 +525,7 @@ public function group.asList() returns LinkedList<unit>
 	this.forEachFrom() u ->
 		result.add(u)
 	return result
-	
+
 /** Joins elements from a string list into one string using a separator */
 public function LinkedList<string>.joinBy(string separator) returns string
 	var joined = ""
@@ -547,7 +547,7 @@ interface ToStringClosure<T>
 
 public function LinkedList<T>.joinBy<T>(ToStringClosure<T> cls, string separator) returns string
 	let iter = this.iterator()
-	LinkedList<string> strings = new LinkedList<string>
+	let strings = new LinkedList<string>
 
 	for elem from iter
 		strings.add(cls.toString(elem))
