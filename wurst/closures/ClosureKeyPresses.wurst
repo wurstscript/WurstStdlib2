@@ -9,7 +9,7 @@ import HashMap
         onKeyPress(OSKEY_B, OSKEY_META.SHIFT) -> 
             print("A player pressed on the B key while holding a SHIFT key.")
 
-        onKeyPress(OSKEY_C, false) -> 
+        onKeyRelease(OSKEY_C) -> 
             print("A player released the C key.")
 
         onKeyPress(players[0], OSKEY_D, OSKEY_META.ALT, false) -> 
@@ -35,8 +35,8 @@ public function onKeyPress(oskeytype key, KeyPressListener listener) returns Key
 public function onKeyPress(oskeytype key, OSKEY_META metaKey, KeyPressListener listener) returns KeyPressListener
     return onKeyPress(key, metaKey, true, listener)
 
-public function onKeyPress(oskeytype key,  bool onKeyDown, KeyPressListener listener) returns KeyPressListener
-    return onKeyPress(key, OSKEY_META.NONE, onKeyDown, listener)
+public function onKeyRelease(oskeytype key, KeyPressListener listener) returns KeyPressListener
+    return onKeyPress(key, OSKEY_META.NONE, false, listener)
 
 public function onKeyPress(oskeytype key, OSKEY_META metaKey, bool onKeyDown, KeyPressListener listener) returns KeyPressListener
     for i=0 to bj_MAX_PLAYERS
@@ -50,8 +50,8 @@ public function onKeyPress(player whichPlayer, oskeytype key, KeyPressListener l
 public function onKeyPress(player whichPlayer, oskeytype key, OSKEY_META metaKey, KeyPressListener listener) returns KeyPressListener
     return onKeyPress(whichPlayer, key, metaKey, true, listener)
         
-public function onKeyPress(player whichPlayer, oskeytype key,  bool onKeyDown, KeyPressListener listener) returns KeyPressListener
-    return onKeyPress(whichPlayer, key, OSKEY_META.NONE, onKeyDown, listener)
+public function onKeyRelease(player whichPlayer, oskeytype key, KeyPressListener listener) returns KeyPressListener
+    return onKeyPress(whichPlayer, key, OSKEY_META.NONE, false, listener)
 
 public function onKeyPress(player whichPlayer, oskeytype key, OSKEY_META metaKey, bool onKeyDown, KeyPressListener listener) returns KeyPressListener
     KEY_TRIGGER.registerPlayerKeyPress(whichPlayer, key, metaKey, onKeyDown)
