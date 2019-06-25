@@ -561,40 +561,5 @@ public function LinkedList<T>.joinBy<T>(ToStringClosure<T> cls, string separator
 public function LinkedList<string>.join() returns string
 	return this.joinBy("")
 
-/** Joins elements from a string list into one string using a separator */
-public function LinkedList<string>.joinBy(string separator) returns string
-	var joined = ""
-	var first = true
-	let iter = this.iterator()
-
-	for str from iter
-		if iter.hasNext() or not first
-			joined += str + separator
-		else
-			joined += str
-			first = false
-
-	iter.close()
-	return joined
-
-interface ToStringClosure<T>
-	function toString(T elem) returns string
-
-public function LinkedList<T>.joinBy<T>(ToStringClosure<T> cls, string separator) returns string
-	let iter = this.iterator()
-	let strings = new LinkedList<string>
-
-	for elem from iter
-		strings.add(cls.toString(elem))
-
-	iter.close()
-	let result = strings.joinBy(separator)
-	destroy strings
-	return result
-
-/** Joins elements from a string list into one string */
-public function LinkedList<string>.join() returns string
-	return this.joinBy("")
-
 init
 	realToIndex(0.)
