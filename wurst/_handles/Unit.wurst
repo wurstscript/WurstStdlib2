@@ -750,6 +750,22 @@ class InventoryIterator
 public function unit.inventory() returns InventoryIterator
 	return new InventoryIterator(this)
 
+/** Change unit attack cooldown by given percentage. Negative values are possible as well. 
+	Returns the new attack cooldown time of the unit. */
+@configurable public function unit.setAttackCooldownPercChange(real attackCooldownPercChange, int weaponIndex) returns real
+	let newSpeed = this.getAttackCooldown(weaponIndex)/(1+attackCooldownPercChange)
+	this.setAttackCooldown(newSpeed, weaponIndex)
+	return newSpeed
+   
+/** Change unit movement speed by given percentage. Negative values are possible as well. 
+	Returns the new speed of the unit.
+	ex.: using 0.25 on unit with speed 400 will make the new speed 500. */
+@configurable public function unit.setMoveSpeedPercChange(real movespeedPercChange) returns real
+	let oldSpeed = this.getMoveSpeed()
+	let newSpeed = oldSpeed + (oldSpeed*movespeedPercChange)
+	this.setMoveSpeed(newSpeed)
+	return newSpeed
+
 // Unit fields
 public function unit.getField(unitbooleanfield field) returns bool
 	return BlzGetUnitBooleanField(this, field)
