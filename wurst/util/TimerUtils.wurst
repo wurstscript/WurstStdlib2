@@ -50,8 +50,8 @@ public function timer.release()
 
 class TimedLoopTimer 
 
-	constant timer loopTimer = getTimer()..setData(this castTo int)
-	constant trigger loopTrigger = CreateTrigger()
+	constant loopTimer = getTimer()..setData(this castTo int)
+	constant loopTrigger = CreateTrigger()
 	int conditionsCount = 0 
 	
 	real period 
