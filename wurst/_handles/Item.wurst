@@ -15,6 +15,10 @@ public function item.remove()
 public function item.getTypeId() returns int
 	return GetItemTypeId(this)
 
+/** Returns "itemtype" of this item. Do not confuse it with itemTypeId. */
+public function item.getItemtype() returns itemtype
+	return GetItemType(this)
+
 public function item.getLevel() returns int
 	return GetItemLevel(this)
 
