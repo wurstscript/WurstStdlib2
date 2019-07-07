@@ -89,15 +89,15 @@ public function gate.kill()
 	SetDestructableAnimation(this.killable, "death")
 
 /** Used to toggles a destructable gate open close state */
-public function gate.setOpen(bool isOpen)
-	if GetDestructableLife(this.killable) > 0 and not isOpen
-		this.close()
-	else if isOpen
+public function gate.setOpen(bool flag)
+	if flag
 		this.open()
+	else
+		this.close()
 
 tuple elevator(destructable elevatable)
-constant let ELEVATOR_HEIGHT_MIN = 1
-constant let ELEVATOR_HEIGHT_MAX = 3		
+constant ELEVATOR_HEIGHT_MIN = 1
+constant ELEVATOR_HEIGHT_MAX = 3		
 /** Used to move a destructable elevator one step up */
 public function elevator.up()
 	this.setHeight(this.getHeight()+1)
