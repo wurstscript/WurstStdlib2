@@ -154,3 +154,20 @@ function testHasAt()
 	list.hasAt(2).assertTrue()
 
 	list.hasAt(0).assertTrue()
+
+
+var xn_1 = 0
+var xn = 1
+@Test
+function testForEachFibonacci()
+	let list = new HashList<int>
+		..add(1, 1, 2, 3, 5, 8, 13, 21, 34)
+
+
+	list.forEach() (entry) ->
+		xn.assertEquals(entry)
+		let oldxn = xn
+		xn = xn + xn_1
+		xn_1 = oldxn
+
+
