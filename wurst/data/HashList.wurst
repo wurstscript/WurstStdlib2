@@ -102,6 +102,13 @@ public class HashList<T>
 			list.add(elem)
 		return list
 
+	/** Executes the closure for each element */
+	function forEach(HLItrClosure<T> itr) returns HashList<T>
+		for i = 0 to size() - 1
+			itr.run(get(i))
+		destroy itr
+		return this
+
 	construct()
 
 	/** Create a new list by copying all elements from another list into it */
@@ -111,6 +118,9 @@ public class HashList<T>
 
 	ondestroy
 		clear()
+
+public interface HLItrClosure<T>
+	function run(T t)
 
 public class HLIterator<Q>
 	protected int i = 0
