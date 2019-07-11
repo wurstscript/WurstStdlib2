@@ -95,7 +95,7 @@ public class HashList<T>
 	function iterator() returns HLIterator<T>
 		return new HLIterator(this)
 
-	/** Returns a shallow copy of this map */
+	/** Returns a shallow copy of this list */
 	function copy() returns HashList<T>
 		let list = new HashList<T>
 		for elem in this
