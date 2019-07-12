@@ -1,0 +1,80 @@
+package LinkedListIndexedModuleTests
+import LinkedListIndexedModule
+
+class TestClass
+    use LinkedListIndexedModule
+    int id 
+    string str
+    construct(int id, string str)
+        this.id = id
+        this.str = str
+        addToTheList()
+        
+    override function getId() returns int 
+        return id
+
+function allToString(int id) returns string
+    var res = ""
+    let itr = TestClass.iterator(id)
+    for x from itr 
+        res += x.str
+    itr.close()
+    return res
+
+@Test
+function test()
+    let a0 = new TestClass(0, "a")
+    let b0 = new TestClass(0, "b")
+    let c0 = new TestClass(0, "c")
+    let d0 = new TestClass(0, "d")
+
+    let a1 = new TestClass(1, "a")
+    let b1 = new TestClass(1, "b")
+    let c1 = new TestClass(1, "c")
+    let d1 = new TestClass(1, "d")
+
+    allToString(0).assertEquals("abcd")
+    allToString(1).assertEquals("abcd")
+
+    destroy c1
+    allToString(1).assertEquals("abd")
+    allToString(0).assertEquals("abcd")
+    destroy d1
+    allToString(1).assertEquals("ab")
+    allToString(0).assertEquals("abcd")
+    destroy a1
+    allToString(1).assertEquals("b")
+    allToString(0).assertEquals("abcd")
+    destroy b1
+    allToString(1).assertEquals("")
+    allToString(0).assertEquals("abcd")
+
+    destroy c0 
+    allToString(0).assertEquals("abd")
+    destroy a0
+    allToString(0).assertEquals("bd")
+    destroy b0
+    allToString(0).assertEquals("d")
+    destroy d0
+    allToString(0).assertEquals("")
+
+@Test
+function testDestroy()
+    new TestClass(0,"a")
+    let b = new TestClass(0,"b")
+    new TestClass(0,"c")
+    new TestClass(0,"d")
+    var s = ""
+    let itr = TestClass.iterator(0)
+    for x from itr
+        s += x.str
+        if x == b
+            destroy x
+    itr.close()
+    s.assertEquals("abcd")
+    allToString(0).assertEquals("acd")
+    let bitr = TestClass.backIterator(0)
+    for x from bitr
+        destroy x
+    bitr.close()
+    allToString(0).assertEquals("")
