@@ -95,11 +95,11 @@ public function forUnitsInRectCounted(rect r, int count, ForGroupCallback c)
 public function forUnitsInRange(vec2 pos, real radius, ForGroupCallback c)
 	forUnitsInRange(pos, radius, false, c)
 
-@deprecated("Use forUnitsInRange(pos, radius, collisionSizeFiltering, c) instead") 
+@deprecated("Use forUnitsInRange(pos, radius, collisionSizeFiltering, c) instead")
 public function forUnitsInRange(vec2 pos, real radius, ForGroupCallback c, bool collisionSizeFiltering)
 	forUnitsInRange(pos, radius, collisionSizeFiltering, c)
 
-/** Executes the given closure for every unit in range of the given position 
+/** Executes the given closure for every unit in range of the given position
 	With collisionSizeFiltering true it will take the units' collision into account. */
 public function forUnitsInRange(vec2 pos, real radius, bool collisionSizeFiltering, ForGroupCallback c)
 	if collisionSizeFiltering
@@ -109,7 +109,7 @@ public function forUnitsInRange(vec2 pos, real radius, bool collisionSizeFilteri
 			if IsUnitInRangeXY(u, pos.x, pos.y, radius)
 				c.callback(u)
 		popCallback()
-	else 
+	else
 		pushCallback(c)
 		GroupEnumUnitsInRange(DUMMY_GROUP, pos.x, pos.y, radius, filter)
 		popCallback()
@@ -167,6 +167,14 @@ function currentCallbackD() returns ForGroupCallbackD
 	return tempCallbacksD[tempCallbacksDCount - 1]
 // ====Stack end====
 
+let enumRect = Rect(0,0,0,0)
+
+/** Executes the given closure for all destructables in a rect
+	that incompasses the circle with the range radius at the given position. */
+public function forDestructablesInRange(vec2 pos, real range, ForGroupCallbackD cb)
+	enumRect.resize(vec2(pos.x - range, pos.y - range), vec2(pos.x + range, pos.y + range))
+	forDestructablesInRect(enumRect, cb)
+
 /** Executes the given closure for all destructables in the given rect */
 public function forDestructablesInRect(rect r, ForGroupCallbackD cb)
 	pushCallbackD(cb)
@@ -175,7 +183,7 @@ public function forDestructablesInRect(rect r, ForGroupCallbackD cb)
 
 // Nearest Destructable helpers
 destructable nearestD = null
-real nearestDDist = REAL_MAX
+var nearestDDist = REAL_MAX
 vec2 gpos = ZERO2
 
 /** Executes the given closure for the closes destructable in the given rect.
