@@ -71,7 +71,9 @@ public function destructable.getName() returns string
 
 // Extensions
 
+/** Tuple wrapper for destructable gates API */
 tuple gate(destructable killable)
+
 /** Opens a destructable gate */
 public function gate.open()
 	if (GetDestructableLife(this.killable) > 0)
@@ -88,23 +90,26 @@ public function gate.kill()
 	this.open()
 	SetDestructableAnimation(this.killable, "death")
 
-/** Toggles a destructable gate open close state */
+/** Sets the gate's open/close state */
 public function gate.setOpen(bool flag)
 	if flag
 		this.open()
 	else
 		this.close()
 
+/** Tuple wrapper for destructable elevator API */
 tuple elevator(destructable elevatable)
+
 constant ELEVATOR_HEIGHT_MIN = 1
-constant ELEVATOR_HEIGHT_MAX = 3		
+constant ELEVATOR_HEIGHT_MAX = 3
+
 /** Moves a destructable elevator one step up */
 public function elevator.up()
-	this.setHeight(this.getHeight()+1)
+	this.setHeight(this.getHeight() + 1)
 
 /** Moves a destructable elevator one step down */
 public function elevator.down()
-	this.setHeight(this.getHeight()-1)
+	this.setHeight(this.getHeight() - 1)
 
 /** Moves a destructable elevator to given height */
 public function elevator.elevatorSetHeight(int height)
@@ -127,7 +132,7 @@ public function getElevatorHeightBound(int height) returns int
 public function elevator.setHeight(int height)
 	let oldHeight = this.getHeight()
 	let newHeight = getElevatorHeightBound(height)
-	this.elevatable.setOccluderHeight(bj_CLIFFHEIGHT*(newHeight-ELEVATOR_HEIGHT_MIN))
+	this.elevatable.setOccluderHeight(bj_CLIFFHEIGHT * (newHeight - ELEVATOR_HEIGHT_MIN))
 
 	var animationInstant = "stand"
 	var animationQueue = "stand"
