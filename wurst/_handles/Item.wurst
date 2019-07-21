@@ -165,3 +165,34 @@ public function item.setField(itemrealfield field, real value) returns bool
 
 public function item.setField(itemstringfield field, string value) returns bool	
 	return BlzSetItemStringField(this, field, value)
+
+/** Updates the item's name, tooltip, extendedtooltip, description or icon for the specific player.
+	If p == null, the item is updated for all players */
+function item.updateDetails(player p, string itemName, string itemTooltip, string itemExtendedTooltip, string itemDesc, string itemIcon) returns bool
+	var valid = false
+	if this != null and (itemName != "" or itemTooltip != "" or itemExtendedTooltip != "" or itemDesc != "" or itemIcon != "")
+		valid = true
+		if (p == null or p == GetLocalPlayer())
+			if itemName != ""
+				this.setName(itemName)
+			if itemTooltip != ""
+				this.setTooltip(itemTooltip)
+			if itemExtendedTooltip != ""
+				this.setExtendedTooltip(itemExtendedTooltip)
+			if itemDesc != ""
+				this.setDescription(itemDesc)
+			if itemIcon != ""
+				this.setIconPath(itemIcon)
+	return valid
+	
+/** Updates the item's name, tooltip, extendedtooltip, description or icon for the specific player.
+	If p == null, the item is updated for all players 
+	Returns false if no player is given. */
+public function item.updateDetailsForPlayer(player p, string itemName, string itemTooltip, string itemExtendedTooltip, string itemDesc, string itemIcon) returns bool
+	return p != null ? this.updateDetails(p, itemName, itemTooltip, itemExtendedTooltip, itemDesc, itemIcon) : false
+
+/** Updates the item's name, tooltip, extendedtooltip, description or icon for the specific player.
+	If p == null, the item is updated for all players 
+	Returns false if no player is given. */
+public function item.updateDetailsForAll(string itemName, string itemTooltip, string itemExtendedTooltip, string itemDesc, string itemIcon) returns bool
+	return this.updateDetails(null, itemName, itemTooltip, itemExtendedTooltip, itemDesc, itemIcon)

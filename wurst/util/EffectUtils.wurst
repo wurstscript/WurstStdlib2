@@ -1,0 +1,27 @@
+package EffectUtils
+
+import ClosureTimers
+import MapBounds
+
+// Extensions
+/** remove effect after "time" expires*/
+public function effect.destrAfter(real time)
+	doAfter(time) ->	  
+		this.destr()
+
+/** After "time", move effect to invisible part of map before removing it (which plays death animation).
+	Does not work on effects attached to units!
+*/
+public function effect.destrHiddenAfter(real time)
+	doAfter(time) ->
+		this.destrHidden()
+
+/** Move effect to invisible part of map before removing it (which plays death animation).
+	Does not work on effects attached to units!
+*/
+public function effect.destrHidden()
+	this..setColor(colorA(0, 0, 0, 0))
+		..setPos(vec3(boundMin.x, boundMin.y, 5000))
+		..setTime(1)
+		..setTimeScale(10)
+		..destr()

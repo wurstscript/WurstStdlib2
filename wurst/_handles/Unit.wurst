@@ -178,6 +178,15 @@ public function unit.getMaxHP() returns real
 public function unit.getMaxMana() returns real
 	return this.getState(UNIT_STATE_MAX_MANA)
 
+/** Get units current missing health. */
+public function unit.getMissingHP() returns real
+	return this.getMaxHP() - this.getHP()
+
+/** Get units current missing mana. */
+public function unit.getMissingMana() returns real
+	return this.getMaxMana() - this.getMana()
+
+
 public function unit.getMoveSpeed() returns real
 	return GetUnitMoveSpeed(this)
 
@@ -205,7 +214,7 @@ public function unit.getPos3Zero() returns vec3
 public function unit.getPos3with(real z) returns vec3
 	return vec3(this.getX(), this.getY(), z)
 
-/** Returns the prop window of the unit as angle.*/
+/** Returns the prop window of the unit as angle. */
 public function unit.getPropWindow() returns angle
 	return angle(GetUnitPropWindow(this))
 
@@ -282,6 +291,18 @@ public function unit.isInRange(vec2 pos, real distance) returns bool
 /** Checks whether a unit is an enemy of the given player **/
 public function unit.isEnemyOf(player whichPlayer) returns bool
 	return IsUnitEnemy(this, whichPlayer)
+
+/** Checks whether two units are enemies */
+public function unit.isEnemyOf(unit u) returns bool
+	return this != null and u != null and this.isEnemyOf(u.getOwner())
+
+/** Checks whether a unit is an ally of the given player */
+public function unit.isAllyOf(player whichPlayer) returns bool
+	return this != null and this.isAllyOf(whichPlayer)
+
+/** Checks whether two units are allies */
+public function unit.isAllyOf(unit u) returns bool
+	return this != null and u != null and this.isAllyOf(u.getOwner())
 
 public function unit.issueImmediateOrder(string order) returns boolean
 	return IssueImmediateOrder(this, order)
@@ -728,6 +749,22 @@ class InventoryIterator
 /** Creates an inventory iterator that allows you to access each existing item in the unit's inventory via for-loop. An example 'for i in u.inventory()'. */
 public function unit.inventory() returns InventoryIterator
 	return new InventoryIterator(this)
+
+/** Change unit attack cooldown by given percentage. Negative values are possible as well. 
+	Returns the new attack cooldown time of the unit. */
+@configurable public function unit.setAttackCooldownPercChange(real attackCooldownPercChange, int weaponIndex) returns real
+	let newSpeed = this.getAttackCooldown(weaponIndex)/(1+attackCooldownPercChange)
+	this.setAttackCooldown(newSpeed, weaponIndex)
+	return newSpeed
+   
+/** Change unit movement speed by given percentage. Negative values are possible as well. 
+	Returns the new speed of the unit.
+	ex.: using 0.25 on unit with speed 400 will make the new speed 500. */
+@configurable public function unit.setMoveSpeedPercChange(real movespeedPercChange) returns real
+	let oldSpeed = this.getMoveSpeed()
+	let newSpeed = oldSpeed + (oldSpeed*movespeedPercChange)
+	this.setMoveSpeed(newSpeed)
+	return newSpeed
 
 // Unit fields
 public function unit.getField(unitbooleanfield field) returns bool

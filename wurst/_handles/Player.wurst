@@ -210,7 +210,10 @@ public function player.sendSyncData(string prefix, string data) returns bool
 public function player.showChatMessage(int recipient, string message)
 	BlzDisplayChatMessage(this, recipient, message)
 
-
+/** Sets the maximum allowed hero amount for a player */
+public function player.setHeroMaxAllowed(int amount)
+	SetPlayerTechMaxAllowed(this, 'HERO', amount)
+		
 @Test
 function testPlayer()
 	let p = Player(0)
