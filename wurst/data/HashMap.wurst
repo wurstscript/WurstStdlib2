@@ -120,7 +120,7 @@ public class IterableMap<K,V> extends HashMap<K, V>
 
 	/** Executes the closure for each key-value pair */
 	function forEach(IMItrClosure<K, V> itr) returns IterableMap<K, V>
-		for i = 0 to size()
+		for i = 0 to size() - 1
 			let key = keys.get(i)
 			let value = this.get(key)
 			itr.run(key, value)
