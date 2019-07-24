@@ -6,7 +6,9 @@ import Basics
 import ErrorHandling
 import MapBounds
 import GameTimer
-import UnitObjEditing
+import AbilityObjEditing
+import initlater ObjectIdGenerator
+import ObjectIds
 import Colors
 import Assets
 import Annotations
@@ -143,6 +145,10 @@ init
 			DummyRecycler.angleQueues[i].enqueue(createDummy(boundMax, DUMMY_PLAYER, (i* ANGLE_DEGREE).asAngleDegrees()))
 
 @compiletime function generateDummyUnit()
+	let a = new AbilityDefinitionPermanentInvisibility(ABIL_ID_GEN.next())
+	a..presetAutoAcquireAttackTargets(_ -> false)
+	..presetDurationNormal(_ -> -1)
+	..presetDurationHero(_ -> -1)
 	let u = new UnitDefinition(DUMMY_UNIT_ID, UnitIds.wisp)
 	u..setName("Effect Dummy Unit")
 	..setUpgradesUsed("")
@@ -170,5 +176,19 @@ init
 	..setUnitClassification("_")
 	..setPropulsionWindowdegrees(1.0)
 	..setTooltipBasic("")
-	..setNormalAbilities("Avul,Aloc")
+	..setAttacksEnabled(AttacksEnabled.AttackOneOnly.toObjectInt())
+	..setAttack1AnimationBackswingPoint(0)
+	..setAttack1AnimationDamagePoint(0)
+	..setAttack1CooldownTime(0)
+	..setAttack1AttackType(AttackType.Unknown)
+	..setAttack1DamageBase(-1)
+	..setAttack1DamageNumberofDice(1)
+	..setAttack1DamageSidesperDie(1)
+	..setAttack1ProjectileSpeed(INT_MAX)
+	..setAttack1Range(INT_MAX)
+	..setAttack1TargetsAllowed("air,debris,ground,invulnerable,item,structure,vulnerable,ward")
+	..setAttack1WeaponSound(WeaponSound.Nothing)
+	..setAttack1WeaponType(WeaponType.Instant)
+	..setAcquisitionRange(INT_MAX.toReal())
+	..setNormalAbilities(commaList(AbilityIds.invulnerable, AbilityIds.locust, a.getNewId()))
 
