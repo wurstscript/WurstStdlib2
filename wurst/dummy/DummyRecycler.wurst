@@ -7,7 +7,6 @@ import ErrorHandling
 import MapBounds
 import GameTimer
 import AbilityObjEditing
-import initlater ObjectIdGenerator
 import ObjectIds
 import Colors
 import Assets
@@ -143,14 +142,16 @@ init
 		DummyRecycler.angleQueues[i] = new ArrayQueue()
 		for j = 0 to SAVED_UNITS_PER_ANGLE - 1
 			DummyRecycler.angleQueues[i].enqueue(createDummy(boundMax, DUMMY_PLAYER, (i* ANGLE_DEGREE).asAngleDegrees()))
+			
+public constant DISABLE_AUTO_ACQUIRE_ATTACK_TARGETS_ABILITY_ID = 'xdaa'
 
 @compiletime function generateDummyUnit()
-	let a = new AbilityDefinitionPermanentInvisibility(ABIL_ID_GEN.next())
-	a..presetAutoAcquireAttackTargets(_ -> false)
+	new AbilityDefinitionPermanentInvisibility(DISABLE_AUTO_ACQUIRE_ATTACK_TARGETS_ABILITY_ID)
+	..presetAutoAcquireAttackTargets(_ -> false)
 	..presetDurationNormal(_ -> -1)
 	..presetDurationHero(_ -> -1)
-	let u = new UnitDefinition(DUMMY_UNIT_ID, UnitIds.wisp)
-	u..setName("Effect Dummy Unit")
+	new UnitDefinition(DUMMY_UNIT_ID, UnitIds.wisp)
+	..setName("Effect Dummy Unit")
 	..setUpgradesUsed("")
 	..setStructuresBuilt("")
 	..setManaRegeneration(0.1)
@@ -190,5 +191,5 @@ init
 	..setAttack1WeaponSound(WeaponSound.Nothing)
 	..setAttack1WeaponType(WeaponType.Instant)
 	..setAcquisitionRange(INT_MAX.toReal())
-	..setNormalAbilities(commaList(AbilityIds.invulnerable, AbilityIds.locust, a.getNewId()))
+	..setNormalAbilities(commaList(AbilityIds.invulnerable, AbilityIds.locust, DISABLE_AUTO_ACQUIRE_ATTACK_TARGETS_ABILITY_ID))
 
