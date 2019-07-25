@@ -8,13 +8,13 @@ package Reflection
 
 /** returns the maximum type id, can be usd to
  iterate over all type-ids from 1 to maxTypeId() */
-native maxTypeId() returns int
+public native maxTypeId() returns int
 
 /** returns the class name for a given type id */
-native typeIdToTypeName(int typeId) returns string
+public native typeIdToTypeName(int typeId) returns string
 
 /** returns the number of active instances for a typeId */
-native instanceCount(int typeId) returns int
+public native instanceCount(int typeId) returns int
 
 /** returns the maximum number of instances reached for the given type id */
-native maxInstanceCount(int typeId) returns int
+public native maxInstanceCount(int typeId) returns int
