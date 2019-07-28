@@ -87,10 +87,10 @@ public function group.targetOrder(int order, widget targetWidget) returns boolea
 	return GroupTargetOrderById(this, order, targetWidget)
 
 public function group.addGroup(group g) returns int
-	return BlzGroupAddGroupFast(this, g)
+	return BlzGroupAddGroupFast(g, this)
 
 public function group.removeGroup(group g) returns int
-	return BlzGroupRemoveGroupFast(this, g)
+	return BlzGroupRemoveGroupFast(g, this)
 
 public function group.getUnitAt(int index) returns unit
 	return BlzGroupUnitAt(this, index)
