@@ -298,7 +298,7 @@ public function unit.isEnemyOf(unit u) returns bool
 
 /** Checks whether a unit is an ally of the given player */
 public function unit.isAllyOf(player whichPlayer) returns bool
-	return this != null and this.isAllyOf(whichPlayer)
+	return this != null and IsUnitAlly(this, whichPlayer)
 
 /** Checks whether two units are allies */
 public function unit.isAllyOf(unit u) returns bool
