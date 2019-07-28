@@ -28,7 +28,9 @@ public function group.enumUnitsOfPlayer(player p, boolexpr filter)
 
 public function group.enumUnitsAll(boolexpr filter)
 	for i = 0 to bj_MAX_PLAYER_SLOTS - 1
-		this.enumUnitsOfPlayer(players[i], filter)
+		ENUM_GROUP.enumUnitsOfPlayer(players[i], filter)
+		this.addGroup(ENUM_GROUP)
+	ENUM_GROUP.clear()
 
 public function group.clear()
 	GroupClear(this)
