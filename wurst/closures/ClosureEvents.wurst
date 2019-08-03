@@ -173,7 +173,6 @@ public abstract class EventListener
 			if unitListenersFirsts[trigUnit.getIndex()] != null
 				var listener = unitListenersFirsts[trigUnit.getIndex()]
 				while listener != null
-					//keep a reference to next listener in case listener is destroyed
 					let nextListener = listener.next
 					if listener.eventId == id
 						listener.onEvent()
@@ -182,7 +181,6 @@ public abstract class EventListener
 		if generalListenersFirsts[id] != null
 			var listener = generalListenersFirsts[id]
 			while listener != null
-				//keep a reference to next listener in case listener is destroyed
 				let nextListener = listener.next
 				listener.onEvent()				
 				listener = nextListener
@@ -193,7 +191,6 @@ public abstract class EventListener
 		if castMapCasters.has(trigUnit)
 			var listener = castMapCasters.get(trigUnit)
 			while listener != null
-				//keep a reference to next listener in case listener is destroyed
 				let nextListener = listener.next
 				if listener.abilId == -1 or listener.abilId == abilId
 					listener.fire(GetSpellAbilityUnit())
@@ -201,7 +198,6 @@ public abstract class EventListener
 		if castMap.has(abilId)
 			var listener = castMap.get(abilId)
 			while listener != null
-				//keep a reference to next listener in case listener is destroyed
 				let nextListener = listener.next
 				if listener.eventUnit == null or listener.eventUnit == trigUnit
 					listener.fire(GetSpellAbilityUnit())
