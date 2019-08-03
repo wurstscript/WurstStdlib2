@@ -47,7 +47,7 @@ public constant EVENT_PLAYER_CHAT_FILTER = ConvertPlayerEvent(96)
 			- EVENT_PLAYER_ARROW_*
 */
 
-abstract class OnCastListener
+public abstract class OnCastListener
  	OnCastListener next = null
 	OnCastListener prev = null
 	int abilId
@@ -88,7 +88,7 @@ abstract class OnPointCast extends OnCastListener
 
 	abstract function fireEx(unit caster, vec2 target)
 
-abstract class OnUnitCast extends OnCastListener
+public abstract class OnUnitCast extends OnCastListener
 
 	override function fire(unit caster)
 		fireEx(caster, GetSpellTargetUnit())
@@ -173,15 +173,17 @@ public abstract class EventListener
 			if unitListenersFirsts[trigUnit.getIndex()] != null
 				var listener = unitListenersFirsts[trigUnit.getIndex()]
 				while listener != null
+					let nextListener = listener.next
 					if listener.eventId == id
 						listener.onEvent()
-					listener = listener.next
+					listener = nextListener
 		// Global Listeners
 		if generalListenersFirsts[id] != null
 			var listener = generalListenersFirsts[id]
 			while listener != null
-				listener.onEvent()
-				listener = listener.next
+				let nextListener = listener.next
+				listener.onEvent()				
+				listener = nextListener
 
 	static function onSpellEffect()
 		let trigUnit = GetTriggerUnit()
@@ -189,15 +191,17 @@ public abstract class EventListener
 		if castMapCasters.has(trigUnit)
 			var listener = castMapCasters.get(trigUnit)
 			while listener != null
+				let nextListener = listener.next
 				if listener.abilId == -1 or listener.abilId == abilId
 					listener.fire(GetSpellAbilityUnit())
-				listener = listener.next
+				listener = nextListener
 		if castMap.has(abilId)
 			var listener = castMap.get(abilId)
 			while listener != null
+				let nextListener = listener.next
 				if listener.eventUnit == null or listener.eventUnit == trigUnit
 					listener.fire(GetSpellAbilityUnit())
-				listener = listener.next
+				listener = nextListener
 
 	ondestroy
 		var listener = generalListenersFirsts[this.eventId]
@@ -236,7 +240,6 @@ function registerEventId(eventid evnt) returns int
 	eventTypeCounter++
 	eventidToIndex[eventId] = eventTypeCounter
 	if evnt.isPlayerunitEvent()
-		Log.debug("reg handleid: " + eventId.toString() + " -> eventId: " + eventTypeCounter.toString())
 		registerPlayerUnitEvent(ConvertPlayerUnitEvent(eventId), function EventListener.generalEventCallback)
 	else if evnt != EVENT_UNIT_DAMAGED and evnt != EVENT_PLAYER_LEAVE and evnt != EVENT_PLAYER_CHAT_FILTER and not evnt.isKeyboardEvent() and not evnt.isMouseEvent()
 		error("registering handleid: " + eventId.toString() + " non-playerunitevent. Except EVENT_UNIT_DAMAGED and EVENT_PLAYER_LEAVE these are not supported right now.")
