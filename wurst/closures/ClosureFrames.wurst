@@ -92,15 +92,16 @@ function addListenerForFrame(FrameHandleListener listener, framehandle frame, fr
 function onEvent() 
     var listener = FRAME_MAP.get(BlzGetTriggerFrame().getHandleId())
     let eventType = BlzGetTriggerFrameEvent()
-    while listener != null 
+    while listener != null
+        let nextListener = listener.next
         if listener.eventType == eventType 
             listener.onEvent()
-        listener = listener.next 
+        listener = nextListener 
 
 
 /* FRAME HANDLE LISTENER */
 
-abstract class FrameHandleListener
+public abstract class FrameHandleListener
     framehandle frame 
     frameeventtype eventType 
     thistype next = null 
