@@ -47,7 +47,7 @@ public class LinkedList<T>
 		for elem in elems
 			add(elem)
 
-	/** Adds all elements from list to the end of this list, and removes them from the provided list */
+	/** Adds all elements from list to the end of this list and removes them from the provided list */
 	function splice(LinkedList<T> list)
 		dummy.prev.next = list.dummy.next
 		dummy.prev.next.prev = dummy.prev
