@@ -9,8 +9,9 @@ import GameTimer
 import AbilityObjEditing
 import ObjectIds
 import Colors
-import Assets
 import Annotations
+import UnitIds
+import Icons
 
 /** Id of the dummy unit */
 public constant DUMMY_UNIT_ID 	   		= 'xdum'
@@ -142,7 +143,7 @@ init
 		DummyRecycler.angleQueues[i] = new ArrayQueue()
 		for j = 0 to SAVED_UNITS_PER_ANGLE - 1
 			DummyRecycler.angleQueues[i].enqueue(createDummy(boundMax, DUMMY_PLAYER, (i* ANGLE_DEGREE).asAngleDegrees()))
-			
+
 public constant DISABLE_AUTO_ACQUIRE_ATTACK_TARGETS_ABILITY_ID = 'xdaa'
 
 @compiletime function generateDummyUnit()
@@ -150,7 +151,7 @@ public constant DISABLE_AUTO_ACQUIRE_ATTACK_TARGETS_ABILITY_ID = 'xdaa'
 	..presetAutoAcquireAttackTargets(_ -> false)
 	..presetDurationNormal(_ -> -1)
 	..presetDurationHero(_ -> -1)
-	
+
 	new UnitDefinition(DUMMY_UNIT_ID, UnitIds.wisp)
 	..setName("Effect Dummy Unit")
 	..setUpgradesUsed("")
