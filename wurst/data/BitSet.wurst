@@ -1,31 +1,43 @@
 package BitSet
 import NoWurst
-import Integer
 import Wurstunit
+import Annotations
 
-/** a bitset is a set of small integers represented by a single int */
+int array pows
+int array reversePows
+constant maxPow = 31
+
+@compiletime function initPows()
+	pows[0] = 1
+	var allPows = 1
+	for i = 1 to maxPow
+		pows[i] = pows[i - 1] * 2
+		allPows = BlzBitOr(allPows, pows[i])
+	for i = 0 to maxPow
+		reversePows[i] = BlzBitXor(allPows, pows[i])
+
+init
+	initPows()
+
 public tuple bitset(int val)
 
 function bitset.containsPow(int pow) returns boolean
-	return (this.val mod (pow * 2)) >= pow
+	return BlzBitAnd(this.val, pow) != 0
 
-/** the empty bitset */
 public function emptyBitset() returns bitset
 	return bitset(0)
 
-/** checks if bitset contains value v*/
 public function bitset.contains(int v) returns boolean
-	return this.containsPow(2 .pow(v))
+	return BlzBitAnd(this.val, pows[v]) != 0
 
-/** adds value v to the bitset */
 public function bitset.add(int v) returns bitset
-	let pow = 2 .pow(v)
-	return not this.containsPow(pow) ? bitset(this.val + pow) : this
+	return bitset(BlzBitOr(this.val, pows[v]))
 
-/** removes value v from the bitset */
 public function bitset.remove(int v) returns bitset
-	let pow = 2 .pow(v)
-	return this.containsPow(pow) ? bitset(this.val - pow) : this
+	return bitset(BlzBitAnd(this.val, reversePows[v]))
+
+public function bitset.flip(int v) returns bitset
+	return bitset(BlzBitXor(this.val, pows[v]))
 
 // Tests:
 @test function testContains()
@@ -47,3 +59,28 @@ public function bitset.remove(int v) returns bitset
 
 @test function testRemove()
 	bitset(45).remove(3).val.assertEquals(37)
+
+@test function testFlip()
+	emptyBitset().add(3).flip(3).contains(3).assertFalse()
+	emptyBitset().flip(3).contains(3).assertTrue()
+
+@test function testOverall()
+	var bitset = emptyBitset().add(0).add(3).add(8)
+
+	for i = 0 to 8
+		if i == 0 or i == 3 or i == 8
+			bitset.contains(i).assertTrue()
+		else
+			bitset.contains(i).assertFalse()
+	
+	bitset = bitset.remove(8)
+	.add(3) // should do nothing
+	.remove(2) // should do nothing
+	.flip(0)
+	.flip(2)
+
+	for i = 0 to 8
+		if i == 2 or i == 3
+			bitset.contains(i).assertTrue()
+		else
+			bitset.contains(i).assertFalse()
