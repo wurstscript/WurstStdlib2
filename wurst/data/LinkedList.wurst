@@ -47,8 +47,11 @@ public class LinkedList<T>
 		for elem in elems
 			add(elem)
 
-	/** Adds all elements from list to the end of this list and removes them from the provided list */
-	function splice(LinkedList<T> list)
+	/** Adds all elements from the other list to the end of this list and removes them from the provided list. 
+	
+		It does not add/remove elements internally, only the internal pointers of the list nodes are re-pointed.
+		The other list will be empty, but not destroyed. */
+	function splice(LinkedList<T> other)
 		dummy.prev.next = list.dummy.next
 		dummy.prev.next.prev = dummy.prev
 		dummy.prev = list.dummy.prev
