@@ -38,7 +38,7 @@ public function bitset.add(int v) returns bitset
 public function bitset.remove(int v) returns bitset
 	return bitset(BlzBitAnd(this.val, reversePows[v]))
 
-/** adds value v to the bitset if bitset does not contain it, removes it otherwise */
+/** adds value v to the bitset if the bitset does not contain it, removes it otherwise */
 public function bitset.flip(int v) returns bitset
 	return bitset(BlzBitXor(this.val, pows[v]))
 
