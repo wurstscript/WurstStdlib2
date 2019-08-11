@@ -19,23 +19,26 @@ constant maxPow = 31
 init
 	initPows()
 
+/** a bitset is a set of small integers represented by a single int */
 public tuple bitset(int val)
 
-function bitset.containsPow(int pow) returns boolean
-	return BlzBitAnd(this.val, pow) != 0
-
+/** the empty bitset */
 public function emptyBitset() returns bitset
 	return bitset(0)
 
+/** checks if bitset contains value v*/
 public function bitset.contains(int v) returns boolean
 	return BlzBitAnd(this.val, pows[v]) != 0
 
+/** adds value v to the bitset */
 public function bitset.add(int v) returns bitset
 	return bitset(BlzBitOr(this.val, pows[v]))
 
+/** removes value v from the bitset */
 public function bitset.remove(int v) returns bitset
 	return bitset(BlzBitAnd(this.val, reversePows[v]))
 
+/** adds value v to the bitset if bitset does not contain it, removes it otherwise */
 public function bitset.flip(int v) returns bitset
 	return bitset(BlzBitXor(this.val, pows[v]))
 
