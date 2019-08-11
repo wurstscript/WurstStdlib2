@@ -52,14 +52,14 @@ public class LinkedList<T>
 		It does not add/remove elements internally, only the internal pointers of the list nodes are re-pointed.
 		The other list will be empty, but not destroyed. */
 	function splice(LinkedList<T> other)
-		dummy.prev.next = list.dummy.next
+		dummy.prev.next = other.dummy.next
 		dummy.prev.next.prev = dummy.prev
-		dummy.prev = list.dummy.prev
+		dummy.prev = other.dummy.prev
 		dummy.prev.next = dummy
-		size += list.size
-		list.dummy.next = list.dummy
-		list.dummy.prev = list.dummy
-		list.size = 0
+		size += other.size
+		other.dummy.next = other.dummy
+		other.dummy.prev = other.dummy
+		other.size = 0
 
 	/** Returns the element at the specified index */
 	function get(int index) returns T
