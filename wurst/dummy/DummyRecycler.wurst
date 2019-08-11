@@ -40,7 +40,7 @@ public class DummyRecycler
 			u.remove()
 		else
 			angleQueues[smallestQueue].enqueue(u)
-			u..setXY(boundMax)..pause()..setFacing((smallestQueue * ANGLE_DEGREE).asAngleDegrees())..setScale(1)..setVertexColor(COLOR_WHITE)
+			u..setXY(boundMax - vec2(16, 16))..pause()..setFacing((smallestQueue * ANGLE_DEGREE).asAngleDegrees())..setScale(1)..setVertexColor(COLOR_WHITE)
 
 
 	static function recycle(unit u, real delay)
@@ -142,7 +142,7 @@ init
 	for i = 0 to DIFFERENT_ANGLES - 1
 		DummyRecycler.angleQueues[i] = new ArrayQueue()
 		for j = 0 to SAVED_UNITS_PER_ANGLE - 1
-			DummyRecycler.angleQueues[i].enqueue(createDummy(boundMax, DUMMY_PLAYER, (i* ANGLE_DEGREE).asAngleDegrees()))
+			DummyRecycler.angleQueues[i].enqueue(createDummy(boundMax - vec2(16, 16), DUMMY_PLAYER, (i* ANGLE_DEGREE).asAngleDegrees()))
 
 public constant DISABLE_AUTO_ACQUIRE_ATTACK_TARGETS_ABILITY_ID = 'xdaa'
 
