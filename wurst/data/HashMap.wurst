@@ -8,7 +8,7 @@ import public Table
 public class HashMap<K,V> extends Table
 
 	protected int size = 0
-	
+
 	/** Whether a value exists under the given key or not */
 	function has(K key) returns boolean
 		return hasInt(key castTo int)
@@ -41,7 +41,7 @@ public class HashMap<K,V> extends Table
 	override function flush()
 		size = 0
 		super.flush()
-		
+
 /** Iterable generic Table Wrapper */
 public class IterableMap<K,V> extends HashMap<K, V>
 	protected let keys = new HashList<K>
@@ -114,13 +114,24 @@ public class IterableMap<K,V> extends HashMap<K, V>
 			map.put(key, get(key))
 		return map
 
-
 	/** Returns the length of this IterableMap **/
 	override function size() returns int
 		return keys.size()
+
+	/** Executes the closure for each key-value pair */
+	function forEach(IMItrClosure<K, V> itr) returns IterableMap<K, V>
+		for i = 0 to size() - 1
+			let key = keys.get(i)
+			let value = this.get(key)
+			itr.run(key, value)
+		destroy itr
+		return this
 
 	ondestroy
 		destroy keys
 		// Makes sure that no attempts to .clear() a destroyed group are made
 		// since .flush() is called after this destructor
 		_destroyed = true
+
+public interface IMItrClosure<K, V>
+	function run(K key, V value)

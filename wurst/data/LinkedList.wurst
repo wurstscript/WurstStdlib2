@@ -22,19 +22,19 @@ public class LinkedList<T>
 	private LLIterator<T> staticItr = null
 	private LLBackIterator<T> staticBackItr = null
 
-	/** Create a new list by copying all elements from another list into it */
+	/** Creates a new list by copying all elements from another list into it */
 	construct(thistype base)
 		dummy.next = dummy
 		dummy.prev = dummy
 		for elem in base
 			add(elem)
 
-	/** Create a new empty list */
+	/** Creates a new empty list */
 	construct()
 		dummy.next = dummy
 		dummy.prev = dummy
 
-	/** Add one or more elements to the end of the list (top of stack, beginning of queue) */
+	/** Adds one or more elements to the end of the list (top of stack, beginning of queue) */
 	function add(vararg T elems)
 		for elem in elems
 			let entry = new LLEntry<T>(elem, dummy.prev, dummy)
@@ -42,10 +42,24 @@ public class LinkedList<T>
 			dummy.prev = entry
 			size++
 
-	/** add all elements from elems to the end of this list */
+	/** Adds all elements from elems to the end of this list */
 	function addAll(LinkedList<T> elems)
 		for elem in elems
 			add(elem)
+
+	/** Adds all elements from the other list to the end of this list and removes them from the provided list. 
+	
+		It does not add/remove elements internally, only the internal pointers of the list nodes are re-pointed.
+		The other list will be empty, but not destroyed. */
+	function splice(LinkedList<T> other)
+		dummy.prev.next = other.dummy.next
+		dummy.prev.next.prev = dummy.prev
+		dummy.prev = other.dummy.prev
+		dummy.prev.next = dummy
+		size += other.size
+		other.dummy.next = other.dummy
+		other.dummy.prev = other.dummy
+		other.size = 0
 
 	/** Returns the element at the specified index */
 	function get(int index) returns T
@@ -66,7 +80,7 @@ public class LinkedList<T>
 	function set(int index, T elem)
 		getEntry(index).elem = elem
 
-	/** Add an element to the end of the list (top of stack, beginning of queue) */
+	/** Adds an element to the end of the list (top of stack, beginning of queue) */
 	function push(T elem)
 		add(elem)
 
@@ -140,7 +154,7 @@ public class LinkedList<T>
 	function isEmpty() returns boolean
 		return size == 0
 
-	/** Returns a shallow copy of this map */
+	/** Returns a shallow copy of this list */
 	function copy() returns LinkedList<T>
 		let list = new LinkedList<T>
 		for elem in this
@@ -433,6 +447,11 @@ public class LLIterator<T>
 			return removed
 		return null
 
+	/** Modifies the last element that was returned by next() (optional operation). */
+	function modify(T newval)
+		if current != dummy
+			current.elem = newval
+
 	function hasNext() returns boolean
 		return current.next != dummy
 
@@ -466,6 +485,11 @@ public class LLBackIterator<T>
 
 	function reset()
 		this.current = dummy
+
+	/** Modifies the last element that was returned by next() (optional operation). */
+	function modify(T newval)
+		if current != dummy
+			current.elem = newval
 
 	function hasNext() returns boolean
 		return current.prev != dummy
@@ -515,6 +539,41 @@ public function group.asList() returns LinkedList<unit>
 	this.forEachFrom() u ->
 		result.add(u)
 	return result
+
+/** Joins elements from a string list into one string using a separator */
+public function LinkedList<string>.joinBy(string separator) returns string
+	var joined = ""
+	var first = true
+	let iter = this.iterator()
+
+	for str from iter
+		if iter.hasNext() or not first
+			joined += str + separator
+		else
+			joined += str
+			first = false
+
+	iter.close()
+	return joined
+
+interface ToStringClosure<T>
+	function toString(T elem) returns string
+
+public function LinkedList<T>.joinBy<T>(ToStringClosure<T> cls, string separator) returns string
+	let iter = this.iterator()
+	let strings = new LinkedList<string>
+
+	for elem from iter
+		strings.add(cls.toString(elem))
+
+	iter.close()
+	let result = strings.joinBy(separator)
+	destroy strings
+	return result
+
+/** Joins elements from a string list into one string */
+public function LinkedList<string>.join() returns string
+	return this.joinBy("")
 
 init
 	realToIndex(0.)

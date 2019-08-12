@@ -74,9 +74,10 @@ public class BuffDefinition
 	function setIconNormal(int level, string value)
 		def.setLvlDataString("fart",  level, 0,  value)
 
+	/** Sets the icon's path for the buff obj, add "@!!" as prefix of the icon name to overide the default path by a custom path */
 	function setIcon(string name)
 		string s = name
-		if name.length() < 20 or not name.startsWith("ReplaceableTextures")
+		if (name.length() < 20 or not name.startsWith("ReplaceableTextures")) and not name.startsWith("@!!")
 			 s = "ReplaceableTextures\\CommandButtons\\" + s
 		if not name.endsWith(".blp")
 			s += ".blp"

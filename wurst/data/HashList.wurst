@@ -95,12 +95,19 @@ public class HashList<T>
 	function iterator() returns HLIterator<T>
 		return new HLIterator(this)
 
-	/** Returns a shallow copy of this map */
+	/** Returns a shallow copy of this list */
 	function copy() returns HashList<T>
 		let list = new HashList<T>
 		for elem in this
 			list.add(elem)
 		return list
+
+	/** Executes the closure for each element */
+	function forEach(HLItrClosure<T> itr) returns HashList<T>
+		for i = 0 to size() - 1
+			itr.run(get(i))
+		destroy itr
+		return this
 
 	construct()
 
@@ -111,6 +118,9 @@ public class HashList<T>
 
 	ondestroy
 		clear()
+
+public interface HLItrClosure<T>
+	function run(T t)
 
 public class HLIterator<Q>
 	protected int i = 0
@@ -128,6 +138,9 @@ public class HLIterator<Q>
 	function next() returns Q
 		i++
 		return list.get(i - 1)
+
+	function reset()
+		i = 0
 
 	function close()
 		destroy this

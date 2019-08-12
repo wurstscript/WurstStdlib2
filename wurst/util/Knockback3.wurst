@@ -26,11 +26,11 @@
 	This value defaults to 300.
 */
 package Knockback3
-import Assets
 import TerrainUtils
 import MapBounds
 import LinkedListModule
 import HashMap
+import Objects
 
 /** The square rect size used for finding destructables. */
 @configurable let DESTRUCTABLE_ENUM_SIZE	= 130.
@@ -222,9 +222,8 @@ public class Knockback3
 
 	private static function tick()
 		for knockback from staticItr()
-			let pos3		 = knockback.u.getPos3Real()
+			let pos3		 = knockback.u.getPos3Fly()
 			var newPos3	  = pos3 + knockback.del
-
 
 			if not newPos3.inPlayable()
 				newPos3.x = pos3.x
@@ -243,7 +242,7 @@ public class Knockback3
 
 			if velXySquared < minimumSlideSpeed * ANIMATION_PERIOD and knockback.del.z > elasticityThreshold * ANIMATION_PERIOD and knockback.del.z < -1 * elasticityThreshold * ANIMATION_PERIOD and pos3.z < isAirborneThreshold
 				tickUnitDone(knockback)
-				knockback.remove()
+				destroy knockback
 
 		if size == 0
 			clock.pause()

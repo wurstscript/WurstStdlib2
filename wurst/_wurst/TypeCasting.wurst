@@ -224,6 +224,20 @@ public function ubersplatFromIndex(int index) returns ubersplat
 public function ubersplatToIndex(ubersplat object) returns int
 	return object.getHandleId()
 
+public function framehandleToIndex(framehandle object) returns int
+	return object.getHandleId()
+
+public function framehandleFromIndex(int index) returns framehandle
+	typecastdata.saveFogState(0,ConvertFogState(index))
+	return typecastdata.loadFrameHandle(0)
+
+public function oskeytypeToIndex(oskeytype object) returns int
+	return object.getHandleId()
+
+public function oskeytypeFromIndex(int index) returns oskeytype
+	typecastdata.saveFogState(0,ConvertFogState(index))
+	return typecastdata.loadOskeytype(0)
+
 public function booleanToIndex(boolean u) returns int
 	return u ? 1 : 0
 

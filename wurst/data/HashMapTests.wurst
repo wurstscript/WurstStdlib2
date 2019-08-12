@@ -187,3 +187,26 @@ function testIMFlush()
 	map.hasKey(5).assertEquals(false)
 	map.get(5).assertEquals(0)
 	destroy map
+
+@Test
+function testIMForEach()
+	let map = new IterableMap<int, int>
+		..put(5, 1)
+		..put(8, 3)
+		..put(9, 5)
+
+	var count = 0
+	map.forEach() (integer key, integer value) ->
+		count++
+		if count == 1
+			key.assertEquals(5)
+			value.assertEquals(1)
+		else if count == 2
+			key.assertEquals(8)
+			value.assertEquals(3)
+		else if count == 3
+			key.assertEquals(9)
+			value.assertEquals(5)
+
+
+	destroy map

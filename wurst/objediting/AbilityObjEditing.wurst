@@ -7,7 +7,7 @@ import BitSet
 import public ObjEditingNatives
 import String
 import public UnitObjEditing
-import Assets
+import public AbilityIds
 import Annotations
 
 public enum AllowWhenFull
@@ -15,7 +15,7 @@ public enum AllowWhenFull
 	LIFE_ONLY
 	MANA_ONLY
 	ALWAYS
-	
+
 public enum StackingType
 	DAMAGE
 	MOVEMENT
@@ -3549,18 +3549,18 @@ public class AbilityDefinitionWindWalk extends AbilityDefinition
 
 	function setMovementSpeedIncrease(int level, real value)
 		def.setLvlDataUnreal("Owk2", level, 2, value)
-	
+
 	function presetMovementSpeedIncrease(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Owk2", lvls, 2, lc)
 		addTooltipProperty("MovementSpeedIncrease", lc)
-	
+
 	function setTransitionTime(int level, real value)
 		def.setLvlDataUnreal("Owk1", level, 1, value)
-	
+
 	function presetTransitionTime(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Owk1", lvls, 1, lc)
 		addTooltipProperty("TransitionTime", lc)
-		
+
 
 public class AbilityDefinitionManaShieldCreep extends AbilityDefinition
 	construct(int newAbilityId)
@@ -10180,7 +10180,7 @@ public class AbilityDefinitionPoisonAttack extends AbilityDefinition
 	function presetStackingTypes(IntLevelClosure lc)
 		def.setLevelsDataInt("Poi4", lvls, 4, lc)
 		addTooltipProperty("StackingType", lc)
-		
+
 	function presetStackingType(StackingType stackingType, boolean flag)
 		let pow = stackingType castTo int
 		if stackingTypesSet.contains(pow)
@@ -10190,7 +10190,7 @@ public class AbilityDefinitionPoisonAttack extends AbilityDefinition
 			stackingTypesSet = stackingTypesSet.add(pow)
 
 		presetStackingTypes(lvl -> stackingTypesSet.val)
-		
+
 	function hasStackingType(StackingType stackingType) returns boolean
 		return stackingTypesSet.contains(stackingType castTo int)
 

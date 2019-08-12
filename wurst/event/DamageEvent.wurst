@@ -4,14 +4,10 @@
     **IMPORTANT** 
         This package **doesn't** provide protection from cyclic damage.
         Damage from code **must** be declared by the user using DamageEvent.setNextDamageFromCode() before dealing damage.
-        
+        If you set damage amount to zero or less in the unreduced listeners, reduced listeners will not fire.
+
         if DETECT_NATIVE_ABILITIES is true:
-            > Spell damage is converted into negative damage values without this system, so do not use any other damage detection method.
-            > Spell reduction abilities like Runed bracers or Elunes Grace have to be coded.
-            > Life Drain doesn't heal the caster.
-            > Locust Swarm needs its Damage Return Factor changed from 0.75 to -0.75.
-            > Mana Shield abilities need their Damage Absorbed % reduced to 0.00 (and the damage absorbtion part has to be coded)
-            > Anti-Magic Shell (amount-based) has to be coded.
+            > Any damage instance of attacktype ATTACK_TYPE_NORMAL is passed with DamageType SPELL
 
 
     To listen to any damage instance firing:
@@ -25,6 +21,12 @@
             print("This fires after.")
         DamageEvent.addListener(0) -> 
             print("This fires before.")
+
+    If you want to catch the damage instance before it has been reduced by any damage reducing effect (such as armor) you can use the unreduced verions of the listeners:
+
+        DamageEvent.addUnreducedListener() -> 
+            print("this fire before any damage reduction")
+
 
     Each damage instance has a DamageType associated to it.
     CODE **must** be declared by the user using DamageEvent.setNextDamageFromCode() before dealing damage.
@@ -58,32 +60,16 @@
 */
 package DamageEvent
 
-import AbilityObjEditing
 import ClosureEvents
-import ObjectIdGenerator
-import OnUnitEnterLeave
 
 /* CONFIGURATION */
 
-/** If true, native abilities that deal damage are passed with DamageType SPELL.
-    Also keep in mind if true:
-        > Spell damage is converted into negative damage values.
-        > Spell reduction abilities have to be coded.
-        > Life Drain doesn't heal the caster.
-        > Locust Swarm's Damage Return Factor has to be changed from 0.75 to -0.75.
-        > Mana Shield abilities' Damage Absorbed % has to be reduced to 0.00
-        > Mana Shield's damage absorbtion part & Anti-Magic Shell (amount-based) have to be coded.
-    If false, native abilities that deal damage are passed with DamageType ATTACK */
-@configurable constant DETECT_NATIVE_ABILITIES = false
+/** If true, any damage instance of attacktype ATTACK_TYPE_NORMAL is passed with DamageType SPELL */
+@configurable constant DETECT_NATIVE_ABILITIES = true
 
 /** A damage instance can have an element. 
     DAMAGE_ELEMENT_ATTACK is the defaut element added to any damage instances of DamageType ATTACK */
 @configurable public constant DAMAGE_ELEMENT_ATTACK = new DamageElement("Physical", colorA(223, 59, 33, 255))
-
-
-/* CONSTANTS */
-
-constant DETECT_NATIVE_ABILITIES_ID  = compiletime(ABIL_ID_GEN.next())// Used if DETECT_NATIVE_ABILITIES is true
 
 
 /* DAMAGE TYPE */
@@ -126,14 +112,17 @@ public class DamageElement
 /* DAMAGE INSTANCE */
 
 class DamageInstance 
-    protected int id 
-    protected unit source 
-    protected unit target 
-    protected real originalAmount 
-    
-    // Add damagetype, attacktype and weapontype when we will be able to access them
-
-    protected real amount 
+    protected int id
+    protected unit source
+    protected unit target
+    protected real amount
+    protected real originalAmount
+    protected real unreducedAmount 
+    protected real unreducedOriginalAmount
+    protected bool unreduced
+    protected attacktype nativeAttackType
+    protected damagetype nativeDamageType
+    protected weapontype nativeWeaponType
     protected DamageType damageType 
     protected DamageElement damageElement
 
@@ -141,18 +130,34 @@ class DamageInstance
     protected static thistype array stack
     protected static int count = 0 
 
-    construct(int id, unit source, unit target, real amount, DamageType damageType, DamageElement damageElement)
+    construct(int id, unit source, unit target, real unreducedAmount, attacktype nativeAttackType, damagetype nativeDamageType, weapontype nativeWeaponType, DamageType damageType, DamageElement damageElement)
         this.id = id 
         this.source = source 
         this.target = target 
-        this.amount = amount 
-        this.originalAmount = amount 
+        this.amount = unreducedAmount
+        this.originalAmount = unreducedAmount
+        this.unreducedAmount = unreducedAmount
+        this.unreducedOriginalAmount = unreducedAmount
+        this.unreduced = true 
+        this.nativeAttackType = nativeAttackType
+        this.nativeDamageType = nativeDamageType
+        this.nativeWeaponType = nativeWeaponType
         this.damageType = damageType
         this.damageElement = damageElement
 
         count++ 
         stack[count] = this 
         current = this 
+
+    protected function setAmount(real amount)
+        this.amount = amount
+        if unreduced
+            this.unreducedAmount = amount    
+
+    protected function setReducedAmount(real amount)
+        this.amount = amount 
+        this.originalAmount = amount 
+        this.unreduced = false
 
     ondestroy
         count-- 
@@ -172,34 +177,30 @@ public class DamageEvent
     // Damage listeners
     protected static DamageListener array firstListeners
     protected static int maxPriority = 0 
-    
+    protected static DamageListener array firstUnreducedListeners
+    protected static int maxUnreducedPriority = 0 
 
+    
     /* ON DAMAGE */
-    protected static function onDamage()
+    protected static function onUnreducedDamage()
         var amount = GetEventDamage()
-        if amount == 0. 
-            return 
-        if nextDamageType == DamageType.UNKNOWN 
-            // Damage type hasn't been defined -> detect it
-            if DETECT_NATIVE_ABILITIES 
-                if amount < 0.
-                    nextDamageType = SPELL
-                    amount *= -1
-                else
-                    nextDamageType = ATTACK
-                    nextDamageElement = DAMAGE_ELEMENT_ATTACK 
+
+        let attackType = BlzGetEventAttackType()
+        if nextDamageType == DamageType.UNKNOWN// Damage type hasn't been defined -> detect it
+            if DETECT_NATIVE_ABILITIES and attackType == ATTACK_TYPE_NORMAL
+                nextDamageType = SPELL
             else 
                 nextDamageType = ATTACK
                 nextDamageElement = DAMAGE_ELEMENT_ATTACK 
 
-        let dmg = new DamageInstance(nextDamageId, GetEventDamageSource(), GetTriggerUnit(), amount, nextDamageType, nextDamageElement)
+        let dmg = new DamageInstance(nextDamageId, GetEventDamageSource(), GetTriggerUnit(), amount, attackType, BlzGetEventDamageType(), BlzGetEventWeaponType(), nextDamageType, nextDamageElement)
         
         nextDamageId = 0 
         nextDamageType = UNKNOWN
         nextDamageElement = null
-        
-        for i = 0 to maxPriority
-            var listener = firstListeners[i]
+
+        for i = 0 to maxUnreducedPriority
+            var listener = firstUnreducedListeners[i]
             while listener != null
                 listener.onEvent()
                 if abort                    
@@ -210,23 +211,48 @@ public class DamageEvent
             if abort 
                 break 
 
+        BlzSetEventAttackType(dmg.nativeAttackType)
+        BlzSetEventDamageType(dmg.nativeDamageType)
+        BlzSetEventWeaponType(dmg.nativeWeaponType)
         BlzSetEventDamage(dmg.amount)
+
+    protected static function onDamage()
+        let dmg = DamageInstance.current
+        if not abort 
+            dmg.setReducedAmount(GetEventDamage())
+            for i = 0 to maxPriority
+                var listener = firstListeners[i]
+                while listener != null
+                    listener.onEvent()
+                    if abort                    
+                        dmg.amount = 0
+                        break
+                    else 
+                        listener = listener.next
+                if abort 
+                    break 
+
+            BlzSetEventAttackType(dmg.nativeAttackType)
+            BlzSetEventDamageType(dmg.nativeDamageType)
+            BlzSetEventWeaponType(dmg.nativeWeaponType)
+            BlzSetEventDamage(dmg.amount)
 
         destroy dmg
         abort = false  
 
         
     /* LISTENERS */
-    /** Add a damage event listener.
+    /** Adds a damage event listener.
         If The order of firing is important, use addListener(priority, listener) */
     static function addListener(DamageListener listener) returns DamageListener
         return addListener(maxPriority, listener)
 
-    /** Add a damage event listener with a given priority.
+    /** Adds a damage event listener with a given priority.
         Listeners of different priorities fire from the lowest priority to the highest priority added. 
         Listeners of the same priority fire by order of addition (FIFO) */
     static function addListener(int priority, DamageListener listener) returns DamageListener
         listener.priority = priority
+        listener.unreduced = false
         if firstListeners[priority] != null
             firstListeners[priority].prev = listener
             listener.next = firstListeners[priority]
@@ -239,9 +265,10 @@ public class DamageEvent
         return listener
 
     protected static function removeListener(DamageListener listener)
+        if listener.unreduced
+            removeUnreducedListener(listener)
+            return
         var prio = listener.priority
-        if firstListeners[prio] != null
-
         if firstListeners[prio] == listener
             firstListeners[prio] = listener.next
             if listener.next == null and maxPriority == prio 
@@ -254,6 +281,41 @@ public class DamageEvent
 
         listener.next.prev = listener.prev
 
+    /** Adds a damage event listener that fires before any damage reduction is applied (such as armor).
+    If The order of firing is important, use addListener(priority, listener) */
+    static function addUnreducedListener(DamageListener listener) returns DamageListener
+        return addUnreducedListener(maxUnreducedPriority, listener)
+
+    /** Adds a damage event listener with a given priority that fires before any damage reduction is applied (such as armor).
+        Listeners of different priorities fire from the lowest priority to the highest priority added. 
+        Listeners of the same priority fire by order of addition (FIFO) */
+    static function addUnreducedListener(int priority, DamageListener listener) returns DamageListener
+        listener.priority = priority
+        listener.unreduced = true 
+        if firstUnreducedListeners[priority] != null
+            firstUnreducedListeners[priority].prev = listener
+            listener.next = firstUnreducedListeners[priority]
+
+        firstUnreducedListeners[priority] = listener
+
+        if maxUnreducedPriority < priority 
+            maxUnreducedPriority = priority 
+
+        return listener
+
+    protected static function removeUnreducedListener(DamageListener listener)
+        var prio = listener.priority
+        if firstUnreducedListeners[prio] == listener
+            firstUnreducedListeners[prio] = listener.next
+            if listener.next == null and maxUnreducedPriority == prio 
+                while firstUnreducedListeners[prio] == null and prio > 0 
+                    prio--
+                maxUnreducedPriority = prio 
+
+        else if listener.prev != null
+            listener.prev.next = listener.next
+
+        listener.next.prev = listener.prev
 
     /* GETTERS */ 
     /** Returns the id of the damage instance being currently fired */
@@ -272,9 +334,36 @@ public class DamageEvent
     static function getAmount() returns real 
         return DamageInstance.current.amount
 
-    /** Returns the original damage amount of the damage instance being currently fired */
+    /** Returns the original reduced damage amount of the damage instance being currently fired */
     static function getOriginalAmount() returns real 
         return DamageInstance.current.originalAmount
+
+    /** Returns the unreduced damage amount of the damage instance being currently fired */
+    static function getUnreducedAmount() returns real 
+        return DamageInstance.current.unreducedAmount
+
+    /** Returns the original unreduced damage amount of the damage instance being currently fired */
+    static function getUnreducedOriginalAmount() returns real 
+        return DamageInstance.current.unreducedOriginalAmount
+
+    /** Returns the percent of damage reduced from the *original unreduced amount* by damage reducing effects.
+        If the damage instance is still unreduced, returns zero */
+    static function getNativeDamageReductionPercent() returns real 
+        if DamageInstance.current.unreduced 
+            return 0. 
+        return 1. - DamageInstance.current.originalAmount / DamageInstance.current.unreducedOriginalAmount
+    
+    /** Returns the attacktype of the damage instance being currently fired */
+    static function getAttackType() returns attacktype 
+        return DamageInstance.current.nativeAttackType
+
+    /** Returns the damagetype of the damage instance being currently fired */
+    static function getDamageType() returns damagetype 
+        return DamageInstance.current.nativeDamageType
+
+    /** Returns the weapontype of the damage instance being currently fired */
+    static function getWeaponType() returns weapontype 
+        return DamageInstance.current.nativeWeaponType
 
     /** Returns the DamageType of the damage instance being currently fired */
     static function getType() returns DamageType 
@@ -291,15 +380,27 @@ public class DamageEvent
     /* SETTERS */
     /** Sets the damage amount of the damage instance being currently fired */
     static function setAmount(real amount) 
-        DamageInstance.current.amount = amount
+        DamageInstance.current.setAmount(amount)
 
     /** Adds to the damage amount of the damage instance being currently fired */
     static function addAmount(real amount) 
-        DamageInstance.current.amount += amount
+        DamageInstance.current.setAmount(DamageInstance.current.amount + amount)
 
     /** Substracts from the damage amount of the damage instance being currently fired */
     static function subAmount(real amount) 
-        DamageInstance.current.amount -= amount
+        DamageInstance.current.setAmount(DamageInstance.current.amount - amount)
+
+    /** Sets the attacktype of the damage instance being currently fired */
+    static function setAttackType(attacktype attackType) 
+        DamageInstance.current.nativeAttackType = attackType
+
+    /** Sets the damagetype of the damage instance being currently fired */
+    static function setDamageType(damagetype damageType) 
+        DamageInstance.current.nativeDamageType = damageType
+
+    /** Sets the weapontype of the damage instance being currently fired */
+    static function setWeaponType(weapontype weaponType) 
+        DamageInstance.current.nativeWeaponType = weaponType
 
     /** Sets the id for the next damage instance */
     static function setNextDamageId(int id)
@@ -329,6 +430,7 @@ public abstract class DamageListener
     int priority = 0 
     thistype prev = null 
     thistype next = null
+    bool unreduced = false
 
     abstract function onEvent()
 
@@ -369,17 +471,5 @@ function getEventDamageDesignation() returns string
 /* INIT */
 
 init
-    EventListener.add(EVENT_UNIT_DAMAGED, () -> DamageEvent.onDamage())
-    if DETECT_NATIVE_ABILITIES
-        onEnter(() -> getEnterLeaveUnit()..addAbility(DETECT_NATIVE_ABILITIES_ID)..makeAbilityPermanent(DETECT_NATIVE_ABILITIES_ID, true))
-
-
-/* ASSETS */
-
-@compiletime function generateAssets()
-    if DETECT_NATIVE_ABILITIES
-        new AbilityDefinitionRunedBracers(DETECT_NATIVE_ABILITIES_ID)
-            ..setName("DETECT_NATIVE_ABILITIES")
-            ..setEditorSuffix("(DamageEvent)")
-            ..setItemAbility(false)
-            ..setDamageReduction(1, 2.)
+    EventListener.add(EVENT_PLAYER_UNIT_DAMAGING, () -> DamageEvent.onUnreducedDamage())
+    EventListener.add(EVENT_PLAYER_UNIT_DAMAGED,  () -> DamageEvent.onDamage())

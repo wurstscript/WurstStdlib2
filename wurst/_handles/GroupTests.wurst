@@ -16,6 +16,18 @@ function testGroupBasic()
 
 	assertTrue(g.size() == 11)
 
+
+	let u2 = createUnit(Player(0), 'hfoo', vec2(0, 0), 0 .fromDeg())
+	g.addUnit(u2)
+	assertTrue(g.getUnitAt(0) == u)
+	assertTrue(g.size() == 12)
+	assertTrue(g.getUnitAt(g.size()-1) == u2)
+
+	for int i = 0 to g.size()-1
+		print(g.getUnitAt(i).getHandleId())
+	print("---")
+	print(u2.getHandleId())
+
 	g.clear()
 	assertTrue(g.isEmpty())
 
@@ -72,3 +84,25 @@ function testVararg()
 	let g = CreateGroup()
 	g.addUnit(createUnit(Player(0), 'hfoo', vec2(0, 0), 0 .fromDeg()), createUnit(Player(0), 'hfoo', vec2(0, 0), 0 .fromDeg()), createUnit(Player(0), 'hfoo', vec2(0, 0), 0 .fromDeg()))
 	g.size().assertEquals(3)
+
+@Test
+function testGroupForGroups()
+	let u = createUnit(Player(0), 'hfoo', vec2(0, 0), 0 .fromDeg())
+	let u2 = createUnit(Player(0), 'hfoo', vec2(0, 0), 0 .fromDeg())
+	let u3 = createUnit(Player(0), 'hfoo', vec2(0, 0), 0 .fromDeg())
+
+	let g = CreateGroup()
+	g.addUnit(u, u2)
+	g.size().assertEquals(2)
+
+	let g2 = CreateGroup()
+	g2.addGroup(g)
+	g2.size().assertEquals(g.size())
+	g2.contains(u).assertTrue()
+
+	g2.addUnit(u3)
+	g2.removeGroup(g)
+	g2.size().assertEquals(1)
+	g2.contains(u3).assertTrue()
+	g2.contains(u2).assertFalse()
+	g2.contains(u).assertFalse()

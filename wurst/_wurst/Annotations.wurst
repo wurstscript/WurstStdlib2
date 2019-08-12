@@ -27,8 +27,14 @@ import NoWurst
 /** Functions annotated with @inline will have a higher priority of being inlined by the optimizer. */
 @annotation public function inline()
 
+/** Functions annotated with @inline will have a lower priority of being inlined by the optimizer. */
+@annotation public function noinline()
+
 /** Elements annotated with @config configure an element in the correspoding package (i.e. replaced by a different implementation).  */
 @annotation public function config()
 
 /** Functions annotated with @extern are assumed to be defined in external sources and are thus not included in the compilation output. */
 @annotation public function extern()
+
+/** Functions annotated with @ifNotDefined are only output into the mapscript if they don't already exist. */
+@annotation public function ifnotdefined()

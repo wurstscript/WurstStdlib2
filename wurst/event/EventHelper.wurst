@@ -2,6 +2,7 @@ package EventHelper
 import NoWurst
 import HashMap
 import _Handles
+import Annotations
 
 constant rectMap = new HashMap<trigger, rect>()
 constant regionMap = new HashMap<region, int>()
@@ -26,12 +27,15 @@ public function unit.clearRegister()
 	t.destr()
 	triggerData..removeHandle(handleId)..removeHandle(trigHandleId)
 
+@deprecated("Use EventData.getSpellTargetPos(). ")
 public function getSpellTargetPos() returns vec2
 	return vec2(GetSpellTargetX(), GetSpellTargetY())
 
+@deprecated("Use EventData.getOrderPos(). ")
 public function getOrderPos() returns vec2
 	return vec2(GetOrderPointX(), GetOrderPointY())
 
+@deprecated("Use EventData.getOrderTargetPos(). ")
 public function getOrderTargetPos() returns vec2
 	return GetOrderTarget().getPos()
 
@@ -60,12 +64,331 @@ public function region.removeRegionData()
 
 public function eventid.isPlayerunitEvent() returns boolean
 	let eventId = this.getHandleId()
-	return (eventId >= 18 and eventId <= 51) or (eventId >= 269 and eventId <= 277)
+	return (eventId >= 18 and eventId <= 51) or (eventId >= 269 and eventId <= 277) or eventId == 315 or eventId == 308
 
 public function eventid.isKeyboardEvent() returns boolean
 	let eventId = this.getHandleId()
 	return (eventId >= 261 and eventId <= 268) or (eventId == 17)
-	
+
 public function eventid.isMouseEvent() returns boolean
 	let eventId = this.getHandleId()
 	return (eventId >= 305 and eventId <= 307)
+
+/** This class exposes all Getters and Setters for trigger events.
+	Note: As these functions simply wrap natives, they will only return proper values during event callbacks (actions/conditions).
+	To use these values in a subsequent closure, save the event data in a variable at the time the event was fired. */
+public class EventData
+	private construct()
+	/** Get trigger event. */
+	static function getEventId() returns eventid
+		return GetTriggerEventId()
+
+	static function getIsKeyDown() returns boolean
+		return BlzGetTriggerPlayerIsKeyDown()
+
+	/** Check if current trigger event is Playerunit Event. */
+	static function isPlayerunitEvent() returns boolean
+		let eventId = EventData.getEventId().getHandleId()
+		return (eventId >= 18 and eventId <= 51) or (eventId >= 269 and eventId <= 277)
+
+	/** Check if current trigger event is Keyboard Event. */
+	static function isKeyboardEvent() returns boolean
+		let eventId = EventData.getEventId().getHandleId()
+		return (eventId >= 261 and eventId <= 268) or (eventId == 17)
+
+	/** Check if current trigger event is Mouse Event. */
+	static function isMouseEvent() returns boolean
+		let eventId = EventData.getEventId().getHandleId()
+		return (eventId >= 305 and eventId <= 307)
+
+	static function getTriggerUnit() returns unit
+		return GetTriggerUnit()
+
+	static function getEnteringUnit() returns unit
+		return GetEnteringUnit()
+
+	static function getLeavingUnit() returns unit
+		return GetLeavingUnit()
+
+	static function getLevelingUnit() returns unit
+		return GetLevelingUnit()
+
+	static function getLearningUnit() returns unit
+		return GetLearningUnit()
+
+	static function getRevivableUnit() returns unit
+		return GetRevivableUnit()
+
+	static function getRevivingUnit() returns unit
+		return GetRevivingUnit()
+
+	static function getAttackerUnit() returns unit
+		return GetAttacker()
+
+	static function getRescuerUnit() returns unit
+		return GetRescuer()
+
+	static function getDyingUnit() returns unit
+		return GetDyingUnit()
+
+	static function getKillingUnit() returns unit
+		return GetKillingUnit()
+
+	static function getDecayingUnit() returns unit
+		return GetDecayingUnit()
+
+	/*static function getUnitSelected() returns unit
+		return GetSelectedUnit()*/ // Commented out in common.j
+
+	/** Returns the unit which constructs the structure.*/
+	static function getConstructingStructure() returns unit
+		return GetConstructingStructure()
+
+	/** Returns the building which is being constructed.*/
+	static function getConstructedStructure() returns unit
+		return GetConstructedStructure()
+
+	/** Returns the building which was being constructed but as cancelled.*/
+	static function getCancelledStructure() returns unit
+		return GetCancelledStructure()
+
+	static function getResearchingUnit() returns unit
+		return GetResearchingUnit()
+
+	static function getTrainedUnit() returns unit
+		return GetTrainedUnit()
+
+	static function getDetectedUnit() returns unit
+		return GetDetectedUnit()
+
+	static function getSummouningUnit() returns unit
+		return GetSummoningUnit()
+
+	static function getSummounedUnit() returns unit
+		return GetSummonedUnit()
+
+	/** Get unit that is transporting. */
+	static function getTransportUnit() returns unit
+		return GetTransportUnit()
+
+	/** Get unit thas is loaded to transport. */
+	static function getLoadedUnit() returns unit
+		return GetLoadedUnit()
+
+	static function getSellingUnit() returns unit
+		return GetSellingUnit()
+
+	static function getSoldUnit() returns unit
+		return GetSoldUnit()
+
+	static function getBuyingUnit() returns unit
+		return GetBuyingUnit()
+
+	static function getChangingUnit() returns unit
+		return GetChangingUnit()
+
+	/**
+		EVENT_PLAYER_UNIT_DROP_ITEM
+		EVENT_PLAYER_UNIT_PICKUP_ITEM
+		EVENT_PLAYER_UNIT_USE_ITEM
+
+		EVENT_UNIT_DROP_ITEM
+		EVENT_UNIT_PICKUP_ITEM
+		EVENT_UNIT_USE_ITEM
+	*/
+	static function getManipulatingUnit() returns unit
+		return GetManipulatingUnit()
+
+	static function getOrderedUnit() returns unit
+		return GetOrderedUnit()
+
+	static function getOrderTargetUnit() returns unit
+		return GetOrderTargetUnit()
+
+	static function getSpellAbilityUnit() returns unit
+		return GetSpellAbilityUnit()
+
+	static function getSpellTargetUnit() returns unit
+		return GetSpellTargetUnit()
+
+	static function getEventDamageSource() returns unit
+		return GetEventDamageSource()
+
+	static function getEventTargetUnit() returns unit
+		return GetEventTargetUnit()
+
+	static function getDamageTarget() returns unit
+		return BlzGetEventDamageTarget()
+
+	static function getLearnedSkill() returns int
+		return GetLearnedSkill()
+
+	static function getLearnedSkillLevel() returns int
+		return GetLearnedSkillLevel()
+
+	static function getResearchedType() returns int
+		return GetResearched()
+
+	static function getTrainedUnitType() returns int
+		return GetTrainedUnitType()
+
+	static function getIssuedOrderId() returns int
+		return GetIssuedOrderId()
+
+	static function getSpellAbilityId() returns int
+		return GetSpellAbilityId()
+
+	/** Return damage done by Unit to another target unit. */
+	static function getEventDamage() returns real
+		return GetEventDamage()
+
+	static function getOrderX() returns real
+		return GetOrderPointX()
+
+	static function getOrderY() returns real
+		return GetOrderPointY()
+
+	static function getSpellTargetX() returns real
+		return GetSpellTargetX()
+
+	static function getSpellTargetY() returns real
+		return GetSpellTargetY()
+
+	/** Return player's mouse X position on the terrain. Alternative: getMouseScreenVec2. */
+	static function getPlayerMouseX() returns real
+		return BlzGetTriggerPlayerMouseX()
+
+	/** Return player's mouse Y position on the terrain. Alternative: getMouseScreenVec2. */
+	static function getPlayerMouseY() returns real
+		return BlzGetTriggerPlayerMouseY()
+
+	static function getSaveFilename() returns string
+		return GetSaveBasicFilename()
+
+	static function getChatMessage() returns string
+		return GetEventPlayerChatString()
+
+	static function getChatMessageMatched() returns string
+		return GetEventPlayerChatStringMatched()
+
+	static function getSyncPrefix() returns string
+		return BlzGetTriggerSyncPrefix()
+
+	static function getSyncData() returns string
+		return BlzGetTriggerSyncData()
+
+	static function getSoldItem() returns item
+		return GetSoldItem()
+
+	static function getManipulatedItem() returns item
+		return GetManipulatedItem()
+
+	static function getOrderTargetItem() returns item
+		return GetOrderTargetItem()
+
+	static function getSpellTargetItem() returns item
+		return GetSpellTargetItem()
+
+	static function getTriggerPlayer() returns player
+		return GetTriggerPlayer()
+
+	static function getWinningPlayer() returns player
+		return GetWinningPlayer()
+
+	static function getDetectingPlayer() returns player
+		return GetEventDetectingPlayer()
+
+	static function getTournamentFinishPlayer() returns player
+		return GetTournamentFinishNowPlayer()
+
+	static function getChangingUnitPreviousOwnerPlayer() returns player
+		return GetChangingUnitPrevOwner()
+
+	static function getPlayerState() returns playerstate
+		return GetEventPlayerState()
+
+	static function getSpellAbility() returns ability
+		return GetSpellAbility()
+
+	static function getTriggerDestructable() returns destructable
+		return GetTriggerDestructable()
+
+	static function getOrderTargetDestructable() returns destructable
+		return GetOrderTargetDestructable()
+
+	static function getSpellTargetDestructable() returns destructable
+		return GetSpellTargetDestructable()
+
+	static function getClickedDialog() returns dialog
+		return GetClickedDialog()
+
+	static function getClickedDialogButton() returns button
+		return GetClickedButton()
+
+	static function getGameState() returns gamestate
+		return GetEventGameState()
+
+	static function getTriggerRegion() returns region
+		return GetTriggeringRegion()
+
+	static function getExpiredTimer() returns timer
+		return GetExpiredTimer()
+
+	static function getTriggerWidget() returns widget
+		return GetTriggerWidget()
+
+	static function getOrderTargetWidget() returns widget
+		return GetOrderTarget()
+
+	static function getDamageType() returns damagetype
+		return BlzGetEventDamageType()
+
+	static function getDamageAttackType() returns attacktype
+		return BlzGetEventAttackType()
+
+	static function getDamageWeaponType() returns weapontype
+		return BlzGetEventWeaponType()
+
+	static function getTriggerKey() returns oskeytype
+		return BlzGetTriggerPlayerKey()
+
+	static function getTriggerMetaKey() returns OSKEY_META
+		return BlzGetTriggerPlayerMetaKey() castTo OSKEY_META
+
+	static function getTriggerFrame() returns framehandle
+		return BlzGetTriggerFrame()
+
+	static function getTriggerFrameEvent() returns frameeventtype
+		return BlzGetTriggerFrameEvent()
+
+	static function getOrderPos() returns vec2
+		return vec2(GetOrderPointX(), GetOrderPointY())
+
+	static function getOrderTargetPos() returns vec2
+		return EventData.getOrderTargetUnit().getPos()
+
+	static function getAbilityTargetPos() returns vec2
+		return vec2(GetSpellTargetX(), GetSpellTargetY())
+
+	static function getSpellTargetPos() returns vec2
+		return EventData.getAbilityTargetPos()
+
+	/** Returns player's mouse position on screen. Do not confuse with getMouseLocationVec2. */
+	static function getMouseWorldPos() returns vec2
+		return vec2(BlzGetTriggerPlayerMouseX(), BlzGetTriggerPlayerMouseY())
+
+	/** Change damage from damage event.*/
+	static function setDamage(real damage)
+		BlzSetEventDamage(damage)
+
+	/** Change damage from damage event.*/
+	static function setDamageAttackType(attacktype attackType)
+		BlzSetEventAttackType(attackType)
+
+	/** Change damage from damage event.*/
+	static function setDamageType(damagetype damageType)
+		BlzSetEventDamageType(damageType)
+
+	/** Change damage from damage event.*/
+	static function setDamageWeaponType(weapontype weaponType)
+		BlzSetEventWeaponType(weaponType)

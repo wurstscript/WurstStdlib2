@@ -58,6 +58,24 @@ function testForLoop()
 		result += i
 	result.assertEquals(1 + 2 + 3 + 4)
 
+@Test function testSplice()
+	let list = new LinkedList<int>()
+	let list2 = new LinkedList<int>()
+
+	list.add(1, 2)
+	list2.add(3, 4)
+	list.splice(list2)
+
+	list.get(2).assertEquals(3)
+	list.get(3).assertEquals(4)
+
+	list2.size().assertEquals(0)
+
+	var result = 0
+	for i in list
+		result += i
+	result.assertEquals(1 + 2 + 3 + 4)
+
 @Test function testAddVararg()
 	let list = new LinkedList<int>()
 	let list2 = new LinkedList<int>()
@@ -189,3 +207,20 @@ function testGenerics()
 	testlist.has("c").assertTrue()
 	testlist.has("x").assertFalse()
 	testlist.has("A").assertFalse()
+
+@Test function testGetters()
+	let testlist = new LinkedList<string>
+	testlist.add("a")
+	testlist.add("c")
+	testlist.add("b")
+	testlist.getFirst().assertEquals("a")
+	testlist.get(1).assertEquals("c")
+
+@Test function testJoin()
+	let list = new LinkedList<string>()
+		..add("this", "is", "a", "string")
+
+	list.join().assertEquals("thisisastring")
+	list.joinBy(" ").assertEquals("this is a string")
+
+	destroy list
