@@ -14,7 +14,16 @@ import UnitIds
 import Icons
 
 /** Id of the dummy unit */
-public constant DUMMY_UNIT_ID 	   		= 'xdum'
+public constant DUMMY_UNIT_ID = 'xdum'
+
+/** Id of the root ability
+it makes unit:
+1. not need to turn when spell or attack
+2. can't move or turn by order like a building
+3. but you can still set it's postion with code
+4. the effect remains even if this ability is removed
+*/
+public constant ROOT_ENABLER = 'xrot'
 
 constant DIFFERENT_ANGLES		= 8
 constant ANGLE_DEGREE			= 360 / DIFFERENT_ANGLES
@@ -134,7 +143,7 @@ class DelayNode
 
 function createDummy(vec2 pos, player owner, angle facing) returns unit
 	let u = createUnit(owner, DUMMY_UNIT_ID, pos, facing)
-	u..setXY(pos)..addAbility(HEIGHT_ENABLER)..removeAbility(HEIGHT_ENABLER)..addAbility(LOCUST_ID)
+	u..setXY(pos)..addAbility(HEIGHT_ENABLER)..removeAbility(HEIGHT_ENABLER)..addAbility(LOCUST_ID)..addAbility(ROOT_ENABLER)..removeAbility(ROOT_ENABLER)
 	return u
 
 
@@ -147,6 +156,8 @@ init
 public constant DISABLE_AUTO_ACQUIRE_ATTACK_TARGETS_ABILITY_ID = 'xdaa'
 
 @compiletime function generateDummyUnit()
+	new AbilityDefinitionRootAncients(ROOT_ENABLER)
+
 	new AbilityDefinitionPermanentInvisibility(DISABLE_AUTO_ACQUIRE_ATTACK_TARGETS_ABILITY_ID)
 	..presetAutoAcquireAttackTargets(_ -> false)
 	..presetDurationNormal(_ -> -1)

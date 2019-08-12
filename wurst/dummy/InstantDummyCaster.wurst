@@ -6,7 +6,7 @@ import Basics
 import ObjectIds
 import Unit
 import Widget
-import UnitObjEditing
+import AbilityObjEditing
 import MapBounds
 import Annotations
 
@@ -91,12 +91,15 @@ public class InstantDummyCaster
 		return castPoint(owner, abilityId, lvl, orderId, targetPos, casterPos.toVec3())
 
 constant DUMMY_CASTER_UNIT_ID = compiletime(UNIT_ID_GEN.next())
+constant DUMMY_ROOT_ABIL_ID = compiletime(ABIL_ID_GEN.next())
 
 init
 	InstantDummyCaster.caster = createUnit(DUMMY_PLAYER, DUMMY_CASTER_UNIT_ID, boundMax, angle(0))
-	..setPathing(false)..addAbility(HEIGHT_ENABLER)..removeAbility(HEIGHT_ENABLER)
+	..setPathing(false)..addAbility(HEIGHT_ENABLER)..removeAbility(HEIGHT_ENABLER)..addAbility(DUMMY_ROOT_ABIL_ID)..removeAbility(DUMMY_ROOT_ABIL_ID)
 
 @compiletime function generateObject()
+	new AbilityDefinitionRootAncients(DUMMY_ROOT_ABIL_ID)
+
 	new UnitDefinition(DUMMY_CASTER_UNIT_ID, 'ewsp')
 	..setName("Dummy Caster")
 	..setManaMaximum(1000000)
