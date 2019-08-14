@@ -3,17 +3,18 @@ import NoWurst
 import Wurstunit
 import Annotations
 
+public constant BITSET_SIZE = 32
+
 int array pows
 int array reversePows
-constant maxPow = 31
 
 @compiletime function initPows()
 	pows[0] = 1
 	var allPows = 1
-	for i = 1 to maxPow
+	for i = 1 to BITSET_SIZE - 1
 		pows[i] = pows[i - 1] * 2
 		allPows = BlzBitOr(allPows, pows[i])
-	for i = 0 to maxPow
+	for i = 0 to BITSET_SIZE - 1
 		reversePows[i] = BlzBitXor(allPows, pows[i])
 
 init
@@ -66,6 +67,13 @@ public function bitset.flip(int v) returns bitset
 @test function testFlip()
 	emptyBitset().add(3).flip(3).contains(3).assertFalse()
 	emptyBitset().flip(3).contains(3).assertTrue()
+
+@test function testHighestBit()
+	constant bit = BITSET_SIZE - 1
+	emptyBitset().add(bit).contains(bit).assertTrue()
+	emptyBitset().add(bit).remove(bit).contains(bit).assertFalse()
+	emptyBitset().flip(bit).contains(bit).assertTrue()
+	emptyBitset().add(bit).flip(bit).contains(bit).assertFalse()
 
 @test function testOverall()
 	var bitset = emptyBitset().add(0).add(3).add(8)
