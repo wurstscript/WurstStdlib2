@@ -104,7 +104,7 @@ public function bitset.remove(int index) returns bitset
 	
 @test function testIsEmpty()
 	emptyBitset().isEmpty().assertTrue()
-	emptyBitset.set(7).isEmpty().assertFalse()
+	emptyBitset().set(7).isEmpty().assertFalse()
 	
 @test function testIntersects()
 	emptyBitset().set(2).set(5).set(7).intersects(emptyBitset().set(1).set(4).set(21)).assertFalse()
