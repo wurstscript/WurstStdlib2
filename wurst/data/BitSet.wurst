@@ -29,7 +29,7 @@ public function emptyBitset() returns bitset
 	
 /** Returns the value of the bit with the specified index. */
 public function bitset.get(int index) returns bool
-	return bBlzBitAnd(this.val, pows[v]) != 0
+	return BlzBitAnd(this.val, pows[index]) != 0
 	
 /** Sets the bit at the specified index to true. */
 public function bitset.set(int index) returns bitset
@@ -37,11 +37,11 @@ public function bitset.set(int index) returns bitset
 	
 /** Sets the bit at the specified index to false. */
 public function bitset.reset(int index) returns bitset
-	return bitset(BlzBitAnd(this.val, reversePows[v]))
+	return bitset(BlzBitAnd(this.val, reversePows[index]))
 	
 /** Sets the bit at the specified index to the specified value. */
 public function bitset.set(int index, bool value) returns bitset
-	return value ? bitset.set(index) : bitset.reset(index)
+	return value ? this.set(index) : this.reset(index)
 
 /** Flips bit at the specified index, i.e. changes true values to false and false values to true. */
 public function bitset.flip(int index) returns bitset
@@ -88,9 +88,9 @@ public function bitset.remove(int index) returns bitset
 	emptyBitset().flip(3).get(3).assertTrue()
 
 @test function testHighestBit()
-	constant bit = BITSET_SIZE - 1
+	let bit = BITSET_SIZE - 1
 	emptyBitset().set(bit).get(bit).assertTrue()
-	emptyBitset().set(bit).reset(bit).ges(bit).assertFalse()
+	emptyBitset().set(bit).reset(bit).get(bit).assertFalse()
 	emptyBitset().flip(bit).get(bit).assertTrue()
 	emptyBitset().set(bit).flip(bit).get(bit).assertFalse()
 
