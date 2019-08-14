@@ -101,6 +101,14 @@ public function bitset.remove(int index) returns bitset
 	emptyBitset().set(bit).reset(bit).get(bit).assertFalse()
 	emptyBitset().flip(bit).get(bit).assertTrue()
 	emptyBitset().set(bit).flip(bit).get(bit).assertFalse()
+	
+@test function testIsEmpty()
+	emptyBitset().isEmpty().assertTrue()
+	emptyBitset.set(7).isEmpty().assertFalse()
+	
+@test function testIntersects()
+	emptyBitset().set(2).set(5).set(7).intersects(emptyBitset().set(1).set(4).set(21)).assertFalse()
+	emptyBitset().set(3).set(11).intersects(emptyBitset().set(5).set(11)).assertTrue()
 
 @test function testOverall()
 	var bitset = emptyBitset().set(0).set(3).set(8)
