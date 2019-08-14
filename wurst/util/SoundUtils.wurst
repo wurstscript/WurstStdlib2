@@ -31,7 +31,7 @@ class SoundInstance
 	Sim3DSound s3s = null
 
 	ondestroy
-		snd.destr()
+		snd.stop(true, false)
 
 public class SoundDefinition
 	constant soundStack = new LinkedList<SoundInstance>()
