@@ -32,6 +32,11 @@ public function sound.playPosition(int millisecs)
 	this.play()
 	SetSoundPlayPosition(this, millisecs)
 
+/** Returns sound length in milliseconds.
+
+	Beware that sound lengths of game assets may differ between different locales,
+	and thus return a different duration.
+	If you use a async duration in a synced manner, it will cause a desync. */
 public function sound.getDuration() returns int
 	return GetSoundDuration(this)
 
