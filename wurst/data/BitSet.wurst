@@ -47,6 +47,14 @@ public function bitset.set(int index, bool value) returns bitset
 public function bitset.flip(int index) returns bitset
 	return bitset(BlzBitXor(this.val, pows[index]))
 	
+/** Returns true if this bitset contains no bits that are set to true. */
+public function bitset.isEmpty() returns bool
+	return this.val == 0
+	
+/** Returns true if the specified bitset has any bits set to true that are also set to true in this bitset. */
+public function bitset.intersects(bitset other) returns bool
+	return BlzBitAnd(this.val, other.val) != 0
+	
 // Compatibility API
 
 /** Returns the value of the bit with the specified index. */
