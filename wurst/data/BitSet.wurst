@@ -44,7 +44,7 @@ public function bitset.reset(int index) returns bitset
 public function bitset.set(int index, bool value) returns bitset
 	return value ? this.set(index) : this.reset(index)
 
-/** Flips bit at the specified index, i.e. changes true values to false and false values to true. */
+/** Sets the bit at the specified index to the complement of its current value. */
 public function bitset.flip(int index) returns bitset
 	return bitset(this.val.bitXor(pows[index]))
 	
@@ -55,6 +55,22 @@ public function bitset.isEmpty() returns bool
 /** Returns true if the specified bitset has any bits set to true that are also set to true in this bitset. */
 public function bitset.intersects(bitset other) returns bool
 	return this.val.bitAnd(other.val) != 0
+	
+/** Performs a logical AND of this bit set with the bit set argument. */
+public function bitset.bitAnd(bitset other) returns bitset
+	return bitset(this.val.bitAnd(other.val))
+
+/** Performs a logical OR of this bit set with the bit set argument. */
+public function bitset.bitOr(bitset other) returns bitset
+	return bitset(this.val.bitOr(other.val))
+
+/** Performs a logical XOR of this bit set with the bit set argument. */
+public function bitset.bitXor(bitset other) returns bitset
+	return bitset(this.val.bitXor(other.val))
+	
+/** Returns an integer representation of the data. */
+public function bitset.toInt() returns int
+	return this.val
 	
 // Compatibility API
 
@@ -69,6 +85,14 @@ public function bitset.add(int index) returns bitset
 /** Sets the bit at the specified index to false. */
 public function bitset.remove(int index) returns bitset
 	return this.reset(index)
+	
+// Conversion methods for generics
+
+public function bitsetToIndex(bitset object) returns int
+	return object.toInt()
+	
+public function bitsetFromIndex(int index) returns bitset
+	return bitset(index)
 	
 // Tests
 
