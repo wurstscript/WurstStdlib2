@@ -75,15 +75,15 @@ public function bitset.toInt() returns int
 // Compatibility API
 
 /** Returns the value of the bit with the specified index. */
-public function bitset.contains(int index) returns boolean
+@deprecated("Use .get() instead.") public function bitset.contains(int index) returns boolean
 	return this.get(index)
 
 /** Sets the bit at the specified index to true. */
-public function bitset.add(int index) returns bitset
+@deprecated("Use .set() instead.") public function bitset.add(int index) returns bitset
 	return this.set(index)
 
 /** Sets the bit at the specified index to false. */
-public function bitset.remove(int index) returns bitset
+@deprecated("Use .reset() instead.") public function bitset.remove(int index) returns bitset
 	return this.reset(index)
 	
 // Conversion methods for generics
