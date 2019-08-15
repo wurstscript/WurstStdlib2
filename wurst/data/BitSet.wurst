@@ -1,5 +1,6 @@
 package BitSet
 import NoWurst
+import Integer
 import Wurstunit
 import Annotations
 
@@ -13,9 +14,9 @@ int array reversePows
 	var allPows = 1
 	for i = 1 to BITSET_SIZE - 1
 		pows[i] = pows[i - 1] * 2
-		allPows = BlzBitOr(allPows, pows[i])
+		allPows = allPows.bitOr(pows[i])
 	for i = 0 to BITSET_SIZE - 1
-		reversePows[i] = BlzBitXor(allPows, pows[i])
+		reversePows[i] = allPows.bitXor(pows[i])
 
 init
 	initPows()
@@ -29,15 +30,15 @@ public function emptyBitset() returns bitset
 	
 /** Returns the value of the bit with the specified index. */
 public function bitset.get(int index) returns bool
-	return BlzBitAnd(this.val, pows[index]) != 0
+	return this.val.bitAnd(pows[index]) != 0
 	
 /** Sets the bit at the specified index to true. */
 public function bitset.set(int index) returns bitset
-	return bitset(BlzBitOr(this.val, pows[index]))
+	return bitset(this.val.bitOr(pows[index]))
 	
 /** Sets the bit at the specified index to false. */
 public function bitset.reset(int index) returns bitset
-	return bitset(BlzBitAnd(this.val, reversePows[index]))
+	return bitset(this.val.bitAnd(reversePows[index]))
 	
 /** Sets the bit at the specified index to the specified value. */
 public function bitset.set(int index, bool value) returns bitset
@@ -45,7 +46,7 @@ public function bitset.set(int index, bool value) returns bitset
 
 /** Flips bit at the specified index, i.e. changes true values to false and false values to true. */
 public function bitset.flip(int index) returns bitset
-	return bitset(BlzBitXor(this.val, pows[index]))
+	return bitset(this.val.bitXor(pows[index]))
 	
 /** Returns true if this bitset contains no bits that are set to true. */
 public function bitset.isEmpty() returns bool
@@ -53,7 +54,7 @@ public function bitset.isEmpty() returns bool
 	
 /** Returns true if the specified bitset has any bits set to true that are also set to true in this bitset. */
 public function bitset.intersects(bitset other) returns bool
-	return BlzBitAnd(this.val, other.val) != 0
+	return this.val.bitAnd(other.val) != 0
 	
 // Compatibility API
 
