@@ -172,13 +172,22 @@ let enumRect = Rect(0,0,0,0)
 /** Executes the given closure for all destructables in a rect
 	that incompasses the circle with the range radius at the given position. */
 public function forDestructablesInRange(vec2 pos, real range, ForGroupCallbackD cb)
+	forDestructablesInRange(pos, range, null, cb)
+
+/** Executes the given closure for all destructables in a rect
+	that incompasses the circle with the range radius at the given position. */
+public function forDestructablesInRange(vec2 pos, real range, boolexpr filter, ForGroupCallbackD cb)
 	enumRect.resize(vec2(pos.x - range, pos.y - range), vec2(pos.x + range, pos.y + range))
-	forDestructablesInRect(enumRect, cb)
+	forDestructablesInRect(enumRect, filter, cb)
 
 /** Executes the given closure for all destructables in the given rect */
 public function forDestructablesInRect(rect r, ForGroupCallbackD cb)
+	forDestructablesInRect(r, null, cb)
+
+/** Executes the given closure for all destructables in the given rect */
+public function forDestructablesInRect(rect r, boolexpr filter, ForGroupCallbackD cb)
 	pushCallbackD(cb)
-	EnumDestructablesInRect(r, null, () -> filterD())
+	EnumDestructablesInRect(r, filter, () -> filterD())
 	popCallbackD()
 
 // Nearest Destructable helpers
