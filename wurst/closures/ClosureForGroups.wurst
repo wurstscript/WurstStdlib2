@@ -193,22 +193,19 @@ public function forDestructablesInRect(rect r, boolexpr filter, ForGroupCallback
 // Nearest Destructable helpers
 destructable nearestD = null
 var nearestDDist = REAL_MAX
-vec2 gpos = ZERO2
+var gpos = ZERO2
 
 /** Executes the given closure for the closes destructable in the given rect.
 	If there is no destructable in range, the closure will be run with "null" */
 public function forNearestDestructable(vec2 pos, real range, ForGroupCallbackD c)
-	pushCallbackD(c)
-	gpos = pos
-	nearestDDist = range.squared()
 	nearestD = null
-	let r = pos.withRadiusRect(range)
-	EnumDestructablesInRect(r, filterEnumDestructablesInCircleBJ) ->
-		let dist = gpos.distanceToSq(GetFilterDestructable().getPos())
+	nearestDDist = range
+	gpos = pos
+	enumRect.resize(vec2(pos.x - range, pos.y - range), vec2(pos.x + range, pos.y + range))
+	EnumDestructablesInRect(enumRect, null) ->
+		let dist = gpos.distanceTo(GetEnumDestructable().getPos())
 		if dist < nearestDDist
-			nearestD = GetFilterDestructable()
+			nearestD = GetEnumDestructable()
 			nearestDDist = dist
 
 	c.callback(nearestD)
-	popCallbackD()
-
