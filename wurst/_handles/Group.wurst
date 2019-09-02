@@ -26,6 +26,12 @@ public function group.enumUnitsSelected(player p, boolexpr filter)
 public function group.enumUnitsOfPlayer(player p, boolexpr filter)
 	GroupEnumUnitsOfPlayer(this, p, filter)
 
+public function group.enumUnitsOfType(string unitname, boolexpr filter)
+	GroupEnumUnitsOfType(this, unitname, filter)
+
+public function group.enumUnitsOfType(int id, boolexpr filter)
+	GroupEnumUnitsOfType(this, UnitId2String(id), filter)
+
 public function group.enumUnitsAll(boolexpr filter)
 	for i = 0 to bj_MAX_PLAYER_SLOTS - 1
 		ENUM_GROUP.enumUnitsOfPlayer(players[i], filter)
