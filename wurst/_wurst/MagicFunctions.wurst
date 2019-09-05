@@ -1,8 +1,11 @@
 package MagicFunctions
 import NoWurst
+import Annotations
 // this package contains functions which are
 // implemented in the wurst compiler
 
+/** Stops compilation with the provided error message */
+@compiletimenative public function compileError(string msg)
 
 /** builtin function which returns a stack trace.
 If stack traces are disabled, this function returns the empty string.
