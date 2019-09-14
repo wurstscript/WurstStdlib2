@@ -43,3 +43,15 @@ public function int.lerp(int target, real alpha) returns int
 /** Checks if this int is between low and high value */
 public function int.isBetween(int low, int high) returns bool
 	return this >= low and this <= high
+
+/** Returns the result of a bitwise AND operation performed on this int and the argument int. */
+public function int.bitAnd(int other) returns int
+	return BlzBitAnd(this, other)
+
+/** Returns the result of a bitwise OR operation performed on this int and the argument int. */
+public function int.bitOr(int other) returns int
+	return BlzBitOr(this, other)
+
+/** Returns the result of a bitwise exclusive OR operation performed on this int and the argument int. */
+public function int.bitXor(int other) returns int
+	return BlzBitXor(this, other)
