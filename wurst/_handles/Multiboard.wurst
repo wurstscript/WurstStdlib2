@@ -123,6 +123,32 @@ public function multiboard.setItemValueColor(int row, int column, int r, int g, 
 public function multiboard.setItemValueColor(int row, int column, colorA col)
 	this.setItemValueColor(row, column, col.red, col.green, col.blue, col.alpha)
 
+public function multiboard.setItemIcon(int row, int column, string iconFileName)
+	this.getItem(row, column)
+	..setIcon(iconFileName)
+	..release()
+
+public function multiboard.setItemWidth(int row, int column, real width)
+	this.getItem(row, column)
+	..setWidth(width)
+	..release()
+
+public function multiboard.setColumnWidth(int column, real width)
+	if column >= this.getColumnCount()
+		return
+	for row = 0 to this.getRowCount() - 1
+		this.getItem(row, column)
+		..setWidth(width)
+		..release()
+
+public function multiboard.setRowWidth(int row, real width)
+	if row >= this.getRowCount()
+		return
+	for column = 0 to this.getColumnCount() - 1
+		this.getItem(row, column)
+		..setWidth(width)
+		..release()
+
 // multiboarditems
 public function multiboarditem.release()
 	MultiboardReleaseItem(this)
