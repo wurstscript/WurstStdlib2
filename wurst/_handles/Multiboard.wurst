@@ -137,17 +137,13 @@ public function multiboard.setColumnWidth(int column, real width)
 	if column >= this.getColumnCount()
 		return
 	for row = 0 to this.getRowCount() - 1
-		this.getItem(row, column)
-		..setWidth(width)
-		..release()
+		this.setItemWidth(row, column, width)
 
 public function multiboard.setRowWidth(int row, real width)
 	if row >= this.getRowCount()
 		return
 	for column = 0 to this.getColumnCount() - 1
-		this.getItem(row, column)
-		..setWidth(width)
-		..release()
+		this.setItemWidth(row, column, width)
 
 // multiboarditems
 public function multiboarditem.release()
