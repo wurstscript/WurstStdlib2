@@ -1,6 +1,7 @@
 package Multiboard
-import Colors
 import NoWurst
+import _Primitives
+import Colors
 import Player
 
 public function multiboard.destr()
@@ -12,15 +13,32 @@ public function multiboard.isDisplayed() returns boolean
 public function multiboard.isMinimized() returns boolean
 	return IsMultiboardMinimized(this)
 
+public function multiboard.isMaximized() returns boolean
+	return not this.isMinimized()
+
 public function multiboard.clear()
 	MultiboardClear(this)
 
 public function multiboard.display(boolean show)
-	MultiboardDisplay(this,show)
+	MultiboardDisplay(this, show)
 
 public function multiboard.display(player p, boolean show)
 	if localPlayer == p
 		MultiboardDisplay(this,show)
+
+public function multiboard.show()
+	this.display(true)
+
+public function multiboard.show(player p)
+	if localPlayer == p
+		this.display(true)
+
+public function multiboard.hide()
+	this.display(false)
+
+public function multiboard.hide(player p)
+	if localPlayer == p
+		this.display(false)
 
 public function multiboard.getColumnCount() returns int
 	return MultiboardGetColumnCount(this)
@@ -35,7 +53,7 @@ public function multiboard.getTitleText() returns string
 	return MultiboardGetTitleText(this)
 
 public function multiboard.minimalize(boolean minimalize)
-	MultiboardMinimize(this,minimalize)
+	MultiboardMinimize(this, minimalize)
 
 public function multiboard.setColumnCount(int count)
 	MultiboardSetColumnCount(this, count)
@@ -67,7 +85,29 @@ public function multiboard.setTitleColor(int r,int g, int b, int a)
 public function multiboard.setTitleColor(colorA col)
 	MultiboardSetTitleTextColor(this, col.red, col.green, col.blue, col.alpha)
 
-//multiboarditems
+public function multiboard.setItemValue(int row, int column, string value)
+	this.getItem(row, column)
+	..setValue(value)
+	..release()
+
+public function multiboard.setItemValue(int row, int column, int value)
+	this.setItemValue(row, column, value.toString())
+
+public function multiboard.setItemValue(int row, int column, real value)
+	this.setItemValue(row, column, value.toString())
+
+public function multiboard.setItemValue(int row, int column, bool value)
+	this.setItemValue(row, column, value.toString())
+
+public function multiboard.setItemValueColor(int row, int column, int r, int g, int b, int a)
+	this.getItem(row, column)
+	..setValueColor(r, g, b, a)
+	..release()
+
+public function multiboard.setItemValueColor(int row, int column, colorA col)
+	this.setItemValueColor(row, column, col.red, col.green, col.blue, col.alpha)
+
+// multiboarditems
 public function multiboarditem.release()
 	MultiboardReleaseItem(this)
 
@@ -82,8 +122,17 @@ public function multiboarditem.setValue(string value)
 	let v = value == null ? "" : value
 	MultiboardSetItemValue(this, v)
 
+public function multiboarditem.setValue(int value)
+	this.setValue(value.toString())
+
+public function multiboarditem.setValue(real value)
+	this.setValue(value.toString())
+
+public function multiboarditem.setValue(bool value)
+	this.setValue(value.toString())
+
 public function multiboarditem.setValueColor(int r, int g, int b, int a)
-	MultiboardSetItemValueColor(this, r,g,b,a)
+	MultiboardSetItemValueColor(this, r, g, b, a)
 
 public function multiboarditem.setValueColor(colorA col)
 	MultiboardSetItemValueColor(this, col.red, col.green, col.blue, col.alpha)
