@@ -3,6 +3,7 @@ import NoWurst
 import _Primitives
 import Colors
 import Player
+import Annotations
 
 public function multiboard.destr()
 	DestroyMultiboard(this)
@@ -52,8 +53,23 @@ public function multiboard.getRowCount() returns int
 public function multiboard.getTitleText() returns string
 	return MultiboardGetTitleText(this)
 
+@deprecated("Use .minimaze() instead")
 public function multiboard.minimalize(boolean minimalize)
 	MultiboardMinimize(this, minimalize)
+
+public function multiboard.minimize()
+	MultiboardMinimize(this, true)
+
+public function multiboard.minimize(player p)
+	if localPlayer == p
+		this.minimize()
+
+public function multiboard.maximize()
+	MultiboardMinimize(this, true)
+
+public function multiboard.maximize(player p)
+	if localPlayer == p
+		this.maximize()
 
 public function multiboard.setColumnCount(int count)
 	MultiboardSetColumnCount(this, count)
