@@ -11,6 +11,7 @@ import ObjectIdGenerator
 import MapBounds
 import ClosureTimers
 import Annotations
+import Orders
 
 /* 	Provides event API for units entering and leaving the map.
 	The event will also fire for preplaced units on the map.
@@ -67,7 +68,7 @@ init
 		// Create the leave event
 		registerPlayerUnitEvent(EVENT_PLAYER_UNIT_ISSUED_ORDER) ->
 			let leavingUnit = GetTriggerUnit()
-			if leavingUnit.getAbilityLevel(ABILITY_ID) == 0
+			if leavingUnit.getAbilityLevel(ABILITY_ID) == 0 and GetIssuedOrderId() == Orders.undefend
 				pushUnit(leavingUnit)
 				eventTrigger.execute()
 				popUnit()
