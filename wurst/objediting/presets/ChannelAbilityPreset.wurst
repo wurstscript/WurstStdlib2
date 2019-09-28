@@ -90,13 +90,13 @@ public class ChannelAbilityPreset extends AbilityDefinitionIllidanChannel
 
 	function presetOption(Option opt, boolean flag)
 		let pow = opt castTo int
-		if optionSet.contains(pow)
+		if optionSet.get(pow)
 			if not flag
-				optionSet = optionSet.remove(pow)
+				optionSet = optionSet.reset(pow)
 		else if flag
-			optionSet = optionSet.add(pow)
+			optionSet = optionSet.set(pow)
 
 		presetOptions(lvl -> optionSet.val)
 
 	function hasOption(Option option) returns boolean
-		return optionSet.contains(option castTo int)
+		return optionSet.get(option castTo int)
