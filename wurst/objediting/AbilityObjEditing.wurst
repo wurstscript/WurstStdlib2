@@ -12109,18 +12109,25 @@ public class AbilityDefinitionElunesGrace extends AbilityDefinition
 		addTooltipProperty("DeflectDamageTakenPiercing", lc)
 
 	function setMagicDamageReduction(int level, real value)
-		def.setLvlDataUnreal("Def1", level, 1, value)
+		def.setLvlDataUnreal("Def5", level, 5, value)
 
 	function presetMagicDamageReduction(RealLevelClosure lc)
-		def.setLevelsDataUnreal("Def1", lvls, 1, lc)
+		def.setLevelsDataUnreal("Def5", lvls, 5, lc)
 		addTooltipProperty("MagicDamageReduction", lc)
 
 	function setDamageTaken(int level, real value)
-		def.setLvlDataUnreal("Def5", level, 5, value)
+		def.setLvlDataUnreal("Def1", level, 1, value)
 
 	function presetDamageTaken(RealLevelClosure lc)
-		def.setLevelsDataUnreal("Def5", lvls, 5, lc)
+		def.setLevelsDataUnreal("Def1", lvls, 1, lc)
 		addTooltipProperty("DamageTaken", lc)
+
+	function setDamageDealt(int level, real value)
+		def.setLvlDataUnreal("Def2", level, 2, value)
+
+	function presetDamageDealt(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Def2", lvls, 2, lc)
+		addTooltipProperty("DamageDealt", lc)
 
 public class AbilityDefinitionReturnLumber extends AbilityDefinition
 	construct(int newAbilityId)
