@@ -4,6 +4,7 @@ import _Primitives
 import Colors
 import Player
 import Annotations
+import ErrorHandling
 
 public function multiboard.destr()
 	DestroyMultiboard(this)
@@ -134,14 +135,14 @@ public function multiboard.setItemWidth(int row, int column, real width)
 	..release()
 
 public function multiboard.setColumnWidth(int column, real width)
-	if column >= this.getColumnCount()
-		return
+	if column >= this.getColumnCount() or column < 0
+		error("Column index out of range.")
 	for row = 0 to this.getRowCount() - 1
 		this.setItemWidth(row, column, width)
 
 public function multiboard.setRowWidth(int row, real width)
-	if row >= this.getRowCount()
-		return
+	if row >= this.getRowCount() or row < 0
+		error("Row index out of range.")
 	for column = 0 to this.getColumnCount() - 1
 		this.setItemWidth(row, column, width)
 
