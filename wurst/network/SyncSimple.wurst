@@ -142,13 +142,13 @@ public class SimpleSynchronizer
 	private function addOfflinePlayers()
 		for i = 0 to bj_MAX_PLAYER_SLOTS - 1
 			if not players[i].isIngame()
-				syncedPlayers = syncedPlayers.add(i)
+				syncedPlayers = syncedPlayers.set(i)
 
 	protected function areAllPlayersSynced() returns boolean
 		return syncedPlayers == allPlayers
 
 	protected function onPlayerFinishedSync(player who)
-		syncedPlayers = syncedPlayers.add(who.getId())
+		syncedPlayers = syncedPlayers.set(who.getId())
 
 		if areAllPlayersSynced()
 			callback.onSynchronized()
