@@ -37,6 +37,8 @@ public constant IDENTITY33 = mat3(  1, 0, 0,
 
 tuple inverseresult33(bool success, mat3 matrix)
 
+constant EPSILON = 0.001
+
 /* =========== 2X2 MATRIX =========== */
 
 public function mat2.op_plus(mat2 m) returns mat2
@@ -112,7 +114,7 @@ Returns tuple inverseresult22(bool success, mat2 matrix) where 'success' is true
 If there's no inverse matrix 'success' is false and 'matrix' is zero matrix. */
 public function mat2.inverse() returns inverseresult22
 	let d = this.determinant()
-	var inverse = inverseresult22(d.abs() > 0.002, ZERO22)
+	var inverse = inverseresult22(d.abs() > EPSILON, ZERO22)
 	if inverse.success
 		let tmp = mat2( this.m11, -this.m01,
 						-this.m10, this.m00)
@@ -238,7 +240,7 @@ Returns tuple inverseresult33(bool success, mat3 matrix) where 'success' is true
 If there's no inverse matrix 'success' is false and 'matrix' is zero matrix. */
 public function mat3.inverse() returns inverseresult33
 	let d = this.determinant()
-	var inverse = inverseresult33(d.abs() > 0.002, ZERO33)
+	var inverse = inverseresult33(d.abs() > EPSILON, ZERO33)
 	if inverse.success
 		let tmp = mat3( this.m11 * this.m22 - this.m12 * this.m21,
 						this.m02 * this.m21 - this.m01 * this.m22,
@@ -254,24 +256,24 @@ public function mat3.inverse() returns inverseresult33
 		inverse.matrix = 1 / d * tmp
 	return inverse
 
-/** Extracts Euler-angles (Tait-Bryan) in radians from rotation matrix. Order of the result is X-Y-Z. */
+/** Extracts Euler-angles (Tait-Bryan) in radians from a rotation matrix. Order of the result is Z-Y-X (Yaw-Pitch-Roll). */
 public function mat3.toEuler() returns vec3
 	real yaw
 	real pitch
 	real roll
-	if this.m02 > 0.999
-		yaw = Atan2(this.m21, this.m11)
-		pitch = PI / 2
-		roll = 0
-	else if this.m02 < -0.999
-		yaw = Atan2(this.m21, this.m11)
+	if this.m20 > 1 - EPSILON
+		yaw = Atan2(-this.m12, -this.m02)
 		pitch = -PI / 2
+		roll = 0
+	else if this.m20 < EPSILON - 1
+		yaw = Atan2(this.m12, this.m02)
+		pitch = PI / 2
 		roll  = 0
 	else
-		yaw  = Atan2(-this.m12, this.m22)
-		pitch = Asin(this.m02)
-		roll = Atan2(-this.m01 , this.m00)
-	return vec3(yaw, pitch, roll)
+		yaw  = Atan2(this.m10, this.m00)
+		pitch = -Asin(this.m20)
+		roll = Atan2(this.m21 , this.m22)
+	return vec3(roll, pitch, yaw)
 
 public function mat3.toString() returns string
 	return "Matrix 3x3\n{0} {1} {2}\n{3} {4} {5}\n{6} {7} {8}".format(
@@ -287,9 +289,9 @@ public function vec3.toRotation(angle angl) returns mat3
 	var z = v.z
 	var mcos = 1 - angl.cos()
 	var sin = angl.sin()
-	return mat3(1 + mcos * (x * x - 1),	 -z * sin + mcos * x * y,	 y * sin + mcos * x * z,
-				z * sin + mcos * x * y,	  1 + mcos * (y * y - 1),	-x * sin + mcos * y * z,
-				-y * sin + mcos * x * z,	 x * sin + mcos * y * z,	 1 + mcos * (z * z - 1))
+	return mat3(1 + mcos * (x * x - 1),	 	-z * sin + mcos * x * y,	 y * sin + mcos * x * z,
+				z * sin + mcos * x * y,	  	1 + mcos * (y * y - 1),		-x * sin + mcos * y * z,
+				-y * sin + mcos * x * z,	x * sin + mcos * y * z,	 	1 + mcos * (z * z - 1))
 
 /** Creates 3x3 rotation matrix from axis and angle. */
 public function angle.toRotation(vec3 axis) returns mat3

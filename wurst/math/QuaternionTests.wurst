@@ -82,7 +82,7 @@ import Quaternion
 	works is producing backward convertation by sequence of rotations
 	acording to the order in the angles. Obtained result must be
 	the quaternion we've started from. */
-	aroundX.cross(aroundY).cross(aroundZ).assertEquals(test)
+	aroundZ.cross(aroundY).cross(aroundX).assertEquals(test)
 
 @Test function testVec3Rotate()
 	let rot = vec3(0, 0, 1).toQuat((-90) .asAngleDegrees())
@@ -128,8 +128,8 @@ import Quaternion
 	start.slerpShort(finish, 0.5).assertEquals(expected)
 
 @Test function testGetGimbalPole()
-	let north = vec3(0, 1, 0).toQuat(90 .asAngleDegrees())
-	let south = vec3(0, 1, 0).toQuat(270 .asAngleDegrees())
+	let north = vec3(0, 1, 0).toQuat(270 .asAngleDegrees())
+	let south = vec3(0, 1, 0).toQuat(90 .asAngleDegrees())
 	let clear = vec3(1, 1, 1).norm().toQuat(90 .asAngleDegrees())
 	north.getGimbalPole().assertEquals(1)
 	south.getGimbalPole().assertEquals(-1)
