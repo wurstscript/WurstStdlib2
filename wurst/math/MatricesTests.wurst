@@ -228,7 +228,7 @@ import Matrices
 	let aroundX = angle(euler.x).toRotation(vec3(1, 0, 0))
 	let aroundY = angle(euler.y).toRotation(vec3(0, 1, 0))
 	let aroundZ = angle(euler.z).toRotation(vec3(0, 0, 1))
-	(aroundX * aroundY * aroundZ).assertEquals(test)
+	(aroundZ * aroundY * aroundX).assertEquals(test)
 
 @test function test33rotationsXYZ()
 	let test = vec3(1, 2, 3)

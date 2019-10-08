@@ -97,11 +97,11 @@ public function effect.setOrientation(real yaw, real pitch, real roll)
 
 public function effect.setOrientation(mat3 matrix)
 	let euler = matrix.toEuler()
-	BlzSetSpecialEffectOrientation(this, euler.x, euler.y, euler.z)
+	BlzSetSpecialEffectOrientation(this, euler.z, euler.y, euler.x)
 
 public function effect.setOrientation(quat quaternion)
 	let euler = quaternion.toEuler()
-	BlzSetSpecialEffectOrientation(this, euler.x, euler.y, euler.z)
+	BlzSetSpecialEffectOrientation(this, euler.z, euler.y, euler.x)
 
 public function effect.setYaw(real yaw)
 	BlzSetSpecialEffectYaw(this, yaw)

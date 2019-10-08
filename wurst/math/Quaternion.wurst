@@ -10,6 +10,8 @@ public tuple quat(real x, real y, real z, real w)
 public constant IDENTITYQ = quat(0, 0, 0, 1)
 public constant ZEROQ = quat(0, 0, 0, 0)
 
+constant EPSILON = 0.001
+
 public function quat.op_plus(quat q) returns quat
 	return quat(this.x + q.x, this.y + q.y, this.z + q.z, this.w + q.w)
 
@@ -51,15 +53,15 @@ public function quat.length() returns real
 /** Returns zero quaternion if lenght is zero. */
 public function quat.norm() returns quat
 	let length = this.length()
-	return length > 0.002 ? quat(this.x / length, this.y / length, this.z / length, this.w / length) : ZEROQ
+	return length > EPSILON ? quat(this.x / length, this.y / length, this.z / length, this.w / length) : ZEROQ
 
 /** Quaternion to power of alpha. */
 public function quat.exp(real alpha) returns quat
 	var result = ZEROQ
 	let norm = this.length()
-	if norm > 0.002 // zero is zero...
+	if norm > EPSILON // zero is zero...
 		var n = vec3(this.x, this.y, this.z)
-		if n.length() > 0.002
+		if n.length() > EPSILON
 			let theta = (this.w / norm).acos()
 			let x = theta * alpha
 			let normPow = norm.pow(alpha)
@@ -103,7 +105,7 @@ public function quat.getZ() returns vec3
 q - targeted quaternion. p - progress from 0 to 1. */
 public function quat.lerp(quat q, real p) returns quat
 	quat result
-	if this.dot(q).abs() < 0.002
+	if this.dot(q).abs() < EPSILON
 		result = q
 	else
 		result = this * (1 - p) + q * p
@@ -144,7 +146,7 @@ Slerp is the least efficient approach in performance so try to avoid using it, u
 public function quat.slerp(quat q, real p) returns quat
 	quat result
 	let dot = this.dot(q)
-	if dot.abs() < 0.002
+	if dot.abs() < EPSILON
 		result = q
 	else
 		let theta = dot.acos()
@@ -171,38 +173,38 @@ public function quat.toString() returns string
 /** Gimbal lock detection.
 Returns 1 for north, -1 for south, 0 if no gimbal lock. */
 public function quat.getGimbalPole() returns int
-	let pole = this.x * this.z + this.y * this.w
-	return pole > 0.499 ? 1 : (pole < -0.499 ? -1 : 0)
+	let pole = this.x * this.z - this.y * this.w
+	return pole > 0.5 - EPSILON ? 1 : (pole < EPSILON - 0.5 ? -1 : 0)
 
-/** Extracts Euler-angles (Tait-Bryan) in radians from a quaternion. Order of the result is X-Y-Z. */
+/** Extracts Euler-angles (Tait-Bryan) in radians from a quaternion. Order of the result is Z-Y-X (Yaw-Pitch-Roll). */
 public function quat.toEuler() returns vec3
 	real yaw
 	real pitch
 	real roll
 	real cos
 	real sin
-	let pole = this.x * this.z + this.y * this.w
-	if pole > 0.499
-		cos = 1 - 2 * this.x * this.x - 2 * this.z * this.z
-		sin = 2 * this.y * this.z + 2 * this.x * this.w
-		yaw = Atan2(sin, cos)
-		pitch = PI / 2
-		roll = 0
-	else if pole < -0.499
-		cos = 1 - 2 * this.x * this.x - 2 * this.z * this.z
-		sin = 2 * this.y * this.z + 2 * this.x * this.w
-		yaw = Atan2(sin, cos)
-		pitch = -PI / 2
-		roll  = 0
-	else
-		cos = 1 - 2 * this.x * this.x - 2 * this.y * this.y
-		sin = -(2 * this.y * this.z - 2 * this.x * this.w)
-		yaw  = Atan2(sin, cos)
-		pitch = Asin(2 * pole)
-		cos = 1 - 2 * this.y * this.y - 2 * this.z * this.z
-		sin = -(2 * this.x * this.y - 2 * this.z * this.w)
-		roll = Atan2(sin , cos)
-	return vec3(yaw, pitch, roll)
+	switch this.getGimbalPole()
+		case 1
+			cos = 2 * this.x * this.z + 2 * this.y * this.w
+			sin = 2 * this.y * this.z - 2 * this.x * this.w
+			yaw = Atan2(-sin, -cos)
+			pitch = -PI / 2
+			roll = 0
+		case -1
+			cos = 2 * this.x * this.z + 2 * this.y * this.w
+			sin = 2 * this.y * this.z - 2 * this.x * this.w
+			yaw = Atan2(sin, cos)
+			pitch = PI / 2
+			roll  = 0
+		default
+			cos = 1 - 2 * this.y * this.y - 2 * this.z * this.z
+			sin = 2 * this.x * this.y + 2 * this.z * this.w
+			yaw  = Atan2(sin, cos)
+			pitch = -Asin(2 * this.x * this.z - 2 * this.y * this.w)
+			cos = 1 - 2 * this.x * this.x - 2 * this.y * this.y
+			sin = 2 * this.y * this.z + 2 * this.x * this.w
+			roll = Atan2(sin , cos)
+	return vec3(roll, pitch, yaw)
 
 /** Creates a quaternion from rotation axis and angle. */
 public function vec3.toQuat(angle angl) returns quat
