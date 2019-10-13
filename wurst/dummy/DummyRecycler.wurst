@@ -34,7 +34,7 @@ public class DummyRecycler
 	static ArrayQueue array angleQueues
 
 	static function get(vec2 pos, angle a) returns unit
-		let angleIndex = ((a.degrees() % 360).toInt() / ANGLE_DEGREE).toInt()
+		let angleIndex = (a.degrees() % 360 / ANGLE_DEGREE).round() mod DIFFERENT_ANGLES
 		if angleQueues[angleIndex].size > 0
 			return angleQueues[angleIndex].dequeue()..setXY(pos)..unpause()
 		else
@@ -50,7 +50,6 @@ public class DummyRecycler
 		else
 			angleQueues[smallestQueue].enqueue(u)
 			u..setXY(boundMax - vec2(16, 16))..pause()..setFacing((smallestQueue * ANGLE_DEGREE).asAngleDegrees())..setScale(1)..setVertexColor(COLOR_WHITE)
-
 
 	static function recycle(unit u, real delay)
 		new DelayNode(u, delay)
@@ -143,15 +142,19 @@ class DelayNode
 
 function createDummy(vec2 pos, player owner, angle facing) returns unit
 	let u = createUnit(owner, DUMMY_UNIT_ID, pos, facing)
-	u..setXY(pos)..addAbility(HEIGHT_ENABLER)..removeAbility(HEIGHT_ENABLER)..addAbility(LOCUST_ID)..addAbility(ROOT_ENABLER)..removeAbility(ROOT_ENABLER)
+	u..addAbility(HEIGHT_ENABLER)..removeAbility(HEIGHT_ENABLER)
+	..addAbility(ROOT_ENABLER)..removeAbility(ROOT_ENABLER)
+	..setXY(pos)..setFacing(facing)
 	return u
 
 
 init
 	for i = 0 to DIFFERENT_ANGLES - 1
 		DummyRecycler.angleQueues[i] = new ArrayQueue()
+		let facing = angle(i * ANGLE_DEGREE)
 		for j = 0 to SAVED_UNITS_PER_ANGLE - 1
-			DummyRecycler.angleQueues[i].enqueue(createDummy(boundMax - vec2(16, 16), DUMMY_PLAYER, (i* ANGLE_DEGREE).asAngleDegrees()))
+			let dummy = createDummy(boundMax - vec2(16, 16), DUMMY_PLAYER, facing)
+			DummyRecycler.angleQueues[i].enqueue(dummy)
 
 public constant DISABLE_AUTO_ACQUIRE_ATTACK_TARGETS_ABILITY_ID = 'xdaa'
 
