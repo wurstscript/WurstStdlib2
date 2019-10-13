@@ -151,7 +151,7 @@ function createDummy(vec2 pos, player owner, angle facing) returns unit
 init
 	for i = 0 to DIFFERENT_ANGLES - 1
 		DummyRecycler.angleQueues[i] = new ArrayQueue()
-		let facing = angle(i* ANGLE_DEGREE)
+		let facing = angle(i * ANGLE_DEGREE)
 		for j = 0 to SAVED_UNITS_PER_ANGLE - 1
 			let dummy = createDummy(boundMax - vec2(16, 16), DUMMY_PLAYER, facing)
 			DummyRecycler.angleQueues[i].enqueue(dummy)
