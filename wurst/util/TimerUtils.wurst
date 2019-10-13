@@ -48,40 +48,40 @@ public function timer.release()
 
 /* TimedLoop for classes */
 
-class TimedLoopTimer 
+class TimedLoopTimer
 
 	constant loopTimer = getTimer()..setData(this castTo int)
 	constant loopTrigger = CreateTrigger()
-	int conditionsCount = 0 
-	
-	real period 
+	int conditionsCount = 0
+
+	real period
 
 	static constant timerMap = new HashMap<real,thistype>
 
 	construct(real period)
-		this.period = period 
+		this.period = period
 
-	static function get(real period) returns thistype 
+	static function get(real period) returns thistype
 		var instance = timerMap.get(period)
-		if instance == null 
-			instance = new TimedLoopTimer(period) 
+		if instance == null
+			instance = new TimedLoopTimer(period)
 			timerMap.put(period, instance)
-		return instance 
+		return instance
 
 	function add(conditionfunc condition) returns triggercondition
 		let triggerCondition = loopTrigger.addCondition(condition)
-		conditionsCount++ 
-		if conditionsCount == 1 
+		conditionsCount++
+		if conditionsCount == 1
 			loopTimer.startPeriodic(period, function triggerEval)
 		return triggerCondition
 
 	static function triggerEval()
-		let instance = GetExpiredTimer().getData() castTo thistype 
+		let instance = GetExpiredTimer().getData() castTo thistype
 		instance.loopTrigger.evaluate()
-		if instance.conditionsCount == 0 
+		if instance.conditionsCount == 0
 			instance.loopTimer.pause()
 
-	function release(triggercondition condition) 
+	function release(triggercondition condition)
 		loopTrigger.removeCondition(condition)
 		conditionsCount--
 
@@ -96,9 +96,9 @@ public enum TimedLoopState
 public module TimedLoop
 	static private thistype array instances
 	static private int instanceCount = 0
-				
-	static private TimedLoopTimer timedLoopTimer 
-	static private triggercondition condition 
+
+	static private TimedLoopTimer timedLoopTimer
+	static private triggercondition condition
 
 	protected TimedLoopState timedLoopState = PAUSED
 
@@ -106,7 +106,7 @@ public module TimedLoop
 
 	/** Returns the period of the timed loop.
 		Ovewrite this to set a custom period */
-	function getPeriod() returns real 
+	function getPeriod() returns real
 		return ANIMATION_PERIOD
 
 	private static function onExpire() returns boolean
@@ -126,9 +126,9 @@ public module TimedLoop
 				t.onTimedLoop()
 			i--
 
-		if instanceCount == 0 
+		if instanceCount == 0
 			timedLoopTimer.release(condition)
-			condition = null 
+			condition = null
 		return false
 
 	/** Stops the periodic update of this object. */
@@ -144,9 +144,9 @@ public module TimedLoop
 		instances[instanceCount] = this
 		instanceCount++
 		if instanceCount == 1
-			if condition == null 
+			if condition == null
 				timedLoopTimer = TimedLoopTimer.get(getPeriod())
-				condition = timedLoopTimer.add(Condition(function onExpire))			
+				condition = timedLoopTimer.add(Condition(function onExpire))
 		timedLoopState = RUNNING
 
 	ondestroy

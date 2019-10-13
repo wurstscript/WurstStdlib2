@@ -5,14 +5,14 @@ import Vectors
 import Colors
 import Annotations
 
-/* 
+/*
     Custom frames can be defined in a frame definition file (*.fdf).
     These files need to be listed inside of a toc file and loaded using loadTOCFile() to be used.
     The toc file *must* always have an empty line at the end.
-    Default .fdf files can be found in: 
-        war3.w3mod:ui\framedef\ui\ 
+    Default .fdf files can be found in:
+        war3.w3mod:ui\framedef\ui\
         war3.w3mod:ui\framedef\glue\
-    
+
 	Synch notes:
         A frame uses the default handlepool - it must not be created locally.
         All frameeventtype are synced events. If a player presses a button, the associated event will fire for all players.
@@ -23,12 +23,12 @@ import Annotations
     originframetype notes:
         ORIGIN_FRAME_GAME_UI 				    --> Main parent frame
         ORIGIN_FRAME_WORLD_FRAME 			    --> The game is displayed on this frame
-        ORIGIN_FRAME_HERO_BAR 				    --> Parent of all HERO_BUTTONS, HeroButons share the same visiblity.	
-        ORIGIN_FRAME_HERO_BUTTON [0 to 6]       --> The buttons of own/allied heroes on the left of the screen	
+        ORIGIN_FRAME_HERO_BAR 				    --> Parent of all HERO_BUTTONS, HeroButons share the same visiblity.
+        ORIGIN_FRAME_HERO_BUTTON [0 to 6]       --> The buttons of own/allied heroes on the left of the screen
             ORIGIN_FRAME_HERO_HP_BAR,
             ORIGIN_FRAME_HERO_MANA_BAR
             ORIGIN_FRAME_HERO_BUTTON_INDICATOR  --> The glowing when a hero has skillpoints; They reappear when a hero gains a new skillpoint even if all originframes are hidden.
-        
+
         ORIGIN_FRAME_ITEM_BUTTON [0 to 5]       --> Items in the inventory. Reappear on unit's selection even if all originframes are hidden (when the parent's parent is shown)
         ORIGIN_FRAME_COMMAND_BUTTON [0 to 11]   --> Buttons of the the command board. 0 is the (0,0) button, 11 is the (3,2) one. Reappear on unit's selection even if all originframes are hidden
         ORIGIN_FRAME_SYSTEM_BUTTON [0 to 3]     --> Menu, allies, log, quest.
@@ -37,7 +37,7 @@ import Annotations
         ORIGIN_FRAME_MINIMAP_BUTTON [0 to 4]    --> 0 is the button at top, 4 the one at the bottom.
         ORIGIN_FRAME_TOOLTIP
         ORIGIN_FRAME_UBERTOOLTIP                --> Frame of the game's tooltips
-        ORIGIN_FRAME_CHAT_MSG                   --> Frame of the game's messages (e.g. from DisplayTextToPlayer()) 
+        ORIGIN_FRAME_CHAT_MSG                   --> Frame of the game's messages (e.g. from DisplayTextToPlayer())
         ORIGIN_FRAME_UNIT_MSG                   --> Frame of the UpKeep change warning message, below the clock
 */
 
@@ -52,7 +52,8 @@ public constant SCREEN_RIGHT        = vec2(0.8, 0.3)
 public constant SCREEN_LEFT         = vec2(0.0, 0.3)
 public constant SCREEN_TOP          = vec2(0.4, 0.6)
 public constant SCREEN_BOTTOM       = vec2(0.4, 0.0)
-
+init
+	let s = BlzGetTriggerFrameValue()
 
 /** Returns the orgin frame of the given type */
 public function getOriginFrame(originframetype frameType) returns framehandle
@@ -70,33 +71,33 @@ public function getFrameByName(string name) returns framehandle
 public function getFrameByName(string name, integer createContext) returns framehandle
     return BlzGetFrameByName(name, createContext)
 
-/** Creates a non simple frame of the given name (the name of the frame which must be defined in the imported fdf files). */ 
+/** Creates a non simple frame of the given name (the name of the frame which must be defined in the imported fdf files). */
 public function createFrame(string name) returns framehandle
     return BlzCreateFrame(name, GAME_UI, 0, 0)
 
 /** Creates a non simple frame:
-        name: the name of the frame which must be defined in the imported fdf files. 
+        name: the name of the frame which must be defined in the imported fdf files.
         owner: the parent of the frame
-        priority: unknown 
+        priority: unknown
         createContext: the unique id assigned to the frame and its children (useful for creating multiple frames of the same name) */
 public function createFrame(string name, framehandle owner, integer priority, integer createContext) returns framehandle
     return BlzCreateFrame(name, owner, priority, createContext)
-    
-/** Creates a simple frame of the given name (the name of the frame which must be defined in the imported fdf files.) */ 
+
+/** Creates a simple frame of the given name (the name of the frame which must be defined in the imported fdf files.) */
 public function createSimpleFrame(string name) returns framehandle
     return BlzCreateSimpleFrame(name, GAME_UI, 0)
 
 /** Creates a simple frame:
-        name: the name of the frame which must be defined in the imported fdf files. 
+        name: the name of the frame which must be defined in the imported fdf files.
         owner: the parent of the frame
         createContext: the unique id assigned to the frame and its children (useful for creating multiple frames of the same name) */
 public function createSimpleFrame(string name, framehandle owner, integer createContext) returns framehandle
     return BlzCreateSimpleFrame(name, owner, createContext)
-    
+
 /** Creates a frame by type:
-        typeName: the name of the type (e.g. "SIMPLEFRAME", "MENU", "BUTTON") 
-        name: the name of the created frame 
-        owner: the parent of the frame 
+        typeName: the name of the type (e.g. "SIMPLEFRAME", "MENU", "BUTTON")
+        name: the name of the created frame
+        owner: the parent of the frame
         inherits: the name of the frame frome which the created frame will be inhereting (which must be defined in the imported .fdf files)
         createContext: the unique id assigned to the frame and its children (useful for creating multiple frames of the same name) */
 public function createFrameByType(string typeName, string name, framehandle owner, string inherits, integer createContext) returns framehandle
@@ -229,29 +230,29 @@ public function framehandle.getAlpha() returns int
 public function framehandle.setAlpha(integer alpha)
     BlzFrameSetAlpha(this, alpha)
 
-/** Unknown */	
+/** Unknown */
 public function framehandle.setSpriteAnimate(integer primaryProp, integer flags)
     BlzFrameSetSpriteAnimate(this, primaryProp, flags)
 
-/** Sets the texture of the frame 
+/** Sets the texture of the frame
         texFile: the path of the texture
-        flags: unknown 
+        flags: unknown
         blend: true to keep transparency */
 public function framehandle.setTexture(string texFile, integer flag, boolean blend)
-    BlzFrameSetTexture(this, texFile, flag, blend) 
+    BlzFrameSetTexture(this, texFile, flag, blend)
 
-/** Sets the frame's scaling value. 
+/** Sets the frame's scaling value.
     Frame's size, children frames and relative anchor points scale */
 public function framehandle.setScale(real scale)
-    BlzFrameSetScale(this, scale)   
+    BlzFrameSetScale(this, scale)
 
 /** Sets a frame's tooltip frame, if it has some tooltip subframe */
 public function framehandle.setTooltip(framehandle tooltip)
-    BlzFrameSetTooltip(this, tooltip)   
-    
+    BlzFrameSetTooltip(this, tooltip)
+
 /** Forces the mouse cursor to stay (caged) inside of the frame */
 public function framehandle.cageMouse(boolean enable)
-    BlzFrameCageMouse(this, enable)   
+    BlzFrameCageMouse(this, enable)
 
 /** Returns the specific value of the frame (e.g. for sliders) */
 public function framehandle.getValue() returns real
@@ -289,7 +290,7 @@ public function framehandle.setVertexColor(integer color)
 public function framehandle.setLevel(integer level)
     BlzFrameSetLevel(this, level)
 
-/** Searches for the frames parent frame. 
+/** Searches for the frames parent frame.
     Should be used with caution as getting the parent of any top most frame will lead into a void crash */
 public function framehandle.getParent() returns framehandle
     return BlzFrameGetParent(this)
