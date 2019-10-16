@@ -1,6 +1,7 @@
 package Rect
 import NoWurst
 import Vectors
+import Wurstunit
 
 public function rect.randomPoint() returns vec2
 	return vec2(GetRandomReal(this.getMinX(), this.getMaxX()), GetRandomReal(this.getMinY(), this.getMaxY()))
@@ -64,3 +65,27 @@ public function rect.remove()
 
 public function rect.copy() returns rect
 	return Rect(this.getMinX(), this.getMinY(), this.getMaxX(), this.getMaxY())
+
+@Test
+function rectTest()
+	let rekt = Rect(2, 2, 4, 4)
+
+	rekt.width().assertEquals(2)
+	rekt.height().assertEquals(2)
+
+	rekt.getCenterX().assertEquals(3)
+	rekt.getCenterY().assertEquals(3)
+
+	rekt.moveTo(1, 1)
+
+	rekt.width().assertEquals(2)
+	rekt.height().assertEquals(2)
+
+	rekt.getCenterX().assertEquals(1)
+	rekt.getCenterY().assertEquals(1)
+
+	rekt.resize(ZERO2, vec2(4, 4))
+
+	rekt.getCenterX().assertEquals(2)
+	rekt.getCenterY().assertEquals(2)
+
