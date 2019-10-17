@@ -21,7 +21,7 @@
 	destroy them. To disable this feature, make the global
 	destroyDestructableSpeedThreshold a very high value:
 
-	   Knockback3.destroyDestructableSpeedThreshold = 999999999.
+		Knockback3.destroyDestructableSpeedThreshold = 999999999.
 
 	This value defaults to 300.
 */
@@ -32,14 +32,24 @@ import LinkedListModule
 import HashMap
 import Objects
 
+/** A vec3 -> real function. */
+public interface TerrainZProvider
+	function get(vec3 where) returns real
+
+/**
+If configured, provides an alternative source for getting terrain z-height.
+This can be useful for avoiding a desync in some cases.
+*/
+@configurable TerrainZProvider HEIGHTMAP_PROVIDER = (vec3 w) -> w.getTerrainZ()
+
 /** The square rect size used for finding destructables. */
-@configurable let DESTRUCTABLE_ENUM_SIZE	= 130.
+@configurable let DESTRUCTABLE_ENUM_SIZE = 130.
 
 /**
 If enabled, units have their move-speed changed while airborne.
 Warning: this is not a lock-safe form of crowd control.
 */
-@configurable let USE_MOVE_SPEED_MODIFIERS  = true
+@configurable let USE_MOVE_SPEED_MODIFIERS = true
 
 /**
 If enabled, units have their prop window changed while airborne.
@@ -50,8 +60,8 @@ Warning: this is not a lock-safe form of crowd control.
 public class Knockback3
 	use LinkedListModule
 
-	/**	Fraction of velocity retained after colliding with ground/destructable.	*/
-	static var restitutionCoefficientGround	   = .2
+	/** Fraction of velocity retained after colliding with ground/destructable. */
+	static var restitutionCoefficientGround = .2
 	static var restitutionCoefficientDestructable = .3
 
 	/** Ratio. */
@@ -98,13 +108,13 @@ public class Knockback3
 	 */
 	static function add(unit u, real velocity, angle groundAngle, angle airAngle)
 		let instVel = velocity * ANIMATION_PERIOD
-		let v	   = ZERO3.polarProject(instVel, groundAngle, airAngle)
+		let v = ZERO3.polarProject(instVel, groundAngle, airAngle)
 		if unitNodes.has(u)
 			unitNodes.get(u).del += v
 		else
 			let knockback = new Knockback3()
 			unitNodes.put(u, knockback)
-			knockback.u   = u
+			knockback.u = u
 			knockback.del = v
 			if size == 1
 				clock.startPeriodic(ANIMATION_PERIOD, function tick)
@@ -120,10 +130,10 @@ public class Knockback3
 		angle will always be used from the pair of possible trajectories. Example:
 	*/
 	static function add(unit u, vec2 target, real groundSpeed)
-		let t	 = (target - u.getPos()).length() / groundSpeed
+		let t = (target - u.getPos()).length() / groundSpeed
 		let theta = u.getPos().angleTo(target)
-		let velZ  = gravity * t / 2. / ANIMATION_PERIOD
-		let vel   = theta.toVec(groundSpeed).withZ(velZ)
+		let velZ = gravity * t / 2. / ANIMATION_PERIOD
+		let vel = theta.toVec(groundSpeed).withZ(velZ)
 		let speed = vel.length()
 
 		add(u, speed, theta, vec2(groundSpeed, vel.z).getAngle())
@@ -132,7 +142,7 @@ public class Knockback3
 	static function setVel(unit u, real velocity, angle groundAngle, angle airAngle)
 		if unitNodes.has(u)
 			let knockback = unitNodes.get(u)
-			let instVel   = velocity * ANIMATION_PERIOD
+			let instVel = velocity * ANIMATION_PERIOD
 
 			knockback.del = ZERO3.polarProject(instVel, groundAngle, airAngle)
 		else
@@ -177,10 +187,10 @@ public class Knockback3
 
 	private static function tickAboveGround(Knockback3 knockback, vec3 newPos3, vec3 pos3)
 		knockback.del.z -= gravity * ANIMATION_PERIOD
-		let heightDifference = newPos3.getTerrainZ() - pos3.getTerrainZ()
+		let heightDifference = HEIGHTMAP_PROVIDER.get(newPos3) - HEIGHTMAP_PROVIDER.get(pos3)
 
 		knockback.u..setFlyHeight(newPos3.z - heightDifference, 0.)
-				   ..setXY(newPos3)
+			..setXY(newPos3)
 
 		if USE_MOVE_SPEED_MODIFIERS
 			knockback.u.setMoveSpeed(0.)
@@ -218,12 +228,12 @@ public class Knockback3
 			knockback.u.setPropWindow(knockback.u.getDefaultPropWindow() * bj_DEGTORAD)
 
 
-	private static let	  clock	  = CreateTimer()
+	private static let clock = CreateTimer()
 
 	private static function tick()
 		for knockback from staticItr()
-			let pos3		 = knockback.u.getPos3Fly()
-			var newPos3	  = pos3 + knockback.del
+			let pos3 = knockback.u.getPos3Fly()
+			var newPos3 = pos3 + knockback.del
 
 			if not newPos3.inPlayable()
 				newPos3.x = pos3.x
