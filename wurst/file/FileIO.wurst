@@ -1,0 +1,107 @@
+package FileIO
+import AbilityIds
+import ErrorHandling
+import HashBuffer
+
+/* 	Lightweight FileIO for Patches 1.31 and up.
+
+	Read a file:
+	>	let fileContent = new File("MyFileName.pld").readAsString()
+
+	Write a file:
+	>	new File("MyFileName.pld")..write("MyContent")..close()
+*/
+
+/** Abilities which tooltips will be used to load data */
+@configurable constant IO_ABILITIES = [AbilityIds.aerialShackles, AbilityIds.rocketAttack, AbilityIds.callToArms,
+						AbilityIds.calltoArms, AbilityIds.cloudofFog, AbilityIds.controlMagic,
+						AbilityIds.defend, AbilityIds.dispelMagic, AbilityIds.feedbackArcaneTower,
+						AbilityIds.feedback]
+
+/** Maximum length of one tooltip */
+@configurable constant IO_CHUNK_SIZE = 200
+
+public var CAN_READ_FILES = true
+
+public class File
+	var filename = ""
+
+	construct(string filename)
+		this.filename = filename
+
+	function write(string content)
+		if validateInput(content) != null
+			error("FileIO(" + filename + ") ERROR: Invalid character |cffffcc00" + validateInput(content) + "|r")
+
+		writePreload(content)
+
+	function close()
+		destroy this
+
+	function read() returns HashBuffer
+		return readPreload()
+
+	function readAsString() returns string
+		let read = readPreload()
+		return read != null ? read.readString() : "-"
+
+	private function writePreload(string content)
+		var length = content.length()
+		var pointer = 0
+		var chunkCount = 0
+
+		// Begin to generate the file
+		PreloadGenClear()
+		PreloadGenStart()
+
+		while length > pointer
+			if (chunkCount >= IO_ABILITIES.length)
+				error("FileIO(" + filename + ") ERROR: String exceeds max length (" + I2S(IO_ABILITIES.length * IO_CHUNK_SIZE) + ").|r")
+
+			let chunk = content.substring(pointer, pointer + IO_CHUNK_SIZE)
+			Preload("\" )\ncall BlzSetAbilityTooltip(" + IO_ABILITIES[chunkCount].toString() + ", \"" + chunk + "\", 0)\n//")
+			chunkCount++
+			pointer = min(chunkCount * IO_CHUNK_SIZE, length)
+
+		Preload("\" )\nendfunction\nfunction a takes nothing returns nothing\n //")
+		PreloadGenEnd(this.filename)
+
+	private function readPreload() returns HashBuffer
+		if not CAN_READ_FILES
+			Log.warn("Reading files is not supported on this system.")
+			return null
+
+		string array original
+		let output = new HashBuffer()
+
+		for i = 0 to IO_ABILITIES.length - 1
+			original[i] = BlzGetAbilityTooltip(IO_ABILITIES[i], 0)
+
+		// Execute the preload file
+		Preloader(this.filename)
+
+		// Read the output
+		for i = 0 to IO_ABILITIES.length - 1
+			// Make sure the tooltip has changed
+			var chunk = BlzGetAbilityTooltip(IO_ABILITIES[i], 0)
+
+			if chunk == original[i]
+				return output
+
+			// Restore the tooltip and append the chunk
+			BlzSetAbilityTooltip(IO_ABILITIES[i], original[i], 0)
+
+			output.writeString(chunk)
+
+		return output
+
+	private static function validateInput(string content) returns string
+		for char in content
+			if (char == "\\")
+				return char
+			else if (char == "\"")
+				return char
+		return null
+
+init
+	CAN_READ_FILES = new File("FileTester.pld")..write("test").readAsString() == "test"

@@ -1,181 +1,55 @@
-/********************************************************************************
-	SyncSimple library by MoriMori.
-
-	Based on TriggerHappy's SyncInteger library.
-
-	Overview:
-		This library can be used to send a 'synchronize' network event that will fire
-		for all players after all previous network events have also been received
-		by all players.
-		Examples of such events include:
-			- Unit selection
-			- Unit orders
-			- Chat messages
-			- Gamecache synchronization
-			- Keyboard events
-
-		For example, this can be used in conjunction with gamecache synchronization
-		to send 'local' values from one player to the rest, such as camera position,
-		data from files, and so on. For a package implementing this functionality,
-		see Network.
-
-		It depends on the fact that all network events in WC3 are fired sequentially,
-		meaning that they arrrive for other players in the order that they were
-		sent in.
-		It also depends on the fact that the EVENT_PLAYER_UNIT_SELECTED fires
-		synchronously for all players at the same time, allowing us to know for
-		certain when other players have acknowledged our unit selection, as well
-		as all network events that have been fired before it.
-
-		By calling the .sync() method, we queue a network action (specifically,
-		a unit selection event) that will only be delivered after all previously
-		queued network actions have also been delivered.
-		The primary use of this library is in conjunction with gamecache's Sync
-		natives, because they also fire sequential network events. When we call
-		.sync() after a series of Sync natives, we ensure that the .onSynced()
-		callback will only be called after all players have received the data.
-
-		This way, we can send local data from one player to the rest, such as
-		camera position, data from files, and so on.
-
-		There may be other usages related to async network events as well.
-
-	Usage:
-		1. Create a new SimpleSynchronizer using:
-			let synchronizer = new SimpleSynchronizer()
-
-		2. Send some network events on one (or more) player using the gamecache Sync natives
-			if sender == localPlayer
-				// value1 and value2 are some local values only known to localPlayer
-				gc.syncInteger(mkey, vkey1, value1)
-				gc.syncInteger(mkey, vkey1, value1)
-
-		3. Set a callback to be called after all players have synchronized and read the data
-			synchronizer.onSynced() ->
-				let value1 = LoadInteger(gc, mkey, vkey1)
-				let value2 = LoadInteger(gc, mkey, vkey2)
-
-				// here, value1 and value2 are integers received from sender
-				...
-
-		4. Call .sync() on all game clients, after having called the Sync natives.
-			synchronizer.sync()
-
-		5. A SimpleSynchronizer can only be used once, and gets destroyed automatically after all players have synced.
-		To synchronize again, create a new SimpleSynchronizer
-
-********************************************************************************/
 package SyncSimple
+import LinkedList
 
-import UnitIndexer
-import BitSet
-import LinkedListModule
-import MapBounds
-import OnUnitEnterLeave
-import ClosureEvents
-import ClosureForGroups
+/* 	Lightweight String Syncing with listeners for Patches 1.31 and up.
 
-/**
-	Configure this function if you need to change how the dummy is created.
-	WARNING: The dummy must be selectable and not locusted, or else it will not work.
-**/
-@configurable
-function getDummy() returns unit
-	return createUnit(DUMMY_PLAYER, 'hfoo', boundMax, 0 .fromDeg())
-	..addAbility(GHOST_VIS_ID)
-	..pause()
-	..setScale(0)
+	Sync a string:
+	>	myString().sync() (syncedMyString) ->
+	>		Log.info("string synced: " + syncedMyString)
 
-// briefly selects the specified unit by the player
-unit last = null
-var count = 0
-function player.onceSelect(unit what)
-	ENUM_GROUP.enumUnitsSelected(this, null)
-	last = null
-	count = 0
-	forUnitsSelected(this) u ->
-		count++
-		last = u
+*/
 
-	if count >= 12
-		this.unselect(last)
+@configurable public constant SYNC_PREFIX = "S"
 
-	if localPlayer == this
-		this.select(what)
-		this.unselect(what)
+public interface SyncListener
+	function onDataSynced(string data)
 
-	if count >= 12
-		this.select(last)
+class SyncData
+	SyncListener listener
+	player syncer
+	string data
 
-public interface SynchronizationCallback
-	function onSynchronized()
-
-public class SimpleSynchronizer
-	use LinkedListModule
-
-	private static thistype array reverseLookup
-
-	private unit dummy
-	private bitset syncedPlayers = emptyBitset()
-	// this sets allPlayers to a bit pattern of 1111..1111 where the total amount of 1's is equal to bj_MAX_PLAYER_SLOTS
-	private static constant allPlayers = bitset(compiletime(2 .pow(bj_MAX_PLAYER_SLOTS) - 1))
-	private SynchronizationCallback callback = null
-
-	construct()
-		dummy = getDummy()
-		reverseLookup[dummy.getIndex()] = this
+	construct(player syncer, SyncListener listener, string data)
+		this.listener = listener
+		this.data = data
+		this.syncer = syncer
 
 	ondestroy
-		reverseLookup[dummy.getIndex()] = null
-		dummy.remove()
-		destroy callback
+		destroy listener
 
-	/** Signals that the local player is ready to continue. **/
-	function sync()
-		addOfflinePlayers()
-		localPlayer.onceSelect(dummy)
+constant syncQueue = new LinkedList<SyncData>
 
-	/**	Specifies the callback to be called when all players have called .sync() **/
-	function onSynced(SynchronizationCallback callback)
-		this.callback = callback
+public function string.sync(player p, SyncListener listener)
+	syncQueue.add(new SyncData(p, listener, this))
 
-	private function addOfflinePlayers()
-		for i = 0 to bj_MAX_PLAYER_SLOTS - 1
-			if not players[i].isIngame()
-				syncedPlayers = syncedPlayers.set(i)
+	if syncQueue.size() == 1
+		checkQueue()
 
-	protected function areAllPlayersSynced() returns boolean
-		return syncedPlayers == allPlayers
-
-	protected function onPlayerFinishedSync(player who)
-		syncedPlayers = syncedPlayers.set(who.getId())
-
-		if areAllPlayersSynced()
-			callback.onSynchronized()
-
-			destroy this
-
-	protected function onPlayerLeave(player who)
-		onPlayerFinishedSync(who)
-
-	protected static function getSynchronizer(unit what) returns thistype
-		return reverseLookup[what.getIndex()]
+function checkQueue()
+	if not syncQueue.isEmpty()
+		let syncData = syncQueue.getFirst()
+		if GetLocalPlayer() == syncData.syncer
+			BlzSendSyncData(SYNC_PREFIX, syncData.data)
 
 init
-	EventListener.add(EVENT_PLAYER_UNIT_SELECTED) ->
-		let synchronizer = SimpleSynchronizer.getSynchronizer(GetTriggerUnit())
+	let trig = CreateTrigger()
+	for i = 0 to bj_MAX_PLAYER_SLOTS - 1
+		BlzTriggerRegisterPlayerSyncEvent(trig, players[i], SYNC_PREFIX, false)
 
-		if synchronizer != null
-			synchronizer.onPlayerFinishedSync(GetTriggerPlayer())
+	trig.addAction() ->
+		let data = syncQueue.dequeue()
+		data.listener.onDataSynced(BlzGetTriggerSyncData())
+		destroy data
+		checkQueue()
 
-	EventListener.add(EVENT_PLAYER_LEAVE) ->
-		let who = GetTriggerPlayer()
 
-		for synchronizer in SimpleSynchronizer
-			synchronizer.onPlayerLeave(who)
-
-	onLeave() ->
-		let synchronizer = SimpleSynchronizer.getSynchronizer(getEnterLeaveUnit())
-
-		if synchronizer != null and not synchronizer.areAllPlayersSynced()
-			Log.error("SimpleSynchronizer: dummy unit was removed before all players synced, make sure your map doesn't remove neutral dummy units")

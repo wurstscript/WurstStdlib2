@@ -1,0 +1,62 @@
+package SaveLoadData
+import FileIO
+import SyncSimple
+import ErrorHandling
+
+/* 	Provides, player based, synced access to player save data.
+	For small data you can use strings, otherwise use HashBuffer.
+
+	Save data for a player:
+	>	myPlayer.saveData("myFileName", "someDataString")
+
+	Load data for a player:
+	>	myPlayer.loadData("myFileName") (status, data) ->
+	>		switch status
+	>			case SUCCESS
+	>				Log.info("Load successful: " + data)
+	>			default
+	>				Log.error("Error occured")
+*/
+
+public enum LoadStatus
+	SUCCESS
+	FAIL_PLAYER_OFFLINE
+	FAIL_FILE_EMPTY
+	FAIL_CANT_READ
+
+public function LoadStatus.isFail()	returns boolean
+	return (this castTo int) > 0
+
+public interface LoadListener
+	function onLoad(LoadStatus status, string data)
+
+/** Blockingly saves the given data string for the given player. */
+public function player.saveData(string slotName, string data)
+	if not this.isIngame()
+		error("Attempting to save data for player who isn't ingame! id: " + this.getId().toString())
+
+	if GetLocalPlayer() == this
+		new File(slotName)..write(data)..close()
+
+/** Asynchronously loads the data from the file of the given player
+	and then synchronizes it with all other players.
+	The listener will be invoked with the synced data string.  */
+public function player.loadData(string slotName, LoadListener listener)
+	if not this.isIngame()
+		listener.onLoad(LoadStatus.FAIL_PLAYER_OFFLINE, "")
+		return
+
+	var content = ""
+
+	if GetLocalPlayer() == this
+		let file = new File(slotName)
+		content = file.readAsString()
+		file.close()
+
+	content.sync(this) (data) ->
+		if data.length() == 0
+			listener.onLoad(LoadStatus.FAIL_FILE_EMPTY, data)
+		else if data == "-"
+			listener.onLoad(LoadStatus.FAIL_CANT_READ, data)
+		else
+			listener.onLoad(LoadStatus.SUCCESS, data)

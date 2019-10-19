@@ -1,7 +1,6 @@
 package BufferAdapters
 import Buffer
 import Execute
-import MultifileIO
 
 function OrderedStringBuffer.transferValueTo(HashBuffer sink)
 	let valueType = this.peekType()
@@ -21,10 +20,3 @@ public function OrderedStringBuffer.transfer(HashBuffer sink)
 	executeWhile(64, () -> this.canRead()) ->
 		this.transferValueTo(sink)
 
-public function OrderedStringBuffer.populateFromFile(FileReader reader)
-	executeWhile(64, () -> reader.canRead()) ->
-		this.pushChunk(reader.readLine())
-
-public function FileWriter.populateFromBuffer(OrderedStringBuffer buffer)
-	executeWhile(64, () -> buffer.hasChunk()) ->
-		this.writeLine(buffer.popChunk())
