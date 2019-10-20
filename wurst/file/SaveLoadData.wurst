@@ -2,7 +2,6 @@ package SaveLoadData
 import FileIO
 import SyncSimple
 import ErrorHandling
-import HashBuffer
 
 /* 	Provides, player based, synced access to player save data.
 	For small data you can use strings, otherwise use HashBuffer.
@@ -29,16 +28,16 @@ public function LoadStatus.isFail()	returns boolean
 	return (this castTo int) > 0
 
 public interface LoadListener
-	function onLoad(LoadStatus status, HashBuffer data)
+	function onLoad(LoadStatus status, ChunkedString data)
 
 /** Blockingly saves the given data string for the given player. */
 public function player.saveData(string slotName, string data)
-	let buffer = new HashBuffer()
-	buffer.writeString(data)
+	let buffer = new ChunkedString(DEFAULT_CHUNK_SIZE)
+	buffer.append(data)
 	this.saveData(slotName, buffer)
 
 /** Blockingly saves the given data string for the given player. */
-public function player.saveData(string slotName, HashBuffer data)
+public function player.saveData(string slotName, ChunkedString data)
 	if not this.isIngame()
 		error("Attempting to save data for player who isn't ingame! id: " + this.getId().toString())
 
@@ -53,7 +52,7 @@ public function player.loadData(string slotName, LoadListener listener)
 		listener.onLoad(LoadStatus.FAIL_PLAYER_OFFLINE, null)
 		return
 
-	var buffer = new HashBuffer()
+	var buffer = new ChunkedString(DEFAULT_CHUNK_SIZE)
 
 	if localPlayer == this
 		let file = new File(slotName)
@@ -61,9 +60,9 @@ public function player.loadData(string slotName, LoadListener listener)
 		file.close()
 
 	buffer.sync(this) (data) ->
-		if not data.hasString()
+		if not data.hasChunk()
 			listener.onLoad(LoadStatus.FAIL_FILE_EMPTY, data)
-		else if data.readString() == "-"
+		else if data.readChunk() == "-"
 			listener.onLoad(LoadStatus.FAIL_CANT_READ, data)
 		else
 			data.resetRead()

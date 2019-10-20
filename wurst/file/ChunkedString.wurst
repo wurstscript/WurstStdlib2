@@ -1,0 +1,67 @@
+package ChunkedString
+import Table
+
+/*
+	A chunked string splits up big strings into chunks.
+	This is used to circumvent certain warcraft limitations.
+*/
+/** Maximum length of one chunk */
+@configurable public constant DEFAULT_CHUNK_SIZE = 200
+
+public class ChunkedString
+	private Table table = new Table()
+	var chunkSize = DEFAULT_CHUNK_SIZE
+	var chunkCount = 0
+	var readIndex = -1
+	var buffer = ""
+
+	construct()
+
+	construct(int chunkSize)
+		this.chunkSize = chunkSize
+
+	function append(string data)
+		var pointer = 0
+
+		while buffer.length() + data.length() > pointer + chunkSize
+			let remain = chunkSize - buffer.length()
+			buffer += data.substring(pointer, remain)
+			table.saveString(chunkCount, buffer)
+			chunkCount++
+			buffer = ""
+			pointer += remain
+
+		buffer += data.substring(pointer)
+
+	function flush()
+		table.saveString(chunkCount, buffer)
+		chunkCount++
+		buffer = ""
+
+	function hasChunk() returns boolean
+		return readIndex + 1 < chunkCount
+
+	function readChunk() returns string
+		readIndex++
+		return getChunk(readIndex)
+
+	function resetRead()
+		readIndex = -1
+
+	function getChunk(int index) returns string
+		return table.loadString(index)
+
+@Test
+function chunkStringTest()
+	let cstring = new ChunkedString(5)
+	cstring.append("abc")
+	cstring.append("def")
+
+	cstring.chunkCount.assertEquals(1)
+	cstring.buffer.assertEquals("f")
+
+	cstring.append("ghijklmnopq")
+
+	cstring.chunkCount.assertEquals(3)
+	cstring.buffer.assertEquals("pq")
+

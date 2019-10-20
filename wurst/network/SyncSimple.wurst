@@ -1,6 +1,6 @@
 package SyncSimple
 import LinkedList
-import HashBuffer
+import ChunkedString
 
 /* 	Lightweight String Syncing with listeners for Patches 1.31 and up.
 
@@ -16,26 +16,26 @@ public interface StringSyncListener
 	function onDataSynced(string data)
 
 public interface BufferSyncListener
-	function onDataSynced(HashBuffer buffer)
+	function onDataSynced(ChunkedString buffer)
 
 class SyncData
 	StringSyncListener slistener = null
 	BufferSyncListener blistener = null
 	player syncer = null
 	string data = null
-	HashBuffer buffer = null
-	HashBuffer syncBuffer = null
+	ChunkedString buffer = null
+	ChunkedString syncBuffer = null
 
 	construct(player syncer, StringSyncListener slistener, string data)
 		this.slistener = slistener
 		this.data = data
 		this.syncer = syncer
 
-	construct(player syncer, BufferSyncListener blistener, HashBuffer data)
+	construct(player syncer, BufferSyncListener blistener, ChunkedString data)
 		this.blistener = blistener
 		this.buffer = data
 		this.syncer = syncer
-		this.syncBuffer = new HashBuffer()
+		this.syncBuffer = new ChunkedString()
 
 	ondestroy
 		if slistener != null
@@ -45,7 +45,7 @@ class SyncData
 
 constant syncQueue = new LinkedList<SyncData>
 
-public function HashBuffer.sync(player p, BufferSyncListener listener)
+public function ChunkedString.sync(player p, BufferSyncListener listener)
 	syncQueue.add(new SyncData(p, listener, this))
 
 	if syncQueue.size() == 1
@@ -64,7 +64,7 @@ function checkQueue()
 			if localPlayer == syncData.syncer
 				BlzSendSyncData(SYNC_PREFIX, syncData.data)
 		else
-			let data = syncData.buffer.readString()
+			let data = syncData.buffer.readChunk()
 			if localPlayer == syncData.syncer
 				BlzSendSyncData(SYNC_PREFIX, data)
 
@@ -81,8 +81,8 @@ init
 			syncQueue.dequeue()
 			destroy syncData
 		else
-			syncData.syncBuffer.writeString(eventData)
-			if not syncData.buffer.hasString()
+			syncData.syncBuffer.append(eventData)
+			if not syncData.buffer.hasChunk()
 				syncData.blistener.onDataSynced(syncData.syncBuffer)
 				syncQueue.dequeue()
 				destroy syncData
