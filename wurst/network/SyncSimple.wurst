@@ -67,7 +67,6 @@ public function string.sync(player p, StringSyncListener listener)
 		checkQueue()
 
 function checkQueue()
-	Log.info("checking queue")
 	if not syncQueue.isEmpty()
 		let syncData = syncQueue.getFirst()
 		if syncData.data != null
@@ -98,7 +97,6 @@ init
 		else
 			syncData.syncBuffer.append(eventData)
 			if eventPrefix == LAST_CHUNK_PREFIX
-				syncData.syncBuffer.flush()
 				syncData.blistener.onDataSynced(syncData.syncBuffer)
 				syncQueue.dequeue()
 				destroy syncData

@@ -19,7 +19,7 @@ import Table
 	>		Log.info("read chunk: " + chunk)
 
 	Read Data iteratively:
-	>	for i = 0 to cstring.chunkSize
+	>	for i = 0 to cstring.chunkCount
 	>		let chunk = cstring.getChunk(i)
 	>		Log.info("read chunk: " + chunk)
 */
@@ -51,14 +51,8 @@ public class ChunkedString
 
 		buffer += data.substring(pointer)
 
-	function flush()
-		if buffer.length() > 0
-			table.saveString(chunkCount, buffer)
-			chunkCount++
-			buffer = ""
-
 	function hasChunk() returns boolean
-		return readIndex + 1 < chunkCount
+		return readIndex < chunkCount
 
 	function readChunk() returns string
 		readIndex++
@@ -68,6 +62,8 @@ public class ChunkedString
 		readIndex = -1
 
 	function getChunk(int index) returns string
+		if index == chunkCount
+			return buffer
 		return table.loadString(index)
 
 	ondestroy

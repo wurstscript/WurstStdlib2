@@ -46,7 +46,6 @@ public interface LoadListener
 public function player.saveData(string slotName, string data)
 	let buffer = new ChunkedString(DEFAULT_CHUNK_SIZE)
 	buffer.append(data)
-	buffer.flush()
 	this.saveData(slotName.endsWith(".pld") ? slotName : slotName + ".pld", buffer)
 	destroy buffer
 

@@ -29,7 +29,7 @@ public class File
 
 	function write(player p, string content)
 		let buffer = new ChunkedString()
-		buffer..append(content)..flush()
+		buffer.append(content)
 		write(p, buffer)
 		destroy buffer
 
@@ -61,7 +61,7 @@ public class File
 			PreloadGenClear()
 			PreloadGenStart()
 
-			for i = 0 to buffer.chunkCount - 1
+			for i = 0 to buffer.chunkCount
 				if (i >= IO_ABILITIES.length)
 					error("FileIO(" + filename + ") ERROR: String exceeds max length (" + I2S(IO_ABILITIES.length * buffer.chunkSize) + ").|r")
 
@@ -91,8 +91,6 @@ public class File
 			// Restore the tooltip and append the chunk
 			BlzSetAbilityTooltip(IO_ABILITIES[i], original[i], 0)
 			output.append(chunk)
-
-		output.flush()
 
 
 	private static function validateInput(string content) returns string
