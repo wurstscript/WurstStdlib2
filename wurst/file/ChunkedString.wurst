@@ -38,18 +38,18 @@ public class ChunkedString
 	construct(int chunkSize)
 		this.chunkSize = chunkSize
 
-	function append(string data)
-		var pointer = 0
+	function append(string pdata)
+		var data = pdata
 
-		while buffer.length() + data.length() > pointer + chunkSize
+		while true
 			let remain = chunkSize - buffer.length()
-			buffer += data.substring(pointer, remain)
+			buffer += data.substring(0, remain)
+			data = data.substring(remain)
+			if data.length() == 0
+				break
 			table.saveString(chunkCount, buffer)
-			chunkCount++
 			buffer = ""
-			pointer += remain
-
-		buffer += data.substring(pointer)
+			chunkCount++
 
 	function hasChunk() returns boolean
 		return readIndex < chunkCount
