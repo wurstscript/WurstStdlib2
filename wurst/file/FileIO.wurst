@@ -30,10 +30,18 @@ public class File
 		this.filename = filename
 
 	function write(string content)
-		if validateInput(content) != null
-			error("FileIO(" + filename + ") ERROR: Invalid character |cffffcc00" + validateInput(content) + "|r")
+		let buffer = new HashBuffer()
+		buffer.writeString(content)
+		write(buffer)
 
-		writePreload(content)
+	function write(HashBuffer buffer)
+		while buffer.hasString()
+			let str = buffer.readString()
+			if validateInput(str) != null
+				error("FileIO(" + filename + ") ERROR: Invalid character |cffffcc00" + validateInput(str) + "|r")
+
+		buffer.resetRead()
+		writePreload(buffer)
 
 	function close()
 		destroy this
@@ -45,23 +53,19 @@ public class File
 		let read = readPreload()
 		return read != null ? read.readString() : "-"
 
-	private function writePreload(string content)
-		var length = content.length()
-		var pointer = 0
-		var chunkCount = 0
-
+	private function writePreload(HashBuffer buffer)
 		// Begin to generate the file
 		PreloadGenClear()
 		PreloadGenStart()
 
-		while length > pointer
+		var chunkCount = 0
+		while buffer.hasString()
 			if (chunkCount >= IO_ABILITIES.length)
 				error("FileIO(" + filename + ") ERROR: String exceeds max length (" + I2S(IO_ABILITIES.length * IO_CHUNK_SIZE) + ").|r")
 
-			let chunk = content.substring(pointer, pointer + IO_CHUNK_SIZE)
+			let chunk = buffer.readString()
 			Preload("\" )\ncall BlzSetAbilityTooltip(" + IO_ABILITIES[chunkCount].toString() + ", \"" + chunk + "\", 0)\n//")
 			chunkCount++
-			pointer = min(chunkCount * IO_CHUNK_SIZE, length)
 
 		Preload("\" )\nendfunction\nfunction a takes nothing returns nothing\n //")
 		PreloadGenEnd(this.filename)
