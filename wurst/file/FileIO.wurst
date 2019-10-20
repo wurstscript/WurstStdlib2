@@ -28,7 +28,7 @@ public class File
 
 	function write(string content)
 		let buffer = new ChunkedString()
-		buffer.append(content)
+		buffer..append(content)..flush()
 		write(buffer)
 
 	function write(ChunkedString buffer)
