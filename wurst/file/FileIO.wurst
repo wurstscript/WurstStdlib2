@@ -48,7 +48,6 @@ public class File
 
 	function readAsString() returns string
 		let read = readPreload()
-		Log.info("Read: <" + read.getChunk(0) + ">")
 		return read != null ? read.getChunk(0) : "-"
 
 	private function writePreload(ChunkedString buffer)
