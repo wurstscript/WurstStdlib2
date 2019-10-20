@@ -83,6 +83,7 @@ init
 		else
 			syncData.syncBuffer.append(eventData)
 			if not syncData.buffer.hasChunk()
+				syncData.syncBuffer.flush()
 				syncData.blistener.onDataSynced(syncData.syncBuffer)
 				syncQueue.dequeue()
 				destroy syncData
