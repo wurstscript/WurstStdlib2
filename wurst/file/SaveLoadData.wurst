@@ -47,6 +47,7 @@ public function player.saveData(string slotName, string data)
 	let buffer = new ChunkedString(DEFAULT_CHUNK_SIZE)
 	buffer.append(data)
 	this.saveData(slotName, buffer)
+	destroy buffer
 
 /** Blockingly saves the given data string for the given player. */
 public function player.saveData(string slotName, ChunkedString data)

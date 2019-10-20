@@ -31,6 +31,7 @@ public class File
 		let buffer = new ChunkedString()
 		buffer..append(content)..flush()
 		write(buffer)
+		destroy buffer
 
 	function write(ChunkedString buffer)
 		for i = 0 to buffer.chunkCount

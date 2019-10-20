@@ -48,6 +48,8 @@ class SyncData
 			destroy slistener
 		if blistener != null
 			destroy blistener
+		if buffer != null
+			destroy buffer
 
 constant syncQueue = new LinkedList<SyncData>
 
