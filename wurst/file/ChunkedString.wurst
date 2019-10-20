@@ -1,9 +1,27 @@
 package ChunkedString
 import Table
 
-/*
-	A chunked string splits up big strings into chunks.
-	This is used to circumvent certain warcraft limitations.
+/*	A chunked string splits up big strings into chunks,
+	which is used to circumvent the maximum string length limit
+	and to prepare data for chunked storage, e.g. for FileIO.
+	Make sure to flush the chunked string when done writing to it,
+	so the unfilled buffer gets written as well.
+
+	Write Data:
+	>	let cstring = new ChunkedString()
+	>	cstring.append("someString")
+	>	cstring.append("someOtherString")
+	>	cstring.flush()
+
+	Read Data Sequentially:
+	>	while cstring.hasChunk()
+	>		let chunk = cstring.readChunk()
+	>		Log.info("read chunk: " + chunk)
+
+	Read Data iteratively:
+	>	for i = 0 to cstring.chunkSize
+	>		let chunk = cstring.getChunk(i)
+	>		Log.info("read chunk: " + chunk)
 */
 /** Maximum length of one chunk */
 @configurable public constant DEFAULT_CHUNK_SIZE = 200

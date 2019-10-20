@@ -3,7 +3,8 @@ import public ChunkedString
 import AbilityIds
 import ErrorHandling
 
-/* 	Lightweight FileIO for Patches 1.31 and up.
+/* 	FileIO for Patches 1.31 and up with chunked string support for big data.
+	Reads and writes using preload files by manipulating default ability tooltips.
 
 	Read a file:
 	>	let fileContent = new File("MyFileName.pld").readAsString()

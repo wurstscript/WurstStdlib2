@@ -2,11 +2,17 @@ package SyncSimple
 import LinkedList
 import ChunkedString
 
-/* 	Lightweight String Syncing with listeners for Patches 1.31 and up.
+/* 	Simple String syncing for Patches 1.31 and up with chunked string support for big data.
+	For better safety sync operations are performed sequentially, one string/chunk at a time.
 
 	Sync a string:
-	>	myString().sync() (syncedMyString) ->
-	>		Log.info("string synced: " + syncedMyString)
+	>	myString.sync() (synced) ->
+	>		Log.info("string synced: " + synced)
+
+	Sync a ChunkedString:
+	>	myChunkedString.sync() (synced) ->
+	>		while synced.hasChunk()
+	>			Log.info("chunked string synced: " + synced.readChunk())
 
 */
 

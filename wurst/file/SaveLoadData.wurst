@@ -3,20 +3,32 @@ import FileIO
 import SyncSimple
 import ErrorHandling
 
-/* 	Provides, player based, synced access to player save data.
-	For small data you can use strings, otherwise use HashBuffer.
+/* 	Comfort wrapper for player based, synced access to save data.
+	For small data you can use strings, otherwise use ChunkedString.
 
 	Save data for a player:
 	>	myPlayer.saveData("myFileName", "someDataString")
+	>	myPlayer.saveData("myChunkedFileName", someChunkedString)
 
 	Load data for a player:
 	>	myPlayer.loadData("myFileName") (status, data) ->
 	>		switch status
 	>			case SUCCESS
-	>				Log.info("Load successful: " + data)
+	>				Log.info("Load successful. Chunks: " + data.chunkCount)
 	>			default
-	>				Log.error("Error occured")
+	>				Log.error("Error occured: " + status.toString())
 */
+
+public function LoadStatus.toString() returns string
+	switch this
+		case SUCCESS
+			return "Success"
+		case FAIL_PLAYER_OFFLINE
+			return "Failed! Player is offline."
+		case FAIL_FILE_EMPTY
+			return "Failed! The file is empty."
+		case FAIL_CANT_READ
+			return "Failed! The player can't read files."
 
 public enum LoadStatus
 	SUCCESS
