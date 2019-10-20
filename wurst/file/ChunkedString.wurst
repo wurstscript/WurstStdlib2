@@ -44,7 +44,7 @@ public class ChunkedString
 		while true
 			let remain = chunkSize - buffer.length()
 			buffer += data.substring(0, remain)
-			data = data.substring(remain)
+			data = data.substring(min(remain, data.length()))
 			if data.length() == 0
 				break
 			table.saveString(chunkCount, buffer)
