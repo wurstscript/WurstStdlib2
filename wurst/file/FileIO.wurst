@@ -27,52 +27,52 @@ public class File
 	construct(string filename)
 		this.filename = filename
 
-	function write(string content)
+	function write(player p, string content)
 		let buffer = new ChunkedString()
 		buffer..append(content)..flush()
-		write(buffer)
+		write(p, buffer)
 		destroy buffer
 
-	function write(ChunkedString buffer)
+	function write(player p, ChunkedString buffer)
 		for i = 0 to buffer.chunkCount
 			let str = buffer.getChunk(i)
 			if validateInput(str) != null
 				error("FileIO(" + filename + ") ERROR: Invalid character |cffffcc00" + validateInput(str) + "|r")
 
-		writePreload(buffer)
+		writePreload(p, buffer)
 
 	function close()
 		destroy this
 
-	function read() returns ChunkedString
-		return readPreload()
+	function read(player p) returns ChunkedString
+		let out = new ChunkedString(DEFAULT_CHUNK_SIZE)
+		if localPlayer == p
+			readPreload(out)
+		return out
 
-	function readAsString() returns string
-		let read = readPreload()
-		return read != null ? read.getChunk(0) : "-"
+	function readAsString(player p) returns string
+		let out = new ChunkedString(DEFAULT_CHUNK_SIZE)
+		if localPlayer == p
+			readPreload(out)
+		return out.readChunk()
 
-	private function writePreload(ChunkedString buffer)
-		// Begin to generate the file
-		PreloadGenClear()
-		PreloadGenStart()
+	private function writePreload(player p, ChunkedString buffer)
+		if localPlayer == p
+			PreloadGenClear()
+			PreloadGenStart()
 
-		for i = 0 to buffer.chunkCount - 1
-			if (i >= IO_ABILITIES.length)
-				error("FileIO(" + filename + ") ERROR: String exceeds max length (" + I2S(IO_ABILITIES.length * buffer.chunkSize) + ").|r")
+			for i = 0 to buffer.chunkCount - 1
+				if (i >= IO_ABILITIES.length)
+					error("FileIO(" + filename + ") ERROR: String exceeds max length (" + I2S(IO_ABILITIES.length * buffer.chunkSize) + ").|r")
 
-			let chunk = buffer.getChunk(i)
-			Preload("\" )\ncall BlzSetAbilityTooltip(" + IO_ABILITIES[i].toString() + ", \"" + chunk + "\", 0)\n//")
+				let chunk = buffer.getChunk(i)
+				Preload("\" )\ncall BlzSetAbilityTooltip(" + IO_ABILITIES[i].toString() + ", \"" + chunk + "\", 0)\n//")
 
-		Preload("\" )\nendfunction\nfunction a takes nothing returns nothing\n //")
-		PreloadGenEnd(this.filename)
+			Preload("\" )\nendfunction\nfunction a takes nothing returns nothing\n //")
+			PreloadGenEnd(this.filename)
 
-	private function readPreload() returns ChunkedString
-		if not CAN_READ_FILES
-			Log.warn("Reading files is not supported on this system.")
-			return null
-
+	private function readPreload(ChunkedString output)
 		string array original
-		let output = new ChunkedString(DEFAULT_CHUNK_SIZE)
 
 		for i = 0 to IO_ABILITIES.length - 1
 			original[i] = BlzGetAbilityTooltip(IO_ABILITIES[i], 0)
@@ -90,12 +90,10 @@ public class File
 
 			// Restore the tooltip and append the chunk
 			BlzSetAbilityTooltip(IO_ABILITIES[i], original[i], 0)
-
 			output.append(chunk)
 
 		output.flush()
 
-		return output
 
 	private static function validateInput(string content) returns string
 		for char in content
@@ -106,4 +104,4 @@ public class File
 		return null
 
 init
-	CAN_READ_FILES = new File("FileTester.pld")..write("test").readAsString() == "test"
+	CAN_READ_FILES = new File("FileTester.pld")..write(localPlayer, "test").readAsString(localPlayer) == "test"

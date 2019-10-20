@@ -16,7 +16,8 @@ import ChunkedString
 
 */
 
-@configurable public constant SYNC_PREFIX = "S"
+@configurable public constant DEFAULT_PREFIX = "S"
+@configurable public constant LAST_CHUNK_PREFIX = "T"
 
 public interface StringSyncListener
 	function onDataSynced(string data)
@@ -66,23 +67,29 @@ public function string.sync(player p, StringSyncListener listener)
 		checkQueue()
 
 function checkQueue()
+	Log.info("checking queue")
 	if not syncQueue.isEmpty()
 		let syncData = syncQueue.getFirst()
 		if syncData.data != null
 			if localPlayer == syncData.syncer
-				BlzSendSyncData(SYNC_PREFIX, syncData.data)
+				BlzSendSyncData(DEFAULT_PREFIX, syncData.data)
 		else
 			let data = syncData.buffer.readChunk()
+			let hasChunk = syncData.buffer.hasChunk()
 			if localPlayer == syncData.syncer
-				BlzSendSyncData(SYNC_PREFIX, data)
-
+				if hasChunk
+					BlzSendSyncData(DEFAULT_PREFIX, data)
+				else
+					BlzSendSyncData(LAST_CHUNK_PREFIX, data)
 init
 	let trig = CreateTrigger()
 	for i = 0 to bj_MAX_PLAYER_SLOTS - 1
-		BlzTriggerRegisterPlayerSyncEvent(trig, players[i], SYNC_PREFIX, false)
+		BlzTriggerRegisterPlayerSyncEvent(trig, players[i], DEFAULT_PREFIX, false)
+		BlzTriggerRegisterPlayerSyncEvent(trig, players[i], LAST_CHUNK_PREFIX, false)
 
 	trig.addAction() ->
 		let eventData = BlzGetTriggerSyncData()
+		let eventPrefix = BlzGetTriggerSyncPrefix()
 		let syncData = syncQueue.getFirst()
 		if syncData.data != null
 			syncData.slistener.onDataSynced(eventData)
@@ -90,7 +97,7 @@ init
 			destroy syncData
 		else
 			syncData.syncBuffer.append(eventData)
-			if not syncData.buffer.hasChunk()
+			if eventPrefix == LAST_CHUNK_PREFIX
 				syncData.syncBuffer.flush()
 				syncData.blistener.onDataSynced(syncData.syncBuffer)
 				syncQueue.dequeue()

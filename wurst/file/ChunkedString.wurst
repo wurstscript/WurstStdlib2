@@ -70,6 +70,9 @@ public class ChunkedString
 	function getChunk(int index) returns string
 		return table.loadString(index)
 
+	ondestroy
+		destroy table
+
 @Test
 function chunkStringTest()
 	let cstring = new ChunkedString(5)
