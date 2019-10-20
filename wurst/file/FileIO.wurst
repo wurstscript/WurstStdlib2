@@ -47,6 +47,7 @@ public class File
 
 	function readAsString() returns string
 		let read = readPreload()
+		Log.info("Read: <" + read.getChunk(0) + ">")
 		return read != null ? read.getChunk(0) : "-"
 
 	private function writePreload(ChunkedString buffer)
@@ -84,7 +85,7 @@ public class File
 			var chunk = BlzGetAbilityTooltip(IO_ABILITIES[i], 0)
 
 			if chunk == original[i]
-				return output
+				break
 
 			// Restore the tooltip and append the chunk
 			BlzSetAbilityTooltip(IO_ABILITIES[i], original[i], 0)

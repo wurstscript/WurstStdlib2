@@ -34,9 +34,10 @@ public class ChunkedString
 		buffer += data.substring(pointer)
 
 	function flush()
-		table.saveString(chunkCount, buffer)
-		chunkCount++
-		buffer = ""
+		if buffer.length() > 0
+			table.saveString(chunkCount, buffer)
+			chunkCount++
+			buffer = ""
 
 	function hasChunk() returns boolean
 		return readIndex + 1 < chunkCount
