@@ -1,0 +1,105 @@
+package Fx2
+
+import LinkedListModule
+
+public interface DestrIface
+    function check_destr(Fx2 m) returns bool
+
+/**
+A simple effect with velocity and acceleration.  The effect is destroyed when
+the provided closure evaluates to true.
+*/
+public class Fx2
+    use LinkedListModule
+
+    private static constant clock = CreateTimer()
+
+    unit owner
+    vec3 vel
+    vec3 accel
+    effect mdl
+    DestrIface des
+
+    ondestroy
+        destroy des
+        mdl.destr()
+
+    /**
+    Create a simple effect that behaves like a projectile.  Arguments:
+        - owner: no-op.  Useful for tracking the owner of the missile.
+        - path: the model used for the effect.  Birth and death animations
+          are played.
+        - start: initial position of the effect.
+        - vel: initial velocity of the effect.
+        - accecl: the acceleration applied to the missile in units/s2.
+        - des: A closure evaluated with each tick.  When the result is true,
+          the effect is destroyed.
+
+    Example usage:
+
+    ```
+    new Fx2(
+        caster,
+        Abilities.lavaSpawnMissile,
+        caster.getPos3Fly()
+            + vec3(0., 0., 60. + casterHeight).offset2d(ang, 50.),
+        1400.
+            * caster
+                .getPos()
+                .withZ(casterHeight)
+                .normalizedPointerTo(targ.withZ(50. + targ.getTerrainZ())),
+        vec3(0., 0., -0.2)
+    ) m ->
+        let height = m.mdl.getPos().getTerrainZ()
+
+        let hit_ref = new BoolRef(m.mdl.getPos3().z - height < 0.)
+
+        forUnitsInRange(m.mdl.getPos(), 96.) (unit u) ->
+            if (
+                (u.isEnemyOf(m.owner))
+                and (m.mdl.getPos3() + vec3(0., 0., 10.))
+                    .distanceToSq(
+                        u.getPos3Fly() + vec3(0., 0., 50. + height)
+                    ) < 96. * 96.
+            )
+                m.owner.damageTarget(u, 150.)
+                hit_ref.val = true
+        
+        let result = hit_ref.val
+        destroy hit_ref
+
+        return result
+    ```
+    */
+    construct(
+        unit owner,
+        string path,
+        vec3 start,
+        vec3 vel,
+        vec3 accel,
+        DestrIface des
+    )
+        this.owner = owner
+        this.vel = vel
+        this.accel = ANIMATION_PERIOD * accel
+        this.mdl = addEffect(path, start)
+        this.des = des
+
+        if size == 1
+            clock.startPeriodic(ANIMATION_PERIOD) ->
+                let iter = staticItr()
+                while iter.hasNext()
+                    let missile = iter.next()
+
+                    missile.vel += missile.accel
+
+                    let old = missile.mdl.getPos3()
+                    let nu  = old + missile.vel
+
+                    missile.mdl..setPos(nu)
+
+                    if missile.des.check_destr(missile)
+                        destroy missile
+
+                if size == 0
+                    clock.pause()
