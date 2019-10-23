@@ -37,7 +37,7 @@ public enum LoadStatus
 	FAIL_CANT_READ
 
 public function LoadStatus.isFail()	returns boolean
-	return (this castTo int) > 0
+	return this != LoadStatus.SUCCESS
 
 public interface LoadListener
 	function onLoad(LoadStatus status, ChunkedString data)
