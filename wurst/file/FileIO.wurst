@@ -1,7 +1,9 @@
 package FileIO
 import public ChunkedString
-import AbilityIds
 import ErrorHandling
+import ObjectIdGenerator
+import AbilityObjEditing
+import ObjectIds
 
 /* 	FileIO for Patches 1.31 and up with chunked string support for big data.
 	Reads and writes using preload files by manipulating default ability tooltips.
@@ -13,13 +15,11 @@ import ErrorHandling
 	>	new File("MyFileName.pld")..write("MyContent")..close()
 */
 
-/** Abilities which tooltips will be used to load data */
-@configurable constant IO_ABILITIES = [AbilityIds.aerialShackles, AbilityIds.rocketAttack, AbilityIds.callToArms,
-						AbilityIds.calltoArms, AbilityIds.cloudofFog, AbilityIds.controlMagic,
-						AbilityIds.defend, AbilityIds.dispelMagic, AbilityIds.feedbackArcaneTower,
-						AbilityIds.feedback]
+@configurable public constant CHUNKS_PER_FILE = 64
 
 public var CAN_READ_FILES = true
+
+constant DUMMY_ABIL_ID = compiletime(ABIL_ID_GEN.next())
 
 public class File
 	var filename = ""
@@ -62,34 +62,26 @@ public class File
 			PreloadGenStart()
 
 			for i = 0 to buffer.chunkCount
-				if (i >= IO_ABILITIES.length)
-					error("FileIO(" + filename + ") ERROR: String exceeds max length (" + I2S(IO_ABILITIES.length * buffer.chunkSize) + ").|r")
+				if (i >= CHUNKS_PER_FILE)
+					error("FileIO(" + filename + ") ERROR: String exceeds max length (" + (CHUNKS_PER_FILE * buffer.chunkSize).toString() + ").|r")
 
 				let chunk = buffer.getChunk(i)
-				Preload("\" )\ncall BlzSetAbilityTooltip(" + IO_ABILITIES[i].toString() + ", \"" + chunk + "\", 0)\n//")
+				Preload("\" )\ncall BlzSetAbilityTooltip(" + DUMMY_ABIL_ID.toRawCode() + ", \"" + chunk + "\", 0)\n//")
 
 			Preload("\" )\nendfunction\nfunction a takes nothing returns nothing\n //")
 			PreloadGenEnd(this.filename)
 
 	private function readPreload(ChunkedString output)
-		string array original
-
-		for i = 0 to IO_ABILITIES.length - 1
-			original[i] = BlzGetAbilityTooltip(IO_ABILITIES[i], 0)
-
-		// Execute the preload file
 		Preloader(this.filename)
 
 		// Read the output
-		for i = 0 to IO_ABILITIES.length - 1
-			// Make sure the tooltip has changed
-			var chunk = BlzGetAbilityTooltip(IO_ABILITIES[i], 0)
+		for i = 0 to CHUNKS_PER_FILE - 1
+			var chunk = BlzGetAbilityTooltip(DUMMY_ABIL_ID, i)
 
-			if chunk == original[i]
+			if chunk == ""
 				break
 
-			// Restore the tooltip and append the chunk
-			BlzSetAbilityTooltip(IO_ABILITIES[i], original[i], 0)
+			BlzSetAbilityTooltip(DUMMY_ABIL_ID, "", i)
 			output.append(chunk)
 
 
@@ -103,3 +95,11 @@ public class File
 
 init
 	CAN_READ_FILES = new File("FileTester.pld")..write(localPlayer, "test").readAsString(localPlayer) == "test"
+
+
+@compiletime function generateDummy()
+	let dummy = new AbilityDefinitionIllidanChannel(DUMMY_ABIL_ID)
+		..setLevels(CHUNKS_PER_FILE)
+
+	for i = 1 to CHUNKS_PER_FILE
+		dummy.setTooltipNormal(i, "")
