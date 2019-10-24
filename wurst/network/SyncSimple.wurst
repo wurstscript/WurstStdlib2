@@ -3,11 +3,11 @@ import LinkedList
 import ChunkedString
 
 /* 	Simple String syncing for Patches 1.31 and up with chunked string support for big data.
-	For better safety sync operations are performed sequentially, one string/chunk at a time.
+	For improved safety, sync operations are performed sequentially - one string/chunk at a time.
 
 	Sync a string:
 	>	myString.sync() (synced) ->
-	>		Log.info("string synced: " + synced)
+	>		Log.info("string synced: " + synced.getUnsafeString())
 
 	Sync a ChunkedString:
 	>	myChunkedString.sync() (synced) ->
@@ -24,6 +24,22 @@ public interface StringSyncListener
 
 public interface BufferSyncListener
 	function onDataSynced(ChunkedString buffer)
+
+constant syncQueue = new LinkedList<SyncData>
+
+/** Syncs a single string from the given player. */
+public function string.sync(player p, StringSyncListener listener)
+	syncQueue.add(new SyncData(p, listener, this))
+
+	if syncQueue.size() == 1
+		checkQueue()
+
+/** Syncs a chunked string from the given player. */
+public function ChunkedString.sync(player p, BufferSyncListener listener)
+	syncQueue.add(new SyncData(p, listener, this))
+
+	if syncQueue.size() == 1
+		checkQueue()
 
 class SyncData
 	StringSyncListener slistener = null
@@ -51,20 +67,6 @@ class SyncData
 			destroy blistener
 		if buffer != null
 			destroy buffer
-
-constant syncQueue = new LinkedList<SyncData>
-
-public function ChunkedString.sync(player p, BufferSyncListener listener)
-	syncQueue.add(new SyncData(p, listener, this))
-
-	if syncQueue.size() == 1
-		checkQueue()
-
-public function string.sync(player p, StringSyncListener listener)
-	syncQueue.add(new SyncData(p, listener, this))
-
-	if syncQueue.size() == 1
-		checkQueue()
 
 function checkQueue()
 	if not syncQueue.isEmpty()

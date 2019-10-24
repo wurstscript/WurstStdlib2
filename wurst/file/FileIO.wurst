@@ -54,7 +54,7 @@ public class File
 		let out = new ChunkedString(DEFAULT_CHUNK_SIZE)
 		if localPlayer == p
 			readPreload(out)
-		return out.readChunk()
+		return out.getUnsafeString()
 
 	private function writePreload(player p, ChunkedString buffer)
 		if localPlayer == p
