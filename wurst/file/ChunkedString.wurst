@@ -66,6 +66,15 @@ public class ChunkedString
 			return buffer
 		return table.loadString(index)
 
+	/** Concatenates all chunks into one string.
+		This is unsafe because the chunked length might be
+		above the maximim allowed string length. */
+	function getUnsafeString() returns string
+		var out = ""
+		for i = 0 to chunkCount
+			out += getChunk(i)
+		return out
+
 	ondestroy
 		destroy table
 

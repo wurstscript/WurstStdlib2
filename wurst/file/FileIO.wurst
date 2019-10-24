@@ -1,7 +1,6 @@
 package FileIO
 import public ChunkedString
 import ErrorHandling
-import ObjectIdGenerator
 import AbilityObjEditing
 import ObjectIds
 
@@ -19,7 +18,8 @@ import ObjectIds
 
 public var CAN_READ_FILES = true
 
-constant DUMMY_ABIL_ID = compiletime(ABIL_ID_GEN.next())
+constant DUMMY_ABIL_ID = 'xlod'
+constant DUMMY_ABIL_ID_STR = 'xlod'.toRawCode()
 
 public class File
 	var filename = ""
@@ -66,7 +66,7 @@ public class File
 					error("FileIO(" + filename + ") ERROR: String exceeds max length (" + (CHUNKS_PER_FILE * buffer.chunkSize).toString() + ").|r")
 
 				let chunk = buffer.getChunk(i)
-				Preload("\" )\ncall BlzSetAbilityTooltip('" + DUMMY_ABIL_ID.toRawCode() + "', \"" + chunk + "\", " + i.toString() + ")\n//")
+				Preload("\" )\ncall BlzSetAbilityTooltip('" + DUMMY_ABIL_ID_STR + "', \"" + chunk + "\", " + i.toString() + ")\n//")
 
 			Preload("\" )\nendfunction\nfunction a takes nothing returns nothing\n //")
 			PreloadGenEnd(this.filename)
