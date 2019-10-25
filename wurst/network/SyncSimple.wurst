@@ -1,181 +1,106 @@
-/********************************************************************************
-	SyncSimple library by MoriMori.
-
-	Based on TriggerHappy's SyncInteger library.
-
-	Overview:
-		This library can be used to send a 'synchronize' network event that will fire
-		for all players after all previous network events have also been received
-		by all players.
-		Examples of such events include:
-			- Unit selection
-			- Unit orders
-			- Chat messages
-			- Gamecache synchronization
-			- Keyboard events
-
-		For example, this can be used in conjunction with gamecache synchronization
-		to send 'local' values from one player to the rest, such as camera position,
-		data from files, and so on. For a package implementing this functionality,
-		see Network.
-
-		It depends on the fact that all network events in WC3 are fired sequentially,
-		meaning that they arrrive for other players in the order that they were
-		sent in.
-		It also depends on the fact that the EVENT_PLAYER_UNIT_SELECTED fires
-		synchronously for all players at the same time, allowing us to know for
-		certain when other players have acknowledged our unit selection, as well
-		as all network events that have been fired before it.
-
-		By calling the .sync() method, we queue a network action (specifically,
-		a unit selection event) that will only be delivered after all previously
-		queued network actions have also been delivered.
-		The primary use of this library is in conjunction with gamecache's Sync
-		natives, because they also fire sequential network events. When we call
-		.sync() after a series of Sync natives, we ensure that the .onSynced()
-		callback will only be called after all players have received the data.
-
-		This way, we can send local data from one player to the rest, such as
-		camera position, data from files, and so on.
-
-		There may be other usages related to async network events as well.
-
-	Usage:
-		1. Create a new SimpleSynchronizer using:
-			let synchronizer = new SimpleSynchronizer()
-
-		2. Send some network events on one (or more) player using the gamecache Sync natives
-			if sender == localPlayer
-				// value1 and value2 are some local values only known to localPlayer
-				gc.syncInteger(mkey, vkey1, value1)
-				gc.syncInteger(mkey, vkey1, value1)
-
-		3. Set a callback to be called after all players have synchronized and read the data
-			synchronizer.onSynced() ->
-				let value1 = LoadInteger(gc, mkey, vkey1)
-				let value2 = LoadInteger(gc, mkey, vkey2)
-
-				// here, value1 and value2 are integers received from sender
-				...
-
-		4. Call .sync() on all game clients, after having called the Sync natives.
-			synchronizer.sync()
-
-		5. A SimpleSynchronizer can only be used once, and gets destroyed automatically after all players have synced.
-		To synchronize again, create a new SimpleSynchronizer
-
-********************************************************************************/
 package SyncSimple
+import LinkedList
+import ChunkedString
 
-import UnitIndexer
-import BitSet
-import LinkedListModule
-import MapBounds
-import OnUnitEnterLeave
-import ClosureEvents
-import ClosureForGroups
+/* 	Simple String syncing for Patches 1.31 and up with chunked string support for big data.
+	For improved safety, sync operations are performed sequentially - one string/chunk at a time.
 
-/**
-	Configure this function if you need to change how the dummy is created.
-	WARNING: The dummy must be selectable and not locusted, or else it will not work.
-**/
-@configurable
-function getDummy() returns unit
-	return createUnit(DUMMY_PLAYER, 'hfoo', boundMax, 0 .fromDeg())
-	..addAbility(GHOST_VIS_ID)
-	..pause()
-	..setScale(0)
+	Sync a string:
+	>	myString.sync() (synced) ->
+	>		Log.info("string synced: " + synced.getUnsafeString())
 
-// briefly selects the specified unit by the player
-unit last = null
-var count = 0
-function player.onceSelect(unit what)
-	ENUM_GROUP.enumUnitsSelected(this, null)
-	last = null
-	count = 0
-	forUnitsSelected(this) u ->
-		count++
-		last = u
+	Sync a ChunkedString:
+	>	myChunkedString.sync() (synced) ->
+	>		while synced.hasChunk()
+	>			Log.info("chunked string synced: " + synced.readChunk())
 
-	if count >= 12
-		this.unselect(last)
+*/
 
-	if localPlayer == this
-		this.select(what)
-		this.unselect(what)
+@configurable public constant DEFAULT_PREFIX = "S"
+@configurable public constant LAST_CHUNK_PREFIX = "T"
 
-	if count >= 12
-		this.select(last)
+public interface StringSyncListener
+	function onDataSynced(string data)
 
-public interface SynchronizationCallback
-	function onSynchronized()
+public interface BufferSyncListener
+	function onDataSynced(ChunkedString buffer)
 
-public class SimpleSynchronizer
-	use LinkedListModule
+constant syncQueue = new LinkedList<SyncData>
 
-	private static thistype array reverseLookup
+/** Syncs a single string from the given player. */
+public function string.sync(player p, StringSyncListener listener)
+	syncQueue.add(new SyncData(p, listener, this))
 
-	private unit dummy
-	private bitset syncedPlayers = emptyBitset()
-	// this sets allPlayers to a bit pattern of 1111..1111 where the total amount of 1's is equal to bj_MAX_PLAYER_SLOTS
-	private static constant allPlayers = bitset(compiletime(2 .pow(bj_MAX_PLAYER_SLOTS) - 1))
-	private SynchronizationCallback callback = null
+	if syncQueue.size() == 1
+		checkQueue()
 
-	construct()
-		dummy = getDummy()
-		reverseLookup[dummy.getIndex()] = this
+/** Syncs a chunked string from the given player. */
+public function ChunkedString.sync(player p, BufferSyncListener listener)
+	syncQueue.add(new SyncData(p, listener, this))
+
+	if syncQueue.size() == 1
+		checkQueue()
+
+class SyncData
+	StringSyncListener slistener = null
+	BufferSyncListener blistener = null
+	player syncer = null
+	string data = null
+	ChunkedString buffer = null
+	ChunkedString syncBuffer = null
+
+	construct(player syncer, StringSyncListener slistener, string data)
+		this.slistener = slistener
+		this.data = data
+		this.syncer = syncer
+
+	construct(player syncer, BufferSyncListener blistener, ChunkedString data)
+		this.blistener = blistener
+		this.buffer = data
+		this.syncer = syncer
+		this.syncBuffer = new ChunkedString()
 
 	ondestroy
-		reverseLookup[dummy.getIndex()] = null
-		dummy.remove()
-		destroy callback
+		if slistener != null
+			destroy slistener
+		if blistener != null
+			destroy blistener
+		if buffer != null
+			destroy buffer
 
-	/** Signals that the local player is ready to continue. **/
-	function sync()
-		addOfflinePlayers()
-		localPlayer.onceSelect(dummy)
-
-	/**	Specifies the callback to be called when all players have called .sync() **/
-	function onSynced(SynchronizationCallback callback)
-		this.callback = callback
-
-	private function addOfflinePlayers()
-		for i = 0 to bj_MAX_PLAYER_SLOTS - 1
-			if not players[i].isIngame()
-				syncedPlayers = syncedPlayers.set(i)
-
-	protected function areAllPlayersSynced() returns boolean
-		return syncedPlayers == allPlayers
-
-	protected function onPlayerFinishedSync(player who)
-		syncedPlayers = syncedPlayers.set(who.getId())
-
-		if areAllPlayersSynced()
-			callback.onSynchronized()
-
-			destroy this
-
-	protected function onPlayerLeave(player who)
-		onPlayerFinishedSync(who)
-
-	protected static function getSynchronizer(unit what) returns thistype
-		return reverseLookup[what.getIndex()]
-
+function checkQueue()
+	if not syncQueue.isEmpty()
+		let syncData = syncQueue.getFirst()
+		if syncData.data != null
+			if localPlayer == syncData.syncer
+				BlzSendSyncData(DEFAULT_PREFIX, syncData.data)
+		else
+			let data = syncData.buffer.readChunk()
+			let hasChunk = syncData.buffer.hasChunk()
+			if localPlayer == syncData.syncer
+				if hasChunk
+					BlzSendSyncData(DEFAULT_PREFIX, data)
+				else
+					BlzSendSyncData(LAST_CHUNK_PREFIX, data)
 init
-	EventListener.add(EVENT_PLAYER_UNIT_SELECTED) ->
-		let synchronizer = SimpleSynchronizer.getSynchronizer(GetTriggerUnit())
+	let trig = CreateTrigger()
+	for i = 0 to bj_MAX_PLAYER_SLOTS - 1
+		BlzTriggerRegisterPlayerSyncEvent(trig, players[i], DEFAULT_PREFIX, false)
+		BlzTriggerRegisterPlayerSyncEvent(trig, players[i], LAST_CHUNK_PREFIX, false)
 
-		if synchronizer != null
-			synchronizer.onPlayerFinishedSync(GetTriggerPlayer())
+	trig.addAction() ->
+		let eventData = BlzGetTriggerSyncData()
+		let eventPrefix = BlzGetTriggerSyncPrefix()
+		let syncData = syncQueue.getFirst()
+		if syncData.data != null
+			syncData.slistener.onDataSynced(eventData)
+			syncQueue.dequeue()
+			destroy syncData
+		else
+			syncData.syncBuffer.append(eventData)
+			if eventPrefix == LAST_CHUNK_PREFIX
+				syncData.blistener.onDataSynced(syncData.syncBuffer)
+				syncQueue.dequeue()
+				destroy syncData
+		checkQueue()
 
-	EventListener.add(EVENT_PLAYER_LEAVE) ->
-		let who = GetTriggerPlayer()
-
-		for synchronizer in SimpleSynchronizer
-			synchronizer.onPlayerLeave(who)
-
-	onLeave() ->
-		let synchronizer = SimpleSynchronizer.getSynchronizer(getEnterLeaveUnit())
-
-		if synchronizer != null and not synchronizer.areAllPlayersSynced()
-			Log.error("SimpleSynchronizer: dummy unit was removed before all players synced, make sure your map doesn't remove neutral dummy units")

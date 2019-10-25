@@ -1,0 +1,94 @@
+package ChunkedString
+import Table
+
+/*	A chunked string splits up big strings into chunks,
+	which is used to circumvent the maximum string length limit
+	and to prepare data for chunked storage, e.g. for FileIO.
+	Make sure to flush the chunked string when done writing to it,
+	so the unfilled buffer gets written as well.
+
+	Write Data:
+	>	let cstring = new ChunkedString()
+	>	cstring.append("someString")
+	>	cstring.append("someOtherString")
+	>	cstring.flush()
+
+	Read Data Sequentially:
+	>	while cstring.hasChunk()
+	>		let chunk = cstring.readChunk()
+	>		Log.info("read chunk: " + chunk)
+
+	Read Data iteratively:
+	>	for i = 0 to cstring.chunkCount
+	>		let chunk = cstring.getChunk(i)
+	>		Log.info("read chunk: " + chunk)
+*/
+/** Maximum length of one chunk */
+@configurable public constant DEFAULT_CHUNK_SIZE = 200
+
+public class ChunkedString
+	private Table table = new Table()
+	var chunkSize = DEFAULT_CHUNK_SIZE
+	var chunkCount = 0
+	var readIndex = -1
+	var buffer = ""
+
+	construct()
+
+	construct(int chunkSize)
+		this.chunkSize = chunkSize
+
+	function append(string pdata)
+		var data = pdata
+
+		while true
+			let remain = chunkSize - buffer.length()
+			buffer += data.substring(0, remain)
+			data = data.substring(min(remain, data.length()))
+			if data.length() == 0
+				break
+			table.saveString(chunkCount, buffer)
+			buffer = ""
+			chunkCount++
+
+	function hasChunk() returns boolean
+		return readIndex < chunkCount
+
+	function readChunk() returns string
+		readIndex++
+		return getChunk(readIndex)
+
+	function resetRead()
+		readIndex = -1
+
+	function getChunk(int index) returns string
+		if index == chunkCount
+			return buffer
+		return table.loadString(index)
+
+	/** Concatenates all chunks into one string.
+		This is unsafe because the chunked length might be
+		above the maximim allowed string length. */
+	function getUnsafeString() returns string
+		var out = ""
+		for i = 0 to chunkCount
+			out += getChunk(i)
+		return out
+
+	ondestroy
+		destroy table
+
+@Test
+function chunkStringTest()
+	let cstring = new ChunkedString(5)
+	cstring.append("abc")
+	cstring.append("def")
+
+	cstring.chunkCount.assertEquals(1)
+	cstring.buffer.assertEquals("f")
+
+	cstring.append("ghijklmnopq")
+
+	cstring.chunkCount.assertEquals(3)
+	cstring.buffer.assertEquals("pq")
+
