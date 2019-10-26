@@ -15,11 +15,6 @@ public interface BiFunction<T:, U:, R:>
 /** Represents an operation upon two operands of the same type, producing a result of the same type as the operands. */
 public interface BinaryOperator<T:> extends BiFunction<T, T, T>
 
-    int a = 0
-
-    construct(int a)
-        print(a)
-
 /** Represents a predicate (boolean-valued function) of two arguments. */
 public interface BiPredicate<T:, U:> extends BiFunction<T, U, bool>
 
