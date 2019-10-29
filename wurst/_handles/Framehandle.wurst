@@ -13,6 +13,11 @@ import Annotations
 		war3.w3mod:ui\framedef\ui\
 		war3.w3mod:ui\framedef\glue\
 
+	Positioning:
+		All frames are placed on the screen in a 4:3 box.
+		(0, 0) is BOTTOM-LEFT corner of the box and (0.8, 0.6) is TOP-RIGHT corner of the box.
+		Currently, there are exceptions. ORIGIN_FRAME_WORLD_FRAME and ORIGIN_FRAME_PORTRAIT are placed on the whole screen so they can go beyond the box' borders. This behaviour affects the frames' size as well. Keep it in mind, if the screen ratio is not 4:3, placing and sizing of ORIGIN_FRAME_WORLD_FRAME and ORIGIN_FRAME_PORTRAIT will not match other frames.
+
 	Synch notes:
 		A frame uses the default handlepool - it must not be created locally.
 		All frameeventtype are synced events. If a player presses a button, the associated event will fire for all players.
@@ -79,7 +84,7 @@ public function getFrame(string name) returns framehandle
 
 /** Creates a non simple frame of the given name (the name of the frame which must be defined in the imported fdf files). */
 public function createFrame(string name) returns framehandle
-	return BlzCreateFrame(name, GAME_UI, 0, 0)
+	return createFrame(name, GAME_UI, 0, 0)
 
 /** Creates a non simple frame:
 		name: the name of the frame which must be defined in the imported fdf files.
@@ -159,8 +164,7 @@ public function framehandle.setVisible(bool flag)
 
 @deprecated("Use .setVisible(player p, bool flag) instead.")
 public function framehandle.setVisibleFor(player p, bool flag)
-	if localPlayer == p
-		BlzFrameSetVisible(this, flag)
+	this.setVisible(p, flag)
 
 /** Shows or hides the frame to the given player */
 public function framehandle.setVisible(player p, bool flag)
@@ -169,31 +173,27 @@ public function framehandle.setVisible(player p, bool flag)
 
 /** Shows the frame */
 public function framehandle.show()
-	BlzFrameSetVisible(this, true)
+	this.setVisible(true)
 
 @deprecated("Use .show(player p) instead.")
 public function framehandle.showFor(player p)
-	if localPlayer == p
-		BlzFrameSetVisible(this, true)
+	this.show(p)
 
 /** Shows the frame to the specific player */
 public function framehandle.show(player p)
-	if localPlayer == p
-		this.show()
+	this.setVisible(p, true)
 
 /** Hides the frame */
 public function framehandle.hide()
-	BlzFrameSetVisible(this, false)
+	this.setVisible(false)
 
 @deprecated("Use .hide(player p) instead.")
 public function framehandle.hideFor(player p)
-	if localPlayer == p
-		BlzFrameSetVisible(this, false)
+	this.hide(p)
 
 /** Hides the frame to the specific player */
 public function framehandle.hide(player p)
-	if localPlayer == p
-		this.hide()
+	this.setVisible(p, false)
 
 /** Returns whether the frame is visible or not */
 public function framehandle.isVisible() returns bool
@@ -368,11 +368,11 @@ public function enableUIAutoPosition(bool flag)
 
 /** Hides or shows all origin frames except ORIGIN_FRAME_WORLD_FRAME */
 public function setOriginFramesVisible(bool flag)
-	BlzHideOriginFrames(flag)
+	BlzHideOriginFrames(not flag)
 
 @deprecated("Use setOriginFramesVisible(bool flag) instead.")
 public function hideOriginFrames(bool flag)
-	setOriginFramesVisible(flag)
+	setOriginFramesVisible(not flag)
 
 /** Hides all origin frames except ORIGIN_FRAME_WORLD_FRAME */
 public function hideOriginFrames()
