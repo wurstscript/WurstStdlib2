@@ -16,13 +16,13 @@ public interface BooleanLevelClosure
 	function run(int lvl) returns boolean
 
 
-public tuple ObjectDefinition(int key)
+public tuple ObjectDefinition(string key)
 
 // creates a new unit objectdefinition
 // for example to create a new unit with id "h000" which is based on a footman ("hfoo")
 // let u = createObjectDefinition("w3u", "h000", "hfoo")
 @compiletimenative public function createObjectDefinition(string fileType, int newId, int deriveFrom) returns ObjectDefinition
-	return ObjectDefinition(0) // dummy implementation
+	return ObjectDefinition(null) // dummy implementation
 
 // changes an int value of an objectdefinition
 @compiletimenative public function ObjectDefinition.setInt(string modification, int value)
