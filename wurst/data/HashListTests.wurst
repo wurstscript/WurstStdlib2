@@ -171,3 +171,20 @@ function testForEachFibonacci()
 		xn_1 = oldxn
 
 
+@Test
+function testIteratorRemove()
+	let list = new HashList<int>
+		..add(1, 1, 2, 3, 5, 8, 13, 21, 34)
+
+	let itr = list.iterator()
+	while itr.hasNext()
+		let next = itr.next()
+		if next > 2 and next < 25
+			itr.remove()
+
+	list.size().assertEquals(4)
+	list.get(0).assertEquals(1)
+	list.get(1).assertEquals(1)
+	list.get(2).assertEquals(2)
+	list.get(3).assertEquals(34)
+
