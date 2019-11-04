@@ -67,12 +67,16 @@ public class HashList<T>
 		size--
 		return tmp
 
-	/** Removes and returns the first occurence of t from this list, or null */
-	function remove(T t) returns T
+	/** Removes the first occurence of t from this list.
+		Returns true if an element was removed from the list. */
+	function remove(T t) returns boolean
+		var result = false
 		for i = 0 to size - 1
 			if t castTo int == ht.loadInt(this castTo int, i)
-				return removeAt(i)
-		return null
+				result = true
+				removeAt(i)
+				break
+		return result
 
 	/** Get the size of the list */
 	function size() returns int
