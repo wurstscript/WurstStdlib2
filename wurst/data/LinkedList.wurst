@@ -47,8 +47,8 @@ public class LinkedList<T>
 		for elem in elems
 			add(elem)
 
-	/** Adds all elements from the other list to the end of this list and removes them from the provided list. 
-	
+	/** Adds all elements from the other list to the end of this list and removes them from the provided list.
+
 		It does not add/remove elements internally, only the internal pointers of the list nodes are re-pointed.
 		The other list will be empty, but not destroyed. */
 	function splice(LinkedList<T> other)
@@ -133,14 +133,18 @@ public class LinkedList<T>
 		size--
 		return res
 
-	/** Removes the first occurence of t from this list */
-	function remove(T elem)
+	/** Removes the first occurence of t from this list.
+		Returns true if an element was removed from the list. */
+	function remove(T elem) returns bool
+		var result = false
 		var entry = dummy.next
 		while entry != dummy
 			if entry.elem == elem
 				removeEntry(entry)
-				return
+				result = true
+				break
 			entry = entry.next
+		return result
 
 	/** gets the size of the list */
 	@deprecated("Use .size() instead.") function getSize() returns int
