@@ -5621,6 +5621,38 @@ public class AbilityDefinitionNeutralBuilding extends AbilityDefinition
 		def.setLevelsDataString("Neu2", lvls, 2, lc)
 		addTooltipProperty("InteractionType", lc)
 
+public class AbilityDefinitionShopSharing extends AbilityDefinition
+	construct(int newAbilityId)
+		super(newAbilityId, AbilityIds.shopSharingAlliedBldg)
+
+	function setShowUnitIndicator(int level, bool value)
+		def.setLvlDataBoolean("Neu4", level, 4, value)
+
+	function presetShowUnitIndicator(BooleanLevelClosure lc)
+		def.setLevelsDataBoolean("Neu4", lvls, 4, lc)
+		addTooltipProperty("ShowUnitIndicator", lc)
+
+	function setActivationRadius(int level, real value)
+		def.setLvlDataUnreal("Neu1", level, 1, value)
+
+	function presetActivationRadius(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Neu1", lvls, 1, lc)
+		addTooltipProperty("ActivationRadius", lc)
+
+	function setShowSelectUnitButton(int level, bool value)
+		def.setLvlDataBoolean("Neu3", level, 3, value)
+
+	function presetShowSelectUnitButton(BooleanLevelClosure lc)
+		def.setLevelsDataBoolean("Neu3", lvls, 3, lc)
+		addTooltipProperty("ShowSelectUnitButton", lc)
+
+	function setInteractionType(int level, string value)
+		def.setLvlDataString("Neu2", level, 2, value)
+
+	function presetInteractionType(StringLevelClosure lc)
+		def.setLevelsDataString("Neu2", lvls, 2, lc)
+		addTooltipProperty("InteractionType", lc)
+
 public class AbilityDefinitionRepairHuman extends AbilityDefinition
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.repairHuman)
