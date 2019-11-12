@@ -424,7 +424,7 @@ public function setToLookAt(vec3 position, vec3 target, vec3 up) returns mat4
 	var result = setToLookAt(target - position, up)
 	let trans = setToTranslation(-position.x, -position.y, -position.z)
 	tmp_mat = result
-	result = op_mult(trans)
+	result = mult(trans)
 	return result
 
 
