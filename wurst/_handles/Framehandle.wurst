@@ -385,3 +385,33 @@ public function showOriginFrames()
 /** Loads a toc file from the given path, to include custom fdf files from, returns true on success */
 public function loadTOCFile(string tocFile) returns bool
 	return BlzLoadTOCFile(tocFile)
+
+let mouseCage = createFrame("FRAME", "SetMousePositionCage", GAME_UI, null, 0)
+	..setSize(0.0001, 0.0001)
+
+/** Places the mouse cursor at the given point of the screen. Uses the same coodinate system as framehandles. */
+public function setMousePos(vec2 pos)
+	mouseCage..clearAllPoints()
+	..setPoint(FRAMEPOINT_BOTTOMLEFT, GAME_UI, FRAMEPOINT_BOTTOMLEFT, pos)
+	..cageMouse(true)
+	..cageMouse(false)
+
+/** Places the mouse cursor in the center of the frame. */
+public function framehandle.setMousePos()
+	mouseCage..clearAllPoints()
+	..setPoint(FRAMEPOINT_CENTER, this, FRAMEPOINT_CENTER)
+	..cageMouse(true)
+	..cageMouse(false)
+
+/** Places the mouse cursor at the given point of the screen. Uses the window's coordinate system (in pixels) where (0, 0) is top-left corner of the window and positive direction of Y axis is "down". */
+public function setMousePos(integer x, integer y)
+	BlzSetMousePos(x, y)
+
+public function enableCursor()
+	BlzEnableCursor(true)
+
+public function disableCursor()
+	BlzEnableCursor(false)
+
+public function setCursorEnabled(bool flag)
+	BlzEnableCursor(flag)
