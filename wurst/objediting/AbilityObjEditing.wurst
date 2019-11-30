@@ -29,9 +29,9 @@ public interface TooltipGenerator
 /** Makes an ability able to be cast by a dummy */
 public function AbilityDefinition.setDummyAbility() returns AbilityDefinition
 	this..setHeroAbility(false)
-	..setManaCost(1, 0)
-	..setCooldown(1, 0)
-	..setCastRange(1, 99999)
+	..presetManaCost(lvl -> 0)
+	..presetCooldown(lvl -> 0)
+    ..presetCastRange(lvl -> 99999)
 	..setCheckDependencies(false)
 	return this
 
