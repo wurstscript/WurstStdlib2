@@ -25,6 +25,19 @@ public enum StackingType
 	MOVEMENT
 	ATTACK_RATE
 	KILL_UNIT
+	
+public enum StackFlag
+	DAMAGE
+	MOVEMENT
+	ATTACK_RATE
+	KILL_UNIT
+
+public enum MorphingFlag
+	UNINTERRUPTABLE
+	IMMEDIATE_LANDING
+	IMMEDIATE_TAKE_OFF
+	PERMANENT
+	REQUIRES_PAYMENT
 
 public interface TooltipGenerator
 	function addProperty(string title, StringLevelClosure lc)
@@ -1205,7 +1218,7 @@ public class AbilityDefinitionMalganisSoulPreservation extends AbilityDefinition
 
 	function presetUnittoPreserve(StringLevelClosure lc)
 		def.setLevelsDataString("Nsl1", lvls, 0, lc)
-		addTooltipProperty("Unitto Preserve", lc)
+		addTooltipProperty("Unit to Preserve", lc)
 
 public class AbilityDefinitionBeastMasterSummonBear extends AbilityDefinition
 	construct(int newAbilityId)
@@ -1248,7 +1261,7 @@ public class AbilityDefinitionDarkRangerSilence extends AbilityDefinition
 
 	function presetChanceToMiss(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Nsi2", lvls, 2, lc)
-		addTooltipProperty("ChanceToMiss", lc)
+		addTooltipProperty("Chance To Miss", lc)
 
 	function setAttacksPrevented(int level, int value)
 		def.setLvlDataInt("Nsi1", level, 1, value)
@@ -1726,6 +1739,8 @@ public class AbilityDefinitionPaladinDevotionAura extends AbilityDefinition
 		addTooltipProperty("Armor Bonus", lc)
 
 public class AbilityDefinitionTinkererRoboGoblinLevel0 extends AbilityDefinition
+	private bitset morphingFlagsSet = bitset(1)
+
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.tinkererRoboGoblinLevel0)
 
@@ -1763,6 +1778,16 @@ public class AbilityDefinitionTinkererRoboGoblinLevel0 extends AbilityDefinition
 	function presetMorphingFlags(IntLevelClosure lc)
 		def.setLevelsDataInt("Eme2", lvls, 2, lc)
 		addTooltipProperty("Morphing Flags", lc)
+	
+	function presetMorphingFlag(MorphingFlag morphingFlag, boolean flag)        
+		let pow = morphingFlag castTo int
+		if morphingFlagsSet.get(pow)
+			if not flag
+				morphingFlagsSet = morphingFlagsSet.reset(pow)
+		else if flag
+			morphingFlagsSet = morphingFlagsSet.set(pow)
+
+		presetMorphingFlags(lvl -> morphingFlagsSet.val)
 
 	function setDefenseBonus(int level, int value)
 		def.setLvlDataInt("Nrg6", level, 6, value)
@@ -2580,7 +2605,7 @@ public class AbilityDefinitionSilenceCreep extends AbilityDefinition
 
 	function presetChanceToMiss(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Nsi2", lvls, 2, lc)
-		addTooltipProperty("ChanceToMiss", lc)
+		addTooltipProperty("Chance To Miss", lc)
 
 	function setAttacksPrevented(int level, int value)
 		def.setLvlDataInt("Nsi1", level, 1, value)
@@ -2809,7 +2834,7 @@ public class AbilityDefinitionHarvest extends AbilityDefinition
 
 	function presetDamagetoTree(IntLevelClosure lc)
 		def.setLevelsDataInt("Har1", lvls, 1, lc)
-		addTooltipProperty("Damageto Tree", lc)
+		addTooltipProperty("Damage to Tree", lc)
 
 public class AbilityDefinitionMagicImmunityDragons extends AbilityDefinition
 	construct(int newAbilityId)
@@ -2885,14 +2910,14 @@ public class AbilityDefinitionItemChangeTOD extends AbilityDefinition
 
 	function presetNewTimeofDayMinute(IntLevelClosure lc)
 		def.setLevelsDataInt("ict2", lvls, 2, lc)
-		addTooltipProperty("New Timeof Day Minute", lc)
+		addTooltipProperty("New Time of Day Minute", lc)
 
 	function setNewTimeofDayHour(int level, int value)
 		def.setLvlDataInt("ict1", level, 1, value)
 
 	function presetNewTimeofDayHour(IntLevelClosure lc)
 		def.setLevelsDataInt("ict1", lvls, 1, lc)
-		addTooltipProperty("New Timeof Day Hour", lc)
+		addTooltipProperty("New Time of Day Hour", lc)
 
 public class AbilityDefinitionMoonPriestessScout extends AbilityDefinition
 	construct(int newAbilityId)
@@ -3043,7 +3068,7 @@ public class AbilityDefinitionOrbofDarkness extends AbilityDefinition
 
 	function presetChanceToHitUnits(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Iob2", lvls, 2, lc)
-		addTooltipProperty("ChanceToHitUnits", lc)
+		addTooltipProperty("Chance To Hit Units", lc)
 
 	function setEnabledAttackIndex(int level, int value)
 		def.setLvlDataInt("Iob5", level, 5, value)
@@ -3057,14 +3082,14 @@ public class AbilityDefinitionOrbofDarkness extends AbilityDefinition
 
 	function presetChanceToHitSummons(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Iob4", lvls, 4, lc)
-		addTooltipProperty("ChanceToHitSummons", lc)
+		addTooltipProperty("Chance To Hit Summons", lc)
 
 	function setChanceToHitHeros(int level, real value)
 		def.setLvlDataUnreal("Iob3", level, 3, value)
 
 	function presetChanceToHitHeros(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Iob3", lvls, 3, lc)
-		addTooltipProperty("ChanceToHitHeros", lc)
+		addTooltipProperty("Chance To Hit Heros", lc)
 
 	function setDamageBonus(int level, real value)
 		def.setLvlDataUnreal("Idam", level, 1, value)
@@ -3387,6 +3412,8 @@ public class AbilityDefinitionItemDispelAoeWithCooldown extends AbilityDefinitio
 		addTooltipProperty("Mana Loss Per Unit", lc)
 
 public class AbilityDefinitionEvilIllidanMetamorphosis extends AbilityDefinition
+	private bitset morphingFlagsSet = bitset(1)
+
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.evilIllidanMetamorphosis)
 
@@ -3417,6 +3444,16 @@ public class AbilityDefinitionEvilIllidanMetamorphosis extends AbilityDefinition
 	function presetMorphingFlags(IntLevelClosure lc)
 		def.setLevelsDataInt("Eme2", lvls, 2, lc)
 		addTooltipProperty("Morphing Flags", lc)
+
+	function presetMorphingFlag(MorphingFlag morphingFlag, boolean flag)        
+		let pow = morphingFlag castTo int
+		if morphingFlagsSet.get(pow)
+			if not flag
+				morphingFlagsSet = morphingFlagsSet.reset(pow)
+		else if flag
+			morphingFlagsSet = morphingFlagsSet.set(pow)
+
+		presetMorphingFlags(lvl -> morphingFlagsSet.val)
 
 	function setAlternateFormHitPointBonus(int level, real value)
 		def.setLvlDataUnreal("Eme5", level, 5, value)
@@ -3605,7 +3642,7 @@ public class AbilityDefinitionCloudofFogItem extends AbilityDefinition
 
 	function presetChanceToMiss(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Nsi2", lvls, 2, lc)
-		addTooltipProperty("ChanceToMiss", lc)
+		addTooltipProperty("Chance To Miss", lc)
 
 	function setAttacksPrevented(int level, int value)
 		def.setLvlDataInt("Nsi1", level, 1, value)
@@ -4041,6 +4078,8 @@ public class AbilityDefinitionFigurineSkeleton extends AbilityDefinition
 		addTooltipProperty("SummonAmount1", lc)
 
 public class AbilityDefinitionSubmergeMyrmidon extends AbilityDefinition
+	private bitset morphingFlagsSet = bitset(1)
+
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.submergeMyrmidon)
 
@@ -4065,6 +4104,16 @@ public class AbilityDefinitionSubmergeMyrmidon extends AbilityDefinition
 		def.setLevelsDataInt("Eme2", lvls, 2, lc)
 		addTooltipProperty("Morphing Flags", lc)
 
+	function presetMorphingFlag(MorphingFlag morphingFlag, boolean flag)        
+		let pow = morphingFlag castTo int
+		if morphingFlagsSet.get(pow)
+			if not flag
+				morphingFlagsSet = morphingFlagsSet.reset(pow)
+		else if flag
+			morphingFlagsSet = morphingFlagsSet.set(pow)
+
+		presetMorphingFlags(lvl -> morphingFlagsSet.val)
+
 	function setAlternateFormUnit(int level, string value)
 		def.setLvlDataString("Emeu", level, 0, value)
 
@@ -4073,6 +4122,8 @@ public class AbilityDefinitionSubmergeMyrmidon extends AbilityDefinition
 		addTooltipProperty("Alternate Form Unit", lc)
 
 public class AbilityDefinitionSubmergeRoyalGuard extends AbilityDefinition
+	private bitset morphingFlagsSet = bitset(1)
+	
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.submergeRoyalGuard)
 
@@ -4096,6 +4147,16 @@ public class AbilityDefinitionSubmergeRoyalGuard extends AbilityDefinition
 	function presetMorphingFlags(IntLevelClosure lc)
 		def.setLevelsDataInt("Eme2", lvls, 2, lc)
 		addTooltipProperty("Morphing Flags", lc)
+
+	function presetMorphingFlag(MorphingFlag morphingFlag, boolean flag)        
+		let pow = morphingFlag castTo int
+		if morphingFlagsSet.get(pow)
+			if not flag
+				morphingFlagsSet = morphingFlagsSet.reset(pow)
+		else if flag
+			morphingFlagsSet = morphingFlagsSet.set(pow)
+
+		presetMorphingFlags(lvl -> morphingFlagsSet.val)
 
 	function setAlternateFormUnit(int level, string value)
 		def.setLvlDataString("Emeu", level, 0, value)
@@ -4137,6 +4198,8 @@ public class AbilityDefinitionFigurineDoomGuard extends AbilityDefinition
 		addTooltipProperty("SummonAmount1", lc)
 
 public class AbilityDefinitionSubmergeSnapDragon extends AbilityDefinition
+	private bitset morphingFlagsSet = bitset(1)
+	
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.submergeSnapDragon)
 
@@ -4160,6 +4223,16 @@ public class AbilityDefinitionSubmergeSnapDragon extends AbilityDefinition
 	function presetMorphingFlags(IntLevelClosure lc)
 		def.setLevelsDataInt("Eme2", lvls, 2, lc)
 		addTooltipProperty("Morphing Flags", lc)
+
+	function presetMorphingFlag(MorphingFlag morphingFlag, boolean flag)        
+		let pow = morphingFlag castTo int
+		if morphingFlagsSet.get(pow)
+			if not flag
+				morphingFlagsSet = morphingFlagsSet.reset(pow)
+		else if flag
+			morphingFlagsSet = morphingFlagsSet.set(pow)
+
+		presetMorphingFlags(lvl -> morphingFlagsSet.val)
 
 	function setAlternateFormUnit(int level, string value)
 		def.setLvlDataString("Emeu", level, 0, value)
@@ -4245,6 +4318,8 @@ public class AbilityDefinitionIntelligenceBonusPlus1 extends AbilityDefinition
 		addTooltipProperty("Strength Bonus", lc)
 
 public class AbilityDefinitionBurrowscarablvl2 extends AbilityDefinition
+	private bitset morphingFlagsSet = bitset(1)
+	
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.burrowscarablvl2)
 
@@ -4275,6 +4350,16 @@ public class AbilityDefinitionBurrowscarablvl2 extends AbilityDefinition
 	function presetMorphingFlags(IntLevelClosure lc)
 		def.setLevelsDataInt("Eme2", lvls, 2, lc)
 		addTooltipProperty("Morphing Flags", lc)
+
+	function presetMorphingFlag(MorphingFlag morphingFlag, boolean flag)        
+		let pow = morphingFlag castTo int
+		if morphingFlagsSet.get(pow)
+			if not flag
+				morphingFlagsSet = morphingFlagsSet.reset(pow)
+		else if flag
+			morphingFlagsSet = morphingFlagsSet.set(pow)
+
+		presetMorphingFlags(lvl -> morphingFlagsSet.val)
 
 	function setAlternateFormUnit(int level, string value)
 		def.setLvlDataString("Emeu", level, 0, value)
@@ -4369,6 +4454,8 @@ public class AbilityDefinitionFirelordSummonLavaSpawn extends AbilityDefinition
 		addTooltipProperty("Split Attack Count", lc)
 
 public class AbilityDefinitionBurrowscarablvl3 extends AbilityDefinition
+	private bitset morphingFlagsSet = bitset(1)
+	
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.burrowscarablvl3)
 
@@ -4399,6 +4486,16 @@ public class AbilityDefinitionBurrowscarablvl3 extends AbilityDefinition
 	function presetMorphingFlags(IntLevelClosure lc)
 		def.setLevelsDataInt("Eme2", lvls, 2, lc)
 		addTooltipProperty("Morphing Flags", lc)
+
+	function presetMorphingFlag(MorphingFlag morphingFlag, boolean flag)        
+		let pow = morphingFlag castTo int
+		if morphingFlagsSet.get(pow)
+			if not flag
+				morphingFlagsSet = morphingFlagsSet.reset(pow)
+		else if flag
+			morphingFlagsSet = morphingFlagsSet.set(pow)
+
+		presetMorphingFlags(lvl -> morphingFlagsSet.val)
 
 	function setAlternateFormUnit(int level, string value)
 		def.setLvlDataString("Emeu", level, 0, value)
@@ -4905,7 +5002,7 @@ public class AbilityDefinitionHarvestLumberArchimondeghouls extends AbilityDefin
 
 	function presetDamagetoTree(IntLevelClosure lc)
 		def.setLevelsDataInt("Har1", lvls, 1, lc)
-		addTooltipProperty("Damageto Tree", lc)
+		addTooltipProperty("Damage to Tree", lc)
 
 public class AbilityDefinitionHealingWardAIhw extends AbilityDefinition
 	construct(int newAbilityId)
@@ -4919,6 +5016,8 @@ public class AbilityDefinitionHealingWardAIhw extends AbilityDefinition
 		addTooltipProperty("Ward Unit Type", lc)
 
 public class AbilityDefinitionIllidanMetamorphosis extends AbilityDefinition
+	private bitset morphingFlagsSet = bitset(1)
+	
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.metamorphosis1)
 
@@ -4949,6 +5048,16 @@ public class AbilityDefinitionIllidanMetamorphosis extends AbilityDefinition
 	function presetMorphingFlags(IntLevelClosure lc)
 		def.setLevelsDataInt("Eme2", lvls, 2, lc)
 		addTooltipProperty("Morphing Flags", lc)
+
+	function presetMorphingFlag(MorphingFlag morphingFlag, boolean flag)        
+		let pow = morphingFlag castTo int
+		if morphingFlagsSet.get(pow)
+			if not flag
+				morphingFlagsSet = morphingFlagsSet.reset(pow)
+		else if flag
+			morphingFlagsSet = morphingFlagsSet.set(pow)
+
+		presetMorphingFlags(lvl -> morphingFlagsSet.val)
 
 	function setAlternateFormHitPointBonus(int level, real value)
 		def.setLvlDataUnreal("Eme5", level, 5, value)
@@ -5124,7 +5233,7 @@ public class AbilityDefinitionHarvestLumbershredder extends AbilityDefinition
 	function presetDamagetoTree(IntLevelClosure lc)
 		def.setLevelsDataInt("Har1", lvls, 1, lc)
 		addTooltipProperty("Damageto Tree", lc)
-
+    
 public class AbilityDefinitionItemHealAoeGreater extends AbilityDefinition
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.itemHealAoeGreater)
@@ -5470,7 +5579,7 @@ public class AbilityDefinitionItemIllusion extends AbilityDefinition
 
 	function presetDamageDealtofnormal(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Iild", lvls, 1, lc)
-		addTooltipProperty("Damage Dealtofnormal", lc)
+		addTooltipProperty("Damage Dealt of normal", lc)
 
 public class AbilityDefinitionMagicDefense extends AbilityDefinition
 	construct(int newAbilityId)
@@ -5533,6 +5642,8 @@ public class AbilityDefinitionMagicDefense extends AbilityDefinition
 		addTooltipProperty("Magic Damage Reduction", lc)
 
 public class AbilityDefinitionAvengerForm extends AbilityDefinition
+	private bitset morphingFlagsSet = bitset(1)
+	
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.avengerForm)
 
@@ -5563,6 +5674,16 @@ public class AbilityDefinitionAvengerForm extends AbilityDefinition
 	function presetMorphingFlags(IntLevelClosure lc)
 		def.setLevelsDataInt("Eme2", lvls, 2, lc)
 		addTooltipProperty("Morphing Flags", lc)
+
+	function presetMorphingFlag(MorphingFlag morphingFlag, boolean flag)        
+		let pow = morphingFlag castTo int
+		if morphingFlagsSet.get(pow)
+			if not flag
+				morphingFlagsSet = morphingFlagsSet.reset(pow)
+		else if flag
+			morphingFlagsSet = morphingFlagsSet.set(pow)
+
+		presetMorphingFlags(lvl -> morphingFlagsSet.val)
 
 	function setLifeRegenerationRatepersecond(int level, real value)
 		def.setLvlDataUnreal("ave5", level, 5, value)
@@ -5771,6 +5892,8 @@ public class AbilityDefinitionFirelordIncinerate extends AbilityDefinition
 		addTooltipProperty("Death Damage Half Area", lc)
 
 public class AbilityDefinitionBearform extends AbilityDefinition
+	private bitset morphingFlagsSet = bitset(1)
+	
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.bearForm)
 
@@ -5801,6 +5924,16 @@ public class AbilityDefinitionBearform extends AbilityDefinition
 	function presetMorphingFlags(IntLevelClosure lc)
 		def.setLevelsDataInt("Eme2", lvls, 2, lc)
 		addTooltipProperty("Morphing Flags", lc)
+
+	function presetMorphingFlag(MorphingFlag morphingFlag, boolean flag)        
+		let pow = morphingFlag castTo int
+		if morphingFlagsSet.get(pow)
+			if not flag
+				morphingFlagsSet = morphingFlagsSet.reset(pow)
+		else if flag
+			morphingFlagsSet = morphingFlagsSet.set(pow)
+
+		presetMorphingFlags(lvl -> morphingFlagsSet.val)
 
 	function setAlternateFormUnit(int level, string value)
 		def.setLvlDataString("Emeu", level, 0, value)
@@ -6493,6 +6626,8 @@ public class AbilityDefinitionItemManaRestoreLesser extends AbilityDefinition
 		addTooltipProperty("Mana Points Gained", lc)
 
 public class AbilityDefinitionStoneForm extends AbilityDefinition
+	private bitset morphingFlagsSet = bitset(1)
+	
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.stoneForm)
 
@@ -6523,6 +6658,16 @@ public class AbilityDefinitionStoneForm extends AbilityDefinition
 	function presetMorphingFlags(IntLevelClosure lc)
 		def.setLevelsDataInt("Eme2", lvls, 2, lc)
 		addTooltipProperty("Morphing Flags", lc)
+
+	function presetMorphingFlag(MorphingFlag morphingFlag, boolean flag)        
+		let pow = morphingFlag castTo int
+		if morphingFlagsSet.get(pow)
+			if not flag
+				morphingFlagsSet = morphingFlagsSet.reset(pow)
+		else if flag
+			morphingFlagsSet = morphingFlagsSet.set(pow)
+
+		presetMorphingFlags(lvl -> morphingFlagsSet.val)
 
 	function setLifeRegenerationRatepersecond(int level, real value)
 		def.setLvlDataUnreal("ave5", level, 5, value)
@@ -6911,7 +7056,7 @@ public class AbilityDefinitionGhost extends AbilityDefinition
 
 	function presetImmunetoMorphEffects(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("Gho2", lvls, 2, lc)
-		addTooltipProperty("Immuneto Morph Effects", lc)
+		addTooltipProperty("Immune to Morph Effects", lc)
 
 	function setAutoAcquireAttackTargets(int level, bool value)
 		def.setLvlDataBoolean("Gho1", level, 1, value)
@@ -7030,7 +7175,7 @@ public class AbilityDefinitionOrbofLightning extends AbilityDefinition
 
 	function presetChanceToHitUnits(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Iob2", lvls, 2, lc)
-		addTooltipProperty("ChanceToHitUnits", lc)
+		addTooltipProperty("Chance To Hit Units", lc)
 
 	function setEnabledAttackIndex(int level, int value)
 		def.setLvlDataInt("Iob5", level, 5, value)
@@ -7044,14 +7189,14 @@ public class AbilityDefinitionOrbofLightning extends AbilityDefinition
 
 	function presetChanceToHitSummons(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Iob4", lvls, 4, lc)
-		addTooltipProperty("ChanceToHitSummons", lc)
+		addTooltipProperty("Chance To Hit Summons", lc)
 
 	function setChanceToHitHeros(int level, real value)
 		def.setLvlDataUnreal("Iob3", level, 3, value)
 
 	function presetChanceToHitHeros(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Iob3", lvls, 3, lc)
-		addTooltipProperty("ChanceToHitHeros", lc)
+		addTooltipProperty("Chance To Hit Heros", lc)
 
 	function setDamageBonus(int level, real value)
 		def.setLvlDataUnreal("Idam", level, 1, value)
@@ -7207,6 +7352,8 @@ public class AbilityDefinitionParasite extends AbilityDefinition
 		addTooltipProperty("Unit Type", lc)
 
 public class AbilityDefinitionDemonHunterMetamorphosis extends AbilityDefinition
+	private bitset morphingFlagsSet = bitset(1)
+	
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.metamorphosis)
 
@@ -7237,6 +7384,15 @@ public class AbilityDefinitionDemonHunterMetamorphosis extends AbilityDefinition
 	function presetMorphingFlags(IntLevelClosure lc)
 		def.setLevelsDataInt("Eme2", lvls, 2, lc)
 		addTooltipProperty("Morphing Flags", lc)
+	function presetMorphingFlag(MorphingFlag morphingFlag, boolean flag)        
+		let pow = morphingFlag castTo int
+		if morphingFlagsSet.get(pow)
+			if not flag
+				morphingFlagsSet = morphingFlagsSet.reset(pow)
+		else if flag
+			morphingFlagsSet = morphingFlagsSet.set(pow)
+
+		presetMorphingFlags(lvl -> morphingFlagsSet.val)
 
 	function setAlternateFormHitPointBonus(int level, real value)
 		def.setLvlDataUnreal("Eme5", level, 5, value)
@@ -7505,6 +7661,8 @@ public class AbilityDefinitionMagicImmunityAImx extends AbilityDefinition
 		addTooltipProperty("Magic Damage Factor", lc)
 
 public class AbilityDefinitionBurrow extends AbilityDefinition
+	private bitset morphingFlagsSet = bitset(1)
+	
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.burrow)
 
@@ -7535,6 +7693,16 @@ public class AbilityDefinitionBurrow extends AbilityDefinition
 	function presetMorphingFlags(IntLevelClosure lc)
 		def.setLevelsDataInt("Eme2", lvls, 2, lc)
 		addTooltipProperty("Morphing Flags", lc)
+
+	function presetMorphingFlag(MorphingFlag morphingFlag, boolean flag)        
+		let pow = morphingFlag castTo int
+		if morphingFlagsSet.get(pow)
+			if not flag
+				morphingFlagsSet = morphingFlagsSet.reset(pow)
+		else if flag
+			morphingFlagsSet = morphingFlagsSet.set(pow)
+
+		presetMorphingFlags(lvl -> morphingFlagsSet.val)
 
 	function setAlternateFormUnit(int level, string value)
 		def.setLvlDataString("Emeu", level, 0, value)
@@ -7627,6 +7795,8 @@ public class AbilityDefinitionMoveSpeedBonus extends AbilityDefinition
 		addTooltipProperty("Movement Speed Bonus", lc)
 
 public class AbilityDefinitionPhoenix extends AbilityDefinition
+	private bitset morphingFlagsSet = bitset(1)
+	
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.phoenix)
 
@@ -7657,6 +7827,16 @@ public class AbilityDefinitionPhoenix extends AbilityDefinition
 	function presetMorphingFlags(IntLevelClosure lc)
 		def.setLevelsDataInt("Eme2", lvls, 2, lc)
 		addTooltipProperty("Morphing Flags", lc)
+
+	function presetMorphingFlag(MorphingFlag morphingFlag, boolean flag)        
+		let pow = morphingFlag castTo int
+		if morphingFlagsSet.get(pow)
+			if not flag
+				morphingFlagsSet = morphingFlagsSet.reset(pow)
+		else if flag
+			morphingFlagsSet = morphingFlagsSet.set(pow)
+
+		presetMorphingFlags(lvl -> morphingFlagsSet.val)
 
 	function setAlternateFormUnit(int level, string value)
 		def.setLvlDataString("Emeu", level, 0, value)
@@ -8913,6 +9093,8 @@ public class AbilityDefinitionBashcreep extends AbilityDefinition
 		addTooltipProperty("Damage Multiplier", lc)
 
 public class AbilityDefinitionAlchemistChemicalRage extends AbilityDefinition
+	private bitset morphingFlagsSet = bitset(1)
+	
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.alchemistChemicalRage)
 
@@ -8957,6 +9139,16 @@ public class AbilityDefinitionAlchemistChemicalRage extends AbilityDefinition
 	function presetMorphingFlags(IntLevelClosure lc)
 		def.setLevelsDataInt("Eme2", lvls, 2, lc)
 		addTooltipProperty("Morphing Flags", lc)
+
+	function presetMorphingFlag(MorphingFlag morphingFlag, boolean flag)        
+		let pow = morphingFlag castTo int
+		if morphingFlagsSet.get(pow)
+			if not flag
+				morphingFlagsSet = morphingFlagsSet.reset(pow)
+		else if flag
+			morphingFlagsSet = morphingFlagsSet.set(pow)
+
+		presetMorphingFlags(lvl -> morphingFlagsSet.val)
 
 	function setAlternateFormUnit(int level, string value)
 		def.setLvlDataString("Emeu", level, 0, value)
@@ -9281,7 +9473,7 @@ public class AbilityDefinitionSilenceItem extends AbilityDefinition
 
 	function presetChanceToMiss(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Nsi2", lvls, 2, lc)
-		addTooltipProperty("ChanceToMiss", lc)
+		addTooltipProperty("Chance To Miss", lc)
 
 	function setAttacksPrevented(int level, int value)
 		def.setLvlDataInt("Nsi1", level, 1, value)
@@ -9388,7 +9580,7 @@ public class AbilityDefinitionCloudofFog extends AbilityDefinition
 
 	function presetChanceToMiss(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Nsi2", lvls, 2, lc)
-		addTooltipProperty("ChanceToMiss", lc)
+		addTooltipProperty("Chance To Miss", lc)
 
 	function setAttacksPrevented(int level, int value)
 		def.setLvlDataInt("Nsi1", level, 1, value)
@@ -9525,7 +9717,7 @@ public class AbilityDefinitionOrbofSpells extends AbilityDefinition
 
 	function presetChanceToHitUnits(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Iob2", lvls, 2, lc)
-		addTooltipProperty("ChanceToHitUnits", lc)
+		addTooltipProperty("Chance To Hit Units", lc)
 
 	function setEnabledAttackIndex(int level, int value)
 		def.setLvlDataInt("Iob5", level, 5, value)
@@ -9539,14 +9731,14 @@ public class AbilityDefinitionOrbofSpells extends AbilityDefinition
 
 	function presetChanceToHitSummons(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Iob4", lvls, 4, lc)
-		addTooltipProperty("ChanceToHitSummons", lc)
+		addTooltipProperty("Chance To Hit Summons", lc)
 
 	function setChanceToHitHeros(int level, real value)
 		def.setLvlDataUnreal("Iob3", level, 3, value)
 
 	function presetChanceToHitHeros(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Iob3", lvls, 3, lc)
-		addTooltipProperty("ChanceToHitHeros", lc)
+		addTooltipProperty("Chance To Hit Heros", lc)
 
 	function setDamageBonus(int level, real value)
 		def.setLvlDataUnreal("Idam", level, 1, value)
@@ -10123,7 +10315,7 @@ public class AbilityDefinitionBrewmasterDrunkenHaze extends AbilityDefinition
 
 	function presetChanceToMiss(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Nsi2", lvls, 2, lc)
-		addTooltipProperty("ChanceToMiss", lc)
+		addTooltipProperty("Chance To Miss", lc)
 
 	function setAttacksPrevented(int level, int value)
 		def.setLvlDataInt("Nsi1", level, 1, value)
@@ -10537,6 +10729,8 @@ public class AbilityDefinitionSpawnHydra extends AbilityDefinition
 		addTooltipProperty("Unit Type", lc)
 
 public class AbilityDefinitionAspx extends AbilityDefinition
+	private bitset morphingFlagsSet = bitset(1)
+	
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.aspx)
 
@@ -10567,6 +10761,16 @@ public class AbilityDefinitionAspx extends AbilityDefinition
 	function presetMorphingFlags(IntLevelClosure lc)
 		def.setLevelsDataInt("Eme2", lvls, 2, lc)
 		addTooltipProperty("Morphing Flags", lc)
+
+	function presetMorphingFlag(MorphingFlag morphingFlag, boolean flag)        
+		let pow = morphingFlag castTo int
+		if morphingFlagsSet.get(pow)
+			if not flag
+				morphingFlagsSet = morphingFlagsSet.reset(pow)
+		else if flag
+			morphingFlagsSet = morphingFlagsSet.set(pow)
+
+		presetMorphingFlags(lvl -> morphingFlagsSet.val)
 
 	function setAlternateFormUnit(int level, string value)
 		def.setLvlDataString("Emeu", level, 0, value)
@@ -12005,6 +12209,8 @@ public class AbilityDefinitionBattlestationsChaos extends AbilityDefinition
 		addTooltipProperty("Allowed Unit Type", lc)
 
 public class AbilityDefinitionCorporealForm extends AbilityDefinition
+	private bitset morphingFlagsSet = bitset(1)
+	
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.corporealForm)
 
@@ -12036,6 +12242,16 @@ public class AbilityDefinitionCorporealForm extends AbilityDefinition
 		def.setLevelsDataInt("Eme2", lvls, 2, lc)
 		addTooltipProperty("Morphing Flags", lc)
 
+	function presetMorphingFlag(MorphingFlag morphingFlag, boolean flag)        
+		let pow = morphingFlag castTo int
+		if morphingFlagsSet.get(pow)
+			if not flag
+				morphingFlagsSet = morphingFlagsSet.reset(pow)
+		else if flag
+			morphingFlagsSet = morphingFlagsSet.set(pow)
+
+		presetMorphingFlags(lvl -> morphingFlagsSet.val)
+    
 	function setAlternateFormUnit(int level, string value)
 		def.setLvlDataString("Emeu", level, 0, value)
 
@@ -12684,6 +12900,8 @@ public class AbilityDefinitionItemTownPortal extends AbilityDefinition
 		addTooltipProperty("Use Teleport Clustering", lc)
 
 public class AbilityDefinitionTinkererRoboGoblinLevel1 extends AbilityDefinition
+	private bitset morphingFlagsSet = bitset(1)
+	
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.tinkererRoboGoblinLevel1)
 
@@ -12721,6 +12939,16 @@ public class AbilityDefinitionTinkererRoboGoblinLevel1 extends AbilityDefinition
 	function presetMorphingFlags(IntLevelClosure lc)
 		def.setLevelsDataInt("Eme2", lvls, 2, lc)
 		addTooltipProperty("Morphing Flags", lc)
+
+	function presetMorphingFlag(MorphingFlag morphingFlag, boolean flag)        
+		let pow = morphingFlag castTo int
+		if morphingFlagsSet.get(pow)
+			if not flag
+				morphingFlagsSet = morphingFlagsSet.reset(pow)
+		else if flag
+			morphingFlagsSet = morphingFlagsSet.set(pow)
+
+		presetMorphingFlags(lvl -> morphingFlagsSet.val)
 
 	function setDefenseBonus(int level, int value)
 		def.setLvlDataInt("Nrg6", level, 6, value)
@@ -12862,6 +13090,8 @@ public class AbilityDefinitionAttackBonusPlus10 extends AbilityDefinition
 		addTooltipProperty("Attack Bonus", lc)
 
 public class AbilityDefinitionTinkererRoboGoblinLevel3 extends AbilityDefinition
+	private bitset morphingFlagsSet = bitset(1)
+	
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.tinkererRoboGoblinLevel3)
 
@@ -12899,6 +13129,16 @@ public class AbilityDefinitionTinkererRoboGoblinLevel3 extends AbilityDefinition
 	function presetMorphingFlags(IntLevelClosure lc)
 		def.setLevelsDataInt("Eme2", lvls, 2, lc)
 		addTooltipProperty("Morphing Flags", lc)
+
+	function presetMorphingFlag(MorphingFlag morphingFlag, boolean flag)        
+		let pow = morphingFlag castTo int
+		if morphingFlagsSet.get(pow)
+			if not flag
+				morphingFlagsSet = morphingFlagsSet.reset(pow)
+		else if flag
+			morphingFlagsSet = morphingFlagsSet.set(pow)
+
+		presetMorphingFlags(lvl -> morphingFlagsSet.val)
 
 	function setDefenseBonus(int level, int value)
 		def.setLvlDataInt("Nrg6", level, 6, value)
@@ -12979,6 +13219,8 @@ public class AbilityDefinitionAroo extends AbilityDefinition
 		addTooltipProperty("Rooted Weapons", lc)
 
 public class AbilityDefinitionTinkererRoboGoblinLevel2 extends AbilityDefinition
+	private bitset morphingFlagsSet = bitset(1)
+	
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.tinkererRoboGoblinLevel2)
 
@@ -13016,6 +13258,16 @@ public class AbilityDefinitionTinkererRoboGoblinLevel2 extends AbilityDefinition
 	function presetMorphingFlags(IntLevelClosure lc)
 		def.setLevelsDataInt("Eme2", lvls, 2, lc)
 		addTooltipProperty("Morphing Flags", lc)
+    
+	function presetMorphingFlag(MorphingFlag morphingFlag, boolean flag)        
+		let pow = morphingFlag castTo int
+		if morphingFlagsSet.get(pow)
+			if not flag
+				morphingFlagsSet = morphingFlagsSet.reset(pow)
+		else if flag
+			morphingFlagsSet = morphingFlagsSet.set(pow)
+
+		presetMorphingFlags(lvl -> morphingFlagsSet.val)
 
 	function setDefenseBonus(int level, int value)
 		def.setLvlDataInt("Nrg6", level, 6, value)
@@ -13945,6 +14197,8 @@ public class AbilityDefinitionAttackBonusPlus1 extends AbilityDefinition
 		addTooltipProperty("Attack Bonus", lc)
 
 public class AbilityDefinitionSeaWitchFrostArrows extends AbilityDefinition
+	private bitset stackFlagsSet = bitset(7)
+	
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.seaWitchFrostArrows)
 
@@ -13954,6 +14208,17 @@ public class AbilityDefinitionSeaWitchFrostArrows extends AbilityDefinition
 	function presetStackFlags(IntLevelClosure lc)
 		def.setLevelsDataInt("Hca4", lvls, 4, lc)
 		addTooltipProperty("Stack Flags", lc)
+
+	function presetStackFlag(StackFlag stackFlag, boolean flag)
+
+		let pow = stackFlag castTo int
+		if stackFlagsSet.get(pow)
+			if not flag
+				stackFlagsSet = stackFlagsSet.reset(pow)
+		else if flag
+			stackFlagsSet = stackFlagsSet.set(pow)
+
+		presetStackFlags(lvl -> stackFlagsSet.val)
 
 	function setExtraDamage(int level, real value)
 		def.setLvlDataUnreal("Hca1", level, 1, value)
@@ -14296,7 +14561,7 @@ public class AbilityDefinitionGhostVisible extends AbilityDefinition
 
 	function presetImmunetoMorphEffects(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("Eth1", lvls, 1, lc)
-		addTooltipProperty("Immuneto Morph Effects", lc)
+		addTooltipProperty("Immune to Morph Effects", lc)
 
 public class AbilityDefinitionDetectgeneral extends AbilityDefinition
 	construct(int newAbilityId)
@@ -14346,6 +14611,8 @@ public class AbilityDefinitionFreezeDamageBonus extends AbilityDefinition
 		addTooltipProperty("Damage Bonus", lc)
 
 public class AbilityDefinitionEtherealForm extends AbilityDefinition
+	private bitset morphingFlagsSet = bitset(1)
+	
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.etherealForm)
 
@@ -14377,6 +14644,16 @@ public class AbilityDefinitionEtherealForm extends AbilityDefinition
 		def.setLevelsDataInt("Eme2", lvls, 2, lc)
 		addTooltipProperty("Morphing Flags", lc)
 
+	function presetMorphingFlag(MorphingFlag morphingFlag, boolean flag)        
+		let pow = morphingFlag castTo int
+		if morphingFlagsSet.get(pow)
+			if not flag
+				morphingFlagsSet = morphingFlagsSet.reset(pow)
+		else if flag
+			morphingFlagsSet = morphingFlagsSet.set(pow)
+
+		presetMorphingFlags(lvl -> morphingFlagsSet.val)
+
 	function setAlternateFormUnit(int level, string value)
 		def.setLvlDataString("Emeu", level, 0, value)
 
@@ -14393,7 +14670,7 @@ public class AbilityDefinitionDetonate extends AbilityDefinition
 
 	function presetDamagetoSummonedUnits(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Dtn2", lvls, 2, lc)
-		addTooltipProperty("Damageto Summoned Units", lc)
+		addTooltipProperty("Damage to Summoned Units", lc)
 
 	function setManaLossperunit(int level, real value)
 		def.setLvlDataUnreal("Dtn1", level, 1, value)
@@ -14403,6 +14680,8 @@ public class AbilityDefinitionDetonate extends AbilityDefinition
 		addTooltipProperty("Mana Loss per unit", lc)
 
 public class AbilityDefinitionRavenFormMedivh extends AbilityDefinition
+	private bitset morphingFlagsSet = bitset(1)
+	
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.crowForm)
 
@@ -14433,6 +14712,16 @@ public class AbilityDefinitionRavenFormMedivh extends AbilityDefinition
 	function presetMorphingFlags(IntLevelClosure lc)
 		def.setLevelsDataInt("Eme2", lvls, 2, lc)
 		addTooltipProperty("Morphing Flags", lc)
+
+	function presetMorphingFlag(MorphingFlag morphingFlag, boolean flag)        
+		let pow = morphingFlag castTo int
+		if morphingFlagsSet.get(pow)
+			if not flag
+				morphingFlagsSet = morphingFlagsSet.reset(pow)
+		else if flag
+			morphingFlagsSet = morphingFlagsSet.set(pow)
+
+		presetMorphingFlags(lvl -> morphingFlagsSet.val)
 
 	function setAlternateFormUnit(int level, string value)
 		def.setLvlDataString("Emeu", level, 0, value)
@@ -14689,6 +14978,8 @@ public class AbilityDefinitionAbolishMagic extends AbilityDefinition
 		addTooltipProperty("Summoned Unit Damage", lc)
 
 public class AbilityDefinitionRavenFormDruidoftheTalon extends AbilityDefinition
+	private bitset morphingFlagsSet = bitset(1)
+	
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.stormCrowForm)
 
@@ -14719,6 +15010,16 @@ public class AbilityDefinitionRavenFormDruidoftheTalon extends AbilityDefinition
 	function presetMorphingFlags(IntLevelClosure lc)
 		def.setLevelsDataInt("Eme2", lvls, 2, lc)
 		addTooltipProperty("Morphing Flags", lc)
+
+	function presetMorphingFlag(MorphingFlag morphingFlag, boolean flag)        
+		let pow = morphingFlag castTo int
+		if morphingFlagsSet.get(pow)
+			if not flag
+				morphingFlagsSet = morphingFlagsSet.reset(pow)
+		else if flag
+			morphingFlagsSet = morphingFlagsSet.set(pow)
+
+		presetMorphingFlags(lvl -> morphingFlagsSet.val)
 
 	function setAlternateFormUnit(int level, string value)
 		def.setLvlDataString("Emeu", level, 0, value)
