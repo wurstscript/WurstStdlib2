@@ -10,6 +10,8 @@ import public UnitObjEditing
 import public AbilityIds
 import Annotations
 
+@configurable constant USE_PROPERTY_SPACING = true
+
 public enum AllowWhenFull
 	NEVER
 	LIFE_ONLY
@@ -68,7 +70,10 @@ public class AbilityDefinition
 
 	function addTooltipProperty(string pName, StringLevelClosure lc)
 		if tooltipGen != null and listen
-			tooltipGen.addProperty(pName, lc)
+			if USE_PROPERTY_SPACING
+				tooltipGen.addProperty(pName, lc)
+			else
+				tooltipGen.addProperty(pName.replace(" ", ""), lc)
 
 	function addTooltipProperty(string pName, IntLevelClosure lc)
 		addTooltipProperty(pName, (int lvl) -> lc.run(lvl).toString())
