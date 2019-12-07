@@ -5232,8 +5232,8 @@ public class AbilityDefinitionHarvestLumbershredder extends AbilityDefinition
 
 	function presetDamagetoTree(IntLevelClosure lc)
 		def.setLevelsDataInt("Har1", lvls, 1, lc)
-		addTooltipProperty("Damage to Tree", lc)
-
+		addTooltipProperty("Damageto Tree", lc)
+    
 public class AbilityDefinitionItemHealAoeGreater extends AbilityDefinition
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.itemHealAoeGreater)
@@ -5715,7 +5715,7 @@ public class AbilityDefinitionHarvestLumber extends AbilityDefinition
 
 	function presetDamagetoTree(IntLevelClosure lc)
 		def.setLevelsDataInt("Har1", lvls, 1, lc)
-		addTooltipProperty("Damage to Tree", lc)
+		addTooltipProperty("Damageto Tree", lc)
 
 public class AbilityDefinitionNeutralBuilding extends AbilityDefinition
 	construct(int newAbilityId)
@@ -7384,7 +7384,6 @@ public class AbilityDefinitionDemonHunterMetamorphosis extends AbilityDefinition
 	function presetMorphingFlags(IntLevelClosure lc)
 		def.setLevelsDataInt("Eme2", lvls, 2, lc)
 		addTooltipProperty("Morphing Flags", lc)
-
 	function presetMorphingFlag(MorphingFlag morphingFlag, boolean flag)        
 		let pow = morphingFlag castTo int
 		if morphingFlagsSet.get(pow)
@@ -12252,7 +12251,7 @@ public class AbilityDefinitionCorporealForm extends AbilityDefinition
 			morphingFlagsSet = morphingFlagsSet.set(pow)
 
 		presetMorphingFlags(lvl -> morphingFlagsSet.val)
-
+    
 	function setAlternateFormUnit(int level, string value)
 		def.setLvlDataString("Emeu", level, 0, value)
 
@@ -13259,7 +13258,7 @@ public class AbilityDefinitionTinkererRoboGoblinLevel2 extends AbilityDefinition
 	function presetMorphingFlags(IntLevelClosure lc)
 		def.setLevelsDataInt("Eme2", lvls, 2, lc)
 		addTooltipProperty("Morphing Flags", lc)
-
+    
 	function presetMorphingFlag(MorphingFlag morphingFlag, boolean flag)        
 		let pow = morphingFlag castTo int
 		if morphingFlagsSet.get(pow)
