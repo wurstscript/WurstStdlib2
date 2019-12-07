@@ -464,11 +464,11 @@ public class AbilityDefinitionRangerColdArrows extends AbilityDefinition
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.coldArrows)
 
-	function setStackFlags(int level, string value)
-		def.setLvlDataString("Hca4", level, 4, value)
+	function setStackFlags(int level, int value)
+		def.setLvlDataInt("Hca4", level, 4, value)
 
-	function presetStackFlags(StringLevelClosure lc)
-		def.setLevelsDataString("Hca4", lvls, 4, lc)
+    function presetStackFlags(IntLevelClosure lc)
+		def.setLevelsDataInt("Hca4", lvls, 4, lc)
 		addTooltipProperty("StackFlags", lc)
 
 	function setExtraDamage(int level, real value)
@@ -1750,11 +1750,11 @@ public class AbilityDefinitionTinkererRoboGoblinLevel0 extends AbilityDefinition
 		def.setLevelsDataUnreal("Eme3", lvls, 3, lc)
 		addTooltipProperty("AltitudeAdjustmentDuration", lc)
 
-	function setMorphingFlags(int level, string value)
-		def.setLvlDataString("Eme2", level, 2, value)
+	function setMorphingFlags(int level, int value)
+		def.setLvlDataInt("Eme2", level, 2, value)
 
-	function presetMorphingFlags(StringLevelClosure lc)
-		def.setLevelsDataString("Eme2", lvls, 2, lc)
+    function presetMorphingFlags(IntLevelClosure lc)
+		def.setLevelsDataInt("Eme2", lvls, 2, lc)
 		addTooltipProperty("MorphingFlags", lc)
 
 	function setDefenseBonus(int level, int value)
@@ -3404,11 +3404,11 @@ public class AbilityDefinitionEvilIllidanMetamorphosis extends AbilityDefinition
 		def.setLevelsDataUnreal("Eme3", lvls, 3, lc)
 		addTooltipProperty("AltitudeAdjustmentDuration", lc)
 
-	function setMorphingFlags(int level, string value)
-		def.setLvlDataString("Eme2", level, 2, value)
+	function setMorphingFlags(int level, int value)
+		def.setLvlDataInt("Eme2", level, 2, value)
 
-	function presetMorphingFlags(StringLevelClosure lc)
-		def.setLevelsDataString("Eme2", lvls, 2, lc)
+    function presetMorphingFlags(IntLevelClosure lc)
+		def.setLevelsDataInt("Eme2", lvls, 2, lc)
 		addTooltipProperty("MorphingFlags", lc)
 
 	function setAlternateFormHitPointBonus(int level, real value)
@@ -4051,11 +4051,11 @@ public class AbilityDefinitionSubmergeMyrmidon extends AbilityDefinition
 		def.setLevelsDataUnreal("Eme3", lvls, 3, lc)
 		addTooltipProperty("AltitudeAdjustmentDuration", lc)
 
-	function setMorphingFlags(int level, string value)
-		def.setLvlDataString("Eme2", level, 2, value)
+	function setMorphingFlags(int level, int value)
+		def.setLvlDataInt("Eme2", level, 2, value)
 
-	function presetMorphingFlags(StringLevelClosure lc)
-		def.setLevelsDataString("Eme2", lvls, 2, lc)
+    function presetMorphingFlags(IntLevelClosure lc)
+		def.setLevelsDataInt("Eme2", lvls, 2, lc)
 		addTooltipProperty("MorphingFlags", lc)
 
 	function setAlternateFormUnit(int level, string value)
@@ -4083,11 +4083,11 @@ public class AbilityDefinitionSubmergeRoyalGuard extends AbilityDefinition
 		def.setLevelsDataUnreal("Eme3", lvls, 3, lc)
 		addTooltipProperty("AltitudeAdjustmentDuration", lc)
 
-	function setMorphingFlags(int level, string value)
-		def.setLvlDataString("Eme2", level, 2, value)
+	function setMorphingFlags(int level, int value)
+		def.setLvlDataInt("Eme2", level, 2, value)
 
-	function presetMorphingFlags(StringLevelClosure lc)
-		def.setLevelsDataString("Eme2", lvls, 2, lc)
+    function presetMorphingFlags(IntLevelClosure lc)
+		def.setLevelsDataInt("Eme2", lvls, 2, lc)
 		addTooltipProperty("MorphingFlags", lc)
 
 	function setAlternateFormUnit(int level, string value)
@@ -4147,11 +4147,11 @@ public class AbilityDefinitionSubmergeSnapDragon extends AbilityDefinition
 		def.setLevelsDataUnreal("Eme3", lvls, 3, lc)
 		addTooltipProperty("AltitudeAdjustmentDuration", lc)
 
-	function setMorphingFlags(int level, string value)
-		def.setLvlDataString("Eme2", level, 2, value)
+	function setMorphingFlags(int level, int value)
+		def.setLvlDataInt("Eme2", level, 2, value)
 
-	function presetMorphingFlags(StringLevelClosure lc)
-		def.setLevelsDataString("Eme2", lvls, 2, lc)
+    function presetMorphingFlags(IntLevelClosure lc)
+		def.setLevelsDataInt("Eme2", lvls, 2, lc)
 		addTooltipProperty("MorphingFlags", lc)
 
 	function setAlternateFormUnit(int level, string value)
@@ -4262,11 +4262,11 @@ public class AbilityDefinitionBurrowscarablvl2 extends AbilityDefinition
 		def.setLevelsDataUnreal("Eme3", lvls, 3, lc)
 		addTooltipProperty("AltitudeAdjustmentDuration", lc)
 
-	function setMorphingFlags(int level, string value)
-		def.setLvlDataString("Eme2", level, 2, value)
+	function setMorphingFlags(int level, int value)
+		def.setLvlDataInt("Eme2", level, 2, value)
 
-	function presetMorphingFlags(StringLevelClosure lc)
-		def.setLevelsDataString("Eme2", lvls, 2, lc)
+    function presetMorphingFlags(IntLevelClosure lc)
+		def.setLevelsDataInt("Eme2", lvls, 2, lc)
 		addTooltipProperty("MorphingFlags", lc)
 
 	function setAlternateFormUnit(int level, string value)
@@ -4386,11 +4386,11 @@ public class AbilityDefinitionBurrowscarablvl3 extends AbilityDefinition
 		def.setLevelsDataUnreal("Eme3", lvls, 3, lc)
 		addTooltipProperty("AltitudeAdjustmentDuration", lc)
 
-	function setMorphingFlags(int level, string value)
-		def.setLvlDataString("Eme2", level, 2, value)
+	function setMorphingFlags(int level, int value)
+		def.setLvlDataInt("Eme2", level, 2, value)
 
-	function presetMorphingFlags(StringLevelClosure lc)
-		def.setLevelsDataString("Eme2", lvls, 2, lc)
+    function presetMorphingFlags(IntLevelClosure lc)
+		def.setLevelsDataInt("Eme2", lvls, 2, lc)
 		addTooltipProperty("MorphingFlags", lc)
 
 	function setAlternateFormUnit(int level, string value)
@@ -4936,11 +4936,11 @@ public class AbilityDefinitionIllidanMetamorphosis extends AbilityDefinition
 		def.setLevelsDataUnreal("Eme3", lvls, 3, lc)
 		addTooltipProperty("AltitudeAdjustmentDuration", lc)
 
-	function setMorphingFlags(int level, string value)
-		def.setLvlDataString("Eme2", level, 2, value)
+	function setMorphingFlags(int level, int value)
+		def.setLvlDataInt("Eme2", level, 2, value)
 
-	function presetMorphingFlags(StringLevelClosure lc)
-		def.setLevelsDataString("Eme2", lvls, 2, lc)
+    function presetMorphingFlags(IntLevelClosure lc)
+		def.setLevelsDataInt("Eme2", lvls, 2, lc)
 		addTooltipProperty("MorphingFlags", lc)
 
 	function setAlternateFormHitPointBonus(int level, real value)
@@ -5550,11 +5550,11 @@ public class AbilityDefinitionAvengerForm extends AbilityDefinition
 		def.setLevelsDataUnreal("Eme3", lvls, 3, lc)
 		addTooltipProperty("AltitudeAdjustmentDuration", lc)
 
-	function setMorphingFlags(int level, string value)
-		def.setLvlDataString("Eme2", level, 2, value)
+	function setMorphingFlags(int level, int value)
+		def.setLvlDataInt("Eme2", level, 2, value)
 
-	function presetMorphingFlags(StringLevelClosure lc)
-		def.setLevelsDataString("Eme2", lvls, 2, lc)
+    function presetMorphingFlags(IntLevelClosure lc)
+		def.setLevelsDataInt("Eme2", lvls, 2, lc)
 		addTooltipProperty("MorphingFlags", lc)
 
 	function setLifeRegenerationRatepersecond(int level, real value)
@@ -5788,11 +5788,11 @@ public class AbilityDefinitionBearform extends AbilityDefinition
 		def.setLevelsDataUnreal("Eme3", lvls, 3, lc)
 		addTooltipProperty("AltitudeAdjustmentDuration", lc)
 
-	function setMorphingFlags(int level, string value)
-		def.setLvlDataString("Eme2", level, 2, value)
+	function setMorphingFlags(int level, int value)
+		def.setLvlDataInt("Eme2", level, 2, value)
 
-	function presetMorphingFlags(StringLevelClosure lc)
-		def.setLevelsDataString("Eme2", lvls, 2, lc)
+    function presetMorphingFlags(IntLevelClosure lc)
+		def.setLevelsDataInt("Eme2", lvls, 2, lc)
 		addTooltipProperty("MorphingFlags", lc)
 
 	function setAlternateFormUnit(int level, string value)
@@ -6270,11 +6270,11 @@ public class AbilityDefinitionColdArrowscreep extends AbilityDefinition
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.coldArrows1)
 
-	function setStackFlags(int level, string value)
-		def.setLvlDataString("Hca4", level, 4, value)
+	function setStackFlags(int level, int value)
+		def.setLvlDataInt("Hca4", level, 4, value)
 
-	function presetStackFlags(StringLevelClosure lc)
-		def.setLevelsDataString("Hca4", lvls, 4, lc)
+    function presetStackFlags(IntLevelClosure lc)
+		def.setLevelsDataInt("Hca4", lvls, 4, lc)
 		addTooltipProperty("StackFlags", lc)
 
 	function setExtraDamage(int level, real value)
@@ -6510,11 +6510,11 @@ public class AbilityDefinitionStoneForm extends AbilityDefinition
 		def.setLevelsDataUnreal("Eme3", lvls, 3, lc)
 		addTooltipProperty("AltitudeAdjustmentDuration", lc)
 
-	function setMorphingFlags(int level, string value)
-		def.setLvlDataString("Eme2", level, 2, value)
+	function setMorphingFlags(int level, int value)
+		def.setLvlDataInt("Eme2", level, 2, value)
 
-	function presetMorphingFlags(StringLevelClosure lc)
-		def.setLevelsDataString("Eme2", lvls, 2, lc)
+    function presetMorphingFlags(IntLevelClosure lc)
+		def.setLevelsDataInt("Eme2", lvls, 2, lc)
 		addTooltipProperty("MorphingFlags", lc)
 
 	function setLifeRegenerationRatepersecond(int level, real value)
@@ -7224,11 +7224,11 @@ public class AbilityDefinitionDemonHunterMetamorphosis extends AbilityDefinition
 		def.setLevelsDataUnreal("Eme3", lvls, 3, lc)
 		addTooltipProperty("AltitudeAdjustmentDuration", lc)
 
-	function setMorphingFlags(int level, string value)
-		def.setLvlDataString("Eme2", level, 2, value)
+	function setMorphingFlags(int level, int value)
+		def.setLvlDataInt("Eme2", level, 2, value)
 
-	function presetMorphingFlags(StringLevelClosure lc)
-		def.setLevelsDataString("Eme2", lvls, 2, lc)
+    function presetMorphingFlags(IntLevelClosure lc)
+		def.setLevelsDataInt("Eme2", lvls, 2, lc)
 		addTooltipProperty("MorphingFlags", lc)
 
 	function setAlternateFormHitPointBonus(int level, real value)
@@ -7522,11 +7522,11 @@ public class AbilityDefinitionBurrow extends AbilityDefinition
 		def.setLevelsDataUnreal("Eme3", lvls, 3, lc)
 		addTooltipProperty("AltitudeAdjustmentDuration", lc)
 
-	function setMorphingFlags(int level, string value)
-		def.setLvlDataString("Eme2", level, 2, value)
+	function setMorphingFlags(int level, int value)
+		def.setLvlDataInt("Eme2", level, 2, value)
 
-	function presetMorphingFlags(StringLevelClosure lc)
-		def.setLevelsDataString("Eme2", lvls, 2, lc)
+    function presetMorphingFlags(IntLevelClosure lc)
+		def.setLevelsDataInt("Eme2", lvls, 2, lc)
 		addTooltipProperty("MorphingFlags", lc)
 
 	function setAlternateFormUnit(int level, string value)
@@ -7644,11 +7644,11 @@ public class AbilityDefinitionPhoenix extends AbilityDefinition
 		def.setLevelsDataUnreal("Eme3", lvls, 3, lc)
 		addTooltipProperty("AltitudeAdjustmentDuration", lc)
 
-	function setMorphingFlags(int level, string value)
-		def.setLvlDataString("Eme2", level, 2, value)
+	function setMorphingFlags(int level, int value)
+		def.setLvlDataInt("Eme2", level, 2, value)
 
-	function presetMorphingFlags(StringLevelClosure lc)
-		def.setLevelsDataString("Eme2", lvls, 2, lc)
+    function presetMorphingFlags(IntLevelClosure lc)
+		def.setLevelsDataInt("Eme2", lvls, 2, lc)
 		addTooltipProperty("MorphingFlags", lc)
 
 	function setAlternateFormUnit(int level, string value)
@@ -8944,11 +8944,11 @@ public class AbilityDefinitionAlchemistChemicalRage extends AbilityDefinition
 		def.setLevelsDataUnreal("Eme3", lvls, 3, lc)
 		addTooltipProperty("AltitudeAdjustmentDuration", lc)
 
-	function setMorphingFlags(int level, string value)
-		def.setLvlDataString("Eme2", level, 2, value)
+	function setMorphingFlags(int level, int value)
+		def.setLvlDataInt("Eme2", level, 2, value)
 
-	function presetMorphingFlags(StringLevelClosure lc)
-		def.setLevelsDataString("Eme2", lvls, 2, lc)
+    function presetMorphingFlags(IntLevelClosure lc)
+		def.setLevelsDataInt("Eme2", lvls, 2, lc)
 		addTooltipProperty("MorphingFlags", lc)
 
 	function setAlternateFormUnit(int level, string value)
@@ -10554,11 +10554,11 @@ public class AbilityDefinitionAspx extends AbilityDefinition
 		def.setLevelsDataUnreal("Eme3", lvls, 3, lc)
 		addTooltipProperty("AltitudeAdjustmentDuration", lc)
 
-	function setMorphingFlags(int level, string value)
-		def.setLvlDataString("Eme2", level, 2, value)
+	function setMorphingFlags(int level, int value)
+		def.setLvlDataInt("Eme2", level, 2, value)
 
-	function presetMorphingFlags(StringLevelClosure lc)
-		def.setLevelsDataString("Eme2", lvls, 2, lc)
+    function presetMorphingFlags(IntLevelClosure lc)
+		def.setLevelsDataInt("Eme2", lvls, 2, lc)
 		addTooltipProperty("MorphingFlags", lc)
 
 	function setAlternateFormUnit(int level, string value)
@@ -12022,11 +12022,11 @@ public class AbilityDefinitionCorporealForm extends AbilityDefinition
 		def.setLevelsDataUnreal("Eme3", lvls, 3, lc)
 		addTooltipProperty("AltitudeAdjustmentDuration", lc)
 
-	function setMorphingFlags(int level, string value)
-		def.setLvlDataString("Eme2", level, 2, value)
+	function setMorphingFlags(int level, int value)
+		def.setLvlDataInt("Eme2", level, 2, value)
 
-	function presetMorphingFlags(StringLevelClosure lc)
-		def.setLevelsDataString("Eme2", lvls, 2, lc)
+    function presetMorphingFlags(IntLevelClosure lc)
+		def.setLevelsDataInt("Eme2", lvls, 2, lc)
 		addTooltipProperty("MorphingFlags", lc)
 
 	function setAlternateFormUnit(int level, string value)
@@ -12708,11 +12708,11 @@ public class AbilityDefinitionTinkererRoboGoblinLevel1 extends AbilityDefinition
 		def.setLevelsDataUnreal("Eme3", lvls, 3, lc)
 		addTooltipProperty("AltitudeAdjustmentDuration", lc)
 
-	function setMorphingFlags(int level, string value)
-		def.setLvlDataString("Eme2", level, 2, value)
+	function setMorphingFlags(int level, int value)
+		def.setLvlDataInt("Eme2", level, 2, value)
 
-	function presetMorphingFlags(StringLevelClosure lc)
-		def.setLevelsDataString("Eme2", lvls, 2, lc)
+    function presetMorphingFlags(IntLevelClosure lc)
+		def.setLevelsDataInt("Eme2", lvls, 2, lc)
 		addTooltipProperty("MorphingFlags", lc)
 
 	function setDefenseBonus(int level, int value)
@@ -12886,11 +12886,11 @@ public class AbilityDefinitionTinkererRoboGoblinLevel3 extends AbilityDefinition
 		def.setLevelsDataUnreal("Eme3", lvls, 3, lc)
 		addTooltipProperty("AltitudeAdjustmentDuration", lc)
 
-	function setMorphingFlags(int level, string value)
-		def.setLvlDataString("Eme2", level, 2, value)
+	function setMorphingFlags(int level, int value)
+		def.setLvlDataInt("Eme2", level, 2, value)
 
-	function presetMorphingFlags(StringLevelClosure lc)
-		def.setLevelsDataString("Eme2", lvls, 2, lc)
+    function presetMorphingFlags(IntLevelClosure lc)
+		def.setLevelsDataInt("Eme2", lvls, 2, lc)
 		addTooltipProperty("MorphingFlags", lc)
 
 	function setDefenseBonus(int level, int value)
@@ -13003,11 +13003,11 @@ public class AbilityDefinitionTinkererRoboGoblinLevel2 extends AbilityDefinition
 		def.setLevelsDataUnreal("Eme3", lvls, 3, lc)
 		addTooltipProperty("AltitudeAdjustmentDuration", lc)
 
-	function setMorphingFlags(int level, string value)
-		def.setLvlDataString("Eme2", level, 2, value)
+	function setMorphingFlags(int level, int value)
+		def.setLvlDataInt("Eme2", level, 2, value)
 
-	function presetMorphingFlags(StringLevelClosure lc)
-		def.setLevelsDataString("Eme2", lvls, 2, lc)
+    function presetMorphingFlags(IntLevelClosure lc)
+		def.setLevelsDataInt("Eme2", lvls, 2, lc)
 		addTooltipProperty("MorphingFlags", lc)
 
 	function setDefenseBonus(int level, int value)
@@ -13941,11 +13941,11 @@ public class AbilityDefinitionSeaWitchFrostArrows extends AbilityDefinition
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.seaWitchFrostArrows)
 
-	function setStackFlags(int level, string value)
-		def.setLvlDataString("Hca4", level, 4, value)
+	function setStackFlags(int level, int value)
+		def.setLvlDataInt("Hca4", level, 4, value)
 
-	function presetStackFlags(StringLevelClosure lc)
-		def.setLevelsDataString("Hca4", lvls, 4, lc)
+    function presetStackFlags(IntLevelClosure lc)
+		def.setLevelsDataInt("Hca4", lvls, 4, lc)
 		addTooltipProperty("StackFlags", lc)
 
 	function setExtraDamage(int level, real value)
@@ -14362,12 +14362,12 @@ public class AbilityDefinitionEtherealForm extends AbilityDefinition
 	function presetAltitudeAdjustmentDuration(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Eme3", lvls, 3, lc)
 		addTooltipProperty("AltitudeAdjustmentDuration", lc)
+		
+	function setMorphingFlags(int level, int value)
+		def.setLvlDataInt("Eme2", level, 2, value)
 
-	function setMorphingFlags(int level, string value)
-		def.setLvlDataString("Eme2", level, 2, value)
-
-	function presetMorphingFlags(StringLevelClosure lc)
-		def.setLevelsDataString("Eme2", lvls, 2, lc)
+    function presetMorphingFlags(IntLevelClosure lc)
+		def.setLevelsDataInt("Eme2", lvls, 2, lc)
 		addTooltipProperty("MorphingFlags", lc)
 
 	function setAlternateFormUnit(int level, string value)
@@ -14420,11 +14420,11 @@ public class AbilityDefinitionRavenFormMedivh extends AbilityDefinition
 		def.setLevelsDataUnreal("Eme3", lvls, 3, lc)
 		addTooltipProperty("AltitudeAdjustmentDuration", lc)
 
-	function setMorphingFlags(int level, string value)
-		def.setLvlDataString("Eme2", level, 2, value)
+	function setMorphingFlags(int level, int value)
+		def.setLvlDataInt("Eme2", level, 2, value)
 
-	function presetMorphingFlags(StringLevelClosure lc)
-		def.setLevelsDataString("Eme2", lvls, 2, lc)
+    function presetMorphingFlags(IntLevelClosure lc)
+		def.setLevelsDataInt("Eme2", lvls, 2, lc)
 		addTooltipProperty("MorphingFlags", lc)
 
 	function setAlternateFormUnit(int level, string value)
@@ -14706,11 +14706,11 @@ public class AbilityDefinitionRavenFormDruidoftheTalon extends AbilityDefinition
 		def.setLevelsDataUnreal("Eme3", lvls, 3, lc)
 		addTooltipProperty("AltitudeAdjustmentDuration", lc)
 
-	function setMorphingFlags(int level, string value)
-		def.setLvlDataString("Eme2", level, 2, value)
+	function setMorphingFlags(int level, int value)
+		def.setLvlDataInt("Eme2", level, 2, value)
 
-	function presetMorphingFlags(StringLevelClosure lc)
-		def.setLevelsDataString("Eme2", lvls, 2, lc)
+    function presetMorphingFlags(IntLevelClosure lc)
+		def.setLevelsDataInt("Eme2", lvls, 2, lc)
 		addTooltipProperty("MorphingFlags", lc)
 
 	function setAlternateFormUnit(int level, string value)
