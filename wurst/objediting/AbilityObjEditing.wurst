@@ -33,7 +33,7 @@ public function AbilityDefinition.setDummyAbility() returns AbilityDefinition
 	this..setHeroAbility(false)
 	..presetManaCost(lvl -> 0)
 	..presetCooldown(lvl -> 0)
-	..presetCastRange(lvl -> 99999)
+    ..presetCastRange(lvl -> 99999)
 	..setCheckDependencies(false)
 	return this
 
@@ -709,7 +709,7 @@ public class AbilityDefinitionBloodMageSiphonMana extends AbilityDefinition
 
 	function presetDrainIntervalseconds(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Ndr3", lvls, 3, lc)
-		addTooltipProperty("Drain Interval", lc)
+		addTooltipProperty("Drain Intervalseconds", lc)
 
 	function setHitPointsDrained(int level, real value)
 		def.setLvlDataUnreal("Ndr1", level, 1, value)
@@ -3439,14 +3439,14 @@ public class AbilityDefinitionImpaleCreep extends AbilityDefinition
 
 	function presetWaveTimeseconds(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Uim2", lvls, 2, lc)
-		addTooltipProperty("Wave Time", lc)
+		addTooltipProperty("Wave Timeseconds", lc)
 
 	function setAirTimeseconds(int level, real value)
 		def.setLvlDataUnreal("Uim4", level, 4, value)
 
 	function presetAirTimeseconds(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Uim4", lvls, 4, lc)
-		addTooltipProperty("Air Time", lc)
+		addTooltipProperty("Air Timeseconds", lc)
 
 	function setDamageDealt(int level, real value)
 		def.setLvlDataUnreal("Uim3", level, 3, value)
@@ -3961,7 +3961,7 @@ public class AbilityDefinitionInvisibility extends AbilityDefinition
 
 	function presetTransitionTimeseconds(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Ivs1", lvls, 1, lc)
-		addTooltipProperty("Transition Time", lc)
+		addTooltipProperty("Transition Timeseconds", lc)
 
 public class AbilityDefinitionSentryWard extends AbilityDefinition
 	construct(int newAbilityId)
@@ -5823,7 +5823,7 @@ public class AbilityDefinitionCryptLordLocustSwarm extends AbilityDefinition
 
 	function presetUnitReleaseIntervalseconds(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Uls2", lvls, 2, lc)
-		addTooltipProperty("Unit Release Interval", lc)
+		addTooltipProperty("Unit Release Intervalseconds", lc)
 
 	function setMaxSwarmUnitsPerTarget(int level, int value)
 		def.setLvlDataInt("Uls3", level, 3, value)
@@ -6688,14 +6688,14 @@ public class AbilityDefinitionCryptLordImpale extends AbilityDefinition
 
 	function presetWaveTimeseconds(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Uim2", lvls, 2, lc)
-		addTooltipProperty("Wave Time", lc)
+		addTooltipProperty("Wave Timeseconds", lc)
 
 	function setAirTimeseconds(int level, real value)
 		def.setLvlDataUnreal("Uim4", level, 4, value)
 
 	function presetAirTimeseconds(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Uim4", lvls, 4, lc)
-		addTooltipProperty("Air Time", lc)
+		addTooltipProperty("Air Timeseconds", lc)
 
 	function setDamageDealt(int level, real value)
 		def.setLvlDataUnreal("Uim3", level, 3, value)
@@ -7800,7 +7800,7 @@ public class AbilityDefinitionItemMonsterLure extends AbilityDefinition
 
 	function presetLureIntervalseconds(RealLevelClosure lc)
 		def.setLevelsDataUnreal("imo3", lvls, 3, lc)
-		addTooltipProperty("Lure Interval", lc)
+		addTooltipProperty("Lure Intervalseconds", lc)
 
 public class AbilityDefinitionAImi extends AbilityDefinition
 	construct(int newAbilityId)
@@ -9655,7 +9655,7 @@ public class AbilityDefinitionDarkRangerDrain extends AbilityDefinition
 
 	function presetDrainIntervalseconds(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Ndr3", lvls, 3, lc)
-		addTooltipProperty("Drain Interval", lc)
+		addTooltipProperty("Drain Intervalseconds", lc)
 
 	function setHitPointsDrained(int level, real value)
 		def.setLvlDataUnreal("Ndr1", level, 1, value)
@@ -9793,7 +9793,7 @@ public class AbilityDefinitionPitLordDoom extends AbilityDefinition
 
 	function presetSummonedUnitDurationseconds(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Ndo3", lvls, 3, lc)
-		addTooltipProperty("Summoned Unit Duration", lc)
+		addTooltipProperty("Summoned Unit Durationseconds", lc)
 
 public class AbilityDefinitionSpellBook extends AbilityDefinition
 	construct(int newAbilityId)
@@ -10328,7 +10328,7 @@ public class AbilityDefinitionItemReincarnation extends AbilityDefinition
 
 	function presetDelayAfterDeathseconds(IntLevelClosure lc)
 		def.setLevelsDataInt("Ircd", lvls, 1, lc)
-		addTooltipProperty("Delay After Death", lc)
+		addTooltipProperty("Delay After Deathseconds", lc)
 
 	function setRestoredManaforcurrent(int level, int value)
 		def.setLvlDataInt("irc3", level, 3, value)
@@ -11084,14 +11084,14 @@ public class AbilityDefinitionTornadoSpin extends AbilityDefinition
 
 	function presetMinimumHitIntervalseconds(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Tsp2", lvls, 2, lc)
-		addTooltipProperty("Minimum Hit Interval", lc)
+		addTooltipProperty("Minimum Hit Intervalseconds", lc)
 
 	function setAirTimeseconds(int level, real value)
 		def.setLvlDataUnreal("Tsp1", level, 1, value)
 
 	function presetAirTimeseconds(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Tsp1", lvls, 1, lc)
-		addTooltipProperty("Air Time", lc)
+		addTooltipProperty("Air Timeseconds", lc)
 
 public class AbilityDefinitionAntimagicShield extends AbilityDefinition
 	construct(int newAbilityId)
@@ -11155,7 +11155,7 @@ public class AbilityDefinitionOrbofDarknessBlackArrow extends AbilityDefinition
 
 	function presetSummonedUnitDurationseconds(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Nba3", lvls, 3, lc)
-		addTooltipProperty("Summoned Unit Duration", lc)
+		addTooltipProperty("Summoned Unit Durationseconds", lc)
 
 public class AbilityDefinitionTinkererDemolishLevel3 extends AbilityDefinition
 	construct(int newAbilityId)
@@ -11546,7 +11546,7 @@ public class AbilityDefinitionDarkRangerBlackArrow extends AbilityDefinition
 
 	function presetSummonedUnitDurationseconds(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Nba3", lvls, 3, lc)
-		addTooltipProperty("Summoned Unit Duration", lc)
+		addTooltipProperty("Summoned Unit Durationseconds", lc)
 
 public class AbilityDefinitionCargoHoldEntangledGoldMine extends AbilityDefinition
 	construct(int newAbilityId)
@@ -13416,7 +13416,7 @@ public class AbilityDefinitionTichondriusDarkSummoning extends AbilityDefinition
 
 	function presetCastingDelayseconds(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Uds2", lvls, 2, lc)
-		addTooltipProperty("Casting Delay", lc)
+		addTooltipProperty("Casting Delayseconds", lc)
 
 public class AbilityDefinitionItemSpeed extends AbilityDefinition
 	construct(int newAbilityId)
