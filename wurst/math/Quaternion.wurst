@@ -12,6 +12,23 @@ public constant ZEROQ = quat(0, 0, 0, 0)
 
 constant EPSILON = 0.001
 
+public function eulerToQuat(real yaw, real pitch, real roll) returns quat
+	var result = ZEROQ
+	let cy = (yaw * 0.5).cos()
+	let sy = (yaw * 0.5).sin()
+	let cp = (pitch * 0.5).cos()
+	let sp = (pitch * 0.5).sin()
+	let cr = (roll * 0.5).cos()
+	let sr = (roll * 0.5).sin()
+
+	result.w = cy * cp * cr + sy * sp * sr
+	result.x = cy * cp * sr - sy * sp * cr
+	result.y = sy * cp * sr + cy * sp * cr
+	result.z = sy * cp * cr - cy * sp * sr
+
+	return result
+
+
 public function quat.op_plus(quat q) returns quat
 	return quat(this.x + q.x, this.y + q.y, this.z + q.z, this.w + q.w)
 
