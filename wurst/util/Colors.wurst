@@ -6,6 +6,8 @@ import Integer
 import Wurstunit
 import Playercolor
 import Annotations
+import Maths
+import Real
 
 public constant COLOR_WHITE = colorA(255,255,255,255)
 public constant COLOR_BLACK = colorA(0,0,0,0)
@@ -72,63 +74,63 @@ public function colorA.withoutAlpha() returns color
 
 /** Returns the HSV equivalent */ 
 public function color.toHSV() returns colorHSV
-    real s
-    real h
-    let r = this.red / 255.0
-    let g = this.green / 255.0
-    let b = this.blue / 255.0
-    let max = max(r, g, b)
-    let min = min(r, g, b)
-    let delta = max - min
-    if max != 0 and delta != 0
-        s = delta / max
-        if r == max
-            if g < b
-                h = 1 + (g - b) / delta / 6
-            else
-                h = (g - b) / delta / 6
-        else if g == max
-            h = 1.0 / 3 + (b - r) / delta / 6
-        else
-            h = 2.0 / 3 + (r - g) / delta / 6
-    else
-        h = 0
-        s = 0
-    return colorHSV(h, s, max)
+	real s
+	real h
+	let r = this.red / 255.0
+	let g = this.green / 255.0
+	let b = this.blue / 255.0
+	let max = max(r, g, b)
+	let min = min(r, g, b)
+	let delta = max - min
+	if max != 0 and delta != 0
+		s = delta / max
+		if r == max
+			if g < b
+				h = 1 + (g - b) / delta / 6
+			else
+				h = (g - b) / delta / 6
+		else if g == max
+			h = 1.0 / 3 + (b - r) / delta / 6
+		else
+			h = 2.0 / 3 + (r - g) / delta / 6
+	else
+		h = 0
+		s = 0
+	return colorHSV(h, s, max)
 
 /** Returns the RGB equivalent */
 public function colorHSV.toRGB() returns color
-    real r
-    real g
-    real b
-    let diff = this.s * this.v
-    let max = this.v * 255
-    let mix = diff * 6 * 255
-    let min = (this.v - diff) * 255
-    if this.h < 1.0 / 6
-        r = max
-        g = this.h * mix + min
-        b = min
-    else if this.h < 2.0 / 6
-        r = (2.0 / 6 - this.h) * mix + min
-        g = max
-        b = min
-    else if this.h < 3.0 / 6
-        r = min
-        g = max
-        b = (this.h - 2.0 / 6) * mix + min
-    else if this.h < 4.0 / 6
-        r = min
-        g = (4.0 / 6 - this.h) * mix + min
-        b = max
-    else if this.h < 5.0 / 6
-        r = (this.h - 4.0 / 6) * mix + min
-        g = min
-        b = max
-    else
-        r = max
-        g = min
-        b = (1 - this.h) * mix + min
+	real r
+	real g
+	real b
+	let diff = this.s * this.v
+	let max = this.v * 255
+	let mix = diff * 6 * 255
+	let min = (this.v - diff) * 255
+	if this.h < 1.0 / 6
+		r = max
+		g = this.h * mix + min
+		b = min
+	else if this.h < 2.0 / 6
+		r = (2.0 / 6 - this.h) * mix + min
+		g = max
+		b = min
+	else if this.h < 3.0 / 6
+		r = min
+		g = max
+		b = (this.h - 2.0 / 6) * mix + min
+	else if this.h < 4.0 / 6
+		r = min
+		g = (4.0 / 6 - this.h) * mix + min
+		b = max
+	else if this.h < 5.0 / 6
+		r = (this.h - 4.0 / 6) * mix + min
+		g = min
+		b = max
+	else
+		r = max
+		g = min
+		b = (1 - this.h) * mix + min
 	return color(r.toInt(), g.toInt(), b.toInt())
 
 /** Get a colorA tuple from a hexstring */
@@ -216,7 +218,7 @@ public function colorA.toString() returns string
 
 /** Returns the tuple in string format colorHSV(h,s,v) */
 public function colorHSV.toString() returns string
-    return "colorHSV(" + (this.h).toString() + ", " + (this.s).toString() + ", " + (this.v).toString() + ")"
+	return "colorHSV(" + (this.h).toString() + ", " + (this.s).toString() + ", " + (this.v).toString() + ")"
    
 /** Hexadecimal numbers */
 public constant hexs = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F"]
@@ -271,11 +273,11 @@ public function string.toPlayerColor() returns playercolor
 	return pc
 
 function colorHSV.test()
-    let delta = 0.01
-    let translated = this.toRGB().toHSV()
-    let compare = colorHSV((translated.h - this.h).abs(), (translated.s - this.s).abs(), (translated.v - this.v).abs())
-    if compare.h > delta or compare.s > delta or compare.v > delta
-        testFail("Actual {0}, Expected {1}".format(translated.toString(), this.toString()))
+	let delta = 0.01
+	let translated = this.toRGB().toHSV()
+	let compare = colorHSV((translated.h - this.h).abs(), (translated.s - this.s).abs(), (translated.v - this.v).abs())
+	if compare.h > delta or compare.s > delta or compare.v > delta
+		testFail("Actual {0}, Expected {1}".format(translated.toString(), this.toString()))
 
 @compiletime function initializeTable()
 	for i = 0 to 15
@@ -296,13 +298,13 @@ init
 	assertTrue(PLAYER_COLOR_RED != null)
 	
 @Test public function testHSV()
-    colorHSV(0, 0, 1).test()
-    colorHSV(0, 0, 0.5).test()
-    colorHSV(0, 0, 0).test()
-    for h = 0 to 11
-        for s = 2 downto 1
-            for v = 2 downto 1
-                colorHSV(h / 12.0, s / 2.0, v / 2.0).test()
+	colorHSV(0, 0, 1).test()
+	colorHSV(0, 0, 0.5).test()
+	colorHSV(0, 0, 0).test()
+	for h = 0 to 11
+		for s = 2 downto 1
+			for v = 2 downto 1
+				colorHSV(h / 12.0, s / 2.0, v / 2.0).test()
 
 @Test public function testColorNames()
 	color(255, 2, 2).getName().assertEquals("red")
