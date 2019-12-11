@@ -74,8 +74,8 @@ public function colorA.withoutAlpha() returns color
 
 /** Returns the HSV equivalent */ 
 public function color.toHSV() returns colorHSV
-	real s
-	real h
+	real s = 0
+	real h = 0
 	let r = this.red / 255.0
 	let g = this.green / 255.0
 	let b = this.blue / 255.0
@@ -93,9 +93,6 @@ public function color.toHSV() returns colorHSV
 			h = 1.0 / 3 + (b - r) / delta / 6
 		else
 			h = 2.0 / 3 + (r - g) / delta / 6
-	else
-		h = 0
-		s = 0
 	return colorHSV(h, s, max)
 
 /** Returns the RGB equivalent */
@@ -272,7 +269,7 @@ public function string.toPlayerColor() returns playercolor
 			break
 	return pc
 
-function colorHSV.test()
+function colorHSV.assert()
 	let delta = 0.01
 	let translated = this.toRGB().toHSV()
 	let compare = colorHSV((translated.h - this.h).abs(), (translated.s - this.s).abs(), (translated.v - this.v).abs())
@@ -298,13 +295,13 @@ init
 	assertTrue(PLAYER_COLOR_RED != null)
 	
 @Test public function testHSV()
-	colorHSV(0, 0, 1).test()
-	colorHSV(0, 0, 0.5).test()
-	colorHSV(0, 0, 0).test()
+	colorHSV(0, 0, 1).assert()
+	colorHSV(0, 0, 0.5).assert()
+	colorHSV(0, 0, 0).assert()
 	for h = 0 to 11
 		for s = 2 downto 1
 			for v = 2 downto 1
-				colorHSV(h / 12.0, s / 2.0, v / 2.0).test()
+				colorHSV(h / 12.0, s / 2.0, v / 2.0).assert()
 
 @Test public function testColorNames()
 	color(255, 2, 2).getName().assertEquals("red")
