@@ -1,106 +1,190 @@
 package Ability
 import NoWurst
 
+/** Levels are indexed, first level is 0, second is 1 e.t.c. */
+public function setAbilityTooltip (int abilCode, string tooltip, int level)
+	BlzSetAbilityTooltip(abilCode, tooltip, level)
+
+/** Levels are indexed, first level is 0, second is 1 e.t.c. */
+public function setAbilityActivatedTooltip (int abilCode, string tooltip, int level)
+	BlzSetAbilityActivatedTooltip(abilCode, tooltip, level)
+
+/** Levels are indexed, first level is 0, second is 1 e.t.c. */
+public function setAbilityExtendedTooltip (int abilCode, string extendedTooltip, int level)
+	BlzSetAbilityExtendedTooltip(abilCode, extendedTooltip, level)
+
+/** Levels are indexed, first level is 0, second is 1 e.t.c. */
+public function setAbilityActivatedExtendedTooltip (int abilCode, string extendedTooltip, int level)
+	BlzSetAbilityActivatedExtendedTooltip(abilCode, extendedTooltip, level)
+
+/** Levels are indexed, first level is 0, second is 1 e.t.c. */
+public function setAbilityResearchTooltip (int abilCode, string researchTooltip, int level)
+	BlzSetAbilityResearchTooltip(abilCode, researchTooltip, level)
+
+/** Levels are indexed, first level is 0, second is 1 e.t.c. */
+public function setAbilityResearchExtendedTooltip (int abilCode, string researchExtendedTooltip, int level)
+	BlzSetAbilityResearchExtendedTooltip(abilCode, researchExtendedTooltip, level)
+
+/** Levels are indexed, first level is 0, second is 1 e.t.c. */
+public function getAbilityTooltip (int abilCode, int level) returns string
+	return BlzGetAbilityTooltip(abilCode, level)
+
+/** Levels are indexed, first level is 0, second is 1 e.t.c. */
+public function getAbilityActivatedTooltip (int abilCode, int level) returns string
+	return BlzGetAbilityActivatedTooltip(abilCode, level)
+
+/** Levels are indexed, first level is 0, second is 1 e.t.c. */
+public function getAbilityExtendedTooltip (int abilCode, int level) returns string
+	return BlzGetAbilityExtendedTooltip(abilCode, level)
+
+/** Levels are indexed, first level is 0, second is 1 e.t.c. */
+public function getAbilityActivatedExtendedTooltip (int abilCode, int level) returns string
+	return BlzGetAbilityActivatedExtendedTooltip(abilCode, level)
+
+/** Levels are indexed, first level is 0, second is 1 e.t.c. */
+public function getAbilityResearchTooltip (int abilCode, int level) returns string
+	return BlzGetAbilityResearchTooltip(abilCode, level)
+
+/** Levels are indexed, first level is 0, second is 1 e.t.c. */
+public function getAbilityResearchExtendedTooltip (int abilCode, int level) returns string
+	return BlzGetAbilityResearchExtendedTooltip(abilCode, level)
+
+public function setAbilityIcon (int abilCode, string iconPath)
+	BlzSetAbilityIcon(abilCode, iconPath)
+
+public function getAbilityIcon (int abilCode) returns string
+	return BlzGetAbilityIcon(abilCode)
+
+public function setAbilityActivatedIcon (int abilCode, string iconPath)
+	BlzSetAbilityActivatedIcon(abilCode, iconPath)
+
+public function getAbilityActivatedIcon (int abilCode) returns string
+	return BlzGetAbilityActivatedIcon(abilCode)
+
+public function getAbilityPosX (int abilCode) returns int
+	return BlzGetAbilityPosX(abilCode)
+
+public function getAbilityPosY (int abilCode) returns int
+	return BlzGetAbilityPosY(abilCode)
+
+public function setAbilityPosX (int abilCode, int x)
+	BlzSetAbilityPosX(abilCode, x)
+
+public function setAbilityPosY (int abilCode, int y)
+	BlzSetAbilityPosY(abilCode, y)
+
+public function getAbilityActivatedPosX (int abilCode) returns int
+	return BlzGetAbilityActivatedPosX(abilCode)
+
+public function getAbilityActivatedPosY (int abilCode) returns int
+	return BlzGetAbilityActivatedPosY(abilCode)
+
+public function setAbilityActivatedPosX (int abilCode, int x)
+	BlzSetAbilityActivatedPosX(abilCode, x)
+
+public function setAbilityActivatedPosY (int abilCode, int y)
+	BlzSetAbilityActivatedPosY(abilCode, y)
+
 // Ability Field Getters
 public function ability.getField(abilitybooleanfield field) returns bool
-    return BlzGetAbilityBooleanField(this, field)
-    
+	return BlzGetAbilityBooleanField(this, field)
+	
 public function ability.getField(abilityintegerfield field) returns int 
-    return BlzGetAbilityIntegerField(this, field)
+	return BlzGetAbilityIntegerField(this, field)
 
 public function ability.getField(abilityrealfield field) returns real
-    return BlzGetAbilityRealField(this, field)
+	return BlzGetAbilityRealField(this, field)
 
 public function ability.getField(abilitystringfield field) returns string
-    return BlzGetAbilityStringField(this, field)
+	return BlzGetAbilityStringField(this, field)
 
 // Ability Level-Field Getters
 public function ability.getField(abilitybooleanlevelfield field, int level) returns bool
-    return BlzGetAbilityBooleanLevelField(this, field, level)
+	return BlzGetAbilityBooleanLevelField(this, field, level)
 
 public function ability.getField(abilityintegerlevelfield field, int level) returns int
-    return BlzGetAbilityIntegerLevelField(this, field, level)
+	return BlzGetAbilityIntegerLevelField(this, field, level)
 
 public function ability.getField(abilityreallevelfield field, int level) returns real
-    return BlzGetAbilityRealLevelField(this, field, level)
+	return BlzGetAbilityRealLevelField(this, field, level)
 
 public function ability.getField(abilitystringlevelfield field, int level) returns string
-    return BlzGetAbilityStringLevelField(this, field, level)
+	return BlzGetAbilityStringLevelField(this, field, level)
 
 // Ability Level-Array Field Getters
 public function ability.getField(abilitybooleanlevelarrayfield field, int level, int index) returns bool
-    return BlzGetAbilityBooleanLevelArrayField(this, field, level, index)
+	return BlzGetAbilityBooleanLevelArrayField(this, field, level, index)
 
 public function ability.getField(abilityintegerlevelarrayfield field, int level, int index) returns int
-    return BlzGetAbilityIntegerLevelArrayField(this, field, level, index)
+	return BlzGetAbilityIntegerLevelArrayField(this, field, level, index)
 
 public function ability.getField(abilityreallevelarrayfield field, int level, int index) returns real
-    return BlzGetAbilityRealLevelArrayField(this, field, level, index)
+	return BlzGetAbilityRealLevelArrayField(this, field, level, index)
 
 public function ability.getField(abilitystringlevelarrayfield field, int level, int index) returns string
-    return BlzGetAbilityStringLevelArrayField(this, field, level, index)
+	return BlzGetAbilityStringLevelArrayField(this, field, level, index)
 
 // Ability Field Setters
 public function ability.setField(abilitybooleanfield field, bool value) returns bool
-    return BlzSetAbilityBooleanField(this, field, value)
+	return BlzSetAbilityBooleanField(this, field, value)
 
 public function ability.setField(abilityintegerfield field, int value) returns bool 
-    return BlzSetAbilityIntegerField(this, field, value)
+	return BlzSetAbilityIntegerField(this, field, value)
 
 public function ability.setField(abilityrealfield field, real value) returns bool
-    return BlzSetAbilityRealField(this, field, value)
+	return BlzSetAbilityRealField(this, field, value)
 
 public function ability.setField(abilitystringfield field, string value) returns bool
-    return BlzSetAbilityStringField(this, field, value)
+	return BlzSetAbilityStringField(this, field, value)
 
 // Ability Level-Field Setters
 public function ability.setField(abilitybooleanlevelfield field, int level, bool value) returns bool
-    return BlzSetAbilityBooleanLevelField(this, field, level, value)
+	return BlzSetAbilityBooleanLevelField(this, field, level, value)
 
 public function ability.setField(abilityintegerlevelfield field, int level, int value) returns bool
-    return BlzSetAbilityIntegerLevelField(this, field, level, value)
+	return BlzSetAbilityIntegerLevelField(this, field, level, value)
 
 public function ability.setField(abilityreallevelfield field, int level, real value) returns bool
-    return BlzSetAbilityRealLevelField(this, field, level, value)
+	return BlzSetAbilityRealLevelField(this, field, level, value)
 
 public function ability.setField(abilitystringlevelfield field, int level, string value) returns bool
-    return BlzSetAbilityStringLevelField(this, field, level, value)
+	return BlzSetAbilityStringLevelField(this, field, level, value)
 
 // Ability Level-Array Field Setters
 public function ability.setField(abilitybooleanlevelarrayfield field, int level, int index, bool value) returns bool
-    return BlzSetAbilityBooleanLevelArrayField(this, field, level, index, value)
+	return BlzSetAbilityBooleanLevelArrayField(this, field, level, index, value)
 
 public function ability.setField(abilityintegerlevelarrayfield field, int level, int index, int value) returns bool
-    return BlzSetAbilityIntegerLevelArrayField(this, field, level, index, value)
+	return BlzSetAbilityIntegerLevelArrayField(this, field, level, index, value)
 
 public function ability.setField(abilityreallevelarrayfield field, int level, int index, real value) returns bool
-    return BlzSetAbilityRealLevelArrayField(this, field, level, index, value)
+	return BlzSetAbilityRealLevelArrayField(this, field, level, index, value)
 
 public function ability.setField(abilitystringlevelarrayfield field, int level, int index, string value) returns bool
-    return BlzSetAbilityStringLevelArrayField(this, field, level, index, value)
+	return BlzSetAbilityStringLevelArrayField(this, field, level, index, value)
 
 // Ability Level-Array Field Add
 public function ability.addField(abilitybooleanlevelarrayfield field, int level, bool value) returns bool
-    return BlzAddAbilityBooleanLevelArrayField(this, field, level, value)
+	return BlzAddAbilityBooleanLevelArrayField(this, field, level, value)
 
 public function ability.addField(abilityintegerlevelarrayfield field, int level, int value) returns bool
-    return BlzAddAbilityIntegerLevelArrayField(this, field, level, value)
+	return BlzAddAbilityIntegerLevelArrayField(this, field, level, value)
 
 public function ability.addField(abilityreallevelarrayfield field, int level, real value) returns bool
-    return BlzAddAbilityRealLevelArrayField(this, field, level, value)
+	return BlzAddAbilityRealLevelArrayField(this, field, level, value)
 
 public function ability.addField(abilitystringlevelarrayfield field, int level, string value) returns bool
-    return BlzAddAbilityStringLevelArrayField(this, field, level, value)
+	return BlzAddAbilityStringLevelArrayField(this, field, level, value)
 
 // Ability Level-Array Field Remove
 public function ability.removeField(abilitybooleanlevelarrayfield field, int level, bool value) returns bool
-    return BlzRemoveAbilityBooleanLevelArrayField(this, field, level, value)
+	return BlzRemoveAbilityBooleanLevelArrayField(this, field, level, value)
 
 public function ability.removeField(abilityintegerlevelarrayfield field, int level, int value) returns bool
-    return BlzRemoveAbilityIntegerLevelArrayField(this, field, level, value)
+	return BlzRemoveAbilityIntegerLevelArrayField(this, field, level, value)
 
 public function ability.removeField(abilityreallevelarrayfield field, int level, real value) returns bool
-    return BlzRemoveAbilityRealLevelArrayField(this, field, level, value)
+	return BlzRemoveAbilityRealLevelArrayField(this, field, level, value)
 
 public function ability.removeField(abilitystringlevelarrayfield field, int level, string value) returns bool
-    return BlzRemoveAbilityStringLevelArrayField(this, field, level, value)
+	return BlzRemoveAbilityStringLevelArrayField(this, field, level, value)
