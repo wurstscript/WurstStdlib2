@@ -1,5 +1,6 @@
 package Ability
 import NoWurst
+import Player
 
 /** Levels are indexed, first level is 0, second is 1 e.t.c. */
 public function setAbilityTooltip(int abilCode, string tooltip, int level)
@@ -25,6 +26,78 @@ public function setAbilityResearchTooltip(int abilCode, string researchTooltip, 
 public function setAbilityResearchExtendedTooltip(int abilCode, string researchExtendedTooltip, int level)
 	BlzSetAbilityResearchExtendedTooltip(abilCode, researchExtendedTooltip, level)
 
+public function setAbilityActivatedIcon(int abilCode, string iconPath)
+	BlzSetAbilityActivatedIcon(abilCode, iconPath)
+
+public function setAbilityIcon(int abilCode, string iconPath)
+	BlzSetAbilityIcon(abilCode, iconPath)
+
+public function setAbilityPosX(int abilCode, int x)
+	BlzSetAbilityPosX(abilCode, x)
+
+public function setAbilityPosY(int abilCode, int y)
+	BlzSetAbilityPosY(abilCode, y)
+
+public function setAbilityActivatedPosX(int abilCode, int x)
+	BlzSetAbilityActivatedPosX(abilCode, x)
+
+public function setAbilityActivatedPosY(int abilCode, int y)
+	BlzSetAbilityActivatedPosY(abilCode, y)
+
+/** Levels are indexed, first level is 0, second is 1 e.t.c. */
+public function setAbilityTooltip(player p, int abilCode, string tooltip, int level)
+	if localPlayer == p
+		BlzSetAbilityTooltip(abilCode, tooltip, level)
+
+/** Levels are indexed, first level is 0, second is 1 e.t.c. */
+public function setAbilityActivatedTooltip(player p, int abilCode, string tooltip, int level)
+	if localPlayer == p
+		BlzSetAbilityActivatedTooltip(abilCode, tooltip, level)
+
+/** Levels are indexed, first level is 0, second is 1 e.t.c. */
+public function setAbilityExtendedTooltip(player p, int abilCode, string extendedTooltip, int level)
+	if localPlayer == p
+		BlzSetAbilityExtendedTooltip(abilCode, extendedTooltip, level)
+
+/** Levels are indexed, first level is 0, second is 1 e.t.c. */
+public function setAbilityActivatedExtendedTooltip(player p, int abilCode, string extendedTooltip, int level)
+	if localPlayer == p
+		BlzSetAbilityActivatedExtendedTooltip(abilCode, extendedTooltip, level)
+
+/** Levels are indexed, first level is 0, second is 1 e.t.c. */
+public function setAbilityResearchTooltip(player p, int abilCode, string researchTooltip, int level)
+	if localPlayer == p
+		BlzSetAbilityResearchTooltip(abilCode, researchTooltip, level)
+
+/** Levels are indexed, first level is 0, second is 1 e.t.c. */
+public function setAbilityResearchExtendedTooltip(player p, int abilCode, string researchExtendedTooltip, int level)
+	if localPlayer == p
+		BlzSetAbilityResearchExtendedTooltip(abilCode, researchExtendedTooltip, level)
+
+public function setAbilityActivatedIcon(player p, int abilCode, string iconPath)
+	if localPlayer == p
+		BlzSetAbilityActivatedIcon(abilCode, iconPath)
+
+public function setAbilityIcon(player p, int abilCode, string iconPath)
+	if localPlayer == p
+		BlzSetAbilityIcon(abilCode, iconPath)
+
+public function setAbilityPosX(player p, int abilCode, int x)
+	if localPlayer == p
+		BlzSetAbilityPosX(abilCode, x)
+
+public function setAbilityPosY(player p, int abilCode, int y)
+	if localPlayer == p
+		BlzSetAbilityPosY(abilCode, y)
+
+public function setAbilityActivatedPosX(player p, int abilCode, int x)
+	if localPlayer == p
+		BlzSetAbilityActivatedPosX(abilCode, x)
+
+public function setAbilityActivatedPosY(player p, int abilCode, int y)
+	if localPlayer == p
+		BlzSetAbilityActivatedPosY(abilCode, y)
+
 /** Levels are indexed, first level is 0, second is 1 e.t.c. */
 public function getAbilityTooltip(int abilCode, int level) returns string
 	return BlzGetAbilityTooltip(abilCode, level)
@@ -49,14 +122,8 @@ public function getAbilityResearchTooltip(int abilCode, int level) returns strin
 public function getAbilityResearchExtendedTooltip(int abilCode, int level) returns string
 	return BlzGetAbilityResearchExtendedTooltip(abilCode, level)
 
-public function setAbilityIcon(int abilCode, string iconPath)
-	BlzSetAbilityIcon(abilCode, iconPath)
-
 public function getAbilityIcon(int abilCode) returns string
 	return BlzGetAbilityIcon(abilCode)
-
-public function setAbilityActivatedIcon(int abilCode, string iconPath)
-	BlzSetAbilityActivatedIcon(abilCode, iconPath)
 
 public function getAbilityActivatedIcon(int abilCode) returns string
 	return BlzGetAbilityActivatedIcon(abilCode)
@@ -67,23 +134,17 @@ public function getAbilityPosX(int abilCode) returns int
 public function getAbilityPosY(int abilCode) returns int
 	return BlzGetAbilityPosY(abilCode)
 
-public function setAbilityPosX(int abilCode, int x)
-	BlzSetAbilityPosX(abilCode, x)
-
-public function setAbilityPosY(int abilCode, int y)
-	BlzSetAbilityPosY(abilCode, y)
-
 public function getAbilityActivatedPosX(int abilCode) returns int
 	return BlzGetAbilityActivatedPosX(abilCode)
 
 public function getAbilityActivatedPosY(int abilCode) returns int
 	return BlzGetAbilityActivatedPosY(abilCode)
 
-public function setAbilityActivatedPosX(int abilCode, int x)
-	BlzSetAbilityActivatedPosX(abilCode, x)
+function getAbilityManaCost(int abilId, int level) returns integer
+	return BlzGetAbilityManaCost(abilId, level)
 
-public function setAbilityActivatedPosY(int abilCode, int y)
-	BlzSetAbilityActivatedPosY(abilCode, y)
+function getAbilityCooldown(int abilId, int level) returns real
+	return BlzGetAbilityCooldown(abilId, level)
 
 // Ability Field Getters
 public function ability.getField(abilitybooleanfield field) returns bool
