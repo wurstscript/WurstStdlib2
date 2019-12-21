@@ -33,6 +33,7 @@ public class HashList<T>
 		decrOccurences(get(index))
 		ht.saveInt(this castTo int, index, elem castTo int)
 		incrOccurences(elem)
+		size = max(index + 1, size)
 
 	/** Add all elements from elems to this list */
 	function addAll(HashList<T> elems)
