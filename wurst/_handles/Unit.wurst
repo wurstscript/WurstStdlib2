@@ -429,6 +429,15 @@ public function unit.setAnimation(string name)
 public function unit.setAnimation(int index)
 	SetUnitAnimationByIndex(this, index)
 
+public function unit.addAnimationProperties(string properties, bool add)
+	AddUnitAnimationProperties(this, properties, add)
+
+public function unit.addAnimationProperties(string properties)
+	this.addAnimationProperties(properties, true)
+	
+public function unit.removeAnimationProperties(string properties)
+	this.addAnimationProperties(properties, false)
+
 public function unit.lookAt(string bone, unit target, vec3 offset)
 	SetUnitLookAt(this, bone, target, offset.x, offset.y, offset.z)
 
