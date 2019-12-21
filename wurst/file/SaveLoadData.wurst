@@ -1,0 +1,79 @@
+package SaveLoadData
+import public FileIO
+import SyncSimple
+import ErrorHandling
+
+/* 	Comfort wrapper for player based, synced access to save data.
+	For small data you can use strings, otherwise use ChunkedString.
+
+	Save data for a player:
+	>	myPlayer.saveData("myFileName", "someDataString")
+	>	myPlayer.saveData("myChunkedFileName", someChunkedString)
+
+	Load data for a player:
+	>	myPlayer.loadData("myFileName") (status, data) ->
+	>		switch status
+	>			case SUCCESS
+	>				Log.info("Load successful. Chunks: " + data.chunkCount)
+	>			default
+	>				Log.error("Error occured: " + status.toString())
+*/
+
+public function LoadStatus.toString() returns string
+	switch this
+		case SUCCESS
+			return "Success"
+		case FAIL_PLAYER_OFFLINE
+			return "Failed! Player is offline."
+		case FAIL_FILE_EMPTY
+			return "Failed! The file is empty."
+		case FAIL_CANT_READ
+			return "Failed! The player can't read files."
+
+public enum LoadStatus
+	SUCCESS
+	FAIL_PLAYER_OFFLINE
+	FAIL_FILE_EMPTY
+	FAIL_CANT_READ
+
+public function LoadStatus.isFail()	returns boolean
+	return this != LoadStatus.SUCCESS
+
+public interface LoadListener
+	function onLoad(LoadStatus status, ChunkedString data)
+
+/** Blockingly saves the given data string for the given player. */
+public function player.saveData(string slotName, string data)
+	let buffer = new ChunkedString(DEFAULT_CHUNK_SIZE)
+	buffer.append(data)
+	this.saveData(slotName.endsWith(".pld") ? slotName : slotName + ".pld", buffer)
+	destroy buffer
+
+/** Blockingly saves the given data string for the given player. */
+public function player.saveData(string slotName, ChunkedString data)
+	if not this.isIngame()
+		error("Attempting to save data for player who isn't ingame! id: " + this.getId().toString())
+
+	new File(slotName.endsWith(".pld") ? slotName : slotName + ".pld")
+		..write(this, data)..close()
+
+/** Asynchronously loads the data from the file of the given player
+	and then synchronizes it with all other players.
+	The listener will be invoked with the synced data string.  */
+public function player.loadData(string slotName, LoadListener listener)
+	if not this.isIngame()
+		listener.onLoad(LoadStatus.FAIL_PLAYER_OFFLINE, null)
+		return
+
+	let file = new File(slotName)
+	let buffer = file.read(this)
+	file.close()
+
+	buffer.sync(this) (syncedBuffer) ->
+		if not syncedBuffer.hasChunk()
+			listener.onLoad(LoadStatus.FAIL_FILE_EMPTY, syncedBuffer)
+		else if syncedBuffer.readChunk() == "-"
+			listener.onLoad(LoadStatus.FAIL_CANT_READ, syncedBuffer)
+		else
+			syncedBuffer.resetRead()
+			listener.onLoad(LoadStatus.SUCCESS, syncedBuffer)

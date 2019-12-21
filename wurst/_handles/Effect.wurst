@@ -20,11 +20,11 @@ public function flashEffect(string path, vec2 pos, real scale)
 public function flashEffect(string path, vec3 pos, real scale)
 	flashEffect(path, pos, scale, GetRandomReal(0, 359).fromDeg())
 
-public function flashEffect(string path, vec2 pos, real scale, angle roll)
-	addEffect(path, pos)..setScale(scale)..setRoll(roll)..destr()
+public function flashEffect(string path, vec2 pos, real scale, angle yaw)
+	addEffect(path, pos)..setScale(scale)..setYaw(yaw)..destr()
 
-public function flashEffect(string path, vec3 pos, real scale, angle roll)
-	addEffect(path, pos)..setScale(scale)..setRoll(roll)..destr()
+public function flashEffect(string path, vec3 pos, real scale, angle yaw)
+	addEffect(path, pos)..setScale(scale)..setYaw(yaw)..destr()
 
 public function flashEffect(string path, widget target, string attachPointName)
 	addEffect(path, target, attachPointName).destr()

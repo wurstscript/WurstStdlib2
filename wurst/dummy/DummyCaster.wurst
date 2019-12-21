@@ -1,3 +1,8 @@
+package DummyCaster
+import DummyRecycler
+import MapBounds
+import ClosureTimers
+
 /**
  * Dummy casters are commonly used in custom spells to cast abilities dynamically onto targets or points.
  * For example hexing all units in an AoE, or impaling in multiple directions.
@@ -20,11 +25,6 @@
  * You shouldn't destroy the object yourself. Just cast any amount of spells at once or shortly after and leave it.
  * Allocate DummyCasters dynamically on the spot and don't save them.
  */
-package DummyCaster
-import DummyRecycler
-import MapBounds
-import ClosureTimers
-
 public class DummyCaster
 	private var delay = 5.0
 	private var castCount = 0

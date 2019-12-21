@@ -3,6 +3,9 @@ import NoWurst
 import ErrorHandling
 import Annotations
 
+@configurable function isOrderBanned(string _order) returns boolean
+	return false
+
 public class OrderStringFactory
 	int counter = -1
 
@@ -10,6 +13,9 @@ public class OrderStringFactory
 		if orderStrings[0] == null
 			initS()
 		counter++
+		while isOrderBanned(orderStrings[counter])
+			counter++
+
 		if counter > 334
 			if recycle
 				counter = 0

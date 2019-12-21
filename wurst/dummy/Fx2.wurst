@@ -1,0 +1,29 @@
+package Fx2
+import Quaternion
+
+/* 	Pendant to Fx.wurst but using the new effect natives instead of a unit
+	and a quaternion for full 3D orientation support. */
+
+public class Fx2
+	effect eff
+
+	var orientation = IDENTITYQ
+	var tint = COLOR_WHITE
+
+	construct(vec3 pos, string path)
+		eff = addEffect(path, pos)
+
+	function setTint(colorA tint)
+		this.tint = tint
+		eff.setColor(tint)
+
+	function setTintFromPlayer(player p)
+		this.tint = p.getColor().toColor().withAlpha(255)
+		eff.setColor(tint)
+
+	function setOrientation(quat orientation)
+		this.orientation = orientation
+		eff.setOrientation(orientation)
+
+	ondestroy
+		eff.destr()

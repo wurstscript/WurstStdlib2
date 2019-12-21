@@ -161,10 +161,18 @@ public class EventData
 	static function getDetectedUnit() returns unit
 		return GetDetectedUnit()
 
+	@deprecated("Use getSummoningUnit")
 	static function getSummouningUnit() returns unit
 		return GetSummoningUnit()
 
+	@deprecated("Use getSummonedUnit")
 	static function getSummounedUnit() returns unit
+		return GetSummonedUnit()
+
+	static function getSummoningUnit() returns unit
+		return GetSummoningUnit()
+
+	static function getSummonedUnit() returns unit
 		return GetSummonedUnit()
 
 	/** Get unit that is transporting. */

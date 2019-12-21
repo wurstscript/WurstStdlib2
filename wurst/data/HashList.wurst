@@ -11,6 +11,15 @@ public class HashList<T>
 
 	private int size = 0
 
+	private HLIterator<T> staticItr = null
+
+	construct()
+
+	/** Create a new list by copying all elements from another list into it */
+	construct(thistype base)
+		for elem in base
+			add(elem)
+
 	/** Returns the number of occurences of an element in this list */
 	function count(T elem) returns int
 		return occurences.loadInt(this castTo int, elem castTo int)
@@ -50,26 +59,28 @@ public class HashList<T>
 	@deprecated("Use .clear() instead.") function removeAll()
 		clear()
 
-	/** Remove the element at the given index */
-	function removeAt(int index)
+	/** Removes and returns the element at the given index */
+	function removeAt(int index) returns T
 		decrOccurences(ht.loadInt(this castTo int, index) castTo T)
+		let tmp = ht.loadInt(this castTo int, index) castTo T
 		for i = index to size
 			ht.saveInt(this castTo int, i, ht.loadInt(this castTo int, i + 1))
 		size--
+		return tmp
 
-	/** Remove the first occurence of t from this list */
-	function remove(T t)
+	/** Removes the first occurence of t from this list.
+		Returns true if an element was removed from the list. */
+	function remove(T t) returns boolean
+		var result = false
 		for i = 0 to size - 1
 			if t castTo int == ht.loadInt(this castTo int, i)
+				result = true
 				removeAt(i)
 				break
+		return result
 
 	/** Get the size of the list */
 	function size() returns int
-		return size
-
-	/** Get the size of the list */
-	@deprecated("Use .size() instead.") function getSize() returns int
 		return size
 
 	/** Return whether the list is empty */
@@ -79,10 +90,6 @@ public class HashList<T>
 	/** Get the element at the given index from this list */
 	function get(int index) returns T
 		return ht.loadInt(this castTo int, index) castTo T
-
-	/** Return whether the element exists in the list */
-	@deprecated function contains(T elem) returns bool
-		return ht.loadReal(this castTo int, elem castTo int) > 0
 
 	/** Return whether the element exists in the list */
 	function has(T elem) returns bool
@@ -110,15 +117,28 @@ public class HashList<T>
 		destroy itr
 		return this
 
-	construct()
+	/** get the static iterator for this list */
+	function staticItr() returns HLIterator<T>
+		if staticItr == null
+			staticItr = new HLIterator<T>(this)
+		staticItr.reset()
+		return staticItr
 
-	/** Create a new list by copying all elements from another list into it */
-	construct(thistype base)
-		for elem in base
-			add(elem)
+	/** Removes the element if the predicates returns true */
+	function removeIf(RemovePredicate<T> predicate)
+		let itr = iterator()
+		for elem from itr
+			if predicate.shouldRemove(elem)
+				itr.remove()
+		itr.close()
+
+		destroy predicate
 
 	ondestroy
 		clear()
+
+public interface RemovePredicate<T>
+	function shouldRemove(T element) returns boolean
 
 public interface HLItrClosure<T>
 	function run(T t)
@@ -134,7 +154,8 @@ public class HLIterator<Q>
 		return i < list.size()
 
 	function remove()
-
+		list.removeAt(i - 1)
+		i--
 
 	function next() returns Q
 		i++
