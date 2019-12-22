@@ -15,6 +15,22 @@ function testSet()
 	list.set(1, 6)
 	list.get(1).assertEquals(6)
 
+	list.set(3, 42)
+	list.get(3).assertEquals(42)
+	// resize when index out of size
+	list.size().assertEquals(4)
+	// elem insert use null
+	list.hasAt(2).assertTrue()
+	list.get(2).assertEquals(0)
+	list.has(0).assertTrue()
+	list.count(0).assertEquals(1)
+
+	list.set(3, 42)
+	// not resize
+	list.size().assertEquals(4)
+	// un-inserted
+	list.count(0).assertEquals(1)
+
 @Test
 function testAddAll()
 	int array vals = [5, 3, 6, 4, 1, 9]
