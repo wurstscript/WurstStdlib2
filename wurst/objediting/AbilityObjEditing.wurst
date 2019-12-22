@@ -94,7 +94,9 @@ public class AbilityDefinition
 		addTooltipProperty(pName, (int lvl) -> lc.run(lvl).toString())
 
 	function addTooltipProperty(string pName, RealLevelClosure lc)
-		addTooltipProperty(pName, (int lvl) -> lc.run(lvl).toString())
+		addTooltipProperty(pName) (int lvl) ->
+			let s = lc.run(lvl).toString()
+			return s.endsWith(".0") ? s.substring(0, s.length() - 2) : s
 
 	function addTooltipProperty(string pName, BooleanLevelClosure lc)
 		addTooltipProperty(pName, (int lvl) -> lc.run(lvl).toString())
