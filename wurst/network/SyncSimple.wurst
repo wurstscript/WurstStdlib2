@@ -14,6 +14,15 @@ import ChunkedString
 	>		while synced.hasChunk()
 	>			Log.info("chunked string synced: " + synced.readChunk())
 
+	Sync a ChunkedString with monitor:
+	>	let monitor = myChunkedString.syncWithMonitor(p) (synced) ->
+	>		while synced.hasChunk()
+	>			Log.info("chunked string synced: " + synced.readChunk())
+	>	// another thread
+	> 	if monitor.cancel()
+	>		Log.info("chunked string sync is cancelled, the message in the code above won't display")
+	>	destroy monitor // don't forget to destroy the monitor when you're no longer interested in the state of the operation
+
 */
 
 @configurable public constant DEFAULT_PREFIX = "S"
@@ -41,6 +50,67 @@ public function ChunkedString.sync(player p, BufferSyncListener listener)
 	if syncQueue.size() == 1
 		checkQueue()
 
+/** Syncs a chunked string from the given player.
+	The returned monitor allows to track the operation's state, 
+	cancel it and set an on-progress-change listener. */
+public function ChunkedString.syncWithMonitor(player p, BufferSyncListener listener) returns SyncMonitor
+	let monitor = new SyncMonitor()
+	monitor.done = false
+	let data = new SyncData(p, listener, this)
+	monitor.data = data
+	data.monitor = monitor
+	data.max = this.getChunkCount()
+	syncQueue.add(data)
+
+	if syncQueue.size() == 1
+		checkQueue()
+
+	return monitor
+
+public interface SyncProgressListener
+	function onProgressChange(int current, int max)
+
+public class SyncMonitor
+
+	protected SyncData data = null
+	protected var done = true
+	protected var cancelled = false
+
+	ondestroy
+		if data != null
+			data.monitor = null
+
+	/** Tries to cancel the operation. Returns 'false' if the operation is already done.
+		If this method returns 'true', the operation listener was not and will not be called. */
+	function cancel() returns bool
+		if done
+			return false
+		cancelled = true
+		return true
+
+	/** Returns whether the operation has been cancelled. */
+	function isCancelled() returns bool
+		return cancelled
+
+	/** Returns whether the operation has finished and the operation listener was called. */
+	function isDone() returns bool
+		return done
+
+	/** Returns whether the operation has finished - either if it was done or cancelled. */
+	function isFinished() returns bool
+		return done or cancelled
+
+	/** Sets the callback to be called each time when a part of the data is synced.
+		You have to set the callback before exiting the thread where you've started the operation.
+		Due to the fact that in Wc3 there is only one thread working at a time,
+		it will work correctly and no update would be skipped. */
+	function onProgressChange(SyncProgressListener listener)
+		if data == null
+			return
+		if data.plistener != null
+			destroy data.plistener
+		data.plistener = listener
+
 class SyncData
 	StringSyncListener slistener = null
 	BufferSyncListener blistener = null
@@ -48,6 +118,10 @@ class SyncData
 	string data = null
 	ChunkedString buffer = null
 	ChunkedString syncBuffer = null
+	SyncMonitor monitor = null
+	SyncProgressListener plistener = null
+	var current = 0
+	var max = 0
 
 	construct(player syncer, StringSyncListener slistener, string data)
 		this.slistener = slistener
@@ -61,12 +135,21 @@ class SyncData
 		this.syncBuffer = new ChunkedString()
 
 	ondestroy
+		if monitor != null
+			monitor.data = null
+		if plistener != null
+			destroy plistener
 		if slistener != null
 			destroy slistener
 		if blistener != null
 			destroy blistener
 		if buffer != null
 			destroy buffer
+
+	function increaseProgress(int delta)
+		current += delta
+		if plistener != null
+			plistener.onProgressChange(current, max)
 
 function checkQueue()
 	if not syncQueue.isEmpty()
@@ -97,10 +180,16 @@ init
 			syncData.slistener.onDataSynced(eventData)
 			syncQueue.dequeue()
 			destroy syncData
-		else
+		else if syncData.monitor == null or not syncData.monitor.cancelled
+			syncData.increaseProgress(1)
 			syncData.syncBuffer.append(eventData)
 			if eventPrefix == LAST_CHUNK_PREFIX
+				if syncData.monitor != null
+					syncData.monitor.done = true
 				syncData.blistener.onDataSynced(syncData.syncBuffer)
 				syncQueue.dequeue()
 				destroy syncData
+		else // cancelled
+			syncQueue.dequeue()
+			destroy syncData
 		checkQueue()

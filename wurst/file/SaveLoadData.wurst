@@ -17,6 +17,19 @@ import ErrorHandling
 	>				Log.info("Load successful. Chunks: " + data.getChunkCount())
 	>			default
 	>				Log.error("Error occured: " + status.toString())
+
+	Load data for a player with monitor:
+	>	let monitor = myPlayer.loadDataWithMonitor("myFileName") (status, data) ->
+	>		switch status
+	>			case SUCCESS
+	>				Log.info("Load successful. Chunks: " + data.chunkCount)
+	>			case FAIL_CANCELLED
+	>				Log.info("Load cancelled")
+	>			default
+	>				Log.error("Error occured: " + status.toString())
+	>	// another thread
+	>	monitor.cancel() // the load will finish with status FAIL_CANCELLED soon if it has not finished already
+	>	destroy monitor // don't forget to destroy the monitor when you're no longer interested in the state of the operation
 */
 
 public function LoadStatus.toString() returns string
@@ -29,12 +42,15 @@ public function LoadStatus.toString() returns string
 			return "Failed! The file is empty."
 		case FAIL_CANT_READ
 			return "Failed! The player can't read files."
+		case FAIL_CANCELLED
+			return "Failed! The operation has been cancelled."
 
 public enum LoadStatus
 	SUCCESS
 	FAIL_PLAYER_OFFLINE
 	FAIL_FILE_EMPTY
 	FAIL_CANT_READ
+	FAIL_CANCELLED
 
 public function LoadStatus.isFail()	returns boolean
 	return this != LoadStatus.SUCCESS
@@ -59,10 +75,11 @@ public function player.saveData(string slotName, ChunkedString data)
 
 /** Asynchronously loads the data from the file of the given player
 	and then synchronizes it with all other players.
-	The listener will be invoked with the synced data string.  */
+	The listener will be invoked with the synced data string. */
 public function player.loadData(string slotName, LoadListener listener)
 	if not this.isIngame()
 		listener.onLoad(LoadStatus.FAIL_PLAYER_OFFLINE, null)
+		destroy listener
 		return
 
 	let file = new File(slotName)
@@ -71,9 +88,84 @@ public function player.loadData(string slotName, LoadListener listener)
 
 	buffer.sync(this) (syncedBuffer) ->
 		if not syncedBuffer.hasChunk()
-			listener.onLoad(LoadStatus.FAIL_FILE_EMPTY, syncedBuffer)
+			destroy syncedBuffer
+			listener.onLoad(LoadStatus.FAIL_FILE_EMPTY, null)
 		else if syncedBuffer.readChunk() == "-"
-			listener.onLoad(LoadStatus.FAIL_CANT_READ, syncedBuffer)
+			destroy syncedBuffer
+			listener.onLoad(LoadStatus.FAIL_CANT_READ, null)
 		else
 			syncedBuffer.resetRead()
 			listener.onLoad(LoadStatus.SUCCESS, syncedBuffer)
+		destroy listener
+
+/** Asynchronously loads the data from the file of the given player
+	and then synchronizes it with all other players.
+	The listener will be invoked with the synced data string.
+
+	The returned monitor allows to track the operation's state, 
+	cancel it and set an on-progress-change listener. */
+public function player.loadDataWithMonitor(string slotName, LoadListener listener) returns LoadMonitor
+	if not this.isIngame()
+		listener.onLoad(LoadStatus.FAIL_PLAYER_OFFLINE, null)
+		destroy listener
+		return new LoadMonitor()
+
+	let file = new File(slotName)
+	let buffer = file.read(this)
+	file.close()
+
+	let monitor = buffer.syncWithMonitor(this) (syncedBuffer) ->
+		if not syncedBuffer.hasChunk()
+			destroy syncedBuffer
+			listener.onLoad(LoadStatus.FAIL_FILE_EMPTY, null)
+		else if syncedBuffer.readChunk() == "-"
+			destroy syncedBuffer
+			listener.onLoad(LoadStatus.FAIL_CANT_READ, null)
+		else
+			syncedBuffer.resetRead()
+			listener.onLoad(LoadStatus.SUCCESS, syncedBuffer)
+		destroy listener
+	return LoadMonitor.create(monitor, listener)
+
+public class LoadMonitor
+
+	private SyncMonitor monitor = null
+	private LoadListener listener = null
+
+	construct()
+		this.monitor = new SyncMonitor()
+
+	private construct(SyncMonitor monitor, LoadListener listener)
+		this.monitor = monitor
+		this.listener = listener
+
+	protected static function create(SyncMonitor monitor, LoadListener listener) returns LoadMonitor
+		return new LoadMonitor(monitor, listener)
+
+	ondestroy
+		destroy monitor
+
+	/** Tries to cancel the operation. */
+	function cancel()
+		if not monitor.isCancelled() and monitor.cancel() and listener != null
+			listener.onLoad(LoadStatus.FAIL_CANCELLED, null)
+			destroy listener
+
+	/** Returns whether the operation has been cancelled. */
+	function isCancelled() returns bool
+		return monitor.isCancelled()
+
+	/** Returns whether the operation has finished without cancellation. */
+	function isDone() returns bool
+		return monitor.isDone()
+
+	/** Returns whether the operation has finished - either if it was done or cancelled. */
+	function isFinished() returns bool
+		return monitor.isFinished()
+
+	/** Sets the callback to be called each time when a part of the data is synced.
+		You have to set the callback before exiting the thread where you've started the operation.
+		Due to the fact that in Wc3 there is only one thread working at a time,
+		it will work correctly and no update would be skipped. */
+	function onProgressChange(SyncProgressListener listener)
+		monitor.onProgressChange(listener)

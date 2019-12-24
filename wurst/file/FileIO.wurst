@@ -96,7 +96,9 @@ public class File
 		return null
 
 init
-	CAN_READ_FILES = new File("FileTester.pld")..write(localPlayer, "test").readAsString(localPlayer) == "test"
+	let file = new File("FileTester.pld")..write(localPlayer, "test")
+	CAN_READ_FILES = file.readAsString(localPlayer) == "test"
+	file.close()
 
 
 @compiletime function generateDummy()
