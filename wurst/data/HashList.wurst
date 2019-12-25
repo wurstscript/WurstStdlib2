@@ -41,9 +41,9 @@ public class HashList<T>
 			size++
 
 	/** Set an element at the given index.
-		If an index out of size:
-		 - auto resize this list
-		 - auto insert elements use null */
+		If the index is higher than the list's size,
+		the list will be resized with null elements added between 
+		the index and the previous size. */
 	function set(int index, T elem)
 		if index < size
 			decrOccurences(get(index))
