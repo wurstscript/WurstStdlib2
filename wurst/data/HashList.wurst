@@ -24,6 +24,9 @@ public class HashList<T>
 	function count(T elem) returns int
 		return occurences.loadInt(this castTo int, elem castTo int)
 
+	private function addOccurences(T elem, int delta)
+		occurences.saveInt(this castTo int, elem castTo int, count(elem) + delta)
+
 	private function incrOccurences(T elem)
 		occurences.saveInt(this castTo int, elem castTo int, count(elem) + 1)
 
@@ -37,9 +40,16 @@ public class HashList<T>
 			incrOccurences(elem)
 			size++
 
-	/** Set an existing element at the given position to a new value */
+	/** Set an element at the given index.
+		If the index is higher than the list's size,
+		the list will be resized with null elements added between 
+		the index and the previous size. */
 	function set(int index, T elem)
-		decrOccurences(get(index))
+		if index < size
+			decrOccurences(get(index))
+		else
+			addOccurences(null, index - size)
+			size = index + 1
 		ht.saveInt(this castTo int, index, elem castTo int)
 		incrOccurences(elem)
 
