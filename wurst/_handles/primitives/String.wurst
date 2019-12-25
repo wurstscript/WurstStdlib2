@@ -82,7 +82,11 @@ public function string.toUpperCase() returns string
 
 /** True when string contains only uppercase letters */
 public function string.isUpper() returns boolean
-	return this == StringCase(this,true)
+	return this == StringCase(this, true)
+
+/** True when string contains only lowercase letters */
+public function string.isLower() returns boolean
+	return this == StringCase(this, false)
 
 /** Returns the given string with whitespaces removed from both ends*/
 public function string.trim() returns string
@@ -180,9 +184,15 @@ public function string.isWhitespace() returns boolean
 
 /** Returns a new string with first letter is upper */
 public function string.firstUpper() returns string
-	if (this == "")
+	if this == ""
 		return ""
 	return StringCase(this.substring(0, 1), true) + this.substring(1, this.length())
+
+/** Returns a new string with first letter is lower */
+public function string.firstLower() returns string
+	if this == ""
+		return ""
+	return StringCase(this.substring(0, 1), false) + this.substring(1, this.length())
 
 /** Returns a new string in which all occurrences of a specified string in the current instance are replaced with another specified string */
 public function string.replace(string oldSubstring, string newSubstring) returns string
