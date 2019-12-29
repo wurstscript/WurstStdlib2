@@ -7,6 +7,31 @@ import ChunkedString
 import Execute
 import ErrorHandling
 
+/*  Base64 package provides an encoder/decoder pair that allows serializing and deserializing of any data.
+
+    Encode Data iteratively:
+    > let encoder = new Base64Encoder()
+    > encoder.writeByte(25)
+    > encoder.writeInt(100500)
+    > let data = encoder.intoData() // the encoder is consumed, no need to destroy it
+
+    Decode Data iteratively:
+    > let decoder = new Base64Decoder()
+    > while data.hasChunk()
+    >   decoder.append(data.readChunk())
+    > let bytes = decoder.intoData() // the decoder is consumed, no need to destroy it
+    > let byte = bytes.readByte()
+    > let number = bytes.readInt()
+
+    This package also provides convenient methods for ChunkedStrings and ByteBuffers.
+
+    Encode Data:
+    > let data = bytes.encodeBase64()
+
+    Decode Data:
+    > let bytes = data.decodeBase64()
+*/
+
 /**
     Specifies how many characters to encode per a single `execute()` call.
     This value has been tuned to work under all optimization settings and
@@ -115,7 +140,7 @@ public class Base64Encoder
             remaining = remaining.shiftl(6)
 
     /** Writes an unsigned byte to be serialized into Base64. 
-    You must be sure that the provided integer is unsigned and isn't bigger than 255. */
+    You must be sure that the provided integer is in the range [0, 255]. */
     private function writeByteUnsafe(int n)
         buffer = buffer.shiftl(8) + n
         bytes++
@@ -124,7 +149,7 @@ public class Base64Encoder
             bytes = 0
 
     /** Writes an unsigned short to be serialized into Base64.
-    You must be sure that the provided integer is unsigned and isn't bigger than 65,535. */
+    You must be sure that the provided integer is in the range [0, 65535]. */
     private function writeShortUnsafe(int n)
         writeByteUnsafe(n.bitAnd(compiletime("11111111".fromBitString())))
         writeByteUnsafe(n.shiftr(8))
@@ -142,11 +167,12 @@ public class Base64Encoder
         writeShortUnsafe(n.bitAnd(compiletime("11111111 11111111".fromBitString())))
         writeShortUnsafe(n.shiftr(16))
 
+    /** Writes all bytes from the buffer to be serialized into Base64. */
     function write(ByteBuffer data)
         writeData(data)
         data.resetRead()
 
-    /** Consumes this encoder and returns the underlying data as a ChunkedString. */
+    /** Consumes this encoder and returns the encoded data as a ChunkedString. */
     function intoData() returns ChunkedString
         if bytes != 0
             encode(buffer.shiftl(8 * (3 - bytes)), bytes)
@@ -233,7 +259,7 @@ public class Base64Decoder
 
         byteBuffer.writeByte(data.bitAnd(DECODE_MASK).shiftr(16))
 
-    /** Consumes this decoder and returns the underlying data as a ByteBuffer. **/
+    /** Consumes this decoder and returns the decoded data as a ByteBuffer. **/
     function intoData() returns ByteBuffer
         if bufferLength > 0
             error("Base64 ERROR: The Base-64 encoded data should have length divisible by 4.")
@@ -245,11 +271,14 @@ public class Base64Decoder
 
         return tmp
 
+/** Encodes the bytes in this buffer to a string according to the Base64 format. */
 public function ByteBuffer.encodeBase64() returns ChunkedString
     return new Base64Encoder(this).intoData()
 
+/** Decodes the bytes encoded into this string according to the Base64 format. */
 public function ChunkedString.decodeBase64() returns ByteBuffer
     return new Base64Decoder(this).intoData()
 
+/** Decodes the bytes encoded into this string according to the Base64 format. */
 public function string.decodeBase64() returns ByteBuffer
     return new Base64Decoder(this).intoData()

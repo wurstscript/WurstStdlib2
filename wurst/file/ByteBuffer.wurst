@@ -3,12 +3,10 @@ package ByteBuffer
 import Table
 import Bitwise
 
-/**
-	This is a utility class that acts like a byte-based buffer.
+/*	ByteBuffer is a utility class that allows you to write/read bytes, shorts and integer to/from it.
+	It may be useful for compacting bytes into integers or decomposing integers into bytes.
+*/
 
-	It has a simple API which allows you to write/read bytes, shorts and integers to/from it.
-	Useful for compacting data into integers.
-**/
 public class ByteBuffer
 	private var storage = new Table()
 	private var intCount = 0
@@ -29,12 +27,12 @@ public class ByteBuffer
 		intCount++
 		buffer = 0
 		bufferLength = 0
-	
+
 	private static function selectByte(int n, int byte) returns int
 		return n.shiftr(8 * byte).bitAnd(compiletime("11111111".fromBitString()))
 
 	/** Writes an unsigned byte into the buffer.
-    You must be sure that the provided integer is unsigned and isn't bigger than 255. */
+    You must be sure that the provided integer is in the range [0, 255]. */
 	function writeByteUnsafe(int n)
 		buffer = buffer + n.shiftl(8 * bufferLength)
 		bufferLength++
@@ -42,7 +40,7 @@ public class ByteBuffer
 			flushBuffer()
 
 	/** Writes an unsigned short into the buffer.
-    You must be sure that the provided integer is unsigned and isn't bigger than 65,535. */
+    You must be sure that the provided integer is in the range [0, 65535]. */
 	function writeShortUnsafe(int n)
 		writeByteUnsafe(n.bitAnd(compiletime("11111111".fromBitString())))
 		writeByteUnsafe(n.shiftr(8))
@@ -63,7 +61,7 @@ public class ByteBuffer
 	function hasByte() returns bool
 		return readIndex < intCount or readBufferIndex < bufferLength
 
-	/** Reads a single unsigned byte from this buffer. The returned value will be in the range [0, 255] **/
+	/** Reads a single unsigned byte from this buffer. The returned value will be in the range [0, 255]. **/
 	function readByte() returns int
 		if readBufferIndex == 4
 			readBuffer = readIndex < intCount ? storage.loadInt(readIndex) : buffer
@@ -73,7 +71,7 @@ public class ByteBuffer
 		readBufferIndex++
 		return byte
 
-	/** Reads a single unsigned short from this buffer. The returned value will be in the range [0, 65535] **/
+	/** Reads a single unsigned short from this buffer. The returned value will be in the range [0, 65535]. **/
 	function readShort() returns int
 		return readByte() + readByte().shiftl(8)
 
@@ -92,7 +90,7 @@ public class ByteBuffer
 
 	function getIntCount() returns int
 		return intCount + 1
-	
+
 	/** Returns the number of bytes in the buffer. **/
 	function size() returns int
 		return intCount * 4 + bufferLength
@@ -104,9 +102,10 @@ public class ByteBuffer
 		return selectByte(storage.loadInt(intI), i - intI * 4)
 
 	/** Assures that the number of bytes is not bigger than the provided one. 
-	If it is, throws bytes from the end of the buffer away so that the number of bytes in the buffer will be exactly the provided one. 
+		If it is, throws bytes from the end of the buffer away 
+		so that the number of bytes in the buffer will be exactly the provided one. 
 	
-	Should not be used when reading from the buffer. */
+		Should not be used when reading from the buffer. */
 	function truncate(int size)
 		let ints = size div 4
 		let newIntCount = min(intCount, ints)
