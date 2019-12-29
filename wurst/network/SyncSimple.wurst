@@ -191,5 +191,7 @@ init
 				destroy syncData
 		else // cancelled
 			syncQueue.dequeue()
+			if syncData.syncBuffer != null
+				destroy syncData.syncBuffer
 			destroy syncData
 		checkQueue()
