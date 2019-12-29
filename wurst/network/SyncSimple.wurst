@@ -19,6 +19,15 @@ import ChunkedString
 @configurable public constant DEFAULT_PREFIX = "S"
 @configurable public constant LAST_CHUNK_PREFIX = "T"
 
+public interface BoolSyncListener
+	function onDataSynced(bool data)
+
+public interface IntSyncListener
+	function onDataSynced(int data)
+
+public interface RealSyncListener
+	function onDataSynced(real data)
+
 public interface StringSyncListener
 	function onDataSynced(string data)
 
@@ -26,6 +35,24 @@ public interface BufferSyncListener
 	function onDataSynced(ChunkedString buffer)
 
 constant syncQueue = new LinkedList<SyncData>
+
+/** Syncs a bool from the given player. */
+public function bool.sync(player p, BoolSyncListener listener)
+	this.toString().sync(p) data ->
+		listener.onDataSynced(data.toBool())
+		destroy listener
+
+/** Syncs an int from the given player. */
+public function int.sync(player p, IntSyncListener listener)
+	this.toString().sync(p) data ->
+		listener.onDataSynced(data.toInt())
+		destroy listener
+
+/** Syncs a real from the given player. */
+public function real.sync(player p, RealSyncListener listener)
+	this.toString().sync(p) data ->
+		listener.onDataSynced(data.toReal())
+		destroy listener
 
 /** Syncs a single string from the given player. */
 public function string.sync(player p, StringSyncListener listener)
