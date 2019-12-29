@@ -28,10 +28,10 @@ import Table
 
 public class ChunkedString
 	private Table table = new Table()
-	var chunkSize = DEFAULT_CHUNK_SIZE
-	var chunkCount = 0
-	var readIndex = -1
-	var buffer = ""
+	private var chunkSize = DEFAULT_CHUNK_SIZE
+	protected var chunkCount = 0
+	private var readIndex = -1
+	protected var buffer = ""
 
 	construct()
 
@@ -66,6 +66,18 @@ public class ChunkedString
 			return buffer
 		return table.loadString(index)
 
+	/** Returns the number of chunks in the string. */
+	function getChunkCount() returns int
+		return chunkCount + 1
+
+	/** Returns the length of every chunk in the string. The last chunk's size may be smaller than this number. */
+	function getChunkSize() returns int
+		return chunkSize
+
+	/** Calculates the length of the whole string. */
+	function length() returns int
+		return chunkCount * chunkSize + buffer.length()
+
 	/** Concatenates all chunks into one string.
 		This is unsafe because the chunked length might be
 		above the maximum allowed string length. */
@@ -96,7 +108,7 @@ public class ChunkedString
 		destroy table
 
 @Test
-function chunkStringTest()
+function chunkedStringTest()
 	let cstring = new ChunkedString(5)
 	cstring.append("abc")
 	cstring.append("def")

@@ -14,7 +14,7 @@ import ErrorHandling
 	>	myPlayer.loadData("myFileName") (status, data) ->
 	>		switch status
 	>			case SUCCESS
-	>				Log.info("Load successful. Chunks: " + data.chunkCount)
+	>				Log.info("Load successful. Chunks: " + data.getChunkCount())
 	>			default
 	>				Log.error("Error occured: " + status.toString())
 */
@@ -46,7 +46,7 @@ public interface LoadListener
 public function player.saveData(string slotName, string data)
 	let buffer = new ChunkedString(DEFAULT_CHUNK_SIZE)
 	buffer.append(data)
-	this.saveData(slotName.endsWith(".pld") ? slotName : slotName + ".pld", buffer)
+	this.saveData(slotName, buffer)
 	destroy buffer
 
 /** Blockingly saves the given data string for the given player. */

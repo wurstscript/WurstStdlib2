@@ -6,11 +6,11 @@ import ChunkedString
 	For improved safety, sync operations are performed sequentially - one string/chunk at a time.
 
 	Sync a string:
-	>	myString.sync() (synced) ->
+	>	myString.sync(p) (synced) ->
 	>		Log.info("string synced: " + synced.getUnsafeString())
 
 	Sync a ChunkedString:
-	>	myChunkedString.sync() (synced) ->
+	>	myChunkedString.sync(p) (synced) ->
 	>		while synced.hasChunk()
 	>			Log.info("chunked string synced: " + synced.readChunk())
 
@@ -82,6 +82,7 @@ function checkQueue()
 					BlzSendSyncData(DEFAULT_PREFIX, data)
 				else
 					BlzSendSyncData(LAST_CHUNK_PREFIX, data)
+
 init
 	let trig = CreateTrigger()
 	for i = 0 to bj_MAX_PLAYER_SLOTS - 1
@@ -103,4 +104,3 @@ init
 				syncQueue.dequeue()
 				destroy syncData
 		checkQueue()
-
