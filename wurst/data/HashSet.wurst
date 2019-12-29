@@ -3,7 +3,7 @@ import public HashList
 
 /** Generic set implementation */
 public class HashSet<T> extends HashList<T>
-	private static constant position = InitHashtable()
+	private static constant position = compiletime(InitHashtable())
 
 	/** Adds an element to this set */
 	override function add(vararg T elems)
