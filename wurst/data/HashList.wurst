@@ -6,8 +6,8 @@ package HashList
  * Removing elements from a HashList is slower than of LinkedLists.
 */
 public class HashList<T>
-	private static hashtable ht = InitHashtable()
-	private static hashtable occurences = InitHashtable()
+	private static hashtable ht = compiletime(InitHashtable())
+	private static hashtable occurences = compiletime(InitHashtable())
 
 	private int size = 0
 

@@ -12,7 +12,7 @@ import Annotations
 @configurable public var MUTE_ERROR_DURATION = 60
 
 constant PRIMARY_ERROR_KEY = -1
-constant HT = InitHashtable()
+constant HT = compiletime(InitHashtable())
 
 /**
 	Stores the last error thrown by error().
