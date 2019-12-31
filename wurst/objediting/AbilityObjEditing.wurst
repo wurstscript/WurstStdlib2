@@ -461,13 +461,7 @@ public class AbilityDefinitionPoisonArrows extends AbilityDefinition
 		addTooltipProperty("Stacking Type", lc)
 
 	function presetStackingType(StackingType stackingType, boolean flag)
-		let pow = stackingType castTo int
-		if stackingTypesSet.get(pow)
-			if not flag
-				stackingTypesSet = stackingTypesSet.reset(pow)
-		else if flag
-			stackingTypesSet = stackingTypesSet.set(pow)
-
+		stackingTypesSet.set(stackingType castTo int, flag)
 		presetStackingTypes(lvl -> stackingTypesSet.val)
 
 	function hasStackingType(StackingType stackingType) returns boolean
@@ -509,13 +503,7 @@ public class AbilityDefinitionRangerColdArrows extends AbilityDefinition
 
 	function presetStackFlag(StackFlag stackFlag, boolean flag)
 
-		let pow = stackFlag castTo int
-		if stackFlagsSet.get(pow)
-			if not flag
-				stackFlagsSet = stackFlagsSet.reset(pow)
-		else if flag
-			stackFlagsSet = stackFlagsSet.set(pow)
-
+		stackFlagsSet.set(stackFlag castTo int, flag)
 		presetStackFlags(lvl -> stackFlagsSet.val)
 
 	function hasStackFlag(StackFlag stackFlag) returns boolean
@@ -1810,13 +1798,7 @@ public class AbilityDefinitionTinkererRoboGoblinLevel0 extends AbilityDefinition
 		addTooltipProperty("Morphing Flags", lc)
 
 	function presetMorphingFlag(MorphingFlag morphingFlag, boolean flag)
-		let pow = morphingFlag castTo int
-		if morphingFlagsSet.get(pow)
-			if not flag
-				morphingFlagsSet = morphingFlagsSet.reset(pow)
-		else if flag
-			morphingFlagsSet = morphingFlagsSet.set(pow)
-
+		morphingFlagsSet.set(morphingFlag castTo int, flag)
 		presetMorphingFlags(lvl -> morphingFlagsSet.val)
 
 	function hasMorphingFlag(MorphingFlag morphingFlag) returns boolean
@@ -3479,13 +3461,7 @@ public class AbilityDefinitionEvilIllidanMetamorphosis extends AbilityDefinition
 		addTooltipProperty("Morphing Flags", lc)
 
 	function presetMorphingFlag(MorphingFlag morphingFlag, boolean flag)
-		let pow = morphingFlag castTo int
-		if morphingFlagsSet.get(pow)
-			if not flag
-				morphingFlagsSet = morphingFlagsSet.reset(pow)
-		else if flag
-			morphingFlagsSet = morphingFlagsSet.set(pow)
-
+		morphingFlagsSet.set(morphingFlag castTo int, flag)
 		presetMorphingFlags(lvl -> morphingFlagsSet.val)
 
 	function hasMorphingFlag(MorphingFlag morphingFlag) returns boolean
@@ -4141,13 +4117,7 @@ public class AbilityDefinitionSubmergeMyrmidon extends AbilityDefinition
 		addTooltipProperty("Morphing Flags", lc)
 
 	function presetMorphingFlag(MorphingFlag morphingFlag, boolean flag)
-		let pow = morphingFlag castTo int
-		if morphingFlagsSet.get(pow)
-			if not flag
-				morphingFlagsSet = morphingFlagsSet.reset(pow)
-		else if flag
-			morphingFlagsSet = morphingFlagsSet.set(pow)
-
+		morphingFlagsSet.set(morphingFlag castTo int, flag)
 		presetMorphingFlags(lvl -> morphingFlagsSet.val)
 		
 	function hasMorphingFlag(MorphingFlag morphingFlag) returns boolean
@@ -4188,13 +4158,7 @@ public class AbilityDefinitionSubmergeRoyalGuard extends AbilityDefinition
 		addTooltipProperty("Morphing Flags", lc)
 
 	function presetMorphingFlag(MorphingFlag morphingFlag, boolean flag)
-		let pow = morphingFlag castTo int
-		if morphingFlagsSet.get(pow)
-			if not flag
-				morphingFlagsSet = morphingFlagsSet.reset(pow)
-		else if flag
-			morphingFlagsSet = morphingFlagsSet.set(pow)
-
+		morphingFlagsSet.set(morphingFlag castTo int, flag)
 		presetMorphingFlags(lvl -> morphingFlagsSet.val)
 
 	function hasMorphingFlag(MorphingFlag morphingFlag) returns boolean
@@ -4267,13 +4231,7 @@ public class AbilityDefinitionSubmergeSnapDragon extends AbilityDefinition
 		addTooltipProperty("Morphing Flags", lc)
 
 	function presetMorphingFlag(MorphingFlag morphingFlag, boolean flag)
-		let pow = morphingFlag castTo int
-		if morphingFlagsSet.get(pow)
-			if not flag
-				morphingFlagsSet = morphingFlagsSet.reset(pow)
-		else if flag
-			morphingFlagsSet = morphingFlagsSet.set(pow)
-
+		morphingFlagsSet.set(morphingFlag castTo int, flag)
 		presetMorphingFlags(lvl -> morphingFlagsSet.val)
 
 	function hasMorphingFlag(MorphingFlag morphingFlag) returns boolean
@@ -4397,13 +4355,7 @@ public class AbilityDefinitionBurrowscarablvl2 extends AbilityDefinition
 		addTooltipProperty("Morphing Flags", lc)
 
 	function presetMorphingFlag(MorphingFlag morphingFlag, boolean flag)
-		let pow = morphingFlag castTo int
-		if morphingFlagsSet.get(pow)
-			if not flag
-				morphingFlagsSet = morphingFlagsSet.reset(pow)
-		else if flag
-			morphingFlagsSet = morphingFlagsSet.set(pow)
-
+		morphingFlagsSet.set(morphingFlag castTo int, flag)
 		presetMorphingFlags(lvl -> morphingFlagsSet.val)
 
 	function hasMorphingFlag(MorphingFlag morphingFlag) returns boolean
@@ -4536,13 +4488,7 @@ public class AbilityDefinitionBurrowscarablvl3 extends AbilityDefinition
 		addTooltipProperty("Morphing Flags", lc)
 
 	function presetMorphingFlag(MorphingFlag morphingFlag, boolean flag)
-		let pow = morphingFlag castTo int
-		if morphingFlagsSet.get(pow)
-			if not flag
-				morphingFlagsSet = morphingFlagsSet.reset(pow)
-		else if flag
-			morphingFlagsSet = morphingFlagsSet.set(pow)
-
+		morphingFlagsSet.set(morphingFlag castTo int, flag)
 		presetMorphingFlags(lvl -> morphingFlagsSet.val)
 
 	function hasMorphingFlag(MorphingFlag morphingFlag) returns boolean
@@ -5101,13 +5047,7 @@ public class AbilityDefinitionIllidanMetamorphosis extends AbilityDefinition
 		addTooltipProperty("Morphing Flags", lc)
 
 	function presetMorphingFlag(MorphingFlag morphingFlag, boolean flag)
-		let pow = morphingFlag castTo int
-		if morphingFlagsSet.get(pow)
-			if not flag
-				morphingFlagsSet = morphingFlagsSet.reset(pow)
-		else if flag
-			morphingFlagsSet = morphingFlagsSet.set(pow)
-
+		morphingFlagsSet.set(morphingFlag castTo int, flag)
 		presetMorphingFlags(lvl -> morphingFlagsSet.val)
 
 	function hasMorphingFlag(MorphingFlag morphingFlag) returns boolean
@@ -5730,13 +5670,7 @@ public class AbilityDefinitionAvengerForm extends AbilityDefinition
 		addTooltipProperty("Morphing Flags", lc)
 
 	function presetMorphingFlag(MorphingFlag morphingFlag, boolean flag)
-		let pow = morphingFlag castTo int
-		if morphingFlagsSet.get(pow)
-			if not flag
-				morphingFlagsSet = morphingFlagsSet.reset(pow)
-		else if flag
-			morphingFlagsSet = morphingFlagsSet.set(pow)
-
+		morphingFlagsSet.set(morphingFlag castTo int, flag)
 		presetMorphingFlags(lvl -> morphingFlagsSet.val)
 
 	function hasMorphingFlag(MorphingFlag morphingFlag) returns boolean
@@ -5983,13 +5917,7 @@ public class AbilityDefinitionBearform extends AbilityDefinition
 		addTooltipProperty("Morphing Flags", lc)
 
 	function presetMorphingFlag(MorphingFlag morphingFlag, boolean flag)
-		let pow = morphingFlag castTo int
-		if morphingFlagsSet.get(pow)
-			if not flag
-				morphingFlagsSet = morphingFlagsSet.reset(pow)
-		else if flag
-			morphingFlagsSet = morphingFlagsSet.set(pow)
-
+		morphingFlagsSet.set(morphingFlag castTo int, flag)
 		presetMorphingFlags(lvl -> morphingFlagsSet.val)
 
 	function hasMorphingFlag(MorphingFlag morphingFlag) returns boolean
@@ -6480,13 +6408,7 @@ public class AbilityDefinitionColdArrowscreep extends AbilityDefinition
 
 	function presetStackFlag(StackFlag stackFlag, boolean flag)
 
-		let pow = stackFlag castTo int
-		if stackFlagsSet.get(pow)
-			if not flag
-				stackFlagsSet = stackFlagsSet.reset(pow)
-		else if flag
-			stackFlagsSet = stackFlagsSet.set(pow)
-
+		stackFlagsSet.set(stackFlag castTo int, flag)
 		presetStackFlags(lvl -> stackFlagsSet.val)
 
 	function hasStackFlag(StackFlag stackFlag) returns boolean
@@ -6735,13 +6657,7 @@ public class AbilityDefinitionStoneForm extends AbilityDefinition
 		addTooltipProperty("Morphing Flags", lc)
 
 	function presetMorphingFlag(MorphingFlag morphingFlag, boolean flag)
-		let pow = morphingFlag castTo int
-		if morphingFlagsSet.get(pow)
-			if not flag
-				morphingFlagsSet = morphingFlagsSet.reset(pow)
-		else if flag
-			morphingFlagsSet = morphingFlagsSet.set(pow)
-
+		morphingFlagsSet.set(morphingFlag castTo int, flag)
 		presetMorphingFlags(lvl -> morphingFlagsSet.val)
 
 	function hasMorphingFlag(MorphingFlag morphingFlag) returns boolean
@@ -7389,13 +7305,7 @@ public class AbilityDefinitionParasite extends AbilityDefinition
 		addTooltipProperty("Stacking Type", lc)
 
 	function presetStackingType(StackingType stackingType, boolean flag)
-		let pow = stackingType castTo int
-		if stackingTypesSet.get(pow)
-			if not flag
-				stackingTypesSet = stackingTypesSet.reset(pow)
-		else if flag
-			stackingTypesSet = stackingTypesSet.set(pow)
-
+		stackingTypesSet.set(stackingType castTo int, flag)
 		presetStackingTypes(lvl -> stackingTypesSet.val)
 
 	function hasStackingType(StackingType stackingType) returns boolean
@@ -7477,13 +7387,7 @@ public class AbilityDefinitionDemonHunterMetamorphosis extends AbilityDefinition
 		def.setLevelsDataInt("Eme2", lvls, 2, lc)
 		addTooltipProperty("Morphing Flags", lc)
 	function presetMorphingFlag(MorphingFlag morphingFlag, boolean flag)
-		let pow = morphingFlag castTo int
-		if morphingFlagsSet.get(pow)
-			if not flag
-				morphingFlagsSet = morphingFlagsSet.reset(pow)
-		else if flag
-			morphingFlagsSet = morphingFlagsSet.set(pow)
-
+		morphingFlagsSet.set(morphingFlag castTo int, flag)
 		presetMorphingFlags(lvl -> morphingFlagsSet.val)
 
 	function hasMorphingFlag(MorphingFlag morphingFlag) returns boolean
@@ -7710,13 +7614,7 @@ public class AbilityDefinitionVenomSpears extends AbilityDefinition
 		addTooltipProperty("Stacking Type", lc)
 
 	function presetStackingType(StackingType stackingType, boolean flag)
-		let pow = stackingType castTo int
-		if stackingTypesSet.get(pow)
-			if not flag
-				stackingTypesSet = stackingTypesSet.reset(pow)
-		else if flag
-			stackingTypesSet = stackingTypesSet.set(pow)
-
+		stackingTypesSet.set(stackingType castTo int, flag)
 		presetStackingTypes(lvl -> stackingTypesSet.val)
 
 	function hasStackingType(StackingType stackingType) returns boolean
@@ -7804,13 +7702,7 @@ public class AbilityDefinitionBurrow extends AbilityDefinition
 		addTooltipProperty("Morphing Flags", lc)
 
 	function presetMorphingFlag(MorphingFlag morphingFlag, boolean flag)
-		let pow = morphingFlag castTo int
-		if morphingFlagsSet.get(pow)
-			if not flag
-				morphingFlagsSet = morphingFlagsSet.reset(pow)
-		else if flag
-			morphingFlagsSet = morphingFlagsSet.set(pow)
-
+		morphingFlagsSet.set(morphingFlag castTo int, flag)
 		presetMorphingFlags(lvl -> morphingFlagsSet.val)
 
 	function hasMorphingFlag(MorphingFlag morphingFlag) returns boolean
@@ -7941,13 +7833,7 @@ public class AbilityDefinitionPhoenix extends AbilityDefinition
 		addTooltipProperty("Morphing Flags", lc)
 
 	function presetMorphingFlag(MorphingFlag morphingFlag, boolean flag)
-		let pow = morphingFlag castTo int
-		if morphingFlagsSet.get(pow)
-			if not flag
-				morphingFlagsSet = morphingFlagsSet.reset(pow)
-		else if flag
-			morphingFlagsSet = morphingFlagsSet.set(pow)
-
+		morphingFlagsSet.set(morphingFlag castTo int, flag)
 		presetMorphingFlags(lvl -> morphingFlagsSet.val)
 
 	function hasMorphingFlag(MorphingFlag morphingFlag) returns boolean
@@ -9256,13 +9142,7 @@ public class AbilityDefinitionAlchemistChemicalRage extends AbilityDefinition
 		addTooltipProperty("Morphing Flags", lc)
 
 	function presetMorphingFlag(MorphingFlag morphingFlag, boolean flag)
-		let pow = morphingFlag castTo int
-		if morphingFlagsSet.get(pow)
-			if not flag
-				morphingFlagsSet = morphingFlagsSet.reset(pow)
-		else if flag
-			morphingFlagsSet = morphingFlagsSet.set(pow)
-
+		morphingFlagsSet.set(morphingFlag castTo int, flag)
 		presetMorphingFlags(lvl -> morphingFlagsSet.val)
 
 	function hasMorphingFlag(MorphingFlag morphingFlag) returns boolean
@@ -9800,13 +9680,7 @@ public class AbilityDefinitionPoisonAttack extends AbilityDefinition
 		addTooltipProperty("Stacking Type", lc)
 
 	function presetStackingType(StackingType stackingType, boolean flag)
-		let pow = stackingType castTo int
-		if stackingTypesSet.get(pow)
-			if not flag
-				stackingTypesSet = stackingTypesSet.reset(pow)
-		else if flag
-			stackingTypesSet = stackingTypesSet.set(pow)
-
+		stackingTypesSet.set(stackingType castTo int, flag)
 		presetStackingTypes(lvl -> stackingTypesSet.val)
 
 	function hasStackingType(StackingType stackingType) returns boolean
@@ -10712,13 +10586,7 @@ public class AbilityDefinitionSlowPoison extends AbilityDefinition
 		addTooltipProperty("Stacking Type", lc)
 
 	function presetStackingType(StackingType stackingType, boolean flag)
-		let pow = stackingType castTo int
-		if stackingTypesSet.get(pow)
-			if not flag
-				stackingTypesSet = stackingTypesSet.reset(pow)
-		else if flag
-			stackingTypesSet = stackingTypesSet.set(pow)
-
+		stackingTypesSet.set(stackingType castTo int, flag)
 		presetStackingTypes(lvl -> stackingTypesSet.val)
 
 	function hasStackingType(StackingType stackingType) returns boolean
@@ -10895,13 +10763,7 @@ public class AbilityDefinitionAspx extends AbilityDefinition
 		addTooltipProperty("Morphing Flags", lc)
 
 	function presetMorphingFlag(MorphingFlag morphingFlag, boolean flag)
-		let pow = morphingFlag castTo int
-		if morphingFlagsSet.get(pow)
-			if not flag
-				morphingFlagsSet = morphingFlagsSet.reset(pow)
-		else if flag
-			morphingFlagsSet = morphingFlagsSet.set(pow)
-
+		morphingFlagsSet.set(morphingFlag castTo int, flag)
 		presetMorphingFlags(lvl -> morphingFlagsSet.val)
 
 	function hasMorphingFlag(MorphingFlag morphingFlag) returns boolean
@@ -11087,13 +10949,7 @@ public class AbilityDefinitionOrbofVenomPoisonAttack extends AbilityDefinition
 		addTooltipProperty("Stacking Type", lc)
 
 	function presetStackingType(StackingType stackingType, boolean flag)
-		let pow = stackingType castTo int
-		if stackingTypesSet.get(pow)
-			if not flag
-				stackingTypesSet = stackingTypesSet.reset(pow)
-		else if flag
-			stackingTypesSet = stackingTypesSet.set(pow)
-
+		stackingTypesSet.set(stackingType castTo int, flag)
 		presetStackingTypes(lvl -> stackingTypesSet.val)
 
 	function hasStackingType(StackingType stackingType) returns boolean
@@ -12392,13 +12248,7 @@ public class AbilityDefinitionCorporealForm extends AbilityDefinition
 		addTooltipProperty("Morphing Flags", lc)
 
 	function presetMorphingFlag(MorphingFlag morphingFlag, boolean flag)
-		let pow = morphingFlag castTo int
-		if morphingFlagsSet.get(pow)
-			if not flag
-				morphingFlagsSet = morphingFlagsSet.reset(pow)
-		else if flag
-			morphingFlagsSet = morphingFlagsSet.set(pow)
-
+		morphingFlagsSet.set(morphingFlag castTo int, flag)
 		presetMorphingFlags(lvl -> morphingFlagsSet.val)
 
 	function hasMorphingFlag(MorphingFlag morphingFlag) returns boolean
@@ -13093,13 +12943,7 @@ public class AbilityDefinitionTinkererRoboGoblinLevel1 extends AbilityDefinition
 		addTooltipProperty("Morphing Flags", lc)
 
 	function presetMorphingFlag(MorphingFlag morphingFlag, boolean flag)
-		let pow = morphingFlag castTo int
-		if morphingFlagsSet.get(pow)
-			if not flag
-				morphingFlagsSet = morphingFlagsSet.reset(pow)
-		else if flag
-			morphingFlagsSet = morphingFlagsSet.set(pow)
-
+		morphingFlagsSet.set(morphingFlag castTo int, flag)
 		presetMorphingFlags(lvl -> morphingFlagsSet.val)
 	
 	function hasMorphingFlag(MorphingFlag morphingFlag) returns boolean
@@ -13286,13 +13130,7 @@ public class AbilityDefinitionTinkererRoboGoblinLevel3 extends AbilityDefinition
 		addTooltipProperty("Morphing Flags", lc)
 
 	function presetMorphingFlag(MorphingFlag morphingFlag, boolean flag)
-		let pow = morphingFlag castTo int
-		if morphingFlagsSet.get(pow)
-			if not flag
-				morphingFlagsSet = morphingFlagsSet.reset(pow)
-		else if flag
-			morphingFlagsSet = morphingFlagsSet.set(pow)
-
+		morphingFlagsSet.set(morphingFlag castTo int, flag)
 		presetMorphingFlags(lvl -> morphingFlagsSet.val)
 
 	function hasMorphingFlag(MorphingFlag morphingFlag) returns boolean
@@ -13418,13 +13256,7 @@ public class AbilityDefinitionTinkererRoboGoblinLevel2 extends AbilityDefinition
 		addTooltipProperty("Morphing Flags", lc)
 
 	function presetMorphingFlag(MorphingFlag morphingFlag, boolean flag)
-		let pow = morphingFlag castTo int
-		if morphingFlagsSet.get(pow)
-			if not flag
-				morphingFlagsSet = morphingFlagsSet.reset(pow)
-		else if flag
-			morphingFlagsSet = morphingFlagsSet.set(pow)
-
+		morphingFlagsSet.set(morphingFlag castTo int, flag)
 		presetMorphingFlags(lvl -> morphingFlagsSet.val)
 
 	function hasMorphingFlag(MorphingFlag morphingFlag) returns boolean
@@ -14372,13 +14204,7 @@ public class AbilityDefinitionSeaWitchFrostArrows extends AbilityDefinition
 
 	function presetStackFlag(StackFlag stackFlag, boolean flag)
 
-		let pow = stackFlag castTo int
-		if stackFlagsSet.get(pow)
-			if not flag
-				stackFlagsSet = stackFlagsSet.reset(pow)
-		else if flag
-			stackFlagsSet = stackFlagsSet.set(pow)
-
+		stackFlagsSet.set(stackFlag castTo int, flag)
 		presetStackFlags(lvl -> stackFlagsSet.val)
 
 	function hasStackFlag(StackFlag stackFlag) returns boolean
@@ -14809,13 +14635,7 @@ public class AbilityDefinitionEtherealForm extends AbilityDefinition
 		addTooltipProperty("Morphing Flags", lc)
 
 	function presetMorphingFlag(MorphingFlag morphingFlag, boolean flag)
-		let pow = morphingFlag castTo int
-		if morphingFlagsSet.get(pow)
-			if not flag
-				morphingFlagsSet = morphingFlagsSet.reset(pow)
-		else if flag
-			morphingFlagsSet = morphingFlagsSet.set(pow)
-
+		morphingFlagsSet.set(morphingFlag castTo int, flag)
 		presetMorphingFlags(lvl -> morphingFlagsSet.val)
 
 	function hasMorphingFlag(MorphingFlag morphingFlag) returns boolean
@@ -14881,13 +14701,7 @@ public class AbilityDefinitionRavenFormMedivh extends AbilityDefinition
 		addTooltipProperty("Morphing Flags", lc)
 
 	function presetMorphingFlag(MorphingFlag morphingFlag, boolean flag)
-		let pow = morphingFlag castTo int
-		if morphingFlagsSet.get(pow)
-			if not flag
-				morphingFlagsSet = morphingFlagsSet.reset(pow)
-		else if flag
-			morphingFlagsSet = morphingFlagsSet.set(pow)
-
+		morphingFlagsSet.set(morphingFlag castTo int, flag)
 		presetMorphingFlags(lvl -> morphingFlagsSet.val)
 
 	function hasMorphingFlag(MorphingFlag morphingFlag) returns boolean
@@ -15182,13 +14996,7 @@ public class AbilityDefinitionRavenFormDruidoftheTalon extends AbilityDefinition
 		addTooltipProperty("Morphing Flags", lc)
 
 	function presetMorphingFlag(MorphingFlag morphingFlag, boolean flag)
-		let pow = morphingFlag castTo int
-		if morphingFlagsSet.get(pow)
-			if not flag
-				morphingFlagsSet = morphingFlagsSet.reset(pow)
-		else if flag
-			morphingFlagsSet = morphingFlagsSet.set(pow)
-
+		morphingFlagsSet.set(morphingFlag castTo int, flag)
 		presetMorphingFlags(lvl -> morphingFlagsSet.val)
 
 	function hasMorphingFlag(MorphingFlag morphingFlag) returns boolean
@@ -16245,13 +16053,7 @@ public class AbilityDefinitionVenomSpearsCreep extends AbilityDefinition
 		addTooltipProperty("Stacking Type", lc)
 
 	function presetStackingType(StackingType stackingType, boolean flag)
-		let pow = stackingType castTo int
-		if stackingTypesSet.get(pow)
-			if not flag
-				stackingTypesSet = stackingTypesSet.reset(pow)
-		else if flag
-			stackingTypesSet = stackingTypesSet.set(pow)
-
+		stackingTypesSet.set(stackingType castTo int, flag)
 		presetStackingTypes(lvl -> stackingTypesSet.val)
 
 	function hasStackingType(StackingType stackingType) returns boolean
@@ -16418,13 +16220,7 @@ public class AbilityDefinitionSunderingBlades extends AbilityDefinition
 		addTooltipProperty("Defense Type Affected", lc)
 
 	function presetDefenseTypeAffected(ArmorType atype, boolean flag)
-		let pow = atype castTo int
-		if armorTypes.get(pow)
-			if not flag
-				armorTypes = armorTypes.reset(pow)
-		else if flag
-			armorTypes = armorTypes.set(pow)
-
+		armorTypes.set(atype castTo int, flag)
 		presetDefenseTypeAffected(lvl -> armorTypes.val)
 
 	function hasStackingType(StackingType stackingType) returns boolean
