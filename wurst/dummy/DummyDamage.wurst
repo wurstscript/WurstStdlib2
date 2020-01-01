@@ -20,7 +20,7 @@ import DummyRecycler
 */
 
 public class DummyDamage
-	private unit dummy = null
+	private unit dummy = DummyRecycler.get(origin, angle(0))
 	private widget target = null
 	private var amount = 0.
 	private var attack = false
@@ -30,9 +30,6 @@ public class DummyDamage
 	private var attackType = ATTACK_TYPE_CHAOS
 	private var damageType = DAMAGE_TYPE_UNKNOWN
 	private var weaponType = WEAPON_TYPE_WHOKNOWS
-
-	construct()
-		dummy = DummyRecycler.get(origin, angle(0))
 
 	function apply()
 		apply(false)
