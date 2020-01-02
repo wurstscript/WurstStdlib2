@@ -88,25 +88,11 @@ public class Base64Encoder
     construct()
         this.chunkedString = new ChunkedString()
 
-    /** This constructor consumes the ByteBuffer. If you want to save it, use the 'write' method. */
-    construct(ByteBuffer data)
-        this.chunkedString = new ChunkedString()
-
-        writeData(data)
-        destroy data
-
     construct(int maxChunkLength)
         this.chunkedString = new ChunkedString(maxChunkLength)
 
-    /** This constructor consumes the ByteBuffer. If you want to save it, use the 'write' method. */
-    construct(ByteBuffer data, int maxChunkLength)
-        this.chunkedString = new ChunkedString(maxChunkLength)
-
-        writeData(data)
-        destroy data
-
     ondestroy
-        if chunkedString != null
+        if chunkedString != null // The string is null after calling `intoData()`.
             destroy chunkedString
 
     // It's way too much overhead in dispatching two lambdas per each byte, 'inlining' them to deal with this.
@@ -171,6 +157,11 @@ public class Base64Encoder
     function write(ByteBuffer data)
         writeData(data)
         data.resetRead()
+    
+    /** Writes all bytes from the buffer to be serialized into Base64 and destroys the buffer. */
+    function consume(ByteBuffer data)
+        writeData(data)
+        destroy data
 
     /** Consumes this encoder and returns the encoded data as a ChunkedString. */
     function intoData() returns ChunkedString
@@ -196,18 +187,8 @@ public class Base64Decoder
 
     private var lastDecoded = ""
 
-    construct()
-
-    construct(string data)
-        append(data)
-
-    /** This constructor consumes the ChunkedString. If you want to save it, use the 'append' method. */
-    construct(ChunkedString data)
-        appendData(data)
-        destroy data
-
     ondestroy
-        if byteBuffer != null
+        if byteBuffer != null // The buffer is null after calling `intoData()`.
             destroy byteBuffer
 
     // It's way too much overhead in dispatching two lambdas per each chunk, 'inlining' them to deal with this.
@@ -241,6 +222,11 @@ public class Base64Decoder
         appendData(data)
         data.resetRead()
 
+    /** Appends a part of the Base64-encoded data and destroys it. */
+    function consume(ChunkedString data)
+        appendData(data)
+        destroy data
+
     @inline private static function decode(string char) returns int
         return REVERSE_CHARMAP[char.toChar().toInt()]
 
@@ -273,12 +259,12 @@ public class Base64Decoder
 
 /** Encodes the bytes in this buffer to a string according to the Base64 format. */
 public function ByteBuffer.encodeBase64() returns ChunkedString
-    return new Base64Encoder(this).intoData()
+    return new Base64Encoder()..consume(this).intoData()
 
 /** Decodes the bytes encoded into this string according to the Base64 format. */
 public function ChunkedString.decodeBase64() returns ByteBuffer
-    return new Base64Decoder(this).intoData()
+    return new Base64Decoder()..consume(this).intoData()
 
 /** Decodes the bytes encoded into this string according to the Base64 format. */
 public function string.decodeBase64() returns ByteBuffer
-    return new Base64Decoder(this).intoData()
+    return new Base64Decoder()..append(this).intoData()

@@ -47,7 +47,7 @@ function base64EncoderSmallChunksTest()
 
 @Test
 function base64DecoderTest()
-    let decoder = new Base64Decoder("SGVsbG8sIHdvcmxkIQ==")
+    let decoder = new Base64Decoder()..append("SGVsbG8sIHdvcmxkIQ==")
 
     let data = decoder.intoData()
     data.readByte().assertEquals(0x48)
@@ -72,7 +72,7 @@ function base64NegativeIntegersTest()
     ..writeInt(1000)
     ..writeShort(1000)
 
-    let data = new Base64Decoder(encoder.intoData()).intoData()
+    let data = new Base64Decoder()..consume(encoder.intoData()).intoData()
     data.readInt().assertEquals(-1000)
     data.readInt().assertEquals(1000)
     data.readShort().assertEquals(1000)
@@ -178,7 +178,7 @@ function base64EncoderStressTest()
 
 @Test
 function base64DecoderStressTest()
-    let decoder = new Base64Decoder("")
+    let decoder = new Base64Decoder()
     for i = 0 to chunks.length - 1
         decoder.append(chunks[i])
     let data = decoder.intoData()
