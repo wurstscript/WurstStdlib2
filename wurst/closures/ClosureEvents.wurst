@@ -102,7 +102,8 @@ public abstract class EventListener
 	static EventListener array unitListenersFirsts
 	static var useMouseEvents = false
 
-	int eventId = 0
+	var eventId = 0
+	var uid = -1
 	EventListener next = null
 	EventListener prev = null
 
@@ -122,6 +123,7 @@ public abstract class EventListener
 		if uid <= 0
 			return listener
 		listener.eventId = eventId.toIntId()
+		listener.uid = uid
 		if unitListenersFirsts[uid] != null
 			unitListenersFirsts[uid].prev = listener
 			listener.next = unitListenersFirsts[uid]
@@ -182,7 +184,7 @@ public abstract class EventListener
 			var listener = generalListenersFirsts[id]
 			while listener != null
 				let nextListener = listener.next
-				listener.onEvent()				
+				listener.onEvent()
 				listener = nextListener
 
 	static function onSpellEffect()
@@ -204,21 +206,21 @@ public abstract class EventListener
 				listener = nextListener
 
 	ondestroy
-		var listener = generalListenersFirsts[this.eventId]
-		if listener == this
-			generalListenersFirsts[this.eventId] = next
-		else if prev != null
-			prev.next = next
+		if uid < 0
+			let listener = generalListenersFirsts[this.eventId]
+			if listener == this
+				generalListenersFirsts[this.eventId] = next
+			else if prev != null
+				prev.next = next
+		else
+			let listener = unitListenersFirsts[this.uid]
+			if listener == this
+				unitListenersFirsts[this.uid] = next
+			else if prev != null
+				prev.next = next
 
 		if next != null
 			next.prev = prev
-
-		listener = unitListenersFirsts[this.eventId]
-		if listener == this
-			unitListenersFirsts[this.eventId] = next
-		else if prev != null
-			prev.next = next
-
 		next = null
 		prev = null
 
