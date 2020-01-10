@@ -153,6 +153,11 @@ public class Knockback3
 		return unitNodes.has(u) ? unitNodes.get(u).del : ZERO3
 
 
+	static function forget(unit u)
+		if unitNodes.has(u)
+			destroy unitNodes.get(u)
+
+
 	// Instance Variables
 	private unit u
 	private vec3 del
@@ -217,15 +222,14 @@ public class Knockback3
 
 	private static constant unitNodes = new HashMap<unit, Knockback3>()
 
-	private static function tickUnitDone(Knockback3 knockback)
-		knockback.u.setFlyHeight(0., 0.)
-		unitNodes.remove(knockback.u)
+	ondestroy
+		unitNodes.remove(this.u)
 
 		if USE_MOVE_SPEED_MODIFIERS
-			knockback.u.setMoveSpeed(knockback.u.getDefaultMovespeed())
+			this.u.setMoveSpeed(this.u.getDefaultMovespeed())
 
 		if USE_PROP_WINDOW_MODIFIERS
-			knockback.u.setPropWindow(knockback.u.getDefaultPropWindow() * bj_DEGTORAD)
+			this.u.setPropWindow(this.u.getDefaultPropWindow() * bj_DEGTORAD)
 
 
 	private static let clock = CreateTimer()
@@ -250,8 +254,17 @@ public class Knockback3
 			if velXySquared > destroyDestructableSpeedThreshold * ANIMATION_PERIOD and pos3.z < destroyDestructableHeightThreshold
 				tickTryDestructable(knockback, newPos3)
 
-			if velXySquared < minimumSlideSpeed * ANIMATION_PERIOD and knockback.del.z > elasticityThreshold * ANIMATION_PERIOD and knockback.del.z < -1 * elasticityThreshold * ANIMATION_PERIOD and pos3.z < isAirborneThreshold
-				tickUnitDone(knockback)
+			if (
+				// Horizontal velocity is low.
+				velXySquared < minimumSlideSpeed * ANIMATION_PERIOD
+			) and (
+				// Vertical velocity is low.
+				knockback.del.z.abs() < -1. * elasticityThreshold * ANIMATION_PERIOD
+			) and (
+				// Not airborne.
+				pos3.z < isAirborneThreshold
+			)
+				knockback.u.setFlyHeight(0., 0.)
 				destroy knockback
 
 		if size == 0
