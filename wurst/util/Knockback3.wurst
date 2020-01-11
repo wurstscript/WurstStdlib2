@@ -139,6 +139,10 @@ public class Knockback3
 		add(u, speed, theta, vec2(groundSpeed, vel.z).getAngle())
 
 
+	/**
+		Setter for the knockback vector on unit u.  If the unit is not already tracked, this has the same behavior as
+		`add`.
+	*/
 	static function setVel(unit u, real velocity, angle groundAngle, angle airAngle)
 		if unitNodes.has(u)
 			let knockback = unitNodes.get(u)
@@ -149,10 +153,17 @@ public class Knockback3
 			add(u, velocity, groundAngle, airAngle)
 
 
+	/**
+		Getting for the knockback vector on unit u.  If the unit is not already tracked, returns (0, 0, 0).
+	*/
 	static function getVel(unit u) returns vec3
 		return unitNodes.has(u) ? unitNodes.get(u).del : ZERO3
 
 
+	/**
+		Stop tracking unit u.  If the unit is middair it will simply stop moving.  If the unit is already untracked,
+		nothing happens.
+	*/
 	static function forget(unit u)
 		if unitNodes.has(u)
 			destroy unitNodes.get(u)
@@ -254,16 +265,10 @@ public class Knockback3
 			if velXySquared > destroyDestructableSpeedThreshold * ANIMATION_PERIOD and pos3.z < destroyDestructableHeightThreshold
 				tickTryDestructable(knockback, newPos3)
 
-			if (
-				// Horizontal velocity is low.
-				velXySquared < minimumSlideSpeed * ANIMATION_PERIOD
-			) and (
-				// Vertical velocity is low.
-				knockback.del.z.abs() < -1. * elasticityThreshold * ANIMATION_PERIOD
-			) and (
-				// Not airborne.
-				pos3.z < isAirborneThreshold
-			)
+			let is_vel_xy_low = velXySquared < (minimumSlideSpeed * minimumSlideSpeed) * ANIMATION_PERIOD
+			let is_vel_z_low = knockback.del.z.abs() < -1. * elasticityThreshold * ANIMATION_PERIOD
+			let is_airborne = pos3.z > isAirborneThreshold
+			if is_vel_xy_low and is_vel_z_low and not is_airborne
 				knockback.u.setFlyHeight(0., 0.)
 				destroy knockback
 
