@@ -154,7 +154,7 @@ public class Knockback3
 
 
 	/**
-		Getting for the knockback vector on unit u.  If the unit is not already tracked, returns (0, 0, 0).
+		Getter for the knockback vector on unit u.  If the unit is not already tracked, returns (0, 0, 0).
 	*/
 	static function getVel(unit u) returns vec3
 		return unitNodes.has(u) ? unitNodes.get(u).del : ZERO3
