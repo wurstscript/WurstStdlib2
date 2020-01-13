@@ -140,7 +140,7 @@ public class Knockback3
 
 
 	/**
-		Setter for the knockback vector on unit u.  If the unit is not already tracked, this has the same behavior as
+		Setter for the knockback vector on unit u. If the unit is not already tracked, this has the same behavior as
 		`add`.
 	*/
 	static function setVel(unit u, real velocity, angle groundAngle, angle airAngle)
@@ -161,7 +161,7 @@ public class Knockback3
 
 
 	/**
-		Stop tracking unit u.  If the unit is middair it will simply stop moving.  If the unit is already untracked,
+		Stop tracking unit u. If the unit is middair it will simply stop moving. If the unit is already untracked,
 		nothing happens.
 	*/
 	static function forget(unit u)
@@ -265,10 +265,10 @@ public class Knockback3
 			if velXySquared > destroyDestructableSpeedThreshold * ANIMATION_PERIOD and pos3.z < destroyDestructableHeightThreshold
 				tickTryDestructable(knockback, newPos3)
 
-			let is_vel_xy_low = velXySquared < (minimumSlideSpeed * minimumSlideSpeed) * ANIMATION_PERIOD
-			let is_vel_z_low = knockback.del.z.abs() < -1. * elasticityThreshold * ANIMATION_PERIOD
-			let is_airborne = pos3.z > isAirborneThreshold
-			if is_vel_xy_low and is_vel_z_low and not is_airborne
+			let isVelxyLow = velXySquared < (minimumSlideSpeed * minimumSlideSpeed) * ANIMATION_PERIOD
+			let isVelzLow = knockback.del.z.abs() < -1. * elasticityThreshold * ANIMATION_PERIOD
+			let isAirborne = pos3.z > isAirborneThreshold
+			if isVelxyLow and isVelzLow and not isAirborne
 				knockback.u.setFlyHeight(0., 0.)
 				destroy knockback
 
