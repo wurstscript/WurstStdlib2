@@ -139,6 +139,10 @@ public class Knockback3
 		add(u, speed, theta, vec2(groundSpeed, vel.z).getAngle())
 
 
+	/**
+		Setter for the knockback vector on unit u. If the unit is not already tracked, this has the same behavior as
+		`add`.
+	*/
 	static function setVel(unit u, real velocity, angle groundAngle, angle airAngle)
 		if unitNodes.has(u)
 			let knockback = unitNodes.get(u)
@@ -149,8 +153,20 @@ public class Knockback3
 			add(u, velocity, groundAngle, airAngle)
 
 
+	/**
+		Getter for the knockback vector on unit u.  If the unit is not already tracked, returns (0, 0, 0).
+	*/
 	static function getVel(unit u) returns vec3
 		return unitNodes.has(u) ? unitNodes.get(u).del : ZERO3
+
+
+	/**
+		Stop tracking unit u. If the unit is middair it will simply stop moving. If the unit is already untracked,
+		nothing happens.
+	*/
+	static function forget(unit u)
+		if unitNodes.has(u)
+			destroy unitNodes.get(u)
 
 
 	// Instance Variables
@@ -217,15 +233,14 @@ public class Knockback3
 
 	private static constant unitNodes = new HashMap<unit, Knockback3>()
 
-	private static function tickUnitDone(Knockback3 knockback)
-		knockback.u.setFlyHeight(0., 0.)
-		unitNodes.remove(knockback.u)
+	ondestroy
+		unitNodes.remove(this.u)
 
 		if USE_MOVE_SPEED_MODIFIERS
-			knockback.u.setMoveSpeed(knockback.u.getDefaultMovespeed())
+			this.u.setMoveSpeed(this.u.getDefaultMovespeed())
 
 		if USE_PROP_WINDOW_MODIFIERS
-			knockback.u.setPropWindow(knockback.u.getDefaultPropWindow() * bj_DEGTORAD)
+			this.u.setPropWindow(this.u.getDefaultPropWindow() * bj_DEGTORAD)
 
 
 	private static let clock = CreateTimer()
@@ -250,8 +265,11 @@ public class Knockback3
 			if velXySquared > destroyDestructableSpeedThreshold * ANIMATION_PERIOD and pos3.z < destroyDestructableHeightThreshold
 				tickTryDestructable(knockback, newPos3)
 
-			if velXySquared < minimumSlideSpeed * ANIMATION_PERIOD and knockback.del.z > elasticityThreshold * ANIMATION_PERIOD and knockback.del.z < -1 * elasticityThreshold * ANIMATION_PERIOD and pos3.z < isAirborneThreshold
-				tickUnitDone(knockback)
+			let isVelxyLow = velXySquared < (minimumSlideSpeed * minimumSlideSpeed) * ANIMATION_PERIOD
+			let isVelzLow = knockback.del.z.abs() < -1. * elasticityThreshold * ANIMATION_PERIOD
+			let isAirborne = pos3.z > isAirborneThreshold
+			if isVelxyLow and isVelzLow and not isAirborne
+				knockback.u.setFlyHeight(0., 0.)
 				destroy knockback
 
 		if size == 0
