@@ -92,8 +92,8 @@ public class ChunkedString
 	above the maximum allowed string length. */
 	function getUnsafeSubString(int startIndex, int endIndex) returns string
 		var out = ""
-		var startChunk = startIndex div chunkSize
-		var lastChunk = endIndex div chunkSize
+		let startChunk = startIndex div chunkSize
+		let lastChunk = endIndex div chunkSize
 		for i = startChunk to lastChunk
 			if i == startChunk
 				out += getChunk(i).substring(startIndex - startChunk * chunkSize, min(endIndex, chunkSize))

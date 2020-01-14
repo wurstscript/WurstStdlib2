@@ -329,12 +329,12 @@ public function mat3.toString() returns string
 
 /** Creates 3x3 rotation matrix from axis and angle. */
 public function vec3.toRotation(angle angl) returns mat3
-	var v = this.norm()
-	var x = v.x
-	var y = v.y
-	var z = v.z
-	var mcos = 1 - angl.cos()
-	var sin = angl.sin()
+	let v = this.norm()
+	let x = v.x
+	let y = v.y
+	let z = v.z
+	let mcos = 1 - angl.cos()
+	let sin = angl.sin()
 	return mat3(1 + mcos * (x * x - 1),	 	-z * sin + mcos * x * y,	 y * sin + mcos * x * z,
 				z * sin + mcos * x * y,	  	1 + mcos * (y * y - 1),		-x * sin + mcos * y * z,
 				-y * sin + mcos * x * z,	x * sin + mcos * y * z,	 	1 + mcos * (z * z - 1))
@@ -377,7 +377,7 @@ public function vec2.toTranslation() returns mat3
 /** Multiplies this vector by the given matrix dividing by w, assuming the fourth (w) component of the vector is 1. This is
 	* mostly used to project/unproject vectors via a perspective projection matrix. **/
 public function vec3.project(mat4 matrix) returns vec3
-	var l_w = 1. / (this.x * matrix.m30 + this.y * matrix.m31 + this.z * matrix.m32 + matrix.m33)
+	let l_w = 1. / (this.x * matrix.m30 + this.y * matrix.m31 + this.z * matrix.m32 + matrix.m33)
 	return vec3((this.x * matrix.m00 + this.y * matrix.m01 + this.z * matrix.m02 + matrix.m03) * l_w,
 		(this.x * matrix.m10 + this.y * matrix.m11 + this.z * matrix.m12 + matrix.m13)
 		* l_w, (this.x * matrix.m20 + this.y * matrix.m21 + this.z * matrix.m22 + matrix.m23) * l_w)
@@ -388,9 +388,9 @@ public function vec3.project(mat4 matrix) returns vec3
  */
 public function getProjection(real near, real far, real fovy, real aspectRatio) returns mat4
 	var result = IDENTITY44
-	var l_fd = (1.0 / ((fovy * (PI / 180)) / 2.0).tan())
-	var l_a1 = (far + near) / (near - far)
-	var l_a2 = (2 * far * near) / (near - far)
+	let l_fd = (1.0 / ((fovy * (PI / 180)) / 2.0).tan())
+	let l_a1 = (far + near) / (near - far)
+	let l_a2 = (2 * far * near) / (near - far)
 	result.m00 = l_fd / aspectRatio
 	result.m10 = 0
 	result.m20 = 0
@@ -485,28 +485,28 @@ public function mat4.inverse() returns inverseresult44
 	let d = this.determinant()
 	var inverse = inverseresult44(d.abs() > EPSILON, ZERO44)
 	if inverse.success
-		real determinant_inv = 1 / d
+		let determinant_inv = 1 / d
 
 		// first row
-		real t00 =  determinant3x3(this.m11, this.m12, this.m13, this.m21, this.m22, this.m23, this.m31, this.m32, this.m33)
-		real t01 = -determinant3x3(this.m10, this.m12, this.m13, this.m20, this.m22, this.m23, this.m30, this.m32, this.m33)
-		real t02 =  determinant3x3(this.m10, this.m11, this.m13, this.m20, this.m21, this.m23, this.m30, this.m31, this.m33)
-		real t03 = -determinant3x3(this.m10, this.m11, this.m12, this.m20, this.m21, this.m22, this.m30, this.m31, this.m32)
+		let t00 =  determinant3x3(this.m11, this.m12, this.m13, this.m21, this.m22, this.m23, this.m31, this.m32, this.m33)
+		let t01 = -determinant3x3(this.m10, this.m12, this.m13, this.m20, this.m22, this.m23, this.m30, this.m32, this.m33)
+		let t02 =  determinant3x3(this.m10, this.m11, this.m13, this.m20, this.m21, this.m23, this.m30, this.m31, this.m33)
+		let t03 = -determinant3x3(this.m10, this.m11, this.m12, this.m20, this.m21, this.m22, this.m30, this.m31, this.m32)
 		// second row
-		real t10 = -determinant3x3(this.m01, this.m02, this.m03, this.m21, this.m22, this.m23, this.m31, this.m32, this.m33)
-		real t11 =  determinant3x3(this.m00, this.m02, this.m03, this.m20, this.m22, this.m23, this.m30, this.m32, this.m33)
-		real t12 = -determinant3x3(this.m00, this.m01, this.m03, this.m20, this.m21, this.m23, this.m30, this.m31, this.m33)
-		real t13 =  determinant3x3(this.m00, this.m01, this.m02, this.m20, this.m21, this.m22, this.m30, this.m31, this.m32)
+		let t10 = -determinant3x3(this.m01, this.m02, this.m03, this.m21, this.m22, this.m23, this.m31, this.m32, this.m33)
+		let t11 =  determinant3x3(this.m00, this.m02, this.m03, this.m20, this.m22, this.m23, this.m30, this.m32, this.m33)
+		let t12 = -determinant3x3(this.m00, this.m01, this.m03, this.m20, this.m21, this.m23, this.m30, this.m31, this.m33)
+		let t13 =  determinant3x3(this.m00, this.m01, this.m02, this.m20, this.m21, this.m22, this.m30, this.m31, this.m32)
 		// third row
-		real t20 =  determinant3x3(this.m01, this.m02, this.m03, this.m11, this.m12, this.m13, this.m31, this.m32, this.m33)
-		real t21 = -determinant3x3(this.m00, this.m02, this.m03, this.m10, this.m12, this.m13, this.m30, this.m32, this.m33)
-		real t22 =  determinant3x3(this.m00, this.m01, this.m03, this.m10, this.m11, this.m13, this.m30, this.m31, this.m33)
-		real t23 = -determinant3x3(this.m00, this.m01, this.m02, this.m10, this.m11, this.m12, this.m30, this.m31, this.m32)
+		let t20 =  determinant3x3(this.m01, this.m02, this.m03, this.m11, this.m12, this.m13, this.m31, this.m32, this.m33)
+		let t21 = -determinant3x3(this.m00, this.m02, this.m03, this.m10, this.m12, this.m13, this.m30, this.m32, this.m33)
+		let t22 =  determinant3x3(this.m00, this.m01, this.m03, this.m10, this.m11, this.m13, this.m30, this.m31, this.m33)
+		let t23 = -determinant3x3(this.m00, this.m01, this.m02, this.m10, this.m11, this.m12, this.m30, this.m31, this.m32)
 		// fourth row
-		real t30 = -determinant3x3(this.m01, this.m02, this.m03, this.m11, this.m12, this.m13, this.m21, this.m22, this.m23)
-		real t31 =  determinant3x3(this.m00, this.m02, this.m03, this.m10, this.m12, this.m13, this.m20, this.m22, this.m23)
-		real t32 = -determinant3x3(this.m00, this.m01, this.m03, this.m10, this.m11, this.m13, this.m20, this.m21, this.m23)
-		real t33 =  determinant3x3(this.m00, this.m01, this.m02, this.m10, this.m11, this.m12, this.m20, this.m21, this.m22)
+		let t30 = -determinant3x3(this.m01, this.m02, this.m03, this.m11, this.m12, this.m13, this.m21, this.m22, this.m23)
+		let t31 =  determinant3x3(this.m00, this.m02, this.m03, this.m10, this.m12, this.m13, this.m20, this.m22, this.m23)
+		let t32 = -determinant3x3(this.m00, this.m01, this.m03, this.m10, this.m11, this.m13, this.m20, this.m21, this.m23)
+		let t33 =  determinant3x3(this.m00, this.m01, this.m02, this.m10, this.m11, this.m12, this.m20, this.m21, this.m22)
 
 		// transpose and divide by the determinant
 		inverse.matrix.m00 = t00*determinant_inv

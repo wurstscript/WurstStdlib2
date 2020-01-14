@@ -72,7 +72,7 @@ public function color.withAlpha(int a) returns colorA
 public function colorA.withoutAlpha() returns color
 	return color(this.red, this.green, this.blue)
 
-/** Returns the HSV equivalent */ 
+/** Returns the HSV equivalent */
 public function color.toHSV() returns colorHSV
 	real s = 0
 	real h = 0
@@ -132,10 +132,10 @@ public function colorHSV.toRGB() returns color
 
 /** Get a colorA tuple from a hexstring */
 public function fromHexString(string number) returns colorA
-	var alpha = number.substring(0,2)
-	var red = number.substring(2,4)
-	var green = number.substring(4,6)
-	var blue = number.substring(6,8)
+	let alpha = number.substring(0,2)
+	let red = number.substring(2,4)
+	let green = number.substring(4,6)
+	let blue = number.substring(6,8)
 	return colorA(toDec(red), toDec(green), toDec(blue), toDec(alpha))
 
 public function color.normalize() returns color
@@ -216,15 +216,15 @@ public function colorA.toString() returns string
 /** Returns the tuple in string format colorHSV(h,s,v) */
 public function colorHSV.toString() returns string
 	return "colorHSV(" + (this.h).toString() + ", " + (this.s).toString() + ", " + (this.v).toString() + ")"
-   
+
 /** Hexadecimal numbers */
 public constant hexs = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F"]
 constant decs = new Table()
 
 /** Converts and int to a hexnumber */
 public function toHex(int number) returns string
-	var firstpart = number div 16
-	var secondpart = number - firstpart * 16
+	let firstpart = number div 16
+	let secondpart = number - firstpart * 16
 	return hexs[firstpart] + hexs[secondpart]
 
 /** Converts a twochar string to an int */
@@ -232,8 +232,8 @@ public function toDec(string twochar) returns int
 	if twochar.length() > 2
 		return -1
 
-	var first = twochar.substring(0,1).toUpperCase()
-	var second = twochar.substring(1,2).toUpperCase()
+	let first = twochar.substring(0,1).toUpperCase()
+	let second = twochar.substring(1,2).toUpperCase()
 
 	return decs.loadInt(StringHash(first)) * 16 + decs.loadInt(StringHash(second))
 
@@ -293,7 +293,7 @@ init
 	assertTrue(fromHexString("33ccff44") == colorA(204, 255, 68, 51))
 
 	assertTrue(PLAYER_COLOR_RED != null)
-	
+
 @Test public function testHSV()
 	colorHSV(0, 0, 1).assert()
 	colorHSV(0, 0, 0.5).assert()

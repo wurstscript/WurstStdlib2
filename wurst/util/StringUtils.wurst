@@ -49,7 +49,7 @@ public function char(string s) returns char
 		return char('/')
 	else if "\\" == s
 		return char('\')
-	var a = s2c[s.getHash() div 0x1F0748 + 0x3EA]
+	let a = s2c[s.getHash() div 0x1F0748 + 0x3EA]
 	if s != c2s[a]
 		return char(a + 32)
 	return char(a)
@@ -105,7 +105,7 @@ public function string.split(string splitBy) returns LinkedList<string>
 /** Replaces consecutive repeats of the same string with a single instance
 	Turns "strstr" into "str" */
 public function string.reduce(string reduced) returns string
-	var toReduce = reduced + reduced
+	let toReduce = reduced + reduced
 	var oldString = this
 	string newString
 
@@ -166,7 +166,7 @@ public function string.isValidDescription() returns bool
 	var isValid = true
 	if this.length() > WC3LIMIT_OBJECTS_DESCRIPTION_LENGTH
 		isValid = false
-		error("String <"+this+"> is too long. Length: "+this.length().toString())	
+		error("String <"+this+"> is too long. Length: "+this.length().toString())
 	return isValid
 
 /** Replaces all occurences of any character from given charlist by a given replacement string.*/

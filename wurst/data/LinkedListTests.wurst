@@ -155,7 +155,7 @@ function testGenerics()
 	elems.assertEquals("1234756")
 
 @Test function testRemoveWhen()
-	var list = new LinkedList<int>()
+	let list = new LinkedList<int>()
 	for i = 1 to 6
 		list.add(i)
 	list.removeIf(i -> i < 3)
@@ -171,21 +171,21 @@ function testGenerics()
 	list.get(2).assertEquals(6)
 
 @Test function testFoldl()
-	var list = new LinkedList<int>()
+	let list = new LinkedList<int>()
 	for i = 1 to 6
 		list.add(i)
 	let result = list.foldl<int>(0, (i, q) -> q + i)
 	result.assertEquals(21)
 
 @Test function testToString()
-	var list = new LinkedList<int>()
+	let list = new LinkedList<int>()
 	for i = 1 to 6
 		list.add(i)
 	let result = list.toString()
 	result.assertEquals("[1,2,3,4,5,6]")
 
 @Test function testSortReal()
-	var list = new LinkedList<real>()
+	let list = new LinkedList<real>()
 	for i = 6 downto 1
 		list.add(i.toReal())
 	list.sort()

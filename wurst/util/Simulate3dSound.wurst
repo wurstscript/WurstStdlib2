@@ -130,9 +130,9 @@ public class Sim3DSound
 		sourceUnit = u
 
 	construct(sound s, real x, real y, real minDist, real maxDist, real distCutoff)
-		real dx = x - GetCameraTargetPositionX()
-		real dy = y - GetCameraTargetPositionY()
-		real dist = dx * dx + dy * dy
+		let dx = x - GetCameraTargetPositionX()
+		let dy = y - GetCameraTargetPositionY()
+		let dist = dx * dx + dy * dy
 
 		this.snd = s
 		this.source.x = x
@@ -149,9 +149,9 @@ public class Sim3DSound
 		getTimer()..setData(this castTo int)..startPeriodic(PERIOD, function Sim3DSound.expire)
 
 	construct(sound s, unit u, real minDist, real maxDist, real distCutoff)
-		real dx = GetUnitX(u) - GetCameraTargetPositionX()
-		real dy = GetUnitY(u) - GetCameraTargetPositionY()
-		real dist = dx * dx + dy * dy
+		let dx = GetUnitX(u) - GetCameraTargetPositionX()
+		let dy = GetUnitY(u) - GetCameraTargetPositionY()
+		let dist = dx * dx + dy * dy
 
 		this.snd = s
 		this.sourceUnit = u

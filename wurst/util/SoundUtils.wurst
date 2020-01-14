@@ -69,7 +69,7 @@ public class SoundDefinition
 			return shandle
 		else
 			// No free handle, create a new one
-			var sdata = new SoundInstance()
+			let sdata = new SoundInstance()
 			sdata.snd = CreateSound(this.file, this.looping, this.is3D, this.stopOnLeaveRange, this.fadeIn, this.fadeOut, this.eaxSetting)
 			sdata.soundDef = this
 
@@ -115,7 +115,7 @@ public class SoundDefinition
 		See play() for more info */
 	function playForPlayer(player p, int duration) returns SoundInstance
 		this.duration = duration
-		var snd = getSound()
+		let snd = getSound()
 		snd.p = p
 		getTimer()
 			..setData(snd castTo int)
@@ -127,7 +127,7 @@ public class SoundDefinition
 
 	function playOnPoint(vec3 target, int duration)  returns SoundInstance
 		this.duration = duration
-		var snd = getSound()
+		let snd = getSound()
 		snd.pos = target
 		getTimer()
 			..setData(snd castTo int)
@@ -135,8 +135,8 @@ public class SoundDefinition
 		return snd
 
 	private static function playSound()
-		var tm = GetExpiredTimer()
-		var sdata = tm.getData() castTo SoundInstance
+		let tm = GetExpiredTimer()
+		let sdata = tm.getData() castTo SoundInstance
 		if sdata.onUnit != null
 			AttachSoundToUnit(sdata.snd, sdata.onUnit)
 		if sdata.pos.x != 0 and sdata.pos.y != 0
@@ -152,8 +152,8 @@ public class SoundDefinition
 			..start(sdata.soundDef.duration * 0.001, function SoundDefinition.recycle)
 
 	private static function recycle()
-		var tm = GetExpiredTimer()
-		var sdata = tm.getData() castTo SoundInstance
+		let tm = GetExpiredTimer()
+		let sdata = tm.getData() castTo SoundInstance
 		sdata.p = null
 		if sdata.s3s != null
 			destroy sdata.s3s

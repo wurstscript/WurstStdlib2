@@ -33,7 +33,7 @@ function testSet()
 
 @Test
 function testAddAll()
-	int array vals = [5, 3, 6, 4, 1, 9]
+	let vals = [5, 3, 6, 4, 1, 9]
 	let list = new HashList<int>
 		..add(5, 3, 6)
 
@@ -120,7 +120,7 @@ function testHas()
 @Test
 function testIterator()
 	let list = new HashList<int>
-	int array vals = [1, 3, 5]
+	let vals = [1, 3, 5]
 	var i = 0
 
 	list

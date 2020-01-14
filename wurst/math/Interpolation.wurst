@@ -22,7 +22,7 @@ public function vec3.bezier3(vec3 mid, vec3 stop, real p) returns vec3
 
 public function vec2.bezier3(vec2 mid, vec2 stop, real p) returns vec2
 	return vec2(bezier3(this.x, mid.x, stop.x, p), bezier3(this.y, mid.y, stop.y, p))
-	
+
 public function vec3.bezier4(vec3 mid1, vec3 mid2, vec3 stop, real p) returns vec3
 	return vec3(bezier4(this.x, mid1.x, mid2.x, stop.x, p), bezier4(this.y, mid1.y, mid2.y, stop.y, p), bezier4(this.z, mid1.z, mid2.z, stop.z, p))
 
@@ -45,7 +45,7 @@ public function bezier3(real start, real mid, real stop, real p) returns real
 
 @deprecated("Use bezier3 instead.")
 public function bezier_3(real start, real mid, real stop, real p) returns real
-	return bezier3(start, mid, stop, p) 
+	return bezier3(start, mid, stop, p)
 
 /**
 	This function returns the derivate of the 3-Point-Bezier curve on certain point.
@@ -56,7 +56,7 @@ public function derivBezier3(real start, real mid, real stop, real p) returns re
 
 @deprecated("Use derivBezier3 instead.")
 public function derivBezier_3(real start, real mid, real stop, real p) returns real
-	return derivBezier3(start, mid, stop, p) 
+	return derivBezier3(start, mid, stop, p)
 
 public function vec3.derivBezier3(vec3 mid, vec3 stop, real p) returns vec3
 	return vec3(derivBezier3(this.x, mid.x, stop.x, p), derivBezier3(this.y, mid.y, stop.y, p), derivBezier3(this.z, mid.z, stop.z, p))
@@ -70,7 +70,7 @@ public function vec2.derivBezier3(vec2 mid, vec2 stop, real p) returns vec2
 	AddSpecialEffect(TEST_SFX,bezier4(P1X,P3X,P4X,P2X,t),bezier4(P1Y,P3Y,P4Y,P2Y,t))
 */
 public function bezier4(real start, real mid1, real mid2, real stop, real p) returns real
-	real m = p * p
+	let m = p * p
 	return start + 3. * p * (mid1 - start) + 3. * m * (mid2 - 2. * mid1 + start) + m * p * (3. * (mid1 - mid2) + stop - start)
 
 /**
@@ -95,11 +95,11 @@ public function vec2.derivBezier4(vec2 mid1, vec2 mid2, vec2 stop, real p) retur
 
 /** Hermite Interpolation */
 public function hermite(real start, real stop, real tangent1, real tangent2, real s) returns real
-	real s2 = s * s
-	real h1 = 8.0 * s * s2 - 9.0 * s2
-	real h2 = h1 * -1
-	real h3 = s2 * (s - 2.0) + s
-	real h4 = s2 * (s - 1.0)
+	let s2 = s * s
+	var h1 = 8.0 * s * s2 - 9.0 * s2
+	let h2 = h1 * -1
+	let h3 = s2 * (s - 2.0) + s
+	let h4 = s2 * (s - 1.0)
 	h1++
 	return h1 * start + h2 * stop + h3 * tangent1 + h4 * tangent2
 

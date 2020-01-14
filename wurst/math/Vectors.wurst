@@ -72,8 +72,8 @@ public function vec2.norm() returns vec2
 
 /** Rotate this vector */
 public function vec2.rotate(angle angl) returns vec2
-	var c = angl.cos()
-	var s = angl.sin()
+	let c = angl.cos()
+	let s = angl.sin()
 
 	let px = this.x * c - this.y * s
 	let py = this.x * s + this.y * c
@@ -144,7 +144,7 @@ public function vec2.polarOffset(angle ang, real dist) returns vec2
 	when this vector and target are equal, then the pointer will point to the right */
 public function vec2.normalizedPointerTo(vec2 target) returns vec2
 	vec2 diff = target - this
-	real len = diff.length()
+	let len = diff.length()
 	if len > 0
 		diff = diff * (1. / len)
 	else
@@ -172,10 +172,10 @@ public function vec2.distanceToSq(vec2 v) returns real
 
 /** Get squared distance to a line segment */
 public function vec2.distanceToSegmentSq(vec2 v1, vec2 v2) returns real
-	var l2 = v1.distanceToSq(v2)
+	let l2 = v1.distanceToSq(v2)
 	if l2 == 0
 		return this.distanceToSq(v1)
-	var t = ((this.x - v1.x) * (v2.x - v1.x) + (this.y - v1.y) * (v2.y - v1.y)) / l2
+	let t = ((this.x - v1.x) * (v2.x - v1.x) + (this.y - v1.y) * (v2.y - v1.y)) / l2
 	if (t < 0)
 		return this.distanceToSq(v1)
 	if (t > 1)
@@ -275,23 +275,23 @@ public function vec3.norm() returns vec3
 /** Rotate this vector around an axis */
 public function vec3.rotate(vec3 axis, real radians) returns vec3
 	var al = axis.x * axis.x + axis.y * axis.y + axis.z * axis.z //axis length^2
-	var c = Cos(radians)
-	var s = Sin(radians)
+	let c = Cos(radians)
+	let s = Sin(radians)
 	if al == 0.0
 		Log.warn("vector.rotate error: The length of the axis vector is 0.0!")
 		return vec3(0, 0, 0)
 
-	var f = (this.x * axis.x + this.y * axis.y + this.z * axis.z) / al
-	var zx = axis.x * f
-	var zy = axis.y * f
-	var zz = axis.z * f //axis component of rotated vector
-	var xx = this.x - zx
-	var xy = this.y - zy
-	var xz = this.z - zz //component of vector perpendicular to axis
+	let f = (this.x * axis.x + this.y * axis.y + this.z * axis.z) / al
+	let zx = axis.x * f
+	let zy = axis.y * f
+	let zz = axis.z * f //axis component of rotated vector
+	let xx = this.x - zx
+	let xy = this.y - zy
+	let xz = this.z - zz //component of vector perpendicular to axis
 	al = SquareRoot(al)
-	var yx = (axis.y * xz - axis.z * xy)/al
-	var yy = (axis.z * xx - axis.x * xz)/al //y same length as x by using cross product and dividing with axis length
-	var yz = (axis.x * xy - axis.y * xx)/al //x,y - coordinate system in which we rotate
+	let yx = (axis.y * xz - axis.z * xy)/al
+	let yy = (axis.z * xx - axis.x * xz)/al //y same length as x by using cross product and dividing with axis length
+	let yz = (axis.x * xy - axis.y * xx)/al //x,y - coordinate system in which we rotate
 	return vec3(xx * c + yx * s + zx, xy * c + yy * s + zy, xz * c + yz * s + zz)
 
 /** Sets the length of the given Vector */
@@ -382,16 +382,16 @@ public function vec3.angleTo2d(vec3 v) returns angle
 
 /** Get a polarprojection of this Vector */
 public function vec3.polarProject(real distance, angle angleGround, angle angleAir) returns vec3
-	real x = this.x + distance * angleGround.cos() * angleAir.sin()
-	real y = this.y + distance * angleGround.sin() * angleAir.sin()
-	real z = this.z + distance * angleAir.cos()
+	let x = this.x + distance * angleGround.cos() * angleAir.sin()
+	let y = this.y + distance * angleGround.sin() * angleAir.sin()
+	let z = this.z + distance * angleAir.cos()
 	return vec3(x,y,z)
 
 /** returns a vector of length 1 which points into the direction of target,
 	when this vector and target are equal, then the pointer will point to the right */
 public function vec3.normalizedPointerTo(vec3 target) returns vec3
 	vec3 diff = target - this
-	real len = diff.length()
+	let len = diff.length()
 	if len > 0
 		diff = diff * (1. / len)
 	else

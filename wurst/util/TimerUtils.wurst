@@ -112,7 +112,7 @@ public module TimedLoop
 	private static function onExpire() returns boolean
 		int i = instanceCount - 1
 		while i >= 0
-			thistype t = instances[i]
+			let t = instances[i]
 
 			if t.timedLoopState != RUNNING
 				instanceCount--

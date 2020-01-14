@@ -101,10 +101,10 @@ public function string.trim() returns string
 /** Returns the given string with whitespaces removed from the left end */
 public function string.ltrim() returns string
 	int i = 0
-	int length = this.length()
+	let length = this.length()
 	while (i < length and this.charAt(i) == " ")
 		i++
-	return this.substring(i, this.length())
+	return this.substring(i, length)
 
 /** Returns the given string with whitespaces removed from the right end */
 public function string.rtrim() returns string

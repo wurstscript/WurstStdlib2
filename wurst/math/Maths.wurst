@@ -20,7 +20,7 @@ public constant real PIHALF		=  1.570796326
  */
 public function hypot(real dx, real dy) returns real
 	real x = dx.abs()
-	real y = dy.abs()
+	let y = dy.abs()
 	real t = 0
 	if x > y
 		t = y / x
@@ -69,7 +69,7 @@ public function min(vararg real numbers) returns real
 	return minNumber
 
 @test function minmax()
-	int three = 3
+	let three = 3
 	max(three,4,21,43,51,30).assertEquals(51)
 	max(3.,4.,5.).assertEquals(5)
 	max(-4,three).assertEquals(3)

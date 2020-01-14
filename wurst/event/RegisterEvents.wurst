@@ -14,7 +14,7 @@ public function registerPlayerUnitEvent(playerunitevent p, code filter, code c)
 	registerPlayerUnitEvent(p, filter, c, null)
 
 public function registerPlayerUnitEvent(playerunitevent p, code filter, code condition, code action)
-	int hid = p.getHandleId()
+	let hid = p.getHandleId()
 	if t[hid] == null
 		t[hid] = CreateTrigger()
 		for k = bj_MAX_PLAYER_SLOTS - 1 downto 0
@@ -25,7 +25,7 @@ public function registerPlayerUnitEvent(playerunitevent p, code filter, code con
 		t[hid].addAction(action)
 
 public function registerPlayerUnitEventForPlayer(playerunitevent p, code c, player pl)
-	int i = 16 * p.getHandleId() + pl.getId()
+	let i = 16 * p.getHandleId() + pl.getId()
 	if t[i] == null
 		t[i] = CreateTrigger()
 		t[i].registerPlayerUnitEvent(pl, p, null)
@@ -40,7 +40,7 @@ public function registerPlayerEvent(playerevent p, code c)
 	registerPlayerEvent(p, c, null)
 
 public function registerPlayerEvent(playerevent p, code condition, code action)
-	int hid = p.getHandleId()
+	let hid = p.getHandleId()
 	if t[hid] == null
 		t[hid] = CreateTrigger()
 		for k = bj_MAX_PLAYER_SLOTS - 1 downto 0

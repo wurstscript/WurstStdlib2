@@ -57,13 +57,13 @@ public abstract class OnCastListener
 
 	ondestroy
 		if eventUnit != null
-			var listener = EventListener.castMapCasters.get(eventUnit)
+			let listener = EventListener.castMapCasters.get(eventUnit)
 			if listener == this
 				EventListener.castMapCasters.put(eventUnit, next)
 			else if prev != null
 				prev.next = next
 		else
-			var listener = EventListener.castMap.get(abilId)
+			let listener = EventListener.castMap.get(abilId)
 			if listener == this
 				EventListener.castMap.put(abilId, next)
 			else if prev != null
