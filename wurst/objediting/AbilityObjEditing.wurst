@@ -117,8 +117,7 @@ public class AbilityDefinition
 
 	function setName(string value)
 		def.setLvlDataString("anam", 0, 0, value)
-		StringLevelClosure clr = lvl -> value
-		addTooltipProperty("Name", clr)
+		addTooltipProperty("Name", (int lvl) -> value)
 
 	function setEditorSuffix(string value)
 		def.setLvlDataString("ansf", 0, 0, value)
@@ -303,8 +302,7 @@ public class AbilityDefinition
 		setHotkeyNormal(value)
 		setHotkeyLearn(value)
 		setHotkeyTurnOff(value)
-		StringLevelClosure clr = lvl -> value
-		addTooltipProperty("Hotkey", clr)
+		addTooltipProperty("Hotkey", (int lvl) -> value)
 
 	function setRequirements(string value)
 		def.setLvlDataString("areq", 0, 0, value)
@@ -339,8 +337,7 @@ public class AbilityDefinition
 	function setLevels(int value)
 		def.setLvlDataInt("alev", 0, 0, value)
 		lvls = value
-		StringLevelClosure clr = lvl -> value.toString()
-		addTooltipProperty("Levels", clr)
+		addTooltipProperty("Levels", (int lvl) -> value)
 
 	function setRequiredLevel(int value)
 		def.setLvlDataInt("arlv", 0, 0, value)
@@ -4121,7 +4118,7 @@ public class AbilityDefinitionSubmergeMyrmidon extends AbilityDefinition
 	function presetMorphingFlag(MorphingFlag morphingFlag, boolean flag)
 		morphingFlagsSet = morphingFlagsSet.set(morphingFlag castTo int, flag)
 		presetMorphingFlags(lvl -> morphingFlagsSet.val)
-		
+
 	function hasMorphingFlag(MorphingFlag morphingFlag) returns boolean
 		return morphingFlagsSet.get(morphingFlag castTo int)
 
@@ -4362,7 +4359,7 @@ public class AbilityDefinitionBurrowscarablvl2 extends AbilityDefinition
 
 	function hasMorphingFlag(MorphingFlag morphingFlag) returns boolean
 		return morphingFlagsSet.get(morphingFlag castTo int)
-		
+
 	function setAlternateFormUnit(int level, string value)
 		def.setLvlDataString("Emeu", level, 0, value)
 
@@ -5677,7 +5674,7 @@ public class AbilityDefinitionAvengerForm extends AbilityDefinition
 
 	function hasMorphingFlag(MorphingFlag morphingFlag) returns boolean
 		return morphingFlagsSet.get(morphingFlag castTo int)
-		
+
 	function setLifeRegenerationRatepersecond(int level, real value)
 		def.setLvlDataUnreal("ave5", level, 5, value)
 
@@ -12947,7 +12944,7 @@ public class AbilityDefinitionTinkererRoboGoblinLevel1 extends AbilityDefinition
 	function presetMorphingFlag(MorphingFlag morphingFlag, boolean flag)
 		morphingFlagsSet = morphingFlagsSet.set(morphingFlag castTo int, flag)
 		presetMorphingFlags(lvl -> morphingFlagsSet.val)
-	
+
 	function hasMorphingFlag(MorphingFlag morphingFlag) returns boolean
 		return morphingFlagsSet.get(morphingFlag castTo int)
 

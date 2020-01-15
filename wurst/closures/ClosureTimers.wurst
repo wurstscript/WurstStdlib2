@@ -115,8 +115,8 @@ public abstract class CallbackSingle
 
 
 	private static function staticCallback()
-		timer t = GetExpiredTimer()
-		thistype cb = t.getData() castTo thistype
+		let t = GetExpiredTimer()
+		let cb = t.getData() castTo thistype
 		cb.call()
 		destroy cb
 
