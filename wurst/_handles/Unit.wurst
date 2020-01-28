@@ -26,6 +26,15 @@ public function createUnitZ(player p, int unitId, vec3 pos, angle facing) return
 public function unit.addAbility(int abil) returns boolean
 	return UnitAddAbility(this, abil)
 
+public function unit.addAbility(int abilId, int level)
+	this..addAbility(abilId)..setAbilityLevel(abilId, level)
+
+public function unit.addPermanentAbility(int abilId)
+	this..addAbility(abilId)..makeAbilityPermanent(abilId, true)
+
+public function unit.addPermanentAbility(int abilId, int level)
+	this..addAbility(abilId)..makeAbilityPermanent(abilId, true)..setAbilityLevel(abilId, level)
+
 public function unit.addHP(real val)
 	this.addState(UNIT_STATE_LIFE, val)
 
