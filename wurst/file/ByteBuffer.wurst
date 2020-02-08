@@ -2,6 +2,8 @@ package ByteBuffer
 
 import Table
 import Bitwise
+import SafetyChecks
+import ErrorHandling
 
 /*	ByteBuffer is a utility class that allows you to write/read bytes, shorts and integer to/from it.
 	It may be useful for compacting bytes into integers or decomposing integers into bytes.
@@ -34,6 +36,8 @@ public class ByteBuffer
 	/** Writes an unsigned byte into the buffer.
     You must be sure that the provided integer is in the range [0, 255]. */
 	function writeByteUnsafe(int n)
+		if SAFETY_CHECKS_ENABLED and n < 0 or n > 255
+			error("ByteBuffer#writeByteUnsafe ERROR: provided argument (" + n.toString() + ") is not in the range [0, 255].")
 		buffer = buffer + n.shiftl(8 * bufferLength)
 		bufferLength++
 		if bufferLength > 3
@@ -42,6 +46,8 @@ public class ByteBuffer
 	/** Writes an unsigned short into the buffer.
     You must be sure that the provided integer is in the range [0, 65535]. */
 	function writeShortUnsafe(int n)
+		if SAFETY_CHECKS_ENABLED and n < 0 or n > 65535
+			error("ByteBuffer#writeShortUnsafe ERROR: provided argument (" + n.toString() + ") is not in the range [0, 65535].")
 		writeByteUnsafe(n.bitAnd(compiletime("11111111".fromBitString())))
 		writeByteUnsafe(n.shiftr(8))
 
