@@ -80,10 +80,10 @@ public class File
 		for i = 0 to CHUNKS_PER_FILE - 1
 			var chunk = BlzGetAbilityTooltip(DUMMY_ABIL_ID, i)
 
-			if chunk == ""
+			if chunk == " "
 				break
 
-			BlzSetAbilityTooltip(DUMMY_ABIL_ID, "", i)
+			BlzSetAbilityTooltip(DUMMY_ABIL_ID, " ", i)
 			output.append(chunk)
 
 
@@ -104,4 +104,4 @@ init
 		..setLevels(CHUNKS_PER_FILE)
 
 	for i = 1 to CHUNKS_PER_FILE
-		dummy.setTooltipNormal(i, "")
+		dummy.setTooltipNormal(i, " ")
