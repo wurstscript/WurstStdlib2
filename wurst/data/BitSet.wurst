@@ -3,6 +3,7 @@ import NoWurst
 import Integer
 import Wurstunit
 import Annotations
+import BasicTypeClasses
 
 public constant BITSET_SIZE = 32
 
@@ -94,6 +95,12 @@ public function bitsetToIndex(bitset object) returns int
 public function bitsetFromIndex(int index) returns bitset
 	return bitset(index)
 	
+public implements ConvertIndex<bitset>
+	override function toIndex(bitset x) returns int
+		return x.toInt()
+	override function fromIndex(int index) returns bitset
+		return bitset(index)
+
 // Tests
 
 @test function testGet()

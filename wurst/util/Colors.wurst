@@ -8,6 +8,7 @@ import Playercolor
 import Annotations
 import Maths
 import Real
+import BasicTypeClasses
 
 public constant COLOR_WHITE = colorA(255,255,255,255)
 public constant COLOR_BLACK = colorA(0,0,0,0)
@@ -216,6 +217,17 @@ public function colorA.toString() returns string
 /** Returns the tuple in string format colorHSV(h,s,v) */
 public function colorHSV.toString() returns string
 	return "colorHSV(" + (this.h).toString() + ", " + (this.s).toString() + ", " + (this.v).toString() + ")"
+
+
+public implements Show<color>
+	override function toString(color x) returns string
+		return x.toString()
+public implements Show<colorA>
+	override function toString(colorA x) returns string
+		return x.toString()
+public implements Show<colorHSV>
+	override function toString(colorHSV x) returns string
+		return x.toString()
 
 /** Hexadecimal numbers */
 public constant hexs = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F"]

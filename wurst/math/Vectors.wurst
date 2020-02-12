@@ -6,6 +6,7 @@ import public Angle
 import String
 import initlater Printing
 import Annotations
+import BasicTypeClasses
 
 /** A vector is a geometric object that has a length and direction.
 	Vectors can be added to other vectors according to vector algebra.
@@ -131,6 +132,10 @@ public function vec2.inRange(vec2 v2, real radius) returns boolean
 /** Get a String-representation of this Vector (for debugging) */
 public function vec2.toString() returns string
 	return "Vector2 [" + this.x.toString() + ", " + this.y.toString() + "]"
+
+public implements Show<vec2>
+	override function toString(vec2 x) returns string
+		return "(" + x.x.toString() + ", " + x.y.toString() + ")"
 
 /** Get this vetor's angle to another one */
 public function vec2.angleTo(vec2 v) returns angle
@@ -364,6 +369,10 @@ public function vec3.distanceToSq(vec3 v) returns real
 /** Get a String-represantation of the vector (for debugging) */
 public function vec3.toString() returns string
 	return "Vector3 [ " + this.x.toString() + ", " + this.y.toString() + ", " + this.z.toString() + " ]"
+
+public implements Show<vec3>
+	override function toString(vec3 x) returns string
+		return "(" + x.x.toString() + ", " + x.y.toString() + ", " + x.z.toString() + ")"
 
 /** Rotate this vector around an axis */
 public function vec3.rotate(vec3 axis, angle ang) returns vec3

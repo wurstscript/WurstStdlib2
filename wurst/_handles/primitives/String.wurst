@@ -1,6 +1,7 @@
 package String
 import NoWurst
 import Integer
+import BasicTypeClasses
 
 constant charset = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 constant numberset = "0123456789"
@@ -271,3 +272,8 @@ public class StringLines
 /** Returns a StringLines Object of the given string for iteration */
 public function string.toLines() returns StringLines
 	return new StringLines(this, 0, this.countOccurences("\n") + 1)
+
+
+public implements Show<string>
+	override function toString(string s) returns string
+		return s

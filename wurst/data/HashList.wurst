@@ -5,7 +5,7 @@ package HashList
  * on a large list object. LinkedLists should be generally used, but are slow in this regard.
  * Removing elements from a HashList is slower than of LinkedLists.
 */
-public class HashList<T>
+public class HashList<T: ConvertIndex>
 	private static hashtable ht = compiletime(InitHashtable())
 	private static hashtable occurences = compiletime(InitHashtable())
 
@@ -22,35 +22,35 @@ public class HashList<T>
 
 	/** Returns the number of occurences of an element in this list */
 	function count(T elem) returns int
-		return occurences.loadInt(this castTo int, elem castTo int)
+		return occurences.loadInt(this castTo int, T.toIndex(elem))
 
 	private function addOccurences(T elem, int delta)
-		occurences.saveInt(this castTo int, elem castTo int, count(elem) + delta)
+		occurences.saveInt(this castTo int, T.toIndex(elem), count(elem) + delta)
 
 	private function incrOccurences(T elem)
-		occurences.saveInt(this castTo int, elem castTo int, count(elem) + 1)
+		occurences.saveInt(this castTo int, T.toIndex(elem), count(elem) + 1)
 
 	private function decrOccurences(T elem)
-		occurences.saveInt(this castTo int, elem castTo int, count(elem) - 1)
+		occurences.saveInt(this castTo int, T.toIndex(elem), count(elem) - 1)
 
 	/** Add an element to the end of the list */
 	function add(vararg T elems)
 		for elem in elems
-			ht.saveInt(this castTo int, size, elem castTo int)
+			ht.saveInt(this castTo int, size, T.toIndex(elem))
 			incrOccurences(elem)
 			size++
 
 	/** Set an element at the given index.
 		If the index is higher than the list's size,
-		the list will be resized with null elements added between 
+		the list will be resized with tNull elements added between 
 		the index and the previous size. */
-	function set(int index, T elem)
+	function set(int index, T elem, T tNull)
 		if index < size
 			decrOccurences(get(index))
 		else
-			addOccurences(null, index - size)
+			addOccurences(tNull, index - size)
 			size = index + 1
-		ht.saveInt(this castTo int, index, elem castTo int)
+		ht.saveInt(this castTo int, index, T.toIndex(elem))
 		incrOccurences(elem)
 
 	/** Add all elements from elems to this list */
@@ -70,8 +70,8 @@ public class HashList<T>
 
 	/** Removes and returns the element at the given index */
 	function removeAt(int index) returns T
-		decrOccurences(ht.loadInt(this castTo int, index) castTo T)
-		let tmp = ht.loadInt(this castTo int, index) castTo T
+		decrOccurences(T.fromIndex(ht.loadInt(this castTo int, index)))
+		let tmp = T.fromIndex(ht.loadInt(this castTo int, index))
 		for i = index to size
 			ht.saveInt(this castTo int, i, ht.loadInt(this castTo int, i + 1))
 		size--
@@ -82,7 +82,7 @@ public class HashList<T>
 	function remove(T t) returns boolean
 		var result = false
 		for i = 0 to size - 1
-			if t castTo int == ht.loadInt(this castTo int, i)
+			if T.toIndex(t) == ht.loadInt(this castTo int, i)
 				result = true
 				removeAt(i)
 				break
@@ -98,7 +98,7 @@ public class HashList<T>
 
 	/** Get the element at the given index from this list */
 	function get(int index) returns T
-		return ht.loadInt(this castTo int, index) castTo T
+		return T.fromIndex(ht.loadInt(this castTo int, index))
 
 	/** Return whether the element exists in the list */
 	function has(T elem) returns bool
@@ -146,13 +146,20 @@ public class HashList<T>
 	ondestroy
 		clear()
 
-public interface RemovePredicate<T>
+/** Set an element at the given index.
+  If the index is higher than the list's size,
+  the list will be resized with default elements added between 
+  the index and the previous size. */
+public function HashList<T>.set<T: ConvertIndex and Default>(int index, T elem)
+	this.set(index, elem, T.defaultValue())
+
+public interface RemovePredicate<T:>
 	function shouldRemove(T element) returns boolean
 
-public interface HLItrClosure<T>
+public interface HLItrClosure<T:>
 	function run(T t)
 
-public class HLIterator<Q>
+public class HLIterator<Q: ConvertIndex>
 	protected int i = 0
 	protected HashList<Q> list
 

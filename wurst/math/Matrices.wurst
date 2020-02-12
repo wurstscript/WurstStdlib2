@@ -4,6 +4,7 @@ import public Vectors
 import Maths
 import ErrorHandling
 import Wurstunit
+import BasicTypeClasses
 
 /** Matrix 2x2
 00 01
@@ -149,6 +150,10 @@ public function mat2.toString() returns string
 	return "Matrix 2x2\n{0} {1}\n{2} {3}".format(
 		this.m00.toString(), this.m01.toString(),
 		this.m10.toString(), this.m11.toString())
+
+public implements Show<mat2>
+	override function toString(mat2 x) returns string
+		return x.toString()
 
 /** Creates rotation matrix from angle. */
 public function angle.toRotation() returns mat2
@@ -326,6 +331,10 @@ public function mat3.toString() returns string
 		this.m00.toString(), this.m01.toString(), this.m02.toString(),
 		this.m10.toString(), this.m11.toString(), this.m12.toString(),
 		this.m20.toString(), this.m21.toString(), this.m22.toString())
+
+public implements Show<mat3>
+	override function toString(mat3 x) returns string
+		return x.toString()
 
 /** Creates 3x3 rotation matrix from axis and angle. */
 public function vec3.toRotation(angle angl) returns mat3
@@ -533,6 +542,10 @@ public function mat4.toString() returns string
 		this.m10.toString(), this.m11.toString(), this.m12.toString(), this.m13.toString(),
 		this.m20.toString(), this.m21.toString(), this.m22.toString(), this.m23.toString(),
 		this.m30.toString(), this.m31.toString(), this.m32.toString(), this.m33.toString())
+
+public implements Show<mat4>
+	override function toString(mat4 x) returns string
+		return x.toString()
 
 /* =========== TESTING =========== */
 

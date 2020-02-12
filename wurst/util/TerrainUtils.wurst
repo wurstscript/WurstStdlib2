@@ -5,6 +5,7 @@ import Rect
 import MapBounds
 import Wurstunit
 import Colors
+import BasicTypeClasses
 
 // Terrain API
 
@@ -91,6 +92,12 @@ function tileToIndex(tile t) returns int
 	return t.id
 function tileFromIndex(int i) returns tile
 	return tile(i)
+
+public implements ConvertIndex<tile>
+	override function toIndex(tile x) returns int
+		return x.id
+	override function fromIndex(int index) returns tile
+		return tile(index)
 
 // coordinate
 

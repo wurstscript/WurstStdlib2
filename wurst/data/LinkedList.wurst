@@ -1,11 +1,11 @@
 package LinkedList
 import NoWurst
 import TypeCasting
-import Integer
 import String
 import ClosureForGroups
 import Real
 import Annotations
+import BasicTypeClasses
 
 /**
  * Doubly-linked list implementation that implements all common list, stack and queue operations.
@@ -15,8 +15,8 @@ import Annotations
  * and fast in common operations. If you need faster contains or access operations on big lists,
  * use HashList. If you want to limit each element's occurance to one, consider HashSet.
  */
-public class LinkedList<T>
-	private var dummy = new LLEntry<T>(null, null, null)
+public class LinkedList<T:>
+	private var dummy = new LLEntry<T>(null, null)
 	protected var size = 0
 
 	private LLIterator<T> staticItr = null
@@ -89,18 +89,18 @@ public class LinkedList<T>
 		return dummy.next.elem
 
 	/** Returns and removes the first added Element (FIFO) */
-	function dequeue() returns T
+	function dequeue(T defaultValue) returns T
 		let top = dummy.next
-		T result = null
+		T result = defaultValue
 		if top != dummy
 			result = top.elem
 			removeEntry(top)
 		return result
 
 	/** Returns and removes the last added Element (LIFO) */
-	function pop() returns T
+	function pop(T defaultValue) returns T
 		let top = dummy.prev
-		T result = null
+		T result = defaultValue
 		if top != dummy
 			result = top.elem
 			removeEntry(top)
@@ -363,11 +363,6 @@ public class LinkedList<T>
 		halfRef.next = dummy
 		return tmp
 
-	/** Prints the content of the list */
-	function toString() returns string
-		let fold = foldl<string>("[", (i, q) -> q + (i castTo int).toString() + ",")
-		return fold.substring(0, fold.length()-1) + "]"
-
 	/** Removes all elements from the list */
 	function clear()
 		var current = dummy.next
@@ -406,6 +401,23 @@ public class LinkedList<T>
 			destroy current.prev
 		destroy dummy
 
+/** Returns and removes the first added Element (FIFO) */
+public function LinkedList<T>.dequeue<T: Default>() returns T
+	return this.dequeue(T.defaultValue())
+
+/** Returns and removes the last added Element (LIFO) */
+public function LinkedList<T>.pop<T: Default>() returns T
+	return this.pop(T.defaultValue())	
+
+/** Prints the content of the list */
+public implements Show<LinkedList<X>> for X: Show
+	override function toString(LinkedList<X> list) returns string
+		let fold = list.foldl<string>("[", (i, q) -> q + (X.toString(i)) + ",")
+		return fold.substring(0, fold.length()-1) + "]"
+
+
+	
+
 public function asList<T>(vararg T ts) returns LinkedList<T>
 	let ll = new LinkedList<T>
 	for t in ts
@@ -416,6 +428,10 @@ class LLEntry<T>
 	T elem
 	LLEntry<T> prev
 	LLEntry<T> next
+
+	construct(LLEntry<T> prev, LLEntry<T> next)
+		this.prev = prev
+		this.next = next
 
 	construct(T elem, LLEntry<T> prev, LLEntry<T> next)
 		this.elem = elem
