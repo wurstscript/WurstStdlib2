@@ -406,3 +406,8 @@ public implements ConvertIndex<boolean>
 		return booleanToIndex(x)
 	override function fromIndex(int i) returns boolean
 		return booleanFromIndex(i)
+public implements ConvertIndex<int>
+	override function toIndex(int x) returns int
+		return x
+	override function fromIndex(int i) returns int
+		return i
