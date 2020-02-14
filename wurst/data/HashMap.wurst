@@ -44,7 +44,7 @@ public class HashMap<K: ToIndex, V: ConvertIndex> extends Table
 		super.flush()
 
 /** Iterable generic Table Wrapper */
-public class IterableMap<K: ToIndex and ConvertIndex, V: ConvertIndex> extends HashMap<K, V>
+public class IterableMap<K: ConvertIndex, V: ConvertIndex> extends HashMap<K, V>
 	protected let keys = new HashList<K>
 	private bool _destroyed = false
 

@@ -21,3 +21,7 @@ public function boolean.toInt() returns int
 /** Converts this int into a boolean */
 public function int.toBool() returns boolean
 	return this != 0
+
+public implements Default<bool>
+	override function defaultValue() returns bool
+		return false

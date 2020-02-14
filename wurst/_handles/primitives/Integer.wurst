@@ -60,3 +60,7 @@ public function int.bitOr(int other) returns int
 /** Returns the result of a bitwise exclusive OR operation performed on this int and the argument int. */
 public function int.bitXor(int other) returns int
 	return BlzBitXor(this, other)
+
+public implements Default<int>
+	override function defaultValue() returns int
+		return 0

@@ -277,3 +277,7 @@ public function string.toLines() returns StringLines
 public implements Show<string>
 	override function toString(string s) returns string
 		return s
+
+public implements Default<string>
+	override function defaultValue() returns string
+		return ""

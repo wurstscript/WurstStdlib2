@@ -102,3 +102,7 @@ public function real.lerp(real target, real alpha) returns real
 /** Checks if this real is between low and high value */
 public function real.isBetween(real low, real high) returns bool
 	return this >= low and this <= high
+
+public implements Default<real>
+	override function defaultValue() returns real
+		return 0.
