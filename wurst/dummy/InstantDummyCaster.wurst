@@ -90,8 +90,8 @@ public class InstantDummyCaster
 	static function castPoint(player owner, int abilityId, int lvl, int orderId, vec2 targetPos, vec2 casterPos) returns boolean
 		return castPoint(owner, abilityId, lvl, orderId, targetPos, casterPos.toVec3())
 
-constant DUMMY_CASTER_UNIT_ID = compiletime(UNIT_ID_GEN.next())
-constant DUMMY_ROOT_ABIL_ID = compiletime(ABIL_ID_GEN.next())
+public constant DUMMY_CASTER_UNIT_ID = compiletime(UNIT_ID_GEN.next())
+public constant DUMMY_ROOT_ABIL_ID = compiletime(ABIL_ID_GEN.next())
 
 init
 	InstantDummyCaster.caster = createUnit(DUMMY_PLAYER, DUMMY_CASTER_UNIT_ID, boundMax, angle(0))

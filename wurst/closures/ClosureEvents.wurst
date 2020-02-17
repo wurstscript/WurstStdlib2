@@ -74,14 +74,14 @@ public abstract class OnCastListener
 		next = null
 		prev = null
 
-abstract class OnCast extends OnCastListener
+public abstract class OnCast extends OnCastListener
 
 	override function fire(unit caster)
 		fireEx(GetSpellAbilityId())
 
 	abstract function fireEx(int id)
 
-abstract class OnPointCast extends OnCastListener
+public abstract class OnPointCast extends OnCastListener
 
 	override function fire(unit caster)
 		fireEx(caster, EventData.getSpellTargetPos())
