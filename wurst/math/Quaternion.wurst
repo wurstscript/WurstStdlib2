@@ -4,6 +4,7 @@ import NoWurst
 import String
 import Maths
 import Wurstunit
+import BasicTypeClasses
 
 public tuple quat(real x, real y, real z, real w)
 
@@ -186,6 +187,10 @@ public function quat.slerpLong(quat q, real p) returns quat
 
 public function quat.toString() returns string
 	return "Quaternion [X {0}, Y {1}, Z {2}, W {3}]".format(this.x.toString(), this.y.toString(), this.z.toString(), this.w.toString())
+
+public implements Show<quat>
+	override function toString(quat x) returns string
+		return x.toString()
 
 /** Gimbal lock detection.
 Returns 1 for north, -1 for south, 0 if no gimbal lock. */

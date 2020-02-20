@@ -3,31 +3,32 @@ import NoWurst
 import HashList
 import public TypeCasting
 import public Table
+import BasicTypeClasses
 
 /** Generic Table Wrapper */
-public class HashMap<K,V> extends Table
+public class HashMap<K: ToIndex, V: ConvertIndex> extends Table
 
 	protected int size = 0
 
 	/** Whether a value exists under the given key or not */
 	function has(K key) returns boolean
-		return hasInt(key castTo int)
+		return hasInt(K.toIndex(key))
 
 	/** Saves the given value under the given key */
 	function put(K key, V value)
 		if not has(key)
 			size++
-		saveInt(key castTo int, value castTo int)
+		saveInt(K.toIndex(key), V.toIndex(value))
 
 	/** Retrieves the value saved under the given key */
 	function get(K key) returns V
-		return loadInt(key castTo int) castTo V
+		return V.fromIndex(loadInt(K.toIndex(key)))
 
 	/** Removes the value saved under the given key */
 	function remove(K key)
 		if has(key)
 			size--
-		removeInt(key castTo int)
+		removeInt(K.toIndex(key))
 
 	/** Retrieves the value saved under the given key and removes it */
 	function getAndRemove(K key) returns V
@@ -43,7 +44,7 @@ public class HashMap<K,V> extends Table
 		super.flush()
 
 /** Iterable generic Table Wrapper */
-public class IterableMap<K,V> extends HashMap<K, V>
+public class IterableMap<K: ConvertIndex, V: ConvertIndex> extends HashMap<K, V>
 	protected let keys = new HashList<K>
 	private bool _destroyed = false
 
@@ -133,5 +134,5 @@ public class IterableMap<K,V> extends HashMap<K, V>
 		// since .flush() is called after this destructor
 		_destroyed = true
 
-public interface IMItrClosure<K, V>
+public interface IMItrClosure<K: , V: >
 	function run(K key, V value)

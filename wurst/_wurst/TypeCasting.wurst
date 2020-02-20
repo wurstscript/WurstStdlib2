@@ -3,6 +3,7 @@ import NoWurst
 import _Handles
 import Table
 import Annotations
+import BasicTypeClasses
 
 constant typecastdata = new Table()
 /** How many decimals to preserve for reals */
@@ -244,3 +245,169 @@ public function booleanToIndex(boolean u) returns int
 public function booleanFromIndex(int index) returns boolean
 	return index == 1
 
+// instances
+public implements ConvertIndex<real>
+	override function toIndex(real x) returns int
+		return realToIndex(x)
+	override function fromIndex(int i) returns real
+		return realFromIndex(i)
+public implements ConvertIndex<string>
+	override function toIndex(string x) returns int
+		return stringToIndex(x)
+	override function fromIndex(int i) returns string
+		return stringFromIndex(i)
+public implements ConvertIndex<player>
+	override function toIndex(player x) returns int
+		return playerToIndex(x)
+	override function fromIndex(int i) returns player
+		return playerFromIndex(i)
+public implements ConvertIndex<widget>
+	override function toIndex(widget x) returns int
+		return widgetToIndex(x)
+	override function fromIndex(int i) returns widget
+		return widgetFromIndex(i)
+public implements ConvertIndex<unit>
+	override function toIndex(unit x) returns int
+		return unitToIndex(x)
+	override function fromIndex(int i) returns unit
+		return unitFromIndex(i)
+public implements ConvertIndex<destructable>
+	override function toIndex(destructable x) returns int
+		return destructableToIndex(x)
+	override function fromIndex(int i) returns destructable
+		return destructableFromIndex(i)
+public implements ConvertIndex<item>
+	override function toIndex(item x) returns int
+		return itemToIndex(x)
+	override function fromIndex(int i) returns item
+		return itemFromIndex(i)
+public implements ConvertIndex<ability>
+	override function toIndex(ability x) returns int
+		return abilityToIndex(x)
+	override function fromIndex(int i) returns ability
+		return abilityFromIndex(i)
+public implements ConvertIndex<force>
+	override function toIndex(force x) returns int
+		return forceToIndex(x)
+	override function fromIndex(int i) returns force
+		return forceFromIndex(i)
+public implements ConvertIndex<group>
+	override function toIndex(group x) returns int
+		return groupToIndex(x)
+	override function fromIndex(int i) returns group
+		return groupFromIndex(i)
+public implements ConvertIndex<trigger>
+	override function toIndex(trigger x) returns int
+		return triggerToIndex(x)
+	override function fromIndex(int i) returns trigger
+		return triggerFromIndex(i)
+public implements ConvertIndex<triggeraction>
+	override function toIndex(triggeraction x) returns int
+		return triggeractionToIndex(x)
+	override function fromIndex(int i) returns triggeraction
+		return triggeractionFromIndex(i)
+public implements ConvertIndex<triggercondition>
+	override function toIndex(triggercondition x) returns int
+		return triggerconditionToIndex(x)
+	override function fromIndex(int i) returns triggercondition
+		return triggerconditionFromIndex(i)
+public implements ConvertIndex<timer>
+	override function toIndex(timer x) returns int
+		return timerToIndex(x)
+	override function fromIndex(int i) returns timer
+		return timerFromIndex(i)
+public implements ConvertIndex<location>
+	override function toIndex(location x) returns int
+		return locationToIndex(x)
+	override function fromIndex(int i) returns location
+		return locationFromIndex(i)
+public implements ConvertIndex<region>
+	override function toIndex(region x) returns int
+		return regionToIndex(x)
+	override function fromIndex(int i) returns region
+		return regionFromIndex(i)
+public implements ConvertIndex<rect>
+	override function toIndex(rect x) returns int
+		return rectToIndex(x)
+	override function fromIndex(int i) returns rect
+		return rectFromIndex(i)
+public implements ConvertIndex<sound>
+	override function toIndex(sound x) returns int
+		return soundToIndex(x)
+	override function fromIndex(int i) returns sound
+		return soundFromIndex(i)
+public implements ConvertIndex<effect>
+	override function toIndex(effect x) returns int
+		return effectToIndex(x)
+	override function fromIndex(int i) returns effect
+		return effectFromIndex(i)
+public implements ConvertIndex<dialog>
+	override function toIndex(dialog x) returns int
+		return dialogToIndex(x)
+	override function fromIndex(int i) returns dialog
+		return dialogFromIndex(i)
+public implements ConvertIndex<button>
+	override function toIndex(button x) returns int
+		return buttonToIndex(x)
+	override function fromIndex(int i) returns button
+		return buttonFromIndex(i)
+public implements ConvertIndex<quest>
+	override function toIndex(quest x) returns int
+		return questToIndex(x)
+	override function fromIndex(int i) returns quest
+		return questFromIndex(i)
+public implements ConvertIndex<questitem>
+	override function toIndex(questitem x) returns int
+		return questitemToIndex(x)
+	override function fromIndex(int i) returns questitem
+		return questitemFromIndex(i)
+public implements ConvertIndex<leaderboard>
+	override function toIndex(leaderboard x) returns int
+		return leaderboardToIndex(x)
+	override function fromIndex(int i) returns leaderboard
+		return leaderboardFromIndex(i)
+public implements ConvertIndex<multiboard>
+	override function toIndex(multiboard x) returns int
+		return multiboardToIndex(x)
+	override function fromIndex(int i) returns multiboard
+		return multiboardFromIndex(i)
+public implements ConvertIndex<trackable>
+	override function toIndex(trackable x) returns int
+		return trackableToIndex(x)
+	override function fromIndex(int i) returns trackable
+		return trackableFromIndex(i)
+public implements ConvertIndex<lightning>
+	override function toIndex(lightning x) returns int
+		return lightningToIndex(x)
+	override function fromIndex(int i) returns lightning
+		return lightningFromIndex(i)
+public implements ConvertIndex<image>
+	override function toIndex(image x) returns int
+		return imageToIndex(x)
+	override function fromIndex(int i) returns image
+		return imageFromIndex(i)
+public implements ConvertIndex<ubersplat>
+	override function toIndex(ubersplat x) returns int
+		return ubersplatToIndex(x)
+	override function fromIndex(int i) returns ubersplat
+		return ubersplatFromIndex(i)
+public implements ConvertIndex<framehandle>
+	override function toIndex(framehandle x) returns int
+		return framehandleToIndex(x)
+	override function fromIndex(int i) returns framehandle
+		return framehandleFromIndex(i)
+public implements ConvertIndex<oskeytype>
+	override function toIndex(oskeytype x) returns int
+		return oskeytypeToIndex(x)
+	override function fromIndex(int i) returns oskeytype
+		return oskeytypeFromIndex(i)
+public implements ConvertIndex<boolean>
+	override function toIndex(boolean x) returns int
+		return booleanToIndex(x)
+	override function fromIndex(int i) returns boolean
+		return booleanFromIndex(i)
+public implements ConvertIndex<int>
+	override function toIndex(int x) returns int
+		return x
+	override function fromIndex(int i) returns int
+		return i

@@ -1,11 +1,12 @@
 package LinkedList
 import NoWurst
 import TypeCasting
-import Integer
 import String
 import ClosureForGroups
 import Real
 import Annotations
+import BasicTypeClasses
+import ErrorHandling
 
 /**
  * Doubly-linked list implementation that implements all common list, stack and queue operations.
@@ -15,8 +16,8 @@ import Annotations
  * and fast in common operations. If you need faster contains or access operations on big lists,
  * use HashList. If you want to limit each element's occurance to one, consider HashSet.
  */
-public class LinkedList<T>
-	private var dummy = new LLEntry<T>(null, null, null)
+public class LinkedList<T:>
+	private var dummy = new LLEntry<T>(null, null)
 	protected var size = 0
 
 	private LLIterator<T> staticItr = null
@@ -89,18 +90,18 @@ public class LinkedList<T>
 		return dummy.next.elem
 
 	/** Returns and removes the first added Element (FIFO) */
-	function dequeue() returns T
+	function dequeue(T defaultValue) returns T
 		let top = dummy.next
-		T result = null
+		T result = defaultValue
 		if top != dummy
 			result = top.elem
 			removeEntry(top)
 		return result
 
 	/** Returns and removes the last added Element (LIFO) */
-	function pop() returns T
+	function pop(T defaultValue) returns T
 		let top = dummy.prev
-		T result = null
+		T result = defaultValue
 		if top != dummy
 			result = top.elem
 			removeEntry(top)
@@ -363,11 +364,6 @@ public class LinkedList<T>
 		halfRef.next = dummy
 		return tmp
 
-	/** Prints the content of the list */
-	function toString() returns string
-		let fold = foldl<string>("[", (i, q) -> q + (i castTo int).toString() + ",")
-		return fold.substring(0, fold.length()-1) + "]"
-
 	/** Removes all elements from the list */
 	function clear()
 		var current = dummy.next
@@ -406,23 +402,44 @@ public class LinkedList<T>
 			destroy current.prev
 		destroy dummy
 
+/** Returns and removes the first added Element (FIFO) */
+public function LinkedList<T>.dequeue<T: Default>() returns T
+	return this.dequeue(T.defaultValue())
+
+/** Returns and removes the last added Element (LIFO) */
+public function LinkedList<T>.pop<T: Default>() returns T
+	return this.pop(T.defaultValue())	
+
+/** Prints the content of the list */
+public implements Show<LinkedList<X>> for X: Show
+	override function toString(LinkedList<X> list) returns string
+		let fold = list.foldl<string>("[", (i, q) -> q + (X.toString(i)) + ",")
+		return fold.substring(0, fold.length()-1) + "]"
+
+
+	
+
 public function asList<T>(vararg T ts) returns LinkedList<T>
 	let ll = new LinkedList<T>
 	for t in ts
 		ll.add(t)
 	return ll
 
-class LLEntry<T>
+class LLEntry<T:>
 	T elem
 	LLEntry<T> prev
 	LLEntry<T> next
+
+	construct(LLEntry<T> prev, LLEntry<T> next)
+		this.prev = prev
+		this.next = next
 
 	construct(T elem, LLEntry<T> prev, LLEntry<T> next)
 		this.elem = elem
 		this.prev = prev
 		this.next = next
 
-public class LLIterator<T>
+public class LLIterator<T:>
 	LLEntry<T>	dummy
 	LLEntry<T>	current
 	LinkedList<T> parent
@@ -449,7 +466,8 @@ public class LLIterator<T>
 			let removed = current.elem
 			current = current.prev
 			return removed
-		return null
+		error("Called remove on invalid iterator position.")
+		return dummy.elem
 
 	/** Modifies the last element that was returned by next() (optional operation). */
 	function modify(T newval)
@@ -463,8 +481,8 @@ public class LLIterator<T>
 		current = current.next
 		return current.elem
 
-	function lookahead() returns T
-		T retVal = null
+	function lookahead(T defaultValue) returns T
+		T retVal = defaultValue
 		if hasNext()
 			retVal = current.next.elem
 		return retVal
@@ -473,7 +491,11 @@ public class LLIterator<T>
 		if destroyOnClose
 			destroy this
 
-public class LLBackIterator<T>
+public function LLIterator<T>.lookahead<T: Default>() returns T
+	return this.lookahead(T.defaultValue())
+
+
+public class LLBackIterator<T:>
 	LLEntry<T> dummy
 	LLEntry<T> current
 	protected bool destroyOnClose = true
@@ -502,8 +524,8 @@ public class LLBackIterator<T>
 		current = current.prev
 		return current.elem
 
-	function lookahead() returns T
-		T retVal = null
+	function lookahead(T defaultValue) returns T
+		T retVal = defaultValue
 		if hasNext()
 			retVal = current.prev.elem
 		return retVal
@@ -512,13 +534,16 @@ public class LLBackIterator<T>
 		if destroyOnClose
 			destroy this
 
-public interface LinkedListPredicate<T>
+public function LLBackIterator<T>.lookahead<T: Default>() returns T
+	return this.lookahead(T.defaultValue())
+
+public interface LinkedListPredicate<T:>
 	function isTrueFor(T t) returns boolean
 
-public interface LLItrClosure<T>
+public interface LLItrClosure<T:>
 	function run(T t)
 
-public interface LinkedListUpdater<T>
+public interface LinkedListUpdater<T:>
 	function update(T t) returns T
 
 public interface MapClosure<T, Q>
@@ -527,7 +552,7 @@ public interface MapClosure<T, Q>
 public interface FoldClosure<T, Q>
 	function run(T t, Q q) returns Q
 
-public interface Comparator<T>
+public interface Comparator<T:>
 	function compare(T o1, T o2) returns int
 
 constant Comparator<real> realComparator = (r1, r2) -> (r1 - r2).toInt()
@@ -560,7 +585,7 @@ public function LinkedList<string>.joinBy(string separator) returns string
 	iter.close()
 	return joined
 
-interface ToStringClosure<T>
+interface ToStringClosure<T:>
 	function toString(T elem) returns string
 
 public function LinkedList<T>.joinBy<T>(ToStringClosure<T> cls, string separator) returns string

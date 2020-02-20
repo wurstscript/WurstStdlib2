@@ -1,0 +1,38 @@
+package BasicTypeClasses
+import NoWurst
+
+/**
+  T is a type that can be converted to an integer.
+  The toIndex function must be injective.
+ */
+public interface ToIndex<T:>
+    function toIndex(T x) returns int
+        
+/**
+  T is a type that can be created from an integer T.
+  */
+public interface FromIndex<T:>
+    function fromIndex(int index) returns T
+
+public interface ConvertIndex<T:> extends ToIndex<T>, FromIndex<T>
+
+/**
+  T is a type with a default value.
+ */
+public interface Default<T:>      
+    function defaultValue() returns T
+
+/**
+    AnyRef is the type class for all reference types (interfaces and classes).
+  */
+public interface AnyRef<T:> extends ConvertIndex<T>, Default<T>
+
+/**
+  T is a type that can be converted to a string.
+  */
+public interface Show<T:>
+    function toString(T t) returns string
+
+/** returns a string representation */
+public function T.toString<T: Show>() returns string
+    return T.toString(this)

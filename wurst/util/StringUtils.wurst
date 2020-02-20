@@ -6,6 +6,7 @@ import Interpolation
 import TypeCasting
 import Annotations
 import ErrorHandling
+import BasicTypeClasses
 
 /**
  * Credits go here: http://www.hiveworkshop.com/forums/jass-resources-412/snippet-ascii-190746/
@@ -59,6 +60,10 @@ public function char.toString() returns string
 		return DEFAULT_STRING
 	return c2s[this.c]
 
+public implements Show<char>
+	override function toString(char x) returns string
+		return x.toString()
+
 public function char.toInt() returns int
 	return this.c
 
@@ -85,6 +90,12 @@ public function charToIndex(char c) returns int
 public function charFromIndex(int index) returns char
 	return char(index)
 
+public implements ConvertIndex<char>
+	override function toIndex(char x) returns int
+		return x.toInt()
+	override function fromIndex(int index) returns char	
+		return char(index)
+	
 /** Splits the string by another string
 	"this..is..an..example" split by the string ".." splits into a list containing four strings ["this", "is", "an", "example"] */
 public function string.split(string splitBy) returns LinkedList<string>

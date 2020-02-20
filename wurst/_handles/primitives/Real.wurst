@@ -1,5 +1,6 @@
 package Real
 import NoWurst
+import BasicTypeClasses
 
 public constant REAL_MAX = 340282366920938000000000000000000000000.
 public constant REAL_MIN = -340282366920938000000000000000000000000.
@@ -52,6 +53,10 @@ public function real.toInt() returns int
 public function real.toString() returns string
 	return R2S(this)
 
+public implements Show<real>
+	override function toString(real b) returns string
+		return b.toString()	
+
 /** Returns the string representation of this real with the given amount if digits precision */
 public function real.toString(int precision) returns string
 	return R2SW(this, precision, precision)
@@ -97,3 +102,7 @@ public function real.lerp(real target, real alpha) returns real
 /** Checks if this real is between low and high value */
 public function real.isBetween(real low, real high) returns bool
 	return this >= low and this <= high
+
+public implements Default<real>
+	override function defaultValue() returns real
+		return 0.

@@ -1,9 +1,14 @@
 package Boolean
 import NoWurst
+import BasicTypeClasses
 
 /** Converts this boolean into a string */
 public function boolean.toString() returns string
 	return this ? "true" : "false"
+
+public implements Show<bool>
+	override function toString(bool b) returns string
+		return b.toString()
 
 /** Converts this string into a boolean */
 public function string.toBool() returns boolean
@@ -16,3 +21,7 @@ public function boolean.toInt() returns int
 /** Converts this int into a boolean */
 public function int.toBool() returns boolean
 	return this != 0
+
+public implements Default<bool>
+	override function defaultValue() returns bool
+		return false
