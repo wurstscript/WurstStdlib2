@@ -15,8 +15,6 @@ public interface FromIndex<T:>
     function fromIndex(int index) returns T
 
 public interface ConvertIndex<T:> extends ToIndex<T>, FromIndex<T>
-    override function toIndex(T x) returns int
-    override function fromIndex(int index) returns T
 
 /**
   T is a type with a default value.
@@ -28,9 +26,6 @@ public interface Default<T:>
     AnyRef is the type class for all reference types (interfaces and classes).
   */
 public interface AnyRef<T:> extends ConvertIndex<T>, Default<T>
-    override function toIndex(T x) returns int
-    override function fromIndex(int index) returns T
-    override function defaultValue() returns T
 
 /**
   T is a type that can be converted to a string.

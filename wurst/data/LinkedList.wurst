@@ -6,6 +6,7 @@ import ClosureForGroups
 import Real
 import Annotations
 import BasicTypeClasses
+import ErrorHandling
 
 /**
  * Doubly-linked list implementation that implements all common list, stack and queue operations.
@@ -424,7 +425,7 @@ public function asList<T>(vararg T ts) returns LinkedList<T>
 		ll.add(t)
 	return ll
 
-class LLEntry<T>
+class LLEntry<T:>
 	T elem
 	LLEntry<T> prev
 	LLEntry<T> next
@@ -438,7 +439,7 @@ class LLEntry<T>
 		this.prev = prev
 		this.next = next
 
-public class LLIterator<T>
+public class LLIterator<T:>
 	LLEntry<T>	dummy
 	LLEntry<T>	current
 	LinkedList<T> parent
@@ -465,7 +466,8 @@ public class LLIterator<T>
 			let removed = current.elem
 			current = current.prev
 			return removed
-		return null
+		error("Called remove on invalid iterator position.")
+		return dummy.elem
 
 	/** Modifies the last element that was returned by next() (optional operation). */
 	function modify(T newval)
@@ -479,8 +481,8 @@ public class LLIterator<T>
 		current = current.next
 		return current.elem
 
-	function lookahead() returns T
-		T retVal = null
+	function lookahead(T defaultValue) returns T
+		T retVal = defaultValue
 		if hasNext()
 			retVal = current.next.elem
 		return retVal
@@ -489,7 +491,11 @@ public class LLIterator<T>
 		if destroyOnClose
 			destroy this
 
-public class LLBackIterator<T>
+public function LLIterator<T>.lookahead<T: Default>() returns T
+	return this.lookahead(T.defaultValue())
+
+
+public class LLBackIterator<T:>
 	LLEntry<T> dummy
 	LLEntry<T> current
 	protected bool destroyOnClose = true
@@ -518,8 +524,8 @@ public class LLBackIterator<T>
 		current = current.prev
 		return current.elem
 
-	function lookahead() returns T
-		T retVal = null
+	function lookahead(T defaultValue) returns T
+		T retVal = defaultValue
 		if hasNext()
 			retVal = current.prev.elem
 		return retVal
@@ -528,13 +534,16 @@ public class LLBackIterator<T>
 		if destroyOnClose
 			destroy this
 
-public interface LinkedListPredicate<T>
+public function LLBackIterator<T>.lookahead<T: Default>() returns T
+	return this.lookahead(T.defaultValue())
+
+public interface LinkedListPredicate<T:>
 	function isTrueFor(T t) returns boolean
 
-public interface LLItrClosure<T>
+public interface LLItrClosure<T:>
 	function run(T t)
 
-public interface LinkedListUpdater<T>
+public interface LinkedListUpdater<T:>
 	function update(T t) returns T
 
 public interface MapClosure<T, Q>
@@ -543,7 +552,7 @@ public interface MapClosure<T, Q>
 public interface FoldClosure<T, Q>
 	function run(T t, Q q) returns Q
 
-public interface Comparator<T>
+public interface Comparator<T:>
 	function compare(T o1, T o2) returns int
 
 constant Comparator<real> realComparator = (r1, r2) -> (r1 - r2).toInt()
@@ -576,7 +585,7 @@ public function LinkedList<string>.joinBy(string separator) returns string
 	iter.close()
 	return joined
 
-interface ToStringClosure<T>
+interface ToStringClosure<T:>
 	function toString(T elem) returns string
 
 public function LinkedList<T>.joinBy<T>(ToStringClosure<T> cls, string separator) returns string
