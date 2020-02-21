@@ -52,7 +52,7 @@ public class ChunkedString
 			chunkCount++
 
 	function hasChunk() returns boolean
-		return readIndex + 1 < chunkCount or buffer.length() > 0
+		return readIndex + 1 < chunkCount or (readIndex + 1 == chunkCount and buffer.length() > 0)
 
 	function readChunk() returns string
 		readIndex++
