@@ -7,9 +7,12 @@ import ErrorHandling
 
 /*	ByteBuffer is a utility class that allows you to write/read bytes, shorts and integer to/from it.
 	It may be useful for compacting bytes into integers or decomposing integers into bytes.
+	The byte order is Big Endian.
 */
 
 public class ByteBuffer
+	// We're using Table instead of HashMap here since HashMap has additional checks to maintain know it's size,
+	// which are unneeded here and slow the container 2x.
 	private var storage = new Table()
 	private var intCount = 0
 

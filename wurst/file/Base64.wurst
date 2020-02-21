@@ -8,8 +8,8 @@ import Execute
 import ErrorHandling
 
 /*  Base64 package provides encoding and decoding functions for the common base64 format
-    that allows serializing and deserializing of any data by writing bytes into the Encoder
-    and reading bytes from the Decoder. You'll have to implement writing/reading functions yourself.
+    that allows serializing and deserializing of any data by writing integers into the Encoder
+    and reading integers from the Decoder. You'll have to implement writing/reading functions yourself.
 
     Encode Data using a builder pattern:
     > let encoder = new Base64Encoder()
@@ -98,7 +98,7 @@ public class Base64Encoder
         if chunkedString != null // The string is null after calling `intoData()`.
             destroy chunkedString
 
-    // It's way too much overhead in dispatching two lambdas per each byte if we use `executeWhile()` from stdlib, 'inlining' them there to deal with this.
+    // We're not using `executeWhile()` here to avoid additional overhead in this tight loop.
     private function writeData(ByteBuffer data)
         execute() ->
             var i = 0
@@ -194,7 +194,7 @@ public class Base64Decoder
         if byteBuffer != null // The buffer is null after calling `intoData()`.
             destroy byteBuffer
 
-    // It's way too much overhead in dispatching two lambdas per each byte if we use `executeWhile()` from stdlib, 'inlining' them there to deal with this.
+    // We're not using `executeWhile()` here to avoid additional overhead in this tight loop.
     private function appendData(ChunkedString data)
         execute() ->
             var i = 0
