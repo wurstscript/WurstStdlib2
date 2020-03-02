@@ -80,7 +80,7 @@ public class File
 		for i = 0 to CHUNKS_PER_FILE - 1
 			let chunk = BlzGetAbilityTooltip(FILE_IO_ABIL_ID, i)
 
-			if chunk == ""
+			if chunk == " "
 				break
 
 			BlzSetAbilityTooltip(FILE_IO_ABIL_ID, "", i)
@@ -104,4 +104,4 @@ init
 		..setLevels(CHUNKS_PER_FILE)
 
 	for i = 1 to CHUNKS_PER_FILE
-		dummy.setTooltipNormal(i, "")
+		dummy.setTooltipNormal(i, " ")
