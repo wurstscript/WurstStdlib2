@@ -70,7 +70,7 @@ public function player.loadData(string slotName, LoadListener listener)
 	file.close()
 
 	buffer.sync(this) (syncedBuffer) ->
-		if not syncedBuffer.hasChunk()
+		if syncedBuffer.length() == 0
 			listener.onLoad(LoadStatus.FAIL_FILE_EMPTY, syncedBuffer)
 		else if syncedBuffer.readChunk() == "-"
 			listener.onLoad(LoadStatus.FAIL_CANT_READ, syncedBuffer)
