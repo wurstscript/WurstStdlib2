@@ -1,4 +1,8 @@
 package HashList
+import NoWurst
+import Annotations
+import MagicFunctions
+import Hashtable
 
 /**
  * HashLists are used if you require quick contains operations
@@ -42,7 +46,7 @@ public class HashList<T>
 
 	/** Set an element at the given index.
 		If the index is higher than the list's size,
-		the list will be resized with null elements added between 
+		the list will be resized with null elements added between
 		the index and the previous size. */
 	function set(int index, T elem)
 		if index < size
