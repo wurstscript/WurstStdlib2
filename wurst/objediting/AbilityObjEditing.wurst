@@ -14,6 +14,8 @@ import Annotations
 	property names to have spaces. */
 @configurable constant USE_PROPERTY_SPACING = true
 
+@configurable constant PRESET_NORMAL_TOOLTIPS_AUTOMATICALLY = false
+
 public enum AllowWhenFull
 	NEVER
 	LIFE_ONLY
@@ -62,6 +64,9 @@ public class AbilityDefinition
 	protected int newId
 	protected int baseId
 
+	private var name = ""
+	private var presetTooltipNormalAutomatically = PRESET_NORMAL_TOOLTIPS_AUTOMATICALLY
+
 	function getNewId() returns int
 		return newId
 
@@ -82,6 +87,16 @@ public class AbilityDefinition
 		this.lvls = lvls
 		def = createObjectDefinition("w3a", newId, baseId)
 		setLevels(lvls)
+
+	private function autoPresetTooltipNormal()
+		if presetTooltipNormalAutomatically
+			presetTooltipNormal(lvls > 1 ? (int lvl) -> "{0} - [|cFFFFCC00Level {1}|r]".format(name, lvl.toString()) : (int lvl) -> name)
+
+	function presetTooltipNormalAutomatically(bool preset)
+		presetTooltipNormalAutomatically = preset
+
+	function presetTooltipNormalAutomatically()
+		presetTooltipNormalAutomatically(true)
 
 	function addTooltipProperty(string pName, StringLevelClosure lc)
 		if tooltipGen != null and listen
@@ -117,7 +132,9 @@ public class AbilityDefinition
 
 	function setName(string value)
 		def.setLvlDataString("anam", 0, 0, value)
+		name = value
 		addTooltipProperty("Name", (int lvl) -> value)
+		autoPresetTooltipNormal()
 
 	function setEditorSuffix(string value)
 		def.setLvlDataString("ansf", 0, 0, value)
@@ -338,6 +355,7 @@ public class AbilityDefinition
 		def.setLvlDataInt("alev", 0, 0, value)
 		lvls = value
 		addTooltipProperty("Levels", (int lvl) -> value)
+		autoPresetTooltipNormal()
 
 	function setRequiredLevel(int value)
 		def.setLvlDataInt("arlv", 0, 0, value)
