@@ -19,8 +19,8 @@ import ObjectIds
 
 public var CAN_READ_FILES = true
 
-constant DUMMY_ABIL_ID = 'xlod'
-constant DUMMY_ABIL_ID_STR = DUMMY_ABIL_ID.toRawCode()
+public constant FILE_IO_ABIL_ID = 'xlod'
+public constant FILE_IO_ABIL_ID_STR = FILE_IO_ABIL_ID.toRawCode()
 
 public class File
 	var filename = ""
@@ -68,7 +68,7 @@ public class File
 
 			for i = 0 to buffer.getChunkCount() - 1
 				let chunk = buffer.getChunk(i)
-				Preload("\" )\ncall BlzSetAbilityTooltip('" + DUMMY_ABIL_ID_STR + "', \"" + chunk + "\", " + i.toString() + ")\n//")
+				Preload("\" )\ncall BlzSetAbilityTooltip('" + FILE_IO_ABIL_ID_STR + "', \"" + chunk + "\", " + i.toString() + ")\n//")
 
 			Preload("\" )\nendfunction\nfunction a takes nothing returns nothing\n //")
 			PreloadGenEnd(this.filename)
@@ -78,12 +78,12 @@ public class File
 
 		// Read the output
 		for i = 0 to CHUNKS_PER_FILE - 1
-			let chunk = BlzGetAbilityTooltip(DUMMY_ABIL_ID, i)
+			let chunk = BlzGetAbilityTooltip(FILE_IO_ABIL_ID, i)
 
 			if chunk == " "
 				break
 
-			BlzSetAbilityTooltip(DUMMY_ABIL_ID, " ", i)
+			BlzSetAbilityTooltip(FILE_IO_ABIL_ID, " ", i)
 			output.append(chunk)
 
 
@@ -100,7 +100,7 @@ init
 
 
 @compiletime function generateDummy()
-	let dummy = new AbilityDefinitionIllidanChannel(DUMMY_ABIL_ID)
+	let dummy = new AbilityDefinitionIllidanChannel(FILE_IO_ABIL_ID)
 		..setLevels(CHUNKS_PER_FILE)
 
 	for i = 1 to CHUNKS_PER_FILE
