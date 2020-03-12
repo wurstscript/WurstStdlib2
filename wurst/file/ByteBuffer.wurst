@@ -22,7 +22,7 @@ public class ByteBuffer
 	private var readBuffer = 0
 	private var readBufferIndex = 4
 
-	private var readIndex = 0
+	private var readIndex = -1
 
 	ondestroy
 		destroy storage
@@ -90,7 +90,7 @@ public class ByteBuffer
 
 	function resetRead()
 		readBufferIndex = 4
-		readIndex = 0
+		readIndex = -1
 
 	function getInt(int i) returns int
 		if i == intCount
