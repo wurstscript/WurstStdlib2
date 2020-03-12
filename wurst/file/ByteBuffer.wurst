@@ -22,7 +22,7 @@ public class ByteBuffer
 	private var readBuffer = 0
 	private var readBufferIndex = 4
 
-	private var readIndex = 0
+	private var readIndex = -1
 
 	ondestroy
 		destroy storage
@@ -73,8 +73,8 @@ public class ByteBuffer
 	/** Reads a single unsigned byte from this buffer. The returned value will be in the range [0, 255]. **/
 	function readByte() returns int
 		if readBufferIndex == 4
-			readBuffer = readIndex < intCount ? storage.loadInt(readIndex) : buffer
 			readIndex++
+			readBuffer = readIndex < intCount ? storage.loadInt(readIndex) : buffer
 			readBufferIndex = 0
 		let byte = selectByte(readBuffer, readBufferIndex)
 		readBufferIndex++
@@ -90,7 +90,7 @@ public class ByteBuffer
 
 	function resetRead()
 		readBufferIndex = 4
-		readIndex = 0
+		readIndex = -1
 
 	function getInt(int i) returns int
 		if i == intCount
