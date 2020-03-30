@@ -72,7 +72,7 @@ public function destructable.getName() returns string
 // Extensions
 
 /** Tuple wrapper for destructable gates API */
-tuple gate(destructable killable)
+public tuple gate(destructable killable)
 
 /** Opens a destructable gate */
 public function gate.open()
@@ -98,7 +98,7 @@ public function gate.setOpen(bool flag)
 		this.close()
 
 /** Tuple wrapper for destructable elevator API */
-tuple elevator(destructable elevatable)
+public tuple elevator(destructable elevatable)
 
 constant ELEVATOR_HEIGHT_MIN = 1
 constant ELEVATOR_HEIGHT_MAX = 3
