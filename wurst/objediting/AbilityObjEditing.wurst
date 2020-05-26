@@ -4575,7 +4575,7 @@ public class AbilityDefinitionIntelligenceBonusPlus6 extends AbilityDefinition
 		def.setLevelsDataInt("Istr", lvls, 3, lc)
 		addTooltipProperty("Strength Bonus", lc)
 
-public class AbilityDefinitionBeserk extends AbilityDefinition
+public class AbilityDefinitionBerserk extends AbilityDefinition
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.berserkerRage1)
 
@@ -4599,6 +4599,10 @@ public class AbilityDefinitionBeserk extends AbilityDefinition
 	function presetAttackSpeedIncrease(RealLevelClosure lc)
 		def.setLevelsDataUnreal("bsk2", lvls, 2, lc)
 		addTooltipProperty("Attack Speed Increase", lc)
+
+public class AbilityDefinitionBeserk extends AbilityDefinitionBerserk
+	construct(int newAbilityId)
+		super(newAbilityId)
 
 public class AbilityDefinitionReplenishLifeMana extends AbilityDefinition
 	construct(int newAbilityId)
