@@ -354,6 +354,12 @@ public function framehandle.getHeight() returns real
 public function framehandle.getWidth() returns real
 	return BlzFrameGetWidth(this)
 
+public function framehandle.getChildrenCount() returns int
+	return BlzFrameGetChildrenCount(this)
+
+public function framehandle.getChild(int index) returns framehandle
+	return BlzFrameGetChild(this, index)
+
 /** Sets the text font of the text frame */
 public function framehandle.setFont(string fileName, real height, integer flags)
 	BlzFrameSetFont(this, fileName, height, flags)
