@@ -3,6 +3,8 @@ import NoWurst
 import Player
 import Vectors
 import Colors
+import String
+import ErrorHandling
 import Annotations
 
 /*
@@ -58,6 +60,15 @@ public constant SCREEN_LEFT         = vec2(0.0, 0.3)
 public constant SCREEN_TOP          = vec2(0.4, 0.6)
 public constant SCREEN_BOTTOM       = vec2(0.4, 0.0)
 
+constant BLZ_FRAMENAME_MAXLENGTH    = 560
+
+/** Returns whether the frame name length is valid or not */
+function verifyFrameNameLength(string name) returns boolean
+	if name.length() > BLZ_FRAMENAME_MAXLENGTH
+		error("Trying to address frame with exceeding maximum frame name length (" + BLZ_FRAMENAME_MAXLENGTH.toString() + ") for: " + name)
+		return false
+	return true
+
 /** Returns the orgin frame of the given type */
 public function getOriginFrame(originframetype frameType) returns framehandle
 	return BlzGetOriginFrame(frameType, 0)
@@ -68,22 +79,27 @@ public function getOriginFrame(originframetype frameType, integer index) returns
 
 @deprecated("Use getFrame(name) instead.")
 public function getFrameByName(string name) returns framehandle
+	verifyFrameNameLength(name)
 	return getFrame(name)
 
 @deprecated("Use getFrame(name, createContext) instead.")
 public function getFrameByName(string name, integer createContext) returns framehandle
+	verifyFrameNameLength(name)
 	return getFrame(name, createContext)
 
 /**	Returns the framehandle of the given name and createContext index (children inherit the createContext value of their parent) */
 public function getFrame(string name, integer createContext) returns framehandle
+	verifyFrameNameLength(name)
 	return BlzGetFrameByName(name, createContext)
 
 /**	Returns the framehandle of the given name */
 public function getFrame(string name) returns framehandle
+	verifyFrameNameLength(name)
 	return getFrame(name, 0)
 
 /** Creates a non simple frame of the given name (the name of the frame which must be defined in the imported fdf files). */
 public function createFrame(string name) returns framehandle
+	verifyFrameNameLength(name)
 	return createFrame(name, GAME_UI, 0, 0)
 
 /** Creates a non simple frame:
@@ -92,10 +108,12 @@ public function createFrame(string name) returns framehandle
 		priority: unknown
 		createContext: the unique id assigned to the frame and its children (useful for creating multiple frames of the same name) */
 public function createFrame(string name, framehandle owner, integer priority, integer createContext) returns framehandle
+	verifyFrameNameLength(name)
 	return BlzCreateFrame(name, owner, priority, createContext)
 
 /** Creates a simple frame of the given name (the name of the frame which must be defined in the imported fdf files.) */
-public function createSimpleFrame(string name) returns framehandle
+public function createSimpleFrame(string name) returns framehandle	
+	verifyFrameNameLength(name)
 	return BlzCreateSimpleFrame(name, GAME_UI, 0)
 
 /** Creates a simple frame:
@@ -103,6 +121,7 @@ public function createSimpleFrame(string name) returns framehandle
 		owner: the parent of the frame
 		createContext: the unique id assigned to the frame and its children (useful for creating multiple frames of the same name) */
 public function createSimpleFrame(string name, framehandle owner, integer createContext) returns framehandle
+	verifyFrameNameLength(name)
 	return BlzCreateSimpleFrame(name, owner, createContext)
 
 /** Creates a frame by type:
@@ -112,10 +131,12 @@ public function createSimpleFrame(string name, framehandle owner, integer create
 		inherits: the name of the frame frome which the created frame will be inhereting (which must be defined in the imported .fdf files)
 		createContext: the unique id assigned to the frame and its children (useful for creating multiple frames of the same name) */
 public function createFrame(string typeName, string name, framehandle owner, string inherits, integer createContext) returns framehandle
+	verifyFrameNameLength(name)
 	return BlzCreateFrameByType(typeName, name, owner, inherits, createContext)
 
 @deprecated("Use createFrame(typeName, name, owner, inherits, createContext) instead.")
 public function createFrameByType(string typeName, string name, framehandle owner, string inherits, integer createContext) returns framehandle
+	verifyFrameNameLength(name)
 	return createFrame(typeName, name, owner, inherits, createContext)
 
 /** Removes a frame */
