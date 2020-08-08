@@ -1,0 +1,220 @@
+package Tiles
+import NoWurst
+// ref: https://www.thehelper.net/threads/terrain-type-raw-value.105981/
+
+public class Tiles
+	// Lordaeron Summer
+	static constant lordaeron_Summer_Dirt = 'Ldrt'
+	static constant lordaeron_Summer_Rough_Dirt = 'Ldro'
+	static constant lordaeron_Summer_Grassy_Dirt = 'Ldrg'
+	static constant lordaeron_Summer_Rock = 'Lrok'
+	static constant lordaeron_Summer_Grass = 'Lgrs'
+	static constant lordaeron_Summer_Dark_Grass = 'Lgrd'
+
+	// Lordaeron Fall
+	static constant lordaeron_Fall_Dirt = 'Fdrt'
+	static constant lordaeron_Fall_Rough_Dirt = 'Fdro'
+	static constant lordaeron_Fall_Grassy_Dirt = 'Fdrg'
+	static constant lordaeron_Fall_Rock = 'Frok'
+	static constant lordaeron_Fall_Grass = 'Fgrs'
+	static constant lordaeron_Fall_Dark_Grass = 'Fgrd'
+
+	// Lordaeron Winter
+	static constant lordaeron_Winter_Dirt = 'Wdrt'
+	static constant lordaeron_Winter_Rough_Dirt = 'Wdro'
+	static constant lordaeron_Winter_Grassy_Snow = 'Wsng'
+	static constant lordaeron_Winter_Rock = 'Wrok'
+	static constant lordaeron_Winter_Grass = 'Wgrs'
+	static constant lordaeron_Winter_Snow = 'Wsnw'
+
+	// Barrens
+	static constant barrens_Dirt = 'Bdrt'
+	static constant barrens_Rough_Dirt = 'Bdrh'
+	static constant barrens_Pebbles = 'Bdrr'
+	static constant barrens_Grassy_Dirt = 'Bdrg'
+	static constant barrens_Desert = 'Bdsr'
+	static constant barrens_Dark_Desert = 'Bdsd'
+	static constant barrens_Rock = 'Bflr'
+	static constant barrens_Grass = 'Bgrr'
+
+	// Ashenvale
+	static constant ashenvale_Dirt = 'Adrt'
+	static constant ashenvale_Rough_Dirt = 'Adrd'
+	static constant ashenvale_Grass = 'Agrs'
+	static constant ashenvale_Rock = 'Arck'
+	static constant ashenvale_Lumpy_Grass = 'Agrd'
+	static constant ashenvale_Vines = 'Avin'
+	static constant ashenvale_Grassy_Dirt = 'Adrg'
+	static constant ashenvale_Leaves = 'Alvd'
+
+	// Felwood
+	static constant felwood_Dirt = 'Cdrt'
+	static constant felwood_Rough_Dirt = 'Cdrd'
+	static constant felwood_Poison = 'Cpos'
+	static constant felwood_Rock = 'Crck'
+	static constant felwood_Vines = 'Cvin'
+	static constant felwood_Grass = 'Cgrs'
+	static constant felwood_Leaves = 'Clvg'
+
+	// Northrend
+	static constant northrend_Dirt = 'Ndrt'
+	static constant northrend_Dark_Dirt = 'Ndrd'
+	static constant northrend_Rock = 'Nrck'
+	static constant northrend_Grass = 'Ngrs'
+	static constant northrend_Ice = 'Nice'
+	static constant northrend_Snow = 'Nsnw'
+	static constant northrend_Rocky_Snow = 'Nsnr'
+
+	// Cityscape
+	static constant cityscape_Dirt = 'Ydrt'
+	static constant cityscape_Rough_Dirt = 'Ydtr'
+	static constant cityscape_Black_Marble = 'Yblm'
+	static constant cityscape_Brick = 'Ybtl'
+	static constant cityscape_Square_Tiles = 'Ysqd'
+	static constant cityscape_Round_Tiles = 'Yrtl'
+	static constant cityscape_Grass = 'Ygsb'
+	static constant cityscape_Grass_Trim = 'Yhdg'
+	static constant cityscape_White_Marble = 'Ywmb'
+
+	// Village
+	static constant village_Dirt = 'Vdrt'
+	static constant village_Rough_Dirt = 'Vdrr'
+	static constant village_Crops = 'Vcrp'
+	static constant village_Cobble_Path = 'Vcbp'
+	static constant village_Stone_Path = 'Vstp'
+	static constant village_Short_Grass = 'Vgrs'
+	static constant village_Rocks = 'Vrck'
+	static constant village_Thick_Grass = 'Vgrt'
+
+	// Village_Fall
+	static constant village_Fall_Dirt = 'Qdrt'
+	static constant village_Fall_Rough_Dirt = 'Qdrr'
+	static constant village_Fall_Crops = 'Qcrp'
+	static constant village_Fall_Cobble_Path = 'Qcbp'
+	static constant village_Fall_Stone_Path = 'Qstp'
+	static constant village_Fall_Short_Grass = 'Qgrs'
+	static constant village_Fall_Rocks = 'Qrck'
+	static constant village_Fall_Thick_Grass = 'Qgrt'
+
+	// Dalaran
+	static constant dalaran_Dirt = 'Xdrt'
+	static constant dalaran_Rough_Dirt = 'Xdtr'
+	static constant dalaran_Black_Marble = 'Xblm'
+	static constant dalaran_Brick_Tiles = 'Xbtl'
+	static constant dalaran_Square_Tiles = 'Xsqd'
+	static constant dalaran_Round_Tiles = 'Xrtl'
+	static constant dalaran_Grass = 'Xgsb'
+	static constant dalaran_Trim_Grass = 'Xhdg'
+	static constant dalaran_White_Marble = 'Xwmb'
+
+	// Dungeon
+	static constant dungeon_Dirt = 'Ddrt'
+	static constant dungeon_Brick = 'Dbrk'
+	static constant dungeon_Red_Stones = 'Drds'
+	static constant dungeon_Lava_Cracks = 'Dlvc'
+	static constant dungeon_Lava = 'Dlav'
+	static constant dungeon_Dark_Rocks = 'Ddkr'
+	static constant dungeon_Grey_Stones = 'Dgrs'
+	static constant dungeon_Square_Tiles = 'Dsqd'
+
+	// Underground
+	static constant underground_Dirt = 'Gdrt'
+	static constant underground_Brick = 'Gbrk'
+	static constant underground_Red_Stones = 'Grds'
+	static constant underground_Lava_Cracks = 'Glvc'
+	static constant underground_Lava = 'Glav'
+	static constant underground_Dark_Rocks = 'Gdkr'
+	static constant underground_Grey_Stones = 'Ggrs'
+	static constant underground_Square_Tiles = 'Gsqd'
+
+	// Sunken_Ruins
+	static constant sunken_Ruins_Dirt = 'Zdrt'
+	static constant sunken_Ruins_Rough_Dirt = 'Zdtr'
+	static constant sunken_Ruins_Grassy_Dirt = 'Zdrg'
+	static constant sunken_Ruins_Small_Bricks = 'Zbks'
+	static constant sunken_Ruins_Sand = 'Zsan'
+	static constant sunken_Ruins_Large_Bricks = 'Zbkl'
+	static constant sunken_Ruins_Round_Tiles = 'Ztil'
+	static constant sunken_Ruins_Grass = 'Zgrs'
+	static constant sunken_Ruins_Dark_Grass = 'Zvin'
+
+	// Icecrown_Glacier
+	static constant icecrown_Glacier_Dirt = 'Idrt'
+	static constant icecrown_Glacier_Rough_Dirt = 'Idtr'
+	static constant icecrown_Glacier_Dark_Ice = 'Idki'
+	static constant icecrown_Glacier_Black_Bricks = 'Ibkb'
+	static constant icecrown_Glacier_Rune_Bricks = 'Irbk'
+	static constant icecrown_Glacier_Tiled_Bricks = 'Itbk'
+	static constant icecrown_Glacier_Ice = 'Iice'
+	static constant icecrown_Glacier_Black_Squares = 'Ibsq'
+	static constant icecrown_Glacier_Snow = 'Isnw'
+
+	// Outland
+	static constant outland_Dirt = 'Odrt'
+	static constant outland_Light_Dirt = 'Odtr'
+	static constant outland_Rough_Dirt = 'Osmb'
+	static constant outland_Cracked_Dirt = 'Ofst'
+	static constant outland_Flat_Stones = 'Olgb'
+	static constant outland_Rock = 'Orok'
+	static constant outland_Light_Flat_Stones = 'Ofsl'
+	static constant outland_Abyss = 'Oaby'
+
+
+	// Black_Citadel
+	static constant black_Citadel_Dirt = 'Kdrt'
+	static constant black_Citadel_Light_Dirt = 'Kfsl'
+	static constant black_Citadel_Rough_Dirt = 'Kdtr'
+	static constant black_Citadel_Flat_Stones = 'Kfst'
+	static constant black_Citadel_Small_Bricks = 'Ksmb'
+	static constant black_Citadel_Large_Bricks = 'Klgb'
+	static constant black_Citadel_Square_Tiles = 'Ksqt'
+	static constant black_Citadel_Dark_Tiles = 'Kdkt'
+
+	// Dalaran_Ruins
+	static constant dalaran_Ruins_Dirt = 'Jdrt'
+	static constant dalaran_Ruins_Rough_Dirt = 'Jdtr'
+	static constant dalaran_Ruins_Black_Marble = 'Jblm'
+	static constant dalaran_Ruins_Brick_Tiles = 'Jbtl'
+	static constant dalaran_Ruins_Square_Tiles = 'Jsqd'
+	static constant dalaran_Ruins_Round_Tiles = 'Jrtl'
+	static constant dalaran_Ruins_Grass = 'Jgsb'
+	static constant dalaran_Ruins_Trim_Grass = 'Jhdg'
+	static constant dalaran_Ruins_White_Marble = 'Jwmb'
+
+	// Cliffs
+	static constant ashenvale_Dirt_Cliff = 'cAc2'
+	static constant ashenvale_Grass_Cliff = 'cAc1'
+	static constant barrens_Desert_Cliff = 'cBc2'
+	static constant barrens_Grass_Cliff = 'cBc1'
+	static constant black_Citadel_Dirt_Cliff = 'cKc1'
+	static constant black_Citadel_Dark_Tiles_Cliff = 'cKc2'
+	static constant cityscape_Dirt_Cliff = 'cYc2'
+	static constant cityscape_Square_Tiles_Cliff = 'cYc1'
+	static constant dalaran_Dirt_Cliff = 'cXc2'
+	static constant dalaran_Square_Tiles_Cliff = 'cXc1'
+	static constant dalaran_Ruins_Dirt_Cliff = 'cJc2'
+	static constant dalaran_Ruins_Square_Tiles_Cliff = 'cJc1'
+	static constant dungeon_Dirt_Cliff = 'cDc2'
+	static constant dungeon_Square_Tiles_Cliff = 'cDc1'
+	static constant felwood_Dirt_Cliff = 'cCc2'
+	static constant felwood_Grass_Cliff = 'cCc1'
+	static constant icecrown_Glacier_Rune_Bricks_Cliff = 'cIc2'
+	static constant icecrown_Glacier_Snow_Cliff = 'cIc1'
+	static constant lordaeron_Fall_Dirt_Cliff = 'cFc2'
+	static constant lordaeron_Fall_Grass_Cliff = 'cFc1'
+	static constant lordaeron_Summer_Dirt_Cliff = 'cLc2'
+	static constant lordaeron_Summer_Grass_Cliff = 'cLc1'
+	static constant lordaeron_Winter_Grass_Cliff = 'cWc2'
+	static constant lordaeron_Winter_Snow_Cliff = 'cWc1'
+	static constant northrend_Dirt_Cliff = 'cNc2'
+	static constant northrend_Snow_Cliff = 'cNc1'
+	static constant outland_Abyss_Cliff = 'cOc1'
+	static constant outland_Rough_Dirt_Cliff = 'cOc2'
+	static constant sunken_Ruins_Dirt_Cliff = 'cZc2'
+	static constant sunken_Ruins_Large_Bricks_Cliff = 'cZc1'
+	static constant underground_Dirt_Cliff = 'cGc2'
+	static constant underground_Square_Tiles_Cliff = 'cGc1'
+	static constant village_Dirt_Cliff = 'cVc2'
+	static constant village_Grass_Thick_Cliff = 'cVc1'
+	static constant village_Fall_Dirt_Cliff = 'cQc2'
+	static constant village_Fall_Grass_Thick_Cliff = 'cQc1'

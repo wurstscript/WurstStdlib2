@@ -11,11 +11,11 @@ import OnUnitEnterLeave
 	BREAK THIS SYSTEM since it depends on being the only system to use it.
 	Conversely, it is very likely that this system is going to break them, too.
 	Always make sure you only have one system using SetUnitUserData.
-	The maximum number of indexed units at any time is 8190, so if you have more
+	The maximum number of indexed units at any time is 32760, so if you have more
 	units than that at any time, the system will not be able to index them.
 
 	----------------------------------------------------------------------------
-			
+
 	1) System initialization
 		In order to initialize the system, the user needs to import UnitIndexer
 		into one of his scripts.
@@ -26,15 +26,15 @@ import OnUnitEnterLeave
 		To get a unit's unique index as an int:
 
 			unit.getIndex()
-			
+
 		To get a unit's unique index as an UnitIndex object (this will also
-		give the unit an index if the unit doesn't already have it): 
+		give the unit an index if the unit doesn't already have it):
 
 			unit.toUnitIndex()
 
 		Remember, it is possible to cast between their return types:
 
-			unit.toUnitIndex() castTo int 
+			unit.toUnitIndex() castTo int
 			unit.getIndex() castTo UnitIndex
 
 		However, if you save a UnitIndex to a variable, it's possible to get
@@ -57,14 +57,14 @@ import OnUnitEnterLeave
 
 		Conversely, if we want to create a class instance that belongs to
 		a unit that had just been indexed, we can do the same:
-			
-			onUnitIndex(() -> new Class(GetIndexedUnit()))
+
+			onUnitIndex(() -> new Class(getIndexedUnit()))
 
 		If you have never worked with lambda functions, the above code might
 		look like black magic, but it essentially translates to this:
 
 			function someFunction()
-				new Class(GetIndexedUnit())
+				new Class(getIndexedUnit())
 
 			...in code somewhere...
 				onUnitIndex(function someFunction())
@@ -105,14 +105,24 @@ import OnUnitEnterLeave
 
 trigger onIndexTrigger = CreateTrigger()
 trigger onDeindexTrigger = CreateTrigger()
-unit indexedUnit = null
-unit deindexedUnit = null
+
+/* Unit stack for nested usage */
+unit array tempUnits
+var tempUnitsCount = 0
+
+function pushUnit(unit u)
+	tempUnits[tempUnitsCount] = u
+	tempUnitsCount++
+
+function popUnit()
+	tempUnitsCount--
+
 
 @configurable public function shouldIndex(unit _u) returns boolean
 	return true
 
-/**  Returns the int index of this unit. 
-	Can be configured by the user to supply a custom unit indexer which won't break 
+/**  Returns the int index of this unit.
+	Can be configured by the user to supply a custom unit indexer which won't break
 	other stdlib components. */
 @configurable public function unit.getIndex() returns int
 	return this.getUserData()
@@ -126,22 +136,27 @@ unit deindexedUnit = null
 
 	return instance
 
+/**	Returns the currently indexing unit.
+	That's the last indexed unit or 
+	the one about to be deindexed. */
+public function getIndexingUnit() returns unit
+	return tempUnits[tempUnitsCount - 1]
 
-/**  Returns the last indexed unit. */
+@deprecated("Use 'getIndexingUnit' instead")
 public function getIndexedUnit() returns unit
-	return indexedUnit
+	return getIndexingUnit()
 
-/**  Returns the unit about to be deindexed. */
+@deprecated("Use 'getIndexingUnit' instead")
 public function getDeindexedUnit() returns unit
-	return deindexedUnit 
+	return getIndexingUnit()
 
 /**  Adds a function to be called before a unit is deindexed.
-    Use the getDeindexedUnit() function to refer to the deindexing unit. */
+	Use the getIndexingUnit() function to refer to the deindexing unit. */
 public function onUnitDeindex(code func)
 	onDeindexTrigger.addCondition(Condition(func))
 
 /**  Adds a function to be called after a unit is indexed.
-	Use the getIndexedUnit() function to refer to the indexed unit. */
+	Use the getIndexingUnit() function to refer to the indexed unit. */
 public function onUnitIndex(code func)
 	onIndexTrigger.addCondition(Condition(func))
 
@@ -166,12 +181,14 @@ public class UnitIndex
 	construct(unit whichUnit)
 		this._unit = whichUnit
 		this._unit.setUserData(this castTo int)
-		indexedUnit = this._unit
+		pushUnit(whichUnit)
 		onIndexTrigger.evaluate()
+		popUnit()
 
 	ondestroy
-		deindexedUnit = this._unit
+		pushUnit(this._unit)
 		onDeindexTrigger.evaluate()
+		popUnit()
 		this._unit.setUserData(0)
 
 // Auto instanciation/destruction

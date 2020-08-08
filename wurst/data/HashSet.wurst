@@ -3,19 +3,29 @@ import public HashList
 
 /** Generic set implementation */
 public class HashSet<T> extends HashList<T>
-	private static hashtable position = InitHashtable()
+	private static constant position = InitHashtable()
 
 	/** Adds an element to this set */
-	override function add(T elem)
-		if count(elem) <= 0
-			super.add(elem)
-			position.saveInt(this castTo int, elem castTo int, size())
+	override function add(vararg T elems)
+		for elem in elems
+			if count(elem) <= 0
+				position.saveInt(this castTo int, elem castTo int, size())
+				super.add(elem)
 
 	/** Removes an element from this set if present */
-	override function remove(T elem)
+	override function remove(T elem) returns boolean
+		var result = false
 		if count(elem) > 0
-			let pos = position.loadInt(this castTo int, elem castTo int)
-			removeAt(pos)
+			removeAt(position.loadInt(this castTo int, elem castTo int))
+			result = true
+		return result
+
+	/** Remove the element at the given index */
+	override function removeAt(int index) returns T
+		position.removeInt(this castTo int, get(index) castTo int)
+		for i = index + 1 to size()
+			position.saveInt(this castTo int, get(i) castTo int, position.loadInt(this castTo int, get(i) castTo int) - 1)
+		return super.removeAt(index)
 
 	override function clear()
 		super.clear()

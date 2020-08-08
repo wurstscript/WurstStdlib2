@@ -5,8 +5,9 @@ import public ObjectIds
 import public ObjectIdGenerator
 import OrderStringFactory
 import BitSet
+import Annotations
 
-OrderStringFactory odf = new OrderStringFactory()
+var odf = new OrderStringFactory()
 @compiletime function initOdf()
 	odf = new OrderStringFactory()
 
@@ -24,7 +25,7 @@ public enum Targettype
 	POINT
 	POINTUNIT
 	PASSIVE
-	
+
 public function Targettype.toString() returns string
 	switch this
 		case NONE
@@ -37,7 +38,6 @@ public function Targettype.toString() returns string
 			return "Point & Unit Target"
 		case PASSIVE
 			return "Passive"
-	return ""
 
 public class ChannelAbilityPreset extends AbilityDefinitionIllidanChannel
 	private bitset optionSet = bitset(0)
@@ -46,23 +46,33 @@ public class ChannelAbilityPreset extends AbilityDefinitionIllidanChannel
 	function getOrderString() returns string
 		return orderString
 
+	construct(int newId, int lvls, boolean removeChannelProperties, TooltipGenerator tgen)
+		super(newId)
+		registerTooltipGenerator(tgen)
+		setup(lvls, removeChannelProperties)
+
 	construct(int newId, int lvls, boolean removeChannelProperties)
 		super(newId)
+		setup(lvls, removeChannelProperties)
+
+	function setup(int lvls, boolean removeChannelProperties)
 		this.lvls = lvls
+		tooltipStartListen()
 		setLevels(lvls)
+		tooltipStopListen(false)
 		orderString = odf.getOrderString(true)
 		presetBaseOrderID(_lvl -> orderString)
 		if removeChannelProperties
 			removeChannelProperties(true)
-			
+
 	function makeUnitSpell(int mana, real cooldown)
 		setHeroAbility(false)
 		presetManaCost(lvl -> mana)
 		presetCooldown(lvl -> cooldown)
-		
+
 	function removeChannelProperties(boolean removeVisuals)
 		removeChannelProperties(removeVisuals, true)
-		
+
 	function removeChannelProperties(boolean removeVisuals, boolean makeVisible)
 		presetDisableOtherAbilities(lvl -> false)
 		presetFollowThroughTime(lvl -> 0.)
@@ -77,17 +87,16 @@ public class ChannelAbilityPreset extends AbilityDefinitionIllidanChannel
 
 	function presetTargetTypes(Targettype ttype)
 		presetTargetType(lvl -> ttype castTo int)
-					
+
 	function presetOption(Option opt, boolean flag)
 		let pow = opt castTo int
-		if optionSet.contains(pow)
+		if optionSet.get(pow)
 			if not flag
-				optionSet = optionSet.remove(pow)
+				optionSet = optionSet.reset(pow)
 		else if flag
-			optionSet = optionSet.add(pow)
+			optionSet = optionSet.set(pow)
 
 		presetOptions(lvl -> optionSet.val)
-	
+
 	function hasOption(Option option) returns boolean
-		return optionSet.contains(option castTo int)
-		
+		return optionSet.get(option castTo int)

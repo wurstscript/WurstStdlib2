@@ -1,0 +1,256 @@
+package ObjEditingCommons
+
+public enum Race
+	Commoner
+	Creeps
+	Critters
+	Demon
+	Human
+	Naga
+	Nightelf
+	Orc
+	Other
+	Undead
+	Unknown
+
+public enum AttacksEnabled
+	None
+	AttackOneOnly
+	AttackTwoOnly
+	Both
+
+public function Race.toObjectString() returns string
+	string result
+	switch this
+		case Commoner
+			result = "commoner"
+		case Creeps
+			result = "creeps"
+		case Critters
+			result = "critters"
+		case Demon
+			result = "demon"
+		case Human
+			result = "human"
+		case Naga
+			result = "naga"
+		case Nightelf
+			result = "nightelf"
+		case Orc
+			result = "orc"
+		case Other
+			result = "other"
+		case Undead
+			result = "undead"
+		case Unknown
+			result = "unknown"
+	return result
+
+
+public function AttacksEnabled.toObjectInt() returns int
+	int result
+	switch this
+		case None
+			result = 0
+		case AttackOneOnly
+			result = 1
+		case AttackTwoOnly
+			result = 2
+		case Both
+			result = 3
+	return result
+
+public enum MovementType
+	None
+	Foot
+	Horse
+	Fly
+	Hover
+	Float
+	Amphipic
+
+public enum ArmorType
+	Small
+	Medium
+	Large
+	Fortified
+	Normal
+	Hero
+	Divine
+	Unarmored
+
+public enum AttackType
+	Unknown
+	Normal
+	Pierce
+	Siege
+	Spells
+	Chaos
+	Magic
+	Hero
+
+public enum WeaponSound
+	Nothing
+	AxeMediumChop
+	MetalHeavyBash
+	MetalHeavyChop
+	MetalHeavySlice
+	MetalLightChop
+	MetalLightSlice
+	MetalMediumBash
+	MetalMediumChop
+	MetalMediumSlice
+	RockHeavyBash
+	WoodHeavyBash
+	WoodLightBash
+	WoodMediumBash
+
+public enum ArmorSoundType
+	Ethereal
+	Metal
+	Flesh
+	Stone
+	Wood
+
+public enum WeaponType
+	None
+	Normal
+	Instant
+	Artillery
+	ArtilleryLine
+	Missile
+	MissileSplash
+	MissileBounce
+	MissileLine
+
+public function WeaponType.toObjectString() returns string
+	switch this
+		case Normal
+			return "normal"
+		case Instant
+			return "instant"
+		case Artillery
+			return "artillery"
+		case ArtilleryLine
+			return "aline"
+		case Missile
+			return "missile"
+		case MissileSplash
+			return "msplash"
+		case MissileBounce
+			return "mbounce"
+		case MissileLine
+			return "mline"
+		default
+			return "_"
+
+
+public function WeaponSound.toString() returns string
+	switch this
+		case WeaponSound.Nothing
+			return "Nothing"
+		case WeaponSound.AxeMediumChop
+			return "AxeMediumChop"
+		case WeaponSound.MetalHeavyBash
+			return "MetalHeavyBash"
+		case WeaponSound.MetalHeavyChop
+			return "MetalHeavyChop"
+		case WeaponSound.MetalHeavySlice
+			return "MetalHeavySlice"
+		case WeaponSound.MetalLightChop
+			return "MetalLightChop"
+		case WeaponSound.MetalLightSlice
+			return "MetalLightSlice"
+		case WeaponSound.MetalMediumBash
+			return "MetalMediumBash"
+		case WeaponSound.MetalMediumChop
+			return "MetalMediumChop"
+		case WeaponSound.MetalMediumSlice
+			return "MetalMediumSlice"
+		case WeaponSound.RockHeavyBash
+			return "RockHeavyBash"
+		case WeaponSound.WoodHeavyBash
+			return "WoodHeavyBash"
+		case WeaponSound.WoodLightBash
+			return "WoodLightBash"
+		case WeaponSound.WoodMediumBash
+			return "WoodMediumBash"
+		default
+			return null
+
+public function ArmorSoundType.toString() returns string
+	switch this
+		case ArmorSoundType.Ethereal
+			return "Ethereal"
+		case ArmorSoundType.Flesh
+			return "Flesh"
+		case ArmorSoundType.Wood
+			return "Wood"
+		case ArmorSoundType.Stone
+			return "Stone"
+		case ArmorSoundType.Metal
+			return "Metal"
+		default
+			return null
+
+
+
+public function ArmorType.toObjectString() returns string
+	string result
+	switch this
+		case Normal
+			result = "normal"
+		case Small
+			result = "small"
+		case Medium
+			result = "medium"
+		case Large
+			result = "large"
+		case Fortified
+			result = "fort"
+		case Hero
+			result = "hero"
+		case Divine
+			result = "divine"
+		case Unarmored
+			result = "none"
+	return result
+
+public function AttackType.toObjectString() returns string
+	string result
+	switch this
+		case Unknown
+			result = "unknown"
+		case Normal
+			result = "normal"
+		case Pierce
+			result = "pierce"
+		case Siege
+			result = "siege"
+		case Spells
+			result = "spells"
+		case Chaos
+			result = "chaos"
+		case Magic
+			result = "magic"
+		case Hero
+			result = "hero"
+	return result
+
+public function MovementType.toObjectString() returns string
+	var result = ""
+	switch this
+		case None
+		case Foot
+			result = "foot"
+		case Horse
+			result = "horse"
+		case Fly
+			result = "fly"
+		case Hover
+			result = "hover"
+		case Float
+			result = "float"
+		case Amphipic
+			result = "amph"
+	return result

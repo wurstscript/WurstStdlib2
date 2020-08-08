@@ -1,10 +1,11 @@
 package StringUtils
 import NoWurst
-import String
 import LinkedList
 import Texttag
 import Interpolation
 import TypeCasting
+import Annotations
+import ErrorHandling
 
 /**
  * Credits go here: http://www.hiveworkshop.com/forums/jass-resources-412/snippet-ascii-190746/
@@ -13,16 +14,17 @@ import TypeCasting
 string array c2s
 int array s2c
 int array width
-constant int MAX_INDEX = '~' + 1
-constant int DEFAULT_WIDTH = 0
-constant string DEFAULT_STRING = ""
+constant MAX_INDEX = '~' + 1
+constant DEFAULT_WIDTH = 0
+constant DEFAULT_STRING = ""
+constant WC3LIMIT_OBJECTS_DESCRIPTION_LENGTH = 1023 // Should be a global for whole WurstScript or StdLib at least
 
 public function texttag.center(vec3 pos, string message, real size) returns texttag
 	var str = message
 	while str.contains("|cff")
 		let idx = str.indexOf("|cff")
 		str = str.substring(0, idx) + str.substring(idx + 10, str.length())
-	this..setPos(pos - vec2(str.getWidth() / 1000. * bezier_3(3.0, 8.0, 11.5, size/25)  * 6.5, 0))
+	this..setPos(pos - vec2(str.getWidth() / 1000. * bezier3(3.0, 8.0, 11.5, size / 25)  * 6.5, 0))
 	..setText(message, size)
 	return this
 
@@ -37,21 +39,23 @@ public tuple char(int c)
 
 /** Returns the width of the string */
 public function string.getWidth() returns int
-	int width = 0
-	for int i = 0 to this.length() - 1
+	var width = 0
+	for i = 0 to this.length() - 1
 		width += char(this.charAt(i)).getWidth()
 	return width
 
 public function char(string s) returns char
-	if ("\\" == s)
+	if s == "/"
+		return char('/')
+	else if "\\" == s
 		return char('\')
-	int a = s2c[StringHash(s) div 0x1F0748 + 0x3EA]
-	if (s != c2s[a])
+	var a = s2c[s.getHash() div 0x1F0748 + 0x3EA]
+	if s != c2s[a]
 		return char(a + 32)
 	return char(a)
 
 public function char.toString() returns string
-	if (this.c > MAX_INDEX)
+	if this.c > MAX_INDEX
 		return DEFAULT_STRING
 	return c2s[this.c]
 
@@ -59,7 +63,7 @@ public function char.toInt() returns int
 	return this.c
 
 public function char.getWidth() returns int
-	if (this.c > MAX_INDEX)
+	if this.c > MAX_INDEX
 		return DEFAULT_WIDTH
 	return width[this.c]
 
@@ -67,7 +71,7 @@ public function string.toChar() returns char
 	return char(this)
 
 public function string.toCharList() returns LinkedList<char>
-	LinkedList<char> res = new LinkedList<char>()
+	let res = new LinkedList<char>()
 	for int i = 0 to this.length() - 1
 		res.add(char(this.charAt(i)))
 	return res
@@ -81,7 +85,7 @@ public function charToIndex(char c) returns int
 public function charFromIndex(int index) returns char
 	return char(index)
 
-/** Splits the string by another string 
+/** Splits the string by another string
 	"this..is..an..example" split by the string ".." splits into a list containing four strings ["this", "is", "an", "example"] */
 public function string.split(string splitBy) returns LinkedList<string>
 	let list = new LinkedList<string>
@@ -98,30 +102,10 @@ public function string.split(string splitBy) returns LinkedList<string>
 		str = second
 	return list
 
-/** Joins elements from a string list into one string using a separator */
-public function LinkedList<string>.joinBy(string separator) returns string
-	var joined = ""
-	var first = true
-	let iter = this.iterator()
-	
-	for str from iter
-		if iter.hasNext() or not first
-			joined += str + separator
-		else
-			joined += str
-			first = false
-			
-	iter.close()
-	return joined
-
-/** Joins elements from a string list into one string */ 
-public function LinkedList<string>.join() returns string
-	return this.joinBy("")
-
-/** Replaces consecutive repeats of the same string with a single instance 
+/** Replaces consecutive repeats of the same string with a single instance
 	Turns "strstr" into "str" */
 public function string.reduce(string reduced) returns string
-	var toReduce = reduced + reduced 
+	var toReduce = reduced + reduced
 	var oldString = this
 	string newString
 
@@ -134,10 +118,63 @@ public function string.reduce(string reduced) returns string
 
 	return newString
 
-/** Replaces consecutive repeats of the whitespace character with a single instance 
+/** Replaces consecutive repeats of the whitespace character with a single instance
 	Turns "  " into " " */
 public function string.reduce() returns string
 	return this.reduce(" ")
+
+public interface ForStringSplitCallback
+	function callback(string str)
+
+/** Custom Function which can split strings and runs callback for each string.
+	It can run even with no delimiter present (with single element).
+	Example usage:
+	"H001,H002".forEachIn(",") ->
+		doSomething()  */
+public function string.forEachIn(string delim, ForStringSplitCallback cb)
+	if this.length() > 0
+		int i = 0
+		int pos = this.indexOf(delim, i)
+
+		if pos == -1
+			cb.callback(this.substring(i, this.length()))
+
+		while pos != -1
+			cb.callback(this.substring(i, pos))
+			pos += 1
+			i = pos
+			pos = this.indexOf(delim, pos)
+			if pos == -1
+				cb.callback(this.substring(i, this.length()))
+
+/** Checks whether a string is a number or not.*/
+public function string.isNumber() returns bool
+	var isNumber = false
+	var hasDecimalPlaces = false
+	for int i = 0 to this.length()-1
+		if (this.charAt(i) == "-" and i == 0) or this.charAt(i) == "0" or this.charAt(i) == "1" or this.charAt(i) == "2" or this.charAt(i) == "3" or this.charAt(i) == "4"
+		or this.charAt(i) == "5" or this.charAt(i) == "6" or this.charAt(i) == "7" or this.charAt(i) == "8" or this.charAt(i) == "9"
+			isNumber = true
+		else if this.charAt(i) == "." and not hasDecimalPlaces
+			hasDecimalPlaces = true
+		else
+			return false
+	return isNumber
+
+/** Checks whether a string is valid in terms of max WC3 string length for various usages (Ability Description, Quest Description,...).*/
+public function string.isValidDescription() returns bool
+	var isValid = true
+	if this.length() > WC3LIMIT_OBJECTS_DESCRIPTION_LENGTH
+		isValid = false
+		error("String <"+this+"> is too long. Length: "+this.length().toString())	
+	return isValid
+
+/** Replaces all occurences of any character from given charlist by a given replacement string.*/
+public function string.replaceChars(string charset, string replacementChar) returns string
+	var newString = this
+	for replaceChar in charset
+		newString = newString.contains(replaceChar) ? newString.replace(replaceChar, replacementChar) : newString
+	return newString
 
 
 @compiletime function initialize()
@@ -148,7 +185,7 @@ public function string.reduce() returns string
 init
 	initialize()
 	stringToIndex("") // just to remove the TypeCasting warning
-	
+
 function widthInit()
 	width[0] = 0
 	width[1] = 0
@@ -280,11 +317,9 @@ function widthInit()
 	width[127] = 0
 
 function s2cInit()
-	for int i = 0 to MAX_INDEX
+	for i = 0 to MAX_INDEX
 		if c2s[i].toUpperCase() == c2s[i]
 			s2c[StringHash(c2s[i]) div 0x1F0748 + 0x3EA] = i
-		else
-			skip
 
 function c2sInit()
 	c2s[0] = ""

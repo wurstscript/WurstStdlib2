@@ -1,6 +1,7 @@
 package Group
 import NoWurst
 import Vectors
+import Player
 
 /** Use this group for your non-nested group enum calls
 	and then iterate through the group via **for from** or
@@ -9,60 +10,87 @@ public constant ENUM_GROUP = CreateGroup()
 
 public function group.enumUnitsInRange(vec2 pos, real range)
 	GroupEnumUnitsInRange(this, pos.x, pos.y, range, null)
-	
+
 public function group.enumUnitsInRange(vec2 pos, real range, boolexpr filter)
 	GroupEnumUnitsInRange(this, pos.x, pos.y, range, filter)
 
-public function group.enumUnitsInRect(rect rec) 
-	this.enumUnitsInRect(rec, null) 
-	
-public function group.enumUnitsInRect(rect rec, boolexpr filter) 
-	GroupEnumUnitsInRect(this, rec, filter) 
+public function group.enumUnitsInRect(rect rec)
+	this.enumUnitsInRect(rec, null)
+
+public function group.enumUnitsInRect(rect rec, boolexpr filter)
+	GroupEnumUnitsInRect(this, rec, filter)
 
 public function group.enumUnitsSelected(player p, boolexpr filter)
 	GroupEnumUnitsSelected(this, p, filter)
 
+public function group.enumUnitsOfPlayer(player p, boolexpr filter)
+	GroupEnumUnitsOfPlayer(this, p, filter)
+
+public function group.enumUnitsOfType(string unitname, boolexpr filter)
+	GroupEnumUnitsOfType(this, unitname, filter)
+
+public function group.enumUnitsOfType(int id, boolexpr filter)
+	GroupEnumUnitsOfType(this, UnitId2String(id), filter)
+
+public function group.enumUnitsAll(boolexpr filter)
+	for i = 0 to bj_MAX_PLAYER_SLOTS - 1
+		ENUM_GROUP.enumUnitsOfPlayer(players[i], filter)
+		this.addGroup(ENUM_GROUP)
+	ENUM_GROUP.clear()
+
 public function group.clear()
 	GroupClear(this)
-	
-public function group.addUnit(unit u)
-	GroupAddUnit(this, u)
-	
-public function group.removeUnit(unit u)
-	GroupRemoveUnit(this, u)
-	
+
+public function group.addUnit(vararg unit units)
+	for u in units
+		GroupAddUnit(this, u)
+
+public function group.removeUnit(vararg unit units)
+	for u in units
+		GroupRemoveUnit(this, u)
+
 public function group.destr()
 	DestroyGroup(this)
-	
+
 public function group.contains(unit u) returns boolean
 	return IsUnitInGroup(u, this)
 
-var unitCounter = 0
-public function group.size() returns int
-	unitCounter = 0
-	ForGroup(this) ->
-		unitCounter++
-
-	return unitCounter
 
 public function group.isEmpty() returns boolean
 	return not this.hasNext()
 
 var randomCounter = 0
 unit randomSelected = null
-/** Returns a random unit from this grouo without removing it
+/** Returns a random unit from this group without removing it
 	or null if the group is empty */
 public function group.getRandomUnit() returns unit
-	let size = this.size()
-	randomCounter = 1 + GetRandomInt(0, size-1)
-	randomSelected = null
-	ForGroup(this) ->
-		randomCounter--
-		if randomCounter == 0
-			randomSelected = GetEnumUnit()
+	return GroupPickRandomUnit(this)
 
-	return randomSelected
-	
+
+public function group.immediateOrder(string order) returns boolean
+	return GroupImmediateOrder(this, order)
+
+public function group.immediateOrderById(int order) returns boolean
+	return GroupImmediateOrderById(this, order)
+
+public function group.pointOrder(string order, vec2 point) returns boolean
+	return GroupPointOrder(this, order, point.x, point.y)
+
+public function group.pointOrderById(int order, vec2 point) returns boolean
+	return GroupPointOrderById(this, order, point.x, point.y)
+
+public function group.targetOrder(string order, widget targetWidget) returns boolean
+	return GroupTargetOrder(this, order, targetWidget)
+
+public function group.targetOrder(int order, widget targetWidget) returns boolean
+	return GroupTargetOrderById(this, order, targetWidget)
+
+public function group.addGroup(group g) 
+	GroupAddGroup(g, this)
+
+public function group.removeGroup(group g)
+	GroupRemoveGroup(g, this)
+
 /* Group iterator */
 
 group iterGroup
@@ -80,10 +108,11 @@ public function group.hasNext() returns boolean
 /** Returns the next item from the iterator */
 public function group.next() returns unit
 	let iterUnit = FirstOfGroup(this)
-	GroupRemoveUnit(this, iterUnit) 
+	GroupRemoveUnit(this, iterUnit)
 	return iterUnit
-	
+
 /** Closes the iterator, releaseing the group */
 public function group.close()
 	this.clear()
 	this.destr()
+

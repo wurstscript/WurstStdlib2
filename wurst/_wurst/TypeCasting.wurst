@@ -2,6 +2,7 @@ package TypeCasting
 import NoWurst
 import _Handles
 import Table
+import Annotations
 
 constant typecastdata = new Table()
 /** How many decimals to preserve for reals */
@@ -20,9 +21,15 @@ public function realFromIndex(int index) returns real
 	return (index / R2I_PRECISION)
 
 public function stringToIndex(string s) returns int
-	let hash = s.getHash()
-	if not typecastdata.hasString(hash)
-		typecastdata.saveString(hash, s)
+	var hash = s.getHash()
+	while true
+		if typecastdata.hasString(hash)
+			if typecastdata.loadString(hash) == s
+				break
+		else
+			typecastdata.saveString(hash, s)
+			break
+		hash++
 	return hash
 
 public function stringFromIndex(int index) returns string
@@ -89,6 +96,20 @@ public function triggerFromIndex(int index) returns trigger
 	return typecastdata.loadTrigger(0)
 
 public function triggerToIndex(trigger object) returns int
+	return object.getHandleId()
+
+public function triggeractionFromIndex(int index) returns triggeraction
+	typecastdata.saveFogState(0,ConvertFogState(index))
+	return typecastdata.loadTriggerAction(0)
+
+public function triggeractionToIndex(triggeraction object) returns int
+	return object.getHandleId()
+
+public function triggerconditionFromIndex(int index) returns triggercondition
+	typecastdata.saveFogState(0,ConvertFogState(index))
+	return typecastdata.loadTriggerCondition(0)
+
+public function triggerconditionToIndex(triggercondition object) returns int
 	return object.getHandleId()
 
 public function timerFromIndex(int index) returns timer
@@ -202,7 +223,21 @@ public function ubersplatFromIndex(int index) returns ubersplat
 
 public function ubersplatToIndex(ubersplat object) returns int
 	return object.getHandleId()
-	
+
+// public function framehandleToIndex(framehandle object) returns int
+// 	return object.getHandleId()
+
+// public function framehandleFromIndex(int index) returns framehandle
+// 	typecastdata.saveFogState(0,ConvertFogState(index))
+// 	return typecastdata.loadFrameHandle(0)
+
+// public function oskeytypeToIndex(oskeytype object) returns int
+// 	return object.getHandleId()
+
+// public function oskeytypeFromIndex(int index) returns oskeytype
+// 	typecastdata.saveFogState(0,ConvertFogState(index))
+// 	return typecastdata.loadOskeytype(0)
+
 public function booleanToIndex(boolean u) returns int
 	return u ? 1 : 0
 

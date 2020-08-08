@@ -1,0 +1,176 @@
+package BufferInterface
+import ErrorHandling
+import SafetyChecks
+
+/**
+	Interface to be implemented by classes that wish to be directly
+	written to classes implementing Buffer.
+*/
+public interface BufferSerializable
+	function serialize(Buffer buffer)
+	function deserialize(Buffer buffer)
+
+/**
+	Since buffers are mainly used for Network/File I/O operations,
+	it is necessary to sometimes lock them in specific states.
+**/
+public enum BufferMode
+	READ // only read operations permitted
+	WRITE // only write operations permitted
+	READ_WRITE // all operations permitted
+	LOCKED // no operations permitted
+
+public function BufferMode.toString() returns string
+	string value
+	switch this
+		case READ
+			value = "READ"
+		case WRITE
+			value = "WRITE"
+		case READ_WRITE
+			value = "READ_WRITE"
+		case LOCKED
+			value = "LOCKED"
+	return value
+
+/**
+	Specifies the various failure types that can occur inside Buffer implementations.
+	INTERNAL_ERROR will always result in an error() call and halt the thread.
+	EOF, MALFORMED_INPUT and INCORRECT_TYPE will set a flag and (optionally) print warnings.
+**/
+public enum BufferFailureMode
+	// no failure has occured, buffer can continue to be used
+	NONE
+	// reached end-of-file, no further data is available to be consumed
+	EOF
+	// some internal error has occured
+	INTERNAL_ERROR
+	// the input is malformed and cannot be processed properly
+	MALFORMED_INPUT
+	// tried to read incorrect data type at current position
+	INCORRECT_TYPE
+
+/**
+	Generic buffer interface with operations to read/write
+	integers, booleans, reals and strings in sequential order.
+**/
+public interface Buffer
+	/** Reads an int from the buffer **/
+	function readInt() returns int
+	/** Reads a boolean from the buffer **/
+	function readBoolean() returns boolean
+	/** Reads a real from the buffer **/
+	function readReal() returns real
+	/** Reads a string from the buffer **/
+	function readString() returns string
+
+	/** Writes an int to the buffer **/
+	function writeInt(int value)
+	/** Writes a boolean to the buffer **/
+	function writeBoolean(boolean value)
+	/** Writes a real to the buffer **/
+	function writeReal(real value)
+	/** Writes a string to the buffer **/
+	function writeString(string value)
+
+	/** Writes an object implementing BufferSerializable to the buffer. **/
+	function write(BufferSerializable value)
+	/**
+		Reads an object implementing BufferSerializable from the buffer.
+		It mutates the object passed to the method instead of
+		returning a new instance.
+	**/
+	function read(BufferSerializable value)
+
+	/** Clears the buffer of any data **/
+	function clear()
+
+	/** Returns the current buffer mode. **/
+	function getMode() returns BufferMode
+
+	/** Sets the current buffer mode. **/
+	function setMode(BufferMode mode)
+
+	/** Tests whether the buffer is writeable. **/
+	function isWriteable() returns boolean
+
+	/** Returns whether the buffer is readable. **/
+	function isReadable() returns boolean
+
+	/** Returns whether the buffer is in a valid state, and no errors occured **/
+	function isValid() returns boolean
+
+	/** Returns the set failure mode, if any **/
+	function getFailure() returns BufferFailureMode
+
+	/** Returns the last error message, if any **/
+	function getErrorMessage() returns string
+
+/**
+	Abstract class implementing read/wri
+	Abstract class implementing read/write protection for buffers, as well
+	as a generic "failed" state.
+**/
+public abstract class AbstractBuffer implements Buffer
+	private var mode = BufferMode.READ_WRITE
+	private var failureMode = BufferFailureMode.NONE
+	private var failureMessage = ""
+
+	protected function checkFailed()
+		if SAFETY_CHECKS_ENABLED and not isValid()
+			error("Buffer: trying to use a failed buffer")
+
+	protected function fail(BufferFailureMode mode, string message)
+		failureMode = mode
+		failureMessage = message
+		if mode == BufferFailureMode.INTERNAL_ERROR
+			error("Buffer: " + message)
+		else
+			Log.warn("Buffer: " + message)
+
+	override function setMode(BufferMode newMode)
+		mode = newMode
+
+	override function getMode() returns BufferMode
+		return mode
+
+	override function isWriteable() returns boolean
+		return mode == BufferMode.WRITE or mode == BufferMode.READ_WRITE
+
+	override function isReadable() returns boolean
+		return mode == BufferMode.READ or mode == BufferMode.READ_WRITE
+
+	override function isValid() returns boolean
+		return failureMode == BufferFailureMode.NONE
+
+	override function getFailure() returns BufferFailureMode
+		return failureMode
+
+	override function getErrorMessage() returns string
+		return failureMessage
+
+	/**
+		Extending classes should call this in write methods.
+		This function will be eliminated with optimizations turned on and when SAFETY_CHECKS_ENABLED == false.
+	**/
+	protected function checkWrite()
+		checkFailed()
+		if SAFETY_CHECKS_ENABLED and not isWriteable()
+			error("Buffer: cannot write to buffer with mode " + mode.toString())
+
+	/**
+		Extending classes should call this in read methods.
+		This function will be eliminated with optimizations turned on and when SAFETY_CHECKS_ENABLED == false.
+	**/
+	protected function checkRead()
+		checkFailed()
+		if SAFETY_CHECKS_ENABLED and not isReadable()
+			error("Buffer: cannot read from buffer with mode " + mode.toString())
+
+	override function write(BufferSerializable object)
+		checkWrite()
+		object.serialize(this)
+
+	override function read(BufferSerializable object)
+		checkRead()
+		object.deserialize(this)

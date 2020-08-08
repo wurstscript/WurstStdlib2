@@ -1,14 +1,15 @@
 package Rect
 import NoWurst
 import Vectors
+import Wurstunit
 
 public function rect.randomPoint() returns vec2
 	return vec2(GetRandomReal(this.getMinX(), this.getMaxX()), GetRandomReal(this.getMinY(), this.getMaxY()))
 
-public function vec2.isInRect(rect r)returns boolean
+public function vec2.isInRect(rect r) returns boolean
 	return this.x > r.getMinX() and this.x < r.getMaxX() and this.y > r.getMinY() and this.y < r.getMaxY()
-	
-public function rect.contains(vec2 r)returns boolean
+
+public function rect.contains(vec2 r) returns boolean
 	return r.x > this.getMinX() and r.x < this.getMaxX() and r.y > this.getMinY() and r.y < this.getMaxY()
 
 public function rect.getCenter() returns vec2
@@ -19,30 +20,72 @@ public function rect.getCenterX() returns real
 
 public function rect.getCenterY() returns real
 	return GetRectCenterY(this)
-	
+
 public function rect.getMaxX() returns real
 	return GetRectMaxX(this)
-	
+
 public function rect.getMaxY() returns real
 	return GetRectMaxY(this)
-	
+
 public function rect.getMinX() returns real
 	return GetRectMinX(this)
-	
+
 public function rect.getMinY() returns real
 	return GetRectMinY(this)
-	
+
 public function rect.getLeftTop() returns vec2
 	return vec2(this.getMinX(), this.getMaxY())
-	
+
 public function rect.getRightTop() returns vec2
 	return vec2(this.getMaxX(), this.getMaxY())
-	
+
 public function rect.getLeftBot() returns vec2
 	return vec2(this.getMinX(), this.getMinY())
-	
+
 public function rect.getRightBot() returns vec2
 	return vec2(this.getMaxX(), this.getMinY())
 
+public function rect.moveTo(vec2 newCenter)
+	MoveRectTo(this, newCenter.x, newCenter.y)
+
+public function rect.moveTo(real newCenterX, real newCenterY)
+	MoveRectTo(this, newCenterX, newCenterY)
+
+public function rect.resize(vec2 min, vec2 max)
+	SetRect(this, min.x, min.y, max.x, max.y)
+
+public function rect.width() returns real
+	return this.getMaxX() - this.getMinX()
+
+public function rect.height() returns real
+	return this.getMaxY() - this.getMinY()
+
 public function rect.remove()
 	RemoveRect(this)
+
+public function rect.copy() returns rect
+	return Rect(this.getMinX(), this.getMinY(), this.getMaxX(), this.getMaxY())
+
+@Test
+function rectTest()
+	let rekt = Rect(2, 2, 4, 4)
+
+	rekt.width().assertEquals(2)
+	rekt.height().assertEquals(2)
+
+	rekt.getCenterX().assertEquals(3)
+	rekt.getCenterY().assertEquals(3)
+
+	rekt.moveTo(1, 1)
+
+	rekt.width().assertEquals(2)
+	rekt.height().assertEquals(2)
+
+	rekt.getCenterX().assertEquals(1)
+	rekt.getCenterY().assertEquals(1)
+
+	rekt.resize(ZERO2, vec2(4, 4))
+
+	rekt.getCenterX().assertEquals(2)
+	rekt.getCenterY().assertEquals(2)
+

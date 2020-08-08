@@ -7,6 +7,7 @@ import ObjectIds
 import Basics
 import ClosureTimers
 import ClosureForGroups
+import Annotations
 
 /* Helps you to preload units and abilities during map-load	*
  * to avoid first-laggs. */
@@ -17,23 +18,27 @@ var dumg = CreateGroup()
 unit dum
 
 /** Preloads the given abilitytype */
-public function preloadAbility(int abilId) returns boolean
-	dum.addAbility(abilId)
+public function preloadAbility(vararg int abilIds) returns boolean
 	var result = true
-	if dum == null 
-		error("Do not load abilities after map init when autoFinish = true")
-	else if not dum.hasAbility(abilId)
-		Log.trace("PreloadAbility: Ability " + int2fourchar(abilId) + " does not exist.")
-		result = false
+	for abilId in abilIds
+		dum.addAbility(abilId)
+		if dum == null
+			error("Do not load abilities after map init when autoFinish = true")
+		else if not dum.hasAbility(abilId)
+			Log.trace("PreloadAbility: Ability " + abilId.toRawCode() + " does not exist.")
+			result = false
 	return result
 
 /** Preloads the given unittype */
-public function preloadUnit(int unitId) returns boolean
-	if dumg == null 
+public function preloadUnit(vararg int unitIds) returns boolean
+	if dumg == null
 		error("PreloadUnit: Group dumg does not exist")
-	let u = createUnit(DUMMY_PLAYER, unitId, vec2(0,0), angle(0))
-	dumg.addUnit(u)
-	return u.isAlive()
+	var valid = true
+	for unitId in unitIds
+		let u = createUnit(DUMMY_PLAYER, unitId, vec2(0,0), angle(0))
+		dumg.addUnit(u)
+		valid = valid and u.isAlive()
+	return valid
 
 /** If autoFinish is false you need to call this function manually */
 public function finishPreload()
@@ -45,6 +50,6 @@ public function finishPreload()
 init
 	dum = createUnit(DUMMY_PLAYER, DUMMY_UNIT_ID, vec2(0,0), angle(0))
 	if dum == null
-		error("DUMMY_UNITID (" + int2fourchar(DUMMY_UNIT_ID) + ") not added correctly to the map.")
+		error("DUMMY_UNITID (" + DUMMY_UNIT_ID.toRawCode() + ") not added correctly to the map.")
 	if autoFinish
 		nullTimer(() -> finishPreload())

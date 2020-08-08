@@ -1,0 +1,210 @@
+package StringBuffer
+import ErrorHandling
+import LinkedList
+import BufferInterface
+import SafetyChecks
+
+class ChunkElement
+	var content = ""
+
+	construct(string value)
+		content = value
+
+/**
+	Abstract class providing the scaffolding required to build
+	your own string-based serializer/deserializer.
+
+	This class is meant to produce/consume "chunks" of data of the specified
+	length, to be fed into IO primitives which expect strings under a certain length.
+
+	WRITING:
+	To push raw string data into the buffer, use pushString().
+	After finishing writing, call .flush() or .flushBuffer(), this will
+	push any remaining unchunked data into the buffer.
+
+	READING:
+	Use popAll() to pop all data in the current chunk, and load the next chunk.
+	Use popStringUntil() to return a string up until the specified character.
+	Use popString() to return a string of a specific length.
+
+	MISC:
+	Use pushChunk() to push a serialized chunk of data as-is into the buffer, to be deserialized
+	later on.
+	Use popChunk() to pop a serialized chunk of data as-is from the buffer, to be written into a file
+	or elsewhere.
+	Use hasChunk() to check if there are any chunks left.
+**/
+public abstract class AbstractStringBuffer extends AbstractBuffer
+	protected static constant MAX_BACKBUFFER_SIZE = 1024
+	protected static constant MAX_BUFFER_SIZE = 2048
+
+	// list of "chunks" that can grow/shrink as required
+	protected var chunks = new LinkedList<ChunkElement>()
+	protected var readBuffer = ""
+	protected var writeBuffer = ""
+
+	// this is the maximum size of each chunk element
+	// we should keep this below MAX_BACKBUFFER_SIZE so that currentBuffer can reliably
+	// fit at least two buffers of that size, while staying under MAX_BUFFER_SIZE characters
+	private int maxBufferSize
+
+	construct(int maxSize)
+		if maxSize > MAX_BACKBUFFER_SIZE
+			Log.warn("Trying to instantiate an instance of AbstractStringBuffer with maxSize=" + maxSize.toString() +
+			", but MAX_BACKBUFFER_SIZE is " + MAX_BACKBUFFER_SIZE.toString())
+			Log.warn("The value will be clamped to " + MAX_BACKBUFFER_SIZE.toString())
+
+		maxBufferSize = min(maxSize, MAX_BACKBUFFER_SIZE)
+
+	construct()
+		maxBufferSize = MAX_BACKBUFFER_SIZE
+
+	ondestroy
+		for chunk in chunks
+			destroy chunk
+		destroy chunks
+
+	/*
+		Write auxiliary methods.
+	*/
+
+	/**
+		Call this function once after you've finished writing to commit any pending data.
+	**/
+	function flush()
+		if writeBuffer.length() > 0
+			flushBuffer()
+
+	// flushes the current buffer to the chunks
+	protected function flushBuffer()
+		chunks.push(new ChunkElement(writeBuffer))
+		writeBuffer = ""
+
+	// pushes a string to the current buffer, flushing if we exceed maxBufferSize
+	protected function pushString(string data)
+		var remaining = data
+		if data.length() > MAX_BUFFER_SIZE
+			error("AbstractStringBuffer: trying to push a string above MAX_BUFFER_SIZE")
+
+		var overflow = data.length() + writeBuffer.length() - maxBufferSize
+		while overflow > 0
+			// we do not want the buffer to exceed maxBufferSize for each flush
+			let toAppend = min(remaining.length(), maxBufferSize - writeBuffer.length())
+			writeBuffer += remaining.substring(0, toAppend)
+			remaining = remaining.substring(toAppend)
+			overflow -= maxBufferSize
+			flushBuffer()
+
+		writeBuffer += remaining
+
+	/*
+		Read auxiliary methods.
+	*/
+
+	private function isDataAvailable() returns boolean
+		return chunks.size() > 0 or readBuffer.length() > 0
+
+	function canRead() returns boolean
+		return isDataAvailable()
+
+	private function checkDataAvailable()
+		if not isDataAvailable()
+			fail(BufferFailureMode.EOF, "reached EOF")
+
+	// loads the next chunk into the buffer
+	private function nextChunk()
+		if chunks.isEmpty()
+			fail(BufferFailureMode.EOF, "reached EOF")
+			return
+
+		let chunk = chunks.dequeue()
+		readBuffer += chunk.content
+		destroy chunk
+
+	// returns all data remaining in the buffer and loads the next chunk
+	protected function popAll() returns string
+		checkDataAvailable()
+		let value = readBuffer
+		readBuffer = ""
+		nextChunk()
+		return value
+
+	// attempts to load a string up to the next specified character
+	protected function popStringUntil(string terminator) returns string
+		var value = ""
+		var terminatorIndex = -1
+		while terminatorIndex < 0
+			// if we start exceeding the buffer limit in the return value, that
+			// probably means something is wrong and that the input data is malformed
+			if value.length() > MAX_BUFFER_SIZE
+				fail(BufferFailureMode.MALFORMED_INPUT, "failed to find terminator character")
+				return null
+
+			terminatorIndex = readBuffer.indexOf(terminator)
+
+			if terminatorIndex < 0
+				// if we haven't found the terminator character in the buffer,
+				// we can be sure that we'll need to return the contents of the
+				// current buffer, and then search in the next chunk
+				value += popAll()
+			else
+				// add the contents up to the terminator character, and then pop
+				// it from the buffer
+				value += readBuffer.substring(0, terminatorIndex)
+				// skip the terminator
+				readBuffer = readBuffer.substring(terminatorIndex + 1)
+		return value
+
+	// returns length amount of characters from the buffer, if there is enough
+	protected function popString(int length) returns string
+		if SAFETY_CHECKS_ENABLED and length > MAX_BUFFER_SIZE
+			fail(BufferFailureMode.INTERNAL_ERROR, "trying to pop a string above max size")
+
+		// length 0 is a special case for a string, so just return it immediately
+		if length == 0
+			return ""
+
+		checkDataAvailable()
+		// if there isn't enough data in the readBuffer, load additional chunks
+		while isValid() and readBuffer.length() < length
+			nextChunk()
+
+		if isValid()
+			// if we haven't errored out at this point, it's safe to pop the string
+			let value = readBuffer.substring(0, length)
+			readBuffer = readBuffer.substring(length)
+
+			return value
+		else
+			return null
+
+	/*
+		Chunk manipulation.
+	*/
+
+	function pushChunk(string value)
+		chunks.push(new ChunkElement(value))
+
+	function hasChunk() returns boolean
+		return chunks.size() > 0
+
+	function popChunk() returns string
+		if not hasChunk()
+			error("OrderedStringBuffer: trying to pop non-existent chunk")
+		let chunk = chunks.dequeue()
+		let value = chunk.content
+		destroy chunk
+		return value
+
+	override function clear()
+		for chunk in chunks
+			destroy chunk
+		chunks.clear()
+		readBuffer = ""
+		writeBuffer = ""
+
+	/*
+		Adapters.
+	*/
+	abstract function moveTo(Buffer buffer)
+

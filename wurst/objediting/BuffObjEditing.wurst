@@ -5,7 +5,7 @@ import ObjectIdGenerator
 
 /**  You should use 'createBuffObject' inside compiletime expressions:
 	let someBuff = compiletime(createBuffObject("Yes", "cool", Icons.bTNFarm))
-	
+
 	And then add the 'abilId' to the target to apply the buff.	*/
 public tuple buffTuple(int abilId, int buffId)
 
@@ -32,23 +32,20 @@ public function createDummyBuffObject(string name, string tooltip, string iconpa
 		new AbilityDefinitionAuraSlow(abilId)
 			..setName("Aura Dummy: " + name)
 			..setMovementSpeedFactor(1, 0)
-			..setBuffs(1, int2fourchar(buffId))
+			..setBuffs(1, buffId.toRawCode())
 			..presetIcon(iconpath)
 			..setArtTarget("")
 			..setTargetsAllowed(1, "self")
 			..setArtTarget(effectPath)
 			..setTargetAttachmentPoint(attachmentPoint)
 			..setEditorSuffix("wurst")
-		
-	return buffTuple(abilId, buffId)
 
-public function compiletime(buffTuple buffT) returns buffTuple
-	return buffT
+	return buffTuple(abilId, buffId)
 
 public class BuffDefinition
 	ObjectDefinition def
-	
-	protected int newId 
+
+	protected int newId
 	protected int baseId
 
 	function getNewId() returns int
@@ -73,16 +70,17 @@ public class BuffDefinition
 
 	function setIconNormal(int level, string value)
 		def.setLvlDataString("fart",  level, 0,  value)
-	
+
+	/** Sets the icon's path for the buff obj, add "@!!" as prefix of the icon name to overide the default path by a custom path */
 	function setIcon(string name)
 		string s = name
-		if name.length() < 20 or not name.startsWith("ReplaceableTextures")
+		if (name.length() < 20 or not name.startsWith("ReplaceableTextures")) and not name.startsWith("@!!")
 			 s = "ReplaceableTextures\\CommandButtons\\" + s
 		if not name.endsWith(".blp")
 			s += ".blp"
 
 		setIconNormal(1, s)
-		
+
 	function setCaster(int level, string value)
 		def.setLvlDataString("fcat",  level, 0,  value)
 

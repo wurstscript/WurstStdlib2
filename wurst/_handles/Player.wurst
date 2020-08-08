@@ -1,13 +1,17 @@
 package Player
 import NoWurst
-import Colors
+import Wurstunit
 import Unit
+import Annotations
 
 /** Use this array instead of Player() to avoid leaks */
 public player array players
 public constant localPlayer = GetLocalPlayer()
 init
-	for i = 0 to bj_MAX_PLAYER_SLOTS-1
+	initPlayerArray()
+
+@compiletime function initPlayerArray()
+	for i = 0 to bj_MAX_PLAYER_SLOTS - 1
 		players[i] = Player(i)
 
 public function player.setGold(int val)
@@ -25,8 +29,20 @@ public function player.addLumber(int val)
 public function player.addState(playerstate state, int val)
 	SetPlayerState(this, state, this.getState(state) + val)
 
-public function player.getColor() returns playercolor
-	return GetPlayerColor(this)
+/** Clears the selection for the player, deselecting all
+	widgets. */
+public function player.clearSelection()
+	if localPlayer == this
+		ClearSelection()
+
+
+/** Disable UI control for the player */
+public function player.disableUserControl()
+	this.setUserControl(false)
+
+/** Enable UI control for the player */
+public function player.enableUserControl()
+	this.setUserControl(true)
 
 public function player.getController() returns mapcontrol
 	return GetPlayerController(this)
@@ -48,9 +64,6 @@ public function player.getMaxSupply() returns int
 
 public function player.getName() returns string
 	return GetPlayerName(this)
-
-public function player.getNameColored() returns string
-	return playercolors[this.getId()].toColorString() + GetPlayerName(this) + "|r"
 
 public function player.getSlotState() returns playerslotstate
 	return GetPlayerSlotState(this)
@@ -86,9 +99,6 @@ public function player.setAbilityAvailable(int abilityId, boolean avail)
 public function player.setName(string name)
 	SetPlayerName(this, name)
 
-public function player.setColor(playercolor color)
-	SetPlayerColor(this, color)
-	
 public function player.setState(playerstate state, int val)
 	SetPlayerState(this, state, val)
 
@@ -98,9 +108,51 @@ public function player.subGold(int val)
 public function player.subState(playerstate state, int val)
 	SetPlayerState(this, state, this.getState(state) - val)
 
+/** Enables / disables user UI control for the player */
+public function player.setUserControl(boolean enable)
+	if localPlayer == this
+		EnableUserControl(enable)
+
 public function player.unselect(unit u)
 	if localPlayer == this
 		SelectUnit(u, false)
 
 public function player.isIngame() returns boolean
 	return this.getSlotState() == PLAYER_SLOT_STATE_PLAYING and this.getController() == MAP_CONTROL_USER
+
+public function player.forceStartLocation(int index)
+	ForcePlayerStartLocation(this, index)
+
+public function player.setPlayerAlliance(player otherPlayer, alliancetype whichAllianceSetting, boolean value)
+	SetPlayerAlliance(this, otherPlayer, whichAllianceSetting, value)
+
+public function player.setTaxRate(player otherPlayer, playerstate whichResource, integer rate)
+	SetPlayerTaxRate(this, otherPlayer, whichResource, rate)
+
+public function player.setRacePreference(racepreference whichRacePreference)
+	SetPlayerRacePreference(this, whichRacePreference)
+
+public function player.setRaceSelectable(boolean value)
+	SetPlayerRaceSelectable(this, value)
+
+public function player.getTeam() returns int
+	return GetPlayerTeam(this)
+
+public function player.isSelectable() returns bool
+	return GetPlayerSelectable(this)
+
+public function player.getTaxRate(player otherPlayer, playerstate whichResource) returns int
+	return GetPlayerTaxRate(this, otherPlayer, whichResource)
+
+public function player.isRacePrefSet(racepreference preference) returns bool
+	return IsPlayerRacePrefSet(this, preference)
+
+
+/** Sets the maximum allowed hero amount for a player */
+public function player.setHeroMaxAllowed(int amount)
+	SetPlayerTechMaxAllowed(this, 'HERO', amount)
+		
+@Test
+function testPlayer()
+	let p = Player(0)
+	assertTrue(p == Player(0))

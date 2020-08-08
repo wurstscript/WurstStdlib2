@@ -1,0 +1,150 @@
+package HashBuffer
+import Table
+import ErrorHandling
+import BufferInterface
+import SafetyChecks
+
+/**
+	Implementation of Buffer backed by a hashtable. Primarily used in Network.
+**/
+public class HashBuffer extends AbstractBuffer
+	private var buffer = new Table()
+
+	/*
+		Store read/write indices for each
+		independent type buffer.
+	*/
+	private var integerWriteIndex = -1
+	private var realWriteIndex	= -1
+	private var booleanWriteIndex = -1
+	private var stringWriteIndex  = -1
+
+	private var integerReadIndex = -1
+	private var realReadIndex	= -1
+	private var booleanReadIndex = -1
+	private var stringReadIndex  = -1
+
+	ondestroy
+		destroy buffer
+
+	override function writeInt(int value)
+		checkWrite()
+		integerWriteIndex++
+		buffer.saveInt(integerWriteIndex, value)
+
+	override function writeReal(real value)
+		checkWrite()
+		realWriteIndex++
+		buffer.saveReal(realWriteIndex, value)
+
+	override function writeString(string value)
+		checkWrite()
+		stringWriteIndex++
+		buffer.saveString(stringWriteIndex, value)
+
+	override function writeBoolean(bool value)
+		checkWrite()
+		booleanWriteIndex++
+		buffer.saveBoolean(booleanWriteIndex, value)
+
+	/* These functions have mandatory safety checks, because they are necessary to
+		detect errors in deserialization code when reading from files. */
+
+	override function readInt() returns int
+		checkRead()
+		integerReadIndex++
+		if not buffer.hasInt(integerReadIndex)
+			error("HashBuffer: trying to read non-present int at pos#" + integerReadIndex.toString())
+		return buffer.loadInt(integerReadIndex)
+
+	override function readReal() returns real
+		checkRead()
+		realReadIndex++
+		if not buffer.hasReal(realReadIndex)
+			error("HashBuffer: trying to read non-present real at pos#" + realReadIndex.toString())
+		return buffer.loadReal(realReadIndex)
+
+	override function readString() returns string
+		checkRead()
+		stringReadIndex++
+		if not buffer.hasString(stringReadIndex)
+			error("HashBuffer: trying to read non-present string at pos#" + stringReadIndex.toString())
+		return buffer.loadString(stringReadIndex)
+
+	override function readBoolean() returns bool
+		checkRead()
+		booleanReadIndex++
+		if not buffer.hasBoolean(booleanReadIndex)
+			error("HashBuffer: trying to read non-present boolean at pos#" + booleanReadIndex.toString())
+		return buffer.loadBoolean(booleanReadIndex)
+
+	/* 'Unsafe' variants that will have safety checks disabled when the config demands it.
+		These should be used when sending across network because we know we'll never hit
+		a non-existent value.
+
+		You shoudln't use these in your code unless you absolutely know what you are doing.
+	*/
+
+	function readIntUnsafe() returns int
+		checkRead()
+		integerReadIndex++
+		if SAFETY_CHECKS_ENABLED and not buffer.hasInt(integerReadIndex)
+			error("HashBuffer: trying to read non-present int at pos#" + integerReadIndex.toString())
+		return buffer.loadInt(integerReadIndex)
+
+	function readRealUnsafe() returns real
+		checkRead()
+		realReadIndex++
+		if SAFETY_CHECKS_ENABLED and not buffer.hasReal(realReadIndex)
+			error("HashBuffer: trying to read non-present real at pos#" + realReadIndex.toString())
+		return buffer.loadReal(realReadIndex)
+
+	function readStringUnsafe() returns string
+		checkRead()
+		stringReadIndex++
+		if SAFETY_CHECKS_ENABLED and not buffer.hasString(stringReadIndex)
+			error("HashBuffer: trying to read non-present string at pos#" + stringReadIndex.toString())
+		return buffer.loadString(stringReadIndex)
+
+	function readBooleanUnsafe() returns bool
+		checkRead()
+		booleanReadIndex++
+		if SAFETY_CHECKS_ENABLED and not buffer.hasBoolean(booleanReadIndex)
+			error("HashBuffer: trying to read non-present boolean at pos#" + booleanReadIndex.toString())
+		return buffer.loadBoolean(booleanReadIndex)
+
+	override function clear()
+		buffer.flush()
+
+	function resetRead()
+		integerReadIndex = -1
+		realReadIndex = -1
+		booleanReadIndex = -1
+		stringReadIndex = -1
+
+	function getIntCount() returns int
+		return integerWriteIndex + 1
+
+	function getRealCount() returns int
+		return realWriteIndex + 1
+
+	function getBooleanCount() returns int
+		return booleanWriteIndex + 1
+
+	function getStringCount() returns int
+		return stringWriteIndex + 1
+
+	function hasInt() returns boolean
+		return integerReadIndex < integerWriteIndex
+
+	function hasReal() returns boolean
+		return realReadIndex < realWriteIndex
+
+	function hasBoolean() returns boolean
+		return booleanReadIndex < booleanWriteIndex
+
+	function hasString() returns boolean
+		return stringReadIndex < stringWriteIndex
+
+	function getReadRemainingInts() returns int
+		return getIntCount() - (integerReadIndex + 1)

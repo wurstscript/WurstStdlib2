@@ -3,24 +3,15 @@ import NoWurst
 
 /** Converts this boolean into a string */
 public function boolean.toString() returns string
-	var result = "false"
-	if this
-		result = "true"
-	return result
+	return this ? "true" : "false"
 
 /** Converts this string into a boolean */
 public function string.toBool() returns boolean
-	var result = false
-	if this == "1" or this == "true"
-		result = true
-	return result
+	return this == "1" or this == "true" ? true : false
 
 /** Converts this boolean into an int */
 public function boolean.toInt() returns int
-	var result = 0
-	if this
-		result = 1
-	return result
+	return this ? 1 : 0
 
 /** Converts this int into a boolean */
 public function int.toBool() returns boolean

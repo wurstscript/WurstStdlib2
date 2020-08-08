@@ -1,0 +1,22 @@
+package BufferAdapters
+import Buffer
+import Execute
+
+function OrderedStringBuffer.transferValueTo(HashBuffer sink)
+	let valueType = this.peekType()
+
+	switch valueType
+		case INTEGER
+			sink.writeInt(this.readInt())
+		case REAL
+			sink.writeReal(this.readReal())
+		case STRING
+			sink.writeString(this.readString())
+		case BOOLEAN
+			sink.writeBoolean(this.readBoolean())
+		default
+
+public function OrderedStringBuffer.transfer(HashBuffer sink)
+	executeWhile(64, () -> this.canRead()) ->
+		this.transferValueTo(sink)
+

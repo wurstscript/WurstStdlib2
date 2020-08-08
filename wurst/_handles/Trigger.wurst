@@ -1,18 +1,28 @@
 package Trigger
 import NoWurst
 
-public function trigger.addAction(code actionFunc)
-	TriggerAddAction(this, actionFunc)
+public enum OSKEY_META
+	NONE
+	SHIFT
+	CTRL
+	ALT
 
-public function trigger.addCondition(boolexpr condition)
-	TriggerAddCondition(this, condition)
+public function OSKEY_META.toInt() returns int
+	return this == OSKEY_META.ALT ? 4 : this castTo int
+
+
+public function trigger.addAction(code actionFunc) returns triggeraction
+	return TriggerAddAction(this, actionFunc)
+
+public function trigger.addCondition(boolexpr condition) returns triggercondition
+	return TriggerAddCondition(this, condition)
 
 public function trigger.clearConditions()
 	TriggerClearConditions(this)
 
 public function trigger.clearActions()
 	TriggerClearActions(this)
-	
+
 public function trigger.destr()
 	DestroyTrigger(this)
 
@@ -28,65 +38,103 @@ public function trigger.evaluate() returns boolean
 public function trigger.execute()
 	TriggerExecute(this)
 
+public function trigger.executeWait()
+	TriggerExecuteWait(this)
+
 public function trigger.isEnabled() returns boolean
 	return IsTriggerEnabled(this)
+
+public function trigger.waitOnSleeps(boolean flag)
+	TriggerWaitOnSleeps(this, flag)
+
+public function trigger.isWaitOnSleeps() returns boolean
+	return IsTriggerWaitOnSleeps(this)
+
+public function trigger.getEvalCount() returns int
+	return GetTriggerEvalCount(this)
+
+public function trigger.getExecCount() returns int
+	return GetTriggerExecCount(this)
 
 public function trigger.registerAnyUnitEvent(playerunitevent whichEvent)
 	TriggerRegisterAnyUnitEventBJ(this, whichEvent)
 
-public function trigger.registerDeathEvent(widget whichWidget)
-	TriggerRegisterDeathEvent(this, whichWidget)
+public function trigger.registerDeathEvent(widget whichWidget) returns event
+	return TriggerRegisterDeathEvent(this, whichWidget)
 
-public function trigger.registerDialogButtonEvent(button whichButton)
-	TriggerRegisterDialogButtonEvent(this, whichButton)
+public function trigger.registerDialogButtonEvent(button whichButton) returns event
+	return TriggerRegisterDialogButtonEvent(this, whichButton)
 
-public function trigger.registerDialogEvent(dialog whichDialog)
-	TriggerRegisterDialogEvent(this, whichDialog)
+public function trigger.registerDialogEvent(dialog whichDialog) returns event
+	return TriggerRegisterDialogEvent(this, whichDialog)
 
-public function trigger.registerEnterRegion(region whichRegion, boolexpr filter)
-	TriggerRegisterEnterRegion(this, whichRegion, filter)
+public function trigger.registerEnterRegion(region whichRegion, boolexpr filter) returns event
+	return TriggerRegisterEnterRegion(this, whichRegion, filter)
 
-public function trigger.registerGameEvent(gameevent whichGameEvent)
-	TriggerRegisterGameEvent(this, whichGameEvent)
+public function trigger.registerGameEvent(gameevent whichGameEvent) returns event
+	return TriggerRegisterGameEvent(this, whichGameEvent)
 
-public function trigger.registerGameStateEvent(gamestate whichState, limitop opcode, real limitval)
-	TriggerRegisterGameStateEvent(this, whichState, opcode, limitval)
+public function trigger.registerGameStateEvent(gamestate whichState, limitop opcode, real limitval) returns event
+	return TriggerRegisterGameStateEvent(this, whichState, opcode, limitval)
 
-public function trigger.registerLeaveRegion(region whichRegion, boolexpr filter)
-	TriggerRegisterLeaveRegion(this, whichRegion, filter)
+public function trigger.registerLeaveRegion(region whichRegion, boolexpr filter) returns event
+	return TriggerRegisterLeaveRegion(this, whichRegion, filter)
 
-public function trigger.registerPlayerChatEvent(player whichPlayer, string chatMessageToDetect, boolean exactMatchOnly)
-	TriggerRegisterPlayerChatEvent(this, whichPlayer, chatMessageToDetect, exactMatchOnly)
+public function trigger.registerPlayerChatEvent(player whichPlayer, string chatMessageToDetect, boolean exactMatchOnly) returns event
+	return TriggerRegisterPlayerChatEvent(this, whichPlayer, chatMessageToDetect, exactMatchOnly)
 
-public function trigger.registerPlayerEvent(player whichPlayer, playerevent whichPlayerEvent)
-	TriggerRegisterPlayerEvent(this, whichPlayer, whichPlayerEvent)
+public function trigger.registerPlayerEvent(player whichPlayer, playerevent whichPlayerEvent) returns event
+	return TriggerRegisterPlayerEvent(this, whichPlayer, whichPlayerEvent)
 
-public function trigger.registerPlayerStateEvent(player whichPlayer, playerstate whichState, limitop opcode, real limitval)
-	TriggerRegisterPlayerStateEvent(this, whichPlayer, whichState, opcode, limitval)
+public function trigger.registerPlayerStateEvent(player whichPlayer, playerstate whichState, limitop opcode, real limitval) returns event
+	return TriggerRegisterPlayerStateEvent(this, whichPlayer, whichState, opcode, limitval)
 
-public function trigger.registerPlayerUnitEvent(player whichPlayer, playerunitevent whichPlayerUnitEvent, boolexpr filter)
-	TriggerRegisterPlayerUnitEvent(this, whichPlayer, whichPlayerUnitEvent, filter)
+public function trigger.registerPlayerUnitEvent(player whichPlayer, playerunitevent whichPlayerUnitEvent, boolexpr filter) returns event
+	return TriggerRegisterPlayerUnitEvent(this, whichPlayer, whichPlayerUnitEvent, filter)
 
-public function trigger.registerTimerEvent(real timeout, boolean periodic)
-	TriggerRegisterTimerEvent(this, timeout, periodic)
+public function trigger.registerPlayerAllianceChange(player whichPlayer, alliancetype whichAlliance) returns event
+	return TriggerRegisterPlayerAllianceChange(this, whichPlayer, whichAlliance)
 
-public function trigger.registerTimerExpireEvent(timer whichTimer)
-	TriggerRegisterTimerExpireEvent(this, whichTimer)
+public function trigger.registerPlayerSync(player whichPlayer, alliancetype whichAlliance) returns event
+	return TriggerRegisterPlayerAllianceChange(this, whichPlayer, whichAlliance)
 
-public function trigger.registerTrackableHitEvent(trackable whichTrackable)
-	TriggerRegisterTrackableHitEvent(this, whichTrackable)
 
-public function trigger.registerTrackableTrackEvent(trackable whichTrackable)
-	TriggerRegisterTrackableTrackEvent(this, whichTrackable)
+public function trigger.registerTimerEvent(real timeout, boolean periodic) returns event
+	return TriggerRegisterTimerEvent(this, timeout, periodic)
 
-public function trigger.registerUnitEvent(unit whichUnit, unitevent whichEvent )
-	TriggerRegisterUnitEvent(this, whichUnit, whichEvent)
+public function trigger.registerTimerExpireEvent(timer whichTimer) returns event
+	return TriggerRegisterTimerExpireEvent(this, whichTimer)
 
-public function trigger.registerUnitInRange(unit whichUnit, real range, boolexpr filter)
-	TriggerRegisterUnitInRange(this, whichUnit, range, filter)
+public function trigger.registerTrackableHitEvent(trackable whichTrackable) returns event
+	return TriggerRegisterTrackableHitEvent(this, whichTrackable)
 
-public function trigger.registerUnitStateEvent(unit whichUnit, unitstate whichState, limitop opcode, real limitval)
-	TriggerRegisterUnitStateEvent(this, whichUnit, whichState, opcode, limitval)
+public function trigger.registerTrackableTrackEvent(trackable whichTrackable) returns event
+	return TriggerRegisterTrackableTrackEvent(this, whichTrackable)
+
+public function trigger.registerUnitEvent(unit whichUnit, unitevent whichEvent) returns event
+	return TriggerRegisterUnitEvent(this, whichUnit, whichEvent)
+
+public function trigger.registerFilterUnitEvent(unit whichUnit, unitevent whichEvent, boolexpr filter) returns event
+	return TriggerRegisterFilterUnitEvent(this, whichUnit, whichEvent, filter)
+
+public function trigger.registerUnitInRange(unit whichUnit, real range, boolexpr filter) returns event
+	return TriggerRegisterUnitInRange(this, whichUnit, range, filter)
+
+public function trigger.registerUnitStateEvent(unit whichUnit, unitstate whichState, limitop opcode, real limitval) returns event
+	return TriggerRegisterUnitStateEvent(this, whichUnit, whichState, opcode, limitval)
+
+/**
+	Registers a frameevent with given type for given frame, the triggered callback will contain following informations:
+		BlzGetTriggerFrame      - the source frame of the event
+		BlzGetTriggerFrameEvent - the type of the frame event
+		BlzGetTriggerFrameValue - the value of the frame event (for sliders)    // not yet part of common.j
+		BlzGetTriggerFrameText  - the value of the frame event (for editfields) // not yet part of common.j
+		GetTriggerPlayer        - the player causing the event
+**/
+
+
+public function trigger.removeAction(triggeraction action)
+	TriggerRemoveAction(this, action)
 
 public function trigger.removeCondition(triggercondition condition)
 	TriggerRemoveCondition(this, condition)

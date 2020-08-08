@@ -1,0 +1,191 @@
+package OrderedStringBuffer
+import StringBuffer
+import BufferInterface
+import ErrorHandling
+import Execute
+
+enum ValueType
+	INTEGER
+	REAL
+	STRING
+	BOOLEAN
+	INVALID
+
+function ValueType.toString() returns string
+	var id = ""
+	switch this
+		case INTEGER
+			id = "i"
+		case REAL
+			id = "r"
+		case BOOLEAN
+			id = "b"
+		case STRING
+			id = "s"
+		case INVALID
+			error("ValueType: INVALID should never be serializable")
+	return id
+
+function valueTypeFromString(string value) returns ValueType
+	var valueType = ValueType.INVALID
+	switch value
+		case "i"
+			valueType = ValueType.INTEGER
+		case "r"
+			valueType = ValueType.REAL
+		case "b"
+			valueType = ValueType.BOOLEAN
+		case "s"
+			valueType = ValueType.STRING
+	return valueType
+
+/**
+	Implementation of Buffer backed by a list of strings. Everything
+	is serialized/deserialized into strings.
+
+	Since we may be dealing with user input in this class, it is
+	important to keep in mind that it might be malformed or invalid.
+
+	For this reason, the class doesn't instantly error out on attempts
+	to read incorrect data, and the users of the class should call
+	OrderedStringBuffer.isValid() during/after reading data to make sure that
+	it is correct.
+
+	Trying to read from a buffer that has entered an erroneous state
+	will not terminate the thread, but will instead return default values:
+		ints - 0
+		booleans - false
+		reals - 0.0
+		strings - null
+
+	This allows you to check for the error right after reading.
+
+	You can use OrderedStringBuffer.getFailure() and OrderedStringBuffer.getErrorMessage()
+	to inspect the error further, if there is any.
+
+	The serialized values keep track of their type, and do not fixed-length
+	encoding anywhere, instead relying on a special 'terminator' character
+	to determine the end of a value.
+
+	Strings are encoded with a length-field prepending them.
+
+	Examples of serialized values:
+		1. "i50392|" - int 50392
+		2. "r3.1415|" - real 3.1415
+		3. "b1" - boolean true
+		4. "s10|0123456789" - string 0123456789
+		5. "s5|01234i10|b1b0r1.0005|" - string 012345, int 10, bool true, bool false, real 1.0005
+**/
+public class OrderedStringBuffer extends AbstractStringBuffer
+	private static constant TERMINATOR = "|"
+
+	construct()
+		super()
+
+	construct(int maxBufferSize)
+		super(maxBufferSize)
+
+	private function pushTerminator()
+		pushString(TERMINATOR)
+
+	private function pushTypeIdentifier(ValueType valueType)
+		pushString(valueType.toString())
+
+	// attempts to read the current position as a value type
+	private function popTypeIdentifier() returns ValueType
+		let valueType = valueTypeFromString(popString(1))
+		if valueType == ValueType.INVALID
+			fail(BufferFailureMode.MALFORMED_INPUT, "malformed input")
+		return valueType
+
+	// checks that we are reading the correct type
+	private function checkType(ValueType toCheck) returns boolean
+		let currentType = popTypeIdentifier()
+		// might have malformed input after popping type identifier, so check that first
+		if not isValid()
+			return false
+		if currentType != toCheck
+			fail(BufferFailureMode.INCORRECT_TYPE, "tried to read " + toCheck.toString() + " but was " + currentType.toString())
+			return false
+		return true
+
+	/*
+		Interface implementation
+	*/
+
+	override function writeInt(int value)
+		checkWrite()
+		pushTypeIdentifier(ValueType.INTEGER)
+		pushString(value.toString())
+		pushTerminator()
+
+	override function writeReal(real value)
+		checkWrite()
+		pushTypeIdentifier(ValueType.REAL)
+		pushString(value.toString())
+		pushTerminator()
+
+	override function writeString(string value)
+		if value.length() > MAX_BUFFER_SIZE
+			error("OrderedStringBuffer: trying to write string above MAX_BUFFER_SIZE")
+		checkWrite()
+		pushTypeIdentifier(ValueType.STRING)
+		pushString(value.length().toString())
+		pushTerminator()
+		pushString(value)
+
+	override function writeBoolean(bool value)
+		checkWrite()
+		pushTypeIdentifier(ValueType.BOOLEAN)
+		pushString(value.toInt().toString())
+
+	private function readIntInternal() returns int
+		return popStringUntil(TERMINATOR).toInt()
+
+	override function readInt() returns int
+		checkRead()
+		return checkType(ValueType.INTEGER) ? readIntInternal() : 0
+
+	override function readReal() returns real
+		checkRead()
+		return checkType(ValueType.REAL) ? popStringUntil(TERMINATOR).toReal() : 0
+
+	override function readString() returns string
+		checkRead()
+		string value = null
+		if checkType(ValueType.STRING)
+			let length = readIntInternal()
+			if length < 0 or length > MAX_BUFFER_SIZE
+				fail(BufferFailureMode.MALFORMED_INPUT, "tried to read string of length " + length.toString() +
+					", but max is " + MAX_BUFFER_SIZE.toString())
+			else
+				value = popString(length)
+		return value
+
+	override function readBoolean() returns bool
+		checkRead()
+		return checkType(ValueType.BOOLEAN) ? (popString(1) == "1") : false
+
+	function peekType() returns ValueType
+		let valueType = popTypeIdentifier()
+		// put the identifier back into the buffer
+		readBuffer = valueType.toString() + readBuffer
+		return valueType
+
+	private function transferValueTo(Buffer sink)
+		let valueType = this.peekType()
+
+		switch valueType
+			case INTEGER
+				sink.writeInt(this.readInt())
+			case REAL
+				sink.writeReal(this.readReal())
+			case STRING
+				sink.writeString(this.readString())
+			case BOOLEAN
+				sink.writeBoolean(this.readBoolean())
+			default
+
+	override function moveTo(Buffer buffer)
+		executeWhile(64, () -> this.canRead()) ->
+			this.transferValueTo(buffer)

@@ -1,0 +1,256 @@
+package MatricesTests
+import NoWurst
+import Wurstunit
+import Matrices
+
+/* =========== 2X2 MATRIX =========== */
+
+@Test function test22PlusMat()
+	let test = mat2(1, 2, 3, 4)
+	(test + mat2(5, 6, 7, 8)).assertEquals(mat2(6, 8, 10, 12))
+	(test + mat2(-2, 14, 87, -94)).assertEquals(mat2(-1, 16, 90, -90))
+
+@Test function test22PlusScalar()
+	(mat2(1, 2, 3, 4) + 13).assertEquals(mat2(14, 15, 16, 17))
+
+@Test function test22MinusMat()
+	let test = mat2(1, 2, 3, 4)
+	(test - mat2(5, 6, 7, 8)).assertEquals(mat2(-4, -4, -4, -4))
+	(test - mat2(-2, 14, 87, -94)).assertEquals(mat2(3, -12, -84, 98))
+
+@Test function test22MinusScalar()
+	(mat2(1, 2, 3, 4) - 13).assertEquals(mat2(-12, -11, -10, -9))
+
+@Test function test22MultMat()
+	let test = mat2(1, 2, 3, 4)
+	(test * mat2(5, 6, 7, 8)).assertEquals(mat2(19, 22, 43, 50))
+	(mat2(5, 6, 7, 8) * test).assertEquals(mat2(23, 34, 31, 46))
+
+@Test function test22MultVec()
+	let test = mat2(1, 2, 3, 4)
+	(test * vec2(6, 7)).assertEquals(vec2(20, 46))
+	(vec2(6, 7) * test).assertEquals(vec2(27, 40))
+
+@Test function test22MultScalar()
+	let test = mat2(1, 2, 3, 4)
+	(test * 5).assertEquals(mat2(5, 10, 15, 20))
+	(5 * test).assertEquals(mat2(5, 10, 15, 20))
+
+@Test function test22Col()
+	let test = mat2(1, 2, 3, 4)
+	test.col(0).assertEquals(vec2(1, 3))
+	test.col(1).assertEquals(vec2(2, 4))
+
+@Test function test22Row()
+	let test = mat2(1, 2, 3, 4)
+	test.row(0).assertEquals(vec2(1, 2))
+	test.row(1).assertEquals(vec2(3, 4))
+
+@Test function test22Transpose()
+	let test = mat2(1, 2,
+					3, 4)
+	let expected = mat2(1, 3,
+						2, 4)
+	test.transpose().assertEquals(expected)
+
+@Test function test22Determinant()
+	mat2(1, 2, 3, 4).determinant().assertEquals(-2, 0.002)
+	mat2(15, 5, 6, 2).determinant().assertEquals(0, 0.002)
+	mat2(-2, 128, 37, -42).determinant().assertEquals(-4652, 0.002)
+
+@Test function test22Inverse()
+	var test = mat2(1, 2, 3, 4)
+	var inverse = test.inverse()
+	inverse.success.assertTrue()
+	(test * inverse.matrix).assertEquals(IDENTITY22)
+	test = mat2(15, 5, 6, 2)
+	inverse = test.inverse()
+	inverse.success.assertFalse()
+	(test * inverse.matrix).assertEquals(ZERO22)
+	test = IDENTITY22
+	inverse = test.inverse()
+	inverse.success.assertTrue()
+	test.assertEquals(inverse.matrix)
+
+@Test function test22Angle2Mat()
+	90 .asAngleDegrees().toRotation().assertEquals(mat2(0, -1, 1, 0))
+	(-90).asAngleDegrees().toRotation().assertEquals(mat2(0, 1, -1, 0))
+	(225).asAngleDegrees().toRotation().assertEquals(mat2(-0.707, 0.707, -0.707, -0.707))
+
+@Test function test22Scaling()
+	vec2(0.5, 0.5).toScaling().assertEquals(mat2(0.5, 0, 0, 0.5))
+	vec2(1.5, 7.5).toScaling().assertEquals(mat2(1.5, 0, 0, 7.5))
+	(vec2(2, 2).toScaling() * vec2(5, 16)).assertEquals(vec2(10, 32))
+
+/* =========== 3X3 MATRIX =========== */
+
+@Test function test33PlusMat()
+	let test = mat3(1, 2, 3,
+					4, 5, 6,
+					7, 8, 9)
+	let add = mat3( 5,  6,  7,
+					8,  9,  10,
+					11, 12, 13)
+	let expected = mat3(6,  8,  10,
+						12, 14, 16,
+						18, 20, 22)
+	(test + add).assertEquals(expected)
+
+@Test function test33PlusScalar()
+	(mat3(1, 2, 3, 4, 5, 6, 7, 8, 9) + 13).assertEquals(mat3(14, 15, 16, 17, 18, 19, 20, 21, 22))
+
+@Test function test33MinusMat()
+	let test = mat3(1, 2, 3,
+					4, 5, 6,
+					7, 8, 9)
+	let sub = mat3( 5,  6,  7,
+					8,  9,  10,
+					11, 12, 13)
+	let expected = mat3(-4, -4, -4,
+						-4, -4, -4,
+						-4, -4, -4)
+	(test - sub).assertEquals(expected)
+
+@Test function test33MinusScalar()
+	(mat3(1, 2, 3, 4, 5, 6, 7, 8, 9) - 13).assertEquals(mat3(-12, -11, -10, -9, -8, -7, -6, -5, -4))
+
+@Test function test33MultMat()
+	let test = mat3(1, 2, 3,
+					4, 5, 6,
+					7, 8, 9)
+	let mult = mat3(5,  6,  7,
+					8,  9,  10,
+					11, 12, 13)
+	var expected = mat3(54,  60,  66,
+						126, 141, 156,
+						198, 222, 246)
+	(test * mult).assertEquals(expected)
+	expected = mat3(78,  96,  114,
+					114, 141, 168,
+					150, 186, 222)
+	(mult * test).assertEquals(expected)
+
+@Test function test33MultVec()
+	let test = mat3(1, 2, 3,
+					4, 5, 6,
+					7, 8, 9)
+	(test * vec3(6, 7, 8)).assertEquals(vec3(44, 107, 170))
+	(vec3(6, 7, 8) * test).assertEquals(vec3(90, 111, 132))
+
+@Test function test33MultScalar()
+	let test = mat3(1, 2, 3, 4, 5, 6, 7, 8, 9)
+	(test * 5).assertEquals(mat3(5, 10, 15, 20, 25, 30, 35, 40, 45))
+	(5 * test).assertEquals(mat3(5, 10, 15, 20, 25, 30, 35, 40, 45))
+
+@Test function test33Col()
+	let test = mat3(1, 2, 3, 4, 5, 6, 7, 8, 9)
+	test.col(0).assertEquals(vec3(1, 4, 7))
+	test.col(1).assertEquals(vec3(2, 5, 8))
+	test.col(2).assertEquals(vec3(3, 6, 9))
+
+@Test function test33Row()
+	let test = mat3(1, 2, 3, 4, 5, 6, 7, 8, 9)
+	test.row(0).assertEquals(vec3(1, 2, 3))
+	test.row(1).assertEquals(vec3(4, 5, 6))
+	test.row(2).assertEquals(vec3(7, 8, 9))
+
+@Test function test33Transpose()
+	let test = mat3(1, 2, 3,
+					4, 5, 6,
+					7, 8, 9)
+	let expected = mat3(1, 4, 7,
+						2, 5, 8,
+						3, 6, 9)
+	test.transpose().assertEquals(expected)
+
+@Test function test33Trace()
+	mat3(1, 2, 3, 4, 5, 6, 7, 8, 9).trace().assertEquals(15)
+
+@Test function test33Determinant()
+	mat3(1, 2, 3, 4, 5, 6, 7, 8, 9).determinant().assertEquals(0, 0.002)
+	mat3(5, 3, 6, 9, 12, 1, 0, 4, 8).determinant().assertEquals(460, 0.002)
+
+@Test function test33Inverse()
+	var test = mat3(1, 2, 3, 4, 5, 6, 7, 8, 9)
+	var inverse = test.inverse()
+	inverse.success.assertFalse()
+	(test * inverse.matrix).assertEquals(ZERO33)
+	test = mat3(5, 3, 6, 9, 12, 1, 0, 4, 8)
+	inverse = test.inverse()
+	inverse.success.assertTrue()
+	(test * inverse.matrix).assertEquals(IDENTITY33)
+	test = IDENTITY33
+	inverse = test.inverse()
+	inverse.success.assertTrue()
+	test.assertEquals(inverse.matrix)
+
+@Test function test33Axis2Mat()
+	var expected = mat3(0, -1, 0,
+						1, 0, 0,
+						0, 0, 1)
+	vec3(0, 0, 1).toRotation(90 .asAngleDegrees()).assertEquals(expected)
+	expected = mat3(1, 0,	   0,
+					0, -0.707,  0.707,
+					0, -0.707,  -0.707)
+	vec3(1, 0, 0).toRotation(225 .asAngleDegrees()).assertEquals(expected)
+
+@Test function test33Angle2Mat()
+	var expected = mat3(0, -1, 0,
+						1, 0, 0,
+						0, 0, 1)
+	90 .asAngleDegrees().toRotation(vec3(0, 0, 1)).assertEquals(expected)
+	expected = mat3(1, 0,	   0,
+					0, -0.707,  0.707,
+					0, -0.707,  -0.707)
+	225 .asAngleDegrees().toRotation(vec3(1, 0, 0)).assertEquals(expected)
+
+@Test function test33Scaling()
+	var expected = mat3(0.5,	0,	 0,
+						0,	  0.5,   0,
+						0,	  0,	 0.5)
+	vec3(0.5, 0.5, 0.5).toScaling().assertEquals(expected)
+	expected = mat3(1.5,	0,	0,
+					0,	  12,   0,
+					0,	  0,	7.5)
+	vec3(1.5, 12, 7.5).toScaling().assertEquals(expected)
+	(vec3(2, 2, 2).toScaling() * vec3(5, 16, 7)).assertEquals(vec3(10, 32, 14))
+
+@Test function test33Mat2Euler()
+	let test = mat3(0, 0,  1,
+					0, -1, 0,
+					1, 0,  0)
+	let euler = test.toEuler()
+	/* The same rotation can be represented by lots different Euler
+	angels thus the best way to check if mat3.toEuler convertation
+	works is producing backward convertation by sequence of rotations
+	acording to the order in the angels. Obtained result must be
+	the rotation matrix we've started from. */
+	let aroundX = angle(euler.x).toRotation(vec3(1, 0, 0))
+	let aroundY = angle(euler.y).toRotation(vec3(0, 1, 0))
+	let aroundZ = angle(euler.z).toRotation(vec3(0, 0, 1))
+	(aroundZ * aroundY * aroundX).assertEquals(test)
+
+@test function test33rotationsXYZ()
+	let test = vec3(1, 2, 3)
+	let a = 90 .asAngleDegrees()
+	let x = a.toRotationX()
+	let y = a.toRotationY()
+	let z = a.toRotationZ()
+	(x * test).assertEquals(vec3(1, -3, 2))
+	(y * test).assertEquals(vec3(3, 2, -1))
+	(z * test).assertEquals(vec3(-2, 1, 3))
+
+@test function testMat3Translation()
+	let point = vec3(2, 5, 1)
+	let trans = vec2(5, 10).toTranslation()
+	(trans * point).assertEquals(vec3(7, 15, 1))
+
+@test function testInverse22()
+	let m22 = mat2(1, 1, 0, 1)
+	let inverse = m22.inverse().matrix
+	inverse.assertEquals(mat2(1, -1, 0, 1))
+
+@test function testInverse33()
+	let m33 = mat3(1, 0, 1, 0, 1, 0, 0, 0, 1)
+	let inverse = m33.inverse().matrix
+	inverse.assertEquals(mat3(1, 0, -1, 0, 1, 0, 0, 0, 1))
