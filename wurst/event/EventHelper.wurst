@@ -297,6 +297,25 @@ public class EventData
 	static function getSpellTargetItem() returns item
 		return GetSpellTargetItem()
 
+	static function isManipulatedItemAbsorbed() returns bool
+		return BlzGetManipulatedItemWasAbsorbed()
+
+	static function getAbsorbingItem() returns item
+		return BlzGetAbsorbingItem()
+
+	/** EVENT_PLAYER_UNIT_STACK_ITEM
+	Source is the item that is losing charges, Target is the item getting charges. */
+	static function getStackingItemSource() returns item
+		return BlzGetStackingItemSource()
+
+	/** EVENT_PLAYER_UNIT_STACK_ITEM
+	Source is the item that is losing charges, Target is the item getting charges. */
+	static function getStackingItemTarget() returns item
+		return BlzGetStackingItemTarget()
+	
+	static function getStackingItemTargetPreviousCharges() returns int
+		return BlzGetStackingItemTargetPreviousCharges()
+	
 	static function getTriggerPlayer() returns player
 		return GetTriggerPlayer()
 

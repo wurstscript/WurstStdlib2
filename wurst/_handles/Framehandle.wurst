@@ -435,3 +435,11 @@ public function disableCursor()
 
 public function setCursorEnabled(bool flag)
 	BlzEnableCursor(flag)
+
+/** Get number of children frames of given frame. Only direct child frames are counted. */ 
+public function framehandle.getChildrenCount() returns int
+	return BlzFrameGetChildrenCount(this)
+
+/** Get child frame handle from given index. */
+public function framehandle.getChild(int index) returns framehandle
+	return BlzFrameGetChild(this, index)
