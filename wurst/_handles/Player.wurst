@@ -141,6 +141,9 @@ public function player.decTechResearched(int techId, int levels)
 
 public function player.forceStartLocation(int index)
 	ForcePlayerStartLocation(this, index)
+	
+public function player.getPlayerAlliance(player otherPlayer, alliancetype whichAllianceSetting) returns boolean
+	return GetPlayerAlliance(this, otherPlayer, whichAllianceSetting)
 
 public function player.setPlayerAlliance(player otherPlayer, alliancetype whichAllianceSetting, boolean value)
 	SetPlayerAlliance(this, otherPlayer, whichAllianceSetting, value)
