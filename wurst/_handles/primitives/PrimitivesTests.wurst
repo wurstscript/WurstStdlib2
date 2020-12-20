@@ -42,3 +42,9 @@ function testBoolean()
 	("true".toBool()).assertEquals(true)
 	("1".toBool()).assertEquals(true)
 	("nottrue".toBool()).assertEquals(false)
+
+@Test
+function testArrayLength()
+	let x = [1, 2, 3]
+	print("length: " + x.length.toString())
+	x.length.assertEquals(3)
