@@ -216,6 +216,13 @@ public function player.showChatMessage(int recipient, string message)
 /** Sets the maximum allowed hero amount for a player */
 public function player.setHeroMaxAllowed(int amount)
 	SetPlayerTechMaxAllowed(this, 'HERO', amount)
+
+public function player.hasVisibility(unit target) returns bool
+	return IsUnitVisible(target, this)
+
+public function player.hasVisibility(vec2 pos) returns bool
+	return IsVisibleToPlayer(pos.x, pos.y, this)
+
 		
 @Test
 function testPlayer()
