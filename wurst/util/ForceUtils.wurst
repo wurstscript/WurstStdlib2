@@ -1,0 +1,27 @@
+package ForceUtils
+
+/* Force iterator */
+force iterForce
+
+/** Creates a new iterator for this group. */
+public function force.iterator() returns force
+    iterForce = CreateForce()
+    ForForce(this, () -> iterForce.addPlayer(GetEnumPlayer()))
+    return iterForce
+
+/** Returns whether the iterator has the next item */
+public function force.hasNext() returns boolean
+    print("hasNext: " + (this.getRandomPlayer() != null).toString())
+    return this.getRandomPlayer() != null
+
+/** Returns the next item from the iterator */
+public function force.next() returns player
+    let iterPlayer = this.getRandomPlayer()
+    print("next: " + iterPlayer.getName())
+    this.removePlayer(iterPlayer)
+    return iterPlayer
+
+/** Closes the iterator, releaseing the group */
+public function force.close()
+    this.clear()
+    this.destr()

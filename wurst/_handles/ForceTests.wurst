@@ -24,24 +24,3 @@ function testForForce()
 		testInt = 10
 
 	testInt.assertEquals(10)
-
-@Test
-function testForceIteration()
-	let numPlayers = 2
-	var counterOne = 0
-	var counterTwo = 0
-	let sampleForce = CreateForce()
-
-	// Create the sample force.
-	for index = 0 to numPlayers
-		sampleForce.addPlayer(Player(index))
-
-	// Test the number of iterations.
-	for _ in sampleForce.iterator()
-		counterOne += 1
-	numPlayers.assertEquals(counterOne)
-
-	// Repeat to test that iteration on .iterator is not destructive.
-	for _ in sampleForce.iterator()
-		counterTwo += 1
-	numPlayers.assertEquals(counterTwo)
