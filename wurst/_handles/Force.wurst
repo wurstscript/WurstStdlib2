@@ -1,5 +1,6 @@
 package Force
 import NoWurst
+import WurstUnit
 
 public function force.destr()
 	DestroyForce(this)
@@ -45,12 +46,6 @@ public function force.containsUnit(unit whichUnit) returns boolean
 public function force.containsPlayer(player whichPlayer) returns boolean
 	return IsPlayerInForce(whichPlayer, this)
 
-/** Creates a new iterator for this group. */
-public function force.iterator() returns force
-    iterForce = CreateForce()
-    ForForce(this, () -> iterForce.addPlayer(GetEnumPlayer()))
-    return iterForce    
-	
 /* Force iterator */
 force iterForce
 
