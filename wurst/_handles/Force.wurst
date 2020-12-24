@@ -49,7 +49,10 @@ public function force.containsPlayer(player whichPlayer) returns boolean
 public function force.iterator() returns force
     iterForce = CreateForce()
     ForForce(this, () -> iterForce.addPlayer(GetEnumPlayer()))
-    return iterForce
+    return iterForce    
+	
+/* Force iterator */
+force iterForce
 
 /** Returns whether the iterator has the next item */
 public function force.hasNext() returns boolean
