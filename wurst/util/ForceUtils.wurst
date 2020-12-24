@@ -11,13 +11,11 @@ public function force.iterator() returns force
 
 /** Returns whether the iterator has the next item */
 public function force.hasNext() returns boolean
-    print("hasNext: " + (this.getRandomPlayer() != null).toString())
     return this.getRandomPlayer() != null
 
 /** Returns the next item from the iterator */
 public function force.next() returns player
     let iterPlayer = this.getRandomPlayer()
-    print("next: " + iterPlayer.getName())
     this.removePlayer(iterPlayer)
     return iterPlayer
 
