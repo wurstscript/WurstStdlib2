@@ -54,17 +54,44 @@ public function force.iterator() returns force
 /* Force iterator */
 force iterForce
 
+/** Creates a new iterator for this group. */
+public function force.iterator() returns force
+	iterForce = CreateForce()
+	ForForce(this, () -> iterForce.addPlayer(GetEnumPlayer()))
+	return iterForce
+
 /** Returns whether the iterator has the next item */
 public function force.hasNext() returns boolean
-    return this.getRandomPlayer() != null
+	return this.getRandomPlayer() != null
 
 /** Returns the next item from the iterator */
 public function force.next() returns player
-    let iterPlayer = this.getRandomPlayer()
-    this.removePlayer(iterPlayer)
-    return iterPlayer
+	let iterPlayer = this.getRandomPlayer()
+	this.removePlayer(iterPlayer)
+	return iterPlayer
 
 /** Closes the iterator, releaseing the group */
 public function force.close()
-    this.clear()
-    this.destr()
+	this.clear()
+	this.destr()
+
+@Test
+function testForceIteration()
+	let numPlayers = 2
+	var counterOne = 0
+	var counterTwo = 0
+	let sampleForce = CreateForce()
+
+	// Create the sample force.
+	for index = 0 to numPlayers
+		sampleForce.addPlayer(Player(index))
+
+	// Test the number of iterations.
+	for _ in sampleForce.iterator()
+		counterOne += 1
+	numPlayers.assertEquals(counterOne)
+
+	// Repeat to test that iteration on .iterator is not destructive.
+	for _ in sampleForce.iterator()
+		counterTwo += 1
+	numPlayers.assertEquals(counterTwo)
