@@ -44,3 +44,27 @@ public function force.containsUnit(unit whichUnit) returns boolean
 
 public function force.containsPlayer(player whichPlayer) returns boolean
 	return IsPlayerInForce(whichPlayer, this)
+
+/* Force iterator */
+force iterForce
+
+/** Creates a new iterator for this group. */
+public function force.iterator() returns force
+	iterForce = CreateForce()
+	ForForce(this, () -> iterForce.addPlayer(GetEnumPlayer()))
+	return iterForce
+
+/** Returns whether the iterator has the next item */
+public function force.hasNext() returns boolean
+	return this.getRandomPlayer() != null
+
+/** Returns the next item from the iterator */
+public function force.next() returns player
+	let iterPlayer = this.getRandomPlayer()
+	this.removePlayer(iterPlayer)
+	return iterPlayer
+
+/** Closes the iterator, releaseing the group */
+public function force.close()
+	this.clear()
+	this.destr()
