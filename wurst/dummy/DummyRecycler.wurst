@@ -12,9 +12,10 @@ import Colors
 import Annotations
 import UnitIds
 import Icons
+import ObjectIdGenerator
 
 /** Id of the dummy unit */
-public constant DUMMY_UNIT_ID = 'xdum'
+public constant DUMMY_UNIT_ID = compiletime(UNIT_ID_GEN.next())
 
 /** Id of the root ability
 it makes unit:
@@ -23,7 +24,9 @@ it makes unit:
 3. but you can still set it's postion with code
 4. the effect remains even if this ability is removed
 */
-public constant ROOT_ENABLER = 'xrot'
+public constant ROOT_ENABLER = compiletime(ABIL_ID_GEN.next())
+
+public constant DISABLE_AUTO_ACQUIRE_ATTACK_TARGETS_ABILITY_ID = compiletime(ABIL_ID_GEN.next())
 
 constant DIFFERENT_ANGLES		= 8
 constant ANGLE_DEGREE			= 360 / DIFFERENT_ANGLES
@@ -155,8 +158,6 @@ init
 		for j = 0 to SAVED_UNITS_PER_ANGLE - 1
 			let dummy = createDummy(boundMax - vec2(16, 16), DUMMY_PLAYER, facing)
 			DummyRecycler.angleQueues[i].enqueue(dummy)
-
-public constant DISABLE_AUTO_ACQUIRE_ATTACK_TARGETS_ABILITY_ID = 'xdaa'
 
 @compiletime function generateDummyUnit()
 	new AbilityDefinitionRootAncients(ROOT_ENABLER)

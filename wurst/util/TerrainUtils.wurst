@@ -5,6 +5,8 @@ import Rect
 import MapBounds
 import Wurstunit
 import Colors
+import ObjectIdGenerator
+import MagicFunctions
 
 // Terrain API
 
@@ -55,7 +57,7 @@ public function vec2.isTerrainPlatform() returns boolean
 	return not this.isTerrainPathable(PATHING_TYPE_FLOATABILITY) and not this.isTerrainPathable(PATHING_TYPE_WALKABILITY) and not this.isTerrainPathable(PATHING_TYPE_BUILDABILITY)
 
 constant MAX_RANGE_SQ = 10. .squared()
-constant DUMMY_ITEM_ID = 'wolg'
+constant DUMMY_ITEM_ID = compiletime(ITEM_ID_GEN.next())
 let dummyItem = createItem(DUMMY_ITEM_ID, ZERO2)..setVisible(false)
 let itemSearchRect = Rect(0., 0., 128., 128.)
 item array hiddenItems

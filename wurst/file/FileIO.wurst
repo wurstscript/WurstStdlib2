@@ -4,6 +4,7 @@ import ErrorHandling
 import SafetyChecks
 import AbilityObjEditing
 import ObjectIds
+import ObjectIdGenerator
 
 /* 	FileIO for Patches 1.31 and up with chunked string support for big data.
 	Reads and writes using preload files by manipulating default ability tooltips.
@@ -19,7 +20,7 @@ import ObjectIds
 
 public var CAN_READ_FILES = true
 
-public constant FILE_IO_ABIL_ID = 'xlod'
+public constant FILE_IO_ABIL_ID  = compiletime(ABIL_ID_GEN.next())
 public constant FILE_IO_ABIL_ID_STR = FILE_IO_ABIL_ID.toRawCode()
 
 public class File

@@ -2,12 +2,14 @@ package Preloader
 import NoWurst
 import ErrorHandling
 import Group
-import DummyRecycler
 import ObjectIds
 import Basics
 import ClosureTimers
 import ClosureForGroups
 import Annotations
+import UnitIds
+import MapBounds
+import Unit
 
 /* Helps you to preload units and abilities during map-load	*
  * to avoid first-laggs. */
@@ -48,8 +50,9 @@ public function finishPreload()
 	dumg = null
 
 init
-	dum = createUnit(DUMMY_PLAYER, DUMMY_UNIT_ID, vec2(0,0), angle(0))
+	dum = createUnit(DUMMY_PLAYER, UnitIds.shade, playableMin, angle(0))
+	dum.setInvulnerable(true)
 	if dum == null
-		error("DUMMY_UNITID (" + DUMMY_UNIT_ID.toRawCode() + ") not added correctly to the map.")
+		error("DUMMY_UNITID not added correctly to the map.")
 	if autoFinish
 		nullTimer(() -> finishPreload())
