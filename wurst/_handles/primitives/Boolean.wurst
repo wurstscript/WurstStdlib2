@@ -9,6 +9,9 @@ public function boolean.toString() returns string
 public function string.toBool() returns boolean
 	return this == "1" or this == "true" ? true : false
 
+public function string.isBool() returns bool
+	return this.toBool().toString() == this
+
 /** Converts this boolean into an int */
 public function boolean.toInt() returns int
 	return this ? 1 : 0

@@ -276,6 +276,16 @@ function colorHSV.assert()
 	if compare.h > delta or compare.s > delta or compare.v > delta
 		testFail("Actual {0}, Expected {1}".format(translated.toString(), this.toString()))
 
+public function string.color(string which) returns string
+	return which + this + "|r"
+
+public function string.color(color which) returns string
+	return which.toColorString() + this + "|r"
+
+public function string.color(colorA which) returns string
+	return which.toColorString() + this + "|r"
+
+
 @compiletime function initializeTable()
 	for i = 0 to 15
 		decs.saveInt(hexs[i].getHash(), i)
