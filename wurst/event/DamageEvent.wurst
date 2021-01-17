@@ -13,7 +13,7 @@
     To listen to any damage instance firing:
 
        DamageEvent.addListener() ->
-            print(DamageEvent.getSource().getName()+" dealt "+DamageEvent.getAmount().toString()+" damage to "+DamageEvent.getTarget().getName()+".")
+            print(DamageEvent.getSource().getName() + " dealt " + DamageEvent.getAmount().toString() + " damage to " + DamageEvent.getTarget().getName() + ".")
 
     If the order of firing of the listeners is important, the user can give a priority to the listener:
 
@@ -447,7 +447,7 @@ public abstract class DamageListener
         case SPELL
             return "Ability"
         case CODE
-            return "Ability"
+            return "Code"
         default
             return "Unknown"
 
