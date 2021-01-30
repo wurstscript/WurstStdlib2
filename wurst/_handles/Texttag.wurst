@@ -3,6 +3,7 @@ import NoWurst
 import public Vectors
 import public Colors
 import Player
+import Unit
 
 public function texttag.setPos(real x, real y, real z)
 	SetTextTagPos(this, x ,y , z)
@@ -39,6 +40,16 @@ public function texttag.setVelocity(real xvel, real yvel)
 
 public function texttag.setVisibility(boolean flag)
 	SetTextTagVisibility(this, flag)
+
+public function texttag.matchVisibility(unit target)
+	this.setVisibility(localPlayer.hasVisibility(target))
+
+public function texttag.matchVisibility(vec2 pos)
+	this.setVisibility(localPlayer.hasVisibility(pos))
+
+public function texttag.attach(unit target, vec2 offset)
+	this.setPos((target.getPos() + offset).toVec3())
+	this.matchVisibility(target)
 
 public function texttag.destr()
 	DestroyTextTag(this)
