@@ -19,3 +19,10 @@ public function boolean.toInt() returns int
 /** Converts this int into a boolean */
 public function int.toBool() returns boolean
 	return this != 0
+
+
+public function xor(bool a, bool b) returns boolean
+	return (a or b) and not (a and b)
+
+public function boolean.xor(bool other) returns boolean
+	return xor(this, other)

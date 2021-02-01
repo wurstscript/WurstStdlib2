@@ -48,3 +48,15 @@ function testArrayLength()
 	let x = [1, 2, 3]
 	print("length: " + x.length.toString())
 	x.length.assertEquals(3)
+
+@Test
+function testParity()
+	(0).isEven().assertEquals(true)
+	(5113).isEven().assertEquals(false)
+
+@Test
+function testXor()
+	xor(true, true).assertEquals(false)
+	xor(true, false).assertEquals(true)
+	xor(false, true).assertEquals(true)
+	xor(false, false).assertEquals(false)
