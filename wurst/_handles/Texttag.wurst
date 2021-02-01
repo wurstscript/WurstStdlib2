@@ -47,7 +47,14 @@ public function texttag.matchVisibility(unit target)
 public function texttag.matchVisibility(vec2 pos)
 	this.setVisibility(localPlayer.hasVisibility(pos))
 
-public function texttag.attach(unit target, vec2 offset)
+/** Match the visibility and position of the texttag to the given unit.
+	This is only intended for temporary text tags similar to Critical Strike. */
+public function texttag.match(unit target)
+	this.match(target, vec2(0, 0))
+
+/** Match the visibility and position with an offest of the texttag to the given unit.
+	This is only intended for temporary text tags similar to Critical Strike. */
+public function texttag.match(unit target, vec2 offset)
 	this.setPos((target.getPos() + offset).toVec3())
 	this.matchVisibility(target)
 
