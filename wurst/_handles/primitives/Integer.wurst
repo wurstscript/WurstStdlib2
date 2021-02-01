@@ -55,3 +55,11 @@ public function int.bitOr(int other) returns int
 /** Returns the result of a bitwise exclusive OR operation performed on this int and the argument int. */
 public function int.bitXor(int other) returns int
 	return BlzBitXor(this, other)
+
+/** Checks whether this int is odd. */
+public function int.isOdd() returns boolean
+	return BlzBitAnd(this, 1) == 1
+
+/** Checks whether this int is even. */
+public function int.isEven() returns boolean
+	return not this.isOdd()
