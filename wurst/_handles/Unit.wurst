@@ -9,6 +9,21 @@ native UnitAlive(unit id) returns boolean
 public function unit.isType(unittype utype) returns boolean
 	return IsUnitType(this, utype)
 
+public function unit.addType(unittype utype) returns boolean
+	return UnitAddType(this, utype)
+
+public function unit.removeType(unittype utype) returns boolean
+	return UnitRemoveType(this, utype)
+
+public function unit.setType(unittype utype, boolean flag) returns boolean
+	if flag
+		return this.addType(utype)
+	else
+		return this.removeType(utype)
+
+public function unit.toggleType(unittype utype) returns boolean
+	return this.setType(utype, not this.isType(utype))
+
 /* Helper Functions for use with vectors */
 
 public function createUnit(player p, int unitId, vec2 pos, angle facing) returns unit
@@ -443,7 +458,7 @@ public function unit.addAnimationProperties(string properties, bool add)
 
 public function unit.addAnimationProperties(string properties)
 	this.addAnimationProperties(properties, true)
-	
+
 public function unit.removeAnimationProperties(string properties)
 	this.addAnimationProperties(properties, false)
 
@@ -721,7 +736,7 @@ public function unit.getAbilityManaCost(int abilId, int level) returns int
 
 public function unit.setAbilityManaCost(int abilId, int level, int manaCost)
 	BlzSetUnitAbilityManaCost(this, abilId, level, manaCost)
-	
+
 @deprecated("Use getPos instead.")
 public function unit.getLoc() returns location
 	return GetUnitLoc(this)
@@ -768,14 +783,14 @@ class InventoryIterator
 public function unit.inventory() returns InventoryIterator
 	return new InventoryIterator(this)
 
-/** Change unit attack cooldown by given percentage. Negative values are possible as well. 
+/** Change unit attack cooldown by given percentage. Negative values are possible as well.
 	Returns the new attack cooldown time of the unit. */
 @configurable public function unit.setAttackCooldownPercChange(real attackCooldownPercChange, int weaponIndex) returns real
 	let newSpeed = this.getAttackCooldown(weaponIndex)/(1+attackCooldownPercChange)
 	this.setAttackCooldown(newSpeed, weaponIndex)
 	return newSpeed
-   
-/** Change unit movement speed by given percentage. Negative values are possible as well. 
+
+/** Change unit movement speed by given percentage. Negative values are possible as well.
 	Returns the new speed of the unit.
 	ex.: using 0.25 on unit with speed 400 will make the new speed 500. */
 @configurable public function unit.setMoveSpeedPercChange(real movespeedPercChange) returns real
@@ -808,7 +823,7 @@ public function unit.setField(unitrealfield field, real value) returns bool
 
 public function unit.setField(unitstringfield field, string value) returns bool
 	return BlzSetUnitStringField(this, field, value)
-	
+
 // Unit Weapon fields
 public function unit.getFieldWeapon(unitweaponbooleanfield field, int weaponIndex) returns bool
 	return BlzGetUnitWeaponBooleanField(this, field, weaponIndex)
@@ -833,4 +848,4 @@ public function unit.setFieldWeapon(unitweaponrealfield field, int weaponIndex, 
 
 public function unit.setFieldWeapon(unitweaponstringfield field, int weaponIndex, string value) returns bool
 	return BlzSetUnitWeaponStringField(this, field, weaponIndex, value)
-	
+
