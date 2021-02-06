@@ -38,6 +38,9 @@ public function texttag.setAge(real age)
 public function texttag.setVelocity(real xvel, real yvel)
 	SetTextTagVelocity(this, xvel, yvel)
 
+public function texttag.setVelocity(vec2 vel)
+	SetTextTagVelocity(this, vel.x, vel.y)
+
 public function texttag.setVisibility(boolean flag)
 	SetTextTagVisibility(this, flag)
 

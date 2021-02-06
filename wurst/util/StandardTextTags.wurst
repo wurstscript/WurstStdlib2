@@ -2,16 +2,28 @@ package StandardTextTags
 constant FONT_SIZE  =  0.024 / 0.0023
 constant OFFSET	 = vec2(16., 0.)
 
+/** Set the text with the standard font size scaled by a factor. */
+public function texttag.setScaledText(string text, real scale)
+	this.setText(text, scale * FONT_SIZE)
 
-public function standardTextTag(vec2 pos, string text) returns texttag
-	let tag = CreateTextTag()
-		..setText(text, FONT_SIZE)
-		..setPos(pos.x, pos.y, 0.)
+/** Set the text with the standard font size. */
+public function texttag.setText(string text)
+	this.setText(text, FONT_SIZE)
+
+/** Creates a text tag with default values matching standard built-in text tags */
+public function standardTextTag() returns texttag
+	return CreateTextTag()
 		..setFadepoint(2.)
 		..setLifespan(3.)
 		..setVelocity(0., .03)
 		..setPermanent(false)
 		..setVisibility(true)
+
+
+public function standardTextTag(vec2 pos, string text) returns texttag
+	let tag = standardTextTag()
+		..setText(text, FONT_SIZE)
+		..setPos(pos.x, pos.y, 0.)
 	return tag
 
 
