@@ -103,9 +103,10 @@ public class LinkedList<T>
 		let entry = getEntry(index)
 		entry.prev.next = entry.next
 		entry.next.prev = entry.prev
+		let res = entry.elem
 		destroy entry	
 		size--
-		return entry.elem
+		return res
 		
 	/** Removes the first occurence of t from this list */
 	function remove(T elem)
