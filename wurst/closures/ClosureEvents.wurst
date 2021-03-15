@@ -243,14 +243,14 @@ function registerEventId(eventid evnt) returns int
 	eventidToIndex[eventId] = eventTypeCounter
 	if evnt.isPlayerunitEvent()
 		registerPlayerUnitEvent(ConvertPlayerUnitEvent(eventId), function EventListener.generalEventCallback)
-	else if evnt != EVENT_UNIT_DAMAGED and evnt != EVENT_PLAYER_LEAVE and evnt != EVENT_PLAYER_CHAT_FILTER and not evnt.isKeyboardEvent() and not evnt.isMouseEvent()
+	else if evnt != EVENT_UNIT_DAMAGED and evnt != EVENT_PLAYER_LEAVE and evnt != EVENT_PLAYER_CHAT_FILTER and not evnt.isKeyboardEvent() 
 		error("registering handleid: " + eventId.toString() + " non-playerunitevent. Except EVENT_UNIT_DAMAGED and EVENT_PLAYER_LEAVE these are not supported right now.")
-	if evnt.isMouseEvent() and not EventListener.useMouseEvents
-		EventListener.useMouseEvents = true
-		for i = 0 to bj_MAX_PLAYERS - 1
-			keyTrig..registerPlayerEvent(players[i], EVENT_PLAYER_MOUSE_UP)
-			..registerPlayerEvent(players[i], EVENT_PLAYER_MOUSE_DOWN)
-			..registerPlayerEvent(players[i], EVENT_PLAYER_MOUSE_MOVE)
+	// if evnt.isMouseEvent() and not EventListener.useMouseEvents
+	// 	EventListener.useMouseEvents = true
+	// 	for i = 0 to bj_MAX_PLAYERS - 1
+	// 		keyTrig..registerPlayerEvent(players[i], EVENT_PLAYER_MOUSE_UP)
+	// 		..registerPlayerEvent(players[i], EVENT_PLAYER_MOUSE_DOWN)
+	// 		..registerPlayerEvent(players[i], EVENT_PLAYER_MOUSE_MOVE)
 	return eventTypeCounter
 
 function registerEventsForUnit(unit u)

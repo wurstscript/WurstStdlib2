@@ -46,12 +46,12 @@ public function int.isBetween(int low, int high) returns bool
 
 /** Returns the result of a bitwise AND operation performed on this int and the argument int. */
 public function int.bitAnd(int other) returns int
-	return 0
+	return AND(this,other)
 
 /** Returns the result of a bitwise OR operation performed on this int and the argument int. */
 public function int.bitOr(int other) returns int
-	return 0
+	return OR(this,other)
 
 /** Returns the result of a bitwise exclusive OR operation performed on this int and the argument int. */
 public function int.bitXor(int other) returns int
-	return 0
+	return XOR(this, other)
