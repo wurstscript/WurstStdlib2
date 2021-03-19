@@ -3,10 +3,13 @@ package Reference
     A simple wrapper class which contains a reference to a value of the given type.
 	The main usage is to wrap primitives to modify them inside closures.
 	
+	> function limited_sum(LinkedList someList) returns real
 	> 	let dist_ref = new Reference(0.)
 	>	someList.for_each() (real elem) ->
 	>		if dist_ref.val < 500	
 	>			dist_ref.val += elem
+	>   // Destroy the reference and use the contained value.
+	>   return dist_ref.into()
 	
 	Make sure to destroy references if you don't need them anymore.
 */
@@ -16,3 +19,9 @@ public class Reference<T:>
 
     construct(T val)
         this.val = val
+
+    /** Consumes the reference, destroying it and returning the contained value. */
+    function into() returns T
+	    let val = this.val
+		destroy this
+		return val
