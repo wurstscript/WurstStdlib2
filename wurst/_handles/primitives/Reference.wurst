@@ -20,9 +20,7 @@ public class Reference<T:>
     construct(T val)
         this.val = val
 
-    /**
-	    Consumes the reference, destroying it and returning the contained value. 
-	*/
+    /** Consumes the reference, destroying it and returning the contained value. */
     function into() returns T
 	    let val = this.val
 		destroy this
