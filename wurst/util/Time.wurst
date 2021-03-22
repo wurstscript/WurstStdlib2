@@ -1,0 +1,169 @@
+package Time
+
+import GameTimer
+
+public tuple instant(real timestamp_seconds)
+
+public tuple duration(real seconds)
+
+public function instantToIndex(instant inst) returns int
+	return realToIndex(inst.timestamp_seconds)
+
+public function instantFromIndex(int index) returns instant
+	return instant(realFromIndex(index))
+
+public function durationToIndex(duration dur) returns int
+	return realToIndex(dur.seconds)
+
+public function durationFromIndex(int index) returns duration
+	return duration(realFromIndex(index))
+
+public function instantNow() returns instant
+	return instant(getElapsedGameTime())
+
+public function real.seconds() returns duration
+	return duration(this)
+
+public function real.minutes() returns duration
+	return (duration(this * 60.))
+
+public function real.hours() returns duration
+	return (duration(this * 60. * 60.))
+
+public function int.seconds() returns duration
+	return this.toReal().seconds()
+
+public function int.minutes() returns duration
+	return this.toReal().minutes()
+
+public function int.hours() returns duration
+	return this.toReal().hours()
+
+public function real.secondsAgo() returns instant
+	return instant(getElapsedGameTime() - this)
+
+public function real.minutesAgo() returns instant
+	return instant(getElapsedGameTime() - this * 60.)
+
+public function real.hoursAgo() returns instant
+	return instant(getElapsedGameTime() - this * 60. * 60.)
+
+public function int.secondsAgo() returns instant
+	return instant(getElapsedGameTime() - this)
+
+public function int.minutesAgo() returns instant
+	return instant(getElapsedGameTime() - this * 60.)
+
+public function int.hoursAgo() returns instant
+	return instant(getElapsedGameTime() - this * 60. * 60.)
+
+public function duration.secondsAgo() returns instant
+	return instant(getElapsedGameTime() - this.seconds)
+
+public function duration.minutesAgo() returns instant
+	return instant(getElapsedGameTime() - this.seconds * 60.)
+
+public function duration.hoursAgo() returns instant
+	return instant(getElapsedGameTime() - this.seconds * 60. * 60.)
+
+public function duration.secondsFromNow() returns instant
+	return instant(getElapsedGameTime() + this.seconds)
+
+public function duration.minutesFromNow() returns instant
+	return instant(getElapsedGameTime() + this.seconds * 60.)
+
+public function duration.hoursFromNow() returns instant
+	return instant(getElapsedGameTime() + this.seconds * 60. * 60.)
+
+public function real.secondsFromNow() returns instant
+	return instant(getElapsedGameTime() + this)
+
+public function real.minutesFromNow() returns instant
+	return instant(getElapsedGameTime() + this * 60.)
+
+public function real.hoursFromNow() returns instant
+	return instant(getElapsedGameTime() + this * 60. * 60.)
+
+public function int.secondsFromNow() returns instant
+	return instant(getElapsedGameTime() + this)
+
+public function int.minutesFromNow() returns instant
+	return instant(getElapsedGameTime() + this * 60.)
+
+public function int.hoursFromNow() returns instant
+	return instant(getElapsedGameTime() + this * 60. * 60.)
+
+public function instant.op_plus(duration dur) returns instant
+	return instant(this.timestamp_seconds + dur.seconds)
+
+public function instant.op_minus(duration dur) returns instant
+	return instant(this.timestamp_seconds - dur.seconds)
+
+public function instant.op_minus(instant other) returns duration
+	return duration(this.timestamp_seconds - other.timestamp_seconds)
+
+public function duration.op_plus(duration other) returns duration
+	return duration(this.seconds + other.seconds)
+
+public function duration.op_minus(duration other) returns duration
+	return duration(this.seconds - other.seconds)
+
+public function duration.op_plus(instant when) returns instant
+	return instant(this.seconds + when.timestamp_seconds)
+
+public function instant.durationSince() returns duration
+	return duration(getElapsedGameTime() - this.timestamp_seconds)
+
+public function instant.durationUntil() returns duration
+	return duration(this.timestamp_seconds - getElapsedGameTime())
+
+public function instant.moreRecentThan(instant other) returns bool
+	return this.timestamp_seconds > other.timestamp_seconds
+
+public function instant.lessRecentThan(instant other) returns bool
+	return this.timestamp_seconds < other.timestamp_seconds
+
+public function duration.greaterThan(duration other) returns bool
+	return this.seconds > other.seconds
+
+public function duration.lessThan(duration other) returns bool
+	return this.seconds < other.seconds
+
+function duration.display(string hrs, string mins, string secs, string ms) returns string
+	let hours = (this.seconds / (60. * 60.)).toInt()
+	let minutes = (this.seconds / 60.).toInt() - (hours * 60)
+	let seconds = (this.seconds).toInt() - (minutes * 60) - (hours * 60 * 60)
+
+	var result = ""
+	if hours > 0
+		result += hours.toString()
+		result += hrs
+
+	if minutes > 0 or result.length() > 0
+		result += minutes.toString()
+		result += mins
+
+	if seconds > 0 or result.length() > 0
+		result += seconds.toString()
+		result += secs
+
+	if result.length() == 0 and this.greaterThan(0..seconds())
+		return (this.seconds * 1000.0).toInt().toString() + ms
+
+	if result.length() == 0
+		return "0"
+
+	return result
+
+public function duration.displayVerbose() returns string
+	return this.display(" hours, ", " minutes, and ", " seconds", " milliseconds")
+
+public function duration.display() returns string
+	return this.display("h", "m", "s", "ms")
+
+@Test function testDisplay()
+	print(1..hours().displayVerbose())
+	assertTrue(.1.seconds().displayVerbose() == "100 milliseconds")
+	assertTrue(1.1.seconds().displayVerbose() == "1 seconds")
+	assertTrue(61..seconds().display() == "1m1s")
+	assertTrue(1..hours().displayVerbose() == "1 hours, 0 minutes, and 0 seconds")
