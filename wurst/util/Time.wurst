@@ -5,16 +5,16 @@
 	Example usage:
 
 	```
-	constant my_gold_mine = create_gold_mine()
-	var next_income_time = 30..secondsFromNow()
-	var income_message = CreateTextTag()..setPos(my_gold_mine.getPos3Real())
+	constant myGoldMine = createGoldMine()
+	var nextIncomeTime = 30..secondsFromNow()
+	var incomeMessage = CreateTextTag()..setPos(myGoldMine.getPos3Real())
 	init
 		doPeriodically(ANIMATION_PERIOD) ->
-			if next_income_time.durationUntil().lessThan(0..seconds())
-				my_gold_mine.getOwner().addGold(100)
-				next_income_time += 30..seconds()
+			if nextIncomeTime.durationUntil().lessThan(0..seconds())
+				myGoldMine.getOwner().addGold(100)
+				nextIncomeTime += 30..seconds()
 
-			income_message..setText("Next income in " + next_income_time.durationUntil().displayVerbose(), 10.)
+			incomeMessage..setText("Next income in " + nextIncomeTime.durationUntil().displayVerbose(), 10.)
 	```
 
 	Details:
