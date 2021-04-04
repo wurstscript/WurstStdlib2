@@ -7,15 +7,16 @@ import AbilityIds
 public class HeroPreset extends HeroDefinition
 	constant properNames = new LinkedList<string>()
 	string heroAbilityString = ""
+	string normalAbilityString = AbilityIds.inventory.toRawCode() + ","
 
 	construct(int newId, int origId, string name)
 		super(newId, origId)
 		setName(name)
 
 	function buildHero()
-		setNormalAbilities(commaList(AbilityIds.inventory))
 		buildProperNames()
 		buildHeroAbilities()
+		buildNormalAbilities()
 
 
 	/** Adds a proper Name to the Hero.
@@ -38,7 +39,9 @@ public class HeroPreset extends HeroDefinition
 		if heroAbilityString.length() > 0
 			setHeroAbilities(heroAbilityString.substring(0,heroAbilityString.length()-1))
 
+	function addNormalAbility(int id)
+		normalAbilityString += id.toRawCode() + ","
 
-
-
-
+	function buildNormalAbilities()
+		if normalAbilityString.length() > 0
+			setNormalAbilities(normalAbilityString.substring(0,normalAbilityString.length()-1))
