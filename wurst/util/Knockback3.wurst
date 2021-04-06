@@ -36,6 +36,10 @@ import Objects
 public interface TerrainZProvider
 	function get(vec3 where) returns real
 
+/** A unit -> bool function. */
+public interface UnitFilter
+	function get(unit which) returns bool
+
 /**
 If configured, provides an alternative source for getting terrain z-height.
 This can be useful for avoiding a desync in some cases.
@@ -56,6 +60,10 @@ If enabled, units have their prop window changed while airborne.
 Warning: this is not a lock-safe form of crowd control.
 */
 @configurable let USE_PROP_WINDOW_MODIFIERS = true
+
+/** Units must match this filter, or Knockback3 takes no effect. */
+@configurable UnitFilter UNIT_FILTER = (unit u) -> not u.isType(UNIT_TYPE_FLYING)
+
 
 public class Knockback3
 	use LinkedListModule
@@ -107,6 +115,9 @@ public class Knockback3
 	 	parameters, respectively. Example:
 	 */
 	static function add(unit u, real velocity, angle groundAngle, angle airAngle)
+		if not UNIT_FILTER.get(u)
+			return
+
 		let instVel = velocity * ANIMATION_PERIOD
 		let v = ZERO3.polarProject(instVel, groundAngle, airAngle)
 		if unitNodes.has(u)
