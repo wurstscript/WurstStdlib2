@@ -186,7 +186,11 @@ public class Knockback3
 
 
 	private static function tickNearGround(Knockback3 knockback, vec3 newPos3, vec3 pos3, real velXySquared)
-		if newPos3.toVec2().isTerrainWalkable()
+		if (
+				newPos3.toVec2().isTerrainWalkable()
+				or (newPos3.z > HEIGHTMAP_PROVIDER.get(newPos3) and knockback.del.z > 0.)
+				or (not pos3.toVec2().isTerrainWalkable())
+		)
 			knockback.u.setXY(newPos3)
 
 			if knockback.del.z <= isAirborneThreshold
@@ -202,7 +206,7 @@ public class Knockback3
 				knockback.u.setPropWindow(knockback.u.getDefaultPropWindow() * bj_DEGTORAD)
 
 		else
-			knockback.del = knockback.del.project(vec3(0., 0., 1.))
+			knockback.del = knockback.del.rotate(vec3(0., 0., 1.), PI) * restitutionCoefficientGround
 
 		if knockback.del.z < elasticityThreshold * ANIMATION_PERIOD
 			knockback.del.z = knockback.del.z*-1.*restitutionCoefficientGround
