@@ -40,11 +40,25 @@ public interface TerrainZProvider
 public interface UnitFilter
 	function get(unit which) returns bool
 
+/** A vec3 -> vec3 closure. */
+public interface WallHitTransform
+	function apply(vec3 vel) returns vec3
+
 /**
 If configured, provides an alternative source for getting terrain z-height.
 This can be useful for avoiding a desync in some cases.
 */
 @configurable TerrainZProvider HEIGHTMAP_PROVIDER = (vec3 w) -> w.getTerrainZ()
+
+/**
+Controls the behavior when hitting a wall at low altitude. Default behavior is to bounce/reverse off the wall, applying
+the same restitution as in bouncing off the ground.
+
+Override this value if you want to prevent bouncing, reflect on planes, etc.
+*/
+@configurable WallHitTransform WALLHIT_TRANSFORM = (vec3 vel) -> (
+	vel.rotate(vec3(0., 0., 1.), PI) * Knockback3.restitutionCoefficientGround
+)
 
 /** The square rect size used for finding destructables. */
 @configurable let DESTRUCTABLE_ENUM_SIZE = 130.
@@ -206,7 +220,7 @@ public class Knockback3
 				knockback.u.setPropWindow(knockback.u.getDefaultPropWindow() * bj_DEGTORAD)
 
 		else
-			knockback.del = knockback.del.rotate(vec3(0., 0., 1.), PI) * restitutionCoefficientGround
+			knockback.del = WALLHIT_TRANSFORM.apply(knockback.del)
 
 		if knockback.del.z < elasticityThreshold * ANIMATION_PERIOD
 			knockback.del.z = knockback.del.z*-1.*restitutionCoefficientGround
