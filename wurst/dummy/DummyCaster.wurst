@@ -74,7 +74,7 @@ public class DummyCaster
 			dummy = null
 		return dummy
 
-	private function prepare(int id, int lvl) returns unit
+	protected function prepare(int id, int lvl) returns unit
 		let dummy = DummyRecycler.get(origin, angle(0))
 		if origin.inBounds()
 			dummy.setXY(origin)
@@ -84,7 +84,7 @@ public class DummyCaster
 		dummy.setOwner(owner, false)
 		return dummy
 
-	private function finish(unit dummy, int id)
+	protected function finish(unit dummy, int id)
 		castCount++
 		doAfter(delay) ->
 			dummy..removeAbility(id)
