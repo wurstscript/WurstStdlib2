@@ -87,8 +87,11 @@ public class DummyCaster
 	protected function finish(unit dummy, int id)
 		castCount++
 		doAfter(delay) ->
-			dummy..removeAbility(id)
-			DummyRecycler.recycle(dummy)
+			recycleDummy(dummy, id)
 			castCount--
 			if castCount == 0
 				destroy this
+
+	protected function recycleDummy(unit dummy, int id)
+		dummy..removeAbility(id)
+		DummyRecycler.recycle(dummy)
