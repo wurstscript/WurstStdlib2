@@ -204,9 +204,12 @@ init
 	..setAttack1DamageSidesperDie(1)
 	..setAttack1ProjectileSpeed(INT_MAX)
 	..setAttack1Range(INT_MAX)
-	..setAttack1TargetsAllowed(commaList(TargetsAllowed.air, TargetsAllowed.debris, TargetsAllowed.ground, TargetsAllowed.invulnerable, TargetsAllowed.item_t, TargetsAllowed.structure, TargetsAllowed.vulnerable, TargetsAllowed.ward))
+	..setAttack1TargetsAllowed(
+		commaList(TargetsAllowed.air, TargetsAllowed.debris, TargetsAllowed.ground, TargetsAllowed.invulnerable,
+			TargetsAllowed.item_t, TargetsAllowed.structure, TargetsAllowed.vulnerable, TargetsAllowed.ward))
 	..setAttack1WeaponSound(WeaponSound.Nothing)
 	..setAttack1WeaponType(WeaponType.Instant)
 	..setAcquisitionRange(INT_MAX.toReal())
-	..setNormalAbilities(commaList(AbilityIds.invulnerable, AbilityIds.locust, DISABLE_AUTO_ACQUIRE_ATTACK_TARGETS_ABILITY_ID))
+	..setNormalAbilities(
+		commaList(AbilityIds.invulnerable, AbilityIds.locust, DISABLE_AUTO_ACQUIRE_ATTACK_TARGETS_ABILITY_ID))
 

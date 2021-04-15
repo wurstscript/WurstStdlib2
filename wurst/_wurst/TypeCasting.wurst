@@ -210,13 +210,6 @@ public function lightningToIndex(lightning object) returns int
 	typecastdata.saveLightning(-object.getHandleId(), object)
 	return -object.getHandleId()
 
-public function imageFromIndex(int index) returns image
-	typecastdata.saveFogState(0,ConvertFogState(index))
-	return typecastdata.loadImage(0)
-
-public function imageToIndex(image object) returns int
-	return object.getHandleId()
-
 public function ubersplatFromIndex(int index) returns ubersplat
 	typecastdata.saveFogState(0,ConvertFogState(index))
 	return typecastdata.loadUbersplat(0)
