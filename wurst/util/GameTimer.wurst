@@ -2,7 +2,9 @@ package GameTimer
 import NoWurst
 import Basics
 import Timer
-timer gameTimer
+import Wurstunit
+
+timer gameTimer = CreateTimer()..start(100000, null)
 
 public real currentTime
 
@@ -10,8 +12,9 @@ public function getElapsedGameTime() returns real
 	return gameTimer.getElapsed()
 
 init
-	gameTimer = CreateTimer()
-	gameTimer.start(100000, null)
 	CreateTimer().startPeriodic(ANIMATION_PERIOD) ->
 		currentTime += ANIMATION_PERIOD
 
+@Test
+function testGameTimer()
+	assertTrue(getElapsedGameTime() > 0)
