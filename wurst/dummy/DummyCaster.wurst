@@ -26,10 +26,10 @@ import ClosureTimers
  * Allocate DummyCasters dynamically on the spot and don't save them.
  */
 public class DummyCaster
-	private var delay = 5.0
 	private var castCount = 0
-	private var origin = ZERO2
-	private var owner = DUMMY_PLAYER
+	protected var delay = 5.0
+	protected var owner = DUMMY_PLAYER
+	protected var origin = ZERO2
 
 	construct()
 
