@@ -65,7 +65,7 @@ public function player.loadData(string slotName, LoadListener listener)
 		listener.onLoad(LoadStatus.FAIL_PLAYER_OFFLINE, null)
 		return
 
-	let file = new File(slotName)
+	let file = new File(slotName.endsWith(".pld") ? slotName : slotName + ".pld")
 	let buffer = file.read(this)
 	file.close()
 
