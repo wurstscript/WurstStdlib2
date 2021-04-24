@@ -102,30 +102,22 @@ class DelayNode
 			DelayNode tmp = first
 			while tmp.next != null and tmp.delayTime < this.delayTime
 				tmp = tmp.next
-			if tmp.delayTime < this.delayTime
-				if tmp == last
-					tmp.next = this
-					this.prev = tmp
-					last = this
-				else
-					tmp.next.prev = this
-					this.next = tmp.next
-					tmp.next = this
-					this.prev = tmp
-			else
+			
+			if tmp.delayTime < this.delayTime // this.delayTime has latest delayTime -> place last
+				tmp.next = this
+				this.prev = tmp
+				last = this
+			else // tmp.delayTime is first element with larger delayTime -> place before tmp
 				if tmp == first
 					tmp.prev = this
 					first = this
 					this.next = tmp
-				else if tmp == last
-					tmp.next = this
-					this.prev = tmp
-					last = tmp
 				else
-					this.prev = tmp
-					this.next = tmp.next
-					tmp.next.prev = this
-					tmp.next = this
+					this.next = tmp
+					this.prev = tmp.prev
+					tmp.prev.next = this
+					tmp.prev = this
+
 			if t.getRemaining() > 0 and time < t.getRemaining()
 				t.start(time, function DelayNode.recycle)
 			else if t.getRemaining() <= 0
