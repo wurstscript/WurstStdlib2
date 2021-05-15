@@ -753,6 +753,12 @@ public function unit.incAbilityLevel(int abilityId)
 public function unit.decAbilityLevel(int abilityId)
 	DecUnitAbilityLevel(this, abilityId)
 
+public function unit.removeGuardPosition()
+	RemoveGuardPosition(this)
+
+public function unit.recycleGuardPosition()
+	RecycleGuardPosition(this)
+
 class InventoryIterator
 	private item array[6] items
 	private int count = 0
