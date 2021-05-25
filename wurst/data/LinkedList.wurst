@@ -259,6 +259,8 @@ public class LinkedList<T>
 		for i = 0 to n-1
 			add(_a[i])
 
+		itr.close()
+
 	/** Returns a random element from this list or null, if empty */
 	function getRandomElement() returns T
 		return getEntry(GetRandomInt(0, size - 1)).elem
