@@ -9,7 +9,7 @@ function testGroupBasic()
 	let u = createUnit(Player(0), 'hfoo', vec2(0, 0), 0 .fromDeg())
 	assertTrue(u != null)
 	g.add(u)
-	assertTrue(g.size() == 1)
+	g.size().assertEquals(1)
 
 	var count = 0
 
@@ -22,7 +22,7 @@ function testGroupBasic()
 	let u2 = createUnit(Player(0), 'hfoo', vec2(0, 0), 0 .fromDeg())
 	g.add(u2)
 	assertTrue(g.get(0) == u)
-	assertTrue(g.size() == 12)
+	g.size().assertEquals(12)
 	assertTrue(g.get(g.size()-1) == u2)
 
 	for int i = 0 to g.size()-1
@@ -110,7 +110,7 @@ function testVararg()
 	..add(units[4], units[5], units[6], units[7], units[8], units[9])
 
 	_count = g.add(a)
-	assertTrue(_count == a.size())
+	_count.assertEquals(a.size())
 
 	_count = g.add(b)
 	_count.assertEquals(4)
