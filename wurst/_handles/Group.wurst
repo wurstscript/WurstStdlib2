@@ -74,7 +74,7 @@ public function group.destr()
 public function group.has(unit u) returns bool
 	return IsUnitInGroup(u, this)
 
-@deprecated("Use .has insted.")
+@deprecated("Use .has instead.")
 public function group.contains(unit u) returns bool
 	return this.has(u)
 
@@ -92,7 +92,7 @@ public function group.getRandom() returns unit
 		return this.get(GetRandomInt(0, size - 1))
 	return null
 
-@deprecated("Use .getRandom insted.")
+@deprecated("Use .getRandom instead.")
 public function group.getRandomUnit() returns unit
 	return this.getRandom()
 

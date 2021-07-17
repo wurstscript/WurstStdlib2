@@ -16,8 +16,8 @@ function testGroupBasic()
 	for i = 1 to 10
 		count += g.add(createUnit(Player(0), 'hfoo', vec2(0, 0), 0 .fromDeg()))
 
-	assertTrue(g.size() == 11)
-	assertTrue(count == 10)
+	g.size().assertEquals(11)
+	count.assertEquals(10)
 
 	let u2 = createUnit(Player(0), 'hfoo', vec2(0, 0), 0 .fromDeg())
 	g.add(u2)
@@ -97,10 +97,10 @@ function testVararg()
 	g.clear()
 
 	_count = g.add(units[0], units[1], units[2], units[3])
-	assertTrue(_count == 4)
+	_count.assertEquals(4)
 
 	_count += g.add(units[2], units[3], units[4], units[5])
-	assertTrue(_count == 6)
+	_count.assertEquals(6)
 
 	g.clear()
 
@@ -113,17 +113,17 @@ function testVararg()
 	assertTrue(_count == a.size())
 
 	_count = g.add(b)
-	assertTrue(_count == 4)
+	_count.assertEquals(4)
 
 	g.clear()
 	_count = g.add(a, b)
-	assertTrue(_count == 10)
+	_count.assertEquals(10)
 
 	_count = g.remove(units[0], units[1], units[2])
-	assertTrue(_count == 3)
+	_count.assertEquals(3)
 
 	_count = g.remove(a, b)
-	assertTrue(_count == 7)
+	_count.assertEquals(7)
 	assertTrue(g.isEmpty())
 
 @Test
