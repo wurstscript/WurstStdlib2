@@ -8,28 +8,31 @@ function testGroupBasic()
 
 	let u = createUnit(Player(0), 'hfoo', vec2(0, 0), 0 .fromDeg())
 	assertTrue(u != null)
-	g.addUnit(u)
+	g.add(u)
+	g.size().assertEquals(1)
 
-	assertTrue(g.size() == 1)
+	var count = 0
+
 	for i = 1 to 10
-		g.addUnit(createUnit(Player(0), 'hfoo', vec2(0, 0), 0 .fromDeg()))
+		count += g.add(createUnit(Player(0), 'hfoo', vec2(0, 0), 0 .fromDeg()))
 
-	assertTrue(g.size() == 11)
-
+	g.size().assertEquals(11)
+	count.assertEquals(10)
 
 	let u2 = createUnit(Player(0), 'hfoo', vec2(0, 0), 0 .fromDeg())
-	g.addUnit(u2)
-	assertTrue(g.getUnitAt(0) == u)
-	assertTrue(g.size() == 12)
-	assertTrue(g.getUnitAt(g.size()-1) == u2)
+	g.add(u2)
+	assertTrue(g.get(0) == u)
+	g.size().assertEquals(12)
+	assertTrue(g.get(g.size()-1) == u2)
 
 	for int i = 0 to g.size()-1
-		print(g.getUnitAt(i).getHandleId())
+		print(g.get(i).getHandleId())
 	print("---")
 	print(u2.getHandleId())
 
 	g.clear()
 	assertTrue(g.isEmpty())
+
 
 @Test
 function testGroupForLoops()
@@ -37,7 +40,7 @@ function testGroupForLoops()
 	assertTrue(g != null)
 	assertTrue(not g.hasNext())
 	for i = 0 to 10
-		g.addUnit(createUnit(Player(0), 'hfoo', vec2(0, 0), 0 .fromDeg()))
+		g.add(createUnit(Player(0), 'hfoo', vec2(0, 0), 0 .fromDeg()))
 
 	assertTrue(g.hasNext())
 
@@ -54,18 +57,18 @@ function testRandom()
 	let g = CreateGroup()
 
 	for i = 0 to 10
-		g.addUnit(createUnit(Player(0), 'hfoo', vec2(0, 0), 0 .fromDeg()))
+		g.add(createUnit(Player(0), 'hfoo', vec2(0, 0), 0 .fromDeg()))
 
-	let ru = g.getRandomUnit()
+	let ru = g.getRandom()
 
 	assertTrue(ru != null)
 
-	assertTrue(g.contains(ru))
+	assertTrue(g.has(ru))
 
-	g.removeUnit(ru)
+	g.remove(ru)
 
 	for i = 1 to 10
-		g.removeUnit(g.getRandomUnit())
+		g.remove(g.getRandom())
 
 	assertTrue(g.isEmpty())
 
@@ -82,8 +85,46 @@ function testHandleId()
 @Test
 function testVararg()
 	let g = CreateGroup()
-	g.addUnit(createUnit(Player(0), 'hfoo', vec2(0, 0), 0 .fromDeg()), createUnit(Player(0), 'hfoo', vec2(0, 0), 0 .fromDeg()), createUnit(Player(0), 'hfoo', vec2(0, 0), 0 .fromDeg()))
+	g.add(createUnit(Player(0), 'hfoo', vec2(0, 0), 0 .fromDeg()), createUnit(Player(0), 'hfoo', vec2(0, 0), 0 .fromDeg()), createUnit(Player(0), 'hfoo', vec2(0, 0), 0 .fromDeg()))
 	g.size().assertEquals(3)
+
+	unit array units
+	var _count = 0
+
+	for i = 0 to 9
+		units[i] = createUnit(Player(0), 'hfoo', vec2(0, 0), 0 .fromDeg())
+
+	g.clear()
+
+	_count = g.add(units[0], units[1], units[2], units[3])
+	_count.assertEquals(4)
+
+	_count += g.add(units[2], units[3], units[4], units[5])
+	_count.assertEquals(6)
+
+	g.clear()
+
+	let a = CreateGroup()
+	..add(units[0], units[1], units[2], units[3], units[4], units[5])
+	let b = CreateGroup()
+	..add(units[4], units[5], units[6], units[7], units[8], units[9])
+
+	_count = g.add(a)
+	_count.assertEquals(a.size())
+
+	_count = g.add(b)
+	_count.assertEquals(4)
+
+	g.clear()
+	_count = g.add(a, b)
+	_count.assertEquals(10)
+
+	_count = g.remove(units[0], units[1], units[2])
+	_count.assertEquals(3)
+
+	_count = g.remove(a, b)
+	_count.assertEquals(7)
+	assertTrue(g.isEmpty())
 
 @Test
 function testGroupForGroups()
@@ -92,17 +133,17 @@ function testGroupForGroups()
 	let u3 = createUnit(Player(0), 'hfoo', vec2(0, 0), 0 .fromDeg())
 
 	let g = CreateGroup()
-	g.addUnit(u, u2)
+	g.add(u, u2)
 	g.size().assertEquals(2)
 
 	let g2 = CreateGroup()
-	g2.addGroup(g)
+	g2.add(g)
 	g2.size().assertEquals(g.size())
-	g2.contains(u).assertTrue()
+	g2.has(u).assertTrue()
 
-	g2.addUnit(u3)
-	g2.removeGroup(g)
+	g2.add(u3)
+	g2.remove(g)
 	g2.size().assertEquals(1)
-	g2.contains(u3).assertTrue()
-	g2.contains(u2).assertFalse()
-	g2.contains(u).assertFalse()
+	g2.has(u3).assertTrue()
+	g2.has(u2).assertFalse()
+	g2.has(u).assertFalse()

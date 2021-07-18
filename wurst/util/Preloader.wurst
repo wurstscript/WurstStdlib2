@@ -38,7 +38,7 @@ public function preloadUnit(vararg int unitIds) returns boolean
 	var valid = true
 	for unitId in unitIds
 		let u = createUnit(DUMMY_PLAYER, unitId, vec2(0,0), angle(0))
-		dumg.addUnit(u)
+		dumg.add(u)
 		valid = valid and u.isAlive()
 	return valid
 
