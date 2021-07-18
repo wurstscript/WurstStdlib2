@@ -3,6 +3,7 @@ import NoWurst
 import Wurstunit
 import Unit
 import Annotations
+import String
 
 /** Use this array instead of Player() to avoid leaks */
 public player array players
@@ -79,7 +80,11 @@ public function player.getMaxSupply() returns int
 	return this.getState(PLAYER_STATE_RESOURCE_FOOD_CAP)
 
 public function player.getName() returns string
-	return GetPlayerName(this)
+	return this.getName(false)
+
+/** Reforged names have a number attached after a hash tag, like Bob#1234 */
+public function player.getName(boolean removeHash) returns string
+	return removeHash ? GetPlayerName(this).substring(0, GetPlayerName(this).indexOf("#")) : GetPlayerName(this)
 
 public function player.getSlotState() returns playerslotstate
 	return GetPlayerSlotState(this)
@@ -141,7 +146,7 @@ public function player.decTechResearched(int techId, int levels)
 
 public function player.forceStartLocation(int index)
 	ForcePlayerStartLocation(this, index)
-	
+
 public function player.getPlayerAlliance(player otherPlayer, alliancetype whichAllianceSetting) returns boolean
 	return GetPlayerAlliance(this, otherPlayer, whichAllianceSetting)
 
@@ -196,12 +201,12 @@ public function player.setCursorEnabled(bool enableCursor)
 		BlzEnableCursor(enableCursor)
 
 /** Set cursor position on screen. Uses int values internally.*/
-public function player.setPosCursor(vec2 pos) 
+public function player.setPosCursor(vec2 pos)
 	if localPlayer == this
 		BlzSetMousePos(R2I(pos.x), R2I(pos.y))
 
 /** Get unit focused by mouse cursor.*/
-public function player.getCursorFocus() returns unit 
+public function player.getCursorFocus() returns unit
 	return localPlayer == this ? BlzGetMouseFocusUnit() : null
 
 public function player.setMinimapTerrainTex(string texFile) returns bool
@@ -223,7 +228,7 @@ public function player.hasVisibility(unit target) returns bool
 public function player.hasVisibility(vec2 pos) returns bool
 	return IsVisibleToPlayer(pos.x, pos.y, this)
 
-		
+
 @Test
 function testPlayer()
 	let p = Player(0)
