@@ -8,6 +8,7 @@ import Playercolor
 import Annotations
 import Maths
 import Real
+import Player
 
 public constant COLOR_WHITE = colorA(255,255,255,255)
 public constant COLOR_BLACK = colorA(0,0,0,0)
@@ -46,8 +47,11 @@ public constant PLAYER_COLOR_NAMES = [
 	"coal", "snow", "emerald", "peanut"
 ]
 
+public function player.getNameColored(boolean removeHash) returns string
+	return this.getColor().toColor().toColorString() + this.getName(removeHash) + "|r"
+
 public function player.getNameColored() returns string
-	return this.getColor().toColor().toColorString() + GetPlayerName(this) + "|r"
+	return this.getNameColored(false)
 
 /** Returns the name of the player color */
 public function playercolor.getName() returns string

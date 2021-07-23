@@ -9,4 +9,4 @@ The standard library has greatly flourished due to amazing feedback, pull reques
 
 If further natives need to be implemented for compiletime, they can be requested via a Feature Request.
 
-Feel free to join our irc channel if you would like to contribute.
+Feel free to join our [Discord](https://discord.gg/mSHZpWcadz) if you would like to contribute.
