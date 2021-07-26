@@ -20,4 +20,3 @@ By introducing a standard library, we offer the developers everything they need 
 
 https://wurstlang.org/stdlib
 
-
