@@ -15,6 +15,10 @@ import Annotations
 @compiletimenative public function getBuildDate() returns string
 	return ""
 
+/** Returns true if the map is being built using the 'buildmap' command, false otherwise. */
+@compiletimenative public function isProductionBuild() returns boolean
+	return false
+
 /** builtin function which returns a stack trace.
 If stack traces are disabled, this function returns the empty string.
 */
