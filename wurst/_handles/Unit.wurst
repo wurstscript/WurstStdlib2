@@ -3,6 +3,7 @@ import NoWurst
 import public Vectors
 import Item
 import Annotations
+import Destructable
 
 native UnitAlive(unit id) returns boolean
 
@@ -758,6 +759,37 @@ public function unit.removeGuardPosition()
 
 public function unit.recycleGuardPosition()
 	RecycleGuardPosition(this)
+
+public function unit.getRallyPoint() returns vec2
+	let loc = GetUnitRallyPoint(this)
+	let result = vec2(GetLocationX(loc), GetLocationY(loc))
+	RemoveLocation(loc)
+	return result
+
+public function unit.getRallyUnit() returns unit
+	return GetUnitRallyUnit(this)
+
+public function unit.getRallyDestructable() returns destructable
+	return GetUnitRallyDestructable(this)
+
+public enum RallyType
+	POINT
+	UNIT
+	DESTRUCTABLE
+
+public tuple rallyResult(RallyType rtype, unit u, destructable d, vec2 pos)
+
+/** Returns the rally point of this unit as a rallyResult */
+public function unit.getRallyTarget() returns rallyResult
+	let runit = this.getRallyUnit()
+	if runit != null
+		return rallyResult(RallyType.UNIT, runit, null, runit.getPos())
+
+	let rdes = this.getRallyDestructable()
+	if rdes != null
+		return rallyResult(RallyType.DESTRUCTABLE, null, rdes, rdes.getPos())
+
+	return rallyResult(RallyType.POINT, null, null, this.getRallyPoint())
 
 class InventoryIterator
 	private item array[6] items
