@@ -60,7 +60,7 @@ public constant SCREEN_LEFT               = vec2(0.0, 0.3)
 public constant SCREEN_TOP                = vec2(0.4, 0.6)
 public constant SCREEN_BOTTOM             = vec2(0.4, 0.0)
 
-// These defines represent the whoel 16:9 screen size. Only Frames of type 'SIMPLE' can be moved here. 
+// These defines represent the whole 16:9 screen size. Only Frames of type 'SIMPLE' can be moved here. 
 public constant WHOLE_SCREEN_TOPRIGHT     = vec2( 0.95, 0.6)
 public constant WHOLE_SCREEN_TOPLEFT      = vec2(-0.15, 0.6)
 public constant WHOLE_SCREEN_BOTTOMRIGHT  = vec2( 0.95, 0.0)
@@ -253,7 +253,7 @@ public function framehandle.setText(string text)
 /** Sets the text value of the text frame for the specific player*/
 public function framehandle.setText(player p, string text)
 	if localPlayer == p
-		this.setText(text)
+        this.setText(text)
         
 /** Returns the maximum allowed text size of the text frame */
 public function framehandle.getTextSizeLimit() returns integer
