@@ -249,12 +249,12 @@ public function framehandle.getText() returns string
 /** Sets the text value of the text frame */
 public function framehandle.setText(string text)
 	BlzFrameSetText(this, text)
-    
+
 /** Sets the text value of the text frame for the specific player*/
 public function framehandle.setText(player p, string text)
 	if localPlayer == p
-        this.setText(text)
-        
+		this.setText(text)
+
 /** Returns the maximum allowed text size of the text frame */
 public function framehandle.getTextSizeLimit() returns integer
 	return BlzFrameGetTextSizeLimit(this)
@@ -321,7 +321,7 @@ public function framehandle.setTexture(string texFile, integer flag, bool blend)
 public function framehandle.setTexture(player p, string texFile, integer flag, bool blend)
 	if localPlayer == p
 		this.setTexture(texFile, flag, blend)
-        
+
 /** Sets the frame's scaling value.
 	Frame's size, children frames and relative anchor points scale */
 public function framehandle.setScale(real scale)
