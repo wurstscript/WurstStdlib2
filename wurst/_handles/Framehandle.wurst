@@ -116,12 +116,12 @@ public function createFrame(string name) returns framehandle
 		name: the name of the frame which must be defined in the imported fdf files.
 		owner: the parent of the frame
 		priority: unknown
-		createContext: the unique id assigned to the frame and its children (useful for creating multiple frames of the same name) */
+		createContext: the unique id assigned to the frame and its children (useful for creating multiple frames of the same name). */
 public function createFrame(string name, framehandle owner, integer priority, integer createContext) returns framehandle
 	verifyFrameNameLength(name)
 	return BlzCreateFrame(name, owner, priority, createContext)
 
-/** Creates a simple frame of the given name (the name of the frame which must be defined in the imported fdf files.) */
+/** Creates a simple frame of the given name (the name of the frame which must be defined in the imported fdf files.). */
 public function createSimpleFrame(string name) returns framehandle	
 	verifyFrameNameLength(name)
 	return BlzCreateSimpleFrame(name, GAME_UI, 0)
@@ -129,7 +129,7 @@ public function createSimpleFrame(string name) returns framehandle
 /** Creates a simple frame:
 		name: the name of the frame which must be defined in the imported fdf files.
 		owner: the parent of the frame
-		createContext: the unique id assigned to the frame and its children (useful for creating multiple frames of the same name) */
+		createContext: the unique id assigned to the frame and its children (useful for creating multiple frames of the same name). */
 public function createSimpleFrame(string name, framehandle owner, integer createContext) returns framehandle
 	verifyFrameNameLength(name)
 	return BlzCreateSimpleFrame(name, owner, createContext)
@@ -139,7 +139,7 @@ public function createSimpleFrame(string name, framehandle owner, integer create
 		name: the name of the created frame
 		owner: the parent of the frame
 		inherits: the name of the frame frome which the created frame will be inhereting (which must be defined in the imported .fdf files)
-		createContext: the unique id assigned to the frame and its children (useful for creating multiple frames of the same name) */
+		createContext: the unique id assigned to the frame and its children (useful for creating multiple frames of the same name). */
 public function createFrame(string typeName, string name, framehandle owner, string inherits, integer createContext) returns framehandle
 	verifyFrameNameLength(name)
 	return BlzCreateFrameByType(typeName, name, owner, inherits, createContext)
@@ -149,47 +149,47 @@ public function createFrameByType(string typeName, string name, framehandle owne
 	verifyFrameNameLength(name)
 	return createFrame(typeName, name, owner, inherits, createContext)
 
-/** Removes a frame */
+/** Removes a frame. */
 public function framehandle.remove()
 	BlzDestroyFrame(this)
 
-/**	Places the frame at the center of the screen */
+/**	Places the frame at the center of the screen. */
 public function framehandle.setCenter()
 	BlzFrameSetAbsPoint(this, FRAMEPOINT_CENTER, SCREEN_CENTER.x, SCREEN_CENTER.y)
 
 /**	Sets the frame position to an absolute x, y point on the screen.
 For the the x-axis, the value is between 0 and 0.8
-For the the y-axis, the value is between 0 and 0.6 */
+For the the y-axis, the value is between 0 and 0.6. */
 public function framehandle.setAbsPoint(framepointtype point, real x, real y)
 	BlzFrameSetAbsPoint(this, point, x, y)
 
 /**	Sets the frame position to an absolute x, y point on the screen.
 	For the the x-axis, the value is between 0 and 0.8
-	For the the y-axis, the value is between 0 and 0.6 */
+	For the the y-axis, the value is between 0 and 0.6. */
 public function framehandle.setAbsPoint(framepointtype point, vec2 pos)
 	BlzFrameSetAbsPoint(this, point, pos.x, pos.y)
 
-/** Sets the frame's anchor point position to the one of the given frame's anchor */
+/** Sets the frame's anchor point position to the one of the given frame's anchor. */
 public function framehandle.setPoint(framepointtype point, framehandle relative, framepointtype relativePoint)
 	BlzFrameSetPoint(this, point, relative, relativePoint, 0, 0)
 
-/** Sets the frame's anchor point position to the one of the given frame's anchor with an offset */
+/** Sets the frame's anchor point position to the one of the given frame's anchor with an offset. */
 public function framehandle.setPoint(framepointtype point, framehandle relative, framepointtype relativePoint, vec2 offset)
 	BlzFrameSetPoint(this, point, relative, relativePoint, offset.x, offset.y)
 
-/** Sets the frame's anchor point position to the one of the given frame's anchor with an offset */
+/** Sets the frame's anchor point position to the one of the given frame's anchor with an offset. */
 public function framehandle.setPoint(framepointtype point, framehandle relative, framepointtype relativePoint, real offsetX, real offsetY)
 	BlzFrameSetPoint(this, point, relative, relativePoint, offsetX, offsetY)
 
-/** Frees the frame from any relative or absolute anchor points */
+/** Frees the frame from any relative or absolute anchor points. */
 public function framehandle.clearAllPoints()
 	BlzFrameClearAllPoints(this)
 
-/** Copy all the anchor points of the given frame */
+/** Copy all the anchor points of the given frame. */
 public function framehandle.setAllPoints(framehandle relative)
 	BlzFrameSetAllPoints(this, relative)
 
-/** Shows or hides the frame */
+/** Shows or hides the frame. */
 public function framehandle.setVisible(bool flag)
 	BlzFrameSetVisible(this, flag)
 
@@ -197,12 +197,12 @@ public function framehandle.setVisible(bool flag)
 public function framehandle.setVisibleFor(player p, bool flag)
 	this.setVisible(p, flag)
 
-/** Shows or hides the frame to the given player */
+/** Shows or hides the frame to the given player. */
 public function framehandle.setVisible(player p, bool flag)
-	if localPlayer == p
+	if localPlayer == p or p == null
 		this.setVisible(flag)
 
-/** Shows the frame */
+/** Shows the frame. */
 public function framehandle.show()
 	this.setVisible(true)
 
@@ -210,11 +210,11 @@ public function framehandle.show()
 public function framehandle.showFor(player p)
 	this.show(p)
 
-/** Shows the frame to the specific player */
+/** Shows the frame to the specific player. */
 public function framehandle.show(player p)
 	this.setVisible(p, true)
 
-/** Hides the frame */
+/** Hides the frame. */
 public function framehandle.hide()
 	this.setVisible(false)
 
@@ -222,68 +222,103 @@ public function framehandle.hide()
 public function framehandle.hideFor(player p)
 	this.hide(p)
 
-/** Hides the frame to the specific player */
+/** Hides the frame to the specific player. */
 public function framehandle.hide(player p)
 	this.setVisible(p, false)
 
-/** Returns whether the frame is visible or not */
+/** Returns whether the frame is visible or not. */
 public function framehandle.isVisible() returns bool
 	return BlzFrameIsVisible(this)
+
+/** Returns whether the frame is visible or not for given player. */
+public function framehandle.isVisible(player p) returns boolean
+	return localPlayer == p or p == null ? this.isVisible() : false
 
 @deprecated("Use .getName() instead.")
 public function framehandle.name() returns string
 	return BlzFrameGetName(this)
 
-/** Returns the frame's name */
+/** Returns the frame's name. */
 public function framehandle.getName() returns string
 	return BlzFrameGetName(this)
 
-/** Fires a click a event on the frame */
+/** Fires a click a event on the frame. */
 public function framehandle.click()
 	BlzFrameClick(this)
 
-/** Returns the text value of the text frame */
+/** Returns the text value of the text frame. */
 public function framehandle.getText() returns string
 	return BlzFrameGetText(this)
 
-/** Sets the text value of the text frame */
+/** Sets the text value of the text frame. */
 public function framehandle.setText(string text)
 	BlzFrameSetText(this, text)
 
 /** Sets the text value of the text frame for the specific player*/
 public function framehandle.setText(player p, string text)
-	if localPlayer == p
+	if localPlayer == p or p == null
 		this.setText(text)
 
-/** Returns the maximum allowed text size of the text frame */
+/** Returns the maximum allowed text size of the text frame. */
 public function framehandle.getTextSizeLimit() returns integer
 	return BlzFrameGetTextSizeLimit(this)
 
-/** Sets the maximum allowed text size of the text frame */
+/** Sets the maximum allowed text size of the text frame. */
 public function framehandle.setTextSizeLimit(integer size)
 	BlzFrameSetTextSizeLimit(this, size)
 
-/** Sets the text color of the text frame */
+/** Sets the text color of the text frame. */
 public function framehandle.setTextColor(colorA color)
 	BlzFrameSetTextColor(this, BlzConvertColor(color.alpha, color.red, color.green, color.blue))
 
-/** Sets the text color of the text frame */
+/** Sets the text color of the text frame. */
 public function framehandle.setTextColor(integer color)
 	BlzFrameSetTextColor(this, color)
 
-/** Enables or disables the user interaction for the frame */
+/** Enables or disables the user interaction for the frame. */
 public function framehandle.setFocus(bool flag)
 	BlzFrameSetFocus(this, flag)
 
-/** Sets the model of the model frame */
+/** Enables or disables the user interaction for the frame for given player. */
+public function framehandle.setFocus(player p, bool flag)
+	if localPlayer == p or p == null
+		this.setFocus(flag)
+
+/** Removes the focus from a given frame by disable and instantly enabling it. Mandatory for Frames of type 'SIMPLE'. */
+public function framehandle.unfocus()
+	if this.isEnabled()
+		this.disable()
+		this.enable()
+	else
+		this.enable()
+		this.disable()
+
+	this.setFocus(false)
+
+/** Removes the focus from a given frame by disable and instantly enabling it for given player. Mandatory for Frames of type 'SIMPLE'. */
+public function framehandle.unfocus(player p)
+	if this.isEnabled(p)
+		this.disable(p)
+		this.enable(p)
+	else
+		this.enable(p)
+		this.disable(p)
+
+	this.setFocus(p, false)    
+
+/** Sets the model of the model frame. */
 public function framehandle.setModel(string modelFile, integer cameraIndex)
 	BlzFrameSetModel(this, modelFile, cameraIndex)
 
-/** Returns the state of the frame */
+/** Returns the state of the frame. */
 public function framehandle.isEnabled() returns bool
 	return BlzFrameGetEnable(this)
+	
+/** Returns the state of the frame for given player. */
+public function framehandle.isEnabled(player p) returns boolean
+	return localPlayer == p or p == null ? this.isEnabled() : false
 
-/** Enables or disables the frame */
+/** Enables or disables the frame. */
 public function framehandle.setEnabled(bool enabled)
 	BlzFrameSetEnable(this, enabled)
 
@@ -294,52 +329,67 @@ public function framehandle.enable()
 /** Disables the frame. */
 public function framehandle.disable()
 	this.setEnabled(false)
+	
+/** Enables the frame for the player p. */
+public function framehandle.enable(player p)
+	if localPlayer == p or p == null
+		this.enable()
+	
+/** Disables the frame for the player p. */
+public function framehandle.disable(player p)
+	if localPlayer == p or p == null
+		this.disable()
 
-/** Returns the decimal alpha value of the frame (only for specific frames) */
+/** Returns the decimal alpha value of the frame (only for specific frames). */
 public function framehandle.getAlpha() returns int
 	return BlzFrameGetAlpha(this)
 
-/** Sets the decimal alpha value of the frame (only for specific frames) */
+/** Sets the decimal alpha value of the frame (only for specific frames). */
 public function framehandle.setAlpha(integer alpha)
 	BlzFrameSetAlpha(this, alpha)
-
-/** Unknown */
+	
+/** Sets the decimal alpha value of the frame (only for specific frames) to the given player. */
+public function framehandle.setAlpha(player p, integer alpha)
+	if localPlayer == p or p == null
+		this.setAlpha(alpha)
+		
+/** Unknown. */
 public function framehandle.setSpriteAnimate(integer primaryProp, integer flags)
 	BlzFrameSetSpriteAnimate(this, primaryProp, flags)
 
 /** Sets the texture of the frame
 		texFile: the path of the texture
 		flags: unknown
-		blend: true to keep transparency */
+		blend: true to keep transparency. */
 public function framehandle.setTexture(string texFile, integer flag, bool blend)
 	BlzFrameSetTexture(this, texFile, flag, blend)
 
 /** Sets the texture of the frame for the specific player
 	texFile: the path of the texture
 	flags: unknown
-	blend: true to keep transparency */
+	blend: true to keep transparency. */
 public function framehandle.setTexture(player p, string texFile, integer flag, bool blend)
-	if localPlayer == p
+	if localPlayer == p or p == null
 		this.setTexture(texFile, flag, blend)
 
 /** Sets the frame's scaling value.
-	Frame's size, children frames and relative anchor points scale */
+	Frame's size, children frames and relative anchor points scale. */
 public function framehandle.setScale(real scale)
 	BlzFrameSetScale(this, scale)
 
-/** Sets a frame's tooltip frame, if it has some tooltip subframe */
+/** Sets a frame's tooltip frame, if it has some tooltip subframe. */
 public function framehandle.setTooltip(framehandle tooltip)
 	BlzFrameSetTooltip(this, tooltip)
 
-/** Forces the mouse cursor to stay (caged) inside of the frame */
+/** Forces the mouse cursor to stay (caged) inside of the frame. */
 public function framehandle.cageMouse(bool enable)
 	BlzFrameCageMouse(this, enable)
 
-/** Returns the specific value of the frame (e.g. for sliders) */
+/** Returns the specific value of the frame (e.g. for sliders). */
 public function framehandle.getValue() returns real
 	return BlzFrameGetValue(this)
 
-/** Sets the specific value of the frame (e.g. for sliders) */
+/** Sets the specific value of the frame (e.g. for sliders). */
 public function framehandle.setValue(real value)
 	BlzFrameSetValue(this, value)
 
@@ -351,23 +401,23 @@ public function framehandle.minMax(real minValue, real maxValue)
 public function framehandle.setMinMax(real minValue, real maxValue)
 	BlzFrameSetMinMaxValue(this, minValue, maxValue)
 
-/** Sets the step size of the frame (e.g. for sliders) */
+/** Sets the step size of the frame (e.g. for sliders). */
 public function framehandle.setStepSize(real stepSize)
 	BlzFrameSetStepSize(this, stepSize)
 
-/** Sets the width of the frame (sets the height to its current height) */
+/** Sets the width of the frame (sets the height to its current height). */
 public function framehandle.setWidth(real width)
 	BlzFrameSetSize(this, width, this.getHeight())
 
-/** Sets the height of the frame (sets the width to its current width) */
+/** Sets the height of the frame (sets the width to its current width). */
 public function framehandle.setHeight(real height)
 	BlzFrameSetSize(this, this.getWidth(), height)
 
-/** Sets the width and height of the frame */
+/** Sets the width and height of the frame. */
 public function framehandle.setSize(real width, real height)
 	BlzFrameSetSize(this, width, height)
 
-/** Sets the vertex color of the model frame */
+/** Sets the vertex color of the model frame. */
 public function framehandle.setVertexColor(integer color)
 	BlzFrameSetVertexColor(this, color)
 
@@ -376,11 +426,11 @@ public function framehandle.setLevel(integer level)
 	BlzFrameSetLevel(this, level)
 
 /** Searches for the frames parent frame.
-	Should be used with caution as getting the parent of any top most frame will lead into a void crash */
+	Should be used with caution as getting the parent of any top most frame will lead into a void crash. */
 public function framehandle.getParent() returns framehandle
 	return BlzFrameGetParent(this)
 
-/** Sets the parent frame of the frame */
+/** Sets the parent frame of the frame. */
 public function framehandle.setParent(framehandle parent)
 	BlzFrameSetParent(this, parent)
 
@@ -390,27 +440,27 @@ public function framehandle.setParent(framehandle parent)
 @deprecated("use getWidth() instead") public function framehandle.width() returns real
 	return this.getWidth()
 
-/** Returns the frame's height */
+/** Returns the frame's height. */
 public function framehandle.getHeight() returns real
 	return BlzFrameGetHeight(this)
 
-/** Returns the frame's width */
+/** Returns the frame's width. */
 public function framehandle.getWidth() returns real
 	return BlzFrameGetWidth(this)
 
-/** Sets the text font of the text frame */
+/** Sets the text font of the text frame. */
 public function framehandle.setFont(string fileName, real height, integer flags)
 	BlzFrameSetFont(this, fileName, height, flags)
 
-/** Set the text alignment of the text frame */
+/** Set the text alignment of the text frame. */
 public function framehandle.setTextAlignment(textaligntype vert, textaligntype horz)
 	BlzFrameSetTextAlignment(this, vert, horz)
 
-/** Enables or disables auto positioning of ui elements */
+/** Enables or disables auto positioning of ui elements. */
 public function enableUIAutoPosition(bool flag)
 	BlzEnableUIAutoPosition(flag)
 
-/** Hides or shows all origin frames except ORIGIN_FRAME_WORLD_FRAME */
+/** Hides or shows all origin frames except ORIGIN_FRAME_WORLD_FRAME. */
 public function setOriginFramesVisible(bool flag)
 	BlzHideOriginFrames(not flag)
 
@@ -418,15 +468,15 @@ public function setOriginFramesVisible(bool flag)
 public function hideOriginFrames(bool flag)
 	setOriginFramesVisible(not flag)
 
-/** Hides all origin frames except ORIGIN_FRAME_WORLD_FRAME */
+/** Hides all origin frames except ORIGIN_FRAME_WORLD_FRAME. */
 public function hideOriginFrames()
 	setOriginFramesVisible(false)
 
-/** Shows all origin frames except ORIGIN_FRAME_WORLD_FRAME */
+/** Shows all origin frames except ORIGIN_FRAME_WORLD_FRAME. */
 public function showOriginFrames()
 	setOriginFramesVisible(true)
 
-/** Loads a toc file from the given path, to include custom fdf files from, returns true on success */
+/** Loads a toc file from the given path, to include custom fdf files from, returns true on success. */
 public function loadTOCFile(string tocFile) returns bool
 	return BlzLoadTOCFile(tocFile)
 
