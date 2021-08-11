@@ -5,7 +5,8 @@ import Item
 import Annotations
 import Destructable
 
-native UnitAlive(unit id) returns boolean
+public native UnitAlive(unit id) returns boolean
+public native GetUnitGoldCost(int unitid) returns integer
 
 public function unit.isType(unittype utype) returns boolean
 	return IsUnitType(this, utype)
