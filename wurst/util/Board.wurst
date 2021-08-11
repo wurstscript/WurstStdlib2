@@ -1,0 +1,152 @@
+package Board
+import LinkedList
+import Reference
+
+/**
+ * This Board library allows you to create a simple multi board with dynamic cell values.
+ *  1. Create a board
+ *      `let board = new Board("myBoard", 0.02)`
+ *
+ *  2. Define columns. The second parameter is width relative to board width.
+ *      `board.columns(asList(new BoardColumn("Player", 0.7), new BoardColumn(COLOR_GOLD.toColorString() + "Kills", 0.3)))`
+ *
+ *  3. Add rows and cells
+ *      `let killcount = dynamicCell<int>(0, i -> i.toString())
+ *       board.addRow()
+ *      ..addCell("My Name")
+ *      ..addDynamic(killcount)`
+ *
+ *  4. Show board
+ *      `board.show()`
+ *
+ *  5. Update dynamic value
+ *      `killcount.updateValue(killcount.value + 1)`
+ */
+
+public function dynamicCell<T>(T defaultValue, DynamicCellValue<T> observer) returns DynamicCellValue<T>
+    observer.value = defaultValue
+    return observer
+
+public abstract class DynamicCellValue<T>
+    T value
+    BoardCell cell = null
+
+    /** Returns a string representation of T */
+    abstract function toString(T t) returns string
+
+    function getString() returns string
+        return toString(value)
+
+    /** Updates the cell's value */
+    function updateValue(T value)
+        this.value = value
+        this.cell.setContent(toString(value))
+
+public class BoardColumn
+    var columnIndex = -1
+    var title = ""
+    var width = 0.25
+
+    /** Creates a board column with a title and width in range [0;1] percentage of board width */
+    construct(string title, real width)
+        this.title = title
+        this.width = width
+
+public class BoardCell
+    BoardRow parent = null
+    var column = 0
+    var content = ""
+
+    construct(BoardRow parent, string content, int column)
+        this.parent = parent
+        this.content = content
+        this.column = column
+        setContent(content)
+
+    /** Sets the text content of this cell */
+    function setContent(string content)
+        parent.board.getItem(parent.rowIndex, column).setValue(content)
+        this.content = content
+
+public class BoardRow
+    multiboard board = null
+    var rowIndex = -1
+    let cells = new LinkedList<BoardCell>
+
+    construct(multiboard board, int rowIndex)
+        this.board = board
+        this.rowIndex = rowIndex
+
+    /** Adds a cell to this column with a static text content */
+    function addCell(string text)
+        let cell = new BoardCell(this, text, cells.size())
+        board.getItem(rowIndex, cell.column)
+        ..setStyle(true, false)
+        cells.add(cell)
+
+    /** Adds a cell to this column with a dynamic text content.
+        If the observable 'dynamicValue' is updated via 'updateValue',
+        the cell's value will be updated as well. */
+    function addDynamic<T>(DynamicCellValue<T> dynamicValue)
+        let cell = new BoardCell(this, dynamicValue.getString(), cells.size())
+        dynamicValue.cell = cell
+        board.getItem(rowIndex, cell.column)
+        ..setStyle(true, false)
+        cells.add(cell)
+
+    /** Issues all cells to redraw their content */
+    function invalidate()
+        cells.forEach() cell ->
+            cell.setContent(cell.content)
+
+
+public class Board
+    private let board = CreateMultiboard()..hide()
+    let rows = new LinkedList<BoardRow>
+    LinkedList<BoardColumn> columns
+    var width = 0.1
+
+    /** Create a board with a title and width.
+        Width being in the range [0;1] percentage of screen space. */
+    construct(string title, real width)
+        board..setTitle(title)
+        this.width = width
+
+    /** Initialize the boards columns */
+    function columns(LinkedList<BoardColumn> columns)
+        this.columns = columns
+        var count = 0
+        board..setColumnCount(columns.size())
+        for column in columns
+            column.columnIndex = count
+            count++
+
+        let row = addRow()
+
+        for column in columns
+            row.addCell(column.title)
+
+    /** Add a new row to the board */
+    function addRow() returns BoardRow
+        let row = new BoardRow(board, rows.size())
+        rows.add(row)
+        board..setRowCount(rows.size())
+        for column in columns
+            board.setItemWidth(row.rowIndex, column.columnIndex, column.width * width)
+        return row
+
+    /** Show the board to players */
+    function show()
+        board.show()
+
+    /** Remove a row from the board, e.g. when a player leaves */
+    function removeRow(BoardRow row)
+        rows.remove(row)
+        board.setRowCount(rows.size())
+        let i = new Reference<int>(0)
+        rows.forEach() row ->
+            row.rowIndex = i.val
+            row.invalidate()
+            i.val++
+
+        destroy i
