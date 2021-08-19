@@ -250,6 +250,10 @@ public class EventData
 	static function getEventDamage() returns real
 		return GetEventDamage()
 
+	/** Returns `true` if the damage done is done with Unit's attack. */
+	static function isAttackDamage() returns bool
+		return BlzGetEventIsAttack()
+
 	static function getOrderX() returns real
 		return GetOrderPointX()
 
