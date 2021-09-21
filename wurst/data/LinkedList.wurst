@@ -188,6 +188,10 @@ public class LinkedList<T>
 		return new LLBackIterator(dummy)
 
 	/** adds an element to the beginning of the list */
+	function enqueue(T elem)
+		addtoStart(elem)
+
+	/** adds an element to the beginning of the list */
 	function addtoStart(T elem)
 		let entry = new LLEntry<T>(elem, dummy, dummy.next)
 		dummy.next.prev = entry
