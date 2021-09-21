@@ -721,14 +721,22 @@ public function unit.interruptAttack()
 public function unit.getCollisionSize() returns real
 	return BlzGetUnitCollisionSize(this)
 
-public function unit.setAbilityCooldown(int abilId, int level, real cooldown)
-	BlzSetUnitAbilityCooldown(this, abilId, level, cooldown)
+/** Level is indexed. Level 1 = 0, Level 2 = 1, e.t.c. */
+public function unit.setAbilityCooldown(int abilId, int levelIndex, real cooldown)
+	BlzSetUnitAbilityCooldown(this, abilId, levelIndex, cooldown)
 
-public function unit.getAbilityCooldown(int abilId, int level) returns real
-	return BlzGetUnitAbilityCooldown(this, abilId, level)
+/** Level is indexed. Level 1 = 0, Level 2 = 1, e.t.c. */
+public function unit.getAbilityCooldown(int abilId, int levelIndex) returns real
+	return BlzGetUnitAbilityCooldown(this, abilId, levelIndex)
 
 public function unit.getAbilityCooldownRemaining(int abilId) returns real
 	return BlzGetUnitAbilityCooldownRemaining(this, abilId)
+
+public function unit.startAbilityCooldown(int abilCode)
+	BlzStartUnitAbilityCooldown(this, abilCode, this.getAbilityCooldown(abilCode, this.getAbilityLevel(abilCode) - 1))
+
+public function unit.startAbilityCooldown(int abilCode, real cooldown)
+	BlzStartUnitAbilityCooldown(this, abilCode, cooldown)
 
 public function unit.endAbilityCooldown(int abilCode)
 	BlzEndUnitAbilityCooldown(this, abilCode)
