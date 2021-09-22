@@ -172,11 +172,11 @@ public function instant.durationUntil() returns duration
 
 /** Instant > instant ? */
 public function instant.isOlderThan(instant other) returns bool
-	return this.timestamp_seconds > other.timestamp_seconds
+	return this.timestamp_seconds < other.timestamp_seconds
 
 /** Instant < instant ? */
 public function instant.isNewerThan(instant other) returns bool
-	return this.timestamp_seconds < other.timestamp_seconds
+	return this.timestamp_seconds > other.timestamp_seconds
 
 /** Duration > duration ? */
 public function duration.greaterThan(duration other) returns bool
