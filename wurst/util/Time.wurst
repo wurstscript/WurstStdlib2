@@ -285,3 +285,7 @@ public function durationFromIndex(int index) returns duration
 	assertTrue(1.1.seconds().displayVerbose() == "1 seconds")
 	assertTrue(61..seconds().display() == "PT1M1S")
 	assertTrue(1..hours().displayVerbose() == "1 hours, 0 minutes, and 0 seconds")
+
+@Test function testNewerThan()
+	assertTrue(5..minutesFromNow().isNewerThan(5..secondsFromNow()))
+	assertTrue(5..minutesFromNow().isInTheFuture())
