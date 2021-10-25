@@ -1,0 +1,25 @@
+package Function
+
+public interface VoidFn
+    function apply()
+
+public interface Supplier<T>
+    function get() returns T
+
+public interface Consumer<T>
+    function apply(T _)
+
+public interface BiConsumer<T, U>
+    function apply(T _, U _u)
+
+public interface Function<T, U>
+    function apply(T _) returns U
+
+public interface BiFunction<T, U, V>
+    function apply(T _, U _u) returns V
+
+public interface Predicate<T>
+    function test(T _) returns bool
+
+public interface BiPredicate<T, U>
+    function test(T _, U _u) returns bool
