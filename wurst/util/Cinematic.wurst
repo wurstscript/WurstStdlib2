@@ -1,0 +1,127 @@
+package Cinematic
+
+import ClosureTimers
+import LinkedList
+import Time
+
+/**
+A cinematic sequence. Cinematic has built-in cinematic sequences:
+
+- Cinematic.fadeOutSeq(duration)
+- Cinematic.fadeInSeq(duration)
+- Cinematic.applyCameraSetupSeq(camerasetup)
+- Cinematic.snapCameraPosSeq(vec2)
+- Cinematic.doNothingSeq()
+*/
+public interface CineSeq
+    function apply() returns duration
+
+/**
+Create a cinematic by composing cinematic sequences:
+
+let cine = new Cinematic(
+    asList(
+        Cinematic.fadeOutSeq(0.5.seconds()),
+        Cinematic.snapCameraPosSeq(ZERO2),
+        Cinematic.fadeInSeq(1..seconds()),
+        () -> begin
+            print("Cinematic!")
+            return 5..seconds()
+        end,
+        Cinematic.fadeOutSeq(0.5.seconds())
+    ),
+    // This final cinematic seq is always run, even if cinematic is skipped. Use this for cleanup.
+    () -> begin
+        FogEnable(true)
+        SelectUnit(u, true)
+        reurn 0..seconds()
+    end,
+)
+
+A cinematic can be skipped, which signals the controller to halt processing sequences and play the closing sequence.
+cine.skip_()
+*/
+public class Cinematic
+    var running = false
+
+    private function controller(LinkedList<CineSeq> sequence, CineSeq ending)
+        if running and not sequence.isEmpty()
+            let next = sequence.dequeue()
+            let duration = next.apply()
+            doAfter(duration.seconds) ->
+                controller(sequence, ending)
+        else
+            endCinematic()
+            ending.apply()
+
+    /**
+        Build a cinematic from a sequence of CineSeqs, and one final CineSeq which should be used for cleanup. The final
+        CineSeq is run even if the cinematic is skip_()'d.
+    */
+    construct(LinkedList<CineSeq> sequence, CineSeq ending)
+        running = true
+        controller(sequence, ending)
+        ShowInterface(false, 0.)
+        EnableUserControl(false)
+
+    private function endCinematic()
+        running = false
+        ShowInterface(true, .5)
+        EnableUserControl(true)
+        fadeIn(0..seconds())
+
+    static function fadeOutSeq(duration duration) returns CineSeq
+        CineSeq seq = () ->
+            fadeOut(duration)
+            return duration
+        return seq
+
+    static function fadeInSeq(duration duration) returns CineSeq
+        CineSeq seq = () ->
+            fadeIn(duration)
+            return duration
+        return seq
+
+    static function applyCameraSetupSeq(camerasetup setup) returns CineSeq
+        CineSeq seq = () ->
+            CameraSetupApply(setup, true, true)
+            return 0..seconds()
+        return seq
+
+    static function snapCameraPosSeq(vec2 pos) returns CineSeq
+        CineSeq seq = () ->
+            setCameraPosition(pos)
+            return 0..seconds()
+        return seq
+
+    static function doNothingSeq(duration duration) returns CineSeq
+        CineSeq seq = () ->
+            return duration
+        return seq
+
+    function skip_()
+        running = false
+
+    static function fadeOut(duration duration)
+        EnableUserUI(false)
+        SetCineFilterTexture("ReplaceableTextures\\CameraMasks\\White_mask.blp")
+        SetCineFilterBlendMode(BLEND_MODE_BLEND)
+        SetCineFilterTexMapFlags(TEXMAP_FLAG_NONE)
+        SetCineFilterStartUV(0, 0, 1, 1)
+        SetCineFilterEndUV(0, 0, 1, 1)
+        SetCineFilterStartColor(0, 0, 0, 0)
+        SetCineFilterEndColor(0, 0, 0, 255)
+        SetCineFilterDuration(duration.seconds)
+        DisplayCineFilter(true)
+
+    static function fadeIn(duration duration)
+        EnableUserUI(true)
+        SetCineFilterTexture("ReplaceableTextures\\CameraMasks\\White_mask.blp")
+        SetCineFilterBlendMode(BLEND_MODE_BLEND)
+        SetCineFilterTexMapFlags(TEXMAP_FLAG_NONE)
+        SetCineFilterStartUV(0, 0, 1, 1)
+        SetCineFilterEndUV(0, 0, 1, 1)
+        SetCineFilterStartColor(0, 0, 0, 255)
+        SetCineFilterEndColor(0, 0, 0, 0)
+        SetCineFilterDuration(duration.seconds)
+        DisplayCineFilter(true)
