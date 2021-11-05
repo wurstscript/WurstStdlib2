@@ -57,15 +57,22 @@ public abstract class OnCastListener
 
 	ondestroy
 		if eventUnit != null
-			let listener = EventListener.castMapCasters.get(eventUnit)
+			let index = eventUnit.getIndex()
+			let listener = EventListener.castMapCasters[index]
 			if listener == this
-				EventListener.castMapCasters.put(eventUnit, next)
+				if next != null
+					EventListener.castMapCasters[index] = next
+				else
+					EventListener.castMapCasters[index] = null
 			else if prev != null
 				prev.next = next
 		else
 			let listener = EventListener.castMap.get(abilId)
 			if listener == this
-				EventListener.castMap.put(abilId, next)
+				if next != null
+					EventListener.castMap.put(abilId, next)
+				else
+					EventListener.castMap.remove(abilId)
 			else if prev != null
 				prev.next = next
 
@@ -97,7 +104,7 @@ public abstract class OnUnitCast extends OnCastListener
 
 public abstract class EventListener
 	static constant castMap = new HashMap<int, OnCastListener>
-	static constant castMapCasters = new HashMap<unit, OnCastListener>
+	static OnCastListener array castMapCasters
 	static EventListener array generalListenersFirsts
 	static EventListener array unitListenersFirsts
 	static var useMouseEvents = false
@@ -155,10 +162,11 @@ public abstract class EventListener
 		listener.abilId = abilId
 		if u != null
 			listener.eventUnit = u
-			if castMapCasters.has(u)
-				castMapCasters.get(u).prev = listener
-				listener.next = castMapCasters.get(u)
-			castMapCasters.put(u, listener)
+			let index = u.getIndex()
+			if castMapCasters[index] != null
+				castMapCasters[index].prev = listener
+				listener.next = castMapCasters[index]
+			castMapCasters[index] = listener
 		else
 			if castMap.has(abilId)
 				castMap.get(abilId).prev = listener
@@ -190,8 +198,9 @@ public abstract class EventListener
 	static function onSpellEffect()
 		let trigUnit = GetTriggerUnit()
 		let abilId = GetSpellAbilityId()
-		if castMapCasters.has(trigUnit)
-			var listener = castMapCasters.get(trigUnit)
+		let index = trigUnit.getIndex()
+		if castMapCasters[index] != null
+			var listener = castMapCasters[index]
 			while listener != null
 				let nextListener = listener.next
 				if listener.abilId == -1 or listener.abilId == abilId
@@ -259,16 +268,11 @@ function registerEventsForUnit(unit u)
 
 public function unregisterEventsForUnit(unit u)
 	if fireEvents(u)
-		unregisterEvents(u.getIndex())
-		if EventListener.castMapCasters.has(u)
-			var listener = EventListener.castMapCasters.get(u)
-			EventListener.castMapCasters.remove(u)
-			while listener != null
-				let t = listener
-				listener = listener.next
-				destroy t
-		if EventListener.castMapCasters.has(u)
-			var listener = EventListener.castMapCasters.get(u)
+		let index = u.getIndex()
+		unregisterEvents(index)
+		if EventListener.castMapCasters[index] != null
+			var listener = EventListener.castMapCasters[index]
+			EventListener.castMapCasters[index] = null
 			while listener != null
 				let t = listener
 				listener = listener.next
