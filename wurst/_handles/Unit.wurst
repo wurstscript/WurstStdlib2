@@ -27,6 +27,17 @@ public function unit.toggleType(unittype utype) returns boolean
 	return this.setType(utype, not this.isType(utype))
 
 /* Helper Functions for use with vectors */
+public function createUnit(int unitId) returns unit
+	return createUnit(Player(0), unitId, ZERO2, 0 .fromDeg())
+
+public function createUnit(player p, int unitId) returns unit
+	return createUnit(p, unitId, ZERO2, 0 .fromDeg())
+
+public function createUnit(int unitId, vec2 pos) returns unit
+	return createUnit(Player(0), unitId, pos, 0 .fromDeg())
+
+public function createUnit(player p, int unitId, vec2 pos) returns unit
+	return createUnit(p, unitId, pos, 0 .fromDeg())
 
 public function createUnit(player p, int unitId, vec2 pos, angle facing) returns unit
 	return CreateUnit(p, unitId, pos.x, pos.y, facing.degrees())
@@ -191,7 +202,7 @@ public function unit.getFoodUsed() returns int
 
 public function unit.getHP() returns real
 	return this.getState(UNIT_STATE_LIFE)
-	
+
 public function unit.getHPRatio() returns real
 	return this.getHP() / this.getMaxHP()
 
