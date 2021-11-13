@@ -2,6 +2,7 @@ package Group
 import NoWurst
 import Vectors
 import Player
+import Annotations
 
 /** Use this group for your non-nested group enum calls
 	and then iterate through the group via **for from** or
@@ -35,73 +36,110 @@ public function group.enumUnitsOfType(int id, boolexpr filter)
 public function group.enumUnitsAll(boolexpr filter)
 	for i = 0 to bj_MAX_PLAYER_SLOTS - 1
 		ENUM_GROUP.enumUnitsOfPlayer(players[i], filter)
-		this.addGroup(ENUM_GROUP)
+		this.add(ENUM_GROUP)
 	ENUM_GROUP.clear()
 
 public function group.clear()
 	GroupClear(this)
 
+/** Returns the number of added units. */
+public function group.add(vararg unit units) returns int
+	var i = 0
+	for u in units
+		if GroupAddUnit(this, u)
+			i += 1
+	return i
+
+@deprecated("Use .add instead.")
 public function group.addUnit(vararg unit units)
 	for u in units
-		GroupAddUnit(this, u)
+		this.add(u)
 
+/** Retruns the number of removed units. */
+public function group.remove(vararg unit units) returns int
+	var i = 0
+	for u in units
+		if GroupRemoveUnit(this, u)
+			i += 1
+	return i
+
+@deprecated("Use .remove instead.")
 public function group.removeUnit(vararg unit units)
 	for u in units
-		GroupRemoveUnit(this, u)
+		this.remove(u)
 
 public function group.destr()
 	DestroyGroup(this)
 
-public function group.contains(unit u) returns boolean
+public function group.has(unit u) returns bool
 	return IsUnitInGroup(u, this)
+
+@deprecated("Use .has instead.")
+public function group.contains(unit u) returns bool
+	return this.has(u)
 
 public function group.size() returns int
 	return BlzGroupGetSize(this)
 
-public function group.isEmpty() returns boolean
+public function group.isEmpty() returns bool
 	return not this.hasNext()
 
-var randomCounter = 0
-unit randomSelected = null
 /** Returns a random unit from this group without removing it
 	or null if the group is empty */
-public function group.getRandomUnit() returns unit
+public function group.getRandom() returns unit
 	let size = this.size()
-	randomCounter = 1 + GetRandomInt(0, size - 1)
-	randomSelected = null
-	ForGroup(this) ->
-		randomCounter--
-		if randomCounter == 0
-			randomSelected = GetEnumUnit()
+	if size > 0
+		return this.get(GetRandomInt(0, size - 1))
+	return null
 
-	return randomSelected
+@deprecated("Use .getRandom instead.")
+public function group.getRandomUnit() returns unit
+	return this.getRandom()
 
-public function group.immediateOrder(string order) returns boolean
+public function group.immediateOrder(string order) returns bool
 	return GroupImmediateOrder(this, order)
 
-public function group.immediateOrderById(int order) returns boolean
+public function group.immediateOrderById(int order) returns bool
 	return GroupImmediateOrderById(this, order)
 
-public function group.pointOrder(string order, vec2 point) returns boolean
+public function group.pointOrder(string order, vec2 point) returns bool
 	return GroupPointOrder(this, order, point.x, point.y)
 
-public function group.pointOrderById(int order, vec2 point) returns boolean
+public function group.pointOrderById(int order, vec2 point) returns bool
 	return GroupPointOrderById(this, order, point.x, point.y)
 
-public function group.targetOrder(string order, widget targetWidget) returns boolean
+public function group.targetOrder(string order, widget targetWidget) returns bool
 	return GroupTargetOrder(this, order, targetWidget)
 
-public function group.targetOrder(int order, widget targetWidget) returns boolean
+public function group.targetOrder(int order, widget targetWidget) returns bool
 	return GroupTargetOrderById(this, order, targetWidget)
 
+public function group.add(vararg group groups) returns int
+	var i = 0
+	for g in groups
+		i += BlzGroupAddGroupFast(g, this)
+	return i
+
+@deprecated("Use .add instead.")
 public function group.addGroup(group g) returns int
-	return BlzGroupAddGroupFast(g, this)
+	return this.add(g)
 
+public function group.remove(vararg group groups) returns int
+	var i = 0
+	for g in groups
+		i += BlzGroupRemoveGroupFast(g, this)
+	return i
+
+@deprecated("Use .remove instead.")
 public function group.removeGroup(group g) returns int
-	return BlzGroupRemoveGroupFast(g, this)
+	return this.remove(g)
 
-public function group.getUnitAt(int index) returns unit
+public function group.get(int index) returns unit
 	return BlzGroupUnitAt(this, index)
+
+@deprecated("Use .get instead.")
+public function group.getUnitAt(int index) returns unit
+	return this.get(index)
 
 /* Group iterator */
 
@@ -110,11 +148,11 @@ group iterGroup
 /** Creates a new iterator for this group. */
 public function group.iterator() returns group
 	iterGroup = CreateGroup()
-	ForGroup(this, () -> iterGroup.addUnit(GetEnumUnit()))
+	ForGroup(this, () -> iterGroup.add(GetEnumUnit()))
 	return iterGroup
 
 /** Returns whether the iterator has the next item */
-public function group.hasNext() returns boolean
+public function group.hasNext() returns bool
 	return FirstOfGroup(this) != null
 
 /** Returns the next item from the iterator */

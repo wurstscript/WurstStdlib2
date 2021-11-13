@@ -7,6 +7,18 @@ import Annotations
 /** Stops compilation with the provided error message */
 @compiletimenative public function compileError(string msg)
 
+/** Returns the map name from wurst.build file */
+@compiletimenative public function getMapName() returns string
+	return ""
+
+/** Returns the build date in uuuu-MM-dd'T'HH:mm format */
+@compiletimenative public function getBuildDate() returns string
+	return ""
+
+/** Returns true if the map is being built using the 'buildmap' command, false otherwise. */
+@compiletimenative public function isProductionBuild() returns boolean
+	return false
+
 /** builtin function which returns a stack trace.
 If stack traces are disabled, this function returns the empty string.
 */

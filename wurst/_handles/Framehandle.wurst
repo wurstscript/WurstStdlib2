@@ -47,17 +47,28 @@ import Annotations
 		ORIGIN_FRAME_UNIT_MSG                   --> Frame of the UpKeep change warning message, below the clock
 */
 
-public constant GAME_UI = BlzGetOriginFrame(ORIGIN_FRAME_GAME_UI, 0)
+public constant GAME_UI  = BlzGetOriginFrame(ORIGIN_FRAME_GAME_UI, 0)
+public constant WORLD_UI = BlzGetOriginFrame(ORIGIN_FRAME_WORLD_FRAME, 0)
 
-public constant SCREEN_CENTER       = vec2(0.4, 0.3)
-public constant SCREEN_TOPRIGHT     = vec2(0.8, 0.6)
-public constant SCREEN_TOPLEFT      = vec2(0.0, 0.6)
-public constant SCREEN_BOTTOMRIGHT  = vec2(0.8, 0.0)
-public constant SCREEN_BOTTOMLEFT   = vec2(0.0, 0.0)
-public constant SCREEN_RIGHT        = vec2(0.8, 0.3)
-public constant SCREEN_LEFT         = vec2(0.0, 0.3)
-public constant SCREEN_TOP          = vec2(0.4, 0.6)
-public constant SCREEN_BOTTOM       = vec2(0.4, 0.0)
+public constant SCREEN_CENTER             = vec2(0.4, 0.3)
+public constant SCREEN_TOPRIGHT           = vec2(0.8, 0.6)
+public constant SCREEN_TOPLEFT            = vec2(0.0, 0.6)
+public constant SCREEN_BOTTOMRIGHT        = vec2(0.8, 0.0)
+public constant SCREEN_BOTTOMLEFT         = vec2(0.0, 0.0)
+public constant SCREEN_RIGHT              = vec2(0.8, 0.3)
+public constant SCREEN_LEFT               = vec2(0.0, 0.3)
+public constant SCREEN_TOP                = vec2(0.4, 0.6)
+public constant SCREEN_BOTTOM             = vec2(0.4, 0.0)
+
+// These defines represent the whole 16:9 screen size. Only Frames of type 'SIMPLE' can be moved here. 
+public constant WHOLE_SCREEN_TOPRIGHT     = vec2( 0.95, 0.6)
+public constant WHOLE_SCREEN_TOPLEFT      = vec2(-0.15, 0.6)
+public constant WHOLE_SCREEN_BOTTOMRIGHT  = vec2( 0.95, 0.0)
+public constant WHOLE_SCREEN_BOTTOMLEFT   = vec2(-0.15, 0.0)
+public constant WHOLE_SCREEN_RIGHT        = vec2( 0.95, 0.3)
+public constant WHOLE_SCREEN_LEFT         = vec2(-0.15, 0.3)
+public constant WHOLE_SCREEN_TOP          = SCREEN_TOP
+public constant WHOLE_SCREEN_BOTTOM       = SCREEN_BOTTOM
 
 constant BLZ_FRAMENAME_MAXLENGTH    = 560
 
@@ -96,7 +107,7 @@ public function getFrame(string name) returns framehandle
 	verifyFrameNameLength(name)
 	return getFrame(name, 0)
 
-/** Creates a non simple frame of the given name (the name of the frame which must be defined in the imported fdf files). */
+/** Creates a non simple frame of the given name (the name of the frame which must be defined in the imported fdf files) */
 public function createFrame(string name) returns framehandle
 	verifyFrameNameLength(name)
 	return createFrame(name, GAME_UI, 0, 0)
@@ -188,7 +199,7 @@ public function framehandle.setVisibleFor(player p, bool flag)
 
 /** Shows or hides the frame to the given player */
 public function framehandle.setVisible(player p, bool flag)
-	if localPlayer == p
+	if localPlayer == p or p == null
 		this.setVisible(flag)
 
 /** Shows the frame */
@@ -219,6 +230,10 @@ public function framehandle.hide(player p)
 public function framehandle.isVisible() returns bool
 	return BlzFrameIsVisible(this)
 
+/** Returns whether the frame is visible or not for given player */
+public function framehandle.isVisible(player p) returns boolean
+	return localPlayer == p or p == null ? this.isVisible() : false
+
 @deprecated("Use .getName() instead.")
 public function framehandle.name() returns string
 	return BlzFrameGetName(this)
@@ -238,6 +253,11 @@ public function framehandle.getText() returns string
 /** Sets the text value of the text frame */
 public function framehandle.setText(string text)
 	BlzFrameSetText(this, text)
+
+/** Sets the text value of the text frame for the specific player*/
+public function framehandle.setText(player p, string text)
+	if localPlayer == p or p == null
+		this.setText(text)
 
 /** Returns the maximum allowed text size of the text frame */
 public function framehandle.getTextSizeLimit() returns integer
@@ -259,6 +279,33 @@ public function framehandle.setTextColor(integer color)
 public function framehandle.setFocus(bool flag)
 	BlzFrameSetFocus(this, flag)
 
+/** Enables or disables the user interaction for the frame for given player */
+public function framehandle.setFocus(player p, bool flag)
+	if localPlayer == p or p == null
+		this.setFocus(flag)
+
+/** Removes the focus from a given frame by disable and instantly enabling it. Mandatory for Frames of type 'SIMPLE' */
+public function framehandle.unfocus()
+	if this.isEnabled()
+		this.disable()
+		this.enable()
+	else
+		this.enable()
+		this.disable()
+
+	this.setFocus(false)
+
+/** Removes the focus from a given frame by disable and instantly enabling it for given player. Mandatory for Frames of type 'SIMPLE' */
+public function framehandle.unfocus(player p)
+	if this.isEnabled(p)
+		this.disable(p)
+		this.enable(p)
+	else
+		this.enable(p)
+		this.disable(p)
+
+	this.setFocus(p, false)    
+
 /** Sets the model of the model frame */
 public function framehandle.setModel(string modelFile, integer cameraIndex)
 	BlzFrameSetModel(this, modelFile, cameraIndex)
@@ -266,18 +313,32 @@ public function framehandle.setModel(string modelFile, integer cameraIndex)
 /** Returns the state of the frame */
 public function framehandle.isEnabled() returns bool
 	return BlzFrameGetEnable(this)
+	
+/** Returns the state of the frame for given player */
+public function framehandle.isEnabled(player p) returns boolean
+	return localPlayer == p or p == null ? this.isEnabled() : false
 
 /** Enables or disables the frame */
 public function framehandle.setEnabled(bool enabled)
 	BlzFrameSetEnable(this, enabled)
 
-/** Enables the frame. */
+/** Enables the frame */
 public function framehandle.enable()
 	this.setEnabled(true)
 
-/** Disables the frame. */
+/** Disables the frame */
 public function framehandle.disable()
 	this.setEnabled(false)
+	
+/** Enables the frame for the player p */
+public function framehandle.enable(player p)
+	if localPlayer == p or p == null
+		this.enable()
+	
+/** Disables the frame for the player p */
+public function framehandle.disable(player p)
+	if localPlayer == p or p == null
+		this.disable()
 
 /** Returns the decimal alpha value of the frame (only for specific frames) */
 public function framehandle.getAlpha() returns int
@@ -286,7 +347,12 @@ public function framehandle.getAlpha() returns int
 /** Sets the decimal alpha value of the frame (only for specific frames) */
 public function framehandle.setAlpha(integer alpha)
 	BlzFrameSetAlpha(this, alpha)
-
+	
+/** Sets the decimal alpha value of the frame (only for specific frames) to the given player */
+public function framehandle.setAlpha(player p, integer alpha)
+	if localPlayer == p or p == null
+		this.setAlpha(alpha)
+		
 /** Unknown */
 public function framehandle.setSpriteAnimate(integer primaryProp, integer flags)
 	BlzFrameSetSpriteAnimate(this, primaryProp, flags)
@@ -297,6 +363,14 @@ public function framehandle.setSpriteAnimate(integer primaryProp, integer flags)
 		blend: true to keep transparency */
 public function framehandle.setTexture(string texFile, integer flag, bool blend)
 	BlzFrameSetTexture(this, texFile, flag, blend)
+
+/** Sets the texture of the frame for the specific player
+	texFile: the path of the texture
+	flags: unknown
+	blend: true to keep transparency */
+public function framehandle.setTexture(player p, string texFile, integer flag, bool blend)
+	if localPlayer == p or p == null
+		this.setTexture(texFile, flag, blend)
 
 /** Sets the frame's scaling value.
 	Frame's size, children frames and relative anchor points scale */
@@ -323,7 +397,7 @@ public function framehandle.setValue(real value)
 public function framehandle.minMax(real minValue, real maxValue)
 	BlzFrameSetMinMaxValue(this,minValue,maxValue)
 
-/** Sets the specific minimum and maximum value of the frame (e.g. for sliders). */
+/** Sets the specific minimum and maximum value of the frame (e.g. for sliders) */
 public function framehandle.setMinMax(real minValue, real maxValue)
 	BlzFrameSetMinMaxValue(this, minValue, maxValue)
 
@@ -347,7 +421,7 @@ public function framehandle.setSize(real width, real height)
 public function framehandle.setVertexColor(integer color)
 	BlzFrameSetVertexColor(this, color)
 
-/** If multiple frames cover each other, the one with the highest level will receive mouse events and will be drawn above the others. If several frames have the same level, the last created one is prioritized. */
+/** If multiple frames cover each other, the one with the highest level will receive mouse events and will be drawn above the others. If several frames have the same level, the last created one is prioritized */
 public function framehandle.setLevel(integer level)
 	BlzFrameSetLevel(this, level)
 
@@ -409,21 +483,21 @@ public function loadTOCFile(string tocFile) returns bool
 let mouseCage = createFrame("FRAME", "SetMousePositionCage", GAME_UI, null, 0)
 	..setSize(0.0001, 0.0001)
 
-/** Places the mouse cursor at the given point of the screen. Uses the same coodinate system as framehandles. */
+/** Places the mouse cursor at the given point of the screen. Uses the same coodinate system as framehandles */
 public function setMousePos(vec2 pos)
 	mouseCage..clearAllPoints()
 	..setPoint(FRAMEPOINT_BOTTOMLEFT, GAME_UI, FRAMEPOINT_BOTTOMLEFT, pos)
 	..cageMouse(true)
 	..cageMouse(false)
 
-/** Places the mouse cursor in the center of the frame. */
+/** Places the mouse cursor in the center of the frame */
 public function framehandle.setMousePos()
 	mouseCage..clearAllPoints()
 	..setPoint(FRAMEPOINT_CENTER, this, FRAMEPOINT_CENTER)
 	..cageMouse(true)
 	..cageMouse(false)
 
-/** Places the mouse cursor at the given point of the screen. Uses the window's coordinate system (in pixels) where (0, 0) is top-left corner of the window and positive direction of Y axis is "down". */
+/** Places the mouse cursor at the given point of the screen. Uses the window's coordinate system (in pixels) where (0, 0) is top-left corner of the window and positive direction of Y axis is "down" */
 public function setMousePos(integer x, integer y)
 	BlzSetMousePos(x, y)
 
@@ -436,10 +510,10 @@ public function disableCursor()
 public function setCursorEnabled(bool flag)
 	BlzEnableCursor(flag)
 
-/** Get number of children frames of given frame. Only direct child frames are counted. */ 
+/** Get number of children frames of given frame. Only direct child frames are counted */ 
 public function framehandle.getChildrenCount() returns int
 	return BlzFrameGetChildrenCount(this)
 
-/** Get child frame handle from given index. */
+/** Get child frame handle from given index */
 public function framehandle.getChild(int index) returns framehandle
 	return BlzFrameGetChild(this, index)

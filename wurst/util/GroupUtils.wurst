@@ -69,7 +69,7 @@ group iterGroup
 
 public function group.recyclableIterator() returns group
 	iterGroup = getGroup()
-	ForGroup(this, () -> iterGroup.addUnit(GetEnumUnit()))
+	ForGroup(this, () -> iterGroup.add(GetEnumUnit()))
 	return iterGroup
 
 /* Group instantiation */

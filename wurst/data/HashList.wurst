@@ -147,6 +147,9 @@ public class HashList<T>
 
 		destroy predicate
 
+	function getRandomElement() returns T
+		return size > 0 ? get(GetRandomInt(0, size - 1)) : null
+
 	ondestroy
 		clear()
 

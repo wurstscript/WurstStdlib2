@@ -8,10 +8,19 @@ import Playercolor
 import Annotations
 import Maths
 import Real
+import Player
+
+/** Hexadecimal numbers */
+public constant hexs = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F"]
+constant decs = new Table()
 
 public constant COLOR_WHITE = colorA(255,255,255,255)
 public constant COLOR_BLACK = colorA(0,0,0,0)
 public constant COLOR_GOLD  = colorA(255, 204, 0, 255)
+
+public constant COLOR_WHITE_STR = COLOR_WHITE.toColorString()
+public constant COLOR_BLACK_STR = COLOR_BLACK.toColorString()
+public constant COLOR_GOLD_STR = COLOR_GOLD.toColorString()
 
 public constant DEFAULT_COLOR_NAME = "black"
 
@@ -46,8 +55,11 @@ public constant PLAYER_COLOR_NAMES = [
 	"coal", "snow", "emerald", "peanut"
 ]
 
+public function player.getNameColored(boolean removeHash) returns string
+	return this.getColor().toColor().toColorString() + this.getName(removeHash) + "|r"
+
 public function player.getNameColored() returns string
-	return this.getColor().toColor().toColorString() + GetPlayerName(this) + "|r"
+	return this.getNameColored(false)
 
 /** Returns the name of the player color */
 public function playercolor.getName() returns string
@@ -216,10 +228,6 @@ public function colorA.toString() returns string
 /** Returns the tuple in string format colorHSV(h,s,v) */
 public function colorHSV.toString() returns string
 	return "colorHSV(" + (this.h).toString() + ", " + (this.s).toString() + ", " + (this.v).toString() + ")"
-
-/** Hexadecimal numbers */
-public constant hexs = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F"]
-constant decs = new Table()
 
 /** Converts and int to a hexnumber */
 public function toHex(int number) returns string

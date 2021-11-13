@@ -3,8 +3,10 @@ import NoWurst
 import public Vectors
 import Item
 import Annotations
+import Destructable
 
-native UnitAlive(unit id) returns boolean
+public native UnitAlive(unit id) returns boolean
+public native GetUnitGoldCost(int unitid) returns integer
 
 public function unit.isType(unittype utype) returns boolean
 	return IsUnitType(this, utype)
@@ -25,6 +27,17 @@ public function unit.toggleType(unittype utype) returns boolean
 	return this.setType(utype, not this.isType(utype))
 
 /* Helper Functions for use with vectors */
+public function createUnit(int unitId) returns unit
+	return createUnit(Player(0), unitId, ZERO2, 0 .fromDeg())
+
+public function createUnit(player p, int unitId) returns unit
+	return createUnit(p, unitId, ZERO2, 0 .fromDeg())
+
+public function createUnit(int unitId, vec2 pos) returns unit
+	return createUnit(Player(0), unitId, pos, 0 .fromDeg())
+
+public function createUnit(player p, int unitId, vec2 pos) returns unit
+	return createUnit(p, unitId, pos, 0 .fromDeg())
 
 public function createUnit(player p, int unitId, vec2 pos, angle facing) returns unit
 	return CreateUnit(p, unitId, pos.x, pos.y, facing.degrees())
@@ -189,6 +202,9 @@ public function unit.getFoodUsed() returns int
 
 public function unit.getHP() returns real
 	return this.getState(UNIT_STATE_LIFE)
+
+public function unit.getHPRatio() returns real
+	return this.getHP() / this.getMaxHP()
 
 public function handle.getHandleId() returns int
 	return GetHandleId(this)
@@ -719,14 +735,22 @@ public function unit.interruptAttack()
 public function unit.getCollisionSize() returns real
 	return BlzGetUnitCollisionSize(this)
 
-public function unit.setAbilityCooldown(int abilId, int level, real cooldown)
-	BlzSetUnitAbilityCooldown(this, abilId, level, cooldown)
+/** Level is indexed. Level 1 = 0, Level 2 = 1, e.t.c. */
+public function unit.setAbilityCooldown(int abilId, int levelIndex, real cooldown)
+	BlzSetUnitAbilityCooldown(this, abilId, levelIndex, cooldown)
 
-public function unit.getAbilityCooldown(int abilId, int level) returns real
-	return BlzGetUnitAbilityCooldown(this, abilId, level)
+/** Level is indexed. Level 1 = 0, Level 2 = 1, e.t.c. */
+public function unit.getAbilityCooldown(int abilId, int levelIndex) returns real
+	return BlzGetUnitAbilityCooldown(this, abilId, levelIndex)
 
 public function unit.getAbilityCooldownRemaining(int abilId) returns real
 	return BlzGetUnitAbilityCooldownRemaining(this, abilId)
+
+public function unit.startAbilityCooldown(int abilCode)
+	BlzStartUnitAbilityCooldown(this, abilCode, this.getAbilityCooldown(abilCode, this.getAbilityLevel(abilCode) - 1))
+
+public function unit.startAbilityCooldown(int abilCode, real cooldown)
+	BlzStartUnitAbilityCooldown(this, abilCode, cooldown)
 
 public function unit.endAbilityCooldown(int abilCode)
 	BlzEndUnitAbilityCooldown(this, abilCode)
@@ -752,6 +776,43 @@ public function unit.incAbilityLevel(int abilityId)
 
 public function unit.decAbilityLevel(int abilityId)
 	DecUnitAbilityLevel(this, abilityId)
+
+public function unit.removeGuardPosition()
+	RemoveGuardPosition(this)
+
+public function unit.recycleGuardPosition()
+	RecycleGuardPosition(this)
+
+public function unit.getRallyPoint() returns vec2
+	let loc = GetUnitRallyPoint(this)
+	let result = vec2(GetLocationX(loc), GetLocationY(loc))
+	RemoveLocation(loc)
+	return result
+
+public function unit.getRallyUnit() returns unit
+	return GetUnitRallyUnit(this)
+
+public function unit.getRallyDestructable() returns destructable
+	return GetUnitRallyDestructable(this)
+
+public enum RallyType
+	POINT
+	UNIT
+	DESTRUCTABLE
+
+public tuple rallyResult(RallyType rtype, unit u, destructable d, vec2 pos)
+
+/** Returns the rally point of this unit as a rallyResult */
+public function unit.getRallyTarget() returns rallyResult
+	let runit = this.getRallyUnit()
+	if runit != null
+		return rallyResult(RallyType.UNIT, runit, null, runit.getPos())
+
+	let rdes = this.getRallyDestructable()
+	if rdes != null
+		return rallyResult(RallyType.DESTRUCTABLE, null, rdes, rdes.getPos())
+
+	return rallyResult(RallyType.POINT, null, null, this.getRallyPoint())
 
 class InventoryIterator
 	private item array[6] items
