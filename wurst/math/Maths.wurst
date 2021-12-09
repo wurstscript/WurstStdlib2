@@ -11,8 +11,16 @@ public constant real EULER	  =  2.718281828
 public constant real PI			=  3.141592654
 /** PI * 2 constant */
 public constant real PI2 		=  6.28318
+/** One turn in radians */
+public constant real TAU		=  PI2
 /** PI / 2 constant */
 public constant real PIHALF		=  1.570796326
+/** A minimum non-zero positive real number. */
+public constant real EPSILON	=  0.00000001
+/** A maximum positive real number. */
+public constant real MAX_REAL	=  Pow(2., 128.)
+
+constant real INVERSE_LOG_2_E	=  0.6931472
 /**
  * Returns the length of the hypotenuse of a right-angle triangle with the
  * given side lengths. Does not overflow or underflow as fast as
@@ -28,6 +36,53 @@ public function hypot(real dx, real dy) returns real
 		t = x / y
 		x = y
 	return x * SquareRoot(1 + t * t)
+
+/**
+ * Returns the base-2 logarithm of a.
+ */
+public function log2(real a) returns real
+	real x = a
+	real sign = 1
+	real res = 0.0
+	real p = 0.5
+
+	if x == 0.0
+		return -MAX_REAL
+
+	if x < 0.0
+		x = -x
+
+	if x < 1
+		x = 1.0 / x
+		sign = -1.0
+
+	while x >= 2
+		res += 1
+		x *= 0.5
+
+	for int i = 1 to 23
+		x *= x
+		if x >= 2.
+			x *= 0.5
+			res += p
+		p *= 0.5
+
+	return sign * res
+
+/** Returns the base-e logarithm (natural log) of a. */
+public function ln(real a) returns real
+	return log2(a) * INVERSE_LOG_2_E
+
+/** A normally distributed random number generator. */
+public tuple gaussianrng(real mean, real stddev)
+
+/** Sample the RNG using box-mueller. */
+public function gaussianrng.sample() returns real
+	return this.mean + (
+		this.stddev
+		* SquareRoot(-2.0 * ln(GetRandomReal(EPSILON, 1.)))
+		* Cos(TAU * GetRandomReal(EPSILON, 1.))
+	)
 
 /** Returns the angle of a height-slope */
 public function getSlopeAngle(real z1, real z2, real dist) returns angle
@@ -87,4 +142,3 @@ public function min(vararg real numbers) returns real
 
 function test_hypot_help(real x, real y)
 	hypot(x,y).assertEquals(SquareRoot(x * x + y * y), 0.0001)
-
