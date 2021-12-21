@@ -6,7 +6,14 @@ import Annotations
 import Destructable
 
 public native UnitAlive(unit id) returns boolean
-public native GetUnitGoldCost(int unitid) returns integer
+public native GetUnitGoldCost(int unitid) returns int
+public native GetUnitWoodCost(int unitid) returns int
+
+public function unit.getGoldCost() returns int
+	return GetUnitGoldCost(this.getTypeId())
+
+public function unit.getWoodCost() returns int
+	return GetUnitWoodCost(this.getTypeId())
 
 public function unit.isType(unittype utype) returns boolean
 	return IsUnitType(this, utype)
