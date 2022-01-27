@@ -87,7 +87,7 @@ constant PERIOD = 0.2
 public class Sim3DSound
 	private sound snd = null
 	private unit sourceUnit = null
-	private vec2 source = vec2(0,0)
+	private vec2 source = ZERO2
 	private boolean adjust
 
 	private real initial
@@ -101,7 +101,7 @@ public class Sim3DSound
 		real dx
 		real dy
 
-		if data.source.x == 0
+		if data.sourceUnit == null
 			dx = data.source.x - GetCameraTargetPositionX()
 			dy = data.source.y - GetCameraTargetPositionY()
 		else
@@ -124,10 +124,12 @@ public class Sim3DSound
 		data.dur -= PERIOD
 
 	function setSoundPosition(vec2 pos)
-		this.source= pos
+		this.source = pos
+		sourceUnit = null
 
 	function setSoundPosition(unit u)
 		sourceUnit = u
+		this.source = ZERO2
 
 	construct(sound s, real x, real y, real minDist, real maxDist, real distCutoff)
 		let dx = x - GetCameraTargetPositionX()
