@@ -148,7 +148,7 @@ group iterGroup
 /** Creates a new iterator for this group. */
 public function group.iterator() returns group
 	iterGroup = CreateGroup()
-	ForGroup(this, () -> iterGroup.add(GetEnumUnit()))
+	iterGroup.add(this)
 	return iterGroup
 
 /** Returns whether the iterator has the next item */
