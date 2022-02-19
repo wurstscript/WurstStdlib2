@@ -23,7 +23,7 @@ import Reference
  *      `killcount.updateValue(killcount.value + 1)`
  */
 
-public function dynamicCell<T>(string icon, DynamicCellValue<T> observer) returns DynamicCellValue<T>
+public function dynamicCellIcon<T>(string icon, DynamicCellValue<T> observer) returns DynamicCellValue<T>
     observer.icon = icon
     return observer
 
