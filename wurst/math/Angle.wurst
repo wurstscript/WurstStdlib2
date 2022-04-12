@@ -1,10 +1,11 @@
 package Angle
 import NoWurst
+import Wurstunit
 
 /** Converts Degrees to Radians */
-public constant real DEGTORAD  	=  0.017453293
+public constant DEGTORAD  	=  0.017453293
 /** Converts Radians to Degrees */
-public constant real RADTODEG  	= 57.295779513
+public constant RADTODEG  	= 57.295779513
 
 /** an angle is just a wrapper around a real which allows for
 typesafe APIs without the confusion between radians and degrees*/
@@ -12,43 +13,47 @@ public tuple angle(real radians)
 
 /** get the real representation of this angle in degrees */
 public function angle.degrees() returns real
-	return this.radians*RADTODEG
-	
+	return this.radians * RADTODEG
+
 /** get the real representation of this angle in radians */
 public function angle.radians() returns real
 	return this.radians
 
 /** interpret this real as an angle given in degrees */
 public function real.asAngleDegrees() returns angle
-	return angle(this*DEGTORAD)
+	return angle(this * DEGTORAD)
 
 /** interpret this real as an angle given in degrees */
 public function real.fromDeg() returns angle
-	return angle(this*DEGTORAD)
+	return angle(this * DEGTORAD)
 
 /** interpret this real as an angle given in degrees */
 public function real.fromRad() returns angle
-	return angle(this*.0)
+	return angle(this)
+
+/** interpret this int as an angle given in degrees */
+public function int.fromRad() returns angle
+	return angle(this * 1.)
 
 /** interpret this int as an angle given in radians */
 public function int.asAngleRadians() returns angle
-	return angle(this * .0)
+	return angle(this * 1.)
 
 /** interpret this real as an angle given in radians*/
 public function real.asAngleRadians() returns angle
 	return angle(this)
-/** get the sinus of this angle */
 
+/** get the sine of this angle */
 public function angle.sin() returns real
 	return Sin(this.radians)
 
-/** get the cosinus of this angle */
+/** get the cosine of this angle */
 public function angle.cos() returns real
 	return Cos(this.radians)
 
-/** get the tangens of this angle */
+/** get the tangent of this angle */
 public function angle.tan() returns real
-	return Tan(this.radians)	
+	return Tan(this.radians)
 
 /** adds two angles */
 public function angle.op_plus(angle other) returns angle
@@ -60,13 +65,20 @@ public function angle.op_minus(angle other) returns angle
 
 /** multiplies the angle with the given scalar */
 public function angle.op_mult(real scalar) returns angle
-	return angle(this.radians*scalar)
+	return angle(this.radians * scalar)
 
 /** multiplies with the given angle */
 public function real.op_mult(angle ang) returns angle
-	return angle(ang.radians*this)
+	return angle(ang.radians * this)
 
 /** divides the angle by the given scalar */
 public function angle.op_divReal(real scalar) returns angle
-	return angle(this.radians/scalar)
+	return angle(this.radians / scalar)
 
+@Test function testAngle()
+	(180 .fromDeg().radians).assertEquals(180 .fromDeg().degrees().fromDeg().radians)
+
+	(180 .fromDeg() + 90 .fromDeg()).degrees().assertEquals(270)
+
+	(0 .fromDeg()).sin().assertEquals(0)
+	(90 .fromDeg()).sin().assertEquals(1)

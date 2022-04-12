@@ -1,6 +1,7 @@
 package Item
 import NoWurst
 import public Vectors
+import Annotations
 
 public function createItem(int itemId, vec2 pos) returns item
 	return createItem(itemId, pos.toVec3())
@@ -8,35 +9,93 @@ public function createItem(int itemId, vec2 pos) returns item
 public function createItem(int itemId, vec3 pos) returns item
 	return CreateItem(itemId, pos.x, pos.y)
 
-public function item.getName() returns string
-	return GetItemName( this )
-	
-public function item.getX() returns real
-	return GetItemX( this )
-		
-public function item.getY() returns real
-	return GetItemY( this )
-
-public function item.setPos( real x, real y )
-	SetItemPosition( this, x, y )
-	
-public function item.setPos( vec2 pos )
-	SetItemPosition( this, pos.x, pos.y )
-	
-public function item.getPos() returns vec2
-	return vec2(this.getX(), this.getY())
-	
-public function item.getUserData() returns int
-	return GetItemUserData(this)
-	
-public function item.setUserData(int data)
-	SetItemUserData(this, data)
-	
 public function item.remove()
 	RemoveItem(this)
 
 public function item.getTypeId() returns int
 	return GetItemTypeId(this)
-	
+
+/** Returns "itemtype" of this item. Do not confuse it with itemTypeId. */
+public function item.getItemtype() returns itemtype
+	return GetItemType(this)
+
+public function item.getLevel() returns int
+	return GetItemLevel(this)
+
+public function item.getX() returns real
+	return GetItemX(this)
+
+public function item.getY() returns real
+	return GetItemY(this)
+
+public function item.getPos() returns vec2
+	return vec2(this.getX(), this.getY())
+
+@Deprecated("use vec2 variant")
+public function item.setPos(real x, real y)
+	SetItemPosition(this, x, y)
+
+public function item.setPos(vec2 pos)
+	SetItemPosition(this, pos.x, pos.y)
+
+public function item.setDropOnDeath(boolean flag)
+	SetItemDropOnDeath(this, flag)
+
+public function item.setDroppable(boolean flag)
+	SetItemDroppable(this, flag)
+
+public function item.setPawnable(boolean flag)
+	SetItemPawnable(this, flag)
+
+public function item.setInvulnerable(boolean flag)
+	SetItemInvulnerable(this, flag)
+
 public function item.setVisible(boolean flag)
 	SetItemVisible(this, flag)
+
+public function item.isInvulnerable() returns boolean
+	return IsItemInvulnerable(this)
+
+public function item.isVisible() returns boolean
+	return IsItemVisible(this)
+
+public function item.isOwned() returns boolean
+	return IsItemOwned(this)
+
+public function item.isPowerup() returns boolean
+	return IsItemPowerup(this)
+
+public function item.isSellable() returns boolean
+	return IsItemSellable(this)
+
+public function item.isPawnable() returns boolean
+	return IsItemPawnable(this)
+
+/** Returns true if item is not destroyed and has a valid type id. */
+public function item.isAlive() returns boolean
+	return this.getTypeId() != 0 and GetWidgetLife(this) > .405
+
+/** Returns true if item can be picked up by a unit. */
+public function item.isPickupable() returns boolean
+	return this.isAlive() and not this.isOwned() and this.isVisible()
+
+public function item.getPlayer() returns player
+	return GetItemPlayer(this)
+
+public function item.setPlayer(player whichPlayer, boolean changeColor)
+	SetItemPlayer(this, whichPlayer, changeColor)
+
+public function item.getCharges() returns int
+	return GetItemCharges(this)
+
+public function item.setCharges(int charges)
+	SetItemCharges(this, charges)
+
+public function item.getUserData() returns int
+	return GetItemUserData(this)
+
+public function item.setUserData(int data)
+	SetItemUserData(this, data)
+
+public function item.getName() returns string
+	return GetItemName(this)

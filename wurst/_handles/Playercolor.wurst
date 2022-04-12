@@ -1,36 +1,93 @@
 package Playercolor
 import NoWurst
+import Force
+import Player
+import Wurstunit
 
-public constant PLAYER_COLOR_BLACK_AGGRESSIVE = ConvertPlayerColor(12)
-public constant PLAYER_COLOR_UNKNOWN1 = ConvertPlayerColor(13)
-public constant PLAYER_COLOR_UNKNOWN2 = ConvertPlayerColor(14)
-public constant PLAYER_COLOR_BLACK_PASSIVE = ConvertPlayerColor(15)
+public constant PLAYER_COLOR_BLACK_AGGRESSIVE = ConvertPlayerColor(PLAYER_NEUTRAL_AGGRESSIVE)
+public constant PLAYER_COLOR_UNKNOWN1 = ConvertPlayerColor(bj_PLAYER_NEUTRAL_VICTIM)
+public constant PLAYER_COLOR_UNKNOWN2 = ConvertPlayerColor(bj_PLAYER_NEUTRAL_EXTRA)
+public constant PLAYER_COLOR_BLACK_PASSIVE = ConvertPlayerColor(PLAYER_NEUTRAL_PASSIVE)
 
-let lookup = [
-	PLAYER_COLOR_RED, 
-	PLAYER_COLOR_BLUE, 
-	PLAYER_COLOR_CYAN, 
-	PLAYER_COLOR_PURPLE, 
-	PLAYER_COLOR_YELLOW, 
-	PLAYER_COLOR_ORANGE, 
-	PLAYER_COLOR_GREEN, 
-	PLAYER_COLOR_PINK, 
-	PLAYER_COLOR_LIGHT_GRAY, 
-	PLAYER_COLOR_LIGHT_BLUE, 
-	PLAYER_COLOR_AQUA, 
+constant LOOKUP = [
+	PLAYER_COLOR_RED,
+	PLAYER_COLOR_BLUE,
+	PLAYER_COLOR_CYAN,
+	PLAYER_COLOR_PURPLE,
+	PLAYER_COLOR_YELLOW,
+	PLAYER_COLOR_ORANGE,
+	PLAYER_COLOR_GREEN,
+	PLAYER_COLOR_PINK,
+	PLAYER_COLOR_LIGHT_GRAY,
+	PLAYER_COLOR_LIGHT_BLUE,
+	PLAYER_COLOR_AQUA,
 	PLAYER_COLOR_BROWN,
 	PLAYER_COLOR_BLACK_AGGRESSIVE,
 	PLAYER_COLOR_UNKNOWN1,
 	PLAYER_COLOR_UNKNOWN2,
 	PLAYER_COLOR_BLACK_PASSIVE]
 
+public function player.setColor(playercolor color)
+	SetPlayerColor(this, color)
+
+public function player.getColor() returns playercolor
+	return GetPlayerColor(this)
+
 public function int.toPlayerColor() returns playercolor
-	return lookup[this]
+	return LOOKUP[this]
 
 public function playercolor.toInt() returns int
 	var value = 0
-	for i = 0 to 15
-		if lookup[i] == this
+	for i = 0 to bj_MAX_PLAYER_SLOTS - 1
+		if LOOKUP[i] == this
 			value = i
 			break
 	return value
+
+
+/** Returns the player that had this color *at the start of the game*. Does not
+	respect SetPlayerColor. */
+public function playercolor.getPlayer() returns player
+	return players[this.toInt()]
+
+/** Returns the players who are currently using this player color. Respects calls
+	to SetPlayerColor */
+public function playercolor.getPlayers() returns force
+	let matchingPlayers = CreateForce()
+	for i = 0 to bj_MAX_PLAYER_SLOTS - 1
+		if players[i].getColor() == this
+			matchingPlayers.add(players[i])
+	return matchingPlayers
+
+
+@test public function testToInt()
+	PLAYER_COLOR_RED.toInt().assertEquals(0)
+	PLAYER_COLOR_BROWN.toInt().assertEquals(11)
+
+@test public function testToPlayerColor()
+	assertTrue((0).toPlayerColor() == PLAYER_COLOR_RED)
+	assertTrue((11).toPlayerColor() == PLAYER_COLOR_BROWN)
+
+@test public function testGetPlayer()
+	assertTrue(PLAYER_COLOR_RED.getPlayer() == Player(0))
+	assertTrue(PLAYER_COLOR_BROWN.getPlayer() == Player(11))
+
+@test public function testGetPlayers()
+	// Test some Player package methods that this file depends on
+	(players[0] != null).assertTrue()
+	players[0].setColor(PLAYER_COLOR_RED)
+	(players[0].getColor() == PLAYER_COLOR_RED).assertTrue()
+	// Test getting forces of players.
+	let force1 = PLAYER_COLOR_RED.getPlayers()
+	force1.has(Player(0)).assertTrue()
+	players[1].setColor(PLAYER_COLOR_BLUE)
+	players[2].setColor(PLAYER_COLOR_BLUE)
+	let force2 = PLAYER_COLOR_BLUE.getPlayers()
+	force2.has(Player(1)).assertTrue()
+	force2.has(Player(2)).assertTrue()
+	force2.has(Player(3)).assertFalse()
+
+	let p = players[5]
+	assertTrue(p.getColor() == null)
+	p.setColor(PLAYER_COLOR_AQUA)
+	assertTrue(p.getColor() == PLAYER_COLOR_AQUA)

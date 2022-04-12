@@ -1,6 +1,15 @@
 package PrimitivesTests
 
 @Test
+function testClamp()
+	(-1).toInt().clamp(0, 10).assertEquals(0)
+	(11).toInt().clamp(0, 10).assertEquals(10)
+	(5).toInt().clamp(0, 10).assertEquals(5)
+	(-1.5).clamp(-0.5, 1.5).assertEquals(-0.5)
+	(2.5).clamp(-0.5, 1.5).assertEquals(1.5)
+	(1.0).clamp(-0.5, 1.5).assertEquals(1.0)
+
+@Test
 function testR2SW()
 	(1.213124.toString()).assertEquals("1.213124")
 	(1.213124.toString(3)).assertEquals("1.213")
@@ -13,12 +22,41 @@ function testArithmetics()
 	(1. / 100.).assertEquals(0.01)
 
 	(-2.).abs().assertEquals(2)
-	
+
 	(4. .squared()).assertEquals(4.*4.)
 
 @Test
-function testMisc()
+function testBoolean()
 	(true).assertEquals(true)
 	(false).assertEquals(false)
+
 	(true.toInt()).assertEquals(1)
 	(false.toInt()).assertEquals(0)
+
+	(true.toString()).assertEquals("true")
+	(false.toString()).assertEquals("false")
+
+	(42 .toBool()).assertEquals(true)
+	(0 .toBool()).assertEquals(false)
+
+	("true".toBool()).assertEquals(true)
+	("1".toBool()).assertEquals(true)
+	("nottrue".toBool()).assertEquals(false)
+
+@Test
+function testArrayLength()
+	let x = [1, 2, 3]
+	print("length: " + x.length.toString())
+	x.length.assertEquals(3)
+
+@Test
+function testParity()
+	(0).isEven().assertEquals(true)
+	(5113).isEven().assertEquals(false)
+
+@Test
+function testXor()
+	xor(true, true).assertEquals(false)
+	xor(true, false).assertEquals(true)
+	xor(false, true).assertEquals(true)
+	xor(false, false).assertEquals(false)

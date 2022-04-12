@@ -1,0 +1,146 @@
+package QuaternionTests
+import NoWurst
+import Wurstunit
+import Quaternion
+
+@Test function testPlusQuat()
+	(quat(1, 2, 3, 4) + quat(6, 7, 8, 9)).assertEquals(quat(7, 9, 11, 13))
+	(quat(0, 0, 0, 1) + quat(0, 0, 0, -1)).assertEquals(ZEROQ)
+
+@Test function testPlusScalar()
+	(quat(1, 2, 3, 4) + 13).assertEquals(quat(14, 15, 16, 17))
+	(13 + quat(1, 2, 3, 4)).assertEquals(quat(14, 15, 16, 17))
+
+@Test function testMinusQuat()
+	(quat(1, 2, 3, 4) - quat(6, 7, 8, 9)).assertEquals(quat(-5, -5, -5, -5))
+	(quat(0, 0, 0, 1) - quat(0, 0, 0, 1)).assertEquals(ZEROQ)
+
+@Test function testMinusScalar()
+	(quat(1, 2, 3, 4) - 13).assertEquals(quat(-12, -11, -10, -9))
+
+@Test function testMultScalar()
+	(quat(1, 2, 3, 4) * 5).assertEquals(quat(5, 10, 15, 20))
+	(5 * quat(1, 2, 3, 4)).assertEquals(quat(5, 10, 15, 20))
+
+@Test function testConjugate()
+	quat(1, 2, 3, 4).conj().assertEquals(quat(-1, -2, -3, 4))
+
+@Test function testCross()
+	quat(1, 2, 3, 4).cross(quat(5, 6, 7, 8)).assertEquals(quat(24, 48, 48, -6))
+
+@Test function testDot()
+	quat(1, 2, 3, 4).dot(quat(5, 6, 7, 8)).assertEquals(70, 0.002)
+
+@Test function testNorm()
+	IDENTITYQ.norm().assertEquals(IDENTITYQ)
+	ZEROQ.norm().assertEquals(ZEROQ)
+	quat(2, 2, 2, 2).norm().assertEquals(quat(0.5, 0.5, 0.5, 0.5))
+
+@Test function testLength()
+	IDENTITYQ.length().assertEquals(1., 0.002)
+	ZEROQ.length().assertEquals(0, 0.002)
+	quat(2, 2, 2, 2).length().assertEquals(4, 0.002)
+
+@Test function testQuat2Mat()
+	IDENTITYQ.toMatrix().assertEquals(IDENTITY33)
+	let compare = mat3( 1, 0, 0,
+						0, 0, -1,
+						0, 1, 0)
+	vec3(1, 0, 0).toQuat(90 .asAngleDegrees()).toMatrix().assertEquals(compare)
+
+@Test function testAxisExtracting()
+	var test = IDENTITYQ
+	test.getX().assertEquals(vec3(1, 0, 0))
+	test.getY().assertEquals(vec3(0, 1, 0))
+	test.getZ().assertEquals(vec3(0, 0, 1))
+	test = vec3(0, 1, 0).toQuat(90 .asAngleDegrees())
+	test.getX().assertEquals(vec3(0, 0, -1))
+	test.getY().assertEquals(vec3(0, 1, 0))
+	test.getZ().assertEquals(vec3(1, 0, 0))
+
+@Test function testVec2Quat()
+	vec3(1, 0, 0).toQuat(angle(0)).assertEquals(IDENTITYQ)
+	vec3(0, 1, 0).toQuat(angle(0)).assertEquals(IDENTITYQ)
+	vec3(0, 0, 1).toQuat(angle(0)).assertEquals(IDENTITYQ)
+	vec3(0, 0, 1).toQuat(90 .asAngleDegrees()).assertEquals(quat(0, 0, 0.707, 0.707))
+
+@Test function testAngle2Quat()
+	angle(0).toQuat(vec3(1, 0, 0)).assertEquals(IDENTITYQ)
+	angle(0).toQuat(vec3(0, 1, 0)).assertEquals(IDENTITYQ)
+	angle(0).toQuat(vec3(0, 0, 1)).assertEquals(IDENTITYQ)
+	(90 .asAngleDegrees()).toQuat(vec3(0, 0, 1)).assertEquals(quat(0, 0, 0.707, 0.707))
+
+@Test function testQuat2Euler()
+	let test = vec3(2, 8, 5).norm().toQuat(38 .asAngleDegrees())
+	let euler = test.toEuler()
+	let aroundX = vec3(1, 0, 0).toQuat(angle(euler.x))
+	let aroundY = vec3(0, 1, 0).toQuat(angle(euler.y))
+	let aroundZ = vec3(0, 0, 1).toQuat(angle(euler.z))
+	/* The same rotation can be represented by lots different Euler
+	angles thus the best way to check if quat.toEuler convertation
+	works is producing backward convertation by sequence of rotations
+	acording to the order in the angles. Obtained result must be
+	the quaternion we've started from. */
+	aroundZ.cross(aroundY).cross(aroundX).assertEquals(test)
+
+@Test function testVec3Rotate()
+	let rot = vec3(0, 0, 1).toQuat((-90) .asAngleDegrees())
+	vec3(4, 2, 1).rotate(rot).assertEquals(vec3(2, -4, 1))
+
+@Test function test33Mat2Quat()
+	let axis = vec3(1, 1, 1).norm()
+	let angl = 30 .asAngleDegrees()
+	let actual = axis.toRotation(angl).toQuat()
+	let expected = axis.toQuat(angl)
+	actual.assertEquals(expected)
+
+@Test function testLerp()
+	let start = IDENTITYQ
+	let finish = vec3(0, 0, 1).toQuat(270 .asAngleDegrees())
+	var actual = start.nlerp(finish, 0.5)
+	var length = actual.length()
+	var expected = vec3(0, 0, 1).toQuat(135 .asAngleDegrees()) * length
+	actual.assertEquals(expected)
+	actual = start.nlerpLong(finish, 0.5)
+	actual.assertEquals(expected)
+	actual = start.nlerpShort(finish, 0.5)
+	length = actual.length()
+	expected = vec3(0, 0, 1).toQuat((-45) .asAngleDegrees()) * length
+	actual.assertEquals(expected)
+
+@Test function testNlerp()
+	let start = IDENTITYQ
+	let finish = vec3(0, 0, 1).toQuat(270 .asAngleDegrees())
+	var expected = vec3(0, 0, 1).toQuat(135 .asAngleDegrees())
+	start.nlerp(finish, 0.5).assertEquals(expected)
+	start.nlerpLong(finish, 0.5).assertEquals(expected)
+	expected = vec3(0, 0, 1).toQuat((-45) .asAngleDegrees())
+	start.nlerpShort(finish, 0.5).assertEquals(expected)
+
+@Test function testSlerp()
+	let start = IDENTITYQ
+	let finish = vec3(0, 0, 1).toQuat(270 .asAngleDegrees())
+	var expected = vec3(0, 0, 1).toQuat(135 .asAngleDegrees())
+	start.slerp(finish, 0.5).assertEquals(expected)
+	start.slerpLong(finish, 0.5).assertEquals(expected)
+	expected = vec3(0, 0, 1).toQuat((-45) .asAngleDegrees())
+	start.slerpShort(finish, 0.5).assertEquals(expected)
+
+@Test function testGetGimbalPole()
+	let north = vec3(0, 1, 0).toQuat(270 .asAngleDegrees())
+	let south = vec3(0, 1, 0).toQuat(90 .asAngleDegrees())
+	let clear = vec3(1, 1, 1).norm().toQuat(90 .asAngleDegrees())
+	north.getGimbalPole().assertEquals(1)
+	south.getGimbalPole().assertEquals(-1)
+	clear.getGimbalPole().assertEquals(0)
+
+@Test function testExp()
+	/* A test through a sequence of rotations around
+	an arbitrary axis by an arbitrary angle. */
+	let axis = vec3(1, -0.5, 3).norm()
+	let angl = 38 .asAngleDegrees()
+	let power = 8.
+	let point = vec3(4, 5, 1)
+	let actual =  axis.toQuat(angl).exp(power)
+	let expected = axis.toQuat(angl * power)
+	point.rotate(actual).assertEquals(point.rotate(expected))

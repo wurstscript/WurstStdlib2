@@ -1,15 +1,35 @@
 package Force
-
 import NoWurst
+import Annotations
 
 public function force.destr()
 	DestroyForce(this)
 
+@deprecated("Use .add instead")
 public function force.addPlayer(player whichPlayer)
 	ForceAddPlayer(this, whichPlayer)
 
+@deprecated("Use .add instead")
+public function force.addPlayers(vararg player players)
+	for whichPlayer in players
+		ForceAddPlayer(this, whichPlayer)
+
+public function force.add(vararg player players)
+	for whichPlayer in players
+		ForceAddPlayer(this, whichPlayer)
+
+@deprecated("Use .remove instead")
 public function force.removePlayer(player whichPlayer)
 	ForceRemovePlayer(this, whichPlayer)
+
+@deprecated("Use .remove instead")
+public function force.removePlayers(vararg player players)
+	for whichPlayer in players
+		ForceRemovePlayer(this, whichPlayer)
+
+public function force.remove(vararg player players)
+	for whichPlayer in players
+		ForceRemovePlayer(this, whichPlayer)
 
 public function force.clear()
 	ForceClear(this)
@@ -29,8 +49,45 @@ public function force.enumEnemies(player whichPlayer, boolexpr filter)
 public function force.forEach(code callback)
 	ForForce(this, callback)
 
+public function force.getRandomPlayer() returns player
+	return ForcePickRandomPlayer(this)
+
+@deprecated("Use .has instead")
 public function force.containsUnit(unit whichUnit) returns boolean
 	return IsUnitInForce(whichUnit, this)
 
+@deprecated("Use .has instead")
 public function force.containsPlayer(player whichPlayer) returns boolean
 	return IsPlayerInForce(whichPlayer, this)
+
+public function force.has(unit whichUnit) returns bool
+	return IsUnitInForce(whichUnit, this)
+
+public function force.has(player whichPlayer) returns bool
+	return IsPlayerInForce(whichPlayer, this)
+
+/* Force iterator */
+force iterForce
+
+public function force.add(force other)
+	iterForce = other
+	ForForce(this, () -> iterForce.add(GetEnumPlayer()))
+
+/** Creates a new iterator for this group. */
+public function force.iterator() returns force
+	return CreateForce()..add(this)
+
+/** Returns whether the iterator has the next item */
+public function force.hasNext() returns boolean
+	return this.getRandomPlayer() != null
+
+/** Returns the next item from the iterator */
+public function force.next() returns player
+	let iterPlayer = this.getRandomPlayer()
+	this.remove(iterPlayer)
+	return iterPlayer
+
+/** Closes the iterator, releaseing the group */
+public function force.close()
+	this.clear()
+	this.destr()

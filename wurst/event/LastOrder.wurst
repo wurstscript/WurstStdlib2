@@ -1,11 +1,29 @@
+/**
+	If you import this package in any of your packages, each order
+	any unit makes will be recorded and up to ORDERS_TO_HOLD will be saved.
+	You can access these old orders and reissue them using .getLastOrder()
+*/
 package LastOrder
 import RegisterEvents
 import UnitIndexer
 import EventHelper
+import Annotations
 
-/** How many bast orders to hold.
+/** How many past orders to hold.
 	Should be at least 2 */
 @configurable constant ORDERS_TO_HOLD = 3
+
+/** Clears all recorded orders for this unit */
+public function unit.clearLastOrders()
+	let index = this.getIndex()
+	if lastOrder[index] != null
+		destroy lastOrder[index]
+		lastOrder[index] = null
+
+/** Returns the lasz recorded order for this unit.
+	To access further back orders, use .prev */
+public function unit.getLastOrder() returns Order
+	return lastOrder[this.getIndex()]
 
 public enum OrderType
 	TARGET
@@ -19,45 +37,54 @@ public class Order
 
 	OrderType orderType
 	unit orderedUnit = null
-	int orderId = -1
-
-	vec2 startPosition
+	var orderId = -1
 
 	widget target
 	vec2 targetPosition
 
-	boolean finished = false
+	var finished = false
 
 	construct(unit ordered, int orderId, OrderType ordtype, widget target, vec2 targetPos)
 		this.orderedUnit   = ordered
-		this.startPosition = ordered.getPos()
 		this.orderId  = orderId
 		this.orderType = ordtype
 		this.target = target
 		this.targetPosition = targetPos
-		
-		let index = ordered.getIndex()
-		if lastOrder[index] != null
-			if lastOrder[index].orderedUnit == orderedUnit
-				prev = lastOrder[index]
-			else
-				destroy lastOrder[index]
-		var i = 0
-		var e = this
-		while e.prev != null
-			i++
-			if i > ORDERS_TO_HOLD
-				destroy e.prev
-				break
-			e = e.prev
 
-		lastOrder[index] = this
+		if ordered != null
+			let index = ordered.getIndex()
+			if lastOrder[index] != null
+				if lastOrder[index].orderedUnit == orderedUnit
+					prev = lastOrder[index]
+				else
+					destroy lastOrder[index]
+			var i = 0
+			var e = this
+			while e.prev != null
+				i++
+				if i > ORDERS_TO_HOLD
+					let tmp = e.prev
+					destroy tmp
+					e.prev = null
+					break
+				e = e.prev
+
+			lastOrder[index] = this
 
 	ondestroy
 		if prev != null
 			destroy prev
 			prev = null
 
+	/** Reissues this order on the unit that originally received the order.
+		If you want the reissued order to be recorded as well,
+		in a response to another order, i.e. chained, you need to wrap
+		it inside using a nulltimer:
+
+			let ordr = caster.getLastOrder().prev
+			nullTimer() ->
+				ordr.issue()
+	*/
 	function issue() returns boolean
 		if orderedUnit.getTypeId() != 0 and not orderedUnit.isType(UNIT_TYPE_DEAD) and not finished
 			switch orderType
@@ -74,17 +101,13 @@ public class Order
 					return orderedUnit.issueImmediateOrderById(orderId)
 		return false
 
+	/** Use this to copy this order to apply it to another unit.
+		The copy must be destroyed manually. */
+	function copy() returns Order
+		return new Order(null, orderId, orderType, target, targetPosition)
 
-public function unit.clearLastOrders()
-	let index = this.getIndex()
-	if lastOrder[index] != null
-		destroy lastOrder[index]
-		lastOrder[index] = null
 
-public function unit.getLastOrder() returns Order
-	return lastOrder[this.getIndex()]
-
-function badOrderList( int id ) returns boolean
+function badOrderList(int id) returns boolean
 	return (id==852055 or id==852056 or id==852064 or id==852065 or id==852067 or
 			 id==852068 or id==852076 or id==852077 or id==852090 or id==852091 or
 			 id==852100 or id==852102 or id==852103 or id==852107 or id==852108 or
@@ -124,9 +147,9 @@ function actions()
 		let oid = GetIssuedOrderId()
 		Log.trace("ordered: <" + OrderId2StringBJ(oid) + ">")
 		if GetTriggerEventId() == EVENT_PLAYER_UNIT_ISSUED_TARGET_ORDER
-			new Order(u, oid, OrderType.TARGET, t, getOrderTargetPos())
+			new Order(u, oid, OrderType.TARGET, t, EventData.getOrderTargetPos())
 		else if GetTriggerEventId() == EVENT_PLAYER_UNIT_ISSUED_POINT_ORDER
-			new Order(u, oid, OrderType.POINT, null, getOrderPos())
+			new Order(u, oid, OrderType.POINT, null, EventData.getOrderPos())
 		else if GetTriggerEventId() == EVENT_PLAYER_UNIT_ISSUED_ORDER
 			new Order(u, oid, OrderType.IMMEDIATE, null, u.getPos())
 
@@ -143,4 +166,4 @@ init
 	registerPlayerUnitEvent(EVENT_PLAYER_UNIT_SPELL_EFFECT, null, function spellActions)
 
 	onUnitDeindex() ->
-		getDeindexedUnit().clearLastOrders()
+		getIndexingUnit().clearLastOrders()

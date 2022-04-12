@@ -5,6 +5,7 @@ import PreloadIO
 import BufferAdapters
 import public Buffer
 import LocalFiles
+import Annotations
 
 /**
 	Represents the various states of a persistable class load.
@@ -145,7 +146,7 @@ class PersistentStore
 	
 		if localPlayer == owner
 			reader.load() _status ->
-				var buffer = new StringBuffer(MAX_PACKET_LENGTH)
+				let buffer = new StringBuffer(MAX_PACKET_LENGTH)
 				// a boolean for keeping track of whether the load was succesful or not
 				network.getData().writeBoolean(true)
 				// read the data from the file into the buffer, and then transfer it into the network's buffer

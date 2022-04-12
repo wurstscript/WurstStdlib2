@@ -2,6 +2,7 @@ package Buffer
 import Table
 import ErrorHandling
 import LinkedList
+import Annotations
 
 /**
 	Enables or disables various runtime safety checks in the Buffer classes.
@@ -28,7 +29,7 @@ public enum BufferMode
 	LOCKED // no operations permitted
 
 public function BufferMode.toString() returns string
-	var value = ""
+	string value
 	switch this
 		case READ
 			value = "READ"
@@ -479,8 +480,9 @@ public class StringBuffer extends AbstractBuffer
 		if not isDataAvailable()
 			fail(BufferFailureMode.EOF, "reached EOF")
 
+	/* It say "is never used"
 	private function getNextChunkSize() returns int
-		return chunks.getFirst().content.length()
+		return chunks.getFirst().content.length()*/
 
 	// loads the next chunk into the buffer
 	private function nextChunk()

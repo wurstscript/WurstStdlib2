@@ -1,11 +1,12 @@
 package GroupUtils
+
 import NoWurst
 import Group
 import ErrorHandling
 import HashMap
 import Execute
-
 import Maths
+import Annotations
 
 /*
     Groups are a necessary evil that exists in warcraft 3, and sometimes their use
@@ -69,7 +70,7 @@ group iterGroup
 
 public function group.recyclableIterator() returns group
     iterGroup = getGroup()
-    ForGroup(this, () -> iterGroup.addUnit(GetEnumUnit()))
+    ForGroup(this, () -> iterGroup.add(GetEnumUnit()))
     return iterGroup
 
 /* Group instantiation */

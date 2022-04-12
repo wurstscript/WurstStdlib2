@@ -1,0 +1,179 @@
+package Serializable
+import ChunkedString
+import HashMap
+import ErrorHandling
+
+/* 	Simple Serialisation and Deserialisation package intended to be used with SaveLoadData.
+	Allows you to save properties of any class instance into a string,
+	and load the same properties from that string.
+
+	Properties are saved in plain text format, but hashed to prevent naive tampering.
+	If the saved properties are meant to be private, you should pripe the output through an encoder.
+
+	=>USAGE<=
+
+	1. Make your class extend the Serializable abstract class
+
+		> class MyClass extends Serializable
+		> 	var amount = 0
+
+	2. Implement `serializeProperties`, saving all properties that you want by using `addProperty`.
+	   The first parameter is the name with which you will load the property later.
+
+		> override function serializeProperties()
+		>	addProperty("amount", amount)
+
+	3.  Implement `deserializeProperties`, loading all saved properties using the type specific `getXProperty` function,
+		and assigning it to the variable that was originally saved.
+
+		> override function deserializeProperties()
+		>	amount = getIntProperty("amount")
+
+	4. That's all the setup required. You can now save any instance to a `ChunkedString` using `serialize`
+
+		> let myClass = new MyClass()
+		> let chunkedString = myClass.serialize()
+
+	   and load it again from a `ChunkedString` using `deserialize`.
+
+	   > let myClass2 = new MyClass()
+	   > myClass.deserialize(chunkedString)
+
+	=>BEHIND THE SCENES<=
+
+	The properties are saved in a RLE format which can be defined as follows:
+
+		T					 	   LLL							N*  		=  				V*
+		^							^							^			^				^
+	  1 letter type token  | 3 letters run length  |  [1-10] prop name | equal sign | [1-180] prop value
+
+	Repeated for each property, with the hash being appended at the end.
+
+*/
+
+constant MAX_NAME_LENGTH = 10
+constant LEN_LENGTH = 3
+constant HASH_LENGTH = 10
+
+constant INT_TOKEN = "i"
+constant REAL_TOKEN = "r"
+constant STRING_TOKEN = "s"
+
+public abstract class Serializable
+    private ChunkedString serOutput = null
+    private HashMap<int, int> intMap = null
+    private HashMap<int, real> realMap = null
+    private HashMap<int, string> stringMap = null
+    var hash = 0
+
+    function addProperty(string name, int value)
+        if name.length() > MAX_NAME_LENGTH
+            error("name " + name + " too long.")
+
+        let prop = name + "=" + value.toString()
+        var propLen = prop.length().toString()
+        while propLen.length() < LEN_LENGTH
+            propLen = "0" + propLen
+
+        hash += prop.getHash()
+        serOutput.append(INT_TOKEN + propLen + prop)
+
+    function addProperty(string name, real value)
+        if name.length() > MAX_NAME_LENGTH
+            error("name " + name + " too long.")
+
+        let prop = name + "=" + value.toString()
+        var propLen = prop.length().toString()
+        while propLen.length() < LEN_LENGTH
+            propLen = "0" + propLen
+
+        hash += prop.getHash()
+        serOutput.append(REAL_TOKEN + propLen + prop)
+
+    function addProperty(string name, string value)
+        if name.length() > MAX_NAME_LENGTH
+            error("name " + name + " too long.")
+
+        let prop = name + "=" + value
+        var propLen = prop.length().toString()
+        while propLen.length() < LEN_LENGTH
+            propLen = "0" + propLen
+
+        hash += prop.getHash()
+        serOutput.append(STRING_TOKEN + propLen + prop)
+
+
+    function getIntProperty(string name) returns int
+        return intMap.get(name.getHash())
+
+    function getRealProperty(string name) returns real
+        return realMap.get(name.getHash())
+
+    function getStringProperty(string name) returns string
+        return stringMap.get(name.getHash())
+
+    function serialize() returns ChunkedString
+        hash = 0
+        serOutput = new ChunkedString()
+        serializeProperties()
+
+        serOutput.append(padHash())
+        return serOutput
+
+    function padHash() returns string
+        var hashStr = hash.toString()
+        if hashStr.length() > HASH_LENGTH
+            hashStr = hashStr.substring(0, HASH_LENGTH)
+        while hashStr.length() < HASH_LENGTH
+            hashStr = "0" + hashStr
+        return hashStr
+
+    function deserialize(ChunkedString input)
+        hash = 0
+        intMap = new HashMap<int, int>()
+        realMap = new HashMap<int, real>()
+        stringMap = new HashMap<int, string>()
+        parseInput(input)
+
+        let hashStr = input.getUnsafeSubString(input.length() - HASH_LENGTH, input.length())
+        if hashStr == padHash()
+            deserializeProperties()
+
+        destroy intMap
+        destroy realMap
+        destroy stringMap
+        intMap = null
+        realMap = null
+        stringMap = null
+
+
+    private function parseInput(ChunkedString input)
+        var pointer = 0
+
+        while pointer + HASH_LENGTH < input.length()
+            let token = input.getUnsafeSubString(pointer, pointer + 1)
+            pointer += 1
+            let length = input.getUnsafeSubString(pointer, pointer + LEN_LENGTH).toInt()
+            pointer += LEN_LENGTH
+            parseProperty(token, input.getUnsafeSubString(pointer, pointer + length))
+            pointer += length
+
+    private function parseProperty(string token, string input)
+        hash += input.getHash()
+        let indexOfEqual = input.indexOf("=")
+        let name = input.substring(0, indexOfEqual).getHash()
+        let value = input.substring(indexOfEqual + 1)
+        switch token
+            case INT_TOKEN
+                intMap.put(name, value.toInt())
+            case REAL_TOKEN
+                realMap.put(name, value.toReal())
+            case STRING_TOKEN
+                stringMap.put(name, value)
+
+
+
+
+    abstract function serializeProperties()
+
+    abstract function deserializeProperties()

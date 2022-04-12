@@ -2,16 +2,14 @@ package EventHelper
 import NoWurst
 import HashMap
 import _Handles
+import Annotations
 
 constant rectMap = new HashMap<trigger, rect>()
 constant regionMap = new HashMap<region, int>()
 constant triggerData = new Table()
 
 public function trigger.registerUnitInRangeSource(unit whichUnit, real range, boolexpr filter) returns event
-	int h = GetHandleId(this)
-	int u = GetHandleId(whichUnit)
-	triggerData.saveUnit(h,whichUnit)
-	triggerData.saveTrigger(u,this)
+	triggerData..saveUnit(this.getHandleId(), whichUnit)..saveTrigger(whichUnit.getHandleId(), this)
 	return TriggerRegisterUnitInRange(this, whichUnit, range, filter)
 
 public function trigger.registerUnitInRangeSource(unit whichUnit, real range) returns event
@@ -21,57 +19,314 @@ public function trigger.getSource() returns unit
 	return triggerData.loadUnit(GetHandleId(this))
 
 public function unit.clearRegister()
-	int h = GetHandleId(this)
-	if triggerData.loadTrigger(h) == null
+	let handleId = this.getHandleId()
+	if triggerData.loadTrigger(handleId) == null
 		return
-	trigger t = triggerData.loadTrigger(h)
-	int th = GetHandleId(t)
-	DestroyTrigger(t)
-	triggerData.removeHandle(h)
-	triggerData.removeHandle(th)
-	
+	let t = triggerData.loadTrigger(handleId)
+	let trigHandleId = t.getHandleId()
+	t.destr()
+	triggerData..removeHandle(handleId)..removeHandle(trigHandleId)
+
+@deprecated("Use EventData.getSpellTargetPos(). ")
 public function getSpellTargetPos() returns vec2
 	return vec2(GetSpellTargetX(), GetSpellTargetY())
-	
+
+@deprecated("Use EventData.getOrderPos(). ")
 public function getOrderPos() returns vec2
 	return vec2(GetOrderPointX(), GetOrderPointY())
 
+@deprecated("Use EventData.getOrderTargetPos(). ")
 public function getOrderTargetPos() returns vec2
 	return GetOrderTarget().getPos()
-	
-public function trigger.registerRectEnterEventSource( rect r )
+
+public function trigger.registerRectEnterEventSource(rect r)
 	TriggerRegisterEnterRectSimple(this, r)
 	rectMap.put(this, r)
-	
-public function trigger.registerRectLeaveEventSource( rect r )
+
+public function trigger.registerRectLeaveEventSource(rect r)
 	TriggerRegisterLeaveRectSimple(this, r)
 	rectMap.put(this, r)
 
 public function trigger.getSourceRect() returns rect
 	return rectMap.get(this)
-	
+
 public function trigger.unregisterRectEvent()
 	rectMap.remove(this)
-	
-public function vec2.isInRegion(region r) returns boolean
-	return IsPointInRegion(r, this.x, this.y)
-	
-public function region.addRect(rect r)
-	RegionAddRect(this, r)
-	
+
 public function region.setRegionData(int data)
 	regionMap.put(this, data)
 
 public function region.loadRegionData() returns int
 	return regionMap.get(this)
-	
+
 public function region.removeRegionData()
 	regionMap.remove(this)
 
 public function eventid.isPlayerunitEvent() returns boolean
 	let eventId = this.getHandleId()
-	return (eventId >= 18 and eventId <= 51) or (eventId >= 269 and eventId <= 277)
+	return (eventId >= 18 and eventId <= 51) or (eventId >= 269 and eventId <= 277) or eventId == 315 or eventId == 308
 
 public function eventid.isKeyboardEvent() returns boolean
 	let eventId = this.getHandleId()
 	return (eventId >= 261 and eventId <= 268) or (eventId == 17)
+
+/** This class exposes all Getters and Setters for trigger events.
+	Note: As these functions simply wrap natives, they will only return proper values during event callbacks (actions/conditions).
+	To use these values in a subsequent closure, save the event data in a variable at the time the event was fired. */
+public class EventData
+	private construct()
+	/** Get trigger event. */
+	static function getEventId() returns eventid
+		return GetTriggerEventId()
+
+	/** Check if current trigger event is Playerunit Event. */
+	static function isPlayerunitEvent() returns boolean
+		let eventId = EventData.getEventId().getHandleId()
+		return (eventId >= 18 and eventId <= 51) or (eventId >= 269 and eventId <= 277)
+
+	/** Check if current trigger event is Keyboard Event. */
+	static function isKeyboardEvent() returns boolean
+		let eventId = EventData.getEventId().getHandleId()
+		return (eventId >= 261 and eventId <= 268) or (eventId == 17)
+
+	static function getTriggerUnit() returns unit
+		return GetTriggerUnit()
+
+	static function getEnteringUnit() returns unit
+		return GetEnteringUnit()
+
+	static function getLeavingUnit() returns unit
+		return GetLeavingUnit()
+
+	static function getLevelingUnit() returns unit
+		return GetLevelingUnit()
+
+	static function getLearningUnit() returns unit
+		return GetLearningUnit()
+
+	static function getRevivableUnit() returns unit
+		return GetRevivableUnit()
+
+	static function getRevivingUnit() returns unit
+		return GetRevivingUnit()
+
+	static function getAttackerUnit() returns unit
+		return GetAttacker()
+
+	static function getRescuerUnit() returns unit
+		return GetRescuer()
+
+	static function getDyingUnit() returns unit
+		return GetDyingUnit()
+
+	static function getKillingUnit() returns unit
+		return GetKillingUnit()
+
+	static function getDecayingUnit() returns unit
+		return GetDecayingUnit()
+
+	/*static function getUnitSelected() returns unit
+		return GetSelectedUnit()*/ // Commented out in common.j
+
+	/** Returns the unit which constructs the structure.*/
+	static function getConstructingStructure() returns unit
+		return GetConstructingStructure()
+
+	/** Returns the building which is being constructed.*/
+	static function getConstructedStructure() returns unit
+		return GetConstructedStructure()
+
+	/** Returns the building which was being constructed but as cancelled.*/
+	static function getCancelledStructure() returns unit
+		return GetCancelledStructure()
+
+	static function getResearchingUnit() returns unit
+		return GetResearchingUnit()
+
+	static function getTrainedUnit() returns unit
+		return GetTrainedUnit()
+
+	static function getDetectedUnit() returns unit
+		return GetDetectedUnit()
+
+	@deprecated("Use getSummoningUnit")
+	static function getSummouningUnit() returns unit
+		return GetSummoningUnit()
+
+	@deprecated("Use getSummonedUnit")
+	static function getSummounedUnit() returns unit
+		return GetSummonedUnit()
+
+	static function getSummoningUnit() returns unit
+		return GetSummoningUnit()
+
+	static function getSummonedUnit() returns unit
+		return GetSummonedUnit()
+
+	/** Get unit that is transporting. */
+	static function getTransportUnit() returns unit
+		return GetTransportUnit()
+
+	/** Get unit thas is loaded to transport. */
+	static function getLoadedUnit() returns unit
+		return GetLoadedUnit()
+
+	static function getSellingUnit() returns unit
+		return GetSellingUnit()
+
+	static function getSoldUnit() returns unit
+		return GetSoldUnit()
+
+	static function getBuyingUnit() returns unit
+		return GetBuyingUnit()
+
+	static function getChangingUnit() returns unit
+		return GetChangingUnit()
+
+	/**
+		EVENT_PLAYER_UNIT_DROP_ITEM
+		EVENT_PLAYER_UNIT_PICKUP_ITEM
+		EVENT_PLAYER_UNIT_USE_ITEM
+
+		EVENT_UNIT_DROP_ITEM
+		EVENT_UNIT_PICKUP_ITEM
+		EVENT_UNIT_USE_ITEM
+	*/
+	static function getManipulatingUnit() returns unit
+		return GetManipulatingUnit()
+
+	static function getOrderedUnit() returns unit
+		return GetOrderedUnit()
+
+	static function getOrderTargetUnit() returns unit
+		return GetOrderTargetUnit()
+
+	static function getSpellAbilityUnit() returns unit
+		return GetSpellAbilityUnit()
+
+	static function getSpellTargetUnit() returns unit
+		return GetSpellTargetUnit()
+
+	static function getEventDamageSource() returns unit
+		return GetEventDamageSource()
+
+	static function getEventTargetUnit() returns unit
+		return GetEventTargetUnit()
+
+	static function getLearnedSkill() returns int
+		return GetLearnedSkill()
+
+	static function getLearnedSkillLevel() returns int
+		return GetLearnedSkillLevel()
+
+	static function getResearchedType() returns int
+		return GetResearched()
+
+	static function getTrainedUnitType() returns int
+		return GetTrainedUnitType()
+
+	static function getIssuedOrderId() returns int
+		return GetIssuedOrderId()
+
+	static function getSpellAbilityId() returns int
+		return GetSpellAbilityId()
+
+	/** Return damage done by Unit to another target unit. */
+	static function getEventDamage() returns real
+		return GetEventDamage()
+
+	static function getOrderX() returns real
+		return GetOrderPointX()
+
+	static function getOrderY() returns real
+		return GetOrderPointY()
+
+	static function getSpellTargetX() returns real
+		return GetSpellTargetX()
+
+	static function getSpellTargetY() returns real
+		return GetSpellTargetY()
+
+	static function getSaveFilename() returns string
+		return GetSaveBasicFilename()
+
+	static function getChatMessage() returns string
+		return GetEventPlayerChatString()
+
+	static function getChatMessageMatched() returns string
+		return GetEventPlayerChatStringMatched()
+
+	static function getSoldItem() returns item
+		return GetSoldItem()
+
+	static function getManipulatedItem() returns item
+		return GetManipulatedItem()
+
+	static function getOrderTargetItem() returns item
+		return GetOrderTargetItem()
+
+	static function getSpellTargetItem() returns item
+		return GetSpellTargetItem()
+
+	static function getTriggerPlayer() returns player
+		return GetTriggerPlayer()
+
+	static function getWinningPlayer() returns player
+		return GetWinningPlayer()
+
+	static function getDetectingPlayer() returns player
+		return GetEventDetectingPlayer()
+
+	static function getTournamentFinishPlayer() returns player
+		return GetTournamentFinishNowPlayer()
+
+	static function getChangingUnitPreviousOwnerPlayer() returns player
+		return GetChangingUnitPrevOwner()
+
+	static function getPlayerState() returns playerstate
+		return GetEventPlayerState()
+
+	static function getSpellAbility() returns ability
+		return GetSpellAbility()
+
+	static function getTriggerDestructable() returns destructable
+		return GetTriggerDestructable()
+
+	static function getOrderTargetDestructable() returns destructable
+		return GetOrderTargetDestructable()
+
+	static function getSpellTargetDestructable() returns destructable
+		return GetSpellTargetDestructable()
+
+	static function getClickedDialog() returns dialog
+		return GetClickedDialog()
+
+	static function getClickedDialogButton() returns button
+		return GetClickedButton()
+
+	static function getGameState() returns gamestate
+		return GetEventGameState()
+
+	static function getTriggerRegion() returns region
+		return GetTriggeringRegion()
+
+	static function getExpiredTimer() returns timer
+		return GetExpiredTimer()
+
+	static function getTriggerWidget() returns widget
+		return GetTriggerWidget()
+
+	static function getOrderTargetWidget() returns widget
+		return GetOrderTarget()
+
+	static function getOrderPos() returns vec2
+		return vec2(GetOrderPointX(), GetOrderPointY())
+
+	static function getOrderTargetPos() returns vec2
+		return EventData.getOrderTargetUnit().getPos()
+
+	static function getAbilityTargetPos() returns vec2
+		return vec2(GetSpellTargetX(), GetSpellTargetY())
+
+	static function getSpellTargetPos() returns vec2
+		return EventData.getAbilityTargetPos()

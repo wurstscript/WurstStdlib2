@@ -1,0 +1,128 @@
+package ChunkedString
+import Table
+import Annotations
+
+/*	A chunked string splits up big strings into chunks,
+	which is used to circumvent the maximum string length limit
+	and to prepare data for chunked storage, e.g. for FileIO.
+	Make sure to flush the chunked string when done writing to it,
+	so the unfilled buffer gets written as well.
+
+	Write Data:
+	>	let cstring = new ChunkedString()
+	>	cstring.append("someString")
+	>	cstring.append("someOtherString")
+	>	cstring.flush()
+
+	Read Data Sequentially:
+	>	while cstring.hasChunk()
+	>		let chunk = cstring.readChunk()
+	>		Log.info("read chunk: " + chunk)
+
+	Read Data iteratively:
+	>	for i = 1 to cstring.getChunkCount()
+	>		let chunk = cstring.getChunk(i)
+	>		Log.info("read chunk: " + chunk)
+*/
+/** Maximum length of one chunk */
+@configurable public constant DEFAULT_CHUNK_SIZE = 200
+
+public class ChunkedString
+	private Table table = new Table()
+	private var chunkSize = DEFAULT_CHUNK_SIZE
+	protected var chunkCount = 0
+	private var readIndex = -1
+	protected var buffer = ""
+
+	construct()
+
+	construct(int chunkSize)
+		this.chunkSize = chunkSize
+
+	function append(string pdata)
+		var data = pdata
+
+		while true
+			let remain = chunkSize - buffer.length()
+			buffer += data.substring(0, remain)
+			data = data.substring(min(remain, data.length()))
+			if data.length() == 0
+				break
+			table.saveString(chunkCount, buffer)
+			buffer = ""
+			chunkCount++
+
+	function hasChunk() returns boolean
+		return readIndex < chunkCount
+
+	function readChunk() returns string
+		readIndex++
+		return getChunk(readIndex)
+
+	function resetRead()
+		readIndex = -1
+
+	function getChunk(int index) returns string
+		if index == chunkCount
+			return buffer
+		return table.loadString(index)
+
+	/** Returns the number of chunks in the string. */
+	function getChunkCount() returns int
+		return chunkCount + 1
+
+	/** Returns the length of every chunk in the string. The last chunk's size may be smaller than this number. */
+	function getChunkSize() returns int
+		return chunkSize
+
+	/** Calculates the length of the whole string. */
+	function length() returns int
+		return chunkCount * chunkSize + buffer.length()
+
+	/** Concatenates all chunks into one string.
+		This is unsafe because the chunked length might be
+		above the maximum allowed string length. */
+	function getUnsafeString() returns string
+		var out = ""
+		for i = 0 to chunkCount
+			out += getChunk(i)
+		return out
+
+	/** Concatenates all chunks required to return the requested substring.
+	This is unsafe because the chunked length might be
+	above the maximum allowed string length. */
+	function getUnsafeSubString(int startIndex, int endIndex) returns string
+		var out = ""
+		let startChunk = startIndex div chunkSize
+		let lastChunk = endIndex div chunkSize
+		for i = startChunk to lastChunk
+			if i == startChunk
+				out += getChunk(i).substring(startIndex - startChunk * chunkSize, min(endIndex, chunkSize))
+			else if i == lastChunk
+				out += getChunk(i).substring(0, endIndex - lastChunk * chunkSize)
+			else
+				out += getChunk(i)
+
+		return out
+
+	ondestroy
+		destroy table
+
+@Test
+function chunkedStringTest()
+	let cstring = new ChunkedString(5)
+	cstring.append("abc")
+	cstring.append("def")
+
+	cstring.chunkCount.assertEquals(1)
+	cstring.buffer.assertEquals("f")
+
+	cstring.append("ghijklmnopq")
+
+	cstring.chunkCount.assertEquals(3)
+	cstring.buffer.assertEquals("pq")
+
+	cstring.getUnsafeString().assertEquals("abcdefghijklmnopq")
+	cstring.getUnsafeSubString(4, 12).assertEquals("efghijkl")
+	cstring.getUnsafeSubString(0, 3).assertEquals("abc")
+	cstring.getUnsafeSubString(15, 17).assertEquals("pq")

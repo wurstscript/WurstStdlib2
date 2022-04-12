@@ -4,8 +4,21 @@ import public Colors
 import Vectors
 import ErrorHandling
 import Player
+import Annotations
 
 public enum Layer
+	L1
+	L3
+	L2
+	L4
+
+/** ImageLayer influences the order in which the images are drawn above one another:
+L1 ("Selection") is drawn above all other ImageLayers.
+L2 ("Indicator") is drawn above ImageLayer 4, but below 1 and 3.
+L3 ("Occlusion Mask") is drawn above ImageLayer 4 and 2 and below ImageLayer 1.
+L4 ("Ubersplat") is drawn below every other layer. Images of this layer are additionally affected by time of day and the fog of war (only for tinting).
+Multiple images with the same layer are drawn in their order of creation - first image below all others, last image above all others.*/
+public enum ImageLayer
 	L1
 	L3
 	L2
@@ -15,11 +28,15 @@ public enum Layer
 public function createImage(string path, vec2 pos, real sizeX, real sizeY) returns image
 	return CreateImage(path, sizeX, sizeY, 0, pos.x, pos.y, 0, sizeX / 2, sizeY / 2, 0, 1)
 
-/** Create an image at the target location, the Image has to be a blp, with transparent borders.
-The layer specifies which image overlaps another: Level 1 is always on the top, and level 4 always in the background. Use the enums "Layer.LX" */
+@deprecated("use ImageLayer instead of Layer.")
 public function createImage(string path, vec2 pos, real sizeX, real sizeY, Layer layer) returns image
 	return CreateImage(path, sizeX, sizeY, 0, pos.x, pos.y, 0, sizeX / 2, sizeY / 2, 0, layer castTo int + 1)
-			
+
+/** Create an image at the target location, the Image has to be a blp, with transparent borders.
+The layer specifies which image overlaps another: Level 1 is always on the top, and level 4 always in the background. Use the enums "ImageLayer.LX" */
+public function createImage(string path, vec2 pos, real sizeX, real sizeY, ImageLayer layer) returns image
+	return CreateImage(path, sizeX, sizeY, 0, pos.x, pos.y, 0, sizeX / 2, sizeY / 2, 0, layer castTo int + 1)
+
 /** Shows the image */
 public function image.show()
 	SetImageRenderAlways(this, true)
@@ -27,46 +44,52 @@ public function image.show()
 /** Hides the image */
 public function image.hide()
 	SetImageRenderAlways(this, false)
-	
+
 /** Shows the image for a specific player  */
 public function image.showForPlayer(player p)
 	if localPlayer == p
 		SetImageRenderAlways(this, true)
-	
+
 /** Hides the image for a specific player */
 public function image.hideForPlayer(player p)
 	if localPlayer == p
-		SetImageRenderAlways(this, true)
-		
+		SetImageRenderAlways(this, false)
+
 /** Set the image 2D position */
 public function image.setPos(vec2 pos)
 	SetImagePosition(this, pos.x, pos.y, 0)
 
-/** Set the image 3D position */	
+/** Set the image 3D position */
 public function image.setPos(vec3 pos)
 	SetImagePosition(this, pos.x, pos.y, 0)
 	SetImageConstantHeight(this, true, pos.z)
-	
-/** Set the image height */	
+
+/** Set the image height */
 public function image.setHeight(real z)
 	SetImageConstantHeight(this, true, z)
-	
-/** Set the image color by using the colorA tuple */		
+
+/** Wrap the image on the terrain */
+public function image.wrap()
+	SetImageConstantHeight(this, false, 0)
+
+/** Set the image color by using the colorA tuple */
 public function image.setColor(colorA col)
 	SetImageColor(this, col.red, col.green, col.blue, col.alpha)
-	
-/** Set the image color by using the color tuple */		
+
+/** Set the image color by using the color tuple */
 public function image.setColor(color col)
 	SetImageColor(this, col.red, col.green, col.blue, 255)
-	
-/** Set the image layer (use the constants) */		
+
+@deprecated("use ImageLayer instead of Layer.")
 public function image.setLevel(Layer layer)
 	SetImageType(this, layer castTo int + 1)
-	
-/** Destroy the image */		
-public function image.remove()
-	if this != null
-		DestroyImage(this)
-	else
-		error("Nullpointer exeption by destroying an image")
 
+/** Set the image layer (use the constants) */
+public function image.setLevel(ImageLayer layer)
+	SetImageType(this, layer castTo int + 1)
+
+/** Destroy the image */
+public function image.remove()
+	if this == null
+		error("Nullpointer exeption by destroying an image")
+	DestroyImage(this)

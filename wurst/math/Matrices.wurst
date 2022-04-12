@@ -1,0 +1,578 @@
+package Matrices
+import NoWurst
+import public Vectors
+import Maths
+import ErrorHandling
+import Wurstunit
+
+/** Matrix 2x2
+00 01
+10 11
+Each column represents an axis in a rotation matrix.
+*/
+public tuple mat2(real m00, real m01, real m10, real m11)
+
+public constant ZERO22 = mat2(0, 0, 0, 0)
+
+public constant IDENTITY22 = mat2(  1, 0,
+									0, 1)
+
+tuple inverseresult22(bool success, mat2 matrix)
+
+/** Matrix 3x3
+00 01 02
+10 11 12
+20 21 22
+Each column represents an axis in a rotation matrix.
+*/
+public tuple mat3(  real m00, real m01, real m02,
+					real m10, real m11, real m12,
+					real m20, real m21, real m22)
+
+public constant ZERO33 = mat3(0, 0, 0, 0, 0, 0, 0, 0, 0)
+
+public constant IDENTITY33 = mat3(  1, 0, 0,
+									0, 1, 0,
+									0, 0, 1)
+
+tuple inverseresult33(bool success, mat3 matrix)
+
+
+/** Matrix 4x4
+00 01 02 03
+10 11 12 13
+20 21 22 23
+30 31 32 33
+*/
+public tuple mat4(  real m00, real m01, real m02, real m03,
+					real m10, real m11, real m12, real m13,
+					real m20, real m21, real m22, real m23,
+					real m30, real m31, real m32, real m33)
+
+public constant ZERO44 = mat4(  	0, 0, 0, 0,
+									0, 0, 0, 0,
+									0, 0, 0, 0,
+									0, 0, 0, 0)
+
+public constant IDENTITY44 = mat4(  1, 0, 0, 0,
+									0, 1, 0, 0,
+									0, 0, 1, 0,
+									0, 0, 0, 1)
+
+tuple inverseresult44(bool success, mat4 matrix)
+
+constant EPSILON = 0.001
+
+/* =========== 2X2 MATRIX =========== */
+
+public function mat2.op_plus(mat2 m) returns mat2
+	return mat2(this.m00 + m.m00,   this.m01 + m.m01,
+				this.m10 + m.m10,   this.m11 + m.m11)
+
+public function mat2.op_minus(mat2 m) returns mat2
+	return mat2(this.m00 - m.m00,   this.m01 - m.m01,
+				this.m10 - m.m10,   this.m11 - m.m11)
+
+public function mat2.op_minus(real scalar) returns mat2
+	return mat2(this.m00 - scalar,  this.m01 - scalar,
+				this.m10 - scalar,  this.m11 - scalar)
+
+public function mat2.op_plus(real scalar) returns mat2
+	return mat2(this.m00 + scalar,  this.m01 + scalar,
+				this.m10 + scalar,  this.m11 + scalar)
+
+public function mat2.op_mult(real scalar) returns mat2
+	return mat2(this.m00 * scalar,	this.m01 * scalar,
+				this.m10 * scalar,	this.m11 * scalar)
+
+public function real.op_mult(mat2 m) returns mat2
+	return m * this
+
+/** Matrix multiplication is not commutative that means matrix * vect is not the same as vec * matrix. */
+public function mat2.op_mult(vec2 v) returns vec2
+	return vec2(this.m00 * v.x + this.m01 * v.y, this.m10 * v.x + this.m11 * v.y)
+
+/** Matrix multiplication is not commutative that means matrix * vect is not the same as vec * matrix. */
+public function vec2.op_mult(mat2 m) returns vec2
+	return vec2(this.x * m.m00 + this.y * m.m10, this.x * m.m01 + this.y * m.m11)
+
+public function mat2.op_mult(mat2 m) returns mat2
+	return mat2(this.m00 * m.m00 + this.m01 * m.m10,	this.m00 * m.m01 + this.m01 * m.m11,
+				this.m10 * m.m00 + this.m11 * m.m10,	this.m10 * m.m01 + this.m11 * m.m11)
+
+/** Returns matrix' column by index as a vector or rises an error if doesn't exist. */
+public function mat2.col(int index) returns vec2
+	vec2 result = ZERO2
+	switch index
+		case 0
+			result = vec2(this.m00, this.m10)
+		case 1
+			result = vec2(this.m01, this.m11)
+		default
+			error("Invalid call mat2.col. Index out of range.")
+	return result
+
+/** Returns matrix' row by index as a vector or rises an error if doesn't exist. */
+public function mat2.row(int index) returns vec2
+	vec2 result = ZERO2
+	switch index
+		case 0
+			result = vec2(this.m00, this.m01)
+		case 1
+			result = vec2(this.m10, this.m11)
+		default
+			error("Invalid call mat2.row. Index out of range.")
+	return result
+
+public function mat2.determinant() returns real
+	return this.m00 * this.m11 - this.m01 * this.m10
+
+/** Flips the matrix over its main diagonale.
+Result of transposing for rotation matrix is its inverse matrix. */
+public function mat2.transpose() returns mat2
+	return mat2(this.m00, this.m10,
+				this.m01, this.m11)
+
+/** Finds inverse matrix.
+Returns tuple inverseresult22(bool success, mat2 matrix) where 'success' is true if the inverse matrix exists and 'matrix' is the inverse matrix.
+If there's no inverse matrix 'success' is false and 'matrix' is zero matrix. */
+public function mat2.inverse() returns inverseresult22
+	let d = this.determinant()
+	var inverse = inverseresult22(d.abs() > EPSILON, ZERO22)
+	if inverse.success
+		let tmp = mat2( this.m11, -this.m01,
+						-this.m10, this.m00)
+		inverse.matrix = 1 / d * tmp
+	return inverse
+
+public function mat2.toString() returns string
+	return "Matrix 2x2\n{0} {1}\n{2} {3}".format(
+		this.m00.toString(), this.m01.toString(),
+		this.m10.toString(), this.m11.toString())
+
+/** Creates rotation matrix from angle. */
+public function angle.toRotation() returns mat2
+	return mat2(this.cos(), -this.sin(),
+				this.sin(), this.cos())
+
+/** Creates scaling 2x2 matrix from a vector. */
+public function vec2.toScaling() returns mat2
+	return mat2(this.x, 0,
+				0,	  this.y)
+
+/* =========== 3X3 MATRIX =========== */
+
+public function mat3.op_plus(mat3 m) returns mat3
+	return mat3(this.m00 + m.m00,	this.m01 + m.m01,	this.m02 + m.m02,
+				this.m10 + m.m10,	this.m11 + m.m11,	this.m12 + m.m12,
+				this.m20 + m.m20,	this.m21 + m.m21,	this.m22 + m.m22)
+
+public function mat3.op_plus(real scalar) returns mat3
+	return mat3(this.m00 + scalar,	this.m01 + scalar,	this.m02 + scalar,
+				this.m10 + scalar,	this.m11 + scalar,	this.m12 + scalar,
+				this.m20 + scalar,	this.m21 + scalar,	this.m22 + scalar)
+
+public function mat3.op_minus(mat3 m) returns mat3
+	return mat3(this.m00 - m.m00,	this.m01 - m.m01,	this.m02 - m.m02,
+				this.m10 - m.m10,	this.m11 - m.m11,	this.m12 - m.m12,
+				this.m20 - m.m20,	this.m21 - m.m21,	this.m22 - m.m22)
+
+public function mat3.op_minus(real scalar) returns mat3
+	return mat3(this.m00 - scalar,	this.m01 - scalar,	this.m02 - scalar,
+				this.m10 - scalar,	this.m11 - scalar,	this.m12 - scalar,
+				this.m20 - scalar,	this.m21 - scalar,	this.m22 - scalar)
+
+public function mat3.op_mult(real scalar) returns mat3
+	return mat3(this.m00 * scalar,	this.m01 * scalar,	this.m02 * scalar,
+				this.m10 * scalar,	this.m11 * scalar,	this.m12 * scalar,
+				this.m20 * scalar,	this.m21 * scalar,	this.m22 * scalar)
+
+public function real.op_mult(mat3 m) returns mat3
+	return m * this
+
+/** Matrix multiplication is not commutative that means matrix * vect is not the same as vec * matrix. */
+public function mat3.op_mult(vec3 v) returns vec3
+	return vec3(this.m00 * v.x + this.m01 * v.y + this.m02 * v.z,
+				this.m10 * v.x + this.m11 * v.y + this.m12 * v.z,
+				this.m20 * v.x + this.m21 * v.y + this.m22 * v.z)
+
+public function vec3.op_mult(mat3 m) returns vec3
+	return vec3(this.x * m.m00 + this.y * m.m10 + this.z * m.m20,
+				this.x * m.m01 + this.y * m.m11 + this.z * m.m21,
+				this.x * m.m02 + this.y * m.m12 + this.z * m.m22)
+
+public function mat3.op_mult(mat3 m) returns mat3
+	return mat3(this.m00 * m.m00 + this.m01 * m.m10 + this.m02 * m.m20,
+				this.m00 * m.m01 + this.m01 * m.m11 + this.m02 * m.m21,
+				this.m00 * m.m02 + this.m01 * m.m12 + this.m02 * m.m22,
+
+				this.m10 * m.m00 + this.m11 * m.m10 + this.m12 * m.m20,
+				this.m10 * m.m01 + this.m11 * m.m11 + this.m12 * m.m21,
+				this.m10 * m.m02 + this.m11 * m.m12 + this.m12 * m.m22,
+
+				this.m20 * m.m00 + this.m21 * m.m10 + this.m22 * m.m20,
+				this.m20 * m.m01 + this.m21 * m.m11 + this.m22 * m.m21,
+				this.m20 * m.m02 + this.m21 * m.m12 + this.m22 * m.m22)
+
+public var tmp_mat = ZERO44
+/** Due to parameter restriction you need to set `tmp_mat` as one matrix before multiplying. **/
+public function mult(mat4 m) returns mat4
+	return mat4(tmp_mat.m00 * m.m00 + tmp_mat.m01 * m.m10 + tmp_mat.m02 * m.m20 + tmp_mat.m03 * m.m30,
+				tmp_mat.m00 * m.m01 + tmp_mat.m01 * m.m11 + tmp_mat.m02 * m.m21 + tmp_mat.m03 * m.m31,
+				tmp_mat.m00 * m.m02 + tmp_mat.m01 * m.m12 + tmp_mat.m02 * m.m22 + tmp_mat.m03 * m.m32,
+				tmp_mat.m00 * m.m03 + tmp_mat.m01 * m.m13 + tmp_mat.m02 * m.m23 + tmp_mat.m03 * m.m33,
+
+				tmp_mat.m10 * m.m00 + tmp_mat.m11 * m.m10 + tmp_mat.m12 * m.m20 + tmp_mat.m13 * m.m30,
+				tmp_mat.m10 * m.m01 + tmp_mat.m11 * m.m11 + tmp_mat.m12 * m.m21 + tmp_mat.m13 * m.m31,
+				tmp_mat.m10 * m.m02 + tmp_mat.m11 * m.m12 + tmp_mat.m12 * m.m22 + tmp_mat.m13 * m.m32,
+				tmp_mat.m10 * m.m03 + tmp_mat.m11 * m.m13 + tmp_mat.m12 * m.m23 + tmp_mat.m13 * m.m33,
+
+				tmp_mat.m20 * m.m00 + tmp_mat.m21 * m.m10 + tmp_mat.m22 * m.m20 + tmp_mat.m23 * m.m30,
+				tmp_mat.m20 * m.m01 + tmp_mat.m21 * m.m11 + tmp_mat.m22 * m.m21 + tmp_mat.m23 * m.m31,
+				tmp_mat.m20 * m.m02 + tmp_mat.m21 * m.m12 + tmp_mat.m22 * m.m22 + tmp_mat.m23 * m.m32,
+				tmp_mat.m20 * m.m03 + tmp_mat.m21 * m.m13 + tmp_mat.m22 * m.m23 + tmp_mat.m23 * m.m33,
+
+				tmp_mat.m30 * m.m00 + tmp_mat.m31 * m.m10 + tmp_mat.m32 * m.m20 + tmp_mat.m33 * m.m30,
+				tmp_mat.m30 * m.m01 + tmp_mat.m31 * m.m11 + tmp_mat.m32 * m.m21 + tmp_mat.m33 * m.m31,
+				tmp_mat.m30 * m.m02 + tmp_mat.m31 * m.m12 + tmp_mat.m32 * m.m22 + tmp_mat.m33 * m.m32,
+				tmp_mat.m30 * m.m03 + tmp_mat.m31 * m.m13 + tmp_mat.m32 * m.m23 + tmp_mat.m33 * m.m33)
+
+/** Returns matrix' column by index as a vector or rises an error if doesn't exist. */
+public function mat3.col(int index) returns vec3
+	vec3 result = ZERO3
+	switch index
+		case 0
+			result = vec3(this.m00, this.m10, this.m20)
+		case 1
+			result = vec3(this.m01, this.m11, this.m21)
+		case 2
+			result = vec3(this.m02, this.m12, this.m22)
+		default
+			error("Invalid call mat3.col. Index out of range.")
+	return result
+
+/** Returns matrix' row by index as a vector or rises an error if doesn't exist. */
+public function mat3.row(int index) returns vec3
+	vec3 result = ZERO3
+	switch index
+		case 0
+			result = vec3(this.m00, this.m01, this.m02)
+		case 1
+			result = vec3(this.m10, this.m11, this.m12)
+		case 2
+			result = vec3(this.m20, this.m21, this.m22)
+		default
+			error("Invalid call mat3.row. Index out of range.")
+	return result
+
+/** The sum of the main diagonal terms. */
+public function mat3.trace() returns real
+	return this.m00 + this.m11 + this.m22
+
+public function mat3.determinant() returns real
+	return this.m00 * (this.m11 * this.m22 - this.m12 * this.m21)
+		 - this.m01 * (this.m10 * this.m22 - this.m12 * this.m20)
+		 + this.m02 * (this.m10 * this.m21 - this.m11 * this.m20)
+
+/** Flips the matrix over its main diagonale.
+Result of transposing for rotation matrix is its inverse matrix. */
+public function mat3.transpose() returns mat3
+	return mat3(this.m00,   this.m10,   this.m20,
+				this.m01,   this.m11,   this.m21,
+				this.m02,   this.m12,   this.m22)
+
+/** Finds inverse matrix.
+Returns tuple inverseresult33(bool success, mat3 matrix) where 'success' is true if the inverse matrix exists and 'matrix' is the inverse matrix.
+If there's no inverse matrix 'success' is false and 'matrix' is zero matrix. */
+public function mat3.inverse() returns inverseresult33
+	let d = this.determinant()
+	var inverse = inverseresult33(d.abs() > EPSILON, ZERO33)
+	if inverse.success
+		let tmp = mat3( this.m11 * this.m22 - this.m12 * this.m21,
+						this.m02 * this.m21 - this.m01 * this.m22,
+						this.m01 * this.m12 - this.m02 * this.m11,
+
+						this.m12 * this.m20 - this.m10 * this.m22,
+						this.m00 * this.m22 - this.m20 * this.m02,
+						this.m02 * this.m10 - this.m00 * this.m12,
+
+						this.m10 * this.m21 - this.m11 * this.m20,
+						this.m01 * this.m20 - this.m00 * this.m21,
+						this.m00 * this.m11 - this.m01 * this.m10)
+		inverse.matrix = 1 / d * tmp
+	return inverse
+
+/** Extracts Euler-angles (Tait-Bryan) in radians from a rotation matrix. Order of the result is Z-Y-X (Yaw-Pitch-Roll). */
+public function mat3.toEuler() returns vec3
+	real yaw
+	real pitch
+	real roll
+	if this.m20 > 1 - EPSILON
+		yaw = Atan2(-this.m12, -this.m02)
+		pitch = -PI / 2
+		roll = 0
+	else if this.m20 < EPSILON - 1
+		yaw = Atan2(this.m12, this.m02)
+		pitch = PI / 2
+		roll  = 0
+	else
+		yaw  = Atan2(this.m10, this.m00)
+		pitch = -Asin(this.m20)
+		roll = Atan2(this.m21 , this.m22)
+	return vec3(roll, pitch, yaw)
+
+public function mat3.toString() returns string
+	return "Matrix 3x3\n{0} {1} {2}\n{3} {4} {5}\n{6} {7} {8}".format(
+		this.m00.toString(), this.m01.toString(), this.m02.toString(),
+		this.m10.toString(), this.m11.toString(), this.m12.toString(),
+		this.m20.toString(), this.m21.toString(), this.m22.toString())
+
+/** Creates 3x3 rotation matrix from axis and angle. */
+public function vec3.toRotation(angle angl) returns mat3
+	let v = this.norm()
+	let x = v.x
+	let y = v.y
+	let z = v.z
+	let mcos = 1 - angl.cos()
+	let sin = angl.sin()
+	return mat3(1 + mcos * (x * x - 1),	 	-z * sin + mcos * x * y,	 y * sin + mcos * x * z,
+				z * sin + mcos * x * y,	  	1 + mcos * (y * y - 1),		-x * sin + mcos * y * z,
+				-y * sin + mcos * x * z,	x * sin + mcos * y * z,	 	1 + mcos * (z * z - 1))
+
+/** Creates 3x3 rotation matrix from axis and angle. */
+public function angle.toRotation(vec3 axis) returns mat3
+	return axis.toRotation(this)
+
+/** Creates 3x3 rotation matrix around X-axis from angle. */
+public function angle.toRotationX() returns mat3
+	return mat3(1, 0,		   0,
+				0, this.cos(), -this.sin(),
+				0, this.sin(), this.cos())
+
+/** Creates 3x3 rotation matrix around Y-axis from angle. */
+public function angle.toRotationY() returns mat3
+	return mat3(this.cos(),  0, this.sin(),
+				0,		   1, 0,
+				-this.sin(), 0, this.cos())
+
+/** Creates 3x3 rotation matrix around Z-axis from angle. */
+public function angle.toRotationZ() returns mat3
+	return mat3(this.cos(), -this.sin(), 0,
+				this.sin(), this.cos(),  0,
+				0,		  0,		   1)
+
+/** Creates  3x3 scaling matrix from a vector. */
+public function vec3.toScaling() returns mat3
+	return mat3(this.x, 0,	  0,
+				0,	  this.y, 0,
+				0,	  0,	  this.z)
+
+/** Creates translation 3x3 matrix from a vector that represents an offset.
+Use it with vec3 that represents 2D point. */
+public function vec2.toTranslation() returns mat3
+	return mat3(1, 0, this.x,
+				0, 1, this.y,
+				0, 0, 1)
+
+/** Multiplies this vector by the given matrix dividing by w, assuming the fourth (w) component of the vector is 1. This is
+	* mostly used to project/unproject vectors via a perspective projection matrix. **/
+public function vec3.project(mat4 matrix) returns vec3
+	let l_w = 1. / (this.x * matrix.m30 + this.y * matrix.m31 + this.z * matrix.m32 + matrix.m33)
+	return vec3((this.x * matrix.m00 + this.y * matrix.m01 + this.z * matrix.m02 + matrix.m03) * l_w,
+		(this.x * matrix.m10 + this.y * matrix.m11 + this.z * matrix.m12 + matrix.m13)
+		* l_w, (this.x * matrix.m20 + this.y * matrix.m21 + this.z * matrix.m22 + matrix.m23) * l_w)
+
+/** Sets the matrix to a projection matrix with a near- and far plane, a field of view in degrees and an aspect ratio. Note that
+ * the field of view specified is the angle in degrees for the height, the field of view for the width will be calculated
+ * according to the aspect ratio.
+ */
+public function getProjection(real near, real far, real fovy, real aspectRatio) returns mat4
+	var result = IDENTITY44
+	let l_fd = (1.0 / ((fovy * (PI / 180)) / 2.0).tan())
+	let l_a1 = (far + near) / (near - far)
+	let l_a2 = (2 * far * near) / (near - far)
+	result.m00 = l_fd / aspectRatio
+	result.m10 = 0
+	result.m20 = 0
+	result.m30 = 0
+	result.m01 = 0
+	result.m11 = l_fd
+	result.m21 = 0
+	result.m31 = 0
+	result.m02 = 0
+	result.m12 = 0
+	result.m22 = l_a1
+	result.m32 = -1
+	result.m03 = 0
+	result.m13 = 0
+	result.m23 = l_a2
+	result.m33 = 0
+
+	return result
+
+/** Sets this matrix to a translation matrix, overwriting it first by an identity matrix and then setting the 4th column to the
+	* translation vector. */
+public function setToTranslation(real x, real y, real z) returns mat4
+	var result = IDENTITY44
+	result.m03 = x
+	result.m13 = y
+	result.m23 = z
+	return result
+
+/** Sets this matrix to a look at matrix with the given position, target and up vector. */
+public function setToLookAt(vec3 position, vec3 target, vec3 up) returns mat4
+	var result = setToLookAt(target - position, up)
+	let trans = setToTranslation(-position.x, -position.y, -position.z)
+	tmp_mat = result
+	result = mult(trans)
+	return result
+
+
+/** Sets the matrix to a look at matrix with a direction and an up vector. Multiply with a translation matrix to get a camera
+	* model view matrix. */
+public function setToLookAt(vec3 direction, vec3 up) returns mat4
+	let l_vez = direction.norm()
+	var l_vex = direction.norm()
+	l_vex = l_vex.cross(up).norm()
+	let l_vey = l_vex.cross(l_vez).norm()
+
+	var result = IDENTITY44
+	result.m00 = l_vex.x
+	result.m01 = l_vex.y
+	result.m02 = l_vex.z
+	result.m10 = l_vey.x
+	result.m11 = l_vey.y
+	result.m12 = l_vey.z
+	result.m20 = -l_vez.x
+	result.m21 = -l_vez.y
+	result.m22 = -l_vez.z
+
+	return result
+
+public function mat4.determinant() returns real
+	var f = this.m00
+				* ((this.m11 * this.m22 * this.m33 + this.m12 * this.m23 * this.m31 + this.m13 * this.m21 * this.m32)
+					- this.m13 * this.m22 * this.m31
+					- this.m11 * this.m23 * this.m32
+					- this.m12 * this.m21 * this.m33)
+	f -= this.m01 * ((this.m10 * this.m22 * this.m33 + this.m12 * this.m23 * this.m30 + this.m13 * this.m20 * this.m32)
+			- this.m13 * this.m22 * this.m30
+			- this.m10 * this.m23 * this.m32
+			- this.m12 * this.m20 * this.m33)
+	f += this.m02
+		* ((this.m10 * this.m21 * this.m33 + this.m11 * this.m23 * this.m30 + this.m13 * this.m20 * this.m31)
+			- this.m13 * this.m21 * this.m30
+			- this.m10 * this.m23 * this.m31
+			- this.m11 * this.m20 * this.m33)
+	f -= this.m03
+		* ((this.m10 * this.m21 * this.m32 + this.m11 * this.m22 * this.m30 + this.m12 * this.m20 * this.m31)
+			- this.m12 * this.m21 * this.m30
+			- this.m10 * this.m22 * this.m31
+			- this.m11 * this.m20 * this.m32)
+	return f
+
+function determinant3x3(real t00, real t01, real t02,
+				     real t10, real t11, real t12,
+				     real t20, real t21, real t22) returns real
+	return t00 * (t11 * t22 - t12 * t21)
+			+ t01 * (t12 * t20 - t10 * t22)
+			+ t02 * (t10 * t21 - t11 * t20)
+
+/** Finds inverse matrix.
+Returns tuple inverseresult44(bool success, mat3 matrix) where 'success' is true if the inverse matrix exists and 'matrix' is the inverse matrix.
+If there's no inverse matrix 'success' is false and 'matrix' is zero matrix. */
+public function mat4.inverse() returns inverseresult44
+	let d = this.determinant()
+	var inverse = inverseresult44(d.abs() > EPSILON, ZERO44)
+	if inverse.success
+		let determinant_inv = 1 / d
+
+		// first row
+		let t00 =  determinant3x3(this.m11, this.m12, this.m13, this.m21, this.m22, this.m23, this.m31, this.m32, this.m33)
+		let t01 = -determinant3x3(this.m10, this.m12, this.m13, this.m20, this.m22, this.m23, this.m30, this.m32, this.m33)
+		let t02 =  determinant3x3(this.m10, this.m11, this.m13, this.m20, this.m21, this.m23, this.m30, this.m31, this.m33)
+		let t03 = -determinant3x3(this.m10, this.m11, this.m12, this.m20, this.m21, this.m22, this.m30, this.m31, this.m32)
+		// second row
+		let t10 = -determinant3x3(this.m01, this.m02, this.m03, this.m21, this.m22, this.m23, this.m31, this.m32, this.m33)
+		let t11 =  determinant3x3(this.m00, this.m02, this.m03, this.m20, this.m22, this.m23, this.m30, this.m32, this.m33)
+		let t12 = -determinant3x3(this.m00, this.m01, this.m03, this.m20, this.m21, this.m23, this.m30, this.m31, this.m33)
+		let t13 =  determinant3x3(this.m00, this.m01, this.m02, this.m20, this.m21, this.m22, this.m30, this.m31, this.m32)
+		// third row
+		let t20 =  determinant3x3(this.m01, this.m02, this.m03, this.m11, this.m12, this.m13, this.m31, this.m32, this.m33)
+		let t21 = -determinant3x3(this.m00, this.m02, this.m03, this.m10, this.m12, this.m13, this.m30, this.m32, this.m33)
+		let t22 =  determinant3x3(this.m00, this.m01, this.m03, this.m10, this.m11, this.m13, this.m30, this.m31, this.m33)
+		let t23 = -determinant3x3(this.m00, this.m01, this.m02, this.m10, this.m11, this.m12, this.m30, this.m31, this.m32)
+		// fourth row
+		let t30 = -determinant3x3(this.m01, this.m02, this.m03, this.m11, this.m12, this.m13, this.m21, this.m22, this.m23)
+		let t31 =  determinant3x3(this.m00, this.m02, this.m03, this.m10, this.m12, this.m13, this.m20, this.m22, this.m23)
+		let t32 = -determinant3x3(this.m00, this.m01, this.m03, this.m10, this.m11, this.m13, this.m20, this.m21, this.m23)
+		let t33 =  determinant3x3(this.m00, this.m01, this.m02, this.m10, this.m11, this.m12, this.m20, this.m21, this.m22)
+
+		// transpose and divide by the determinant
+		inverse.matrix.m00 = t00*determinant_inv
+		inverse.matrix.m11 = t11*determinant_inv
+		inverse.matrix.m22 = t22*determinant_inv
+		inverse.matrix.m33 = t33*determinant_inv
+		inverse.matrix.m01 = t10*determinant_inv
+		inverse.matrix.m10 = t01*determinant_inv
+		inverse.matrix.m20 = t02*determinant_inv
+		inverse.matrix.m02 = t20*determinant_inv
+		inverse.matrix.m12 = t21*determinant_inv
+		inverse.matrix.m21 = t12*determinant_inv
+		inverse.matrix.m03 = t30*determinant_inv
+		inverse.matrix.m30 = t03*determinant_inv
+		inverse.matrix.m13 = t31*determinant_inv
+		inverse.matrix.m31 = t13*determinant_inv
+		inverse.matrix.m32 = t23*determinant_inv
+		inverse.matrix.m23 = t32*determinant_inv
+	return inverse
+
+public function mat4.toString() returns string
+	return "Matrix 4x4\n{0} {1} {2} {3}\n{4} {5} {6} {7}\n{8} {9} {10} {11}\n{12} {13} {14} {15}".format(
+		this.m00.toString(), this.m01.toString(), this.m02.toString(), this.m03.toString(),
+		this.m10.toString(), this.m11.toString(), this.m12.toString(), this.m13.toString(),
+		this.m20.toString(), this.m21.toString(), this.m22.toString(), this.m23.toString(),
+		this.m30.toString(), this.m31.toString(), this.m32.toString(), this.m33.toString())
+
+/* =========== TESTING =========== */
+
+public function mat2.assertEquals(mat2 expected)
+	let delta = 0.002
+	let compare = mat2( (this.m00 - expected.m00).abs(), (this.m01 - expected.m01).abs(),
+						(this.m10 - expected.m10).abs(), (this.m11 - expected.m11).abs())
+	let msg = "Expected {0} <{1}>, Actual <{2} with delta {3}>"
+	if compare.m00 > delta
+		testFail(msg.format("m00", expected.m00.toString(), this.m00.toString(), delta.toString()))
+	if compare.m01 > delta
+		testFail(msg.format("m01", expected.m01.toString(), this.m01.toString(), delta.toString()))
+	if compare.m10 > delta
+		testFail(msg.format("m10", expected.m10.toString(), this.m10.toString(), delta.toString()))
+	if compare.m11 > delta
+		testFail(msg.format("m11", expected.m11.toString(), this.m11.toString(), delta.toString()))
+
+public function mat3.assertEquals(mat3 expected)
+	let delta = 0.002
+	let compare = mat3( (this.m00 - expected.m00).abs(), (this.m01 - expected.m01).abs(), (this.m02 - expected.m02).abs(),
+						(this.m10 - expected.m10).abs(), (this.m11 - expected.m11).abs(), (this.m12 - expected.m12).abs(),
+						(this.m20 - expected.m20).abs(), (this.m21 - expected.m21).abs(), (this.m22 - expected.m22).abs())
+	let msg = "Expected {0} <{1}>, Actual <{2} with delta {3}>"
+	if compare.m00 > delta
+		testFail(msg.format("m00", expected.m00.toString(), this.m00.toString(), delta.toString()))
+	if compare.m01 > delta
+		testFail(msg.format("m01", expected.m01.toString(), this.m01.toString(), delta.toString()))
+	if compare.m02 > delta
+		testFail(msg.format("m02", expected.m02.toString(), this.m02.toString(), delta.toString()))
+
+	if compare.m10 > delta
+		testFail(msg.format("m10", expected.m10.toString(), this.m10.toString(), delta.toString()))
+	if compare.m11 > delta
+		testFail(msg.format("m11", expected.m11.toString(), this.m11.toString(), delta.toString()))
+	if compare.m12 > delta
+		testFail(msg.format("m12", expected.m12.toString(), this.m12.toString(), delta.toString()))
+
+	if compare.m20 > delta
+		testFail(msg.format("m20", expected.m20.toString(), this.m20.toString(), delta.toString()))
+	if compare.m21 > delta
+		testFail(msg.format("m21", expected.m21.toString(), this.m21.toString(), delta.toString()))
+	if compare.m22 > delta
+		testFail(msg.format("m22", expected.m22.toString(), this.m22.toString(), delta.toString()))

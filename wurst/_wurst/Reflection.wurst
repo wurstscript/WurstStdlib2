@@ -1,0 +1,20 @@
+/**
+ This package is designed for debugging.
+ It can print some details from the runtime presentation
+ of Wurst objects.
+ Everything is highly implementation specific, so DO NOT use these functions for anything else than showing debugging text.
+*/
+package Reflection
+
+/** returns the maximum type id, can be usd to
+ iterate over all type-ids from 1 to maxTypeId() */
+public native maxTypeId() returns int
+
+/** returns the class name for a given type id */
+public native typeIdToTypeName(int typeId) returns string
+
+/** returns the number of active instances for a typeId */
+public native instanceCount(int typeId) returns int
+
+/** returns the maximum number of instances reached for the given type id */
+public native maxInstanceCount(int typeId) returns int

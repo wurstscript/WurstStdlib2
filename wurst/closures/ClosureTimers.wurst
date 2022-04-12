@@ -2,131 +2,213 @@ package ClosureTimers
 import NoWurst
 import TimerUtils
 import Real
+import Wurstunit
 
-/** Execute an action after a certain time. 
+/** Execute an action after a certain time.
 	The callback object is automatically destroyed.
-	
+	Must be used on a timer acquired with `getTimer()`
+
+	Example use:
+	| someTimer.doAfter(10.0) ->
+	|	 print("10 seconds later")
+*/
+public function timer.doAfter(real timeToWait, CallbackSingle cb) returns CallbackSingle
+	cb.start(this, timeToWait)
+	return cb
+
+/** Execute an action after a certain time.
+	The callback object is automatically destroyed.
+
 	Example use:
 	| doAfter(10.0) ->
-	|     print("10 seconds later")		
-*/			
+	|	 print("10 seconds later")
+*/
 public function doAfter(real timeToWait, CallbackSingle cb) returns CallbackSingle
-	cb.start(timeToWait)
-	return cb
-	
+	return getTimer().doAfter(timeToWait, cb)
+
 /** Execute an action with a 0-second timer delay.
 	The callback object is destroyed afterwards.
 */
 public function nullTimer(CallbackSingle cb) returns CallbackSingle
-	doAfter(0, cb)
-	return cb
-	
+	return doAfter(0, cb)
+
 /** Execute an action periodically.
 	The callback has to be destroyed manually.
-	
+	Must be used on a timer acquired with `getTimer()`
+
+	Example use:
+	| someTimer.doPeriodically(0.5) cb ->
+	|	 if i > 10
+	|		destroy cb
+*/
+public function timer.doPeriodically(real time, CallbackPeriodic cb) returns CallbackPeriodic
+	cb.start(this, time)
+	return cb
+
+/** Execute an action periodically.
+	The callback has to be destroyed manually.
+
 	Example use:
 	| doPeriodically(0.5) cb ->
-	|     if i > 10
-			destroy cb
+	|	 if i > 10
+	|		destroy cb
 */
 public function doPeriodically(real time, CallbackPeriodic cb) returns CallbackPeriodic
-	cb.start(time)
-	return cb
-	
-/** execute an action periodically, with a limited amount of calls 
+	return getTimer().doPeriodically(time, cb)
+
+/** execute an action periodically, with a limited amount of calls
 	The callback object is destroyed after the action has been executed callAmount times.
-	
+	Must be used on a timer acquired with `getTimer()`
+
+	Example use:
+	| someTimer.doPeriodicallyCounted(0.5, 100) cb ->
+	|	 doSomething()
+
+*/
+public function timer.doPeriodicallyCounted(real time, int callAmount, CallbackCounted cb) returns CallbackCounted
+	cb.start(this, time, callAmount)
+	return cb
+
+/** execute an action periodically, with a limited amount of calls
+	The callback object is destroyed after the action has been executed callAmount times.
+
 	Example use:
 	| doPeriodicallyCounted(0.5, 100) cb ->
-	|     doSomething()	
-	
+	|	 doSomething()
+
 */
 public function doPeriodicallyCounted(real time, int callAmount, CallbackCounted cb) returns CallbackCounted
-	cb.start(time, callAmount)
-	return cb
+	return getTimer().doPeriodicallyCounted(time, callAmount, cb)
 
-/** execute an action periodically, with a limited duration 
+/** execute an action periodically, with a limited duration
 	The callback object is destroyed afterwards.
-	
+	Must be used on a timer acquired with `getTimer()`
+
+	Example use:
+	| someTimer.doPeriodicallyCounted(0.5, 10.) ->
+	|	 doSomething()
+
+*/
+public function timer.doPeriodicallyTimed(real interval, real timerDuration, CallbackCounted cb) returns CallbackCounted
+	return this.doPeriodicallyCounted(interval, (timerDuration / interval + 0.5).toInt(), cb)
+
+/** execute an action periodically, with a limited duration
+	The callback object is destroyed afterwards.
+
 	Example use:
 	| doPeriodicallyCounted(0.5, 10.) ->
-	|     doSomething()		
-	
-*/	
-public function doPeriodicallyTimed(real interval, real timerDuration, CallbackCounted cb) returns CallbackCounted
-	doPeriodicallyCounted(interval, (timerDuration / interval + 0.5).toInt(), cb)
-	return cb
+	|	 doSomething()
 
-//Timer Stuff	
+*/
+public function doPeriodicallyTimed(real interval, real timerDuration, CallbackCounted cb) returns CallbackCounted
+	return getTimer().doPeriodicallyTimed(interval, timerDuration, cb)
+
+//Timer Stuff
 public abstract class CallbackSingle
 	private timer t
 	abstract function call()
-	
-	function start(real time)
-		t = getTimer()
+
+	protected function start(timer whichTimer, real time)
+		t = whichTimer
 			..setData(this castTo int)
 			..start(time, () -> staticCallback())
-			
-			
+
+
 	private static function staticCallback()
-		timer t = GetExpiredTimer()
-		thistype cb = t.getData() castTo thistype
+		let t = GetExpiredTimer()
+		let cb = t.getData() castTo thistype
 		cb.call()
 		destroy cb
-		
+
 	ondestroy
 		t.release()
-		
+
 
 public abstract class CallbackPeriodic
 	private timer t
-	
+
 	protected abstract function call(thistype cb)
 
-	function start(real time)
-		this.t = getTimer()
-		t.setData(this castTo int)
-		t.startPeriodic(time, function staticCallback)
-		
+	protected function start(timer whichTimer, real time)
+		t = whichTimer
+			..setData(this castTo int)
+			..startPeriodic(time, function staticCallback)
+
 	private static function staticCallback()
 		let cb = (GetExpiredTimer().getData() castTo thistype)
 		cb.call(cb)
-		
+
 	ondestroy
 		t.release()
-		
+
 public abstract class CallbackCounted
 	private var count = 0
+	private var maxCount = 0
 	private timer t
-	
+
 	protected abstract function call(thistype cb)
 
-	function start(real time, int callAmount)
-		this.t = getTimer()
-		t.setData(this castTo int)
+	protected function start(timer whichTimer, real time, int callAmount)
 		count = callAmount
-		t.startPeriodic(time, function staticCallback)
-		
+		maxCount = callAmount
+		t = whichTimer
+			..setData(this castTo int)
+			..startPeriodic(time, function staticCallback)
+
 	function isLast() returns boolean
-		return count == 1
-		
+		return count == 0
+
 	function getCount() returns int
-		return count
-		
+		return count < maxCount ? count + 1 : count
+
+	/** Returns a value between 0 and 1. */
+	function progress() returns real
+		return 1. - count / maxCount
+
 	function stop()
-		count = 1
-		
+		count = 0
+
 	private static function staticCallback()
 		(GetExpiredTimer().getData() castTo thistype).callAndCount()
-		
+
 	private function callAndCount()
-		call(this)
-		count--
-		if count <= 0
+		if count > 0
+			count--
+			call(this)
+		else
 			destroy this
-		
+
 	ondestroy
 		t.release()
-		
 
-	
+
+var x = 200
+@Test function testDoAfter()
+
+	doAfter(0.1) ->
+		x += 50
+
+	doAfter(0.2) ->
+		x *= 2
+
+	doAfter(0.3) ->
+		x = x div 2
+		x.assertEquals(250)
+
+	var _count = 3
+
+	let cb = doPeriodicallyCounted(3, 3) (CallbackCounted cb) ->
+		cb.getCount().assertEquals(_count)
+		if cb.isLast()
+			cb.progress().assertEquals(1, 0.0001)
+			cb.getCount().assertEquals(1)
+		else if _count == 3
+			cb.progress().assertEquals(0.33333, 0.00001)
+			cb.getCount().assertEquals(3)
+		else if _count == 2
+			cb.progress().assertEquals(0.66666, 0.00001)
+			cb.getCount().assertEquals(2)
+		_count--
+
+	cb.progress().assertEquals(0, 0.00001)
+	cb.getCount().assertEquals(_count)

@@ -2,8 +2,8 @@ package Fx
 import NoWurst
 import DummyRecycler
 import Effect
+import Widget
 import Colors
-import TerrainUtils
 
 /********************************************************
  * * * * * * * * * * Fx * * * * * * * * * * * * * * * * *
@@ -22,9 +22,9 @@ public class Fx
 	private effect 	fx 		= null
 	private angle 	zAngle  = angle(0)
 	private string 	sfxPath = ""
-	
+
 	private colorA col = colorA(255,255,255,255)
-	
+
 	construct(real x, real y, angle facing)
 		dummy = DummyRecycler.get(vec2(x, y), facing)
 
@@ -34,20 +34,20 @@ public class Fx
 	construct(vec2 pos, string fxpath)
 		dummy = DummyRecycler.get(pos, angle(0))
 		setFx(fxpath)
-	
+
 	construct(vec2 pos, angle facing, string fxpath)
 		dummy = DummyRecycler.get(pos, facing)
 		setFx(fxpath)
-	
+
 	construct(vec3 pos, angle facing)
 		dummy = DummyRecycler.get(pos.toVec2(), facing)
-		setZ(pos.z)	
-	
+		setZ(pos.z)
+
 	construct(vec3 pos, string fxpath)
 		dummy = DummyRecycler.get(pos.toVec2(), angle(0))
 		setFx(fxpath)
 		setZ(pos.z)
-	
+
 	construct(vec3 pos, angle facing, string fxpath)
 		dummy = DummyRecycler.get(pos.toVec2(), facing)
 		setZ(pos.z)
@@ -58,14 +58,14 @@ public class Fx
 		setFx(fxpath)
 		setZ(pos.z)
 		setPlayerColor(pc)
-	
+
 	/** Get the owner of this Fx Object */
 	function getOwner() returns player
 		return dummy.getOwner()
 
 	function setPlayerColor(playercolor pc)
 		getDummy().setColor(pc)
-		
+
 	/** Set the owner of this Fx Object */
 	function setOwner(player p, boolean changeColor)
 		if fx != null
@@ -73,11 +73,11 @@ public class Fx
 			fx = null
 		setFx(sfxPath)
 		dummy.setOwner(p, changeColor)
-		
+
 	/** Set the playercolor of this Fx Object */
 	function setPlayercolor(playercolor c)
 		SetUnitColor(dummy, c)
-	
+
 	/** Set the scale of this Fx Object */
 	function setScale(real value)
 		dummy.setScale(value)
@@ -85,12 +85,12 @@ public class Fx
 	/** Get the color (rgba) */
 	function getColor() returns colorA
 		return col
-		
+
 	/** Get the dummyunit */
 	function getDummy() returns unit
 		return dummy
-		
-	/** Sets the color of the Fx object to the given color 
+
+	/** Sets the color of the Fx object to the given color
 	Color: 0 = no color - 255 = full color
 	Alpha: 0 = transparent - 255 = visible */
 	function setColor(colorA newColor)
@@ -101,26 +101,26 @@ public class Fx
 		Flashing plays the death animation of the effect at the fx's position. */
 	function flash(string fx)
 		dummy.addEffect(fx, "origin").destr()
-		
+
 	/** Get the xy angle */
 	function getXYAngle() returns angle
-		return dummy.getFacing().asAngleDegrees()
- 
+		return dummy.getFacingAngle()
+
 	/** Set the xy angle */
 	function setXYAngle(angle value)
 		dummy.setFacing(value)
-		
+
 	/** Creates a new dummy with the given facing in order to achieve instant turning. */
 	function setXYAngleInstant(angle value)
 		fx.destr()
 		DummyRecycler.recycle(dummy)
 		dummy = DummyRecycler.get(vec2(dummy.getX(), dummy.getY()), value)
 		setFx(sfxPath)
-		
+
 	/** Get the z angle */
 	function getZAngle() returns angle
 		return zAngle
-		
+
 	/** Set the z angle in radians */
 	function setZAngle(angle zangle)
 		int i = (zangle.degrees() + 90.5).toInt()
@@ -130,43 +130,43 @@ public class Fx
 		else if i < 0
 			i = 0
 		dummy.setAnimation(i)
-		
+
 	/** Get the z coordinate (fly height) */
 	function getZ() returns real
 		return dummy.getFlyHeight()
-		
-	/** Get the 2d position */			
+
+	/** Get the 2d position */
 	function getPos2() returns vec2
 		return vec2(dummy.getX(), dummy.getY())
-	
-	/** Get the 3d position */			
+
+	/** Get the 3d position */
 	function getPos3() returns vec3
 		return vec3(dummy.getX(), dummy.getY(), getZ())
-		
+
 	/** Set the position to the given xy vector tuple */
 	function setXY(vec2 pos)
 		dummy.setXY(pos)
-	
+
 	/** Set the position to the given xyz vector tuple */
 	function setXYZ(vec3 pos)
 		dummy.setXYZReal(pos)
-		
-	/** Set the position to the given xyz vector tuple. 
+
+	/** Set the position to the given xyz vector tuple.
 	 * It is possible to ignore the terrain height when desired.
-	 * Use setXYheight when you never need terrain height. 
+	 * Use setXYheight when you never need terrain height.
 	 * */
  	function setXYZ(vec3 pos, boolean ignoreTerrainHeight)
 		dummy.setXY(pos)
 		if ignoreTerrainHeight
 			setZ(pos.z)
 		else
-			setZ(pos.z-getTerrainZ(pos.x, pos.y))
-	
+			setZ(pos.z - pos.getTerrainZ())
+
 	/** Set the z coordinate (flyHeight) */
 	function setZ(real z)
 		dummy.setFlyHeight(z, 0.)
-			
-	/** Set the path to the sfx model that should be displayed. 
+
+	/** Set the path to the sfx model that should be displayed.
 	If there is already a model displayed, it will be replaced with the new one.*/
 	function setFx(string newpath)
 		if fx != null
@@ -176,16 +176,15 @@ public class Fx
 		else
 			fx = dummy.addEffect(newpath, "origin")
 		sfxPath = newpath
-				
-	ondestroy  			
+
+	ondestroy
 		if fx != null
 			fx.destr()
 
 		DummyRecycler.recycle(dummy, 1.)
 
-	/** Destroys the Fx object without showing the effect's death animation 
+	/** Destroys the Fx object without showing the effect's death animation
 		Sort of a workaround by setting the position to the top right corner, hopefully not visible.*/
 	function hiddenDestroy()
 		dummy.setPos(2147483647, 2147483647)
 		destroy this
-

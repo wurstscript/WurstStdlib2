@@ -1,0 +1,282 @@
+package Bitwise
+import BitwiseInit
+
+/**
+	A tuple containing 4 bytes comprising a 4-byte integer.
+	b1 is the least significant byte, b4 is the most significant byte.
+	All functions operating on this are LSB first.
+	The bytes are always unsigned, from 0 to 255.
+
+	WARNING: This library contains no safety bound checks to guarantee
+	that these bytes stay in the 0-255 range. If these values go out of bounds,
+	the behaviour is undefined.
+**/
+public tuple byte4(int b1, int b2, int b3, int b4)
+
+/**
+	Selects the n-th byte from these bytes, starting from
+	0 for the least significant byte and ending with
+	3 for the most significant byte.
+**/
+public function byte4.select(int pos) returns int
+	int result
+	if pos > 1
+		if pos == 3
+			result = this.b4
+		else
+			result = this.b3
+	else
+		if pos == 1
+			result = this.b2
+		else
+			result = this.b1
+	return result
+
+/**
+	Replaces the byte in the n-th position with the provided one.
+**/
+public function byte4.put(int pos, int value) returns byte4
+	byte4 result
+	if pos > 1
+		if pos == 3
+			result = byte4(this.b1, this.b2, this.b3, value)
+		else
+			result = byte4(this.b1, this.b2, value, this.b4)
+	else
+		if pos == 1
+			result = byte4(this.b1, value, this.b3, this.b4)
+		else
+			result = byte4(value, this.b2, this.b3, this.b4)
+	return result
+
+/** Re-assembles these bytes into an integer. **/
+public function byte4.toInt() returns int
+	return this.b1 + this.b2 * 0x100 + this.b3 * 0x10000 + this.b4 * 0x1000000
+
+/**
+	Turns this signed integer into an unsigned one if it is negative,
+	removing the first (sign) bit
+**/
+public function int.toUnsigned() returns int
+	int result
+	if this < 0
+		result = -2147483648 + this
+	else
+		result = this
+	return result
+
+public function int.byte1() returns int
+	return this mod 0x100
+
+public function int.byte2() returns int
+	return (this - (this div 0x10000) * 0x10000) div 0x100
+
+public function int.byte3() returns int
+	return (this - (this div 0x1000000) * 0x1000000) div 0x10000
+
+public function int.byte4(int isNegative) returns int
+	return isNegative * 128 + this div 0x1000000
+
+/** De-composes an integer into 4 unsigned bytes. **/
+public function int.bytes() returns byte4
+	var value = this
+	var isNegative = 0
+	if value < 0
+		value = -2147483648 + value
+		isNegative = 1
+
+	let b1 = value mod 0x100
+	let b2 = (value - (value div 0x10000) * 0x10000) div 0x100
+	let b3 = (value - (value div 0x1000000) * 0x1000000) div 0x10000
+	let b4 = isNegative * 128 + value div 0x1000000
+
+	return byte4(b1, b2, b3, b4)
+
+/**
+	Produces a signed integer from the bitstring.
+	Input string may contain whitespace for padding.
+**/
+public function string.fromBitString() returns int
+	var pow = 1
+	var result = 0
+	for i = (this.length() - 1) downto 0
+		let char = this.charAt(i)
+		if char != " "
+			if char == "1"
+				result += pow
+			pow *= 2
+
+	return result
+
+/**
+	Produces a bistring from this integer.
+**/
+public function int.toBitString() returns string
+	var result = ""
+	var value = this
+
+	while value != 0
+		result = (value mod 2).toString() + result
+		value = bwShiftr32(value, 1)
+
+	return result
+
+
+/** 4-bit AND operator **/
+function bwAnd4(int lhs, int rhs) returns int
+	return andData[lhs * 0x10 + rhs]
+
+/** 4-bit OR operator **/
+function bwOr4(int lhs, int rhs) returns int
+	return orData[lhs * 0x10 + rhs]
+
+/** 4-bit XOR operator **/
+function bwXor4(int lhs, int rhs) returns int
+	return xorData[lhs * 0x10 + rhs]
+
+/** 8-bit NOT operator **/
+function bNot8(int val) returns int
+	return 0xFF - val
+
+/** 8-bit AND operator **/
+function bwAnd8(int lhs, int rhs) returns int
+	return bwAnd4(lbyte[lhs], lbyte[rhs]) * 0x10 + bwAnd4(rbyte[lhs], rbyte[rhs])
+
+/** 8-bit OR operator **/
+function bwOr8(int lhs, int rhs) returns int
+	return bwOr4(lbyte[lhs], lbyte[rhs]) * 0x10 + bwOr4(rbyte[lhs], rbyte[rhs])
+
+/** 8-bit XOR operator **/
+function bwXor8(int lhs, int rhs) returns int
+	return bwXor4(lbyte[lhs], lbyte[rhs]) * 0x10 + bwXor4(rbyte[lhs], rbyte[rhs])
+
+/** 32-bit SHIFTL operator **/
+function bwShiftl32(int num, int shift) returns int
+	return num * powShift[shift]
+
+/** 32-bit SHIFTR operator **/
+function bwShiftr32(int num, int shift) returns int
+	var value = num
+	var isNegative = 0
+	if value < 0
+		value = -2147483648 + value
+		isNegative = 1
+	return isNegative * powShift[31-shift] + value div powShift[shift]
+
+/** 32-bit NOT operator **/
+function bwNot32(int num) returns int
+	return -num - 1
+
+/** 32-bit AND operator **/
+function bwAnd32(int lhs, int rhs) returns int
+	let bytes1 = lhs.bytes()
+	let bytes2 = rhs.bytes()
+
+	return byte4(bwAnd8(bytes1.b1, bytes2.b1),
+				 bwAnd8(bytes1.b2, bytes2.b2),
+				 bwAnd8(bytes1.b3, bytes2.b3),
+				 bwAnd8(bytes1.b4, bytes2.b4)).toInt()
+
+/** 32-bit OR operator **/
+function bwOr32(int lhs, int rhs) returns int
+	let bytes1 = lhs.bytes()
+	let bytes2 = rhs.bytes()
+
+	return byte4(bwOr8(bytes1.b1, bytes2.b1),
+				 bwOr8(bytes1.b2, bytes2.b2),
+				 bwOr8(bytes1.b3, bytes2.b3),
+				 bwOr8(bytes1.b4, bytes2.b4)).toInt()
+
+/** 32-bit XOR operator **/
+function bwXor32(int lhs, int rhs) returns int
+	let bytes1 = lhs.bytes()
+	let bytes2 = rhs.bytes()
+
+	return byte4(bwXor8(bytes1.b1, bytes2.b1),
+				 bwXor8(bytes1.b2, bytes2.b2),
+				 bwXor8(bytes1.b3, bytes2.b3),
+				 bwXor8(bytes1.b4, bytes2.b4)).toInt()
+
+/**
+	8-bit NOT (~)
+	NOTE: Assumes number is in the range [0, 255]
+
+	number.not8() equivalent to (~number)
+**/
+public function int.not8() returns int
+	return bNot8(this)
+
+/**
+	32-bit NOT (~)
+
+	number.not32() equivalent to (~number)
+**/
+public function int.not32() returns int
+	return bwNot32(this)
+
+/**
+	8-bit AND (&)
+	NOTE: Assumes both operands are in the range [0, 255]
+
+	number.and8(other) equivalent to (number & other)
+**/
+public function int.and8(int other) returns int
+	return bwAnd8(this, other)
+
+/**
+	32-bit AND (&)
+
+	number.and32(other) equivalent to (number & other)
+**/
+public function int.and32(int other) returns int
+	return bwAnd32(this, other)
+
+/**
+	8-bit OR (|)
+	NOTE: Assumes both operands are in the range [0, 255]
+
+	number.or8(other) equivalent to (number | other)
+**/
+public function int.or8(int other) returns int
+	return bwOr8(this, other)
+
+/**
+	32-bit OR (|)
+
+	number.or32(other) equivalent to (number | other)
+**/
+public function int.or32(int other) returns int
+	return bwOr32(this, other)
+
+/**
+	8-bit XOR (^)
+	NOTE: Assumes both operands are in the range [0, 255]
+
+	number.xor8(other) equivalent to (number ^ other)
+**/
+public function int.xor8(int other) returns int
+	return bwXor8(this, other)
+
+/**
+	32-bit XOR (^)
+
+	number.xor32(other) equivalent to (number ^ other)
+**/
+public function int.xor32(int other) returns int
+	return bwXor32(this, other)
+
+/**
+	32-bit SHIFTL (<<)
+
+	number.shiftl(amount) equivalent to (number << amount)
+**/
+public function int.shiftl(int amount) returns int
+	return bwShiftl32(this, amount)
+
+/**
+	32-bit SHIFTR (>>)
+
+	number.shiftr(amount) equivalent to (number >> amount)
+**/
+public function int.shiftr(int amount) returns int
+	return bwShiftr32(this, amount)

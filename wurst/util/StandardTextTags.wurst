@@ -1,84 +1,103 @@
 package StandardTextTags
 constant FONT_SIZE  =  0.024 / 0.0023
-constant OFFSET     = vec2(16., 0.)
+constant OFFSET	 = vec2(16., 0.)
+
+/** Set the text with the standard font size scaled by a factor. */
+public function texttag.setScaledText(string text, real scale)
+	this.setText(text, scale * FONT_SIZE)
+
+/** Set the text with the standard font size. */
+public function texttag.setText(string text)
+	this.setText(text, FONT_SIZE)
+
+/** Creates a text tag with default values matching standard built-in text tags */
+public function standardTextTag() returns texttag
+	return CreateTextTag()
+		..setFadepoint(2.)
+		..setLifespan(3.)
+		..setVelocity(0., .03)
+		..setPermanent(false)
+		..setVisibility(true)
 
 
 public function standardTextTag(vec2 pos, string text) returns texttag
-    let tag = CreateTextTag()..setText(text, FONT_SIZE)
-                             ..setPos(pos.x, pos.y, 0.)
-                             ..setFadepoint(2.)
-                             ..setLifespan(3.)
-                             ..setVelocity(0., .03)
-                             ..setPermanent(false)
-                             ..setVisibility(true)
-    return tag
+	let tag = standardTextTag()
+		..setText(text, FONT_SIZE)
+		..setPos(pos.x, pos.y, 0.)
+	return tag
 
 
 /** Create a texttag that matches the style of the standard warcraft 3 Critical
-    Strike ability. */
-public function createCriticalStrikeTextTag(unit u, int damage)
-    let text = damage.toString() + "!"
-    standardTextTag(u.getPos(), text)..setColor(255, 0, 0, 255)
-                                     ..setVelocity(0., .04)
-                                     ..setLifespan(5.)
+	Strike ability. */
+public function createCriticalStrikeTextTag(unit u, int damage) returns texttag
+	let text = damage.toString() + "!"
+	return standardTextTag(u.getPos(), text)
+		..setColor(255, 0, 0, 255)
+		..setVelocity(0., .04)
+		..setLifespan(5.)
 
 
 /** Create a texttag that matches the style of the standard warcraft 3 gold
-    bounty. */
-public function createGoldBountyTextTag(unit u, int bounty, player killer)
-    let text = "+" + bounty.toString()
-    let pos  = u.getPos() - OFFSET
-    standardTextTag(pos, text)..setColor(255, 220, 0, 255)
-                              ..setVisibility(GetLocalPlayer() == killer)
+	bounty. */
+public function createGoldBountyTextTag(unit u, int bounty, player killer) returns texttag
+	let text = "+" + bounty.toString()
+	let pos  = u.getPos() - OFFSET
+	return standardTextTag(pos, text)
+		..setColor(255, 220, 0, 255)
+		..setVisibility(localPlayer == killer)
 
 /** Create a texttag that matches the style of the standard warcraft 3 gold
-    bounty. */
-public function createGoldBountyTextTag(unit u, int bounty)
-    let text = "+" + bounty.toString()
-    let pos  = u.getPos() - OFFSET
-    standardTextTag(pos, text)..setColor(255, 220, 0, 255)
+	bounty. */
+public function createGoldBountyTextTag(unit u, int bounty) returns texttag
+	let text = "+" + bounty.toString()
+	let pos  = u.getPos() - OFFSET
+	return standardTextTag(pos, text)..setColor(255, 220, 0, 255)
 
 
 /** Create a texttag that matches the style of the standard warcraft 3 lumber
-    bounty. */
-public function createLumberBountyTextTag(unit u, int bounty, player killer)
-    let text = "+" + bounty.toString()
-    let pos  = u.getPos() - OFFSET
-    standardTextTag(pos, text)..setColor(0, 200, 80, 255)
-                              ..setVisibility(GetLocalPlayer() == killer)
+	bounty. */
+public function createLumberBountyTextTag(unit u, int bounty, player killer) returns texttag
+	let text = "+" + bounty.toString()
+	let pos  = u.getPos() - OFFSET
+	return standardTextTag(pos, text)
+		..setColor(0, 200, 80, 255)
+		..setVisibility(localPlayer == killer)
 
 /** Create a texttag that matches the style of the standard warcraft 3 lumber
-    bounty. */
-public function createLumberBountyTextTag(unit u, int bounty)
-    let text = "+" + bounty.toString()
-    let pos  = u.getPos() - OFFSET
-    standardTextTag(pos, text)..setColor(0, 200, 80, 255)
+	bounty. */
+public function createLumberBountyTextTag(unit u, int bounty) returns texttag
+	let text = "+" + bounty.toString()
+	let pos  = u.getPos() - OFFSET
+	return standardTextTag(pos, text)..setColor(0, 200, 80, 255)
 
 
 /** Create a texttag that matches the style of the standard warcraft 3 Mana Burn
-    ability. */
-public function createManaBurnTextTag(unit u, int damage)
-    let text = "-" + damage.toString()
-    let pos  = u.getPos() - OFFSET
-    standardTextTag(pos, text)..setColor(82, 82, 255, 255)
-                              ..setVelocity(0., .04)
-                              ..setLifespan(5.)
+	ability. */
+public function createManaBurnTextTag(unit u, int damage) returns texttag
+	let text = "-" + damage.toString()
+	let pos  = u.getPos() - OFFSET
+	return standardTextTag(pos, text)
+		..setColor(82, 82, 255, 255)
+		..setVelocity(0., .04)
+		..setLifespan(5.)
 
 
 /** Create a texttag that matches the style of the standard warcraft 3 attack
-    miss indication. */
-public function createMissTextTag(unit u)
-    standardTextTag(u.getPos(), "miss")..setColor(255, 0, 0, 255)
-                                       ..setFadepoint(1.)
+	miss indication. */
+public function createMissTextTag(unit u) returns texttag
+	return standardTextTag(u.getPos(), "miss")
+		..setColor(255, 0, 0, 255)
+		..setFadepoint(1.)
 
 
 /** Create a texttag that matches the style of the standard warcraft 3 Shadow
-    Strike ability. */
-public function createShadowStrikeTextTag(unit u, int damage, bool isInitialDamage)
-    var text = damage.toString()
-    if isInitialDamage
-        text += "!"
+	Strike ability. */
+public function createShadowStrikeTextTag(unit u, int damage, bool isInitialDamage) returns texttag
+	var text = damage.toString()
+	if isInitialDamage
+		text += "!"
 
-    standardTextTag(u.getPos(), text)..setColor(160, 255, 0, 255)
-                                     ..setVelocity(0., .04)
-..setLifespan(5.)
+	return standardTextTag(u.getPos(), text)
+		..setColor(160, 255, 0, 255)
+		..setVelocity(0., .04)
+		..setLifespan(5.)
