@@ -1,6 +1,9 @@
 package String
 import NoWurst
 import Integer
+import Annotations
+
+@configurable public constant ENABLE_MULTIBYTE_SUPPORT = false
 
 constant charset = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 constant numberset = "0123456789"
@@ -235,7 +238,7 @@ public class StringIterator
 
 	function next() returns string
 		var val = s.substring(currentpos, currentpos + 1)
-		if val.getHash() == 1843378377
+		if ENABLE_MULTIBYTE_SUPPORT and val.getHash() == 1843378377
 			val = s.substring(currentpos, currentpos + 2)
 			currentpos += 2
 		else
