@@ -19,7 +19,7 @@ import Table
 	>		Log.info("read chunk: " + chunk)
 
 	Read Data iteratively:
-	>	for i = 1 to cstring.getChunkCount()
+	>	for i = 0 to cstring.getChunkCount()
 	>		let chunk = cstring.getChunk(i)
 	>		Log.info("read chunk: " + chunk)
 */
@@ -66,7 +66,7 @@ public class ChunkedString
 			return buffer
 		return table.loadString(index)
 
-	/** Returns the number of chunks in the string. */
+	/** Returns the number of chunks in the string. The buffer counts as one chunk */
 	function getChunkCount() returns int
 		return chunkCount + 1
 
@@ -125,3 +125,22 @@ function chunkedStringTest()
 	cstring.getUnsafeSubString(4, 12).assertEquals("efghijkl")
 	cstring.getUnsafeSubString(0, 3).assertEquals("abc")
 	cstring.getUnsafeSubString(15, 17).assertEquals("pq")
+
+@Test
+function chunkedStringIteration()
+	let cstring = new ChunkedString(5)
+	cstring.append("abc")
+	cstring.append("def")
+
+	var result = ""
+
+	for i = 0 to cstring.getChunkCount()
+		result += cstring.getChunk(i)
+
+	result.assertEquals("abcdef")
+	result = ""
+
+	while cstring.hasChunk()
+		result += cstring.readChunk()
+
+	result.assertEquals("abcdef")
