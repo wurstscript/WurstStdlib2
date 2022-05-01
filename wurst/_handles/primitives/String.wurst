@@ -234,8 +234,12 @@ public class StringIterator
 		return currentpos < stringLen
 
 	function next() returns string
-		let val = s.substring(currentpos, currentpos + 1)
-		currentpos++
+		var val = s.substring(currentpos, currentpos + 1)
+		if val.getHash() == 1843378377
+			val = s.substring(currentpos, currentpos + 2)
+			currentpos += 2
+		else
+			currentpos++
 		return val
 
 	function close()

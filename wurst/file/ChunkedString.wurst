@@ -42,7 +42,9 @@ public class ChunkedString
 		var data = pdata
 
 		while true
-			let remain = chunkSize - buffer.length()
+			var remain = chunkSize - buffer.length()
+			if remain > 0 and data.substring(remain - 1, remain).getHash() == 1843378377
+				remain++
 			buffer += data.substring(0, remain)
 			data = data.substring(min(remain, data.length()))
 			if data.length() == 0
