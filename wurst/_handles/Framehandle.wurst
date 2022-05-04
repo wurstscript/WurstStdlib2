@@ -60,7 +60,7 @@ public constant SCREEN_LEFT               = vec2(0.0, 0.3)
 public constant SCREEN_TOP                = vec2(0.4, 0.6)
 public constant SCREEN_BOTTOM             = vec2(0.4, 0.0)
 
-// These defines represent the whole 16:9 screen size. Only Frames of type 'SIMPLE' can be moved here. 
+// These defines represent the whole 16:9 screen size. Only Frames of type 'SIMPLE' can be moved here.
 public constant WHOLE_SCREEN_TOPRIGHT     = vec2( 0.95, 0.6)
 public constant WHOLE_SCREEN_TOPLEFT      = vec2(-0.15, 0.6)
 public constant WHOLE_SCREEN_BOTTOMRIGHT  = vec2( 0.95, 0.0)
@@ -122,7 +122,7 @@ public function createFrame(string name, framehandle owner, integer priority, in
 	return BlzCreateFrame(name, owner, priority, createContext)
 
 /** Creates a simple frame of the given name (the name of the frame which must be defined in the imported fdf files.) */
-public function createSimpleFrame(string name) returns framehandle	
+public function createSimpleFrame(string name) returns framehandle
 	verifyFrameNameLength(name)
 	return BlzCreateSimpleFrame(name, GAME_UI, 0)
 
@@ -304,7 +304,7 @@ public function framehandle.unfocus(player p)
 		this.enable(p)
 		this.disable(p)
 
-	this.setFocus(p, false)    
+	this.setFocus(p, false)
 
 /** Sets the model of the model frame */
 public function framehandle.setModel(string modelFile, integer cameraIndex)
@@ -313,7 +313,7 @@ public function framehandle.setModel(string modelFile, integer cameraIndex)
 /** Returns the state of the frame */
 public function framehandle.isEnabled() returns bool
 	return BlzFrameGetEnable(this)
-	
+
 /** Returns the state of the frame for given player */
 public function framehandle.isEnabled(player p) returns boolean
 	return localPlayer == p or p == null ? this.isEnabled() : false
@@ -329,12 +329,12 @@ public function framehandle.enable()
 /** Disables the frame */
 public function framehandle.disable()
 	this.setEnabled(false)
-	
+
 /** Enables the frame for the player p */
 public function framehandle.enable(player p)
 	if localPlayer == p or p == null
 		this.enable()
-	
+
 /** Disables the frame for the player p */
 public function framehandle.disable(player p)
 	if localPlayer == p or p == null
@@ -347,12 +347,12 @@ public function framehandle.getAlpha() returns int
 /** Sets the decimal alpha value of the frame (only for specific frames) */
 public function framehandle.setAlpha(integer alpha)
 	BlzFrameSetAlpha(this, alpha)
-	
+
 /** Sets the decimal alpha value of the frame (only for specific frames) to the given player */
 public function framehandle.setAlpha(player p, integer alpha)
 	if localPlayer == p or p == null
 		this.setAlpha(alpha)
-		
+
 /** Unknown */
 public function framehandle.setSpriteAnimate(integer primaryProp, integer flags)
 	BlzFrameSetSpriteAnimate(this, primaryProp, flags)
@@ -416,6 +416,14 @@ public function framehandle.setHeight(real height)
 /** Sets the width and height of the frame */
 public function framehandle.setSize(real width, real height)
 	BlzFrameSetSize(this, width, height)
+
+/** Sets the vertex color of the model frame */
+public function framehandle.setVertexColor(color pcolor)
+	BlzFrameSetVertexColor(this, BlzConvertColor(255, pcolor.red, pcolor.green, pcolor.blue))
+
+/** Sets the vertex color of the model frame */
+public function framehandle.setVertexColor(colorA color)
+	BlzFrameSetVertexColor(this, BlzConvertColor(color.alpha, color.red, color.green, color.blue))
 
 /** Sets the vertex color of the model frame */
 public function framehandle.setVertexColor(integer color)
@@ -510,7 +518,7 @@ public function disableCursor()
 public function setCursorEnabled(bool flag)
 	BlzEnableCursor(flag)
 
-/** Get number of children frames of given frame. Only direct child frames are counted */ 
+/** Get number of children frames of given frame. Only direct child frames are counted */
 public function framehandle.getChildrenCount() returns int
 	return BlzFrameGetChildrenCount(this)
 
