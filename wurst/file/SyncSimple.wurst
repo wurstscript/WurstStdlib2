@@ -118,8 +118,8 @@ public class SimpleSynchronizer
 
 	private unit dummy
 	private bitset syncedPlayers = emptyBitset()
-	// 4095 is 1111 1111 1111 in binary, one bit for each player slot
-	private static bitset allPlayers = bitset(4095)
+	// One bit for each player slot
+	private static bitset allPlayers = bitset((2).pow(bj_MAX_PLAYERS) - 1)
 	private SynchronizationCallback callback = null
 
 	construct()
@@ -141,7 +141,7 @@ public class SimpleSynchronizer
 		this.callback = callback
 
 	private function addOfflinePlayers()
-		for i = 0 to 11
+		for i = 0 to bj_MAX_PLAYERS - 1
 			if not players[i].isIngame()
 				syncedPlayers = syncedPlayers.set(i)
 

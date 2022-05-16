@@ -77,7 +77,7 @@ public class LocalFiles
 		let synchronizer = new SimpleSynchronizer()
 		check()
 
-		for i = 0 to 11
+		for i = 0 to bj_MAX_PLAYERS - 1
 			enabledPlayers[i] = false
 			let network = new Network(players[i])
 			network.getData().writeBoolean(LocalFiles.isEnabled())
