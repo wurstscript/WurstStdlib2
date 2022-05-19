@@ -313,14 +313,14 @@ init
 	color(255, 2, 2).getName().assertEquals("red")
 	color(77,41,3).getName().assertEquals("brown")
 	assertTrue("red".toColor() == color(255, 2, 2))
-	assertTrue("brown".toColor() == color(164, 111, 51))
+	assertTrue("brown".toColor() == color(77, 41, 3))
 	assertTrue("red".toPlayerColor() == PLAYER_COLOR_RED)
 	assertTrue("brown".toPlayerColor() == PLAYER_COLOR_BROWN)
 
 @Test public function testPlayerColorConversion()
 	assertTrue(PLAYER_COLOR_BLUE.toColor() == color(0,65,255))
 	assertTrue(PLAYER_COLOR_RED.toColor() == color(255, 2, 2))
-	assertTrue(PLAYER_COLOR_BROWN.toColor() ==  color(164, 111, 51))
+	assertTrue(PLAYER_COLOR_BROWN.toColor() ==  color(77, 41, 3))
 	PLAYER_COLOR_RED.getName().assertEquals("red")
 	PLAYER_COLOR_LIGHT_BLUE.getName().assertEquals("light blue")
 

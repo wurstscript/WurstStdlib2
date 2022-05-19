@@ -128,15 +128,21 @@ public function group.targetOrder(string order, widget targetWidget) returns boo
 public function group.targetOrder(int order, widget targetWidget) returns bool
 	return GroupTargetOrderById(this, order, targetWidget)
 
+group mainGroup
+int count
+
 public function group.add(vararg group groups) returns int
 	// I think this is how it works
-	var i = 0
+	// I had to recreate it because I can't use the "for u in g" is using a recursion,
+	// because it needs the function .iterator(), but that needs this function first
+
+	mainGroup = this
+	count = 0
 	for g in groups
-		for u in g
-			if not IsUnitInGroup(u, this)
-				i += 1
-			GroupAddUnit(this, u)
-	return i
+		ForGroup(g, () -> begin
+			count += mainGroup.add(GetEnumUnit())
+		end)
+	return count
 
 @deprecated("Use .add instead.")
 public function group.addGroup(group g)
