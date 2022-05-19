@@ -4,6 +4,9 @@ import Force
 import Player
 import Wurstunit
 
+native GetBJPlayerNeutralVictim() returns integer
+native GetBJPlayerNeutralExtra() returns integer
+
 public constant PLAYER_COLOR_BLACK_AGGRESSIVE = ConvertPlayerColor(PLAYER_NEUTRAL_AGGRESSIVE)
 public constant PLAYER_COLOR_UNKNOWN1 = ConvertPlayerColor(bj_PLAYER_NEUTRAL_VICTIM)
 public constant PLAYER_COLOR_UNKNOWN2 = ConvertPlayerColor(bj_PLAYER_NEUTRAL_EXTRA)
