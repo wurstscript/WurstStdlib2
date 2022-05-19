@@ -192,3 +192,7 @@ public class Board
             i.val++
 
         destroy i
+
+    /** Unsafe access to the underlying multiboard */
+    function getBoard() returns multiboard
+        return board
