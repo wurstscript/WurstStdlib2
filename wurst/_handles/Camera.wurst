@@ -115,7 +115,7 @@ public function camerasetup.applyForceDurationWithZ(real zDestOffset, real force
 public function camerasetup.apply(boolean doPan, player whichPlayer, real duration)
 	CameraSetupApplyForPlayer(doPan, this, whichPlayer, duration)
 
-@deprecated("Use .getField instead") // Who did this?
+@deprecated("Use .getField instead")
 public function camerasetup.getFieldSwap(camerafield whichField) returns real
 	return CameraSetupGetFieldSwap(whichField, this)
 

@@ -132,8 +132,7 @@ group mainGroup
 int count
 
 public function group.add(vararg group groups) returns int
-	// I think this is how it works
-	// I had to recreate it because I can't use the "for u in g" is using a recursion,
+	// I had to do it in this way because I can't use the "for u in g" is using a recursion,
 	// because it needs the function .iterator(), but that needs this function first
 
 	mainGroup = this
