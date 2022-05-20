@@ -10,11 +10,11 @@ public native GetUnitGoldCost(int unitid) returns int
 public native GetUnitWoodCost(int unitid) returns int
 
 public function getUnitIcon(int unitId) returns string
-    return BlzGetAbilityIcon(unitId)
+	return BlzGetAbilityIcon(unitId)
 
 public function unit.getIcon() returns string
-    return getUnitIcon(this.getTypeId())
-	
+	return getUnitIcon(this.getTypeId())
+
 public function unit.getGoldCost() returns int
 	return GetUnitGoldCost(this.getTypeId())
 
