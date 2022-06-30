@@ -4,11 +4,7 @@ import HashSet
 @Test
 function testHashSet()
 	let set = new HashSet<int>
-	..add(4)
-	..add(5)
-	..add(6)
-	..add(3)
-	..add(5)
+	..add(4, 5, 6, 3, 5)
 
 	// Test count
 	set.count(5).assertEquals(1)
@@ -18,7 +14,7 @@ function testHashSet()
 	// Test has
 	set.has(5).assertEquals(true)
 	set.has(9).assertEquals(false)
-	
+
 	// Test removeAt
 	set.get(0).assertEquals(4)
 	set.has(4).assertEquals(true)
@@ -29,3 +25,17 @@ function testHashSet()
 	set.get(0).assertEquals(5)
 	set.remove(3)
 	set.size().assertEquals(2)
+
+@Test function testFenixOrder()
+	let hset = new HashSet<int>
+	hset..add(1, 2, 3)..remove(2)
+	hset.get(0).assertEquals(1)
+	hset.get(1).assertEquals(3)
+
+@Test function testRemoval()
+	let hset = new HashSet<int>
+	..add(4, 5, 6, 3, 5)
+	hset.removeAt(0)
+	hset.get(0).assertEquals(5)
+	hset.remove(5)
+	hset.get(0).assertEquals(6)

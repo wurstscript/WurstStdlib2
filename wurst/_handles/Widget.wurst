@@ -1,6 +1,7 @@
 package Widget
 import NoWurst
 import public Vectors
+import Effect
 
 public function widget.getLife() returns real
 	return GetWidgetLife(this)
@@ -10,9 +11,19 @@ public function widget.setLife(real newLife)
 
 public function widget.getPos() returns vec2
 	return vec2(this.getX(), this.getY())
-	
+
 public function widget.getX() returns real
 	return GetWidgetX(this)
-	
+
 public function widget.getY() returns real
 	return GetWidgetY(this)
+
+public function widget.addEffect(string modelName, string attachment) returns effect
+	return AddSpecialEffectTarget(modelName, this, attachment)
+
+public function widget.flashEffect(string modelName, string attachment)
+	AddSpecialEffectTarget(modelName, this, attachment).destr()
+
+/** Checks if the widget is alive by testing current life > .405 */
+public function widget.isAliveTrick() returns bool
+	return .405 < this.getLife()

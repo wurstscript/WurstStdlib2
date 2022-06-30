@@ -1,6 +1,8 @@
 package Destructable
 import NoWurst
 import Vectors
+import Wurstunit
+import Annotations
 
 public function createDestructable(int id, vec3 pos, angle direction, real scale, int variation) returns destructable
 	return createDestructable(id, pos.toVec2(), direction, scale, variation)
@@ -13,18 +15,147 @@ public function destructable.getPos() returns vec2
 
 public function destructable.getX() returns real
 	return GetDestructableX(this)
-	
+
 public function destructable.getY() returns real
 	return GetDestructableY(this)
-	
+
 public function destructable.kill()
 	KillDestructable(this)
 
 public function destructable.getTypeId() returns int
 	return GetDestructableTypeId(this)
-	
+
 public function destructable.setAnimation(string anim)
 	SetDestructableAnimation(this, anim)
 
 public function destructable.remove()
 	RemoveDestructable(this)
+
+public function destructable.setInvulnerable(bool flag)
+	SetDestructableInvulnerable(this, flag)
+
+public function destructable.isInvulnerable() returns bool
+	return IsDestructableInvulnerable(this)
+
+@deprecated("Use .isInvulnerable instead")
+public function destructable.getInvulnerable() returns bool
+	return IsDestructableInvulnerable(this)
+
+public function destructable.setLife(real life)
+	SetDestructableLife(this, life)
+
+public function destructable.getLife() returns real
+	return GetDestructableLife(this)
+
+public function destructable.setMaxLife(real max)
+	SetDestructableMaxLife(this, max)
+
+public function destructable.getMaxLife() returns real
+	return GetDestructableMaxLife(this)
+
+public function destructable.restoreLife(real life, boolean birth)
+	DestructableRestoreLife(this, life, birth)
+
+public function destructable.queueAnimation(string anim)
+	QueueDestructableAnimation(this, anim)
+
+public function destructable.setAnimationSpeed(real speedFactor)
+	SetDestructableAnimationSpeed(this, speedFactor)
+
+public function destructable.show(bool flag)
+	ShowDestructable(this, flag)
+
+public function destructable.getOccluderHeight() returns real
+	return GetDestructableOccluderHeight(this)
+
+public function destructable.setOccluderHeight(real height)
+	SetDestructableOccluderHeight(this, height)
+
+public function destructable.getName() returns string
+	return GetDestructableName(this)
+
+// Extensions
+
+/** Tuple wrapper for destructable gates API */
+public tuple gate(destructable killable)
+
+/** Opens a destructable gate (only if is not destroyed)*/
+public function gate.open()
+	if (GetDestructableLife(this.killable) > 0)
+		KillDestructable(this.killable)
+		SetDestructableAnimation(this.killable, "death alternate")
+
+/** Closes a destructable gate */
+public function gate.close()
+	this.open()
+	DestructableRestoreLife(this.killable, GetDestructableMaxLife(this.killable), true)
+	SetDestructableAnimation(this.killable, "stand")
+
+/** Destroys a destructable gate */
+public function gate.kill()
+	this.open()
+	SetDestructableAnimation(this.killable, "death")
+
+/** Sets the gate's open/close state */
+public function gate.setOpen(bool flag)
+	if flag
+		this.open()
+	else
+		this.close()
+
+/** Tuple wrapper for destructable elevator API */
+public tuple elevator(destructable elevatable)
+
+constant ELEVATOR_HEIGHT_MIN = 1
+constant ELEVATOR_HEIGHT_MAX = 3
+
+/** Moves a destructable elevator one step up */
+public function elevator.up()
+	this.setHeight(this.getHeight() + 1)
+
+/** Moves a destructable elevator one step down */
+public function elevator.down()
+	this.setHeight(this.getHeight() - 1)
+
+/** Moves a destructable elevator to given height */
+public function elevator.elevatorSetHeight(int height)
+	this.setHeight(height)
+
+/** Get a destructable elevator height */
+public function elevator.getHeight() returns int
+	let height = ELEVATOR_HEIGHT_MIN + (this.elevatable.getOccluderHeight() / bj_CLIFFHEIGHT).toInt()
+	return height < ELEVATOR_HEIGHT_MIN or height > ELEVATOR_HEIGHT_MAX ? ELEVATOR_HEIGHT_MIN : height
+
+/** Returns elevator adjusted height based on given bounds */
+public function isElevatorHeightInBounds(int height) returns bool
+	return height >= ELEVATOR_HEIGHT_MIN and height <= ELEVATOR_HEIGHT_MAX
+	
+/** Returns elevator adjusted height based on given bounds */
+public function getElevatorHeightBound(int height) returns int
+	return height < ELEVATOR_HEIGHT_MIN ? ELEVATOR_HEIGHT_MIN : (height > ELEVATOR_HEIGHT_MAX ? ELEVATOR_HEIGHT_MAX : height)
+
+/** Set elevator height to given value. */
+public function elevator.setHeight(int height)
+	let oldHeight = this.getHeight()
+	let newHeight = getElevatorHeightBound(height)
+	this.elevatable.setOccluderHeight(bj_CLIFFHEIGHT * (newHeight - ELEVATOR_HEIGHT_MIN))
+
+	var animationInstant = "stand"
+	var animationQueue = "stand"
+	switch (newHeight)
+		case ELEVATOR_HEIGHT_MIN
+			animationInstant = oldHeight == 2 ? "birth" : (oldHeight == ELEVATOR_HEIGHT_MAX ? "birth third" : animationInstant)
+		case ELEVATOR_HEIGHT_MAX
+			animationInstant = oldHeight == ELEVATOR_HEIGHT_MIN ? "death third" : (oldHeight == 2 ? "death second" : animationInstant + " third")
+			animationQueue += " third"
+		default
+			animationInstant = oldHeight == ELEVATOR_HEIGHT_MIN ? "death" : (oldHeight == ELEVATOR_HEIGHT_MAX ? "birth second" : animationInstant + " second")
+			animationQueue += " second"
+
+	this.elevatable.setAnimation(animationInstant)
+	if newHeight != oldHeight
+		this.elevatable.queueAnimation(animationQueue)
+
+@Test function testDestructables()
+	let destr = createDestructable(0, ZERO2, 0 .fromDeg(), 1, -1)
+	destr.getX().assertEquals(0.)

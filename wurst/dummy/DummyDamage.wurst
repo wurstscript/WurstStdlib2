@@ -1,0 +1,73 @@
+package DummyDamage
+import DummyRecycler
+
+/**
+	DummyDamage is used when you want to inflict damage from a certain player,
+	without having access to a unit by that player, that the damage should originate from,
+	e.g. an effect missile, that does damage on impact, but doesn't know the caster unit.
+	A DummyDamage is constructed analogous to a DummyCaster using the builder pattern.
+
+	> new DummyDamage()
+	>	..attacker(attackingPlayer)
+	>	..target(targetWidget)
+	>	..amount(50)
+	>	..attackType(ATTACK_TYPE_NORMAL)
+	>	..apply(true)
+
+	The object is only destroyed if you pass true to the #apply function,
+	and can therefore be reused to apply the same type of damage to multiple targets.
+
+*/
+
+public class DummyDamage
+	private unit dummy = DummyRecycler.get(origin, angle(0))
+	private widget target = null
+	private var amount = 0.
+	private var attack = false
+	private var ranged = false
+	private var origin = ZERO2
+	private var attacker = DUMMY_PLAYER
+	private var attackType = ATTACK_TYPE_CHAOS
+	private var damageType = DAMAGE_TYPE_UNKNOWN
+	private var weaponType = WEAPON_TYPE_WHOKNOWS
+
+	function apply()
+		apply(false)
+
+	function apply(boolean terminate)
+		dummy
+		..setOwner(attacker, false)
+		..damageTarget(target, amount, attack, ranged, attackType, damageType, weaponType)
+
+		if terminate
+			destroy this
+
+	function target(widget target)
+		this.target = target
+
+	function attacker(player attacker)
+		this.attacker = attacker
+
+	function amount(real amount)
+		this.amount = amount
+
+	function isAttack(boolean isAttack)
+		this.attack = isAttack
+
+	function isRanged(boolean isRanged)
+		this.ranged = isRanged
+
+	function origin(vec2 origin)
+		this.origin = origin
+
+	function attackType(attacktype attackType)
+		this.attackType = attackType
+
+	function damageType(damagetype damageType)
+		this.damageType = damageType
+
+	function weaponType(weapontype weaponType)
+		this.weaponType = weaponType
+
+	ondestroy
+		DummyRecycler.recycle(dummy)

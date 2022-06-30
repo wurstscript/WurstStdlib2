@@ -1,8 +1,23 @@
 package MagicFunctions
 import NoWurst
-// this package contains functions which are 
+import Annotations
+// this package contains functions which are
 // implemented in the wurst compiler
 
+/** Stops compilation with the provided error message */
+@compiletimenative public function compileError(string msg)
+
+/** Returns the map name from wurst.build file */
+@compiletimenative public function getMapName() returns string
+	return ""
+
+/** Returns the build date in uuuu-MM-dd'T'HH:mm format */
+@compiletimenative public function getBuildDate() returns string
+	return ""
+
+/** Returns true if the map is being built using the 'buildmap' command, false otherwise. */
+@compiletimenative public function isProductionBuild() returns boolean
+	return false
 
 /** builtin function which returns a stack trace.
 If stack traces are disabled, this function returns the empty string.
@@ -13,11 +28,11 @@ public function getStackTraceString() returns string
 /** builtin magic function.
 Calls all functions with the given annotation, for example
 `callFunctionsWithAnnotation("@initializeObject")`.
-The called functions must not take any parameters. 
+The called functions must not take any parameters.
 */
 public function callFunctionsWithAnnotation(string _annotation)
 
-/** this is a magic constant. 
+/** this is a magic constant.
 It is always false at runtime and true during compiletime.
 */
 public constant compiletime = false
@@ -25,23 +40,5 @@ public constant compiletime = false
 /** This is a builtin magic function.
  * It evaluates it's argument at compiletime and replaces the call with the result.
  */
-public function compiletime(int expr) returns int
-	return expr
-
-/** This is a builtin magic function.
- * It evaluates it's argument at compiletime and replaces the call with the result.
- */
-public function compiletime(real expr) returns real
-	return expr
-	
-/** This is a builtin magic function.
- * It evaluates it's argument at compiletime and replaces the call with the result.
- */
- public function compiletime(string expr) returns string
+ public function compiletime<T:>(T expr) returns T
 	 return expr
-
-/** This is a builtin magic function.
- * It evaluates it's argument at compiletime and replaces the call with the result.
- */
- public function compiletime(boolean expr) returns boolean
- 	return expr

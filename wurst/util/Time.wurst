@@ -1,0 +1,291 @@
+/**
+	Type-safe wrappers to distinguish durations (an amount of time) from instants (a point in time), and the valid ways
+	to reason about those types.
+
+	Example usage:
+
+	```
+	constant myGoldMine = createGoldMine()
+	var nextIncomeTime = 30..secondsFromNow()
+	var incomeMessage = CreateTextTag()..setPos(myGoldMine.getPos3Real())
+	init
+		doPeriodically(ANIMATION_PERIOD) ->
+			if nextIncomeTime.durationUntil().lessThan(0..seconds())
+				myGoldMine.getOwner().addGold(100)
+				nextIncomeTime += 30..seconds()
+
+			incomeMessage..setText("Next income in " + nextIncomeTime.durationUntil().displayVerbose(), 10.)
+	```
+
+	Details:
+
+	- Durations and instants are directly related, but can't be used interchangeably.
+		* Example: it doesn't make sense to set a timer for "tomorrow" seconds.
+	- Sometimes durations and instants can be combined to produce a new value.
+		* Example: "Now" plus "30 seconds" gives you an instant 30 seconds from now.
+	- Not every combination of instants and durations makes sense.
+		* Example: "30 seconds" plus "30 seconds" is 60 seconds, but "Now" plus "Now" doesn't make sense.
+
+	This library helps you write safe code by making it possible to add instant + duration, subtract instant - instant,
+	but fails to compile the addition of instant + instant.
+*/
+package Time
+
+import GameTimer
+
+/** An instant in time. Use `instantNow()` to produce an instant from the current game time. */
+public tuple instant(real timestamp_seconds)
+
+/** A duration of time. Use constructors like `6..seconds() or `15..minutes()` for convenience. */
+public tuple duration(real seconds)
+
+/** Instant constructor. Uses the elapsed game time. */
+public function instantNow() returns instant
+	return instant(getElapsedGameTime())
+
+
+/// Duration constructors ///
+
+/** Duration constructor. */
+public function real.seconds() returns duration
+	return duration(this)
+
+/** Duration constructor. */
+public function real.minutes() returns duration
+	return (duration(this * 60.))
+
+/** Duration constructor. */
+public function real.hours() returns duration
+	return (duration(this * 60. * 60.))
+
+/** Duration constructor. */
+public function int.seconds() returns duration
+	return this.toReal().seconds()
+
+/** Duration constructor. */
+public function int.minutes() returns duration
+	return this.toReal().minutes()
+
+/** Duration constructor. */
+public function int.hours() returns duration
+	return this.toReal().hours()
+
+
+/// Instant constructors ///
+
+/** Instant constructor. */
+public function real.secondsAgo() returns instant
+	return instant(getElapsedGameTime() - this)
+
+/** Instant constructor. */
+public function real.minutesAgo() returns instant
+	return instant(getElapsedGameTime() - this * 60.)
+
+/** Instant constructor. */
+public function real.hoursAgo() returns instant
+	return instant(getElapsedGameTime() - this * 60. * 60.)
+
+/** Instant constructor. */
+public function int.secondsAgo() returns instant
+	return instant(getElapsedGameTime() - this)
+
+/** Instant constructor. */
+public function int.minutesAgo() returns instant
+	return instant(getElapsedGameTime() - this * 60.)
+
+/** Instant constructor. */
+public function int.hoursAgo() returns instant
+	return instant(getElapsedGameTime() - this * 60. * 60.)
+
+/** Instant constructor. */
+public function duration.ago() returns instant
+	return instant(getElapsedGameTime() - this.seconds)
+
+/** Instant constructor. */
+public function duration.fromNow() returns instant
+	return instant(getElapsedGameTime() + this.seconds)
+
+/** Instant constructor. */
+public function real.secondsFromNow() returns instant
+	return instant(getElapsedGameTime() + this)
+
+/** Instant constructor. */
+public function real.minutesFromNow() returns instant
+	return instant(getElapsedGameTime() + this * 60.)
+
+/** Instant constructor. */
+public function real.hoursFromNow() returns instant
+	return instant(getElapsedGameTime() + this * 60. * 60.)
+
+/** Instant constructor. */
+public function int.secondsFromNow() returns instant
+	return instant(getElapsedGameTime() + this)
+
+/** Instant constructor. */
+public function int.minutesFromNow() returns instant
+	return instant(getElapsedGameTime() + this * 60.)
+
+/** Instant constructor. */
+public function int.hoursFromNow() returns instant
+	return instant(getElapsedGameTime() + this * 60. * 60.)
+
+
+/// Arithmetic operators ///
+
+/** Compute an instant plus a duration. (Now plus 5 minutes = an instant 5 minutes in the future). */
+public function instant.op_plus(duration dur) returns instant
+	return instant(this.timestamp_seconds + dur.seconds)
+
+/** Compute an instant minus a duration. (Now minus 5 minutes = an instant 5 minutes in the past). */
+public function instant.op_minus(duration dur) returns instant
+	return instant(this.timestamp_seconds - dur.seconds)
+
+/** Compute an instant minus an instant. (Now minus 5 minutes ago = 5 minutes). */
+public function instant.op_minus(instant other) returns duration
+	return duration(this.timestamp_seconds - other.timestamp_seconds)
+
+/** Compute a duration plus a duration. (5 minutes plus 5 minutes = 10 minutes). */
+public function duration.op_plus(duration other) returns duration
+	return duration(this.seconds + other.seconds)
+
+/** Compute a duration minus a duration. (5 minutes minus 2 minutes = 3 minutes). */
+public function duration.op_minus(duration other) returns duration
+	return duration(this.seconds - other.seconds)
+
+/** Compute a duration plus an instant. (5 minutes plus now = 5 minutes in the future). */
+public function duration.op_plus(instant when) returns instant
+	return instant(this.seconds + when.timestamp_seconds)
+
+
+/// Other transforms ///
+
+/** Provides duration since an instant. Equivalent to Now - instant. */
+public function instant.durationSince() returns duration
+	return duration(getElapsedGameTime() - this.timestamp_seconds)
+
+/** Provides duration until an instant. Convenience for the negative of durationSince. */
+public function instant.durationUntil() returns duration
+	return duration(this.timestamp_seconds - getElapsedGameTime())
+
+
+/// Comparisons ///
+
+/** Instant > instant ? */
+public function instant.isOlderThan(instant other) returns bool
+	return this.timestamp_seconds < other.timestamp_seconds
+
+/** Instant < instant ? */
+public function instant.isNewerThan(instant other) returns bool
+	return this.timestamp_seconds > other.timestamp_seconds
+
+/** Duration > duration ? */
+public function duration.greaterThan(duration other) returns bool
+	return this.seconds > other.seconds
+
+/** Duration < duration ? */
+public function duration.lessThan(duration other) returns bool
+	return this.seconds < other.seconds
+
+/** Convenience for checking if an instant comes after instantNow. */
+public function instant.isInTheFuture() returns bool
+	return this.isNewerThan(instantNow())
+
+/** Convenience for checking if an instant comes before instantNow. */
+public function instant.isInThePast() returns bool
+	return this.isOlderThan(instantNow())
+
+/// Printing ///
+
+function duration.display(string hrs, string mins, string secs, string ms) returns string
+	let hours = (this.seconds / (60. * 60.)).toInt()
+	let minutes = (this.seconds / 60.).toInt() - (hours * 60)
+	let seconds = (this.seconds).toInt() - (minutes * 60) - (hours * 60 * 60)
+
+	var result = ""
+	if hours > 0
+		result += hours.toString()
+		result += hrs
+
+	if minutes > 0 or result.length() > 0
+		result += minutes.toString()
+		result += mins
+
+	if seconds > 0 or result.length() > 0
+		result += seconds.toString()
+		result += secs
+
+	if result.length() == 0 and this.greaterThan(0..seconds())
+		return (this.seconds * 1000.0).toInt().toString() + ms
+
+	if result.length() == 0
+		return "0"
+
+	return result
+
+/**
+	Tranform a duration to a verbose string. Example:
+
+	61..seconds().displayVerbose()
+	> "1 minutes, and 1 seconds"
+*/
+public function duration.displayVerbose() returns string
+	return this.display(" hours, ", " minutes, and ", " seconds", " milliseconds")
+
+/**
+	Tranform a duration to a short string. Example:
+
+	61..minutes().display("T-")
+	> "T-1H1M0S"
+*/
+public function duration.display(string prefix) returns string
+	return prefix + this.display("H", "M", "S", "MS")
+
+/**
+	ISO-8601 compatible duration representation. Example:
+
+	61..minutes().display()
+	> "PT1H1M0S"
+*/
+public function duration.display() returns string
+	return this.display("PT")
+
+/**
+	Transform an instant to a verbose string. Example:
+	instantNow().displayVerbose(" passed before the zombies killed you")
+	> "5 minutes, and 0 seconds passed before the zombies killed you"
+*/
+public function instant.displayVerbose(string suffix) returns string
+	return duration(this.timestamp_seconds).displayVerbose() + suffix
+
+/**
+	Transform an instant to a verbose string. Example:
+	"Time elapsed: " + instantNow().displayVerbose()
+	> "Time elapsed: 5 minutes, and 0 seconds game time"
+*/
+public function instant.displayVerbose() returns string
+	return this.displayVerbose(" game time")
+
+/// Indexing ///
+
+public function instantToIndex(instant inst) returns int
+	return realToIndex(inst.timestamp_seconds)
+
+public function instantFromIndex(int index) returns instant
+	return instant(realFromIndex(index))
+
+public function durationToIndex(duration dur) returns int
+	return realToIndex(dur.seconds)
+
+public function durationFromIndex(int index) returns duration
+	return duration(realFromIndex(index))
+
+@Test function testDisplay()
+	print(1..hours().displayVerbose())
+	assertTrue(.1.seconds().displayVerbose() == "100 milliseconds")
+	assertTrue(1.1.seconds().displayVerbose() == "1 seconds")
+	assertTrue(61..seconds().display() == "PT1M1S")
+	assertTrue(1..hours().displayVerbose() == "1 hours, 0 minutes, and 0 seconds")
+
+@Test function testNewerThan()
+	assertTrue(5..minutesFromNow().isNewerThan(5..secondsFromNow()))
+	assertTrue(5..minutesFromNow().isInTheFuture())

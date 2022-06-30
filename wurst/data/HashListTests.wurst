@@ -15,18 +15,30 @@ function testSet()
 	list.set(1, 6)
 	list.get(1).assertEquals(6)
 
+	list.set(3, 42)
+	list.get(3).assertEquals(42)
+	// resize when index out of size
+	list.size().assertEquals(4)
+	// elem insert use null
+	list.hasAt(2).assertTrue()
+	list.get(2).assertEquals(0)
+	list.has(0).assertTrue()
+	list.count(0).assertEquals(1)
+
+	list.set(3, 42)
+	// not resize
+	list.size().assertEquals(4)
+	// un-inserted
+	list.count(0).assertEquals(1)
+
 @Test
 function testAddAll()
-	int array vals = [5, 3, 6, 4, 1, 9]
+	let vals = [5, 3, 6, 4, 1, 9]
 	let list = new HashList<int>
-		..add(5)
-		..add(3)
-		..add(6)
+		..add(5, 3, 6)
 
 	let addl = new HashList<int>
-		..add(4)
-		..add(1)
-		..add(9)
+		..add(4, 1, 9)
 
 	list.addAll(addl)
 	var i = 0
@@ -39,9 +51,7 @@ function testAddAll()
 @Test
 function testClear()
 	let list = new HashList<int>
-		..add(5)
-		..add(3)
-		..add(4)
+		..add(5, 3, 4)
 
 	list.clear()
 	list.size().assertEquals(0)
@@ -49,19 +59,16 @@ function testClear()
 @Test
 function testRemoveAll()
 	let list = new HashList<int>
-		..add(5)
-		..add(3)
-		..add(4)
-	
+		..add(5, 3, 4)
+
 	list.clear()
 	list.size().assertEquals(0)
 
 @Test
 function testRemoveAt()
 	let list = new HashList<int>
-		..add(3)
-		..add(5)
-	
+		..add(3, 5)
+
 	list.removeAt(1)
 	list.get(0).assertEquals(3)
 	list.get(1).assertEquals(0)
@@ -69,9 +76,7 @@ function testRemoveAt()
 @Test
 function testRemove()
 	let list = new HashList<int>
-		..add(1)
-		..add(3)
-		..add(5)
+		..add(1, 3, 5)
 
 	list.remove(3)
 	list.get(0).assertEquals(1)
@@ -82,33 +87,27 @@ function testSize()
 	let list = new HashList<int>
 	list.size().assertEquals(0)
 	list
-		..add(5)
-		..add(3)
-		..add(1)
+		..add(5, 3, 1)
 	list.size().assertEquals(3)
 
 @Test
 function testIsEmpty()
 	let list = new HashList<int>
 	list.isEmpty().assertEquals(true)
-	list..add(1)
+	list.add(1)
 	list.isEmpty().assertEquals(false)
 
 @Test
 function testGet()
 	let list = new HashList<int>
-		..add(5)
-		..add(1)
-		..add(3)
+		..add(5, 1, 3)
 
 	list.get(1).assertEquals(1)
 
 @Test
 function testHas()
 	let list = new HashList<int>
-		..add(1)
-		..add(3)
-		..add(5)
+		..add(1, 3, 5)
 
 	list.has(3).assertEquals(true)
 	list.add(3)
@@ -121,14 +120,12 @@ function testHas()
 @Test
 function testIterator()
 	let list = new HashList<int>
-	int array vals = [1, 3, 5]
+	let vals = [1, 3, 5]
 	var i = 0
 
 	list
-		..add(1)
-		..add(3)
-		..add(5)
-	
+		..add(1, 3, 5)
+
 	for val in list
 		val.assertEquals(vals[i])
 		i++
@@ -136,13 +133,11 @@ function testIterator()
 @Test
 function testCopy()
 	let list = new HashList<int>
-		..add(1)
-		..add(3)
-		..add(5)
-	
-	let copy = list.copy()	
+		..add(1, 3, 5)
+
+	let copy = list.copy()
 	var i = 0
-	
+
 	for val in list
 		val.assertEquals(copy.get(i))
 		i++
@@ -150,13 +145,61 @@ function testCopy()
 @Test
 function testCopyConstructor()
 	let list = new HashList<int>
-		..add(1)
-		..add(3)
-		..add(5)
-	
+		..add(1, 3, 5)
+
 	let copy = new HashList<int>(list)
 	var i = 0
-	
+
 	for val in list
 		val.assertEquals(copy.get(i))
 		i++
+
+@Test
+function testHasAt()
+	let list = new HashList<int>
+		..add(1, 3, 5, 7, 9)
+
+	list.hasAt(4).assertTrue()
+	list.hasAt(5).assertFalse()
+
+	list.hasAt(-1).assertFalse()
+
+	list..remove(3)..remove(9)
+
+	list.hasAt(4).assertFalse()
+	list.hasAt(2).assertTrue()
+
+	list.hasAt(0).assertTrue()
+
+
+var xn_1 = 0
+var xn = 1
+@Test
+function testForEachFibonacci()
+	let list = new HashList<int>
+		..add(1, 1, 2, 3, 5, 8, 13, 21, 34)
+
+
+	list.forEach() (entry) ->
+		xn.assertEquals(entry)
+		let oldxn = xn
+		xn = xn + xn_1
+		xn_1 = oldxn
+
+
+@Test
+function testIteratorRemove()
+	let list = new HashList<int>
+		..add(1, 1, 2, 3, 5, 8, 13, 21, 34)
+
+	let itr = list.iterator()
+	while itr.hasNext()
+		let next = itr.next()
+		if next > 2 and next < 25
+			itr.remove()
+
+	list.size().assertEquals(4)
+	list.get(0).assertEquals(1)
+	list.get(1).assertEquals(1)
+	list.get(2).assertEquals(2)
+	list.get(3).assertEquals(34)

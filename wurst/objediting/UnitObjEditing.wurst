@@ -1,248 +1,14 @@
 package UnitObjEditing
 import NoWurst
-
 import ObjEditingNatives
 import public TargetsAllowed
+import public ObjEditingCommons
+import Annotations
 
-public enum MovementType
-	None
-	Foot
-	Horse
-	Fly
-	Hover
-	Float
-	Amphipic
-
-public enum Race
-	Commoner
-	Creeps
-	Critters
-	Demon
-	Human
-	Naga
-	Nightelf
-	Orc
-	Other
-	Undead
-	Unknown
-	
-public enum ArmorType
-	Normal
-	Small
-	Medium
-	Large
-	Fortified
-	Hero
-	Divine
-	Unarmored
-	
-public enum AttackType
-	Unknown
-	Normal
-	Pierce
-	Siege
-	Spells
-	Chaos
-	Magic
-	Hero
-	
-public enum WeaponSound
-	Nothing
-	AxeMediumChop
-	MetalHeavyBash
-	MetalHeavyChop
-	MetalHeavySlice
-	MetalLightChop
-	MetalLightSlice
-	MetalMediumBash
-	MetalMediumChop
-	MetalMediumSlice
-	RockHeavyBash
-	WoodHeavyBash
-	WoodLightBash
-	WoodMediumBash
-	
-public enum ArmorSoundType
-	Ethereal
-	Metal
-	Flesh
-	Stone
-	Wood
-	
-public enum WeaponType
-	None
-	Normal
-	Instant
-	Artillery
-	ArtilleryLine
-	Missile
-	MissileSplash
-	MissileBounce
-	MissileLine
-	
-public function WeaponType.toObjectString() returns string
-	switch this
-		case Normal
-			return "normal"
-		case Instant
-			return "instant"
-		case Artillery
-			return "artillery"
-		case ArtilleryLine
-			return "aline"
-		case Missile
-			return "missile"
-		case MissileSplash
-			return "msplash"
-		case MissileBounce
-			return "mbounce"
-		case MissileLine
-			return "mline"
-		default
-			return "_"
-		
-	
-public function WeaponSound.toString() returns string
-	switch this
-		case WeaponSound.Nothing
-			return "Nothing"
-		case WeaponSound.AxeMediumChop
-			return "AxeMediumChop"
-		case WeaponSound.MetalHeavyBash
-			return "MetalHeavyBash"
-		case WeaponSound.MetalHeavyChop
-			return "MetalHeavyChop"
-		case WeaponSound.MetalHeavySlice
-			return "MetalHeavySlice"
-		case WeaponSound.MetalLightChop
-			return "MetalLightChop"
-		case WeaponSound.MetalLightSlice
-			return "MetalLightSlice"
-		case WeaponSound.MetalMediumBash
-			return "MetalMediumBash"
-		case WeaponSound.MetalMediumChop
-			return "MetalMediumChop"
-		case WeaponSound.MetalMediumSlice
-			return "MetalMediumSlice"
-		case WeaponSound.RockHeavyBash
-			return "RockHeavyBash"
-		case WeaponSound.WoodHeavyBash
-			return "WoodHeavyBash"
-		case WeaponSound.WoodLightBash
-			return "WoodLightBash"
-		case WeaponSound.WoodMediumBash
-			return "WoodMediumBash"
-		default
-			return null
-		
-public function ArmorSoundType.toString() returns string
-	switch this
-		case ArmorSoundType.Ethereal
-			return "Ethereal"
-		case ArmorSoundType.Flesh
-			return "Flesh"
-		case ArmorSoundType.Wood
-			return "Wood"
-		case ArmorSoundType.Stone
-			return "Stone"
-		case ArmorSoundType.Metal
-			return "Metal"
-		default
-			return null
-			
-
-
-public function ArmorType.toObjectString() returns string
-	string result = "normal"
-	switch this
-		case Normal
-			result = "normal"
-		case Small
-			result = "small"
-		case Medium
-			result = "medium"
-		case Large
-			result = "large"
-		case Fortified
-			result = "fort"
-		case Hero
-			result = "hero"
-		case Divine
-			result = "divine"
-		case Unarmored
-			result = "none"
-	return result
-	
-public function AttackType.toObjectString() returns string
-	string result = "unknown"
-	switch this
-		case Unknown
-			result = "unknown"
-		case Normal
-			result = "normal"
-		case Pierce
-			result = "pierce"
-		case Siege
-			result = "siege"
-		case Spells
-			result = "spells"
-		case Chaos
-			result = "chaos"
-		case Magic
-			result = "magic"
-		case Hero
-			result = "hero"
-	return result
-	
-public function Race.toObjectString() returns string
-	string result = "unknown"
-	switch this
-		case Commoner
-			result = "commoner"
-		case Creeps
-			result = "creeps"
-		case Critters
-			result = "critters"
-		case Demon
-			result = "demon"
-		case Human
-			result = "human"
-		case Naga
-			result = "naga"
-		case Nightelf
-			result = "nightelf"
-		case Orc
-			result = "orc"
-		case Other
-			result = "other"
-		case Undead
-			result = "undead"
-		case Unknown
-			result = "unknown"
-	return result
-	
-public function MovementType.toObjectString() returns string
-	var result = ""
-	switch this
-		case None
-		case Foot
-			result = "foot"
-		case Horse
-			result = "horse"
-		case Fly
-			result = "fly"
-		case Hover
-			result = "hover"
-		case Float
-			result = "float"
-		case Amphipic
-			result = "amph"
-	return result
-	
 public class W3UDefinition
 	ObjectDefinition def
-	
-	protected int newId 
+
+	protected int newId
 	protected int baseId
 
 	function getNewId() returns int
@@ -255,43 +21,49 @@ public class W3UDefinition
 		this.newId = newId
 		this.baseId = baseId
 		def = createObjectDefinition("w3u", newId, baseId)
-				
+
 	function setTooltipExtended(string data)
 		def.setString("utub", data)
-	
+
 	function setTooltipBasic(string data)
 		def.setString("utip", data)
-	
+
 	function setRequirementsLevels(string data)
 		def.setString("urqa", data)
-	
+
 	function setRequirements(string data)
 		def.setString("ureq", data)
-	
+
 	function setName(string data)
 		def.setString("unam", data)
-	
+
 	function setHotkey(string data)
 		def.setString("uhot", data)
-	
+
 	function setDescription(string data)
 		def.setString("ides", data)
-	
+
 	function setButtonPositionY(int data)
 		def.setInt("ubpy", data)
-	
+
 	function setButtonPositionX(int data)
 		def.setInt("ubpx", data)
-	
+
 
 public class UnitOrBuildingOrHeroDefinition extends W3UDefinition
 
 	construct(int newUnitId, int origUnitId)
 		super(newUnitId, origUnitId)
-		
+
+	function setItemsSold(string data)
+		def.setString("usei", data)
+
+	function setUnitsSold(string data)
+		def.setString("useu", data)
+
 	function setHideMinimapDisplay(boolean flag)
-		def.setBoolean("uhom", flag) 
-	
+		def.setBoolean("uhom", flag)
+
 	function setUseExtendedLineofSight(boolean data)
 		def.setBoolean("ulos", data)
 
@@ -431,7 +203,7 @@ public class UnitOrBuildingOrHeroDefinition extends W3UDefinition
 
 	function setRace(Race data)
 		def.setString("urac", data.toObjectString())
-		
+
 	function setPropulsionWindowdegrees(real data)
 		def.setUnreal("uprw", data)
 
@@ -551,6 +323,15 @@ public class UnitOrBuildingOrHeroDefinition extends W3UDefinition
 
 	function setGoldBountyAwardedBase(int data)
 		def.setInt("ubba", data)
+
+	function setLumberBountyAwardedSidesperDie(int data)
+		def.setInt("ulbs", data)
+
+	function setLumberBountyAwardedNumberofDice(int data)
+		def.setInt("ulbd", data)
+
+	function setLumberBountyAwardedBase(int data)
+		def.setInt("ulba", data)
 
 	function setFoodProduced(int data)
 		def.setInt("ufma", data)
@@ -809,38 +590,41 @@ public class UnitOrBuildingOrHeroDefinition extends W3UDefinition
 
 	function setAcquisitionRange(real data)
 		def.setUnreal("uacq", data)
-	
+
+	function setStructuresBuilt(string data)
+		def.setString("ubui", data)
+
 public class UnitOrHeroDefinition extends UnitOrBuildingOrHeroDefinition
-	
-	construct(int newId, int origId)
-		super(newId, origId)
-	
-	function setTransportedSize(int data)
-		def.setInt("ucar", data)
-	
-	function setLevel(int data)
-		def.setInt("ulev", data)
-	
-	function setGroupSeparationPriority(int data)
-		def.setInt("urpr", data)
-	
-	function setGroupSeparationParameter(int data)
-		def.setInt("urpp", data)
-	
-	function setGroupSeparationGroupNumber(int data)
-		def.setInt("urpg", data)
-	
-	function setGroupSeparationEnabled(boolean data)
-		def.setBoolean("urpo", data)
-	
-	function setFormationRank(int data)
-		def.setInt("ufor", data)
-	
-public class HeroDefinition extends UnitOrHeroDefinition						
 
 	construct(int newId, int origId)
 		super(newId, origId)
-	
+
+	function setTransportedSize(int data)
+		def.setInt("ucar", data)
+
+	function setLevel(int data)
+		def.setInt("ulev", data)
+
+	function setGroupSeparationPriority(int data)
+		def.setInt("urpr", data)
+
+	function setGroupSeparationParameter(int data)
+		def.setInt("urpp", data)
+
+	function setGroupSeparationGroupNumber(int data)
+		def.setInt("urpg", data)
+
+	function setGroupSeparationEnabled(boolean data)
+		def.setBoolean("urpo", data)
+
+	function setFormationRank(int data)
+		def.setInt("ufor", data)
+
+public class HeroDefinition extends UnitOrHeroDefinition
+
+	construct(int newId, int origId)
+		super(newId, origId)
+
 	function hideHeroDeathMsg(boolean flag)
 		def.setBoolean("uhhd", flag)
 
@@ -849,7 +633,7 @@ public class HeroDefinition extends UnitOrHeroDefinition
 
 	function hideHeroMinimapDisplay(boolean flag)
 		def.setBoolean("uhhm", flag)
-	
+
 	function setTooltipRevive(string data)
 		def.setString("utpr", data)
 
@@ -888,7 +672,7 @@ public class HeroDefinition extends UnitOrHeroDefinition
 
 	function setAgilityPerLevel(real data)
 		def.setUnreal("uagp", data)
-		
+
 	/** sets the techtree requirements for a specific tier
 		for example use setRequierements
 	*/
@@ -913,35 +697,29 @@ public class HeroDefinition extends UnitOrHeroDefinition
 			default
 
 public class UnitDefinition extends UnitOrHeroDefinition
-	
+
 	construct(int newId, int origId)
 		super(newId, origId)
-		
-	function setStructuresBuilt(string data)
-		def.setString("ubui", data)
-	
+
 	function setCasterUpgradeTips(string data)
 		def.setString("ucut", data)
-	
+
 	function setCasterUpgradeNames(string data)
 		def.setString("ucun", data)
-	
+
 	function setCasterUpgradeArt(string data)
 		def.setString("ucua", data)
-		
+
 public class BuildingDefinition extends UnitOrBuildingOrHeroDefinition
-	
+
 	construct(int newId, int origId)
 		super(newId, origId)
-		
+
 	function setUpgradesTo(string data)
 		def.setString("uupt", data)
 
 	function setUnitsTrained(string data)
 		def.setString("utra", data)
-
-	function setUnitsSold(string data)
-		def.setString("useu", data)
 
 	function setRevivesDeadHeros(boolean data)
 		def.setBoolean("urev", data)
@@ -966,9 +744,6 @@ public class BuildingDefinition extends UnitOrBuildingOrHeroDefinition
 
 	function setNeutralBuildingShowsMinimapIcon(boolean data)
 		def.setBoolean("unbm", data)
-
-	function setItemsSold(string data)
-		def.setString("usei", data)
 
 	function setItemsMade(string data)
 		def.setString("umki", data)
@@ -980,18 +755,15 @@ public class BuildingDefinition extends UnitOrBuildingOrHeroDefinition
 		def.setString("ubsl", data)
 
 public class BuildingAndHeroDefinition extends UnitOrBuildingOrHeroDefinition
-	
+
 	construct(int newId, int origId)
 		super(newId, origId)
-		
+
 	function setUpgradesTo(string data)
 		def.setString("uupt", data)
 
 	function setUnitsTrained(string data)
 		def.setString("utra", data)
-
-	function setUnitsSold(string data)
-		def.setString("useu", data)
 
 	function setRevivesDeadHeros(boolean data)
 		def.setBoolean("urev", data)
@@ -1016,9 +788,6 @@ public class BuildingAndHeroDefinition extends UnitOrBuildingOrHeroDefinition
 
 	function setNeutralBuildingShowsMinimapIcon(boolean data)
 		def.setBoolean("unbm", data)
-
-	function setItemsSold(string data)
-		def.setString("usei", data)
 
 	function setItemsMade(string data)
 		def.setString("umki", data)

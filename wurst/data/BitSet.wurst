@@ -2,48 +2,72 @@ package BitSet
 import NoWurst
 import Integer
 import Wurstunit
+import Annotations
 
 /** a bitset is a set of small integers represented by a single int */
 public tuple bitset(int val)
 
 function bitset.containsPow(int pow) returns boolean
-	return (this.val mod (pow*2)) >= pow
+	return (this.val mod (pow * 2)) >= pow
 
 /** the empty bitset */
 public function emptyBitset() returns bitset
 	return bitset(0)
 
 /** checks if bitset contains value v*/
+@deprecated("Use .get instead")
 public function bitset.contains(int v) returns boolean
-	return this.containsPow(2 .pow(v))
+	return this.get(v)
+
+/** Returns the value of the bit with the specified index.*/
+public function bitset.get(int index) returns boolean
+	return this.containsPow(2 .pow(index))
 
 /** adds value v to the bitset */
+@deprecated("Use .set instead")
 public function bitset.add(int v) returns bitset
-	let pow = 2 .pow(v)
+	return this.set(v)
+
+/** Sets the bit at the specified index to true. */
+public function bitset.set(int index) returns bitset
+	let pow = 2 .pow(index)
 	return not this.containsPow(pow) ? bitset(this.val + pow) : this
 
-/** removes value v from the bitset */		
+/** removes value v from the bitset */
+@deprecated("Use .reset instead")
 public function bitset.remove(int v) returns bitset
-	let pow = 2 .pow(v)
+	return this.reset(v)
+
+/** Sets the bit at the specified index to false. */
+public function bitset.reset(int index) returns bitset
+	let pow = 2 .pow(index)
 	return this.containsPow(pow) ? bitset(this.val - pow) : this
-		
+	
+/** Sets the bit at the specified index to the specified value. */
+public function bitset.set(int index, bool value) returns bitset
+	return value ? this.set(index) : this.reset(index)
+	
+/** Returns an integer representation of the data. */
+public function bitset.toInt() returns int
+	return this.val
+
 // Tests:
 @test function testContains()
-	if not bitset(45).contains(0)
+	if not bitset(45).get(0)
 		testFail("a")
-	if bitset(45).contains(1)
+	if bitset(45).get(1)
 		testFail("b")
-	if not bitset(45).contains(2)
+	if not bitset(45).get(2)
 		testFail("c")
-	if not bitset(45).contains(3)
+	if not bitset(45).get(3)
 		testFail("d")
-	if bitset(45).contains(4)
+	if bitset(45).get(4)
 		testFail("e")
-	if not bitset(45).contains(5)
-		testFail("f")	
-			
-@test function testAdd()	
-	emptyBitset().add(0).add(2).add(3).add(5).val.assertEquals(45) 	
-	
-@test function testRemove()	
-	bitset(45).remove(3).val.assertEquals(37) 
+	if not bitset(45).get(5)
+		testFail("f")
+
+@test function testAdd()
+	emptyBitset().set(0).set(2).set(3).set(5).val.assertEquals(45)
+
+@test function testRemove()
+	bitset(45).reset(3).val.assertEquals(37)

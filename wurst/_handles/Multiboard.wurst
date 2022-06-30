@@ -1,6 +1,10 @@
 package Multiboard
 import NoWurst
+import _Primitives
+import Colors
 import Player
+import Annotations
+import ErrorHandling
 
 public function multiboard.destr()
 	DestroyMultiboard(this)
@@ -11,21 +15,38 @@ public function multiboard.isDisplayed() returns boolean
 public function multiboard.isMinimized() returns boolean
 	return IsMultiboardMinimized(this)
 
+public function multiboard.isMaximized() returns boolean
+	return not this.isMinimized()
+
 public function multiboard.clear()
 	MultiboardClear(this)
 
 public function multiboard.display(boolean show)
-	MultiboardDisplay(this,show)
-	
+	MultiboardDisplay(this, show)
+
 public function multiboard.display(player p, boolean show)
 	if localPlayer == p
 		MultiboardDisplay(this,show)
+
+public function multiboard.show()
+	this.display(true)
+
+public function multiboard.show(player p)
+	if localPlayer == p
+		this.display(true)
+
+public function multiboard.hide()
+	this.display(false)
+
+public function multiboard.hide(player p)
+	if localPlayer == p
+		this.display(false)
 
 public function multiboard.getColumnCount() returns int
 	return MultiboardGetColumnCount(this)
 
 public function multiboard.getItem(int row, int column) returns multiboarditem
-	return MultiboardGetItem(this,row,column)
+	return MultiboardGetItem(this, row, column)
 
 public function multiboard.getRowCount() returns int
 	return MultiboardGetRowCount(this)
@@ -33,8 +54,23 @@ public function multiboard.getRowCount() returns int
 public function multiboard.getTitleText() returns string
 	return MultiboardGetTitleText(this)
 
+@deprecated("Use .minimize() instead")
 public function multiboard.minimalize(boolean minimalize)
-	MultiboardMinimize(this,minimalize)
+	MultiboardMinimize(this, minimalize)
+
+public function multiboard.minimize()
+	MultiboardMinimize(this, true)
+
+public function multiboard.minimize(player p)
+	if localPlayer == p
+		this.minimize()
+
+public function multiboard.maximize()
+	MultiboardMinimize(this, false)
+
+public function multiboard.maximize(player p)
+	if localPlayer == p
+		this.maximize()
 
 public function multiboard.setColumnCount(int count)
 	MultiboardSetColumnCount(this, count)
@@ -51,7 +87,7 @@ public function multiboard.setItemsStyle(boolean showValues, boolean showIcons)
 public function multiboard.setItemsValue(string value)
 	MultiboardSetItemsValue(this,value)
 
-public function multiboard.setItemsValueColor(int r,int g, int b, int a )
+public function multiboard.setItemsValueColor(int r,int g, int b, int a)
 	MultiboardSetItemsValueColor(this,r,g,b,a)
 
 public function multiboard.setItemsWidth(real width)
@@ -63,21 +99,82 @@ public function multiboard.setTitle(string label)
 public function multiboard.setTitleColor(int r,int g, int b, int a)
 	MultiboardSetTitleTextColor(this, r,g,b,a)
 
-//multiboarditems
+public function multiboard.setTitleColor(colorA col)
+	MultiboardSetTitleTextColor(this, col.red, col.green, col.blue, col.alpha)
+
+public function multiboard.setItemValue(int row, int column, string value)
+	this.getItem(row, column)
+	..setValue(value)
+	..release()
+
+public function multiboard.setItemValue(int row, int column, int value)
+	this.setItemValue(row, column, value.toString())
+
+public function multiboard.setItemValue(int row, int column, real value)
+	this.setItemValue(row, column, value.toString())
+
+public function multiboard.setItemValue(int row, int column, bool value)
+	this.setItemValue(row, column, value.toString())
+
+public function multiboard.setItemValueColor(int row, int column, int r, int g, int b, int a)
+	this.getItem(row, column)
+	..setValueColor(r, g, b, a)
+	..release()
+
+public function multiboard.setItemValueColor(int row, int column, colorA col)
+	this.setItemValueColor(row, column, col.red, col.green, col.blue, col.alpha)
+
+public function multiboard.setItemIcon(int row, int column, string iconFileName)
+	this.getItem(row, column)
+	..setIcon(iconFileName)
+	..release()
+
+public function multiboard.setItemWidth(int row, int column, real width)
+	this.getItem(row, column)
+	..setWidth(width)
+	..release()
+
+public function multiboard.setColumnWidth(int column, real width)
+	if column >= this.getColumnCount() or column < 0
+		error("Column index out of range.")
+	for row = 0 to this.getRowCount() - 1
+		this.setItemWidth(row, column, width)
+
+public function multiboard.setRowWidth(int row, real width)
+	if row >= this.getRowCount() or row < 0
+		error("Row index out of range.")
+	for column = 0 to this.getColumnCount() - 1
+		this.setItemWidth(row, column, width)
+
+// multiboarditems
 public function multiboarditem.release()
 	MultiboardReleaseItem(this)
 
 public function multiboarditem.setIcon(string iconFileName)
-	MultiboardSetItemIcon(this,iconFileName)
+	let v = iconFileName == null ? "" : iconFileName
+	MultiboardSetItemIcon(this, v)
 
 public function multiboarditem.setStyle(boolean showValue, boolean showIcon)
 	MultiboardSetItemStyle(this, showValue, showIcon)
 
 public function multiboarditem.setValue(string value)
-	MultiboardSetItemValue(this,value)
+	let v = value == null ? "" : value
+	MultiboardSetItemValue(this, v)
+
+public function multiboarditem.setValue(int value)
+	this.setValue(value.toString())
+
+public function multiboarditem.setValue(real value)
+	this.setValue(value.toString())
+
+public function multiboarditem.setValue(bool value)
+	this.setValue(value.toString())
 
 public function multiboarditem.setValueColor(int r, int g, int b, int a)
-	MultiboardSetItemValueColor(this, r,g,b,a)
+	MultiboardSetItemValueColor(this, r, g, b, a)
+
+public function multiboarditem.setValueColor(colorA col)
+	MultiboardSetItemValueColor(this, col.red, col.green, col.blue, col.alpha)
 
 public function multiboarditem.setWidth(real width)
 	MultiboardSetItemWidth(this, width)

@@ -2,38 +2,64 @@ package StringUtilsTests
 import StringUtils
 
 import LinkedList
+import ObjectIds
 
 @Test function testSplit()
-    var list = "this is a string".split(" ")
-    list.get(0).assertEquals("this")
-    list.get(1).assertEquals("is")
-    list.get(2).assertEquals("a")
-    list.get(3).assertEquals("string")
-    destroy list
+	var list = "this is a string".split(" ")
+	list.get(0).assertEquals("this")
+	list.get(1).assertEquals("is")
+	list.get(2).assertEquals("a")
+	list.get(3).assertEquals("string")
+	destroy list
 
-    list = "this,is,a,string".split(",")
-    list.get(0).assertEquals("this")
-    list.get(1).assertEquals("is")
-    list.get(2).assertEquals("a")
-    list.get(3).assertEquals("string")
-    destroy list
+	list = "this,is,a,string".split(",")
+	list.get(0).assertEquals("this")
+	list.get(1).assertEquals("is")
+	list.get(2).assertEquals("a")
+	list.get(3).assertEquals("string")
+	destroy list
 
-    list = "thisisastring".split(" ")
-    (list.size() == 1).assertTrue()
-    destroy list
+	list = "thisisastring".split(" ")
+	(list.size() == 1).assertTrue()
+	destroy list
 
 @Test function testJoin()
-    let list = new LinkedList<string>()
-        ..add("this")
-        ..add("is")
-        ..add("a")
-        ..add("string")
+	let list = new LinkedList<string>()
+		..add("this", "is", "a", "string")
 
-    list.join().assertEquals("thisisastring")
-    list.joinBy(" ").assertEquals("this is a string")
+	list.join().assertEquals("thisisastring")
+	list.joinBy(" ").assertEquals("this is a string")
 
-    destroy list
+	destroy list
 
 @Test function testReduce()
-    "reee      duu   cee".reduce("e").reduce("u").reduce(" ").assertEquals("re du ce")
-    "redu          ce".reduce().assertEquals("redu ce")
+	"reee      duu   cee".reduce("e").reduce("u").reduce(" ").assertEquals("re du ce")
+	"redu      ce".reduce().assertEquals("redu ce")
+
+@Test function testChar()
+	char("/").toInt().assertEquals(47)
+	char("\\").toInt().assertEquals(92)
+	char("|").toInt().assertEquals(124)
+
+@Test function testCreateDelimitedString_ForEachIn()
+	let str = commaList("a", "b", "c")
+
+	let l = new LinkedList<string>()
+	str.forEachIn(",") (string str) ->
+		l.add(str)
+	l.has("a").assertTrue()
+	l.has("b").assertTrue()
+	l.has("c").assertTrue()
+
+
+@Test function testIsNumber_IsValidLength()
+	"a".isNumber().assertFalse()
+	"1".isNumber().assertTrue()
+	"259812".isNumber().assertTrue()
+	"251a52".isNumber().assertFalse()
+	"1251FDSFA".isValidDescription().assertTrue()
+	"-1232.32".isNumber().assertTrue()
+	"-1231.3a1".isNumber().assertFalse()
+	
+@Test function testReplaceChars()
+	"abca".replaceChars("ca", "d").assertEquals("dbdd")

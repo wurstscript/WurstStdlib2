@@ -2,12 +2,23 @@ package Region
 import NoWurst
 import Vectors
 
-public function vec2.isInRegion(region r) returns boolean
-	return IsPointInRegion(r, this.x, this.y)
-	
-public function region.addRect(rect r)
-	RegionAddRect(this, r)
-	
+public function vec2.isInRegion(region whichRegion) returns boolean
+	return IsPointInRegion(whichRegion, this.x, this.y)
+
+public function unit.isInRegion(region whichRegion) returns boolean
+	return IsUnitInRegion(whichRegion, this)
+
+public function region.addRect(rect rct)
+	RegionAddRect(this, rct)
+
+public function region.clearRect(rect rct)
+	RegionClearRect(this, rct)
+
+public function region.addCell(vec2 point)
+	RegionAddCell(this, point.x, point.y)
+
+public function region.clearCell(vec2 point)
+	RegionClearCell(this, point.x, point.y)
+
 public function region.destr()
 	RemoveRegion(this)
-

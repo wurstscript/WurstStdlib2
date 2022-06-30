@@ -1,91 +1,189 @@
 package TerrainUtils
 import NoWurst
 import Item
+import Rect
+import MapBounds
+import Wurstunit
+import Colors
+
+// Terrain API
+
+public function setWaterBaseColor(colorA color)
+	SetWaterBaseColor(color.red, color.green, color.blue, color.alpha)
 
 public function vec2.setTerrainType(int ttype, int variation, int area, int shape)
 	SetTerrainType(this.x, this.y, ttype, variation, area, shape)
 
-constant		MAX_RANGE	 	= 10.
-constant 		DUMMY_ITEM_ID 	= 'wolg'
-location 		tempLoc 		= Location(0.,0.)
-item	   		dItem   		= null
-rect	   		find   			= null
-item array 		hid
-int			hidMax 			= 0
-vec2 			tempPos 		= vec2(0,0)
+public function vec2.getTerrainType() returns int
+	return GetTerrainType(this.x, this.y)
 
-init
-	find = Rect(0., 0., 128., 128.)
-	dItem = CreateItem(DUMMY_ITEM_ID, 0, 0)
-	dItem.setVisible(false)
-	
+public function vec2.getTerrainVariance() returns int
+	return GetTerrainVariance(this.x, this.y)
+
+/** Applies a single terrain deformation to closest tile. Is not immediate.
+	Reports shows that this may cause desync with Mac players. */
+public function vec2.addTerrainHeight(real val) returns terraindeformation
+	return TerrainDeformCrater(this.x, this.y, 63, -val, 1, true)
+
+/** Fills 32x32 rect around vec2 with given pathing type */
+public function vec2.setTerrainPathable(pathingtype ttype, bool flag)
+	SetTerrainPathable(this.x, this.y, ttype, flag)
+
+/** Returns if a specific pathingtype is set at the location.
+	  Note: Returns true if the pathingtype is *not* set, false if it *is* set. */
+public function vec2.isTerrainPathable(pathingtype ttype) returns bool
+	return IsTerrainPathable(this.x, this.y, ttype)
+
+/** Returns center of the Tile which given vec2 belongs to. */
+public function vec2.toTileCenter() returns vec2
+	return vec2((this.x / 128.).round() * 128., (this.y / 128.).round() * 128.)
+
 /** Returns the (not normalised) terrain-normal at the given point */
-public function getTerrainNormal( real x, real y, real sampleRadius) returns vec3
-	MoveLocation(tempLoc, x-sampleRadius, y)
-	var zx = GetLocationZ(tempLoc)
-	MoveLocation(tempLoc, x+sampleRadius, y)
-	zx -= GetLocationZ(tempLoc)
-	MoveLocation(tempLoc, x, y-sampleRadius)
-	var zy = GetLocationZ(tempLoc)
-	MoveLocation(tempLoc, x, y+sampleRadius)
-	zy -= GetLocationZ(tempLoc)
-	let sampleRadius2 = 2*sampleRadius
-	return vec3( zx*sampleRadius2, zy*sampleRadius2, sampleRadius2*sampleRadius2 )
+public function vec2.getTerrainNormal(real sampleRadius) returns vec3
+	return 2 * sampleRadius * vec3((this.add(-sampleRadius, 0).getTerrainZ() - this.add(sampleRadius, 0).getTerrainZ()), (this.add(-sampleRadius, 0).getTerrainZ() - this.add(sampleRadius, 0).getTerrainZ()), 2 * sampleRadius)
 
-public function getTerrainZ(real x, real y) returns real
-	MoveLocation(tempLoc, x, y)
-	return GetLocationZ(tempLoc)
-	
-public function getTerrainZ(vec2 v) returns real
-	MoveLocation(tempLoc, v.x, v.y)
-	return GetLocationZ(tempLoc)
+public function vec2.isTerrainDeepWater() returns boolean
+	return not this.isTerrainPathable(PATHING_TYPE_FLOATABILITY) and this.isTerrainPathable(PATHING_TYPE_WALKABILITY)
 
-public function vec2.getTerrainZ() returns real
-	MoveLocation(tempLoc, this.x, this.y)
-	return GetLocationZ(tempLoc)
-	
-public function vec2.withTerrainZ() returns vec3
-	return vec3(this.x, this.y, getTerrainZ(this.x, this.y))
-	
-public function vec2.withTerrainZ(real zoffset) returns vec3
-	return vec3(this.x, this.y, getTerrainZ(this.x, this.y) + zoffset)
+public function vec2.isTerrainShallowWater() returns boolean
+	return not this.isTerrainPathable(PATHING_TYPE_FLOATABILITY) and not this.isTerrainPathable(PATHING_TYPE_WALKABILITY) and this.isTerrainPathable(PATHING_TYPE_BUILDABILITY)
 
-public function vec3.withTerrainZ() returns vec3
-	return vec3(this.x, this.y, getTerrainZ(this.x, this.y))
-	
-public function vec3.withTerrainZ(real zoffset) returns vec3
-	return vec3(this.x, this.y, getTerrainZ(this.x, this.y) + zoffset)
-	
-public function isTerrainDeepWater(real x, real y) returns boolean
-	return not IsTerrainPathable(x, y, PATHING_TYPE_FLOATABILITY) and IsTerrainPathable(x, y, PATHING_TYPE_WALKABILITY)
+public function vec2.isTerrainLand() returns boolean
+	return this.isTerrainPathable(PATHING_TYPE_FLOATABILITY)
 
-public function isTerrainShallowWater(real x, real y) returns boolean
-	return not IsTerrainPathable(x, y, PATHING_TYPE_FLOATABILITY) and not IsTerrainPathable(x, y, PATHING_TYPE_WALKABILITY) and IsTerrainPathable(x, y, PATHING_TYPE_BUILDABILITY)
+public function vec2.isTerrainPlatform() returns boolean
+	return not this.isTerrainPathable(PATHING_TYPE_FLOATABILITY) and not this.isTerrainPathable(PATHING_TYPE_WALKABILITY) and not this.isTerrainPathable(PATHING_TYPE_BUILDABILITY)
 
-public function isTerrainLand(real x, real y) returns boolean
-	return IsTerrainPathable(x, y, PATHING_TYPE_FLOATABILITY)
+constant MAX_RANGE_SQ = 10. .squared()
+constant DUMMY_ITEM_ID = 'wolg'
+let dummyItem = createItem(DUMMY_ITEM_ID, ZERO2)..setVisible(false)
+let itemSearchRect = Rect(0., 0., 128., 128.)
+item array hiddenItems
+int hiddenItemsCount = 0
+public function vec2.isTerrainWalkable() returns boolean
+	// Hide any items in the area to avoid conflicts with our item
+	itemSearchRect.moveTo(this)
+	EnumItemsInRect(itemSearchRect, null) ->
+		if GetEnumItem().isVisible()
+			hiddenItems[hiddenItemsCount] = GetEnumItem()
+			hiddenItems[hiddenItemsCount].setVisible(false)
+			hiddenItemsCount++
 
-public function isTerrainPlatform(real x, real y) returns boolean
-	return not IsTerrainPathable(x, y, PATHING_TYPE_FLOATABILITY) and not IsTerrainPathable(x, y, PATHING_TYPE_WALKABILITY) and not IsTerrainPathable(x, y, PATHING_TYPE_BUILDABILITY)
+	// Try to move the test item and get its coords
+	dummyItem.setPos(this) // Unhides the item
+	let tempPos = dummyItem.getPos()
+	dummyItem.setVisible(false) // Hide it again
 
-function hideItem()
-	if IsItemVisible(GetEnumItem())
-		hid[hidMax] = GetEnumItem()
-		SetItemVisible(hid[hidMax], false)
-		hidMax++
+	// Unhide any items hidden at the start
+	while hiddenItemsCount > 0
+		hiddenItemsCount--
+		hiddenItems[hiddenItemsCount].setVisible(true)
+		hiddenItems[hiddenItemsCount] = null
 
-public function isTerrainWalkable(real x, real y) returns boolean
-	//Hide any items in the area to avoid conflicts with our item
-	MoveRectTo(find, x, y)
-	EnumItemsInRect(find ,null, function hideItem)
-	//Try to move the test item and get its coords
-	SetItemPosition(dItem, x, y) //Unhides the item
-	tempPos = dItem.getPos()
-	SetItemVisible(dItem, false)//Hide it again
-	//Unhide any items hidden at the start
-	while hidMax > 0
-		hidMax--
-		SetItemVisible(hid[hidMax], true)
-		hid[hidMax] = null
-	//Return walkability
-	return (tempPos.x-x)*(tempPos.x-x)+(tempPos.y-y)*(tempPos.y-y) <= MAX_RANGE*MAX_RANGE and not IsTerrainPathable(x, y, PATHING_TYPE_WALKABILITY)
+	return (tempPos.x - this.x) * (tempPos.x - this.x) + (tempPos.y-this.y) * (tempPos.y - this.y) <= MAX_RANGE_SQ and not this.isTerrainPathable(PATHING_TYPE_WALKABILITY)
+
+// Tile API
+/** represents a single terrain tile
+	can also be used as vec2 <-> int conversion */
+public tuple tile(int id)
+
+function tileToIndex(tile t) returns int
+	return t.id
+function tileFromIndex(int i) returns tile
+	return tile(i)
+
+// coordinate
+
+public constant TILES_X = (boundMax.x - boundMin.x).toInt() div 128 + 1
+public constant TILES_Y = (boundMax.y - boundMin.y).toInt() div 128 + 1
+public constant TILES_COUNT = TILES_X * TILES_Y
+
+public function tile(int x, int y) returns tile
+	if ((x < 0) or (x >= TILES_X) or (y < 0) or (y >= TILES_Y))
+		return tile(-1)
+	return tile(y * TILES_X + x)
+
+public function tile(real x, real y) returns tile
+	let rx = (x - boundMin.x + 64).toInt() div 128
+	let ry = (y - boundMin.y + 64).toInt() div 128
+	if ((rx < 0) or (rx >= TILES_X) or (ry < 0) or (ry >= TILES_Y))
+		return tile(-1)
+	return tile(ry * TILES_X + rx)
+
+public function tile.getX() returns real
+	return (this.id mod TILES_X) * 128. + boundMin.x
+
+public function tile.getY() returns real
+	return (this.id div TILES_X) * 128. + boundMin.y
+
+// vec2 conversion
+
+/** Returns the tile which given vec2 belongs to. */
+public function vec2.getTile() returns tile
+	return tile(this.x, this.y)
+
+public function tile.toVec2() returns vec2
+	return vec2(this.getX(), this.getY())
+
+// functionality
+
+public function tile.setType(int ttype, int variation)
+	this.toVec2().setTerrainType(ttype, variation, 1, 1)
+
+public function tile.setType(int ttype)
+	this.toVec2().setTerrainType(ttype, -1, 1, 1)
+
+public function tile.getHeight() returns real
+	return this.toVec2().getTerrainZ()
+
+public function tile.addHeight(real val) returns terraindeformation
+	return this.toVec2().addTerrainHeight(val)
+
+public function tile.getType() returns int
+	return this.toVec2().getTerrainType()
+
+public function tile.getVariance() returns int
+	return this.toVec2().getTerrainVariance()
+
+/** Fills the entire tile (128x128 rect around tile pos) with given type */
+public function tile.setPathing(pathingtype ttype, bool flag)
+	for i = 0 to 3
+		for j = 0 to 3
+			(this.toVec2() + vec2(-48. + i * 32,-48. + j * 32)).setTerrainPathable(ttype, flag)
+
+@test function testMapCorners()
+	boundMin.getTile().id.assertEquals(0)
+	boundMax.getTile().id.assertEquals(TILES_COUNT - 1)
+	tile(boundMax.x, boundMin.y).id.assertEquals(TILES_X - 1)
+	tile(boundMin.x, boundMax.y).id.assertEquals(TILES_X * (TILES_Y - 1))
+
+@test function testUpperBound()
+	(boundMin + vec2(1,0)).getTile().id.assertEquals(0)
+	(boundMin + vec2(63.9999,0)).getTile().id.assertEquals(0)
+	(boundMin + vec2(64,0)).getTile().id.assertEquals(1)
+	(boundMin + vec2(128,0)).getTile().id.assertEquals(1)
+
+	(boundMin + vec2(63.9999,63.9999)).getTile().id.assertEquals(0)
+	(boundMin + vec2(64,64)).getTile().id.assertEquals(TILES_X + 1)
+
+@test function testLowerBound()
+	(boundMax - vec2(1,0)).getTile().id.assertEquals(TILES_COUNT - 1)
+	(boundMax - vec2(64,0)).getTile().id.assertEquals(TILES_COUNT - 1)
+	(boundMax - vec2(64.0002,0)).getTile().id.assertEquals(TILES_COUNT - 2)
+	(boundMax - vec2(128,0)).getTile().id.assertEquals(TILES_COUNT - 2)
+
+	(boundMax - vec2(64,64)).getTile().id.assertEquals(TILES_COUNT - 1)
+	(boundMax - vec2(64.0002,64.0002)).getTile().id.assertEquals(TILES_COUNT - 1 - (TILES_X + 1))
+
+// Some notes:
+	// tile(0,0) bounds:
+	// x: [-64; 64)
+	// y: [-64; 64)
+
+// Tile mapping example on a map sized 256x256 pts.
+	// Total tile count: 9
+	// Last tile index: 8 == <Total> - 1
+
+	// 6 7 8
+	// 3 4 5
+	// 0 1 2

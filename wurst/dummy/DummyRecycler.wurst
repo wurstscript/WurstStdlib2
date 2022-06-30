@@ -3,14 +3,32 @@ import NoWurst
 import public Unit
 import public Timer
 import Basics
-import ErrorHandling
 import MapBounds
-import GameTimer
-import UnitObjEditing
+import AbilityObjEditing
 import Colors
+import Annotations
+import UnitIds
+import Icons
+import ObjectIdGenerator
+import LinkedList
+import TypeCasting
+import ClosureTimers
+import MagicFunctions
+import ObjectIds
 
 /** Id of the dummy unit */
-public constant DUMMY_UNIT_ID 	   		= 'xdum'
+public constant DUMMY_UNIT_ID = compiletime(UNIT_ID_GEN.next())
+
+/** Id of the root ability
+it makes unit:
+1. not need to turn when spell or attack
+2. can't move or turn by order like a building
+3. but you can still set it's postion with code
+4. the effect remains even if this ability is removed
+*/
+public constant ROOT_ENABLER = compiletime(ABIL_ID_GEN.next())
+
+public constant DISABLE_AUTO_ACQUIRE_ATTACK_TARGETS_ABILITY_ID = compiletime(ABIL_ID_GEN.next())
 
 constant DIFFERENT_ANGLES		= 8
 constant ANGLE_DEGREE			= 360 / DIFFERENT_ANGLES
@@ -18,131 +36,62 @@ constant SAVED_UNITS_PER_ANGLE	= 6
 
 
 public class DummyRecycler
-	static ArrayQueue array angleQueues
-	
+	static LinkedList<unit> array angleQueues
+
 	static function get(vec2 pos, angle a) returns unit
-		let angleIndex = ((a.degrees() % 360).toInt() / ANGLE_DEGREE).toInt()
-		if angleQueues[angleIndex].size > 0
+		let angleIndex = (a.degrees() % 360 / ANGLE_DEGREE).round() mod DIFFERENT_ANGLES
+		if angleQueues[angleIndex].size() > 0
 			return angleQueues[angleIndex].dequeue()..setXY(pos)..unpause()
 		else
-			return createDummy(pos, DUMMY_PLAYER, a)
-	
+			return createDummy(pos, a)
+
 	static function recycle(unit u)
 		var smallestQueue = 0
 		for i = 1 to DIFFERENT_ANGLES - 1
-			if angleQueues[smallestQueue].size > angleQueues[i].size
+			if angleQueues[smallestQueue].size() > angleQueues[i].size()
 				smallestQueue = i
-		if angleQueues[smallestQueue].size >= SAVED_UNITS_PER_ANGLE
+		if angleQueues[smallestQueue].size() >= SAVED_UNITS_PER_ANGLE
 			u.remove()
 		else
 			angleQueues[smallestQueue].enqueue(u)
-			u..setXY(boundMax)..pause()..setFacing((smallestQueue*ANGLE_DEGREE).asAngleDegrees())..setScale(1)..setVertexColor(COLOR_WHITE)
-		
-		
+			u..setXY(boundMax - vec2(16, 16))
+			..pause()
+			..setFacing((smallestQueue * ANGLE_DEGREE).asAngleDegrees())
+			..setScale(1)
+			..setVertexColor(COLOR_WHITE)
+			..setOwner(DUMMY_PLAYER, true)
+
 	static function recycle(unit u, real delay)
-		new DelayNode(u, delay)
-		
+		doAfter(delay) ->
+			DummyRecycler.recycle(u)
 
-
-
-class ArrayQueue
-	unit array[SAVED_UNITS_PER_ANGLE] units
-	int fp = 0
-	int rp = 0
-	int size = 0
-
-	function enqueue(unit u)
-		if size < SAVED_UNITS_PER_ANGLE
-			size++
-			rp = (rp + 1) mod SAVED_UNITS_PER_ANGLE
-			units[rp] = u
-		else
-			error("Queue Overflow")
-		
-	function dequeue() returns unit
-		if size > 0
-			size--
-			fp = (fp + 1) mod SAVED_UNITS_PER_ANGLE
-			return units[fp]
-		else
-			error("Queue empty")
-			return null
-			
-class DelayNode
-	static timer t = CreateTimer()
-	unit u
-	real delayTime
-	DelayNode prev = null
-	DelayNode next = null
-	static DelayNode first = null
-	static DelayNode last = null
-	
-	construct(unit u, real time)
-		this.u = u
-		this.delayTime = getElapsedGameTime() + time
-		if first == null
-			first = this
-			last = first
-		else
-			DelayNode tmp = first
-			while tmp.next != null and tmp.delayTime < this.delayTime
-				tmp = tmp.next
-			if tmp.delayTime < this.delayTime
-				if tmp == last
-					tmp.next = this
-					this.prev = tmp
-					last = this
-				else
-					tmp.next.prev = this
-					this.next = tmp.next
-					tmp.next = this
-					this.prev = tmp
-			else
-				if tmp == first
-					tmp.prev = this
-					first = this
-					this.next = tmp
-				else if tmp == last
-					tmp.next = this
-					this.prev = tmp
-					last = tmp
-				else
-					this.prev = tmp
-					this.next = tmp.next
-					tmp.next.prev = this
-					tmp.next = this
-			if t.getRemaining() > 0 and time < t.getRemaining()
-				t.start(time, function DelayNode.recycle)
-			else if t.getRemaining() <= 0
-				t.start(time, function DelayNode.recycle)
-				
-	static function recycle()
-		DummyRecycler.recycle(first.u)
-		let tmp = first
-		if first.next == null
-			first = null
-		else
-			first = first.next
-			first.prev = null
-			t.start(first.delayTime - getElapsedGameTime(), function DelayNode.recycle)
-
-		destroy tmp
-			
-function createDummy(vec2 pos, player owner, angle facing) returns unit
-	let u = createUnit(owner, DUMMY_UNIT_ID, pos, facing)
-	u..setXY(pos)..addAbility(HEIGHT_ENABLER)..removeAbility(HEIGHT_ENABLER)..addAbility(LOCUST_ID)
+function createDummy(vec2 pos, angle facing) returns unit
+	let u = createUnit(DUMMY_PLAYER, DUMMY_UNIT_ID, pos, facing)
+	u..addAbility(HEIGHT_ENABLER)..removeAbility(HEIGHT_ENABLER)
+	..addAbility(ROOT_ENABLER)..removeAbility(ROOT_ENABLER)
+	..setXY(pos)..setFacing(facing)
 	return u
-	
-	
+
+
 init
+	realToIndex(1)
 	for i = 0 to DIFFERENT_ANGLES - 1
-		DummyRecycler.angleQueues[i] = new ArrayQueue()
-		for j = 0 to SAVED_UNITS_PER_ANGLE-1
-			DummyRecycler.angleQueues[i].enqueue(createDummy(boundMax, DUMMY_PLAYER, (i* ANGLE_DEGREE).asAngleDegrees()))
-			
+		DummyRecycler.angleQueues[i] = new LinkedList<unit>()
+		let facing = angle(i * ANGLE_DEGREE)
+		for j = 0 to SAVED_UNITS_PER_ANGLE - 1
+			let dummy = createDummy(boundMax - vec2(16, 16), facing)
+			DummyRecycler.angleQueues[i].enqueue(dummy)
+
 @compiletime function generateDummyUnit()
-	let u = new UnitDefinition(DUMMY_UNIT_ID, 'ewsp')
-	u..setName("Effect Dummy Unit")
+	new AbilityDefinitionRootAncients(ROOT_ENABLER)
+
+	new AbilityDefinitionPermanentInvisibility(DISABLE_AUTO_ACQUIRE_ATTACK_TARGETS_ABILITY_ID)
+	..presetAutoAcquireAttackTargets(_ -> false)
+	..presetDurationNormal(_ -> -1)
+	..presetDurationHero(_ -> -1)
+
+	new UnitDefinition(DUMMY_UNIT_ID, UnitIds.wisp)
+	..setName("Effect Dummy Unit")
 	..setUpgradesUsed("")
 	..setStructuresBuilt("")
 	..setManaRegeneration(0.1)
@@ -152,7 +101,7 @@ init
 	..setRace(Race.Commoner)
 	..setFoodCost(0)
 	..setArmorType(ArmorType.Divine)
-	..setIconGameInterface("ReplaceableTextures\\CommandButtons\\BTNtemp.blp")
+	..setIconGameInterface(Icons.bTNTemp)
 	..setSpeedBase(522)
 	..setModelFile("dummy.mdl")
 	..setAnimationBlendTimeseconds(0.0)
@@ -168,5 +117,21 @@ init
 	..setUnitClassification("_")
 	..setPropulsionWindowdegrees(1.0)
 	..setTooltipBasic("")
-	..setNormalAbilities("Avul,Aloc")
-			
+	..setAttacksEnabled(AttacksEnabled.AttackOneOnly.toObjectInt())
+	..setAttack1AnimationBackswingPoint(0)
+	..setAttack1AnimationDamagePoint(0)
+	..setAttack1CooldownTime(0)
+	..setAttack1AttackType(AttackType.Unknown)
+	..setAttack1DamageBase(-1)
+	..setAttack1DamageNumberofDice(1)
+	..setAttack1DamageSidesperDie(1)
+	..setAttack1ProjectileSpeed(INT_MAX)
+	..setAttack1Range(INT_MAX)
+	..setAttack1TargetsAllowed(
+		commaList(TargetsAllowed.air, TargetsAllowed.debris, TargetsAllowed.ground, TargetsAllowed.invulnerable,
+			TargetsAllowed.item_t, TargetsAllowed.structure, TargetsAllowed.vulnerable, TargetsAllowed.ward))
+	..setAttack1WeaponSound(WeaponSound.Nothing)
+	..setAttack1WeaponType(WeaponType.Instant)
+	..setAcquisitionRange(INT_MAX.toReal())
+	..setNormalAbilities(
+		commaList(AbilityIds.invulnerable, LOCUST_ID, DISABLE_AUTO_ACQUIRE_ATTACK_TARGETS_ABILITY_ID))

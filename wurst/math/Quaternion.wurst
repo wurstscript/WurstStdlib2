@@ -1,0 +1,266 @@
+package Quaternion
+import public Matrices
+import NoWurst
+import String
+import Maths
+import Wurstunit
+
+public tuple quat(real x, real y, real z, real w)
+
+public constant IDENTITYQ = quat(0, 0, 0, 1)
+public constant ZEROQ = quat(0, 0, 0, 0)
+
+constant EPSILON = 0.001
+
+public function eulerToQuat(real yaw, real pitch, real roll) returns quat
+	var result = ZEROQ
+	let cy = (yaw * 0.5).cos()
+	let sy = (yaw * 0.5).sin()
+	let cp = (pitch * 0.5).cos()
+	let sp = (pitch * 0.5).sin()
+	let cr = (roll * 0.5).cos()
+	let sr = (roll * 0.5).sin()
+
+	result.w = cy * cp * cr + sy * sp * sr
+	result.x = cy * cp * sr - sy * sp * cr
+	result.y = sy * cp * sr + cy * sp * cr
+	result.z = sy * cp * cr - cy * sp * sr
+
+	return result
+
+
+public function quat.op_plus(quat q) returns quat
+	return quat(this.x + q.x, this.y + q.y, this.z + q.z, this.w + q.w)
+
+public function quat.op_plus(real scalar) returns quat
+	return quat(this.x + scalar, this.y + scalar, this.z + scalar, this.w + scalar)
+
+public function real.op_plus(quat q) returns quat
+	return q + this
+
+public function quat.op_minus(quat q) returns quat
+	return quat(this.x - q.x, this.y - q.y, this.z - q.z, this.w - q.w)
+
+public function quat.op_minus(real scalar) returns quat
+	return quat(this.x - scalar, this.y - scalar, this.z - scalar, this.w - scalar)
+
+public function quat.op_mult(real scalar) returns quat
+	return quat(this.x * scalar, this.y * scalar, this.z * scalar, this.w * scalar)
+
+public function real.op_mult(quat q) returns quat
+	return q * this
+
+public function quat.dot(quat q) returns real
+	return this.x * q.x + this.y * q.y + this.z * q.z + this.w * q.w
+
+/** Represents the composition of two rotations. */
+public function quat.cross(quat q) returns quat
+	return quat(this.x * q.w + this.y * q.z - this.z * q.y + this.w * q.x,
+				-this.x * q.z + this.y * q.w + this.z * q.x + this.w * q.y,
+				this.x * q.y - this.y * q.x + this.z * q.w + this.w * q.z,
+				-this.x * q.x - this.y * q.y - this.z * q.z + this.w * q.w)
+
+/** Represents the same rotation in opposite direction. */
+public function quat.conj() returns quat
+	return quat(-this.x, -this.y, -this.z, this.w)
+
+public function quat.length() returns real
+	return SquareRoot(this.x.squared() + this.y.squared() + this.z.squared() + this.w.squared())
+
+/** Returns zero quaternion if lenght is zero. */
+public function quat.norm() returns quat
+	let length = this.length()
+	return length > EPSILON ? quat(this.x / length, this.y / length, this.z / length, this.w / length) : ZEROQ
+
+/** Quaternion to power of alpha. */
+public function quat.exp(real alpha) returns quat
+	var result = ZEROQ
+	let norm = this.length()
+	if norm > EPSILON // zero is zero...
+		var n = vec3(this.x, this.y, this.z)
+		if n.length() > EPSILON
+			let theta = (this.w / norm).acos()
+			let x = theta * alpha
+			let normPow = norm.pow(alpha)
+			n = n.norm() * x.sin()
+			result = normPow * quat(n.x, n.y, n.z, x.cos())
+		else
+			/* There's no imaginary part in the quaternion
+			hence the quaternion is a real number. */
+			result = quat(0, 0, 0, this.w.pow(alpha))
+	return result
+
+public function quat.toMatrix() returns mat3
+	let q = this.norm()
+	let x = q.x
+	let y = q.y
+	let z = q.z
+	let w = q.w
+	return mat3(1 - 2 * y * y - 2 * z * z,	  2 * x * y - 2 * z * w,	  2 * x * z + 2 * y * w,
+				2 * x * y + 2 * z * w,		  1 - 2 * x * x - 2 * z * z,  2 * y * z - 2 * x * w,
+				2 * x * z - 2 * y * w,		  2 * y * z + 2 * x * w,	  1 - 2 * x * x - 2 * y * y)
+
+/** Extracts X-axis from a quaternion that represents rotation. */
+public function quat.getX() returns vec3
+	return vec3(1 - 2 * this.y * this.y - 2 * this.z * this.z,
+				2 * this.x * this.y + 2 * this.z *this. w,
+				2 * this.x * this.z - 2 * this.y * this.w)
+
+/** Extracts Y-axis as a vector from a quaternion that represents rotation. */
+public function quat.getY() returns vec3
+	return vec3(2 * this.x * this.y - 2 * this.z * this.w,
+				1 - 2 * this.x * this.x - 2 * this.z * this.z,
+				2 * this.y * this.z + 2 * this.x * this.w)
+
+/** Extracts Z-axis as a vector from a quaternion that represents rotation. */
+public function quat.getZ() returns vec3
+	return vec3(2 * this.x * this.z + 2 * this.y * this.w,
+				2 * this.y * this.z - 2 * this.x * this.w,
+				1 - 2 * this.x * this.x - 2 * this.y * this.y)
+
+/** Linear interpolation.
+q - targeted quaternion. p - progress from 0 to 1. */
+public function quat.lerp(quat q, real p) returns quat
+	quat result
+	if this.dot(q).abs() < EPSILON
+		result = q
+	else
+		result = this * (1 - p) + q * p
+	return result
+
+/** Linear interpolation.
+Always chooses the SHORTEST way between rotations.
+q - targeted quaternion. p - progress from 0 to 1. */
+public function quat.lerpShort(quat q, real p) returns quat
+	return this.dot(q) > 0 ? this.lerp(q, p) : this.lerp(quat(-q.x, -q.y, -q.z, -q.w), p)
+
+/** Linear interpolation.
+Always chooses the LONGEST way between rotations.
+q - targeted quaternion. p - progress from 0 to 1. */
+public function quat.lerpLong(quat q, real p) returns quat
+	return this.dot(q) < 0 ? this.lerp(q, p) : this.lerp(quat(-q.x, -q.y, -q.z, -q.w), p)
+
+/** Normalized linear interpolation.
+q - targeted quaternion. p - progress from 0 to 1. */
+public function quat.nlerp(quat q, real p) returns quat
+	return this.lerp(q, p).norm()
+
+/** Normalized linear interpolation.
+Always chooses the SHORTEST way between rotations.
+q - targeted quaternion. p - progress from 0 to 1. */
+public function quat.nlerpShort(quat q, real p) returns quat
+	return this.dot(q) > 0 ? this.nlerp(q, p) : this.nlerp(quat(-q.x, -q.y, -q.z, -q.w), p)
+
+/** Normalized linear interpolation.
+Always chooses the LONGEST way between rotations.
+q - targeted quaternion. p - progress from 0 to 1. */
+public function quat.nlerpLong(quat q, real p) returns quat
+	return this.dot(q) < 0 ? this.nlerp(q, p) : this.nlerp(quat(-q.x, -q.y, -q.z, -q.w), p)
+
+/** Spherical linear interpolation. Interpolates between two rotations.
+q - targeted quaternion. p - progress from 0 to 1.
+Slerp is the least efficient approach in performance so try to avoid using it, unless you need constant angular velocity. Nlerp is better solution in most cases. */
+public function quat.slerp(quat q, real p) returns quat
+	quat result
+	let dot = this.dot(q)
+	if dot.abs() < EPSILON
+		result = q
+	else
+		let theta = dot.acos()
+		result = ((1 - p) * theta).sin() / theta.sin() * this + (p * theta).sin() / theta.sin() * q
+	return result
+
+/** Spherical linear interpolation. Interpolates between two rotations.
+Always chooses the SHORTEST way between rotations.
+q - targeted quaternion. p - progress from 0 to 1.
+Slerp is the least efficient approach in performance so try to avoid using it, unless you need constant angular velocity. Nlerp is better solution in most cases. */
+public function quat.slerpShort(quat q, real p) returns quat
+	return this.dot(q) > 0 ? this.slerp(q, p) : this.slerp(quat(-q.x, -q.y, -q.z, -q.w), p)
+
+/** Spherical linear interpolation. Interpolates between two rotations.
+Always chooses the LONGEST way between rotations.
+q - targeted quaternion. p - progress from 0 to 1.
+Slerp is the least efficient approach in performance so try to avoid using it, unless you need constant angular velocity. Nlerp is better solution in most cases. */
+public function quat.slerpLong(quat q, real p) returns quat
+	return this.dot(q) < 0 ? this.slerp(q, p) : this.slerp(quat(-q.x, -q.y, -q.z, -q.w), p)
+
+public function quat.toString() returns string
+	return "Quaternion [X {0}, Y {1}, Z {2}, W {3}]".format(this.x.toString(), this.y.toString(), this.z.toString(), this.w.toString())
+
+/** Gimbal lock detection.
+Returns 1 for north, -1 for south, 0 if no gimbal lock. */
+public function quat.getGimbalPole() returns int
+	let pole = this.x * this.z - this.y * this.w
+	return pole > 0.5 - EPSILON ? 1 : (pole < EPSILON - 0.5 ? -1 : 0)
+
+/** Extracts Euler-angles (Tait-Bryan) in radians from a quaternion. Order of the result is Z-Y-X (Yaw-Pitch-Roll). */
+public function quat.toEuler() returns vec3
+	real yaw
+	real pitch
+	real roll
+	real cos
+	real sin
+	switch this.getGimbalPole()
+		case 1
+			cos = 2 * this.x * this.z + 2 * this.y * this.w
+			sin = 2 * this.y * this.z - 2 * this.x * this.w
+			yaw = Atan2(-sin, -cos)
+			pitch = -PI / 2
+			roll = 0
+		case -1
+			cos = 2 * this.x * this.z + 2 * this.y * this.w
+			sin = 2 * this.y * this.z - 2 * this.x * this.w
+			yaw = Atan2(sin, cos)
+			pitch = PI / 2
+			roll  = 0
+		default
+			cos = 1 - 2 * this.y * this.y - 2 * this.z * this.z
+			sin = 2 * this.x * this.y + 2 * this.z * this.w
+			yaw  = Atan2(sin, cos)
+			pitch = -Asin(2 * this.x * this.z - 2 * this.y * this.w)
+			cos = 1 - 2 * this.x * this.x - 2 * this.y * this.y
+			sin = 2 * this.y * this.z + 2 * this.x * this.w
+			roll = Atan2(sin , cos)
+	return vec3(roll, pitch, yaw)
+
+/** Creates a quaternion from rotation axis and angle. */
+public function vec3.toQuat(angle angl) returns quat
+	let v = this.norm()
+	let sin = (angl / 2).sin()
+	return quat(v.x * sin, v.y * sin, v.z * sin,  (angl / 2).cos())
+
+/** Creates a quaternion from rotation axis and angle. */
+public function angle.toQuat(vec3 axis) returns quat
+	return axis.toQuat(this)
+
+/** Rotates a vector by a quaternion. */
+public function vec3.rotate(quat q) returns vec3
+	let tmp = quat(this.x, this.y, this.z, 0)
+	let result = q.cross(tmp).cross(q.conj())
+	return vec3(result.x, result.y, result.z)
+
+/** Extracts quaternion from a rotation matrix. */
+public function mat3.toQuat() returns quat
+	let trace = this.trace()
+	quat result
+	real s
+	if trace > 0
+		s = SquareRoot(trace + 1) * 2
+		result = quat((this.m21 - this.m12) / s, (this.m02 - this.m20) / s, (this.m10 - this.m01) / s, 0.25 * s)
+	else if this.m00 > this.m11 and this.m00 > this.m22
+		s = SquareRoot(1 + this.m00 - this.m11 - this.m22) * 2
+		result = quat(0.25 * s, (this.m01 + this.m10) / s, (this.m02 + this.m20) / s, (this.m21 - this.m12) / s)
+	else if this.m11 > this.m22
+		s = SquareRoot(1 + this.m11 - this.m00 - this.m22) * 2
+		result = quat((this.m01 + this.m10) / s, 0.25 * s, (this.m12 + this.m21) / s, (this.m02 - this.m20) / s)
+	else
+		s = SquareRoot(1 + this.m22 - this.m00 - this.m11) * 2
+		result = quat((this.m02 + this.m20) / s, (this.m12 + this.m21) / s, 0.25 * s, (this.m10 - this.m01) / s)
+	return result
+
+public function quat.assertEquals(quat expected)
+	let delta = 0.002
+	let compare = quat((this.x - expected.x).abs(), (this.y - expected.y).abs(), (this.z - expected.z).abs(), (this.w - expected.w).abs())
+	let msg = "Expected <{0}>, Actual <{1} with delta {2}>"
+	if compare.x > delta or compare.y > delta or compare.z > delta or compare.w > delta
+		testFail(msg.format(expected.toString(), this.toString(), delta.toString()))

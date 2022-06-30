@@ -1,0 +1,22 @@
+version: 2
+
+jobs:
+  build:
+
+    docker:
+      - image: frotty/wurstscript
+
+    steps:
+      - checkout
+
+      - run:
+          name: Update Wurst
+          command: grill install wurstscript
+
+      - run:
+          name: Install Dependencies
+          command: grill install
+
+      - run:
+          name: Test
+          command: grill test

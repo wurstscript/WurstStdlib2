@@ -2,10 +2,11 @@ package BuffObjEditing
 import AbilityObjEditing
 import ObjectIds
 import ObjectIdGenerator
+import Annotations
 
 /**  You should use 'createBuffObject' inside compiletime expressions:
 	let someBuff = compiletime(createBuffObject("Yes", "cool", Icons.bTNFarm))
-	
+
 	And then add the 'abilId' to the target to apply the buff.	*/
 public tuple buffTuple(int abilId, int buffId)
 
@@ -32,23 +33,20 @@ public function createDummyBuffObject(string name, string tooltip, string iconpa
 		new AbilityDefinitionAuraSlow(abilId)
 			..setName("Aura Dummy: " + name)
 			..setMovementSpeedFactor(1, 0)
-			..setBuffs(1, int2fourchar(buffId))
+			..setBuffs(1, buffId.toRawCode())
 			..presetIcon(iconpath)
 			..setArtTarget("")
 			..setTargetsAllowed(1, "self")
 			..setArtTarget(effectPath)
 			..setTargetAttachmentPoint(attachmentPoint)
 			..setEditorSuffix("wurst")
-		
-	return buffTuple(abilId, buffId)
 
-public function compiletime(buffTuple buffT) returns buffTuple
-	return buffT
+	return buffTuple(abilId, buffId)
 
 public class BuffDefinition
 	ObjectDefinition def
-	
-	protected int newId 
+
+	protected int newId
 	protected int baseId
 
 	function getNewId() returns int
@@ -73,16 +71,17 @@ public class BuffDefinition
 
 	function setIconNormal(int level, string value)
 		def.setLvlDataString("fart",  level, 0,  value)
-	
+
+	/** Sets the icon's path for the buff obj, add "@!!" as prefix of the icon name to overide the default path by a custom path */
 	function setIcon(string name)
 		string s = name
-		if name.length() < 20 or not name.startsWith("ReplaceableTextures")
+		if (name.length() < 20 or not name.startsWith("ReplaceableTextures")) and not name.startsWith("@!!")
 			 s = "ReplaceableTextures\\CommandButtons\\" + s
 		if not name.endsWith(".blp")
 			s += ".blp"
 
 		setIconNormal(1, s)
-		
+
 	function setCaster(int level, string value)
 		def.setLvlDataString("fcat",  level, 0,  value)
 
@@ -157,4 +156,77 @@ public class BuffDefinition
 	function setEffectSoundLooping(int level, string value)
 		def.setLvlDataString("fefl",  level, 0,  value)
 
+	function setName(string value)
+		setName(1, value)
 
+	function setEditorSuffix(string value)
+		setEditorSuffix(1, value)
+
+	function setRace(string value)
+		setRace(1, value)
+
+	function setCaster(string value)
+		setCaster(1, value)
+
+	function setArtTarget(string value)
+		setArtTarget(1, value)
+
+	function setArtSpecial(string value)
+		setArtSpecial(1, value)
+
+	function setEffect(string value)
+		setEffect(1, value)
+
+	function setAreaEffect(string value)
+		setAreaEffect(1, value)
+
+	function setMissileArt(string value)
+		setMissileArt(1, value)
+
+	function setMissileSpeed(int value)
+		setMissileSpeed(1, value)
+
+	function setMissileArc(real value)
+		setMissileArc(1, value)
+
+	function setMissileHomingEnabled(boolean value)
+		setMissileHomingEnabled(1, value)
+
+	function setTargetAttachments(int value)
+		setTargetAttachments(1, value)
+
+	function setTargetAttachmentPoint0(string value)
+		setTargetAttachmentPoint0(1, value)
+
+	function setTargetAttachmentPoint1(string value)
+		setTargetAttachmentPoint1(1, value)
+
+	function setTargetAttachmentPoint2(string value)
+		setTargetAttachmentPoint2(1, value)
+
+	function setTargetAttachmentPoint3(string value)
+		setTargetAttachmentPoint3(1, value)
+
+	function setTargetAttachmentPoint4(string value)
+		setTargetAttachmentPoint4(1, value)
+
+	function setTargetAttachmentPoint5(string value)
+		setTargetAttachmentPoint5(1, value)
+
+	function setCasterAttachments(int value)
+		setCasterAttachments(1, value)
+
+	function setSpecialAttachmentPoint(string value)
+		setSpecialAttachmentPoint(1, value)
+
+	function setTooltipNormal(string value)
+		setTooltipNormal(1, value)
+
+	function setTooltipNormalExtended(string value)
+		setTooltipNormalExtended(1, value)
+
+	function setEffectSound(string value)
+		setEffectSound(1, value)
+
+	function setEffectSoundLooping(string value)
+		setEffectSoundLooping(1, value)

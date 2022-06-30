@@ -12,11 +12,11 @@ class SerializableElement implements BufferSerializable
 	construct(Buffer buffer)
 		deserialize(buffer)
 
-	function serialize(Buffer buffer)
+	override function serialize(Buffer buffer)
 		buffer.writeInt(id)
 		buffer.writeInt(value)
 
-	function deserialize(Buffer buffer)
+	override function deserialize(Buffer buffer)
 		id = buffer.readInt()
 		value = buffer.readInt()
 
@@ -31,7 +31,7 @@ class TestSerializable implements BufferSerializable
 	construct(Buffer buffer)
 		deserialize(buffer)
 	
-	function serialize(Buffer buffer)
+	override function serialize(Buffer buffer)
 		buffer.writeString(name)
 		buffer.writeInt(id)
 		buffer.writeReal(facing)
@@ -40,7 +40,7 @@ class TestSerializable implements BufferSerializable
 		for element in elements
 			buffer.write(element)
 
-	function deserialize(Buffer buffer)
+	override function deserialize(Buffer buffer)
 		name = buffer.readString()
 		id = buffer.readInt()
 		facing = buffer.readReal()
@@ -52,7 +52,7 @@ class TestSerializable implements BufferSerializable
 @test
 function stringBufferShortSerializationTest()
 	let sBuffer = new StringBuffer(4)
-	Buffer buffer = sBuffer
+	let buffer = sBuffer
 
 	buffer.writeInt(1)
 	buffer.writeInt(2)

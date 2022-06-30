@@ -1,0 +1,172 @@
+package ByteBuffer
+
+import Table
+import Bitwise
+import SafetyChecks
+import ErrorHandling
+
+/*	ByteBuffer is a utility class that allows you to write/read bytes, shorts and integer to/from it.
+	It may be useful for compacting bytes into integers or decomposing integers into bytes.
+	The byte order is Big Endian.
+*/
+
+public class ByteBuffer
+	// We're using Table instead of HashMap here since HashMap has additional checks to maintain know it's size,
+	// which are unneeded here and slow the container 2x.
+	private var storage = new Table()
+	private var intCount = 0
+
+	private var buffer = 0
+	private var bufferLength = 0
+
+	private var readBuffer = 0
+	private var readBufferIndex = 4
+
+	private var readIndex = -1
+
+	ondestroy
+		destroy storage
+
+	private function flushBuffer()
+		storage.saveInt(intCount, buffer)
+		intCount++
+		buffer = 0
+		bufferLength = 0
+
+	private static function selectByte(int n, int byte) returns int
+		return n.shiftr(8 * byte).bitAnd(compiletime("11111111".fromBitString()))
+
+	/** Writes an unsigned byte into the buffer.
+    You must be sure that the provided integer is in the range [0, 255]. */
+	function writeByteUnsafe(int n)
+		if SAFETY_CHECKS_ENABLED and n < 0 or n > 255
+			error("ByteBuffer#writeByteUnsafe ERROR: provided argument (" + n.toString() + ") is not in the range [0, 255].")
+		buffer = buffer + n.shiftl(8 * bufferLength)
+		bufferLength++
+		if bufferLength > 3
+			flushBuffer()
+
+	/** Writes an unsigned short into the buffer.
+    You must be sure that the provided integer is in the range [0, 65535]. */
+	function writeShortUnsafe(int n)
+		if SAFETY_CHECKS_ENABLED and n < 0 or n > 65535
+			error("ByteBuffer#writeShortUnsafe ERROR: provided argument (" + n.toString() + ") is not in the range [0, 65535].")
+		writeByteUnsafe(n.bitAnd(compiletime("11111111".fromBitString())))
+		writeByteUnsafe(n.shiftr(8))
+
+	/** Writes an unsigned byte into the buffer. */
+	function writeByte(int n)
+		writeByteUnsafe(n.bitAnd(compiletime("11111111".fromBitString())))
+
+	/** Writes an unsigned short into the buffer. */
+	function writeShort(int n)
+		writeShortUnsafe(n.bitAnd(compiletime("11111111 11111111".fromBitString())))
+
+	/** Writes a signed integer into the buffer. */
+	function writeInt(int n)
+		writeShortUnsafe(n.bitAnd(compiletime("11111111 11111111".fromBitString())))
+		writeShortUnsafe(n.shiftr(16))
+
+	function hasByte() returns bool
+		return readIndex < intCount or readBufferIndex < bufferLength
+
+	/** Reads a single unsigned byte from this buffer. The returned value will be in the range [0, 255]. **/
+	function readByte() returns int
+		if readBufferIndex == 4
+			readIndex++
+			readBuffer = readIndex < intCount ? storage.loadInt(readIndex) : buffer
+			readBufferIndex = 0
+		let byte = selectByte(readBuffer, readBufferIndex)
+		readBufferIndex++
+		return byte
+
+	/** Reads a single unsigned short from this buffer. The returned value will be in the range [0, 65535]. **/
+	function readShort() returns int
+		return readByte() + readByte().shiftl(8)
+
+	/** Reads a single signed integer from this buffer. **/
+	function readInt() returns int
+		return readByte() + readByte().shiftl(8) + readByte().shiftl(16) + readByte().shiftl(24)
+
+	function resetRead()
+		readBufferIndex = 4
+		readIndex = -1
+
+	function getInt(int i) returns int
+		if i == intCount
+			return buffer
+		return storage.loadInt(i)
+
+	function getIntCount() returns int
+		return intCount + 1
+
+	/** Returns the number of bytes in the buffer. **/
+	function size() returns int
+		return intCount * 4 + bufferLength
+
+	function getByte(int i) returns int
+		let intI = i div 4
+		if intI == intCount
+			return selectByte(buffer, i - intCount * 4)
+		return selectByte(storage.loadInt(intI), i - intI * 4)
+
+	/** Assures that the number of bytes is not bigger than the provided one. 
+		If it is, throws bytes from the end of the buffer away 
+		so that the number of bytes in the buffer will be exactly the provided one. 
+	
+		Should not be used when reading from the buffer. */
+	function truncate(int size)
+		let ints = size div 4
+		let newIntCount = min(intCount, ints)
+		if newIntCount < intCount
+			buffer = storage.loadInt(newIntCount)
+			bufferLength = 4
+		intCount = newIntCount
+		bufferLength = min(size - newIntCount * 4, bufferLength)
+
+@Test
+function byteBufferTest()
+	let byteBuffer = new ByteBuffer()
+	byteBuffer.writeByte(3)
+	byteBuffer.writeByte(200)
+	byteBuffer.writeByte(15)
+	byteBuffer.writeByte(7)
+
+	byteBuffer.writeByte(128)
+
+	byteBuffer.writeShort(0x4a2f)
+	byteBuffer.writeShort(0xfabc)
+	byteBuffer.writeShort(0x002a)
+
+	byteBuffer.writeInt(0xffaabbcc)
+
+	byteBuffer.readByte().assertEquals(3)
+	byteBuffer.readByte().assertEquals(200)
+	byteBuffer.readByte().assertEquals(15) 
+	byteBuffer.readByte().assertEquals(7)
+
+	byteBuffer.readByte().assertEquals(128)
+
+	byteBuffer.readShort().assertEquals(0x4a2f)
+	byteBuffer.readShort().assertEquals(0xfabc)
+	byteBuffer.readShort().assertEquals(0x002a)
+
+	byteBuffer.readInt().assertEquals(0xffaabbcc)
+
+@Test
+function byteBufferIterativeReadingTest()
+	let byteBuffer = new ByteBuffer()
+
+	let expectedBytes = [0xb3, 0xfb, 0xc6, 0xec, 0x89, 0xf9, 0x25, 0x22, 0x4a, 0xe0, 0x99, 0x08, 0x5d, 0x1a]
+	for i = 0 to expectedBytes.length - 1
+		byteBuffer.writeByte(expectedBytes[i])
+
+	int array bytes
+	var bytesLength = 0
+	while byteBuffer.hasByte()
+		bytes[bytesLength] = byteBuffer.readByte()
+		bytesLength++
+
+	bytesLength.assertEquals(expectedBytes.length)
+	for i = 0 to bytesLength - 1
+		bytes[i].assertEquals(expectedBytes[i])

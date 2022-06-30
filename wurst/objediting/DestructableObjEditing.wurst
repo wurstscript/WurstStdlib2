@@ -1,12 +1,11 @@
 package DestructableObjEditing
-
 import ObjEditingNatives
 import NoWurst
 
 public class W3BDefinition
 	ObjectDefinition def
-	
-	protected int newId 
+
+	protected int newId
 	protected int baseId
 
 	function getNewId() returns int
@@ -19,22 +18,28 @@ public class W3BDefinition
 		this.newId = newId
 		this.baseId = baseId
 		def = createObjectDefinition("w3b", newId, baseId)
-		
+
 public class DestructableDefinition extends W3BDefinition
 	construct(int newID,int origID)
 		super(newID,origID)
-		
+
 	function setTexture(string data)
 		def.setString("btxf",data)
-		
+
+	function setTextureId(int data)
+		def.setInt("btxi",data)
+
+	function setCategory(string data)
+		def.setString("bcat",data)
+
 	function setName(string data)
 		def.setString("bnam",data)
-		
+
 	function setPath(string data)
 		def.setString("bptx",data)
-		
+
 	function setModel(string data)
 		def.setString("bfil",data)
-		
+
 	function setSoundOnDestroy(string data)
 		def.setString("bdsn",data)

@@ -1,0 +1,293 @@
+package Camera
+import NoWurst
+import public Vectors
+import Player
+import Maths
+import ErrorHandling
+import Annotations
+
+public function getCameraBoundMin() returns vec2
+	return vec2(GetCameraBoundMinX(), GetCameraBoundMinY())
+
+public function getCameraBoundMax() returns vec2
+	return vec2(GetCameraBoundMaxX(), GetCameraBoundMaxY())
+
+public function getCameraTargetPosition() returns vec2
+	return vec2(GetCameraTargetPositionX(), GetCameraTargetPositionY())
+
+public function getCameraTargetPosition3() returns vec3
+	return getCameraTargetPosition().withZ(GetCameraTargetPositionZ())
+
+public function getCameraEyePosition() returns vec2
+	return vec2(GetCameraEyePositionX(), GetCameraEyePositionY())
+
+public function getCameraEyePosition3() returns vec3
+	return getCameraEyePosition().withZ(GetCameraEyePositionZ())
+
+public function setCameraPosition(vec2 pos)
+	SetCameraPosition(pos.x, pos.y)
+
+/** Set the position the camera will go when you press the space-bar */
+public function setCameraQuickPosition(vec2 pos)
+	SetCameraQuickPosition(pos.x, pos.y)
+
+public function setCameraBounds(vec2 bottomLeft, vec2 topRight, vec2 topLeft, vec2 bottomRight)
+	SetCameraBounds(bottomLeft.x, bottomLeft.y, topRight.x, topRight.y, topLeft.x, topLeft.y, bottomRight.x, bottomRight.y)
+
+public function panCameraTo(vec2 pos)
+	PanCameraTo(pos.x, pos.y)
+
+public function panCameraToTimed(vec2 pos, real duration)
+	PanCameraToTimed(pos.x, pos.y, duration)
+
+/** Pans the camera to pos.x, pos.y and absolute height pos.z
+	If pos.z > pos.getTerrainZ, the camera will not drop below
+	the terrain on its path. */
+public function panCameraTo(vec3 pos)
+	PanCameraToWithZ(pos.x, pos.y, pos.z - pos.toVec2().getTerrainZ())
+
+public function panCameraToTimed(vec3 pos, real duration)
+	PanCameraToTimedWithZ(pos.x, pos.y, pos.z - pos.toVec2().getTerrainZ(), duration)
+
+public function setCameraRotateMode(vec2 pos, angle toSweep, real duration)
+	SetCameraRotateMode(pos.x, pos.y, toSweep.radians(), duration)
+
+/** Runs the camera through the cinematic camera
+	specified in cameraModelFile. Existing cameras are available
+	via Objects.cameraXXX paths" */
+public function setCinematicCamera(string cameraModelFile)
+	SetCinematicCamera(cameraModelFile)
+
+public function setCameraSourceNoise(real magnitude, real velocity)
+	CameraSetSourceNoise(magnitude, velocity)
+
+public function setCameraSourceNoise(real magnitude, real velocity, bool vertOnly)
+	CameraSetSourceNoiseEx(magnitude, velocity, vertOnly)
+
+public function setCameraTargetNoise(real magnitude, real velocity)
+	CameraSetTargetNoise(magnitude, velocity)
+
+public function setCameraTargetNoise(real magnitude, real velocity, bool vertOnly)
+	CameraSetTargetNoiseEx(magnitude, velocity, vertOnly)
+
+public function setCameraOrientController(unit whichUnit, vec2 offset)
+	SetCameraOrientController(whichUnit, offset.x, offset.y)
+
+public function camerafield.set(real value, real duration)
+	SetCameraField(this, value, duration)
+
+public function camerafield.adjust(real offset, real duration)
+	AdjustCameraField(this, offset, duration)
+
+public function camerafield.get() returns real
+	return GetCameraField(this)
+
+public function camerafield.getFieldSwap(camerasetup whichSetup) returns real
+	return CameraSetupGetFieldSwap(this, whichSetup)
+
+public function camerafield.setCameraField(player whichPlayer, real value, real duration)
+	SetCameraFieldForPlayer(whichPlayer, this, value, duration)
+
+public function camerasetup.setField(camerafield whichField, real value, real duration)
+	CameraSetupSetField(this, whichField, value, duration)
+
+public function camerasetup.getField(camerafield whichField) returns real
+	return CameraSetupGetField(this, whichField)
+
+public function camerasetup.setDestPosition(vec2 pos, real duration)
+	CameraSetupSetDestPosition(this, pos.x, pos.y, duration)
+
+public function camerasetup.getDestPosition() returns vec2
+	return vec2(CameraSetupGetDestPositionX(this), CameraSetupGetDestPositionY(this))
+
+public function camerasetup.apply(boolean doPan, boolean panTimed)
+	CameraSetupApply(this, doPan, panTimed)
+
+public function camerasetup.applyWithZ(real zDestOffset)
+	CameraSetupApplyWithZ(this, zDestOffset)
+
+public function camerasetup.applyForceDuration(boolean doPan, real forceDuration)
+	CameraSetupApplyForceDuration(this, doPan, forceDuration)
+
+public function camerasetup.applyForceDurationWithZ(real zDestOffset, real forceDuration)
+	CameraSetupApplyForceDurationWithZ(this, zDestOffset, forceDuration)
+
+public function camerasetup.apply(boolean doPan, player whichPlayer, real duration)
+	CameraSetupApplyForPlayer(doPan, this, whichPlayer, duration)
+
+@deprecated("Use .getField instead")
+public function camerasetup.getFieldSwap(camerafield whichField) returns real
+	return CameraSetupGetFieldSwap(whichField, this)
+
+public function player.cameraSetupApply(boolean doPan, camerasetup whichSetup, real duration)
+	CameraSetupApplyForPlayer(doPan, whichSetup, this, duration)
+
+public function player.setCameraField(camerafield whichField, real value, real duration)
+	if localPlayer == this
+		SetCameraField(whichField, value, duration)
+
+@deprecated("Use .setCameraTargetController instead")
+public function player.setCameraTargetControllerNoZ(unit whichUnit, vec2 offset, boolean inheritOrientation)
+	this.setCameraTargetController(whichUnit, offset, inheritOrientation)
+
+public function player.setCameraTargetController(unit whichUnit, vec2 offset, boolean inheritOrientation)
+	if localPlayer == this
+		SetCameraTargetController(whichUnit, offset.x, offset.y, inheritOrientation)
+
+public function player.setCameraPosition(vec2 pos)
+	if localPlayer == this
+		SetCameraPosition(pos.x, pos.y)
+
+public function player.panCameraTo(vec2 pos)
+	if localPlayer == this
+		panCameraTo(pos)
+
+public function player.panCameraTo(vec3 pos)
+	if localPlayer == this
+		panCameraTo(pos)
+
+public function player.panCameraToTimed(vec2 pos, real duration)
+	if localPlayer == this
+		panCameraToTimed(pos, duration)
+
+public function player.panCameraToTimed(vec3 pos, real duration)
+	if localPlayer == this
+		panCameraToTimed(pos, duration)
+
+/** Pans the camera depending on how far pos is from the current
+	camera target:
+	- If the distance is larger than
+	  bj_SMARTPAN_TRESHOLD_SNAP, the camera snaps instantenously
+	- If the distance is larger than bj_SMARTPAN_TRESHOLD_PAN, the
+	  camera pans over the specified duration
+	- If the distance is smaller than bj_SMARTPAN_TRESHOLD_PAN, the
+	  camera doesn't move at all. */
+public function player.smartCameraPan(vec2 pos, real duration)
+	if localPlayer == this
+		let dist = pos.distanceTo(getCameraTargetPosition())
+		if dist >= bj_SMARTPAN_TRESHOLD_SNAP
+			panCameraToTimed(pos, 0.0)
+		else if dist >= bj_SMARTPAN_TRESHOLD_PAN
+			panCameraToTimed(pos, duration)
+
+/** Runs the camera for the player through the cinematic camera
+	specified in  cameraModelFile. Existing cameras are available
+	via Objects.cameraXXX paths" */
+public function player.setCinematicCamera(string cameraModelFile)
+	if localPlayer == this
+		SetCinematicCamera(cameraModelFile)
+
+public function player.resetToGameCamera(real duration)
+	if localPlayer == this
+		ResetToGameCamera(duration)
+
+@deprecated("Use .setCameraSourceNoise instead")
+public function player.cameraSetSourceNoise(real magnitude, real velocity)
+	this.setCameraSourceNoise(magnitude, velocity)
+
+@deprecated("Use .setCameraSourceNoise instead")
+public function player.cameraSetSourceNoise(real magnitude, real velocity, bool vertOnly)
+	this.setCameraSourceNoise(magnitude, velocity, vertOnly)
+
+@deprecated("Use .setCameraTargetNoise instead")
+public function player.cameraSetTargetNoise(real magnitude, real velocity)
+	this.setCameraTargetNoise(magnitude, velocity)
+
+@deprecated("Use .setCameraTargetNoise instead")
+public function player.cameraSetTargetNoise(real magnitude, real velocity, bool vertOnly)
+	this.setCameraTargetNoise(magnitude, velocity, vertOnly)
+
+@deprecated("Use .setCameraEQNoise instead")
+public function player.cameraSetEQNoise(real magnitude)
+	this.setCameraEQNoise(magnitude)
+
+@deprecated("Use .clearCameraNoise instead")
+public function player.cameraClearNoise()
+	this.clearCameraNoise()
+
+public function player.setCameraSourceNoise(real magnitude, real velocity)
+	if localPlayer == this
+		setCameraSourceNoise(magnitude, velocity)
+
+public function player.setCameraSourceNoise(real magnitude, real velocity, bool vertOnly)
+	if localPlayer == this
+		setCameraSourceNoise(magnitude, velocity, vertOnly)
+
+public function player.setCameraTargetNoise(real magnitude, real velocity)
+	if localPlayer == this
+		setCameraTargetNoise(magnitude, velocity)
+
+public function player.setCameraTargetNoise(real magnitude, real velocity, bool vertOnly)
+	if localPlayer == this
+		setCameraTargetNoise(magnitude, velocity, vertOnly)
+
+public function player.setCameraEQNoise(real magnitude)
+	let richter = min(max(2., magnitude), 5.)
+	if localPlayer == this
+		setCameraTargetNoise(magnitude * 2., magnitude * 10..pow(richter), true)
+		setCameraSourceNoise(magnitude * 2., magnitude * 10..pow(richter), true)
+
+public function player.clearCameraNoise()
+	if localPlayer == this
+		setCameraTargetNoise(0, 0)
+		setCameraSourceNoise(0, 0)
+
+public function player.setCameraBoundsToRect(rect r)
+	if localPlayer == this
+		SetCameraBoundsToRect(r)
+
+public enum CameraBoundsAdjust
+	ADD
+	SUB
+
+public function player.adjustCameraBounds(CameraBoundsAdjust adjustMethod, real dxWest, real dxEast, real dyNorth, real dySouth)
+	real scale
+
+	switch adjustMethod
+		case ADD
+			scale = 1.
+		case SUB
+			scale = -1.
+		default
+			printLog(Loglevel.WARNING, "Unrecognized adjustment method, request ignored.")
+			return
+	
+	// Adjust the actual camera values
+	var minX = GetCameraBoundMinX() - scale * dxWest
+	var maxX = GetCameraBoundMaxX() + scale * dxEast
+	var minY = GetCameraBoundMinY() - scale * dySouth
+	var maxY = GetCameraBoundMaxY() + scale * dyNorth
+
+	// Make sure the camera bounds are still valid.
+	if maxX < minX
+		minX = minX + maxX * 0.5
+		maxX = minX
+	if maxY < minY
+		minY = (minY + maxY) * 0.5
+		maxY = minY
+
+	// Apply the new camera values.
+	SetCameraBounds(minX, minY, minX, maxY, maxX, maxY, maxX, minY)
+
+/** Set the position the camera will go when you press the space-bar */
+public function player.setCameraQuickPosition(vec2 pos)
+	if localPlayer == this
+		setCameraQuickPosition(pos)
+
+public function player.stopCamera()
+	if localPlayer == this
+		StopCamera()
+
+public function player.setCameraOrientController(unit whichUnit, vec2 offset)
+	if localPlayer == this
+		setCameraOrientController(whichUnit, offset)
+
+public function unit.setCameraTargetController(vec2 offset, boolean inheritOrientation)
+	SetCameraTargetController(this, offset.x, offset.y, inheritOrientation)
+
+public function unit.setCameraOrientController(vec2 offset)
+	SetCameraOrientController(this, offset.x, offset.y)
+
+public function unit.setCameraOrientControllerForPlayer(vec2 offset, player whichPlayer)
+	if localPlayer == whichPlayer
+		setCameraOrientController(this, offset)

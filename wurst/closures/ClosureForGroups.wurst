@@ -1,20 +1,31 @@
 package ClosureForGroups
 
+import Annotations
+
 public interface ForGroupCallback
 	function callback(unit u)
-		
+
 /** This is used as dummy in the GroupEnum calls and should not be used */
 constant DUMMY_GROUP = CreateGroup()
 
 // ====Callback stack for nested usage====
 ForGroupCallback array tempCallbacks
 var tempCallbacksCount = 0
-constant filter = Filter(() -> currentCallback().callback(GetFilterUnit()))
+var maxCount = INT_MAX
+var iterCount = 0
+constant filter = Filter(() -> filterCallback(GetFilterUnit()))
+
+function filterCallback(unit filter)
+	if iterCount < maxCount
+		currentCallback().callback(filter)
+	iterCount++
 
 function pushCallback(ForGroupCallback c)
 	tempCallbacks[tempCallbacksCount] = c
 	tempCallbacksCount++
-	
+	iterCount = 0
+	maxCount = INT_MAX
+
 function popCallback()
 	DUMMY_GROUP.clear()
 	tempCallbacksCount--
@@ -29,15 +40,17 @@ function currentCallback() returns ForGroupCallback
 public function group.forEachFrom(ForGroupCallback cb)
 	for u from this
 		cb.callback(u)
+	destroy cb
 
 /** Executes the given closure for every unit in this group,
 	keeping all units in the group */
 public function group.forEachIn(ForGroupCallback cb)
 	for u in this
 		cb.callback(u)
+	destroy cb
 
 /** Executes the given closure for every unit of the given type.
-	Remember that names of custom units are "custom_[typeId]" */		
+	Remember that names of custom units are "custom_[typeId]" */
 public function forUnitsOfType(string unitname, ForGroupCallback c)
 	pushCallback(c)
 	GroupEnumUnitsOfType(DUMMY_GROUP, unitname, filter)
@@ -47,39 +60,68 @@ public function forUnitsOfType(string unitname, ForGroupCallback c)
 	Cancels itself after *count* iterations */
 public function forUnitsOfTypeCounted(string unitname, int count, ForGroupCallback c)
 	pushCallback(c)
-	GroupEnumUnitsOfTypeCounted(DUMMY_GROUP, unitname, filter, count)
+	maxCount = count
+	GroupEnumUnitsOfType(DUMMY_GROUP, unitname, filter)
 	popCallback()
 
-/** Executes the given closure for every unit of the given player */	
+/** Executes the given closure for every unit of the given player */
 public function forUnitsOfPlayer(player p, ForGroupCallback c)
 	pushCallback(c)
 	GroupEnumUnitsOfPlayer(DUMMY_GROUP, p, filter)
 	popCallback()
 
-/** Executes the given closure for every unit in the given rect */	
+/** Executes the given closure for every existing unit */
+public function forUnitsAll(ForGroupCallback c)
+	for i = 0 to bj_MAX_PLAYER_SLOTS - 1
+		pushCallback(c)
+		GroupEnumUnitsOfPlayer(DUMMY_GROUP, players[i], filter)
+		DUMMY_GROUP.clear()
+		tempCallbacksCount--
+	destroy c
+
+/** Executes the given closure for every unit in the given rect */
 public function forUnitsInRect(rect r, ForGroupCallback c)
 	pushCallback(c)
 	GroupEnumUnitsInRect(DUMMY_GROUP, r, filter)
 	popCallback()
 
 /** Executes the given closure for every unit in the given rect.
-	Cancels itself after *count* iterations */	
+	Cancels itself after *count* iterations */
 public function forUnitsInRectCounted(rect r, int count, ForGroupCallback c)
 	pushCallback(c)
-	GroupEnumUnitsInRectCounted(DUMMY_GROUP, r, filter, count)
+	maxCount = count
+	GroupEnumUnitsInRect(DUMMY_GROUP, r, filter)
 	popCallback()
 
-/** Executes the given closure for every unit in range of the given position */	
+/** Executes the given closure for every unit in range of the given position */
 public function forUnitsInRange(vec2 pos, real radius, ForGroupCallback c)
-	pushCallback(c)
-	GroupEnumUnitsInRange(DUMMY_GROUP, pos.x, pos.y, radius, filter)
-	popCallback()
+	forUnitsInRange(pos, radius, false, c)
+
+@deprecated("Use forUnitsInRange(pos, radius, collisionSizeFiltering, c) instead")
+public function forUnitsInRange(vec2 pos, real radius, ForGroupCallback c, bool collisionSizeFiltering)
+	forUnitsInRange(pos, radius, collisionSizeFiltering, c)
+
+/** Executes the given closure for every unit in range of the given position
+	With collisionSizeFiltering true it will take the units' collision into account. */
+public function forUnitsInRange(vec2 pos, real radius, bool collisionSizeFiltering, ForGroupCallback c)
+	if collisionSizeFiltering
+		pushCallback(c)
+		GroupEnumUnitsInRange(ENUM_GROUP, pos.x, pos.y, radius + MAX_COLLISION_SIZE, null)
+		for u from ENUM_GROUP
+			if IsUnitInRangeXY(u, pos.x, pos.y, radius)
+				c.callback(u)
+		popCallback()
+	else
+		pushCallback(c)
+		GroupEnumUnitsInRange(DUMMY_GROUP, pos.x, pos.y, radius, filter)
+		popCallback()
 
 /** Executes the given closure for every unit in range of the given position
 	Cancels itself after *count* iterations */
 public function forUnitsInRangeCounted(vec2 pos, real radius, int count, ForGroupCallback c)
 	pushCallback(c)
-	GroupEnumUnitsInRangeCounted(DUMMY_GROUP, pos.x, pos.y, radius, filter, count)
+	maxCount = count
+	GroupEnumUnitsInRange(DUMMY_GROUP, pos.x, pos.y, radius, filter)
 	popCallback()
 
 /** Executes the given closure for every unit selected by the given player */
@@ -107,11 +149,11 @@ public function forNearestUnit(vec2 pos, real range, filterfunc filter, ForGroup
 // ====Callback stack for nested usage====
 public interface ForGroupCallbackD
 	function callback(destructable d)
-	
+
 function filterD() returns boolean
 	currentCallbackD().callback(GetEnumDestructable())
 	return false
-	
+
 ForGroupCallbackD array tempCallbacksD
 int tempCallbacksDCount = 0
 
@@ -127,31 +169,46 @@ function currentCallbackD() returns ForGroupCallbackD
 	return tempCallbacksD[tempCallbacksDCount - 1]
 // ====Stack end====
 
+let enumRect = Rect(0,0,0,0)
+
+/** Executes the given closure for all destructables in a rect
+	that incompasses the circle with the range radius at the given position. */
+public function forDestructablesInRange(vec2 pos, real range, ForGroupCallbackD cb)
+	forDestructablesInRange(pos, range, null, cb)
+
+/** Executes the given closure for all destructables in a rect
+	that incompasses the circle with the range radius at the given position. */
+public function forDestructablesInRange(vec2 pos, real range, boolexpr filter, ForGroupCallbackD cb)
+	enumRect.resize(vec2(pos.x - range, pos.y - range), vec2(pos.x + range, pos.y + range))
+	forDestructablesInRect(enumRect, filter, cb)
+
 /** Executes the given closure for all destructables in the given rect */
 public function forDestructablesInRect(rect r, ForGroupCallbackD cb)
+	forDestructablesInRect(r, null, cb)
+
+/** Executes the given closure for all destructables in the given rect */
+public function forDestructablesInRect(rect r, boolexpr filter, ForGroupCallbackD cb)
 	pushCallbackD(cb)
-	EnumDestructablesInRect(r, null, () -> filterD())
+	EnumDestructablesInRect(r, filter, () -> filterD())
 	popCallbackD()
 
 // Nearest Destructable helpers
 destructable nearestD = null
-real nearestDDist = REAL_MAX
-vec2 gpos = ZERO2
+var nearestDDist = REAL_MAX
+var gpos = ZERO2
 
 /** Executes the given closure for the closes destructable in the given rect.
 	If there is no destructable in range, the closure will be run with "null" */
 public function forNearestDestructable(vec2 pos, real range, ForGroupCallbackD c)
-	pushCallbackD(c)
-	gpos = pos
-	nearestDDist = range.squared()
 	nearestD = null
-	let r = Rect(pos.x - range, pos.y - range, pos.x + range, pos.y + range)
-	EnumDestructablesInRect(r, filterEnumDestructablesInCircleBJ) ->
-		let dist = gpos.distanceToSq(GetFilterDestructable().getPos())
+	nearestDDist = range
+	gpos = pos
+	enumRect.resize(vec2(pos.x - range, pos.y - range), vec2(pos.x + range, pos.y + range))
+	EnumDestructablesInRect(enumRect, null) ->
+		let dist = gpos.distanceTo(GetEnumDestructable().getPos())
 		if dist < nearestDDist
-			nearestD = GetFilterDestructable()
+			nearestD = GetEnumDestructable()
 			nearestDDist = dist
 
 	c.callback(nearestD)
-	popCallbackD()
-
+	destroy c

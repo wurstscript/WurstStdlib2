@@ -1,16 +1,15 @@
 package Basics
 import public _Primitives
+import Player
 import NoWurst
+import Annotations
 
-/* Map defaults */
- /** Standard Period for animation.
-	Note that 0.03125 is also possible, but doesn't work with order cancel from SetUnitPos */
+/** Standard Period for animation.
+	  Note that 0.03125 is also possible, but doesn't work with order cancel from SetUnitPos */
 @configurable public constant ANIMATION_PERIOD   =  0.030
 /** Max collision size of any unit */
 @configurable public constant MAX_COLLISION_SIZE =  197.0
 
-
-/* Collection of useful wc3 specific constants */
 /** Id of Ravenform to allow setting fly height */
 public constant HEIGHT_ENABLER	 		= 'Amrf'
 /** Id of Eattree to recognize trees */
@@ -18,10 +17,10 @@ public constant TREE_RECOGNITION  		= 'Aeat'
 /** Id of Locust */
 public constant LOCUST_ID				= 'Aloc'
 /** Id of Ghost (Visible) */
-public constant GHOST_INVIS_ID				= 'Agho'
+public constant GHOST_INVIS_ID			= 'Agho'
 /** Id of Ghost (Invisible) */
-public constant GHOST_VIS_ID				= 'Aeth'
+public constant GHOST_VIS_ID			= 'Aeth'
 /** Neutral Passive (grey) */
-public constant DUMMY_PLAYER 			= Player(15)
+public constant DUMMY_PLAYER 			= players[PLAYER_NEUTRAL_PASSIVE]
 /** Neutral Hostile (darkgreen) */
-public constant DUMMY_HOSTILE_PLAYER 	= Player(12)
+public constant DUMMY_HOSTILE_PLAYER 	= players[PLAYER_NEUTRAL_AGGRESSIVE]

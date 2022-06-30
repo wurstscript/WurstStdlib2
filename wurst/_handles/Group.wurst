@@ -1,6 +1,8 @@
 package Group
 import NoWurst
 import Vectors
+import Player
+import Annotations
 
 /** Use this group for your non-nested group enum calls
 	and then iterate through the group via **for from** or
@@ -9,33 +11,74 @@ public constant ENUM_GROUP = CreateGroup()
 
 public function group.enumUnitsInRange(vec2 pos, real range)
 	GroupEnumUnitsInRange(this, pos.x, pos.y, range, null)
-	
+
 public function group.enumUnitsInRange(vec2 pos, real range, boolexpr filter)
 	GroupEnumUnitsInRange(this, pos.x, pos.y, range, filter)
 
-public function group.enumUnitsInRect(rect rec) 
-	this.enumUnitsInRect(rec, null) 
-	
-public function group.enumUnitsInRect(rect rec, boolexpr filter) 
-	GroupEnumUnitsInRect(this, rec, filter) 
+public function group.enumUnitsInRect(rect rec)
+	this.enumUnitsInRect(rec, null)
+
+public function group.enumUnitsInRect(rect rec, boolexpr filter)
+	GroupEnumUnitsInRect(this, rec, filter)
 
 public function group.enumUnitsSelected(player p, boolexpr filter)
 	GroupEnumUnitsSelected(this, p, filter)
 
+public function group.enumUnitsOfPlayer(player p, boolexpr filter)
+	GroupEnumUnitsOfPlayer(this, p, filter)
+
+public function group.enumUnitsOfType(string unitname, boolexpr filter)
+	GroupEnumUnitsOfType(this, unitname, filter)
+
+public function group.enumUnitsOfType(int id, boolexpr filter)
+	GroupEnumUnitsOfType(this, UnitId2String(id), filter)
+
+public function group.enumUnitsAll(boolexpr filter)
+	for i = 0 to bj_MAX_PLAYER_SLOTS - 1
+		ENUM_GROUP.enumUnitsOfPlayer(players[i], filter)
+		this.add(ENUM_GROUP)
+	ENUM_GROUP.clear()
+
 public function group.clear()
 	GroupClear(this)
-	
-public function group.addUnit(unit u)
-	GroupAddUnit(this, u)
-	
-public function group.removeUnit(unit u)
-	GroupRemoveUnit(this, u)
-	
+
+/** Returns the number of added units. */
+public function group.add(vararg unit units) returns int
+	var i = 0
+	for u in units
+		if not IsUnitInGroup(u, this)
+			i += 1
+		GroupAddUnit(this, u)
+	return i
+
+@deprecated("Use .add instead.")
+public function group.addUnit(vararg unit units)
+	for u in units
+		this.add(u)
+
+/** Retruns the number of removed units. */
+public function group.remove(vararg unit units) returns int
+	var i = 0
+	for u in units
+		if IsUnitInGroup(u, this)
+			i += 1
+		GroupRemoveUnit(this, u)
+	return i
+
+@deprecated("Use .remove instead.")
+public function group.removeUnit(vararg unit units)
+	for u in units
+		this.remove(u)
+
 public function group.destr()
 	DestroyGroup(this)
-	
-public function group.contains(unit u) returns boolean
+
+public function group.has(unit u) returns bool
 	return IsUnitInGroup(u, this)
+
+@deprecated("Use .has instead.")
+public function group.contains(unit u) returns bool
+	return this.has(u)
 
 var unitCounter = 0
 public function group.size() returns int
@@ -45,14 +88,14 @@ public function group.size() returns int
 
 	return unitCounter
 
-public function group.isEmpty() returns boolean
+public function group.isEmpty() returns bool
 	return not this.hasNext()
 
 var randomCounter = 0
 unit randomSelected = null
-/** Returns a random unit from this grouo without removing it
+/** Returns a random unit from this group without removing it
 	or null if the group is empty */
-public function group.getRandomUnit() returns unit
+public function group.getRandom() returns unit
 	let size = this.size()
 	randomCounter = 1 + GetRandomInt(0, size-1)
 	randomSelected = null
@@ -62,7 +105,62 @@ public function group.getRandomUnit() returns unit
 			randomSelected = GetEnumUnit()
 
 	return randomSelected
-	
+
+@deprecated("Use .getRandom instead.")
+public function group.getRandomUnit() returns unit
+	return this.getRandom()
+
+public function group.immediateOrder(string order) returns bool
+	return GroupImmediateOrder(this, order)
+
+public function group.immediateOrderById(int order) returns bool
+	return GroupImmediateOrderById(this, order)
+
+public function group.pointOrder(string order, vec2 point) returns bool
+	return GroupPointOrder(this, order, point.x, point.y)
+
+public function group.pointOrderById(int order, vec2 point) returns bool
+	return GroupPointOrderById(this, order, point.x, point.y)
+
+public function group.targetOrder(string order, widget targetWidget) returns bool
+	return GroupTargetOrder(this, order, targetWidget)
+
+public function group.targetOrder(int order, widget targetWidget) returns bool
+	return GroupTargetOrderById(this, order, targetWidget)
+
+group mainGroup
+int count
+
+public function group.add(vararg group groups) returns int
+	// I had to do it in this way because I can't use the "for u in g" is using a recursion,
+	// because it needs the function .iterator(), but that needs this function first
+
+	mainGroup = this
+	count = 0
+	for g in groups
+		ForGroup(g, () -> begin
+			count += mainGroup.add(GetEnumUnit())
+		end)
+	return count
+
+@deprecated("Use .add instead.")
+public function group.addGroup(group g)
+	this.add(g)
+
+public function group.remove(vararg group groups) returns int
+	// I think this is how it works
+	var i = 0
+	for g in groups
+		for u in g
+			if IsUnitInGroup(u, this)
+				i += 1
+			GroupRemoveUnit(this, u)
+	return i
+
+@deprecated("Use .remove instead.")
+public function group.removeGroup(group g) returns int
+	return this.remove(g)
+
 /* Group iterator */
 
 group iterGroup
@@ -70,19 +168,19 @@ group iterGroup
 /** Creates a new iterator for this group. */
 public function group.iterator() returns group
 	iterGroup = CreateGroup()
-	ForGroup(this, () -> iterGroup.addUnit(GetEnumUnit()))
+	iterGroup.add(this)
 	return iterGroup
 
 /** Returns whether the iterator has the next item */
-public function group.hasNext() returns boolean
+public function group.hasNext() returns bool
 	return FirstOfGroup(this) != null
 
 /** Returns the next item from the iterator */
 public function group.next() returns unit
 	let iterUnit = FirstOfGroup(this)
-	GroupRemoveUnit(this, iterUnit) 
+	GroupRemoveUnit(this, iterUnit)
 	return iterUnit
-	
+
 /** Closes the iterator, releaseing the group */
 public function group.close()
 	this.clear()

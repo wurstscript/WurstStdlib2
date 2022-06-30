@@ -1,132 +1,138 @@
 package StringTests
 
-
 @Test function testToCharsetInt()
-    "a".toCharsetInt().assertEquals(10)
+	"a".toCharsetInt().assertEquals(10)
 
 @Test function int.toCharsetString()
-    "b".toCharsetInt().assertEquals(11)
+	"b".toCharsetInt().assertEquals(11)
 
 @Test function testSubstring()
-    "teststring".substring(1, 3).assertEquals("es")
-    "teststring".substring(3, 4).assertEquals("t")
+	"teststring".substring(1, 3).assertEquals("es")
+	"teststring".substring(3, 4).assertEquals("t")
 
 @Test function testLength()
-    "short string".length().assertEquals(StringLength("short string"))
+	"short string".length().assertEquals(StringLength("short string"))
 
 @Test function testCharAt()
-    "string".charAt(0).assertEquals("s")
-    "string".charAt(5).assertEquals("g")
-    "string".charAt(2).assertEquals("r")
+	"string".charAt(0).assertEquals("s")
+	"string".charAt(5).assertEquals("g")
+	"string".charAt(2).assertEquals("r")
 
 @Test function testEndsWith()
-    "teststring".endsWith("ing").assertEquals(true)
-    "teststring".endsWith("ting").assertEquals(false)
-    "teststring".endsWith("teststring").assertEquals(true)
-    "teststring".endsWith("g").assertEquals(true)
+	"teststring".endsWith("ing").assertEquals(true)
+	"teststring".endsWith("ting").assertEquals(false)
+	"teststring".endsWith("teststring").assertEquals(true)
+	"teststring".endsWith("g").assertEquals(true)
 
 @Test function testStartsWith()
-    "teststring".startsWith("test").assertEquals(true)
-    "teststring".startsWith("testt").assertEquals(false)
-    "teststring".startsWith("teststring").assertEquals(true)
-    "teststring".startsWith("").assertEquals(true)
+	"teststring".startsWith("test").assertEquals(true)
+	"teststring".startsWith("testt").assertEquals(false)
+	"teststring".startsWith("teststring").assertEquals(true)
+	"teststring".startsWith("").assertEquals(true)
 
 @Test function testToLowerCase()
-    "tEst#3".toLowerCase().assertEquals("test#3")
+	"tEst#3".toLowerCase().assertEquals("test#3")
 
 @Test function testToUpperCase()
-    "tEst#3".toUpperCase().assertEquals("TEST#3")
+	"tEst#3".toUpperCase().assertEquals("TEST#3")
 
 @Test function testIsUpper()
-    "tEsT".isUpper().assertEquals(false)
-    "TEST".isUpper().assertEquals(true)
+	"tEsT".isUpper().assertEquals(false)
+	"TEST".isUpper().assertEquals(true)
 
 @Test function testTrim()
-    " te st ".trim().assertEquals("te st")
-    "  test ".trim().assertEquals("test")
-    "test".trim().assertEquals("test")
+	" te st ".trim().assertEquals("te st")
+	"  test ".trim().assertEquals("test")
+	"test".trim().assertEquals("test")
 
-    "te st ".rtrim().assertEquals("te st")
-    " test".rtrim().assertEquals(" test")
-    " test ".rtrim().assertEquals(" test")
+	"te st ".rtrim().assertEquals("te st")
+	" test".rtrim().assertEquals(" test")
+	" test ".rtrim().assertEquals(" test")
 
-    "te st ".ltrim().assertEquals("te st ")
-    " test".ltrim().assertEquals("test")
-    " test ".ltrim().assertEquals("test ")
+	"te st ".ltrim().assertEquals("te st ")
+	" test".ltrim().assertEquals("test")
+	" test ".ltrim().assertEquals("test ")
 
-    ".test.".trim(".").assertEquals("test")
-    "..test.".trim(".").assertEquals("test")
-    "test".trim(".").assertEquals("test")
+	".test.".trim(".").assertEquals("test")
+	"..test.".trim(".").assertEquals("test")
+	"test".trim(".").assertEquals("test")
 
-    "te.st.".rtrim(".").assertEquals("te.st")
-    ".test".rtrim(".").assertEquals(".test")
-    ".test.".rtrim(".").assertEquals(".test")
+	"te.st.".rtrim(".").assertEquals("te.st")
+	".test".rtrim(".").assertEquals(".test")
+	".test.".rtrim(".").assertEquals(".test")
 
-    "te.st.".ltrim(".").assertEquals("te.st.")
-    ".test".ltrim(".").assertEquals("test")
-    ".test.".ltrim(".").assertEquals("test.")
+	"te.st.".ltrim(".").assertEquals("te.st.")
+	".test".ltrim(".").assertEquals("test")
+	".test.".ltrim(".").assertEquals("test.")
+
+	"".trim().assertEquals("")
+	"".ltrim().assertEquals("")
+	"".rtrim().assertEquals("")
+
+	"    ".trim().assertEquals("")
+	"    ".ltrim().assertEquals("")
+	"    ".rtrim().assertEquals("")
 
 @Test function testIndexOf()
-    "test".indexOf("t").assertEquals(0)
-    "test".indexOf("es").assertEquals(1)
-    "test".indexOf("something").assertEquals(-1)
-    "test".indexOf("t", 2).assertEquals(3)
+	"test".indexOf("t").assertEquals(0)
+	"test".indexOf("es").assertEquals(1)
+	"test".indexOf("something").assertEquals(-1)
+	"test".indexOf("t", 2).assertEquals(3)
 
 @Test function testLastIndexOf()
-    "test".lastIndexOf("t").assertEquals(3)
-    "test".lastIndexOf("st").assertEquals(2)
-    "test".lastIndexOf("rest").assertEquals(-1)
+	"test".lastIndexOf("t").assertEquals(3)
+	"test".lastIndexOf("st").assertEquals(2)
+	"test".lastIndexOf("rest").assertEquals(-1)
 
 @Test function testCountOccurences()
-    "testing test".countOccurences("test").assertEquals(2)
-    "testing test".countOccurences("testi").assertEquals(1)
-    "testing test".countOccurences("testings").assertEquals(0)
+	"testing test".countOccurences("test").assertEquals(2)
+	"testing test".countOccurences("testi").assertEquals(1)
+	"testing test".countOccurences("testings").assertEquals(0)
 
 @Test function testContains()
-    "testing test".contains("test").assertEquals(true)
-    "testing test".contains("tasty").assertEquals(false)
+	"testing test".contains("test").assertEquals(true)
+	"testing test".contains("tasty").assertEquals(false)
 
 @Test function testIsWhitespace()
-    "\n".isWhitespace().assertEquals(true)
-    "\t".isWhitespace().assertEquals(true)
-    "\r".isWhitespace().assertEquals(true)
-    " ".isWhitespace().assertEquals(true)
-    "A".isWhitespace().assertEquals(false)
+	"\n".isWhitespace().assertEquals(true)
+	"\t".isWhitespace().assertEquals(true)
+	"\r".isWhitespace().assertEquals(true)
+	" ".isWhitespace().assertEquals(true)
+	"A".isWhitespace().assertEquals(false)
 
 @Test function testFirstUpper()
-    "test".firstUpper().assertEquals("Test")
-    "TEST".firstUpper().assertEquals("TEST")
+	"test".firstUpper().assertEquals("Test")
+	"TEST".firstUpper().assertEquals("TEST")
 
 @Test function testReplace()
-    "testtest".replace("es", "r").assertEquals("trttrt")
-    "test".replace("testy", "something").assertEquals("test")
+	"testtest".replace("es", "r").assertEquals("trttrt")
+	"test".replace("testy", "something").assertEquals("test")
+	"dfdf".replace("", "2").assertEquals("dfdf")
 
 @Test function testGetHash()
-    "test".getHash().assertEquals(StringHash("test"))
-    
+	"test".getHash().assertEquals(StringHash("test"))
+
 @Test function testFormat()
-    "te{0}".format("s", "t").assertEquals("tes")
-    "te{0}{0}".format("s", "t").assertEquals("tess")
-    "te{0}{1}{2}{3}{4}{5}{6}{7}{8}{9}".format("a", "b", "c", "d", "e", "f", "g", "h", "i", "j")
-        .assertEquals("teabcdefghij")
-        
+	"te{0}".format("s", "t").assertEquals("tes")
+	"te{0}{0}".format("s", "t").assertEquals("tess")
+	"te{0}{1}{2}{3}{4}{5}{6}{7}{8}{9}".format("a", "b", "c", "d", "e", "f", "g", "h", "i", "j")
+		.assertEquals("teabcdefghij")
+
 @Test function testIterator()
-    var accumulated = ""
-    for char in "test"
-        accumulated += char
-    accumulated.assertEquals("test")
+	var accumulated = ""
+	for char in "test"
+		accumulated += char
+	accumulated.assertEquals("test")
 
 @Test function testConversion()
-    "12345".toInt().assertEquals(12345)
+	"12345".toInt().assertEquals(12345)
 
-    "12345.23453".toInt().assertEquals(12345)
+	"12345.23453".toInt().assertEquals(12345)
 
-    "invalid".toInt().assertEquals(0)
+	"invalid".toInt().assertEquals(0)
 
-    "12345.3423".toReal().assertEquals(12345.3423)
+	"12345.3423".toReal().assertEquals(12345.3423)
 
-    "234.25asdad".toReal().assertEquals(234.25)
-    
-    "invalid".toReal().assertEquals(0)
+	"234.25asdad".toReal().assertEquals(234.25)
 
-@Test function complExprs()
+	"invalid".toReal().assertEquals(0)

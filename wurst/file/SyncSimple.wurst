@@ -74,6 +74,7 @@ import RegisterEvents
 import MapBounds
 import OnUnitEnterLeave
 import ClosureForGroups
+import Annotations
 
 /**
 	Configure this function if you need to change how the dummy is created.
@@ -117,8 +118,8 @@ public class SimpleSynchronizer
 
 	private unit dummy
 	private bitset syncedPlayers = emptyBitset()
-	// 4095 is 1111 1111 1111 in binary, one bit for each player slot
-	private static bitset allPlayers = bitset(4095)
+	// One bit for each player slot
+	private static bitset allPlayers = bitset((2).pow(bj_MAX_PLAYERS) - 1)
 	private SynchronizationCallback callback = null
 
 	construct()
@@ -140,15 +141,15 @@ public class SimpleSynchronizer
 		this.callback = callback
 
 	private function addOfflinePlayers()
-		for i = 0 to 11
+		for i = 0 to bj_MAX_PLAYERS - 1
 			if not players[i].isIngame()
-				syncedPlayers = syncedPlayers.add(i)
+				syncedPlayers = syncedPlayers.set(i)
 
 	protected function areAllPlayersSynced() returns boolean
 		return syncedPlayers == allPlayers
 
 	protected function onPlayerFinishedSync(player who)
-		syncedPlayers = syncedPlayers.add(who.getId())
+		syncedPlayers = syncedPlayers.set(who.getId())
 
 		if areAllPlayersSynced()
 			callback.onSynchronized()

@@ -1,0 +1,97 @@
+package DummyCaster
+import DummyRecycler
+import MapBounds
+import ClosureTimers
+
+/**
+ * Dummy casters are commonly used in custom spells to cast abilities dynamically onto targets or points.
+ * For example hexing all units in an AoE, or impaling in multiple directions.
+ * If your spell's effect is entirely instant, you should use `InstantDummyCaster`.
+ * For many spells however, InstantDummyCaster is not feasible, because they
+ * 	 - are of type impale or channel
+ *   - attach effects to the caster, like chain lightning
+ *	 - deal delayed damage (fireball, shockwave)
+ * In all of these scenarios the unit has to stand in a place and the spell's effects are not instant.
+ *
+ * DummyCaster uses one dummy per cast, and only removes it after a set delay, to allow effects and damage to process
+ * Example with long delay for blizzard:
+ *
+ *		new DummyCaster(casterPos)
+ *			..owner(caster)
+ *			..delay(15)
+ *			..castPoint('A000', 1, OrderIds.OrderIds.blizzard, target)
+ *
+ * The dummy caster will be recycled automatically, after the last spell's `delay` duration has expired.
+ * You shouldn't destroy the object yourself. Just cast any amount of spells at once or shortly after and leave it.
+ * Allocate DummyCasters dynamically on the spot and don't save them.
+ */
+public class DummyCaster
+	private var castCount = 0
+	protected var delay = 5.0
+	protected var owner = DUMMY_PLAYER
+	protected var origin = ZERO2
+
+	construct()
+
+	function origin(vec2 pos)
+		this.origin = pos
+
+	/** Sets the owner of the dummy */
+	function owner(player owner)
+		this.owner = owner
+
+	/** Delay after which the dummy is recycled. Increase this if your spell is longer.
+		Default 5 seconds. */
+	function delay(real delay)
+		this.delay = delay
+
+	/** Returns the casting dummy unit if the cast order was successful, or null if cast failed.*/
+	function castImmediate(int abilityId, int lvl, int orderId) returns unit
+		var dummy = prepare(abilityId, lvl)
+		let success = dummy.issueImmediateOrderById(orderId)
+		finish(dummy, abilityId)
+		if not success
+			dummy = null
+		return dummy
+
+	/** Returns the casting dummy unit if the cast order was successful, or null if cast failed. */
+	function castTarget(int abilityId, int lvl, int orderId, widget target) returns unit
+		var dummy = prepare(abilityId, lvl)
+		dummy.setFacing(dummy.getPos().angleTo(target.getPos()))
+		let success = dummy.issueTargetOrderById(orderId, target)
+		finish(dummy, abilityId)
+		if not success
+			dummy = null
+		return dummy
+
+	/** Returns the casting dummy unit if the cast order was successful, or null if cast failed. */
+	function castPoint(int abilityId, int lvl, int orderId, vec2 targetPos) returns unit
+		var dummy = prepare(abilityId, lvl)
+		dummy.setFacing(dummy.getPos().angleTo(targetPos))
+		let success = dummy.issuePointOrderById(orderId, targetPos)
+		finish(dummy, abilityId)
+		if not success
+			dummy = null
+		return dummy
+
+	protected function prepare(int id, int lvl) returns unit
+		let dummy = DummyRecycler.get(origin, angle(0))
+		if origin.inBounds()
+			dummy.setXY(origin)
+		dummy..addAbility(id)..setMana(1000000)
+		if lvl > 1
+			dummy.setAbilityLevel(id, lvl)
+		dummy.setOwner(owner, false)
+		return dummy
+
+	protected function finish(unit dummy, int id)
+		castCount++
+		doAfter(delay) ->
+			recycleDummy(dummy, id)
+			castCount--
+			if castCount == 0
+				destroy this
+
+	protected function recycleDummy(unit dummy, int id)
+		dummy..removeAbility(id)
+		DummyRecycler.recycle(dummy)
