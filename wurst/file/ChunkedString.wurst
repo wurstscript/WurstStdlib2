@@ -43,7 +43,7 @@ public class ChunkedString
 
 		while true
 			var remain = chunkSize - buffer.length()
-			if ENABLE_MULTIBYTE_SUPPORT and remain > 0 and data.substring(remain - 1, remain).getHash() == 1843378377
+			if ENABLE_MULTIBYTE_SUPPORT and remain > 0 and data.length() >= remain and data.substring(remain - 1, remain).getHash() == 1843378377
 				remain++
 			buffer += data.substring(0, remain)
 			data = data.substring(min(remain, data.length()))
@@ -98,7 +98,7 @@ public class ChunkedString
 		let lastChunk = endIndex div chunkSize
 		for i = startChunk to lastChunk
 			if i == startChunk
-				out += getChunk(i).substring(startIndex - startChunk * chunkSize, min(endIndex, chunkSize))
+				out += getChunk(i).substring(startIndex - startChunk * chunkSize, min(endIndex - startChunk * chunkSize, chunkSize))
 			else if i == lastChunk
 				out += getChunk(i).substring(0, endIndex - lastChunk * chunkSize)
 			else
