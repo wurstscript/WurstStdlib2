@@ -5,9 +5,9 @@ import Item
 import Annotations
 import Destructable
 
-public native UnitAlive(unit id) returns boolean
-public native GetUnitGoldCost(int unitid) returns int
-public native GetUnitWoodCost(int unitid) returns int
+@IfNotDefined public native UnitAlive(unit id) returns boolean
+@IfNotDefined public native GetUnitGoldCost(int unitid) returns int
+@IfNotDefined public native GetUnitWoodCost(int unitid) returns int
 
 public function getUnitIcon(int unitId) returns string
 	return BlzGetAbilityIcon(unitId)
