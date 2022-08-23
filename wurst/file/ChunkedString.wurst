@@ -43,7 +43,7 @@ public class ChunkedString
 
 		while true
 			var remain = chunkSize - buffer.length()
-			if ENABLE_MULTIBYTE_SUPPORT and remain > 0 and data.length() >= remain and data.substring(remain - 1, remain).getHash() == 1843378377
+			if ENABLE_MULTIBYTE_SUPPORT and remain > 0 and data.length() >= remain and offset[R2I(data.substring(remain - 1, remain).getHash() / 1366202 + 1572.)] != 1
 				remain++
 			buffer += data.substring(0, remain)
 			data = data.substring(min(remain, data.length()))
