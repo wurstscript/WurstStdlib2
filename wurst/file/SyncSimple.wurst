@@ -1,6 +1,7 @@
 package SyncSimple
 import LinkedList
 import ChunkedString
+import GameStatus
 
 /* 	Simple String syncing for Patches 1.31 and up with chunked string support for big data.
 	For improved safety, sync operations are performed sequentially - one string/chunk at a time.
@@ -18,6 +19,8 @@ import ChunkedString
 
 @configurable public constant DEFAULT_PREFIX = "S"
 @configurable public constant LAST_CHUNK_PREFIX = "T"
+@configurable public constant SYNC_IN_REPLAYS = false
+
 
 public interface BoolSyncListener
 	function onDataSynced(bool data)
@@ -65,7 +68,7 @@ public function string.sync(player p, StringSyncListener listener)
 public function ChunkedString.sync(player p, BufferSyncListener listener)
 	syncQueue.add(new SyncData(p, listener, this))
 
-	if syncQueue.size() == 1
+	if syncQueue.size() == 1 and shouldSync()
 		checkQueue()
 
 class SyncData
@@ -110,6 +113,10 @@ function checkQueue()
 				else
 					BlzSendSyncData(LAST_CHUNK_PREFIX, data)
 
+
+function shouldSync() returns boolean
+	return SYNC_IN_REPLAYS or gameStatus != REPLAY
+
 init
 	let trig = CreateTrigger()
 	for i = 0 to bj_MAX_PLAYER_SLOTS - 1
@@ -130,4 +137,6 @@ init
 				syncData.blistener.onDataSynced(syncData.syncBuffer)
 				syncQueue.dequeue()
 				destroy syncData
-		checkQueue()
+
+		if shouldSync()
+			checkQueue()

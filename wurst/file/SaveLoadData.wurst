@@ -2,6 +2,7 @@ package SaveLoadData
 import public FileIO
 import SyncSimple
 import ErrorHandling
+import GameStatus
 
 /* 	Comfort wrapper for player based, synced access to save data.
 	For small data you can use strings, otherwise use ChunkedString.
@@ -18,6 +19,8 @@ import ErrorHandling
 	>			default
 	>				Log.error("Error occured: " + status.toString())
 */
+
+@configurable public constant READ_FILES_IN_REPLAYS = false
 
 public function LoadStatus.toString() returns string
 	switch this
@@ -66,7 +69,11 @@ public function player.loadData(string slotName, LoadListener listener)
 		return
 
 	let file = new File(slotName.endsWith(".pld") ? slotName : slotName + ".pld")
-	let buffer = file.read(this)
+	ChunkedString buffer
+	if shouldReadFile()
+		buffer = file.read(this)
+	else
+		buffer = new ChunkedString()
 	file.close()
 
 	buffer.sync(this) (syncedBuffer) ->
@@ -77,3 +84,7 @@ public function player.loadData(string slotName, LoadListener listener)
 		else
 			syncedBuffer.resetRead()
 			listener.onLoad(LoadStatus.SUCCESS, syncedBuffer)
+
+
+function shouldReadFile() returns boolean
+	return READ_FILES_IN_REPLAYS or gameStatus != REPLAY

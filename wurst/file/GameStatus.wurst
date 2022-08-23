@@ -1,0 +1,30 @@
+package GameStatus
+
+public enum GameStatus
+    UNKNOWN
+    ONLINE
+    OFFLINE
+    REPLAY
+
+public var gameStatus = GameStatus.UNKNOWN
+
+init
+    var firstPlayer = Player(0)
+    while not firstPlayer.isIngame()
+        firstPlayer = Player(firstPlayer.getId() + 1)
+
+    // force the player to select a dummy unit
+    let u = CreateUnit(firstPlayer, 'hfoo', 0, 0, 0)
+    SelectUnit(u, true)
+    let selected = IsUnitSelected(u, firstPlayer)
+    RemoveUnit(u)
+
+    if selected
+        // detect if replay or offline game
+        if (ReloadGameCachesFromDisk())
+            gameStatus = GameStatus.OFFLINE
+        else
+            gameStatus = GameStatus.REPLAY
+    else
+        // if the unit wasn't selected instantly, the game is online
+        gameStatus = GameStatus.ONLINE
