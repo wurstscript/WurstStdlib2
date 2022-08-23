@@ -1,0 +1,22 @@
+package QuestItemTests
+import NoWurst
+import QuestItem
+import Wurstunit
+
+@test function testComplete()
+    let qi = new QuestItem(CreateQuest(), "")
+    qi.isCompleted().assertFalse()
+
+    qi.complete(true)
+    qi.isCompleted().assertTrue()
+
+    qi.complete(false)
+    qi.isCompleted().assertFalse()
+
+@test function testQuestItemNatives()
+    // Exercise mocked out quest item native.
+    // There's currently no way to validate the behavior of this native,
+    // but this will detect a regression in mocked native presence.
+    let qi = QuestCreateItem(CreateQuest())
+
+    qi.setDescription("")

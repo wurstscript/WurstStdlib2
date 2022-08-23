@@ -1,0 +1,46 @@
+package QuestTests
+import NoWurst
+import Quest
+import Wurstunit
+
+function QuestState.toString() returns string
+    switch this
+        case FAILED
+            return "FAILED"
+        case COMPLETED
+            return "COMPLETED"
+        case UNDISCOVERED
+            return "UNDISCOVERED"
+        case DISCOVERED
+            return "DISCOVERED"
+        default
+            return "UNKNOWN"
+
+function QuestState.assertEquals(QuestState want)
+    if this != want
+        testFail("Expected <" + want.toString() + ">, Actual <" + this.toString() + ">")
+
+@test function testSetState()
+    let q = new Quest(false /* required */)
+    
+    q.setState(QuestState.COMPLETED)
+    q.getState().assertEquals(QuestState.COMPLETED)
+
+    q.setState(QuestState.FAILED)
+    q.getState().assertEquals(QuestState.FAILED)
+
+    q.setState(QuestState.UNDISCOVERED)
+    q.getState().assertEquals(QuestState.UNDISCOVERED)
+
+    q.setState(QuestState.DISCOVERED)
+    q.getState().assertEquals(QuestState.DISCOVERED)
+
+@test function testQuestNatives()
+    // Exercise mocked out quest natives.
+    // There's currently no way to validate the behavior of these natives,
+    // but this will detect a regression in mocked native presence.
+    let q = CreateQuest()
+    
+    q.setDescription("")
+    q.setIcon("")
+    q.setTitle("")
