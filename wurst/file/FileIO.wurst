@@ -17,10 +17,10 @@ import ObjectIdGenerator
 */
 
 @configurable public constant CHUNKS_PER_FILE = 64
+@configurable public constant FILE_IO_ABIL_ID = compiletime(ABIL_ID_GEN.next())
 
 public var CAN_READ_FILES = true
 
-public constant FILE_IO_ABIL_ID  = compiletime(ABIL_ID_GEN.next())
 public constant FILE_IO_ABIL_ID_STR = FILE_IO_ABIL_ID.toRawCode()
 
 public class File
