@@ -152,6 +152,8 @@ public abstract class Serializable
 
         while pointer + HASH_LENGTH < input.length()
             let token = input.getUnsafeSubString(pointer, pointer + 1)
+            if token != INT_TOKEN and token != REAL_TOKEN and token != STRING_TOKEN
+                break
             pointer += 1
             let length = input.getUnsafeSubString(pointer, pointer + LEN_LENGTH).toInt()
             pointer += LEN_LENGTH
