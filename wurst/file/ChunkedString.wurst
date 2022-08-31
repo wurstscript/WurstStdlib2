@@ -45,13 +45,18 @@ public class ChunkedString
 			var remain = chunkSize - buffer.length()
 			if ENABLE_MULTIBYTE_SUPPORT and remain > 0 and data.length() >= remain and offset[R2I(data.substring(remain - 1, remain).getHash() / 1366202 + 1572.)] != 1
 				remain++
+
 			buffer += data.substring(0, remain)
+
+			if buffer.length() >= chunkSize
+				table.saveString(chunkCount, buffer)
+				buffer = ""
+				chunkCount++
+
 			data = data.substring(min(remain, data.length()))
 			if data.length() == 0
 				break
-			table.saveString(chunkCount, buffer)
-			buffer = ""
-			chunkCount++
+
 
 	function hasChunk() returns boolean
 		return readIndex < chunkCount
@@ -78,7 +83,13 @@ public class ChunkedString
 
 	/** Calculates the length of the whole string. */
 	function length() returns int
-		return chunkCount * chunkSize + buffer.length()
+		if ENABLE_MULTIBYTE_SUPPORT
+			var len = 0
+			for i = 0 to chunkCount
+				len += getChunk(i).length()
+			return len + buffer.length()
+		else
+			return chunkCount * chunkSize + buffer.length()
 
 	/** Concatenates all chunks into one string.
 		This is unsafe because the chunked length might be
@@ -94,15 +105,44 @@ public class ChunkedString
 	above the maximum allowed string length. */
 	function getUnsafeSubString(int startIndex, int endIndex) returns string
 		var out = ""
-		let startChunk = startIndex div chunkSize
-		let lastChunk = endIndex div chunkSize
-		for i = startChunk to lastChunk
-			if i == startChunk
-				out += getChunk(i).substring(startIndex - startChunk * chunkSize, min(endIndex - startChunk * chunkSize, chunkSize))
-			else if i == lastChunk
-				out += getChunk(i).substring(0, endIndex - lastChunk * chunkSize)
-			else
-				out += getChunk(i)
+		if ENABLE_MULTIBYTE_SUPPORT
+			var pointer = 0
+			for i = 0 to chunkCount
+				let chunk = getChunk(i)
+				let len = chunk.length()
+				if pointer+len <= startIndex
+					// Chunk can be skipped
+					pointer += len
+				else
+					var chunkIdx = 0
+					if pointer < startIndex
+						chunkIdx = startIndex - pointer
+						pointer = startIndex
+
+					let leftToRead = endIndex - pointer
+					let leftInChunk = len - chunkIdx
+
+					if leftToRead <= leftInChunk
+						// Chunk is partially contained in substring
+						out += chunk.substring(chunkIdx, chunkIdx + leftToRead)
+						pointer += leftToRead
+						break
+					else
+						out += chunk.substring(chunkIdx, len)
+						pointer += leftInChunk
+
+			if pointer < endIndex
+				out += buffer.substring(pointer < startIndex ? startIndex - pointer : 0, endIndex - pointer)
+		else
+			let startChunk = startIndex div chunkSize
+			let lastChunk = endIndex div chunkSize
+			for i = startChunk to lastChunk
+				if i == startChunk
+					out += getChunk(i).substring(startIndex - startChunk * chunkSize, min(endIndex - startChunk * chunkSize, chunkSize))
+				else if i == lastChunk
+					out += getChunk(i).substring(0, endIndex - lastChunk * chunkSize)
+				else
+					out += getChunk(i)
 
 		return out
 
