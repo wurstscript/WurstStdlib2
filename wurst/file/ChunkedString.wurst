@@ -85,9 +85,9 @@ public class ChunkedString
 	function length() returns int
 		if ENABLE_MULTIBYTE_SUPPORT
 			var len = 0
-			for i = 0 to chunkCount
+			for i = 0 to getChunkCount()
 				len += getChunk(i).length()
-			return len + buffer.length()
+			return len
 		else
 			return chunkCount * chunkSize + buffer.length()
 
@@ -96,7 +96,7 @@ public class ChunkedString
 		above the maximum allowed string length. */
 	function getUnsafeString() returns string
 		var out = ""
-		for i = 0 to chunkCount
+		for i = 0 to getChunkCount()
 			out += getChunk(i)
 		return out
 
@@ -107,9 +107,10 @@ public class ChunkedString
 		var out = ""
 		if ENABLE_MULTIBYTE_SUPPORT
 			var pointer = 0
-			for i = 0 to chunkCount
+			for i = 0 to getChunkCount()
 				let chunk = getChunk(i)
 				let len = chunk.length()
+
 				if pointer+len <= startIndex
 					// Chunk can be skipped
 					pointer += len
@@ -121,7 +122,6 @@ public class ChunkedString
 
 					let leftToRead = endIndex - pointer
 					let leftInChunk = len - chunkIdx
-
 					if leftToRead <= leftInChunk
 						// Chunk is partially contained in substring
 						out += chunk.substring(chunkIdx, chunkIdx + leftToRead)
@@ -131,8 +131,6 @@ public class ChunkedString
 						out += chunk.substring(chunkIdx, len)
 						pointer += leftInChunk
 
-			if pointer < endIndex
-				out += buffer.substring(pointer < startIndex ? startIndex - pointer : 0, endIndex - pointer)
 		else
 			let startChunk = startIndex div chunkSize
 			let lastChunk = endIndex div chunkSize
