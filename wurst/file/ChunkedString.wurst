@@ -43,7 +43,7 @@ public class ChunkedString
 
 		while true
 			var remain = chunkSize - buffer.length()
-			if ENABLE_MULTIBYTE_SUPPORT and remain > 0 and data.length() >= remain and offset[R2I(data.substring(remain - 1, remain).getHash() / 1366202 + 1572.)] != 1
+			if ENABLE_MULTIBYTE_SUPPORT and remain > 0 and data.length() >= remain and data.substring(remain - 1, remain).getHash() == 1843378377
 				remain++
 
 			buffer += data.substring(0, remain)
@@ -85,7 +85,7 @@ public class ChunkedString
 	function length() returns int
 		if ENABLE_MULTIBYTE_SUPPORT
 			var len = 0
-			for i = 0 to getChunkCount()
+			for i = 0 to getChunkCount() - 1
 				len += getChunk(i).length()
 			return len
 		else
@@ -107,7 +107,7 @@ public class ChunkedString
 		var out = ""
 		if ENABLE_MULTIBYTE_SUPPORT
 			var pointer = 0
-			for i = 0 to getChunkCount()
+			for i = 0 to getChunkCount() - 1
 				let chunk = getChunk(i)
 				let len = chunk.length()
 
@@ -125,7 +125,6 @@ public class ChunkedString
 					if leftToRead <= leftInChunk
 						// Chunk is partially contained in substring
 						out += chunk.substring(chunkIdx, chunkIdx + leftToRead)
-						pointer += leftToRead
 						break
 					else
 						out += chunk.substring(chunkIdx, len)
