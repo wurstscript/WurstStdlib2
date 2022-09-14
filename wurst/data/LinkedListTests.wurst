@@ -224,3 +224,27 @@ function testGenerics()
 	list.joinBy(" ").assertEquals("this is a string")
 
 	destroy list
+
+@Test function testQueue()
+	let list = new LinkedList<string>()
+		..enqueue("a")
+		..enqueue("b")
+		..enqueue("c")
+
+	list.dequeue().assertEquals("a")
+	list.dequeue().assertEquals("b")
+	list.dequeue().assertEquals("c")
+
+	destroy list
+
+@Test function testStack()
+	let list = new LinkedList<string>()
+		..push("a")
+		..push("b")
+		..push("c")
+
+	list.pop().assertEquals("c")
+	list.pop().assertEquals("b")
+	list.pop().assertEquals("a")
+
+	destroy list
