@@ -59,14 +59,14 @@ public function real.sync(player p, RealSyncListener listener)
 
 /** Syncs a single string from the given player. */
 public function string.sync(player p, StringSyncListener listener)
-	syncQueue.add(new SyncData(p, listener, this))
+	syncQueue.enqueue(new SyncData(p, listener, this))
 
 	if syncQueue.size() == 1
 		checkQueue()
 
 /** Syncs a chunked string from the given player. */
 public function ChunkedString.sync(player p, BufferSyncListener listener)
-	syncQueue.add(new SyncData(p, listener, this))
+	syncQueue.enqueue(new SyncData(p, listener, this))
 
 	if syncQueue.size() == 1 and shouldSync()
 		checkQueue()
