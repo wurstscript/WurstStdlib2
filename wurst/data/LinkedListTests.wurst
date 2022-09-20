@@ -231,8 +231,11 @@ function testGenerics()
 		..enqueue("b")
 		..enqueue("c")
 
+	list.getFirstInQueue().assertEquals("a")
 	list.dequeue().assertEquals("a")
+	list.getFirstInQueue().assertEquals("b")
 	list.dequeue().assertEquals("b")
+	list.getFirstInQueue().assertEquals("c")
 	list.dequeue().assertEquals("c")
 
 	destroy list
@@ -243,8 +246,11 @@ function testGenerics()
 		..push("b")
 		..push("c")
 
+	list.peek().assertEquals("c")
 	list.pop().assertEquals("c")
+	list.peek().assertEquals("b")
 	list.pop().assertEquals("b")
+	list.peek().assertEquals("a")
 	list.pop().assertEquals("a")
 
 	destroy list

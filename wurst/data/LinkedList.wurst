@@ -88,6 +88,16 @@ public class LinkedList<T>
 	function getFirst() returns T
 		return dummy.next.elem
 
+	/** Returns the last element in the list */
+	function getLast() returns T
+		return dummy.prev.elem
+
+	/** Returns the last element in the list */
+	function getFirstInQueue() returns T
+		return getLast()
+
+
+
 	/** Returns and removes the first added Element (FIFO) */
 	function dequeue() returns T
 		let top = dummy.prev
@@ -108,7 +118,7 @@ public class LinkedList<T>
 
 	/** Returns the lastly added Element */
 	function peek() returns T
-		return dummy.prev.elem
+		return getLast()
 
 	/** Returns whether the lists contains the specified element */
 	@deprecated("Use .has instead") function contains(T elem) returns boolean
