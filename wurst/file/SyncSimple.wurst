@@ -100,7 +100,7 @@ class SyncData
 
 function checkQueue()
 	if not syncQueue.isEmpty()
-		let syncData = syncQueue.getFirstInQueue()
+		let syncData = syncQueue.getFirst()
 		if syncData.data != null
 			if localPlayer == syncData.syncer
 				BlzSendSyncData(DEFAULT_PREFIX, syncData.data)
@@ -126,7 +126,7 @@ init
 	trig.addAction() ->
 		let eventData = BlzGetTriggerSyncData()
 		let eventPrefix = BlzGetTriggerSyncPrefix()
-		let syncData = syncQueue.getFirstInQueue()
+		let syncData = syncQueue.getFirst()
 		if syncData.data != null
 			syncData.slistener.onDataSynced(eventData)
 			syncQueue.dequeue()

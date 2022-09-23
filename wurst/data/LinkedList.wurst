@@ -92,15 +92,9 @@ public class LinkedList<T>
 	function getLast() returns T
 		return dummy.prev.elem
 
-	/** Returns the last element in the list */
-	function getFirstInQueue() returns T
-		return getLast()
-
-
-
 	/** Returns and removes the first added Element (FIFO) */
 	function dequeue() returns T
-		let top = dummy.prev
+		let top = dummy.next
 		T result = null
 		if top != dummy
 			result = top.elem
@@ -199,7 +193,7 @@ public class LinkedList<T>
 
 	/** adds an element to the beginning of the list */
 	function enqueue(T elem)
-		addtoStart(elem)
+		add(elem)
 
 	/** adds an element to the beginning of the list */
 	function addtoStart(T elem)

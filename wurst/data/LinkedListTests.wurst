@@ -231,11 +231,26 @@ function testGenerics()
 		..enqueue("b")
 		..enqueue("c")
 
-	list.getFirstInQueue().assertEquals("a")
+	list.getFirst().assertEquals("a")
 	list.dequeue().assertEquals("a")
-	list.getFirstInQueue().assertEquals("b")
+	list.getFirst().assertEquals("b")
 	list.dequeue().assertEquals("b")
-	list.getFirstInQueue().assertEquals("c")
+	list.getFirst().assertEquals("c")
+	list.dequeue().assertEquals("c")
+
+	destroy list
+
+@Test function testQueueWithAdd()
+	let list = new LinkedList<string>()
+		..add("a")
+		..add("b")
+		..add("c")
+
+	list.getFirst().assertEquals("a")
+	list.dequeue().assertEquals("a")
+	list.getFirst().assertEquals("b")
+	list.dequeue().assertEquals("b")
+	list.getFirst().assertEquals("c")
 	list.dequeue().assertEquals("c")
 
 	destroy list
