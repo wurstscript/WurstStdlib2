@@ -72,7 +72,7 @@ package DamageEvent
 import DamageDetection
 import OnUnitEnterLeave
 import ClosureForGroups
-import TimerUtils
+import ClosureTimers
 import LinkedList
 import ErrorHandling
 import AbilityObjEditing
@@ -158,7 +158,6 @@ class DamageInstance
     protected DamageElement damageElement
 
     protected static thistype current = null
-    protected static thistype array stack
     protected static int count = 0
 
     protected real lastDamageHP = 0.00
@@ -178,8 +177,6 @@ class DamageInstance
         this.damageElement = damageElement
 
         count++
-        stack[count] = this
-        current = this
 
     protected function setAmount(real amount)
         this.amount = amount
@@ -193,7 +190,6 @@ class DamageInstance
 
     ondestroy
         count--
-        current = stack[count]
 
 
 /* DAMAGE EVENT */
@@ -250,7 +246,10 @@ public class DamageEvent
         for i = 0 to maxUnreducedPriority
             var listener = firstUnreducedListeners[i]
             while listener != null
+                let prev = DamageInstance.current
+                DamageInstance.current = dmg
                 listener.onEvent()
+                DamageInstance.current = prev
                 if abort
                     dmg.amount = 0
                     break
@@ -258,6 +257,11 @@ public class DamageEvent
                     listener = listener.next
             if abort
                 break
+        
+        if amount == 0.
+            destroy dmg
+            recursion--
+            return
         
         // All events have run and the damage amount is finalized.
         var life = target.getLife()
@@ -285,11 +289,14 @@ public class DamageEvent
                     target.addAbility(DAMAGE_ABIL_ID)
                 target.setLife(max(life, 0.42))
         
-            getTimer().start(0., function onDamage)
+            nullTimer() ->
+                DamageInstance.current = dmg
+                onDamage()
     
     private static function onTrg()
         for damage in damageList
             if damage.target == GetTriggerUnit()
+                DamageInstance.current = damage
                 onDamage()
                 damageList.remove(damage)
         dmgTrg.clearActions()
@@ -315,7 +322,10 @@ public class DamageEvent
             for i = 0 to maxPriority
                 var listener = firstListeners[i]
                 while listener != null
+                    let prev = DamageInstance.current
+                    DamageInstance.current = dmg
                     listener.onEvent()
+                    DamageInstance.current = prev
                     if abort
                         dmg.amount = 0
                         break
