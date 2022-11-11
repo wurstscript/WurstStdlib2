@@ -4,6 +4,7 @@ import public Vectors
 import Item
 import Annotations
 import Destructable
+import AbilityIds
 
 @IfNotDefined public native UnitAlive(unit id) returns boolean
 @IfNotDefined public native GetUnitGoldCost(int unitid) returns int
@@ -733,6 +734,12 @@ public function unit.hideAbility(int abilId, boolean flag)
 public function unit.disableAbility(int abilId, boolean flag, boolean hideUI)
 	BlzUnitDisableAbility(this, abilId, flag, hideUI)
 
+public function unit.disableAttack(boolean flag, boolean hideUI)
+	this.disableAbility(AbilityIds.attack, flag, hideUI)
+
+public function unit.disableWorkQueue(boolean flag, boolean hideUI)
+	this.disableAbility(AbilityIds.queue, flag, hideUI)
+
 public function unit.cancelTimedLife()
 	BlzUnitCancelTimedLife(this)
 
@@ -783,6 +790,12 @@ public function unit.getLocalZ() returns real
 
 public function unit.isIllusion() returns bool
 	return IsUnitIllusion(this)
+
+public function unit.isBuildInProgress() returns bool
+	return this.hasAbility(AbilityIds.buildInProgress)
+
+public function unit.isUpgradeInProgress() returns bool
+	return this.hasAbility(AbilityIds.upgradeInProgress)
 
 public function unit.incAbilityLevel(int abilityId)
 	IncUnitAbilityLevel(this, abilityId)
