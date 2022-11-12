@@ -1,0 +1,130 @@
+package LinkedListIndexedModule
+import HashMap
+
+/** Turns a class into a collection of linked lists where each list
+    is composed of instances of the same index. Each instance 
+    knows it's previous and next member in its index's list. */
+public module LinkedListIndexedModule
+    protected thistype prev = null 
+    protected thistype next = null 
+
+    private static constant firstMap = new HashMap<int, thistype>
+    private static constant lastMap = new HashMap<int, thistype>
+    
+    abstract function getId() returns int 
+
+    /** Adds an instance to the list of its index */
+    function addToTheList() 
+        let id = getId()
+        let last = getLast(id)
+        if last == null 
+            setFirst(id, this)
+        else 
+            prev = last 
+            last.next = this 
+        setLast(id, this)
+            
+    private static function setFirst(int id, thistype instance)
+        if instance == null 
+            firstMap.remove(id)
+        else 
+            firstMap.put(id, instance)
+
+    private static function setLast(int id, thistype instance)
+        if instance == null 
+            lastMap.remove(id)
+        else 
+            lastMap.put(id, instance)
+    
+    /** Returns the first instance of this index's list */
+    static function getFirst(int id) returns thistype  
+        return firstMap.get(id) 
+
+    /** Returns the last instance of this index's list */
+    static function getLast(int id) returns thistype  
+        return lastMap.get(id)
+
+    /** Returns the first instance of this instance's list */
+    function getFirst() returns thistype
+        return getFirst(getId())
+
+    /** Returns the last instance of this instance's list */
+    function getLast() returns thistype
+        return getLast(getId())
+    
+    function getNext() returns thistype
+        return next
+
+    function getPrev() returns thistype
+        return prev
+
+    function removeFromTheList()
+        if prev == null 
+            let id = getId() 
+            if next == null 
+                setFirst(id, null)
+                setLast(id, null)
+            else 
+                setFirst(id, next)
+                next.prev = null  
+        else 
+            prev.next = next 
+            if next == null
+                setLast(getId(), prev) 
+            else
+                next.prev = prev 
+                
+    ondestroy
+        removeFromTheList()
+
+    /** An iterator which iterates over all instances of this index's list */
+    static function iterator(int id) returns Iterator
+        return new Iterator(getFirst(id))
+
+    /** An iterator which iterates over all instances of this index's list in reverse */
+    static function backIterator(int id) returns BackIterator
+        return new BackIterator(getLast(id))
+
+    static class Iterator
+        protected LinkedListIndexedModule.thistype current
+        protected LinkedListIndexedModule.thistype first 
+
+        construct(LinkedListIndexedModule.thistype first)
+            this.first = first 
+            this.current = first
+
+        function hasNext() returns boolean
+            return current != null
+
+        function next() returns LinkedListIndexedModule.thistype
+            let res = current
+            current = current.next
+            return res
+
+        function reset()
+            current = first
+
+        function close()
+            destroy this
+
+    static class BackIterator
+        protected LinkedListIndexedModule.thistype current
+        protected LinkedListIndexedModule.thistype last
+
+        construct(LinkedListIndexedModule.thistype last)
+            this.last = last 
+            this.current = last
+
+        function hasNext() returns boolean
+            return current != null
+
+        function next() returns LinkedListIndexedModule.thistype
+            let res = current
+            current = current.prev
+            return res
+
+        function reset()
+            current = last
+
+        function close()
+            destroy this
