@@ -2,10 +2,7 @@ package Destructable
 import NoWurst
 import Wurstunit
 import Annotations
-import initlater Unit
-import Item
-import Rect
-import initlater ClosureForGroups
+import Vectors
 
 public function createDestructable(int id, vec3 pos, angle direction, real scale, int variation) returns destructable
 	return createDestructable(id, pos.toVec2(), direction, scale, variation)
@@ -158,105 +155,6 @@ public function elevator.setHeight(int height)
 	this.elevatable.setAnimation(animationInstant)
 	if newHeight != oldHeight
 		this.elevatable.queueAnimation(animationQueue)
-
-public enum EWType
-	EAST
-    NORTH
-    SOUTH
-    WEST
-    ALL
-
-function rect.nudgeObjects()
-    forUnitsInRect(this, u -> u.setPos(u.getPos()))
-    EnumItemsInRect(this, null, () -> GetEnumItem().setPos(GetEnumItem().getPos()))
-
-destructable blocker
-
-function changeWallBlocker(real x, real y, real facing, boolean open)
-    let findThreshold = 32
-    let nudgeLength   = 4.25 * bj_CELLWIDTH
-    let nudgeWidth    = 1.25 * bj_CELLWIDTH
-    // Search for the pathing blocker within the general area.
-    let r = Rect(x - findThreshold, y - findThreshold, x + findThreshold, y + findThreshold)
-    blocker = null
-    EnumDestructablesInRect(r, null, () -> begin
-        blocker = GetEnumDestructable()
-    end)
-    r.remove()
-
-    // Ensure that the blocker exists.
-    if (blocker == null)
-        blocker = CreateDeadDestructable(bj_ELEVATOR_BLOCKER_CODE, x, y, facing, 1, 0)
-    else if blocker.getTypeId() != bj_ELEVATOR_BLOCKER_CODE
-        // If a different destructible exists in the blocker's spot, ignore
-        // the request.  (Two destructibles cannot occupy the same location
-        // on the map, so we cannot create an elevator blocker here.)
-        return
-
-    if open
-        // Ensure that the blocker is dead.
-        if blocker.getLife() > 0
-            blocker.kill()
-    else
-        // Ensure that the blocker is alive.
-        if blocker.getLife() <= 0
-            DestructableRestoreLife(blocker, GetDestructableMaxLife(blocker), false)
-
-        // Nudge any objects standing in the blocker's way.
-        if facing == 0
-            Rect(x - nudgeWidth/2, y - nudgeLength/2, x + nudgeWidth/2, y + nudgeLength/2)
-                ..nudgeObjects()
-                ..remove()
-        else if facing == 90
-            Rect(x - nudgeLength/2, y - nudgeWidth/2, x + nudgeLength/2, y + nudgeWidth/2)
-                ..nudgeObjects()
-                ..remove()
-
-destructable elevatorNeighbor
-
-function nearbyElevatorExists(real x, real y) returns boolean
-    let findThreshold = 32
-    // If another elevator is overlapping this one, ignore the wall.
-    let r = Rect(x - findThreshold, y - findThreshold, x + findThreshold, y + findThreshold)
-    elevatorNeighbor = null
-    EnumDestructablesInRect(r, null, () -> begin
-        let dType = GetEnumDestructable().getTypeId()
-        if dType == bj_ELEVATOR_CODE01 or dType == bj_ELEVATOR_CODE02
-            elevatorNeighbor = GetEnumDestructable()
-    end)
-    r.remove()
-    return elevatorNeighbor != null
-
-/** Adds wall blockers to the elevator in the specified directions*/
-public function elevator.changeWalls(boolean open, EWType walls)
-    let x = this.elevatable.getX()
-    let y = this.elevatable.getY()
-    let distToBlocker = 192
-    let distToNeighbor = 256
-
-    let b = [
-        walls == ALL,
-        walls == EAST,
-        walls == NORTH,
-        walls == SOUTH,
-        walls == WEST
-    ]
-
-    if b[0] or b[1]
-        if not nearbyElevatorExists(x + distToNeighbor, y)
-            changeWallBlocker(x + distToBlocker, y, 0, open)
-
-    if b[0] or b[2]
-        if not nearbyElevatorExists(x, y + distToNeighbor)
-            changeWallBlocker(x, y + distToBlocker, 90, open)
-
-    if b[0] or b[3]
-        if not nearbyElevatorExists(x, y - distToNeighbor)
-            changeWallBlocker(x, y - distToBlocker, 90, open)
-
-    if b[0] or b[4]
-        if not nearbyElevatorExists(x - distToNeighbor, y)
-            changeWallBlocker(x - distToBlocker, y, 0, open)
 
 @Test function testDestructables()
 	let destr = createDestructable(0, ZERO2, 0 .fromDeg(), 1, -1)
