@@ -87,9 +87,6 @@ public function trigger.registerPlayerUnitEvent(player whichPlayer, playerunitev
 public function trigger.registerPlayerAllianceChange(player whichPlayer, alliancetype whichAlliance) returns event
 	return TriggerRegisterPlayerAllianceChange(this, whichPlayer, whichAlliance)
 
-public function trigger.registerPlayerSync(player whichPlayer, alliancetype whichAlliance) returns event
-	return TriggerRegisterPlayerAllianceChange(this, whichPlayer, whichAlliance)
-
 public function trigger.registerTimerEvent(real timeout, boolean periodic) returns event
 	return TriggerRegisterTimerEvent(this, timeout, periodic)
 

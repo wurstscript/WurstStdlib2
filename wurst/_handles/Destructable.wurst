@@ -1,8 +1,8 @@
 package Destructable
 import NoWurst
-import Vectors
 import Wurstunit
 import Annotations
+import Vectors
 
 public function createDestructable(int id, vec3 pos, angle direction, real scale, int variation) returns destructable
 	return createDestructable(id, pos.toVec2(), direction, scale, variation)

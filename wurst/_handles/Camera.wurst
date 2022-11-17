@@ -252,22 +252,23 @@ public function player.adjustCameraBounds(CameraBoundsAdjust adjustMethod, real 
 			printLog(Loglevel.WARNING, "Unrecognized adjustment method, request ignored.")
 			return
 	
-	// Adjust the actual camera values
-	var minX = GetCameraBoundMinX() - scale * dxWest
-	var maxX = GetCameraBoundMaxX() + scale * dxEast
-	var minY = GetCameraBoundMinY() - scale * dySouth
-	var maxY = GetCameraBoundMaxY() + scale * dyNorth
+	if this == localPlayer
+		// Adjust the actual camera values
+		var minX = GetCameraBoundMinX() - scale * dxWest
+		var maxX = GetCameraBoundMaxX() + scale * dxEast
+		var minY = GetCameraBoundMinY() - scale * dySouth
+		var maxY = GetCameraBoundMaxY() + scale * dyNorth
 
-	// Make sure the camera bounds are still valid.
-	if maxX < minX
-		minX = minX + maxX * 0.5
-		maxX = minX
-	if maxY < minY
-		minY = (minY + maxY) * 0.5
-		maxY = minY
+		// Make sure the camera bounds are still valid.
+		if maxX < minX
+			minX = minX + maxX * 0.5
+			maxX = minX
+		if maxY < minY
+			minY = (minY + maxY) * 0.5
+			maxY = minY
 
-	// Apply the new camera values.
-	SetCameraBounds(minX, minY, minX, maxY, maxX, maxY, maxX, minY)
+		// Apply the new camera values.
+		SetCameraBounds(minX, minY, minX, maxY, maxX, maxY, maxX, minY)
 
 /** Set the position the camera will go when you press the space-bar */
 public function player.setCameraQuickPosition(vec2 pos)

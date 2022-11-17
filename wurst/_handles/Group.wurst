@@ -56,7 +56,7 @@ public function group.addUnit(vararg unit units)
 	for u in units
 		this.add(u)
 
-/** Retruns the number of removed units. */
+/** Returns the number of removed units. */
 public function group.remove(vararg unit units) returns int
 	var i = 0
 	for u in units
@@ -132,8 +132,8 @@ group mainGroup
 int count
 
 public function group.add(vararg group groups) returns int
-	// I had to do it in this way because I can't use the "for u in g" is using a recursion,
-	// because it needs the function .iterator(), but that needs this function first
+	// I had to do it in this way because I can't use the "for u in g" cause is using a recursion,
+	// since it needs the function .iterator(), but that needs this function first
 
 	mainGroup = this
 	count = 0

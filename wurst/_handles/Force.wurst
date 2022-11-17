@@ -66,6 +66,14 @@ public function force.has(unit whichUnit) returns bool
 public function force.has(player whichPlayer) returns bool
 	return IsPlayerInForce(whichPlayer, this)
 
+int count
+public function force.size() returns int
+	count = 0
+	this.forEach(() -> begin
+		count++
+	end)
+	return count
+
 /* Force iterator */
 force iterForce
 
