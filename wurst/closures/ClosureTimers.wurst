@@ -18,20 +18,6 @@ public function timer.doAfter(real timeToWait, CallbackSingle cb) returns Callba
 	return cb
 
 /** Execute an action after a certain time.
-	The timer is accompanied by a visible timerdialogue with the title text provided.
-	The callback object is automatically destroyed.
-	Must be used on a timer acquired with `getTimer()`
-
-	Example use:
-	| someTimer.doAfterWithDialogue(10.0, "Respawn in") ->
-	|	 hero.revive()
-	|	 print("10 seconds later")
-*/
-public function timer.doAfterWithDialogue(real timeToWait, string titleText, CallbackSingleDialogue cb) returns CallbackSingleDialogue
-	cb.start(this, timeToWait, titleText)
-	return cb
-
-/** Execute an action after a certain time.
 	The callback object is automatically destroyed.
 
 	Example use:
@@ -42,7 +28,7 @@ public function doAfter(real timeToWait, CallbackSingle cb) returns CallbackSing
 	return getTimer().doAfter(timeToWait, cb)
 
 /** Execute an action after a certain time.
-	The timer is accompanied by a visible timerdialogue with the title text provided.
+	The timer is accompanied by a visible timerdialog with the title text provided.
 	The callback object is automatically destroyed.
 
 	Example use:
@@ -50,9 +36,13 @@ public function doAfter(real timeToWait, CallbackSingle cb) returns CallbackSing
 	|	 hero.revive()
 	|	 print("10 seconds later")
 */
-public function doAfterWithDialogue(real timeToWait, string titleText, CallbackSingleDialogue cb) returns CallbackSingleDialogue
-	return getTimer().doAfterWithDialogue(timeToWait, titleText, cb)
-
+public function doAfterWithDialogue(real timeToWait, string titleText, CallbackSingle cb) returns CallbackSingle
+	let tim = getTimer()
+	let dia = tim.createTimerDialog()..setTitle(titleText)
+	return tim.doAfter(timeToWait) ->
+		cb.call()
+		destroy cb
+		dia.destr()
 
 /** Execute an action with a 0-second timer delay.
 	The callback object is destroyed afterwards.
@@ -146,27 +136,6 @@ public abstract class CallbackSingle
 		let t = GetExpiredTimer()
 		let cb = t.getData() castTo thistype
 		cb.call()
-		destroy cb
-
-	ondestroy
-		t.release()
-
-public abstract class CallbackSingleDialogue
-	private timer t
-	private timerdialog d
-	abstract function call()
-
-	protected function start(timer whichTimer, real time, string text)
-		t = whichTimer
-			..setData(this castTo int)
-			..start(time, () -> staticCallback())
-		d = whichTimer.createTimerDialog()..setTitle(text)..display(true)
-
-	private static function staticCallback()
-		let t = GetExpiredTimer()
-		let cb = t.getData() castTo thistype
-		cb.call()
-		cb.d.destr()
 		destroy cb
 
 	ondestroy
