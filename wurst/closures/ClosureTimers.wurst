@@ -1,5 +1,6 @@
 package ClosureTimers
 import NoWurst
+import TimerDialog
 import TimerUtils
 import Real
 import Wurstunit
@@ -25,6 +26,23 @@ public function timer.doAfter(real timeToWait, CallbackSingle cb) returns Callba
 */
 public function doAfter(real timeToWait, CallbackSingle cb) returns CallbackSingle
 	return getTimer().doAfter(timeToWait, cb)
+
+/** Execute an action after a certain time.
+	The timer is accompanied by a visible timerdialog with the title text provided.
+	The callback object is automatically destroyed.
+
+	Example use:
+	| doAfterWithDialogue(10.0, "Respawn in") ->
+	|	 hero.revive()
+	|	 print("10 seconds later")
+*/
+public function doAfterWithDialogue(real timeToWait, string titleText, CallbackSingle cb) returns CallbackSingle
+	let tim = getTimer()
+	let dia = tim.createTimerDialog()..setTitle(titleText)
+	return tim.doAfter(timeToWait) ->
+		cb.call()
+		destroy cb
+		dia.destr()
 
 /** Execute an action with a 0-second timer delay.
 	The callback object is destroyed afterwards.
