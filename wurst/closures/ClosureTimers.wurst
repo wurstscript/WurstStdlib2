@@ -36,9 +36,9 @@ public function doAfter(real timeToWait, CallbackSingle cb) returns CallbackSing
 	|	 hero.revive()
 	|	 print("10 seconds later")
 */
-public function doAfterWithDialogue(real timeToWait, string titleText, CallbackSingle cb) returns CallbackSingle
+public function doAfterWithDialogue(real timeToWait, string titleText, Callback cb) returns CallbackSingle
 	let tim = getTimer()
-	let dia = tim.createTimerDialog()..setTitle(titleText)
+	let dia = tim.createTimerDialog()..setTitle(titleText)..display(true)
 	return tim.doAfter(timeToWait) ->
 		cb.call()
 		destroy cb
@@ -122,6 +122,9 @@ public function doPeriodicallyTimed(real interval, real timerDuration, CallbackC
 	return getTimer().doPeriodicallyTimed(interval, timerDuration, cb)
 
 //Timer Stuff
+public interface Callback
+	function call()
+
 public abstract class CallbackSingle
 	private timer t
 	abstract function call()
