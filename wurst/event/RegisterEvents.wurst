@@ -25,7 +25,7 @@ public function registerPlayerUnitEvent(playerunitevent p, code filter, code con
 		t[hid].addAction(action)
 
 public function registerPlayerUnitEventForPlayer(playerunitevent p, code c, player pl)
-	let i = 16 * p.getHandleId() + pl.getId()
+	let i = bj_MAX_PLAYER_SLOTS * p.getHandleId() + pl.getId()
 	if t[i] == null
 		t[i] = CreateTrigger()
 		t[i].registerPlayerUnitEvent(pl, p, null)
