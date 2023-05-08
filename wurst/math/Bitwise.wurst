@@ -156,12 +156,13 @@ function bwShiftl32(int num, int shift) returns int
 
 /** 32-bit SHIFTR operator **/
 function bwShiftr32(int num, int shift) returns int
-	var value = num
-	var isNegative = 0
+	var value = num.toReal()
 	if value < 0
-		value = -2147483648 + value
-		isNegative = 1
-	return isNegative * powShift[31-shift] + value div powShift[shift]
+		value = -2147483648 - value
+		let isNegative = -1
+		return ((value / powShift[shift] + isNegative * powShift[31-shift]) * isNegative).toInt()
+	else
+		return value.toInt() div powShift[shift]
 
 /** 32-bit NOT operator **/
 function bwNot32(int num) returns int
