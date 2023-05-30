@@ -483,6 +483,13 @@ public class LLIterator<T>
 			retVal = current.next.elem
 		return retVal
 
+	/** Adds an element before the currently iterated element */
+	function addBefore(T elem)
+		let entry = new LLEntry<T>(elem, current.prev, current)
+		current.prev.next = entry
+		current.prev = entry
+		parent.size++
+
 	function close()
 		if destroyOnClose
 			destroy this
