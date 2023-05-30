@@ -179,7 +179,7 @@ public class LinkedList<T>
 	/** get the static back iterator for this list */
 	function staticBackItr() returns LLBackIterator<T>
 		if staticBackItr == null
-			staticBackItr = new LLBackIterator<T>(dummy, false)
+			staticBackItr = new LLBackIterator<T>(this)
 		staticBackItr.reset()
 		return staticBackItr
 
@@ -189,7 +189,7 @@ public class LinkedList<T>
 
 	/** get a backiterator for this list */
 	function backiterator() returns LLBackIterator<T>
-		return new LLBackIterator(dummy)
+		return new LLBackIterator(this)
 
 	/** adds an element to the beginning of the list */
 	function enqueue(T elem)
@@ -497,18 +497,20 @@ public class LLIterator<T>
 public class LLBackIterator<T>
 	LLEntry<T> dummy
 	LLEntry<T> current
+	LinkedList<T> parent
 	protected bool destroyOnClose = true
 
-	construct(LLEntry<T> dummy, bool destroyOnClose)
-		this.dummy = dummy
+	construct(LinkedList<T> parent, bool destroyOnClose)
+		this.parent = parent
 		reset()
 		this.destroyOnClose = destroyOnClose
 
-	construct(LLEntry<T> dummy)
-		this.dummy = dummy
+	construct(LinkedList<T> parent)
+		this.parent = parent
 		reset()
 
 	function reset()
+		this.dummy = parent.getDummy()
 		this.current = dummy
 
 	/** Modifies the last element that was returned by next() (optional operation). */
@@ -528,6 +530,13 @@ public class LLBackIterator<T>
 		if hasNext()
 			retVal = current.prev.elem
 		return retVal
+
+	/** Adds an element before the currently iterated element */
+	function addBefore(T elem)
+		let entry = new LLEntry<T>(elem, current.prev, current)
+		current.prev.next = entry
+		current.prev = entry
+		parent.size++
 
 	function close()
 		if destroyOnClose
