@@ -275,13 +275,15 @@ function testGenerics()
 	let list2 = new LinkedList<int>()
 
 	list..add(1, 2, 3, 4)
-	list2..add(4, 3, 9, 2, 1)
+	list2..add(4, 3, 7, 8, 9, 2, 1)
 
 
 	let bi = list.backiterator()
 	while bi.hasNext()
 		if bi.next() < 4
 			bi.addBefore(9)
+			bi.addBefore(8)
+			bi.addBefore(7)
 			break
 
 	bi.reset()
@@ -294,13 +296,15 @@ function testGenerics()
 	let list2 = new LinkedList<int>()
 
 	list..add(1, 2, 3, 4)
-	list2..add(4, 3, 9, 2, 1)
+	list2..add(4, 3, 7, 8, 9, 2, 1)
 
 
 	let bi = list.iterator()
 	while bi.hasNext()
 		if bi.next() > 2
 			bi.addBefore(9)
+			bi.addBefore(8)
+			bi.addBefore(7)
 			break
 
 	bi.reset()
