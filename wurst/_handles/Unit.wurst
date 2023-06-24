@@ -755,6 +755,9 @@ public function unit.interruptAttack()
 public function unit.getCollisionSize() returns real
 	return BlzGetUnitCollisionSize(this)
 
+public function unit.showTeamGlow(boolean show)
+	BlzShowUnitTeamGlow(this, show)
+
 /** Level is indexed. Level 1 = 0, Level 2 = 1, e.t.c. */
 public function unit.setAbilityCooldown(int abilId, int levelIndex, real cooldown)
 	BlzSetUnitAbilityCooldown(this, abilId, levelIndex, cooldown)
