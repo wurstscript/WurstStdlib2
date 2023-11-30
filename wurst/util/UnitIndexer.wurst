@@ -137,18 +137,10 @@ function popUnit()
 	return instance
 
 /**	Returns the currently indexing unit.
-	That's the last indexed unit or 
+	That's the last indexed unit or
 	the one about to be deindexed. */
 public function getIndexingUnit() returns unit
 	return tempUnits[tempUnitsCount - 1]
-
-@deprecated("Use 'getIndexingUnit' instead")
-public function getIndexedUnit() returns unit
-	return getIndexingUnit()
-
-@deprecated("Use 'getIndexingUnit' instead")
-public function getDeindexedUnit() returns unit
-	return getIndexingUnit()
 
 /**  Adds a function to be called before a unit is deindexed.
 	Use the getIndexingUnit() function to refer to the deindexing unit. */

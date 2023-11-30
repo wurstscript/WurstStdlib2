@@ -95,10 +95,6 @@ public function forUnitsInRectCounted(rect r, int count, ForGroupCallback c)
 public function forUnitsInRange(vec2 pos, real radius, ForGroupCallback c)
 	forUnitsInRange(pos, radius, false, c)
 
-@deprecated("Use forUnitsInRange(pos, radius, collisionSizeFiltering, c) instead")
-public function forUnitsInRange(vec2 pos, real radius, ForGroupCallback c, bool collisionSizeFiltering)
-	forUnitsInRange(pos, radius, collisionSizeFiltering, c)
-
 /** Executes the given closure for every unit in range of the given position
 	With collisionSizeFiltering true it will take the units' collision into account. */
 public function forUnitsInRange(vec2 pos, real radius, bool collisionSizeFiltering, ForGroupCallback c)

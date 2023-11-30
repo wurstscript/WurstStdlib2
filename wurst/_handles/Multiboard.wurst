@@ -3,7 +3,6 @@ import NoWurst
 import _Primitives
 import Colors
 import Player
-import Annotations
 import ErrorHandling
 
 public function multiboard.destr()
@@ -53,10 +52,6 @@ public function multiboard.getRowCount() returns int
 
 public function multiboard.getTitleText() returns string
 	return MultiboardGetTitleText(this)
-
-@deprecated("Use .minimize() instead")
-public function multiboard.minimalize(boolean minimalize)
-	MultiboardMinimize(this, minimalize)
 
 public function multiboard.minimize()
 	MultiboardMinimize(this, true)

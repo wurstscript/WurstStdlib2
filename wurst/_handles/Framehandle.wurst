@@ -4,7 +4,6 @@ import Player
 import Vectors
 import Colors
 import ErrorHandling
-import Annotations
 
 /*
 	Custom frames can be defined in a frame definition file (*.fdf).
@@ -87,16 +86,6 @@ public function getOriginFrame(originframetype frameType) returns framehandle
 public function getOriginFrame(originframetype frameType, integer index) returns framehandle
 	return BlzGetOriginFrame(frameType, index)
 
-@deprecated("Use getFrame(name) instead.")
-public function getFrameByName(string name) returns framehandle
-	verifyFrameNameLength(name)
-	return getFrame(name)
-
-@deprecated("Use getFrame(name, createContext) instead.")
-public function getFrameByName(string name, integer createContext) returns framehandle
-	verifyFrameNameLength(name)
-	return getFrame(name, createContext)
-
 /**	Returns the framehandle of the given name and createContext index (children inherit the createContext value of their parent) */
 public function getFrame(string name, integer createContext) returns framehandle
 	verifyFrameNameLength(name)
@@ -144,11 +133,6 @@ public function createFrame(string typeName, string name, framehandle owner, str
 	verifyFrameNameLength(name)
 	return BlzCreateFrameByType(typeName, name, owner, inherits, createContext)
 
-@deprecated("Use createFrame(typeName, name, owner, inherits, createContext) instead.")
-public function createFrameByType(string typeName, string name, framehandle owner, string inherits, integer createContext) returns framehandle
-	verifyFrameNameLength(name)
-	return createFrame(typeName, name, owner, inherits, createContext)
-
 /** Removes a frame */
 public function framehandle.remove()
 	BlzDestroyFrame(this)
@@ -193,10 +177,6 @@ public function framehandle.setAllPoints(framehandle relative)
 public function framehandle.setVisible(bool flag)
 	BlzFrameSetVisible(this, flag)
 
-@deprecated("Use .setVisible(player p, bool flag) instead.")
-public function framehandle.setVisibleFor(player p, bool flag)
-	this.setVisible(p, flag)
-
 /** Shows or hides the frame to the given player */
 public function framehandle.setVisible(player p, bool flag)
 	if localPlayer == p or p == null
@@ -206,10 +186,6 @@ public function framehandle.setVisible(player p, bool flag)
 public function framehandle.show()
 	this.setVisible(true)
 
-@deprecated("Use .show(player p) instead.")
-public function framehandle.showFor(player p)
-	this.show(p)
-
 /** Shows the frame to the specific player */
 public function framehandle.show(player p)
 	this.setVisible(p, true)
@@ -217,10 +193,6 @@ public function framehandle.show(player p)
 /** Hides the frame */
 public function framehandle.hide()
 	this.setVisible(false)
-
-@deprecated("Use .hide(player p) instead.")
-public function framehandle.hideFor(player p)
-	this.hide(p)
 
 /** Hides the frame to the specific player */
 public function framehandle.hide(player p)
@@ -233,10 +205,6 @@ public function framehandle.isVisible() returns bool
 /** Returns whether the frame is visible or not for given player */
 public function framehandle.isVisible(player p) returns boolean
 	return localPlayer == p or p == null ? this.isVisible() : false
-
-@deprecated("Use .getName() instead.")
-public function framehandle.name() returns string
-	return BlzFrameGetName(this)
 
 /** Returns the frame's name */
 public function framehandle.getName() returns string
@@ -393,10 +361,6 @@ public function framehandle.getValue() returns real
 public function framehandle.setValue(real value)
 	BlzFrameSetValue(this, value)
 
-@deprecated("Use .setMinMax(minValue, maxValue) instead.")
-public function framehandle.minMax(real minValue, real maxValue)
-	BlzFrameSetMinMaxValue(this,minValue,maxValue)
-
 /** Sets the specific minimum and maximum value of the frame (e.g. for sliders) */
 public function framehandle.setMinMax(real minValue, real maxValue)
 	BlzFrameSetMinMaxValue(this, minValue, maxValue)
@@ -442,12 +406,6 @@ public function framehandle.getParent() returns framehandle
 public function framehandle.setParent(framehandle parent)
 	BlzFrameSetParent(this, parent)
 
-@deprecated("use getHeight() instead") public function framehandle.height() returns real
-	return this.getHeight()
-
-@deprecated("use getWidth() instead") public function framehandle.width() returns real
-	return this.getWidth()
-
 /** Returns the frame's height */
 public function framehandle.getHeight() returns real
 	return BlzFrameGetHeight(this)
@@ -471,10 +429,6 @@ public function enableUIAutoPosition(bool flag)
 /** Hides or shows all origin frames except ORIGIN_FRAME_WORLD_FRAME */
 public function setOriginFramesVisible(bool flag)
 	BlzHideOriginFrames(not flag)
-
-@deprecated("Use setOriginFramesVisible(bool flag) instead.")
-public function hideOriginFrames(bool flag)
-	setOriginFramesVisible(not flag)
 
 /** Hides all origin frames except ORIGIN_FRAME_WORLD_FRAME */
 public function hideOriginFrames()

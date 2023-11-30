@@ -2,7 +2,6 @@ package Group
 import NoWurst
 import Vectors
 import Player
-import Annotations
 
 /** Use this group for your non-nested group enum calls
 	and then iterate through the group via **for from** or
@@ -50,11 +49,6 @@ public function group.add(vararg unit units) returns int
 			i += 1
 	return i
 
-@deprecated("Use .add instead.")
-public function group.addUnit(vararg unit units)
-	for u in units
-		this.add(u)
-
 /** Retruns the number of removed units. */
 public function group.remove(vararg unit units) returns int
 	var i = 0
@@ -63,20 +57,11 @@ public function group.remove(vararg unit units) returns int
 			i += 1
 	return i
 
-@deprecated("Use .remove instead.")
-public function group.removeUnit(vararg unit units)
-	for u in units
-		this.remove(u)
-
 public function group.destr()
 	DestroyGroup(this)
 
 public function group.has(unit u) returns bool
 	return IsUnitInGroup(u, this)
-
-@deprecated("Use .has instead.")
-public function group.contains(unit u) returns bool
-	return this.has(u)
 
 public function group.size() returns int
 	return BlzGroupGetSize(this)
@@ -91,10 +76,6 @@ public function group.getRandom() returns unit
 	if size > 0
 		return this.get(GetRandomInt(0, size - 1))
 	return null
-
-@deprecated("Use .getRandom instead.")
-public function group.getRandomUnit() returns unit
-	return this.getRandom()
 
 public function group.immediateOrder(string order) returns bool
 	return GroupImmediateOrder(this, order)
@@ -120,26 +101,14 @@ public function group.add(vararg group groups) returns int
 		i += BlzGroupAddGroupFast(g, this)
 	return i
 
-@deprecated("Use .add instead.")
-public function group.addGroup(group g) returns int
-	return this.add(g)
-
 public function group.remove(vararg group groups) returns int
 	var i = 0
 	for g in groups
 		i += BlzGroupRemoveGroupFast(g, this)
 	return i
 
-@deprecated("Use .remove instead.")
-public function group.removeGroup(group g) returns int
-	return this.remove(g)
-
 public function group.get(int index) returns unit
 	return BlzGroupUnitAt(this, index)
-
-@deprecated("Use .get instead.")
-public function group.getUnitAt(int index) returns unit
-	return this.get(index)
 
 /* Group iterator */
 

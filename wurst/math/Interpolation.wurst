@@ -2,7 +2,6 @@ package Interpolation
 import NoWurst
 import Vectors
 import Wurstunit
-import Annotations
 
 // Credits to BlinkyBoy
 /** Look at linear */
@@ -43,20 +42,12 @@ public function vec2.lerp(vec2 target, real alpha) returns vec2
 public function bezier3(real start, real mid, real stop, real p) returns real
 	return start + 2. * (mid - start) * p + (stop - 2. * mid + start) * p * p
 
-@deprecated("Use bezier3 instead.")
-public function bezier_3(real start, real mid, real stop, real p) returns real
-	return bezier3(start, mid, stop, p)
-
 /**
 	This function returns the derivate of the 3-Point-Bezier curve on certain point.
 	(d(bezier3())/dt)
 */
 public function derivBezier3(real start, real mid, real stop, real p) returns real
 	return 2. * (mid - start) + 2. * (stop - 2. * mid + start) * p
-
-@deprecated("Use derivBezier3 instead.")
-public function derivBezier_3(real start, real mid, real stop, real p) returns real
-	return derivBezier3(start, mid, stop, p)
 
 public function vec3.derivBezier3(vec3 mid, vec3 stop, real p) returns vec3
 	return vec3(derivBezier3(this.x, mid.x, stop.x, p), derivBezier3(this.y, mid.y, stop.y, p), derivBezier3(this.z, mid.z, stop.z, p))
@@ -79,10 +70,6 @@ public function bezier4(real start, real mid1, real mid2, real stop, real p) ret
 */
 public function derivBezier4(real start, real mid1, real mid2, real stop, real p) returns real
 	return 3. * (mid1 - start) + 6. * (mid2 - 2. * mid1 + start) * p + 3. * (3. * (mid1 - mid2) + stop - start) * p * p
-
-@deprecated("Use derivBezier4 instead.")
-public function derivBezier_4(real start, real mid1, real mid2, real stop, real p) returns real
-	return derivBezier4(start, mid1, mid2, stop, p)
 
 public function vec3.derivBezier4(vec3 mid1, vec3 mid2, vec3 stop, real p) returns vec3
 	return vec3(derivBezier4(this.x, mid1.x, mid2.x, stop.x, p), derivBezier4(this.y, mid1.y, mid2.y, stop.y, p), derivBezier4(this.z, mid1.z, mid2.z, stop.z, p))

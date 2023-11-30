@@ -86,10 +86,6 @@ public function unit.addItemHandle(item whichItem) returns boolean
 public function unit.addItemById(int itemId) returns item
 	return UnitAddItemById(this, itemId)
 
-@deprecated("Use addItemById method instead.")
-public function unit.addItem(int itemId) returns item
-	return UnitAddItemById(this, itemId)
-
 public function unit.addItemToSlot(int id, int slot) returns bool
 	return UnitAddItemToSlotById(this, id, slot)
 
@@ -199,9 +195,6 @@ public function unit.getUnitAcquireRange() returns real
 /** Returns the current order of the unit */
 public function unit.getCurrentOrder() returns int
 	return GetUnitCurrentOrder(this)
-
-@deprecated("Use .getFacingAngle() instead.") public function unit.getFacing() returns real
-	return GetUnitFacing(this)
 
 /** Returns the facing of the unit as an angle.
 	Use this to avoid confusion between radians and degrees */
@@ -549,9 +542,6 @@ public function unit.setPosReal(vec3 pos)
 public function unit.setPos(real x, real y)
 	SetUnitPosition(this, x, y)
 
-@deprecated("Use .setPropWindow(angle value) instead.") public function unit.setPropWindow(real radians)
-	SetUnitPropWindow(this, radians)
-
 /**	A prop window of 0 prevents the unit from moving, but
 	it can still turn around.*/
 public function unit.setPropWindow(angle value)
@@ -783,10 +773,6 @@ public function unit.getAbilityManaCost(int abilId, int level) returns int
 
 public function unit.setAbilityManaCost(int abilId, int level, int manaCost)
 	BlzSetUnitAbilityManaCost(this, abilId, level, manaCost)
-
-@deprecated("Use getPos instead.")
-public function unit.getLoc() returns location
-	return GetUnitLoc(this)
 
 public function unit.getLocalZ() returns real
 	return BlzGetLocalUnitZ(this)

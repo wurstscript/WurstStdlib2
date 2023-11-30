@@ -5,7 +5,6 @@ import Integer
 import String
 import ClosureForGroups
 import Real
-import Annotations
 
 /**
  * Doubly-linked list implementation that implements all common list, stack and queue operations.
@@ -115,10 +114,6 @@ public class LinkedList<T>
 		return getLast()
 
 	/** Returns whether the lists contains the specified element */
-	@deprecated("Use .has instead") function contains(T elem) returns boolean
-		return has(elem)
-
-	/** Returns whether the lists contains the specified element */
 	function has(T elem) returns boolean
 		var entry = dummy.next
 		while entry != dummy
@@ -149,10 +144,6 @@ public class LinkedList<T>
 				break
 			entry = entry.next
 		return result
-
-	/** gets the size of the list */
-	@deprecated("Use .size() instead.") function getSize() returns int
-		return size
 
 	/** gets the size of the list (java-compat wrapper) */
 	function size() returns int
@@ -214,10 +205,6 @@ public class LinkedList<T>
 				return true
 			current = current.next
 		return false
-
-	@deprecated("Use #removeIf")
-	function removeWhen(LinkedListPredicate<T> predicate)
-		removeIf(predicate)
 
 	/** Removes the element if the predicates returns true */
 	function removeIf(LinkedListPredicate<T> predicate)

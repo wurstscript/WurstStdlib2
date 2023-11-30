@@ -35,16 +35,6 @@ public constant PLAYER_COLORS = [
 	color(40, 40, 40), color(235, 240, 255), color(0, 120, 30), color(164, 111, 51)
 ]
 
-@deprecated("use playercolor.toColor()") // Please delete this monster at a later date
-public constant playercolors = [
-	PLAYER_COLORS[0], PLAYER_COLORS[1], PLAYER_COLORS[2], PLAYER_COLORS[3],
-	PLAYER_COLORS[4], PLAYER_COLORS[5], PLAYER_COLORS[6], PLAYER_COLORS[7],
-	PLAYER_COLORS[8], PLAYER_COLORS[9], PLAYER_COLORS[10], PLAYER_COLORS[11],
-	PLAYER_COLORS[12], PLAYER_COLORS[13], PLAYER_COLORS[14], PLAYER_COLORS[15],
-	PLAYER_COLORS[16], PLAYER_COLORS[17], PLAYER_COLORS[18], PLAYER_COLORS[19],
-	PLAYER_COLORS[20], PLAYER_COLORS[21], PLAYER_COLORS[22], PLAYER_COLORS[23]
-]
-
 /** Player color names array. Access through playercolor.getName() */
 public constant PLAYER_COLOR_NAMES = [
 	"red", "blue", "teal", "purple",
@@ -176,16 +166,6 @@ public function makeColor(int colo) returns colorA
 	b = col-g * 0x100
 
 	return colorA(r,g,b,a)
-
-/** Returns the color associated with the given playercolor */
-@deprecated("Use playercolor.toColor()")
-public function fromPlayerColor(playercolor pc) returns color
-	return pc.toColor()
-
-/** Get a simple colortuple containing the colorvalues of the playercolor */
-@deprecated("Use player.getColor().toColor()")
-public function fromPlayer(player p) returns color
-	return p.getColor().toColor()
 
 /**
 *	Mixes two colors, s would be a number 0<=s<=1 that determines
