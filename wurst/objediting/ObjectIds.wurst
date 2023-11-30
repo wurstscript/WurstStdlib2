@@ -5,13 +5,8 @@ import Wurstunit
 import AbilityIds
 import LinkedList
 import TypeCasting
-import Annotations
 
 constant CHARMAP = ".................................!.#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[.]^_`abcdefghijklmnopqrstuvwxyz{|}~................................................................................................................................."
-
-@deprecated("Use .toRawCode() instead.")
-public function int2fourchar(int value) returns string
-	return toRawCode(value)
 
 /** Convert a integer id value into a 4-letter id code. */
 public function toRawCode(int value) returns string
@@ -24,10 +19,6 @@ public function toRawCode(int value) returns string
 		result = CHARMAP.charAt(charValue) + result
 
 	return result
-
-@deprecated("Use .fromRawCode() instead.")
-public function fourchar2int(string value) returns int
-	return fromRawCode(value)
 
 /** converts a 4-letter id code to an integer */
 public function fromRawCode(string value) returns int

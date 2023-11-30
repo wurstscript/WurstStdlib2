@@ -1,6 +1,5 @@
 package HashList
 import NoWurst
-import Annotations
 import MagicFunctions
 import Hashtable
 
@@ -67,10 +66,6 @@ public class HashList<T>
 		ht.flushChild(this castTo int)
 		occurences.flushChild(this castTo int)
 		size = 0
-
-	/** Remove all elements from this list without destroying it */
-	@deprecated("Use .clear() instead.") function removeAll()
-		clear()
 
 	/** Removes and returns the element at the given index */
 	function removeAt(int index) returns T

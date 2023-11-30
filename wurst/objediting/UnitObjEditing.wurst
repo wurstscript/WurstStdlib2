@@ -3,7 +3,6 @@ import NoWurst
 import ObjEditingNatives
 import public TargetsAllowed
 import public ObjEditingCommons
-import Annotations
 
 public class W3UDefinition
 	ObjectDefinition def
@@ -103,10 +102,6 @@ public class UnitOrBuildingOrHeroDefinition extends W3UDefinition
 	function setTargetedAs(string data)
 		def.setString("utar", data)
 
-	@deprecated("use #setArtTarget() instead")
-	function setTarget(string data)
-		def.setString("utaa", data)
-
 	function setArtTarget(string data)
 		def.setString("utaa", data)
 
@@ -127,10 +122,6 @@ public class UnitOrBuildingOrHeroDefinition extends W3UDefinition
 
 	function setSpeedBase(int data)
 		def.setInt("umvs", data)
-
-	@deprecated("use #setArtSpecial() instead")
-	function setSpecial(string data)
-		def.setString("uspa", data)
 
 	function setArtSpecial(string data)
 		def.setString("uspa", data)

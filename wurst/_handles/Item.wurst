@@ -1,7 +1,6 @@
 package Item
 import NoWurst
 import public Vectors
-import Annotations
 
 public function createItem(int itemId, vec2 pos) returns item
 	return createItem(itemId, pos.toVec3())
@@ -30,10 +29,6 @@ public function item.getY() returns real
 
 public function item.getPos() returns vec2
 	return vec2(this.getX(), this.getY())
-
-@Deprecated("use vec2 variant")
-public function item.setPos(real x, real y)
-	SetItemPosition(this, x, y)
 
 public function item.setPos(vec2 pos)
 	SetItemPosition(this, pos.x, pos.y)
@@ -130,40 +125,40 @@ public function item.setIconPath(string path)
 // Item-Ability Get/Setters
 public function item.getAbilityByIndex(int index) returns ability
 	return BlzGetItemAbilityByIndex(this, index)
-	
+
 public function item.getAbility(int abiId) returns ability
 	return BlzGetItemAbility(this, abiId)
 
-public function item.addAbility(int abiId) returns bool	
+public function item.addAbility(int abiId) returns bool
 	return BlzItemAddAbility(this, abiId)
 
-public function item.removeAbility(int abiId) returns bool	
+public function item.removeAbility(int abiId) returns bool
 	return BlzItemRemoveAbility(this, abiId)
 
-// Item Field Getters	
-public function item.getField(itembooleanfield field) returns bool	
+// Item Field Getters
+public function item.getField(itembooleanfield field) returns bool
 	return BlzGetItemBooleanField(this, field)
 
-public function item.getField(itemintegerfield field) returns int	
+public function item.getField(itemintegerfield field) returns int
 	return BlzGetItemIntegerField(this, field)
 
-public function item.getField(itemrealfield field) returns real	
+public function item.getField(itemrealfield field) returns real
 	return BlzGetItemRealField(this, field)
 
-public function item.getField(itemstringfield field) returns string	
+public function item.getField(itemstringfield field) returns string
 	return BlzGetItemStringField(this, field)
 
 // Item Field Setters
-public function item.setField(itembooleanfield field, bool value) returns bool	
+public function item.setField(itembooleanfield field, bool value) returns bool
 	return BlzSetItemBooleanField(this, field, value)
 
-public function item.setField(itemintegerfield field, int value) returns bool	
+public function item.setField(itemintegerfield field, int value) returns bool
 	return BlzSetItemIntegerField(this, field, value)
 
-public function item.setField(itemrealfield field, real value) returns bool	
+public function item.setField(itemrealfield field, real value) returns bool
 	return BlzSetItemRealField(this, field, value)
 
-public function item.setField(itemstringfield field, string value) returns bool	
+public function item.setField(itemstringfield field, string value) returns bool
 	return BlzSetItemStringField(this, field, value)
 
 /** Updates the item's name, tooltip, extendedtooltip, description or icon for the specific player.
@@ -184,15 +179,15 @@ function item.updateDetails(player p, string itemName, string itemTooltip, strin
 			if itemIcon != ""
 				this.setIconPath(itemIcon)
 	return valid
-	
+
 /** Updates the item's name, tooltip, extendedtooltip, description or icon for the specific player.
-	If p == null, the item is updated for all players 
+	If p == null, the item is updated for all players
 	Returns false if no player is given. */
 public function item.updateDetailsForPlayer(player p, string itemName, string itemTooltip, string itemExtendedTooltip, string itemDesc, string itemIcon) returns bool
 	return p != null ? this.updateDetails(p, itemName, itemTooltip, itemExtendedTooltip, itemDesc, itemIcon) : false
 
 /** Updates the item's name, tooltip, extendedtooltip, description or icon for the specific player.
-	If p == null, the item is updated for all players 
+	If p == null, the item is updated for all players
 	Returns false if no player is given. */
 public function item.updateDetailsForAll(string itemName, string itemTooltip, string itemExtendedTooltip, string itemDesc, string itemIcon) returns bool
 	return this.updateDetails(null, itemName, itemTooltip, itemExtendedTooltip, itemDesc, itemIcon)
