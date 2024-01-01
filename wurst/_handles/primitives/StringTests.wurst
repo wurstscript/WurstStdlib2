@@ -109,6 +109,23 @@ package StringTests
 	"test".replace("testy", "something").assertEquals("test")
 	"dfdf".replace("", "2").assertEquals("dfdf")
 
+@Test function testCompare()
+    stringCompare("", "").assertEquals(0)
+    stringCompare("", " ").assertLessThan(0)
+    stringCompare(" ", "").assertGreaterThan(0)
+    stringCompare("test", "long string").assertGreaterThan(0)
+    stringCompare("string", "string (longer)").assertLessThan(0)
+    stringCompare("string (longer)", "string").assertGreaterThan(0)
+    stringCompare("hello", "hello").assertEquals(0)
+    stringCompare("hello", "world").assertLessThan(0)
+    stringCompare("world", "hello").assertGreaterThan(0)
+    stringCompare("hello, world 1234", "hello, world 4321").assertLessThan(0)
+    stringCompare("hello, world 4234", "hello, world 4321").assertLessThan(0)
+    stringCompare("", "hello, world 1234").assertLessThan(0)
+    stringCompare("4331", "4321").assertGreaterThan(0)
+    stringCompare("Hello", "hello").assertGreaterThan(0) // uppercase > lowercase
+    stringCompare("#)!*#&", "~ @#*)").assertEquals(0) // all non-charset chars compare as equal
+
 @Test function testGetHash()
 	"test".getHash().assertEquals(StringHash("test"))
 
