@@ -555,6 +555,10 @@ constant Comparator<int> intComparator = (i1, i2) -> i1 - i2
 public function LinkedList<int>.sort()
 	this.sortWith(intComparator)
 
+constant Comparator<string> stringComparator = (s1, s2) -> stringCompare(s1, s2)
+public function LinkedList<string>.sort()
+	this.sortWith(stringComparator)
+
 public function group.asList() returns LinkedList<unit>
 	let result = new LinkedList<unit>()
 	this.forEachFrom() u ->
