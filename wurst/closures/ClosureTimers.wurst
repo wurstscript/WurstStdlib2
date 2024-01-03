@@ -141,6 +141,9 @@ public abstract class CallbackSingle
 		cb.call()
 		destroy cb
 
+	function getRemaining() returns real
+		return t.getRemaining()
+
 	ondestroy
 		t.release()
 
