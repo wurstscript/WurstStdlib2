@@ -26,7 +26,7 @@ function bitStringTests()
 	"0001".fromBitString().assertEquals(1)
 	"1000".fromBitString().assertEquals(8)
 	"1001".fromBitString().assertEquals(9)
-	"10000000 00000000 00000000 00000000".fromBitString().assertEquals(-2147483648)
+	"10000000 00000000 00000000 00000000".fromBitString().assertEquals(INT_MIN)
 	"11111111 11111111 11111111 11111111".fromBitString().assertEquals(-1)
 
 @test
