@@ -462,6 +462,18 @@ public function unit.useItem(item itm) returns boolean
 public function unit.useItemPoint(item itm, vec2 pos) returns boolean
 	return UnitUseItemPoint(this, itm, pos.x, pos.y)
 
+public function unit.addItemToStock(int itmId, int currentStock, int stockMax)
+	AddItemToStock(this, itmId, currentStock, stockMax)
+
+public function unit.removeItemFromStock(int itmId)
+	RemoveItemFromStock(this, itmId)
+
+public function unit.addUnitToStock(int unitId, int currentStock, int stockMax)
+	AddUnitToStock(this, unitId, currentStock, stockMax)
+
+public function unit.removeUnitFromStock(int unitId)
+	RemoveUnitFromStock(this, unitId)
+
 public function unit.useItemTarget(item itm, widget target) returns boolean
 	return UnitUseItemTarget(this, itm, target)
 
@@ -938,4 +950,3 @@ public function unit.setFieldWeapon(unitweaponrealfield field, int weaponIndex, 
 
 public function unit.setFieldWeapon(unitweaponstringfield field, int weaponIndex, string value) returns bool
 	return BlzSetUnitWeaponStringField(this, field, weaponIndex, value)
-
