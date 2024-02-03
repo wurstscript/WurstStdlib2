@@ -3810,6 +3810,31 @@ public class AbilityDefinitionFireDamageBonus extends AbilityDefinition
 		def.setLevelsDataUnreal("Idam", lvls, 1, lc)
 		addTooltipProperty("Damage Bonus", lc)
 
+public class AbilityDefinitionHealReductionBonus extends AbilityDefinition
+	construct(int newAbilityId)
+		super(newAbilityId, AbilityIds.itemAttackHealReduction)
+
+	function setEnabledAttackIndex(int level, int value)
+		def.setLvlDataInt("Iob5", level, 5, value)
+
+	function presetEnabledAttackIndex(IntLevelClosure lc)
+		def.setLevelsDataInt("Iob5", lvls, 5, lc)
+		addTooltipProperty("Enabled Attack Index", lc)
+
+	function setDamageBonus(int level, real value)
+		def.setLvlDataUnreal("Idam", level, 1, value)
+
+	function presetDamageBonus(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Idam", lvls, 1, lc)
+		addTooltipProperty("Damage Bonus", lc)
+
+	function setHealingMultiplier(int level, real value)
+		def.setLvlDataUnreal("Iofr", level, 1, value)
+
+	function presetHealingMultiplier(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Iofr", lvls, 1, lc)
+		addTooltipProperty("Heal Reduction", lc)
+
 public class AbilityDefinitionDetectMagicSentinel extends AbilityDefinition
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.magicSentry)
@@ -14117,6 +14142,13 @@ public class AbilityDefinitionMountainKingThunderClap extends AbilityDefinition
 	function presetAOEDamage(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Htc1", lvls, 1, lc)
 		addTooltipProperty("AOEDamage", lc)
+
+	function setMaximumDamage(int level, real value)
+		def.setLvlDataUnreal("Htc5", level, 1, value)
+
+	function presetMaximumDamage(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Htc5", lvls, 1, lc)
+		addTooltipProperty("Maximum Damage", lc)
 
 	function setMovementSpeedReduction(int level, real value)
 		def.setLvlDataUnreal("Htc3", level, 3, value)
