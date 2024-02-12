@@ -128,8 +128,8 @@ public abstract class EventListener
 	static function add(unit u, eventid eventId, EventListener listener) returns EventListener
 		let uid = u.getIndex()
 		if uid <= 0
-			Log.warn("Warning: Found attempt to add event listener to a unit that is not indexed by UnitIndexer. This can cause the listener to not be called correctly." +
-				"if this happens during initialization, try wrapping the EventListener.add call in a doAfter(0.5) block.")
+			Log.warn("Warning: Found attempt to add event listener to a unit that is not indexed by UnitIndexer. This can cause the listener to not be called correctly. " +
+				"if this happens during initialization, try putting the EventListener.add call in a callback to nullTimer() instead.")
 			return listener
 		listener.eventId = eventId.toIntId()
 		listener.uid = uid
