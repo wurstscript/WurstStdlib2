@@ -14483,6 +14483,32 @@ public class AbilityDefinitionAnwm extends AbilityDefinition
 		def.setLevelsDataString("Hwe1", lvls, 0, lc)
 		addTooltipProperty("Summoned Unit Type", lc)
 
+public class AbilityDefinitionRayOfDisruption extends AbilityDefinition
+	construct(int newAbilityId)
+		super(newAbilityId, AbilityIds.rayofDisruption)
+
+	function setManaLossPerUnit(int level, real value)
+		def.setLvlDataUnreal("idc1", level, 1, value)
+
+	function presetManaLossPerUnit(RealLevelClosure lc)
+		def.setLevelsDataUnreal("idc1", lvls, 1, lc)
+		addTooltipProperty("Mana Loss Per Unit", lc)
+
+	function setMaximumDispelledUnits(int level, int value)
+		def.setLvlDataInt("idc3", level, 1, value)
+
+	function presetMaximumDispelledUnits(IntLevelClosure lc)
+		def.setLevelsDataInt("idc3", lvls, 1, lc)
+		addTooltipProperty("Maximum Dispelled Units", lc)
+
+	function setSummonedUnitDamage(int level, real value)
+		def.setLvlDataUnreal("idc2", level, 1, value)
+
+	function presetSummonedUnitDamage(RealLevelClosure lc)
+		def.setLevelsDataUnreal("idc2", lvls, 1, lc)
+		addTooltipProperty("Summoned Unit Damage", lc)
+
+
 public class AbilityDefinitionShadowMeld extends AbilityDefinition
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.shadowMeld)
