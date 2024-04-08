@@ -3829,10 +3829,10 @@ public class AbilityDefinitionHealReductionBonus extends AbilityDefinition
 		addTooltipProperty("Damage Bonus", lc)
 
 	function setHealingMultiplier(int level, real value)
-		def.setLvlDataUnreal("Iofr", level, 1, value)
+		def.setLvlDataUnreal("Iofr", level, 2, value)
 
 	function presetHealingMultiplier(RealLevelClosure lc)
-		def.setLevelsDataUnreal("Iofr", lvls, 1, lc)
+		def.setLevelsDataUnreal("Iofr", lvls, 2, lc)
 		addTooltipProperty("Heal Reduction", lc)
 
 public class AbilityDefinitionDetectMagicSentinel extends AbilityDefinition
