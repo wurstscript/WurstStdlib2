@@ -8109,6 +8109,13 @@ public class AbilityDefinitionStasisTrap extends AbilityDefinition
 		def.setLevelsDataUnreal("Sta4", lvls, 4, lc)
 		addTooltipProperty("Stun Duration", lc)
 
+	function setDetonationDelay(int level, real value)
+		def.setLvlDataUnreal("Sta5", level, 5, value)
+
+	function presetDetonationDelay(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Sta5", lvls, 5, lc)
+		addTooltipProperty("Detonation Delay", lc)
+
 public class AbilityDefinitionPermanentImmolationgraphic extends AbilityDefinition
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.permanentImmolationgraphic)
