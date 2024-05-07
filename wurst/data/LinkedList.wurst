@@ -470,6 +470,9 @@ public class LLIterator<T>
 			retVal = current.next.elem
 		return retVal
 
+	function previous() returns T
+		return current.prev.elem
+
 	/** Adds an element before the currently iterated element */
 	function addBefore(T elem)
 		let entry = new LLEntry<T>(elem, current.prev, current)
