@@ -11,6 +11,12 @@ constant typecastdata = new Table()
 @compiletime function initTypecastData()
 	typecastdata.saveString(0, "")
 
+constant castTable = InitHashtable()
+
+@noinline
+public function handle.getTCHandleId() returns int
+	return GetHandleId(this)
+
 init
 	initTypecastData()
 
@@ -47,185 +53,185 @@ public function widgetFromIndex(int index) returns widget
 	return typecastdata.loadWidget(0)
 
 public function widgetToIndex(widget object) returns int
-	return object.getHandleId()
+	return object.getTCHandleId()
 
 public function unitFromIndex(int index) returns unit
 	typecastdata.saveFogState(0,ConvertFogState(index))
 	return typecastdata.loadUnit(0)
 
 public function unitToIndex(unit object) returns int
-	return object.getHandleId()
+	return object.getTCHandleId()
 
 public function destructableFromIndex(int index) returns destructable
 	typecastdata.saveFogState(0,ConvertFogState(index))
 	return typecastdata.loadDestructable(0)
 
 public function destructableToIndex(destructable object) returns int
-	return object.getHandleId()
+	return object.getTCHandleId()
 
 public function itemFromIndex(int index) returns item
 	typecastdata.saveFogState(0,ConvertFogState(index))
 	return typecastdata.loadItem(0)
 
 public function itemToIndex(item object) returns int
-	return object.getHandleId()
+	return object.getTCHandleId()
 
 public function abilityFromIndex(int index) returns ability
 	typecastdata.saveFogState(0,ConvertFogState(index))
 	return typecastdata.loadAbility(0)
 
 public function abilityToIndex(ability object) returns int
-	return object.getHandleId()
+	return object.getTCHandleId()
 
 public function forceFromIndex(int index) returns force
 	typecastdata.saveFogState(0,ConvertFogState(index))
 	return typecastdata.loadForce(0)
 
 public function forceToIndex(force object) returns int
-	return object.getHandleId()
+	return object.getTCHandleId()
 
 public function groupFromIndex(int index) returns group
 	typecastdata.saveFogState(0,ConvertFogState(index))
 	return typecastdata.loadGroup(0)
 
 public function groupToIndex(group object) returns int
-	return object.getHandleId()
+	return object.getTCHandleId()
 
 public function triggerFromIndex(int index) returns trigger
 	typecastdata.saveFogState(0,ConvertFogState(index))
 	return typecastdata.loadTrigger(0)
 
 public function triggerToIndex(trigger object) returns int
-	return object.getHandleId()
+	return object.getTCHandleId()
 
 public function triggeractionFromIndex(int index) returns triggeraction
 	typecastdata.saveFogState(0,ConvertFogState(index))
 	return typecastdata.loadTriggerAction(0)
 
 public function triggeractionToIndex(triggeraction object) returns int
-	return object.getHandleId()
+	return object.getTCHandleId()
 
 public function triggerconditionFromIndex(int index) returns triggercondition
 	typecastdata.saveFogState(0,ConvertFogState(index))
 	return typecastdata.loadTriggerCondition(0)
 
 public function triggerconditionToIndex(triggercondition object) returns int
-	return object.getHandleId()
+	return object.getTCHandleId()
 
 public function timerFromIndex(int index) returns timer
 	typecastdata.saveFogState(0,ConvertFogState(index))
 	return typecastdata.loadTimer(0)
 
 public function timerToIndex(timer object) returns int
-	return object.getHandleId()
+	return object.getTCHandleId()
 
 public function locationFromIndex(int index) returns location
 	typecastdata.saveFogState(0,ConvertFogState(index))
 	return typecastdata.loadLocation(0)
 
 public function locationToIndex(location object) returns int
-	return object.getHandleId()
+	return object.getTCHandleId()
 
 public function regionFromIndex(int index) returns region
 	typecastdata.saveFogState(0,ConvertFogState(index))
 	return typecastdata.loadRegion(0)
 
 public function regionToIndex(region object) returns int
-	return object.getHandleId()
+	return object.getTCHandleId()
 
 public function rectFromIndex(int index) returns rect
 	typecastdata.saveFogState(0,ConvertFogState(index))
 	return typecastdata.loadRect(0)
 
 public function rectToIndex(rect object) returns int
-	return object.getHandleId()
+	return object.getTCHandleId()
 
 public function soundFromIndex(int index) returns sound
 	typecastdata.saveFogState(0,ConvertFogState(index))
 	return typecastdata.loadSound(0)
 
 public function soundToIndex(sound object) returns int
-	return object.getHandleId()
+	return object.getTCHandleId()
 
 public function effectFromIndex(int index) returns effect
 	typecastdata.saveFogState(0,ConvertFogState(index))
 	return typecastdata.loadEffect(0)
 
 public function effectToIndex(effect object) returns int
-	return object.getHandleId()
+	return object.getTCHandleId()
 
 public function dialogFromIndex(int index) returns dialog
 	typecastdata.saveFogState(0,ConvertFogState(index))
 	return typecastdata.loadDialog(0)
 
 public function dialogToIndex(dialog object) returns int
-	return object.getHandleId()
+	return object.getTCHandleId()
 
 public function buttonFromIndex(int index) returns button
 	typecastdata.saveFogState(0,ConvertFogState(index))
 	return typecastdata.loadButton(0)
 
 public function buttonToIndex(button object) returns int
-	return object.getHandleId()
+	return object.getTCHandleId()
 
 public function questFromIndex(int index) returns quest
 	typecastdata.saveFogState(0,ConvertFogState(index))
 	return typecastdata.loadQuest(0)
 
 public function questToIndex(quest object) returns int
-	return object.getHandleId()
+	return object.getTCHandleId()
 
 public function questitemFromIndex(int index) returns questitem
 	typecastdata.saveFogState(0,ConvertFogState(index))
 	return typecastdata.loadQuestItem(0)
 
 public function questitemToIndex(questitem object) returns int
-	return object.getHandleId()
+	return object.getTCHandleId()
 
 public function leaderboardFromIndex(int index) returns leaderboard
 	typecastdata.saveFogState(0,ConvertFogState(index))
 	return typecastdata.loadLeaderboard(0)
 
 public function leaderboardToIndex(leaderboard object) returns int
-	return object.getHandleId()
+	return object.getTCHandleId()
 
 public function multiboardFromIndex(int index) returns multiboard
 	typecastdata.saveFogState(0,ConvertFogState(index))
 	return typecastdata.loadMultiboard(0)
 
 public function multiboardToIndex(multiboard object) returns int
-	return object.getHandleId()
+	return object.getTCHandleId()
 
 public function trackableFromIndex(int index) returns trackable
 	typecastdata.saveFogState(0,ConvertFogState(index))
 	return typecastdata.loadTrackable(0)
 
 public function trackableToIndex(trackable object) returns int
-	return object.getHandleId()
+	return object.getTCHandleId()
 
 public function lightningFromIndex(int index) returns lightning
 	return typecastdata.loadLightning(index)
 
 public function lightningToIndex(lightning object) returns int
-	typecastdata.saveLightning(-object.getHandleId(), object)
-	return -object.getHandleId()
+	typecastdata.saveLightning(-object.getTCHandleId(), object)
+	return -object.getTCHandleId()
 
 public function ubersplatFromIndex(int index) returns ubersplat
 	typecastdata.saveFogState(0,ConvertFogState(index))
 	return typecastdata.loadUbersplat(0)
 
 public function ubersplatToIndex(ubersplat object) returns int
-	return object.getHandleId()
+	return object.getTCHandleId()
 
 public function framehandleToIndex(framehandle object) returns int
-	return object.getHandleId()
+	return object.getTCHandleId()
 
 public function framehandleFromIndex(int index) returns framehandle
 	typecastdata.saveFogState(0,ConvertFogState(index))
 	return typecastdata.loadFrameHandle(0)
 
 public function oskeytypeToIndex(oskeytype object) returns int
-	return object.getHandleId()
+	return object.getTCHandleId()
 
 public function oskeytypeFromIndex(int index) returns oskeytype
 	typecastdata.saveFogState(0,ConvertFogState(index))

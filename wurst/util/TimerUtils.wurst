@@ -15,11 +15,11 @@ constant HELD = 0x28829022
 
 /** Attach Data to this timer */
 public function timer.setData(int data)
-	timerData.saveInt(this.getHandleId(), data)
+	timerData.saveInt(this.getTCHandleId(), data)
 
 /** Retrieve the data attached to this timer */
 public function timer.getData() returns int
-	return timerData.loadInt(this.getHandleId())
+	return timerData.loadInt(this.getTCHandleId())
 
 /** Get a new timer. Use this instead of "CreateTimer".
 You can attach data to the timer with .setData and retrieve it with .getData
