@@ -16,7 +16,8 @@ import ClosureTimers
  * DummyCaster uses one dummy per cast, and only removes it after a set delay, to allow effects and damage to process
  * Example with long delay for blizzard:
  *
- *		new DummyCaster(casterPos)
+ *		new DummyCaster()
+ *			..origin(casterPos)
  *			..owner(caster)
  *			..delay(15)
  *			..castPoint('A000', 1, OrderIds.OrderIds.blizzard, target)
@@ -29,11 +30,16 @@ public class DummyCaster
 	private var castCount = 0
 	protected var delay = 5.0
 	protected var owner = DUMMY_PLAYER
-	protected var origin = ZERO2
+	protected var origin = ZERO3
 
 	construct()
 
+	/** Sets the origin of the dummy with a z-value of 0 */
 	function origin(vec2 pos)
+		this.origin = pos.toVec3()
+
+	/** Sets the origin of the dummy */
+	function origin(vec3 pos)
 		this.origin = pos
 
 	/** Sets the owner of the dummy */
@@ -75,9 +81,9 @@ public class DummyCaster
 		return dummy
 
 	protected function prepare(int id, int lvl) returns unit
-		let dummy = DummyRecycler.get(origin, angle(0))
+		let dummy = DummyRecycler.get(origin.toVec2(), angle(0))
 		if origin.inBounds()
-			dummy.setXY(origin)
+			dummy.setXYZ(origin)
 		dummy..addAbility(id)..setMana(1000000)
 		if lvl > 1
 			dummy.setAbilityLevel(id, lvl)
