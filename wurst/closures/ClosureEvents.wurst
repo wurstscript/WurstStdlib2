@@ -91,14 +91,16 @@ public abstract class OnCast extends OnCastListener
 public abstract class OnPointCast extends OnCastListener
 
 	override function fire(unit caster)
-		fireEx(caster, EventData.getSpellTargetPos())
+		if EventData.getSpellTargetUnit() == null
+			fireEx(caster, EventData.getSpellTargetPos())
 
 	abstract function fireEx(unit caster, vec2 target)
 
 public abstract class OnUnitCast extends OnCastListener
 
 	override function fire(unit caster)
-		fireEx(caster, GetSpellTargetUnit())
+		if EventData.getSpellTargetUnit() != null
+			fireEx(caster, EventData.getSpellTargetUnit())
 
 	abstract function fireEx(unit caster, unit target)
 
