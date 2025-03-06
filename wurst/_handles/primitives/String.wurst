@@ -140,8 +140,9 @@ public function string.trim(string val) returns string
 	If the string does not exist, the returnvalue is -1
 */
 public function string.indexOf(string s) returns int
-	for int i = 0 to this.length() - s.length()
-		if this.substring(i, i + s.length()) == s
+	let len = s.length()
+	for int i = 0 to this.length() - len
+		if this.substring(i, i + len) == s
 			return i
 	return -1
 
