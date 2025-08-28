@@ -91,13 +91,12 @@ public function real.assertLessThanOrEqual(real greater)
 	if this > greater
 		testFail("Expected <" + this.toString() + "> to be less than or equal to <" + greater.toString() + ">")
 
-
 /**
  * Asserts that two reals are equal to within a positive delta. If they are not, an error is thrown
  * with a message.
  */
 public function real.assertEquals(real expected, real delta)
-	if (this - expected > delta) or (expected - this > delta)
+	if (this - expected).abs() > delta
 		testFail("Expected <" + expected.toString() + ">, Actual <" + this.toString() + " with delta " + delta.toString() + ">")
 
 /**
