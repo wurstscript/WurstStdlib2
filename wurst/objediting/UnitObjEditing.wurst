@@ -1,6 +1,8 @@
 package UnitObjEditing
 import NoWurst
 import ObjEditingNatives
+import LinkedList
+import ObjectIds
 import public TargetsAllowed
 import public ObjEditingCommons
 
@@ -101,6 +103,12 @@ public class UnitOrBuildingOrHeroDefinition extends W3UDefinition
 
 	function setTargetedAs(string data)
 		def.setString("utar", data)
+
+	function setTargetedAs(vararg TargetType tags)
+		let list = new LinkedList<TargetType>
+		for t in tags
+			list.add(t)
+		def.setString("utar", commaList(list))
 
 	function setArtTarget(string data)
 		def.setString("utaa", data)
