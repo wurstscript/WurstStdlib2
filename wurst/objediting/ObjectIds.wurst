@@ -65,15 +65,15 @@ public function commaList(vararg string values) returns string
 		list.add(v)
 	return commaList(list)
 
-public function commaList(LinkedList<TargetType> tags) returns string
-	let list = tags.map(t -> t.toTokenString())
+public function commaList(LinkedList<UnitTargetType> tags) returns string
+	let list = tags.map(t -> t.toObjectString())
 	destroy tags
 	return commaList(list)
 
-public function commaList(vararg TargetType tags) returns string
+public function commaList(vararg UnitTargetType tags) returns string
 	let list = new LinkedList<string>
 	for t in tags
-		list.add(t.toTokenString())
+		list.add(t.toObjectString())
 	return commaList(list)
 
 @Test function asListIntTest()
@@ -100,4 +100,4 @@ public function commaList(vararg TargetType tags) returns string
 	toRawCode('ABCD') .assertEquals("ABCD")
 
 @Test function test_TargetTypes()
-	commaList(TargetType.Self, TargetType.Ground).assertEquals("self,ground")
+	commaList(UnitTargetType.Self, UnitTargetType.Ground).assertEquals("self,ground")

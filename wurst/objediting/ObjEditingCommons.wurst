@@ -123,7 +123,7 @@ public enum WeaponType
 	MissileBounce
 	MissileLine
 
-public enum TargetType
+public enum UnitTargetType
 	Air
 	Alive
 	Allies
@@ -155,7 +155,7 @@ public enum TargetType
 	Wall
 	Ward
 
-public function TargetType.toTokenString() returns string
+public function UnitTargetType.toObjectString() returns string
 	switch this
 		case Air
 			return "air"
