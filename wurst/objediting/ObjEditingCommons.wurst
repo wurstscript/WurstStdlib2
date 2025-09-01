@@ -123,6 +123,101 @@ public enum WeaponType
 	MissileBounce
 	MissileLine
 
+public enum TargetType
+	Air
+	Alive
+	Allies
+	Ancient
+	Dead
+	Debris
+	Decoration
+	Enemies
+	Friend
+	Ground
+	Hero
+	Invulnerable
+	Item
+	Mechanical
+	Neutral
+	NonAncient
+	None
+	NonHero
+	NonSapper
+	NotSelf
+	Organic
+	PlayerUnits
+	Sapper
+	Self
+	Structure
+	Terrain
+	Tree
+	Vulnerable
+	Wall
+	Ward
+
+public function TargetType.toTokenString() returns string
+	switch this
+		case Air
+			return "air"
+		case Alive
+			return "alive"
+		case Allies
+			return "allies"
+		case Ancient
+			return "ancient"
+		case Dead
+			return "dead"
+		case Debris
+			return "debris"
+		case Decoration
+			return "decoration"
+		case Enemies
+			return "enemies"
+		case Friend
+			return "friend"
+		case Ground
+			return "ground"
+		case Hero
+			return "hero"
+		case Invulnerable
+			return "invulnerable"
+		case Item
+			return "item"
+		case Mechanical
+			return "mechanical"
+		case Neutral
+			return "neutral"
+		case NonAncient
+			return "nonancient"
+		case None
+			return "none"
+		case NonHero
+			return "nonhero"
+		case NonSapper
+			return "nonsapper"
+		case NotSelf
+			return "notself"
+		case Organic
+			return "organic"
+		case PlayerUnits
+			return "playerunits"
+		case Sapper
+			return "sapper"
+		case Self
+			return "self"
+		case Structure
+			return "structure"
+		case Terrain
+			return "terrain"
+		case Tree
+			return "tree"
+		case Vulnerable
+			return "vulnerable"
+		case Wall
+			return "wall"
+		case Ward
+			return "ward"
+
 public function WeaponType.toObjectString() returns string
 	switch this
 		case Normal
