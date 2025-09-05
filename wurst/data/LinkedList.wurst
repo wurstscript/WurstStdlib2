@@ -303,6 +303,18 @@ public class LinkedList<T>
 		destroy predicate
 		return result
 
+	/** Returns the first element that satisfies the predicate, or null if none present */
+	function find(LinkedListPredicate<T> predicate) returns T
+		T result = null
+		let iter = this.iterator()
+		for elem from iter
+			if predicate.isTrueFor(elem)
+				result = elem
+				break
+		iter.close()
+		destroy predicate
+		return result
+
 	/** internal merge sort */
 	private function sort(Comparator<T> comparator, LLEntry<T> e) returns LLEntry<T>
 		if e == dummy or e.next == dummy
