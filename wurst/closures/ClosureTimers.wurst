@@ -151,7 +151,7 @@ public abstract class CallbackSingle
 public abstract class CallbackPeriodic
 	private timer t
 
-	protected abstract function call(thistype cb)
+	abstract function call(thistype cb)
 
 	protected function start(timer whichTimer, real time)
 		t = whichTimer
@@ -170,7 +170,7 @@ public abstract class CallbackCounted
 	private var maxCount = 0
 	private timer t
 
-	protected abstract function call(thistype cb)
+	abstract function call(thistype cb)
 
 	protected function start(timer whichTimer, real time, int callAmount)
 		count = callAmount
@@ -195,7 +195,7 @@ public abstract class CallbackCounted
 	private static function staticCallback()
 		(GetExpiredTimer().getData() castTo thistype).callAndCount()
 
-	private function callAndCount()
+	function callAndCount()
 		if count > 0
 			count--
 			call(this)
