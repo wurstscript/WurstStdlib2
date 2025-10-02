@@ -1,0 +1,707 @@
+package ArrayList
+import NoWurst
+import Integer
+import String
+import Printing
+import Real
+
+/**
+ * High-performance array-based list implementation using a static shared store.
+ *
+ * WHEN TO USE ArrayList vs LinkedList:
+ * ====================================
+ *
+ * ArrayList shines in these specific cases:
+ * 1. Iterating over large lists (hundreds+ elements) - no node indirection overhead
+ * 2. Adding many elements in tight loops - reduced allocation/deallocation churn
+ * 3. Random access patterns - O(1) get/set operations
+ * 4. Memory-sensitive scenarios where node overhead matters
+ *
+ * Use LinkedList when you need:
+ * - Frequent insertions/deletions in middle of list
+ * - Flexibility without preallocating capacity
+ * - No risk of costly resize operations
+ * - Simpler memory management
+ *
+ * CRITICAL PERFORMANCE CONSIDERATIONS:
+ * ====================================
+ *
+ * ⚠️ PRESIZE YOUR LISTS! ⚠️
+ * The single most important thing: estimate your maximum size and add headroom.
+ * Example: new ArrayList<int>(200) if you expect ~150 elements max
+ *
+ * Why? If the list resizes, ALL elements are copied to a new memory location,
+ * negating any performance advantage over LinkedList!
+ *
+ * PERFORMANCE COMPARISON TABLE:
+ * ============================
+ *
+ * Operation          | ArrayList      | LinkedList     | Notes
+ * -------------------|----------------|----------------|---------------------------
+ * Add to end         | O(1)*          | O(1)           | *O(n) on resize!
+ * Add to start       | O(n)           | O(1)           | ArrayList shifts all elements
+ * Insert at index    | O(n)           | O(n)           | Both require traversal
+ * Remove (ordered)   | O(n)           | O(1)           | ArrayList shifts elements
+ * Remove (unordered) | O(1)           | O(1)           | Use removeSwap() for ArrayList
+ * Get by index       | O(1)           | O(n)           | ArrayList major advantage
+ * Iterate all        | Fast           | Slower         | ArrayList: cache-friendly, no indirection
+ * Search             | O(n)           | O(n)           | Same, but ArrayList faster due to cache
+ * Create/Destroy     | Medium cost    | High cost      | ArrayList: 1 alloc, LinkedList: n allocs
+ * Memory overhead    | Low            | High           | LinkedList: 2 pointers per element
+ *
+ * COMMON PITFALLS:
+ * ===============
+ *
+ * 1. NOT PRESIZING
+ *    Bad:  let list = new ArrayList<int>()  // Will resize multiple times!
+ *    Good: let list = new ArrayList<int>(estimatedMaxSize + headroom)
+ *
+ * 2. CREATING MANY TEMPORARY LISTS
+ *    Bad:  In a loop: let temp = new ArrayList<int>() ... destroy temp
+ *    Good: Create once, reuse with clear(): temp.clear()
+ *
+ * 3. ORDERED REMOVAL IN LOOPS
+ *    Bad:  for i in list: list.remove(x)  // O(n²) with shifting!
+ *    Good: Use removeIf() or removeSwap() if order doesn't matter
+ *
+ * 4. USING FOR-IN WHEN NOT NEEDED
+ *    Bad:  for elem in list: doSomething(elem)  // Creates iterator
+ *    Good: for i = 0 to list.size() - 1: doSomething(list.get(i))  // No allocation
+ *
+ * 5. FREQUENT INSERTIONS AT START
+ *    Bad:  Repeatedly using addtoStart() - O(n) every time!
+ *    Good: Use LinkedList, or collect and add in reverse order
+ *
+ * BEST PRACTICES:
+ * ==============
+ *
+ * ✓ Estimate capacity: measure actual usage, then add 20-30% headroom
+ * ✓ Reuse lists: clear() and reuse instead of destroy/create
+ * ✓ Use removeSwap() when order doesn't matter (O(1) vs O(n))
+ * ✓ Prefer index loops over for-in loops for hot paths
+ * ✓ Profile your code: only use ArrayList where it actually helps!
+ *
+ * MEMORY MANAGEMENT:
+ * =================
+ *
+ * ArrayList uses a shared static array store with section allocation.
+ * Destroyed lists return their sections to a free pool for reuse.
+ * The system automatically compacts fragmented free sections.
+ *
+ * Warning: The static store has a hard limit (JASS_MAX_ARRAY_SIZE).
+ * If you create many large lists simultaneously, you may exhaust it.
+ */
+public class ArrayList<T:>
+    private static T array store
+    private static int nextFreeIndex = 0
+
+    // Memory management structures
+    private static constant int MAX_FREE_SECTIONS = 256
+    private static int array freeSectionStart
+    private static int array freeSectionCapacity
+    private static int freeSectionCount = 0
+
+    private int startIndex
+    private int capacity
+    private int size = 0
+    private static constant int INITIAL_CAPACITY = 16
+
+    static function getNextFreeIndex() returns int
+        return nextFreeIndex
+
+    /** Creates a new empty list with default capacity (16) */
+    construct()
+        allocateStorage(INITIAL_CAPACITY)
+
+    /** Creates a new list with specified initial capacity - RECOMMENDED for performance */
+    construct(int initialCapacity)
+        allocateStorage(initialCapacity)
+
+    /** Creates a new list by copying all elements from another list */
+    construct(thistype base)
+        allocateStorage(base.size > INITIAL_CAPACITY ? base.size : INITIAL_CAPACITY)
+        for elem in base
+            add(elem)
+
+    /** Allocates storage section - tries to reuse freed sections first */
+    private function allocateStorage(int cap)
+        // Try to find a freed section that fits
+        for i = 0 to freeSectionCount - 1
+            if freeSectionCapacity[i] >= cap
+                startIndex = freeSectionStart[i]
+                capacity = freeSectionCapacity[i]
+
+                // Remove this section from free list
+                for j = i to freeSectionCount - 2
+                    freeSectionStart[j] = freeSectionStart[j + 1]
+                    freeSectionCapacity[j] = freeSectionCapacity[j + 1]
+                freeSectionCount--
+                return
+
+        // No suitable free section, allocate new
+        if nextFreeIndex + cap > JASS_MAX_ARRAY_SIZE
+            // Try to compact free sections
+            compactFreeList()
+
+            if nextFreeIndex + cap > JASS_MAX_ARRAY_SIZE
+                // Still not enough, wrap around (dangerous!)
+                print("ArrayList: WARNING - Memory store exhausted, wrapping around!")
+                nextFreeIndex = 0
+
+        startIndex = nextFreeIndex
+        capacity = cap
+        nextFreeIndex += cap
+
+    /** Compacts the free list by merging adjacent sections */
+    private static function compactFreeList()
+        if freeSectionCount <= 1
+            return
+
+        // Sort free sections by start index using insertion sort
+        for i = 1 to freeSectionCount - 1
+            let keyStart = freeSectionStart[i]
+            let keyCap = freeSectionCapacity[i]
+            var j = i - 1
+
+            while j >= 0 and freeSectionStart[j] > keyStart
+                freeSectionStart[j + 1] = freeSectionStart[j]
+                freeSectionCapacity[j + 1] = freeSectionCapacity[j]
+                j--
+
+            freeSectionStart[j + 1] = keyStart
+            freeSectionCapacity[j + 1] = keyCap
+
+        // Merge adjacent sections
+        var writeIdx = 0
+        for readIdx = 0 to freeSectionCount - 1
+            if writeIdx > 0 and freeSectionStart[writeIdx - 1] + freeSectionCapacity[writeIdx - 1] == freeSectionStart[readIdx]
+                // Merge with previous
+                freeSectionCapacity[writeIdx - 1] += freeSectionCapacity[readIdx]
+            else
+                // Keep as separate section
+                if writeIdx != readIdx
+                    freeSectionStart[writeIdx] = freeSectionStart[readIdx]
+                    freeSectionCapacity[writeIdx] = freeSectionCapacity[readIdx]
+                writeIdx++
+
+        freeSectionCount = writeIdx
+
+        // Update nextFreeIndex if last section extends to it
+        if freeSectionCount > 0
+            let lastIdx = freeSectionCount - 1
+            if freeSectionStart[lastIdx] + freeSectionCapacity[lastIdx] == nextFreeIndex
+                nextFreeIndex = freeSectionStart[lastIdx]
+                freeSectionCount--
+
+    /** Frees this list's storage section for reuse */
+    private function freeStorage()
+        if capacity <= 0
+            return
+
+        // Add to free list if there's space
+        if freeSectionCount < MAX_FREE_SECTIONS
+            freeSectionStart[freeSectionCount] = startIndex
+            freeSectionCapacity[freeSectionCount] = capacity
+            freeSectionCount++
+
+            // If this was at the end, we can reclaim it immediately
+            if startIndex + capacity == nextFreeIndex
+                nextFreeIndex = startIndex
+                freeSectionCount--
+        else
+            // Free list full, try to compact
+            compactFreeList()
+
+            // Try again after compaction
+            if freeSectionCount < MAX_FREE_SECTIONS
+                freeSectionStart[freeSectionCount] = startIndex
+                freeSectionCapacity[freeSectionCount] = capacity
+                freeSectionCount++
+
+    /** Grows the capacity (doubles it) - EXPENSIVE OPERATION! */
+    private function grow()
+        let newCapacity = capacity * 2
+        let oldStart = startIndex
+        let oldCapacity = capacity
+
+        // Try to allocate new section
+        allocateStorage(newCapacity)
+
+        // Copy elements to new location
+        for i = 0 to size - 1
+            store[startIndex + i] = store[oldStart + i]
+
+        // Free old section
+        let tempStart = startIndex
+        let tempCap = capacity
+        startIndex = oldStart
+        capacity = oldCapacity
+        freeStorage()
+        startIndex = tempStart
+        capacity = tempCap
+
+    ondestroy
+        // Clear references to allow garbage collection
+        for i = 0 to size - 1
+            store[startIndex + i] = null
+
+        // Return storage to free pool
+        freeStorage()
+
+    /** Debug function to get memory layout info */
+    function getMemoryInfo() returns string
+        return "Start: " + startIndex.toString() + ", Capacity: " + capacity.toString() + ", Size: " + size.toString()
+
+    /** Static function to get global memory state */
+    static function getGlobalMemoryInfo() returns string
+        return "NextFree: " + nextFreeIndex.toString() + ", FreeSections: " + freeSectionCount.toString() + ", Used: " + (nextFreeIndex - freeSectionCount).toString()
+
+    // ============================================================================
+    // BASIC OPERATIONS
+    // ============================================================================
+
+    /** Adds one or more elements to the end of the list (amortized O(1)) */
+    function add(vararg T elems)
+        for elem in elems
+            if size >= capacity
+                grow()
+            store[startIndex + size] = elem
+            size++
+
+    /** Adds all elements from another list */
+    function addAll(ArrayList<T> other)
+        // Optimize: pre-grow if needed
+        let needed = size + other.size
+        while needed > capacity
+            grow()
+
+        for elem in other
+            store[startIndex + size] = elem
+            size++
+
+    /** Returns the element at the specified index (O(1)) */
+    function get(int index) returns T
+        if index < 0 or index >= size
+            print("ArrayList: Index out of bounds: " + index.toString())
+        return store[startIndex + index]
+
+    /** Sets the element at the specified index (O(1)) */
+    function set(int index, T elem)
+        if index < 0 or index >= size
+            print("ArrayList: Index out of bounds: " + index.toString())
+        store[startIndex + index] = elem
+
+    /** Returns the index of the specified element or -1 if it doesn't exist (O(n)) */
+    function indexOf(T elem) returns int
+        for i = 0 to size - 1
+            if store[startIndex + i] == elem
+                return i
+        return -1
+
+    /** Returns whether the list contains the specified element (O(n)) */
+    function has(T elem) returns boolean
+        return indexOf(elem) >= 0
+
+    /** Removes the element at the given index and returns it (O(n) - shifts elements) */
+    function removeAt(int index) returns T
+        if index < 0 or index >= size
+            print("ArrayList: Index out of bounds: " + index.toString())
+
+        let elem = store[startIndex + index]
+
+        // Shift elements left
+        for i = index to size - 2
+            store[startIndex + i] = store[startIndex + i + 1]
+
+        size--
+        return elem
+
+    /** Removes the element at the given index by swapping with last element (O(1) - DOES NOT PRESERVE ORDER!) */
+    function removeSwap(int index) returns T
+        if index < 0 or index >= size
+            print("ArrayList: Index out of bounds: " + index.toString())
+
+        let elem = store[startIndex + index]
+
+        // Replace with last element
+        size--
+        if index < size
+            store[startIndex + index] = store[startIndex + size]
+
+        return elem
+
+    /** Removes the first occurrence of the element from the list (O(n)) */
+    function remove(T elem) returns bool
+        let index = indexOf(elem)
+        if index >= 0
+            removeAt(index)
+            return true
+        return false
+
+    /** Returns the size of the list (O(1)) */
+    function size() returns int
+        return size
+
+    /** Checks whether this list is empty (O(1)) */
+    function isEmpty() returns boolean
+        return size == 0
+
+    /** Returns the first element in the list (O(1)) */
+    function getFirst() returns T
+        if size == 0
+            print("ArrayList: getFirst on empty list")
+        return store[startIndex]
+
+    /** Returns the last element in the list (O(1)) */
+    function getLast() returns T
+        if size == 0
+            print("ArrayList: getLast on empty list")
+        return store[startIndex + size - 1]
+
+    /** Clears all elements from the list (O(1) - reuse this list instead of creating new ones!) */
+    function clear()
+        size = 0
+
+    /** Returns a shallow copy of this list */
+    function copy() returns ArrayList<T>
+        let list = new ArrayList<T>(size)
+        for i = 0 to size - 1
+            list.add(store[startIndex + i])
+        return list
+
+    /** Replaces the first occurrence of 'whichElement' with 'newElement' */
+    function replace(T whichElement, T newElement) returns boolean
+        let index = indexOf(whichElement)
+        if index >= 0
+            set(index, newElement)
+            return true
+        return false
+
+    /** Returns a random element from this list or null if empty */
+    function getRandomElement() returns T
+        if size == 0
+            return null
+        return get(GetRandomInt(0, size - 1))
+
+    // ============================================================================
+    // STACK OPERATIONS (LIFO)
+    // ============================================================================
+
+    /** Adds an element to the end of the list (stack push) */
+    function push(T elem)
+        add(elem)
+
+    /** Returns and removes the last added element (LIFO) */
+    function pop() returns T
+        if size == 0
+            return null
+        size--
+        return store[startIndex + size]
+
+    /** Returns the lastly added element without removing it */
+    function peek() returns T
+        return getLast()
+
+    // ============================================================================
+    // QUEUE OPERATIONS (FIFO)
+    // ============================================================================
+
+    /** Adds an element to the end (queue enqueue) */
+    function enqueue(T elem)
+        add(elem)
+
+    /** Returns and removes the first element (FIFO) - WARNING: O(n) operation! */
+    function dequeue() returns T
+        if size == 0
+            return null
+        return removeAt(0)
+
+    // ============================================================================
+    // INSERTION OPERATIONS
+    // ============================================================================
+
+    /** Adds element at the beginning of the list - WARNING: O(n) operation! */
+    function addtoStart(T elem)
+        if size >= capacity
+            grow()
+
+        // Shift all elements right
+        for i = size - 1 downto 0
+            store[startIndex + i + 1] = store[startIndex + i]
+
+        store[startIndex] = elem
+        size++
+
+    /** Adds the given element at the given index - WARNING: O(n) operation! */
+    function addAt(T elem, int index)
+        if index < 0 or index > size
+            print("ArrayList: Index out of bounds: " + index.toString())
+
+        if size >= capacity
+            grow()
+
+        // Shift elements right
+        for i = size - 1 downto index
+            store[startIndex + i + 1] = store[startIndex + i]
+
+        store[startIndex + index] = elem
+        size++
+
+    // ============================================================================
+    // ITERATOR & FUNCTIONAL OPERATIONS
+    // ============================================================================
+
+    /** Get an iterator for this list - NOTE: Creates an object, use index loops in hot paths! */
+    function iterator() returns ALIterator<T>
+        return new ALIterator<T>(this)
+
+    /** Removes elements that satisfy the predicate */
+    function removeIf(ArrayListPredicate<T> predicate)
+        let itr = iterator()
+        for elem from itr
+            if predicate.isTrueFor(elem)
+                itr.remove()
+        itr.close()
+        destroy predicate
+
+    /** Executes the closure for each element */
+    function forEach(ALItrClosure<T> itr) returns ArrayList<T>
+        for i = 0 to size - 1
+            itr.run(store[startIndex + i])
+        destroy itr
+        return this
+
+    /** Updates all elements */
+    function updateAll(ArrayListUpdater<T> f)
+        for i = 0 to size - 1
+            store[startIndex + i] = f.update(store[startIndex + i])
+        destroy f
+
+    /** Returns the list obtained by applying the given closure to each element */
+    function map<Q>(MapClosure<T, Q> itr) returns ArrayList<Q>
+        let output = new ArrayList<Q>(size)
+        forEach(t -> output.add(itr.run(t)))
+        destroy itr
+        return output
+
+    /** Returns a new list of elements that satisfy the predicate */
+    function filter(ArrayListPredicate<T> predicate) returns ArrayList<T>
+        let result = new ArrayList<T>()
+        for i = 0 to size - 1
+            let elem = store[startIndex + i]
+            if predicate.isTrueFor(elem)
+                result.add(elem)
+        destroy predicate
+        return result
+
+    /** Folds this list into a single value of type Q */
+    function foldl<Q>(Q startValue, FoldClosure<T, Q> predicate) returns Q
+        var result = startValue
+        for i = 0 to size - 1
+            result = predicate.run(store[startIndex + i], result)
+        destroy predicate
+        return result
+
+    /** Returns the first element that satisfies the predicate, or null if none present */
+    function find(ArrayListPredicate<T> predicate) returns T
+        T result = null
+        for i = 0 to size - 1
+            let elem = store[startIndex + i]
+            if predicate.isTrueFor(elem)
+                result = elem
+                break
+        destroy predicate
+        return result
+
+    // ============================================================================
+    // SORTING & SHUFFLING
+    // ============================================================================
+
+    /** Performs a Fisher-Yates shuffle on this list */
+    function shuffle()
+        for i = size - 1 downto 1
+            let j = GetRandomInt(0, i)
+            let tmp = store[startIndex + i]
+            store[startIndex + i] = store[startIndex + j]
+            store[startIndex + j] = tmp
+
+    /** Sorts the list using optimized quicksort with median-of-three pivot */
+    function sortWith(Comparator<T> comparator)
+        if comparator != null and size > 1
+            quicksort(comparator, 0, size - 1)
+
+    /** Optimized quicksort with median-of-three pivot selection */
+    private function quicksort(Comparator<T> comparator, int low, int high)
+        if low < high
+            let pivot = medianOfThree(comparator, low, low + (high - low) div 2, high)
+            let p = partition(comparator, low, high, pivot)
+
+            quicksort(comparator, low, p - 1)
+            quicksort(comparator, p + 1, high)
+
+    /** Median-of-three pivot selection */
+    private function medianOfThree(Comparator<T> comparator, int a, int b, int c) returns int
+        let va = store[startIndex + a]
+        let vb = store[startIndex + b]
+        let vc = store[startIndex + c]
+
+        if comparator.compare(va, vb) < 0
+            if comparator.compare(vb, vc) < 0
+                return b
+            else if comparator.compare(va, vc) < 0
+                return c
+            else
+                return a
+        else
+            if comparator.compare(va, vc) < 0
+                return a
+            else if comparator.compare(vb, vc) < 0
+                return c
+            else
+                return b
+
+    /** Optimized partition with median pivot */
+    private function partition(Comparator<T> comparator, int low, int high, int pivotIndex) returns int
+        let pivotValue = store[startIndex + pivotIndex]
+
+        // Move pivot to end
+        let temp = store[startIndex + pivotIndex]
+        store[startIndex + pivotIndex] = store[startIndex + high]
+        store[startIndex + high] = temp
+
+        var storeIndex = low
+
+        for i = low to high - 1
+            if comparator.compare(store[startIndex + i], pivotValue) < 0
+                let t = store[startIndex + storeIndex]
+                store[startIndex + storeIndex] = store[startIndex + i]
+                store[startIndex + i] = t
+                storeIndex++
+
+        // Move pivot to final position
+        let t2 = store[startIndex + storeIndex]
+        store[startIndex + storeIndex] = store[startIndex + high]
+        store[startIndex + high] = t2
+
+        return storeIndex
+
+// ============================================================================
+// UTILITY FUNCTIONS
+// ============================================================================
+
+public function asArrayList<T>(vararg T ts) returns ArrayList<T>
+    let al = new ArrayList<T>()
+    for t in ts
+        al.add(t)
+    return al
+
+// ============================================================================
+// ITERATOR
+// ============================================================================
+
+/** Iterator for ArrayList - NOTE: Allocates an object, prefer index loops in hot paths! */
+public class ALIterator<T>
+    private ArrayList<T> parent
+    private int currentIndex
+    private bool destroyOnClose = true
+    private bool canRemove = false
+
+    construct(ArrayList<T> parent)
+        this.parent = parent
+        reset()
+
+    construct(ArrayList<T> parent, bool destroyOnClose)
+        this.parent = parent
+        this.destroyOnClose = destroyOnClose
+        reset()
+
+    function reset()
+        currentIndex = -1
+        canRemove = false
+
+    function hasNext() returns boolean
+        return currentIndex + 1 < parent.size()
+
+    function next() returns T
+        currentIndex++
+        canRemove = true
+        return parent.get(currentIndex)
+
+    function lookahead() returns T
+        if currentIndex + 1 < parent.size()
+            return parent.get(currentIndex + 1)
+        return null
+
+    /** Removes the last element returned by next() */
+    function remove() returns T
+        if not canRemove or currentIndex < 0
+            return null
+
+        let removed = parent.removeAt(currentIndex)
+        currentIndex--
+        canRemove = false
+        return removed
+
+    /** Modifies the last element returned by next() */
+    function modify(T newval)
+        if canRemove and currentIndex >= 0
+            parent.set(currentIndex, newval)
+
+    function close()
+        if destroyOnClose
+            destroy this
+
+// ============================================================================
+// INTERFACES
+// ============================================================================
+
+public interface ArrayListPredicate<T>
+    function isTrueFor(T t) returns boolean
+
+public interface ALItrClosure<T>
+    function run(T t)
+
+public interface ArrayListUpdater<T>
+    function update(T t) returns T
+
+public interface MapClosure<T, Q>
+    function run(T t) returns Q
+
+public interface FoldClosure<T, Q>
+    function run(T t, Q q) returns Q
+
+public interface Comparator<T:>
+    function compare(T o1, T o2) returns int
+
+// ============================================================================
+// SPECIALIZED SORT FUNCTIONS
+// ============================================================================
+
+constant Comparator<int> intComparator = (i1, i2) -> i1 - i2
+public function ArrayList<int>.sort()
+    this.sortWith(intComparator)
+
+constant Comparator<real> realComparator = (r1, r2) -> (r1 - r2).toInt()
+public function ArrayList<real>.sort()
+    this.sortWith(realComparator)
+
+constant Comparator<string> stringComparator = (s1, s2) -> stringCompare(s1, s2)
+public function ArrayList<string>.sort()
+    this.sortWith(stringComparator)
+
+// ============================================================================
+// STRING OPERATIONS
+// ============================================================================
+
+/** Joins elements from a string list into one string using a separator */
+public function ArrayList<string>.joinBy(string separator) returns string
+    var joined = ""
+    for i = 0 to this.size() - 1
+        if i > 0
+            joined += separator
+        joined += this.get(i)
+    return joined
+
+/** Joins elements from a string list into one string */
+public function ArrayList<string>.join() returns string
+    return this.joinBy("")

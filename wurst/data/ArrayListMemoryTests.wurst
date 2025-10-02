@@ -1,0 +1,504 @@
+package ArrayListMemoryTests
+import ArrayList
+
+// ============================================================================
+// SIMPLIFIED MEMORY VISUALIZATION
+// ============================================================================
+
+/** Simple memory visualizer that tracks lists manually */
+class MemoryVisualizer
+    private static int array starts
+    private static int array capacities
+    private static string array names
+    private static int count = 0
+
+    static function reset()
+        count = 0
+
+    static function track(int start, int capacity, string name)
+        starts[count] = start
+        capacities[count] = capacity
+        names[count] = name
+        count++
+
+    static function visualize(int maxIndex) returns string
+        if maxIndex == 0
+            return "[Empty memory]\n"
+
+        // Build allocation map
+        string array allocationMap
+        for i = 0 to maxIndex - 1
+            allocationMap[i] = "░"  // Free space
+
+        // Mark tracked allocations
+        for idx = 0 to count - 1
+            let start = starts[idx]
+            let cap = capacities[idx]
+            let name = names[idx]
+            let marker = name.substring(0, 1)
+
+            for i = start to start + cap - 1
+                if i < maxIndex
+                    allocationMap[i] = marker
+
+        var result = "\nMemory Layout [0-" + (maxIndex - 1).toString() + "]:\n"
+
+        // Print in rows of 64 for readability
+        let rowSize = 64
+        var row = 0
+        while row * rowSize < maxIndex
+            let startIdx = row * rowSize
+            let endIdx = startIdx + rowSize
+
+            result += "["
+            // Print row label
+            if startIdx < 10
+                result += "0"
+            if startIdx < 100
+                result += "0"
+            if startIdx < 1000
+                result += "0"
+            result += startIdx.toString() + "] -> |"
+
+            for i = startIdx to endIdx - 1
+                if i < maxIndex
+                    result += allocationMap[i]
+                else
+                    break
+
+            result += "|\n"
+            row++
+
+        result += "\n"
+
+        // Legend
+        for idx = 0 to count - 1
+            result += names[idx].substring(0, 1) + "=" + names[idx] + " "
+        result += "░=free\n"
+        result += ArrayList.getGlobalMemoryInfo() + "\n"
+
+        return result
+
+// Helper to extract start index from memory info string
+function extractStart(string memInfo) returns int
+    // "Start: 123, Capacity: 456, Size: 789"
+    // Find "Start: " and parse number after it
+    let startPos = memInfo.indexOf("Start: ") + 7
+    var endPos = startPos
+    let len = memInfo.length()
+
+    while endPos < len
+        let char = memInfo.substring(endPos, endPos + 1)
+        if char == ","
+            break
+        endPos++
+
+    let numStr = memInfo.substring(startPos, endPos)
+    return numStr.toInt()
+
+function extractCapacity(string memInfo) returns int
+    let startPos = memInfo.indexOf("Capacity: ") + 10
+    var endPos = startPos
+    let len = memInfo.length()
+
+    while endPos < len
+        let char = memInfo.substring(endPos, endPos + 1)
+        if char == ","
+            break
+        endPos++
+
+    let numStr = memInfo.substring(startPos, endPos)
+    return numStr.toInt()
+
+function extractNextFree() returns int
+    let info = ArrayList.getGlobalMemoryInfo()
+    let startPos = info.indexOf("NextFree: ") + 10
+    var endPos = startPos
+    let len = info.length()
+
+    while endPos < len
+        let char = info.substring(endPos, endPos + 1)
+        if char == ","
+            break
+        endPos++
+
+    let numStr = info.substring(startPos, endPos)
+    return numStr.toInt()
+
+// ============================================================================
+// MEMORY TESTS
+// ============================================================================
+
+@Test
+function testBasicMemoryAllocation()
+    print("\n=== TEST: Basic Memory Allocation ===")
+
+    MemoryVisualizer.reset()
+
+    let list1 = new ArrayList<int>(10)
+    let info1 = list1.getMemoryInfo()
+    MemoryVisualizer.track(extractStart(info1), extractCapacity(info1), "1")
+
+    let list2 = new ArrayList<int>(20)
+    let info2 = list2.getMemoryInfo()
+    MemoryVisualizer.track(extractStart(info2), extractCapacity(info2), "2")
+
+    let list3 = new ArrayList<int>(15)
+    let info3 = list3.getMemoryInfo()
+    MemoryVisualizer.track(extractStart(info3), extractCapacity(info3), "3")
+
+    print(MemoryVisualizer.visualize(extractNextFree()))
+
+    info1.contains("Start: 0").assertTrue()
+    info2.contains("Start: 10").assertTrue()
+    info3.contains("Start: 30").assertTrue()
+
+    destroy list1
+    destroy list2
+    destroy list3
+
+@Test
+function testMemoryReclamation()
+    print("\n=== TEST: Memory Reclamation ===")
+
+    // Clear any previous state by getting current free index
+    let initialFree = extractNextFree()
+    print("Initial NextFree: " + initialFree.toString())
+
+    MemoryVisualizer.reset()
+    let list1 = new ArrayList<int>(50)
+    let list1Start = extractStart(list1.getMemoryInfo())
+    let list1Cap = extractCapacity(list1.getMemoryInfo())
+    MemoryVisualizer.track(list1Start, list1Cap, "List1")
+    print("After allocation:")
+    let nextFree = extractNextFree()
+    print(MemoryVisualizer.visualize(nextFree))
+    print("List1 info: " + list1.getMemoryInfo())
+
+    destroy list1
+
+    MemoryVisualizer.reset()
+    let list2 = new ArrayList<int>(30)
+    let list2Start = extractStart(list2.getMemoryInfo())
+    let list2Cap = extractCapacity(list2.getMemoryInfo())
+    MemoryVisualizer.track(list2Start, list2Cap, "List2-reused")
+    print("After reclamation:")
+    print(MemoryVisualizer.visualize(nextFree))
+    print("List2 info: " + list2.getMemoryInfo())
+
+    // List2 should reuse list1's memory location
+    print("Checking: list2Start (" + list2Start.toString() + ") == list1Start (" + list1Start.toString() + ")")
+    list2Start.assertEquals(list1Start)
+
+    // Capacity should be at least 30, but might be 50 if reusing the full section
+    (list2Cap >= 30).assertTrue()
+
+    destroy list2
+
+@Test
+function testMemoryFragmentation()
+    print("\n=== TEST: Memory Fragmentation ===")
+
+    MemoryVisualizer.reset()
+
+    let list1 = new ArrayList<int>(10)
+    MemoryVisualizer.track(extractStart(list1.getMemoryInfo()), 10, "A")
+
+    let list2 = new ArrayList<int>(20)
+    MemoryVisualizer.track(extractStart(list2.getMemoryInfo()), 20, "B")
+
+    let list3 = new ArrayList<int>(15)
+    MemoryVisualizer.track(extractStart(list3.getMemoryInfo()), 15, "C")
+
+    print("Initial layout:")
+    print(MemoryVisualizer.visualize(extractNextFree()))
+
+    destroy list2
+
+    MemoryVisualizer.reset()
+    MemoryVisualizer.track(extractStart(list1.getMemoryInfo()), 10, "A")
+    MemoryVisualizer.track(extractStart(list3.getMemoryInfo()), 15, "C")
+
+    let list4 = new ArrayList<int>(10)
+    MemoryVisualizer.track(extractStart(list4.getMemoryInfo()), 10, "D-reused")
+
+    print("After destroying B and creating D:")
+    print(MemoryVisualizer.visualize(extractNextFree()))
+
+    list4.getMemoryInfo().contains("Start: 10").assertTrue()
+
+    destroy list1
+    destroy list3
+    destroy list4
+
+@Test
+function testGrowthMemoryBehavior()
+    print("\n=== TEST: Growth Memory Behavior ===")
+
+    let list = new ArrayList<int>(4)
+
+    MemoryVisualizer.reset()
+    MemoryVisualizer.track(extractStart(list.getMemoryInfo()), 4, "List")
+    print("Initial (capacity 4):")
+    print(MemoryVisualizer.visualize(extractNextFree()))
+    print(list.getMemoryInfo())
+
+    // Force growth
+    for i = 1 to 5
+        list.add(i)
+
+    MemoryVisualizer.reset()
+    MemoryVisualizer.track(extractStart(list.getMemoryInfo()), 8, "List-grown")
+    print("\nAfter adding 5 elements (grew to 8):")
+    print(MemoryVisualizer.visualize(extractNextFree()))
+    print(list.getMemoryInfo())
+
+    // Force another growth
+    for i = 6 to 10
+        list.add(i)
+
+    MemoryVisualizer.reset()
+    MemoryVisualizer.track(extractStart(list.getMemoryInfo()), 16, "List-grown2")
+    print("\nAfter adding 10 total elements (grew to 16):")
+    print(MemoryVisualizer.visualize(extractNextFree()))
+    print(list.getMemoryInfo())
+
+    list.getMemoryInfo().contains("Size: 10").assertTrue()
+
+    // Verify data integrity
+    for i = 0 to 9
+        list.get(i).assertEquals(i + 1)
+
+    destroy list
+
+@Test
+function testMultipleGrowths()
+    print("\n=== TEST: Multiple Growths ===")
+
+    let list = new ArrayList<int>(2)
+
+    print("Initial capacity: 2")
+    print(list.getMemoryInfo())
+
+    // Track key growth points
+    var lastSize = 0
+
+    for i = 1 to 50
+        list.add(i)
+
+        // Visualize at powers of 2
+        if list.size() == 2 or list.size() == 4 or list.size() == 8 or list.size() == 16 or list.size() == 32 or list.size() == 50
+            if list.size() != lastSize
+                MemoryVisualizer.reset()
+                let cap = extractCapacity(list.getMemoryInfo())
+                MemoryVisualizer.track(extractStart(list.getMemoryInfo()), cap, "List")
+                print("\nAfter adding " + list.size().toString() + " elements:")
+                print(MemoryVisualizer.visualize(extractNextFree()))
+                print(list.getMemoryInfo())
+                lastSize = list.size()
+
+    list.size().assertEquals(50)
+
+    // Verify all elements
+    for i = 0 to 49
+        list.get(i).assertEquals(i + 1)
+
+    destroy list
+
+@Test
+function testMemoryCompaction()
+    print("\n=== TEST: Memory Compaction ===")
+
+    let lists = new ArrayList<ArrayList<int>>()
+    MemoryVisualizer.reset()
+
+    // Create many small lists
+    for i = 0 to 10
+        let list = new ArrayList<int>(5)
+        lists.add(list)
+        MemoryVisualizer.track(extractStart(list.getMemoryInfo()), 5, "L" + i.toString())
+
+    print("Initial layout with 11 lists:")
+    print(MemoryVisualizer.visualize(extractNextFree()))
+
+    // Destroy every other list
+    for i = 0 to 5
+        destroy lists.get(i * 2)
+        lists.set(i * 2, null)
+
+    MemoryVisualizer.reset()
+    for i = 0 to 10
+        if lists.get(i) != null
+            MemoryVisualizer.track(extractStart(lists.get(i).getMemoryInfo()), 5, "L" + i.toString())
+
+    print("\nAfter destroying every other list:")
+    print(MemoryVisualizer.visualize(extractNextFree()))
+
+    let globalInfo = ArrayList.getGlobalMemoryInfo()
+    print("Free sections should be present: " + globalInfo)
+
+    // Clean up
+    for i = 0 to 10
+        if lists.get(i) != null
+            destroy lists.get(i)
+    destroy lists
+
+@Test
+function testLargeAllocation()
+    print("\n=== TEST: Large Allocation ===")
+
+    let list = new ArrayList<int>(1000)
+
+    MemoryVisualizer.reset()
+    MemoryVisualizer.track(extractStart(list.getMemoryInfo()), 1000, "LargeList")
+    print("Allocated 1000 capacity:")
+    print(MemoryVisualizer.visualize(extractNextFree()))
+
+    for i = 0 to 999
+        list.add(i)
+
+    list.size().assertEquals(1000)
+    list.get(500).assertEquals(500)
+    list.get(999).assertEquals(999)
+
+    print("\nFilled with 1000 elements:")
+    print(list.getMemoryInfo())
+
+    destroy list
+
+@Test
+function testMemoryAfterClear()
+    print("\n=== TEST: Memory After Clear ===")
+
+    let list = new ArrayList<int>(20)
+
+    for i = 1 to 15
+        list.add(i)
+
+    MemoryVisualizer.reset()
+    MemoryVisualizer.track(extractStart(list.getMemoryInfo()), 20, "List")
+    print("Before clear (15 elements):")
+    print(MemoryVisualizer.visualize(extractNextFree()))
+    print(list.getMemoryInfo())
+
+    list.clear()
+
+    MemoryVisualizer.reset()
+    MemoryVisualizer.track(extractStart(list.getMemoryInfo()), 20, "List")
+    print("\nAfter clear:")
+    print(MemoryVisualizer.visualize(extractNextFree()))
+    print(list.getMemoryInfo())
+
+    list.getMemoryInfo().contains("Size: 0").assertTrue()
+
+    destroy list
+
+@Test
+function testCopyMemoryIndependence()
+    print("\n=== TEST: Copy Memory Independence ===")
+
+    let list1 = new ArrayList<int>()
+    list1.add(1, 2, 3, 4, 5)
+
+    let list2 = list1.copy()
+
+    MemoryVisualizer.reset()
+    MemoryVisualizer.track(extractStart(list1.getMemoryInfo()), extractCapacity(list1.getMemoryInfo()), "Original")
+    MemoryVisualizer.track(extractStart(list2.getMemoryInfo()), extractCapacity(list2.getMemoryInfo()), "Copy")
+    print("Original and copy in memory:")
+    print(MemoryVisualizer.visualize(extractNextFree()))
+
+    // Modify one shouldn't affect the other
+    list1.set(0, 99)
+    list2.get(0).assertEquals(1)
+    list1.get(0).assertEquals(99)
+
+    destroy list1
+    destroy list2
+
+@Test
+function testReusePattern()
+    print("\n=== TEST: Reuse Pattern (Best Practice) ===")
+
+    let reusableList = new ArrayList<int>(100)
+
+    MemoryVisualizer.reset()
+    MemoryVisualizer.track(extractStart(reusableList.getMemoryInfo()), 100, "Reusable")
+
+    print("Initial allocation:")
+    print(MemoryVisualizer.visualize(extractNextFree()))
+
+    // Simulate multiple operations with reuse
+    for iteration = 0 to 3
+        for i = 0 to 50
+            reusableList.add(i)
+
+        print("\nIteration " + iteration.toString() + " - filled:")
+        print(reusableList.getMemoryInfo())
+
+        reusableList.clear()
+        print("Iteration " + iteration.toString() + " - cleared (memory retained):")
+        print(reusableList.getMemoryInfo())
+
+    print("\nFinal state - same memory location throughout:")
+    MemoryVisualizer.reset()
+    MemoryVisualizer.track(extractStart(reusableList.getMemoryInfo()), 100, "Reusable")
+    print(MemoryVisualizer.visualize(extractNextFree()))
+
+    destroy reusableList
+
+@Test
+function testWorstCaseScenario()
+    print("\n=== TEST: Worst Case - No Presizing ===")
+
+    let badList = new ArrayList<int>()
+
+    print("Starting with default capacity (16)...")
+
+    var growthCount = 0
+    var lastCap = 16
+
+    for i = 1 to 100
+        badList.add(i)
+
+        let currentCap = extractCapacity(badList.getMemoryInfo())
+
+        if currentCap > lastCap
+            growthCount++
+            lastCap = currentCap
+
+            MemoryVisualizer.reset()
+            MemoryVisualizer.track(extractStart(badList.getMemoryInfo()), currentCap, "BadList")
+            print("\nGrowth #" + growthCount.toString() + " occurred at size " + badList.size().toString())
+            print(MemoryVisualizer.visualize(extractNextFree()))
+            print(badList.getMemoryInfo())
+
+    print("\nTotal growths: " + growthCount.toString())
+    print("This is why you should presize your lists!")
+
+    destroy badList
+
+@Test
+function testBestCaseScenario()
+    print("\n=== TEST: Best Case - Proper Presizing ===")
+
+    let goodList = new ArrayList<int>(100)
+
+    MemoryVisualizer.reset()
+    MemoryVisualizer.track(extractStart(goodList.getMemoryInfo()), 100, "GoodList")
+    print("Starting with presized capacity (100):")
+    print(MemoryVisualizer.visualize(extractNextFree()))
+    print(goodList.getMemoryInfo())
+
+    for i = 1 to 100
+        goodList.add(i)
+
+    MemoryVisualizer.reset()
+    MemoryVisualizer.track(extractStart(goodList.getMemoryInfo()), 100, "GoodList")
+    print("\nAfter adding 100 elements - NO GROWTH!")
+    print(MemoryVisualizer.visualize(extractNextFree()))
+    print(goodList.getMemoryInfo())
+
+    goodList.size().assertEquals(100)
+
+    destroy goodList
