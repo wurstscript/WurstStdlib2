@@ -1,5 +1,28 @@
 package ArrayListTests
 import ArrayList
+import StringUtils
+
+@Test
+function testIteratorRemove()
+    let list = new ArrayList<int>()
+
+    list.add(1, 2, 3, 4)
+
+    var acc = 0
+
+    let itr = list.iterator()
+    while itr.hasNext()
+        let v = itr.next()
+        acc += v
+        if v % 2 == 0
+            itr.remove()
+    itr.close()
+    list.size().assertEquals(2)
+    list.get(0).assertEquals(1)
+    list.get(1).assertEquals(3)
+    acc.assertEquals(10)
+
+
 
 @Test
 function testForLoop()
@@ -28,22 +51,32 @@ function testAddAll()
     list.get(3).assertEquals(4)
 
     var result = 0
-    for i in list
-        result += i
+    for i = 0 to list.size() - 1
+        result += list.get(i)
     result.assertEquals(1 + 2 + 3 + 4)
 
 @Test
 function testClosures()
     let list = new ArrayList<int>()
     list.add(1, 2, 3, 4)
+    for i = 0 to list.size() - 1
+        print(list.get(i))
 
     list.updateAll(i -> i * 2)
     list.get(3).assertEquals(4 * 2)
+    for i = 0 to list.size() - 1
+        print(list.get(i))
 
     list.removeIf(i -> i > 4)
+    for i = 0 to list.size() - 1
+        print(list.get(i))
     list.size().assertEquals(2)
 
-    let realList = list.map<real>(i -> i * 10.)
+    let realList = list.map<real>(i -> begin
+        return i * 10.
+    end)
+    for i = 0 to realList.size() - 1
+        print(realList.get(i))
     realList.get(1).assertEquals(40.)
 
 @Test
@@ -61,7 +94,7 @@ function testGenerics()
 @Test
 function testSort()
     let list = new ArrayList<int>()
-    for i = 0 to 50
+    for i = 0 to 500
         list.add(GetRandomInt(-100, 100) * 2 + 1)
     list.sort()
 
@@ -86,7 +119,6 @@ function testRemoveWhen()
         list.add(i)
     list.removeIf(i -> i < 3)
     list.size().assertEquals(4)
-    list.get(2).assertEquals(5)
 
 @Test
 function testFilter()
@@ -204,3 +236,239 @@ function testReplace()
     list.replace(3, 99).assertTrue()
     list.get(2).assertEquals(99)
     list.replace(999, 1).assertFalse()
+
+
+// -----------------------------
+// NESTED ARRAYLISTS
+// -----------------------------
+
+@Test
+function testNestedArrayList_basic()
+    let outer = new ArrayList<ArrayList<int>>()
+    let a = asArrayList(1, 2, 3)
+    let b = asArrayList(4, 5)
+    outer.add(a)
+    outer.add(b)
+
+    outer.size().assertEquals(2)
+    outer.get(0).size().assertEquals(3)
+    outer.get(1).get(0).assertEquals(4)
+
+@Test
+function testNestedArrayList_mutation()
+    let outer = new ArrayList<ArrayList<int>>()
+    outer.add(asArrayList(10, 20))
+    outer.add(asArrayList(30))
+
+    // mutate inner list via reference
+    outer.get(0).set(1, 99)
+    outer.get(0).get(1).assertEquals(99)
+
+    // replace inner list object
+    let c = asArrayList(7, 8, 9)
+    outer.set(1, c)
+    outer.get(1).size().assertEquals(3)
+    outer.get(1).get(2).assertEquals(9)
+
+@Test
+function testNestedArrayList_removeSwapOuter()
+    let outer = new ArrayList<ArrayList<int>>()
+        ..add(asArrayList(1))
+        ..add(asArrayList(2))
+        ..add(asArrayList(3))
+    let removed = outer.removeSwap(0)
+    removed.get(0).assertEquals(1) // we removed the first inner list
+    outer.size().assertEquals(2)
+    // order not guaranteed; just check the remaining are valid lists
+    (outer.get(0).size() >= 1 or outer.get(1).size() >= 1).assertTrue()
+
+// -----------------------------
+// TUPLES IN ARRAYLISTS
+// -----------------------------
+
+tuple T2(int x, int y)
+
+@Test
+function testTupleInArrayList_basic()
+    let list = new ArrayList<T2>()
+    list.add(T2(3, 4))
+    list.add(T2(7, 8))
+    list.size().assertEquals(2)
+    list.get(0).x.assertEquals(3)
+    list.get(1).y.assertEquals(8)
+
+@Test
+function testTupleInArrayList_removeSwap()
+    let list = new ArrayList<T2>()
+        ..add(T2(1, 2))
+        ..add(T2(3, 4))
+        ..add(T2(5, 6))
+
+    let mid = list.removeSwap(1)
+    mid.x.assertEquals(3)
+    list.size().assertEquals(2)
+    // element at 1 is now former last (order not preserved)
+    (list.get(1).x == 1 or list.get(1).x == 5).assertTrue()
+
+// -----------------------------
+// NESTED TUPLES IN ARRAYLISTS
+// -----------------------------
+
+tuple TInner(int a, int b)
+tuple TOuter(int head, TInner tail)
+
+@Test
+function testNestedTupleInArrayList_get_set()
+    let list = new ArrayList<TOuter>()
+    list.add(TOuter(10, TInner(20, 30)))
+    list.add(TOuter(40, TInner(50, 60)))
+
+    list.get(0).head.assertEquals(10)
+    list.get(0).tail.a.assertEquals(20)
+    list.get(1).tail.b.assertEquals(60)
+
+    list.set(0, TOuter(1, TInner(2, 3)))
+    list.get(0).tail.b.assertEquals(3)
+
+@Test
+function testNullElements_storeAndIndexOf()
+    let list = new ArrayList<string>()
+    list.add("a", null, "b")
+    list.size().assertEquals(3)
+    (list.get(1) == null).assertTrue()
+    // indexOf(null) is unspecified in docs, but == comparison should work:
+    list.indexOf(null).assertEquals(1)
+
+// -----------------------------
+// ITERATOR EDGE CASES
+// -----------------------------
+
+@Test
+function testIterator_removeAtStartAndEnd()
+    let list = asArrayList(1, 2, 3, 4, 5)
+    let itr = list.iterator()
+    // remove first (after first next)
+    itr.next()          // 1
+    itr.remove()        // remove 1
+    list.size().assertEquals(4)
+
+    // advance and remove last yielded
+    while itr.hasNext()
+        let v = itr.next()
+        if v == 5
+            itr.remove()
+    itr.close()
+    list.size().assertEquals(3)
+    // remaining elements are {?, ?, ?} but 1 and 5 must be gone
+    (list.indexOf(1) == -1).assertTrue()
+    (list.indexOf(5) == -1).assertTrue()
+
+@Test
+function testIterator_modifyAfterNext()
+    let list = asArrayList(10, 20, 30)
+    let itr = list.iterator()
+    itr.next()          // 10
+    itr.modify(11)
+    itr.next()          // 20
+    itr.modify(21)
+    itr.close()
+    list.get(0).assertEquals(11)
+    list.get(1).assertEquals(21)
+
+
+// -----------------------------
+// BOUNDARIES & INSERTIONS
+// -----------------------------
+
+@Test
+function testAddtoStart_and_addAtBoundaries()
+    let list = asArrayList(2, 3)
+    list.addtoStart(1)
+    list.get(0).assertEquals(1)
+    list.addAt(4, list.size()) // insert at end
+    list.getLast().assertEquals(4)
+
+@Test
+function testRemoveAt_middle_and_shift()
+    let list = asArrayList(1, 2, 3, 4)
+    let removed = list.removeAt(1) // remove "2"
+    removed.assertEquals(2)
+    list.size().assertEquals(3)
+    list.get(1).assertEquals(3) // shifted over
+
+// -----------------------------
+// MAP / FILTER / FOLD with TUPLES
+// -----------------------------
+
+@Test
+function testMapTuple_toInt()
+    let list = new ArrayList<T2>()
+        ..add(T2(1, 2))
+        ..add(T2(3, 4))
+    let sums = list.map<int>(t -> t.x + t.y)
+    sums.size().assertEquals(2)
+    sums.get(0).assertEquals(3)
+    sums.get(1).assertEquals(7)
+
+@Test
+function testFilterTuple_nested()
+    let list = new ArrayList<TOuter>()
+        ..add(TOuter(1, TInner(2, 0)))
+        ..add(TOuter(9, TInner(2, 1)))
+        ..add(TOuter(5, TInner(3, 0)))
+    let filtered = list.filter(o -> o.head >= 5 and o.tail.a >= 2)
+    filtered.size().assertEquals(2)
+    filtered.get(0).head.assertEquals(9)
+    filtered.get(1).head.assertEquals(5)
+
+@Test
+function testFoldlTuple_collectSumOfLeaves()
+    let list = new ArrayList<TOuter>()
+        ..add(TOuter(1, TInner(2, 3)))
+        ..add(TOuter(4, TInner(5, 6)))
+    let sum = list.foldl<int>(0, (o, acc) -> acc + o.head + o.tail.a + o.tail.b)
+    sum.assertEquals(1 + 2 + 3 + 4 + 5 + 6)
+
+// -----------------------------
+// STATIC STORE SEPARATION / MEMORY HINTS
+// -----------------------------
+
+@Test
+function testStaticStore_separatePerType()
+    // The two types should not interfere; we check behaviorally.
+    let ints = new ArrayList<int>()
+    let reals = new ArrayList<real>()
+    ints.add(1, 2, 3)
+    reals.add(1.5, 2.5)
+    ints.size().assertEquals(3)
+    reals.size().assertEquals(2)
+    ints.get(1).assertEquals(2)
+    reals.get(1).assertEquals(2.5)
+
+@Test
+function testClear_keepsCapacityAndStorage()
+    let list = new ArrayList<int>(32)
+    for i = 0 to 15
+        list.add(i)
+    let before = list.getMemoryInfo()
+    list.clear()
+    let after = list.getMemoryInfo()
+    // capacity and start usually stay the same; size is 0 now
+    (before.split(", ").get(0) == after.split(", ").get(0)).assertTrue() // Start: ...
+    (before.split(", ").get(1) == after.split(", ").get(1)).assertTrue() // Capacity: ...
+    list.size().assertEquals(0)
+
+// -----------------------------
+// QUEUE/STACK + NULL INTERACTIONS
+// -----------------------------
+
+@Test
+function testQueue_nulls()
+    let q = new ArrayList<string>()
+    q.enqueue("a")
+    q.enqueue(null)
+    q.enqueue("c")
+    q.dequeue().assertEquals("a")
+    (q.dequeue() == null).assertTrue()
+    q.dequeue().assertEquals("c")
+

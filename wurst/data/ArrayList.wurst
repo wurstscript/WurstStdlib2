@@ -6,91 +6,87 @@ import Printing
 import Real
 
 /**
- * High-performance array-based list implementation using a static shared store.
+ * High-performance array-based list using static shared storage per type.
+ * In most cases, a LinkedList is a better choice due to its flexibility.
+ * This data structure is only recommended for performance-critical code
+ * and requires careful use to avoid fragmentation.
  *
- * WHEN TO USE ArrayList vs LinkedList:
- * ====================================
+ * WHEN TO USE:
+ * ===========
+ * ArrayList is faster than LinkedList for:
+ * - Iterating large lists (1000+ elements) - no node indirection
+ * - Index based operations - O(1) vs O(n)
+ * - When only appending elements to the end
  *
- * ArrayList shines in these specific cases:
- * 1. Iterating over large lists (hundreds+ elements) - no node indirection overhead
- * 2. Adding many elements in tight loops - reduced allocation/deallocation churn
- * 3. Random access patterns - O(1) get/set operations
- * 4. Memory-sensitive scenarios where node overhead matters
+ * LinkedList is better for:
+ * - Insertion anywhere except the end of the list
+ * - Deletions while retaining order
+ * - Unknown size requirements
+ * - No resize performance risk
  *
- * Use LinkedList when you need:
- * - Frequent insertions/deletions in middle of list
- * - Flexibility without preallocating capacity
- * - No risk of costly resize operations
- * - Simpler memory management
+ * TYPE SYSTEM IMPLICATIONS:
+ * ========================
+ * Each ArrayList<T> type gets its own static storage array.
+ * - ArrayList<int>, ArrayList<unit>, ArrayList<string> = 3 separate arrays
+ * - Each type can hold up to JASS_MAX_ARRAY_SIZE elements total across all instances
  *
- * CRITICAL PERFORMANCE CONSIDERATIONS:
- * ====================================
+ * Choose wisely based on how many types you have.
  *
- * ⚠️ PRESIZE YOUR LISTS! ⚠️
- * The single most important thing: estimate your maximum size and add headroom.
- * Example: new ArrayList<int>(200) if you expect ~150 elements max
+ * PERFORMANCE RULES:
+ * ==================
  *
- * Why? If the list resizes, ALL elements are copied to a new memory location,
- * negating any performance advantage over LinkedList!
+ * 1. PRESIZE, DON'T RESIZE
+ *    Bad:  new ArrayList<int>()           // Might resize multiple times
+ *    Good: new ArrayList<int>(maxSize)    // One allocation
  *
- * PERFORMANCE COMPARISON TABLE:
- * ============================
+ *    Why: Resize operations copy ALL elements to new memory. Expensive!
  *
- * Operation          | ArrayList      | LinkedList     | Notes
- * -------------------|----------------|----------------|---------------------------
- * Add to end         | O(1)*          | O(1)           | *O(n) on resize!
- * Add to start       | O(n)           | O(1)           | ArrayList shifts all elements
- * Insert at index    | O(n)           | O(n)           | Both require traversal
- * Remove (ordered)   | O(n)           | O(1)           | ArrayList shifts elements
- * Remove (unordered) | O(1)           | O(1)           | Use removeSwap() for ArrayList
- * Get by index       | O(1)           | O(n)           | ArrayList major advantage
- * Iterate all        | Fast           | Slower         | ArrayList: cache-friendly, no indirection
- * Search             | O(n)           | O(n)           | Same, but ArrayList faster due to cache
- * Create/Destroy     | Medium cost    | High cost      | ArrayList: 1 alloc, LinkedList: n allocs
- * Memory overhead    | Low            | High           | LinkedList: 2 pointers per element
+ * 2. REUSE, DON'T RECREATE
+ *    Bad:  In loop `let temp = new ArrayList<int>() ... destroy temp`
+ *    Good: `let temp = new ArrayList<int>() ... temp.clear()` in loop
  *
- * COMMON PITFALLS:
- * ===============
+ *    Why: Allocation/Deallocation is moderately expensive and causes fragmentation
  *
- * 1. NOT PRESIZING
- *    Bad:  let list = new ArrayList<int>()  // Will resize multiple times!
- *    Good: let list = new ArrayList<int>(estimatedMaxSize + headroom)
+ * 3. ORDERED REMOVAL IS SLOW
+ *    Bad:  list.removeAt(i)           // O(n) - shifts all elements
+ *    Good: list.removeSwap(i)         // O(1) - swaps with last element
  *
- * 2. CREATING MANY TEMPORARY LISTS
- *    Bad:  In a loop: let temp = new ArrayList<int>() ... destroy temp
- *    Good: Create once, reuse with clear(): temp.clear()
+ *    Only use removeSwap() if order doesn't matter
  *
- * 3. ORDERED REMOVAL IN LOOPS
- *    Bad:  for i in list: list.remove(x)  // O(n²) with shifting!
- *    Good: Use removeIf() or removeSwap() if order doesn't matter
+ * 4. ITERATORS ALLOCATE
+ *    Bad:  for elem in list: process(elem)           // Allocates iterator
+ *    Good: for i = 0 to list.size()-1                // Zero allocation
  *
- * 4. USING FOR-IN WHEN NOT NEEDED
- *    Bad:  for elem in list: doSomething(elem)  // Creates iterator
- *    Good: for i = 0 to list.size() - 1: doSomething(list.get(i))  // No allocation
+ *    Use iterators for convenience, index loops for performance
  *
- * 5. FREQUENT INSERTIONS AT START
- *    Bad:  Repeatedly using addtoStart() - O(n) every time!
- *    Good: Use LinkedList, or collect and add in reverse order
+ * 5. AVOID FREQUENT INSERTS AT START
+ *    Bad:  list.addtoStart(x)         // O(n) every time
+ *    Good: Use LinkedList or add in reverse order
  *
- * BEST PRACTICES:
- * ==============
- *
- * ✓ Estimate capacity: measure actual usage, then add 20-30% headroom
- * ✓ Reuse lists: clear() and reuse instead of destroy/create
- * ✓ Use removeSwap() when order doesn't matter (O(1) vs O(n))
- * ✓ Prefer index loops over for-in loops for hot paths
- * ✓ Profile your code: only use ArrayList where it actually helps!
+ * PERFORMANCE TABLE:
+ * ==================
+ * Operation          | ArrayList | LinkedList | Notes
+ * -------------------|-----------|------------|---------------------------
+ * add(elem)          | O(1)*     | O(1)       | *O(n) on resize!
+ * addtoStart(elem)   | O(n)      | O(1)       | Shifts all elements
+ * get(index)         | O(1)      | O(n)       | Major ArrayList advantage
+ * removeAt(index)    | O(n)      | O(1)       | Shifts remaining elements
+ * removeSwap(index)  | O(1)      | N/A        | Doesn't preserve order
+ * Iterate all        | Faster    | Fast       | LinkedList does double the work, but is still fast
+ * Memory per element | 1 slot    | 3 slots    | Element + 2 pointers
+ * Create/destroy     | Varies    | High       | AL might need memory management, LL needs to process Nodes
  *
  * MEMORY MANAGEMENT:
- * =================
+ * ==================
+ * ArrayList uses section allocation in a shared static array per type.
+ * Destroyed lists return sections to a free pool for reuse.
+ * Free sections are compacted to reduce fragmentation.
  *
- * ArrayList uses a shared static array store with section allocation.
- * Destroyed lists return their sections to a free pool for reuse.
- * The system automatically compacts fragmented free sections.
+ * Fragmentation occurs when lists grow - the old section becomes a gap.
+ * This is why presizing matters: growth = copy to new location = wasted space.
  *
- * Warning: The static store has a hard limit (JASS_MAX_ARRAY_SIZE).
- * If you create many large lists simultaneously, you may exhaust it.
- */
+ * Hard limit: JASS_MAX_ARRAY_SIZE total slots per type across all instances.
+ **/
 public class ArrayList<T:>
     private static T array store
     private static int nextFreeIndex = 0
@@ -478,7 +474,7 @@ public class ArrayList<T:>
         destroy f
 
     /** Returns the list obtained by applying the given closure to each element */
-    function map<Q>(MapClosure<T, Q> itr) returns ArrayList<Q>
+    function map<Q:>(MapClosure<T, Q> itr) returns ArrayList<Q>
         let output = new ArrayList<Q>(size)
         forEach(t -> output.add(itr.run(t)))
         destroy itr
@@ -495,7 +491,7 @@ public class ArrayList<T:>
         return result
 
     /** Folds this list into a single value of type Q */
-    function foldl<Q>(Q startValue, FoldClosure<T, Q> predicate) returns Q
+    function foldl<Q:>(Q startValue, FoldClosure<T, Q> predicate) returns Q
         var result = startValue
         for i = 0 to size - 1
             result = predicate.run(store[startIndex + i], result)
@@ -589,7 +585,7 @@ public class ArrayList<T:>
 // UTILITY FUNCTIONS
 // ============================================================================
 
-public function asArrayList<T>(vararg T ts) returns ArrayList<T>
+public function asArrayList<T:>(vararg T ts) returns ArrayList<T>
     let al = new ArrayList<T>()
     for t in ts
         al.add(t)
@@ -600,7 +596,7 @@ public function asArrayList<T>(vararg T ts) returns ArrayList<T>
 // ============================================================================
 
 /** Iterator for ArrayList - NOTE: Allocates an object, prefer index loops in hot paths! */
-public class ALIterator<T>
+public class ALIterator<T:>
     private ArrayList<T> parent
     private int currentIndex
     private bool destroyOnClose = true
@@ -637,7 +633,7 @@ public class ALIterator<T>
         if not canRemove or currentIndex < 0
             return null
 
-        let removed = parent.removeAt(currentIndex)
+        let removed = parent.removeSwap(currentIndex)
         currentIndex--
         canRemove = false
         return removed
@@ -655,19 +651,19 @@ public class ALIterator<T>
 // INTERFACES
 // ============================================================================
 
-public interface ArrayListPredicate<T>
+public interface ArrayListPredicate<T:>
     function isTrueFor(T t) returns boolean
 
-public interface ALItrClosure<T>
+public interface ALItrClosure<T:>
     function run(T t)
 
-public interface ArrayListUpdater<T>
+public interface ArrayListUpdater<T:>
     function update(T t) returns T
 
-public interface MapClosure<T, Q>
+public interface MapClosure<T:, Q:>
     function run(T t) returns Q
 
-public interface FoldClosure<T, Q>
+public interface FoldClosure<T:, Q:>
     function run(T t, Q q) returns Q
 
 public interface Comparator<T:>
