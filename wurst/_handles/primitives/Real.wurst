@@ -97,3 +97,27 @@ public function real.lerp(real target, real alpha) returns real
 /** Checks if this real is between low and high value */
 public function real.isBetween(real low, real high) returns bool
 	return this >= low and this <= high
+
+/** Clamps to [0,1] */
+public function real.saturate() returns real
+	return this.clamp(0., 1.)
+
+/** t in [0,1] such that mix(a,b,t) == this (clamped) */
+public function real.inverseLerp(real a, real b) returns real
+	if a == b
+		return 0.
+	return ((this - a) / (b - a)).saturate()
+
+/** Smoothstep from edge0 to edge1 */
+public function real.smoothstep(real edge0, real edge1) returns real
+	if edge0 == edge1
+		return 0.
+	let t = ((this - edge0) / (edge1 - edge0)).saturate()
+	return t * t * (3. - 2. * t)
+
+/** Smootherstep from edge0 to edge1 */
+public function real.smootherstep(real edge0, real edge1) returns real
+	if edge0 == edge1
+		return 0.
+	let t = ((this - edge0) / (edge1 - edge0)).saturate()
+	return t * t * t * (t * (t * 6. - 15.) + 10.)

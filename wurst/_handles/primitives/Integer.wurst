@@ -63,3 +63,18 @@ public function int.isOdd() returns boolean
 /** Checks whether this int is even. */
 public function int.isEven() returns boolean
 	return not this.isOdd()
+
+/** Moves this towards target by at most maxStep (never overshoots) */
+public function int.approach(int target, int maxStep) returns int
+	if this < target
+		return (this + maxStep) <= target ? this + maxStep : target
+	if this > target
+		return (this - maxStep) >= target ? this - maxStep : target
+	return this
+
+/** Wraps this into [0, length-1] for cyclic indexing (length<=0 -> 0) */
+public function int.wrapIndex(int length) returns int
+	if length <= 0
+		return 0
+	let r = this mod length
+	return r < 0 ? r + length : r
