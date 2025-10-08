@@ -32,7 +32,7 @@ public function int.toString() returns string
 /** Returns this int to the power of the argument int */
 public function int.pow(int x) returns int
 	int result = 1
-	for int i=1 to x
+	for int i = 1 to x
 		result *= this
 	return result
 
@@ -72,7 +72,7 @@ public function int.approach(int target, int maxStep) returns int
 		return (this - maxStep) >= target ? this - maxStep : target
 	return this
 
-/** Wraps this into [0, length-1] for cyclic indexing (length<=0 -> 0) */
+/** Wraps this into [0, length-1] for cyclic indexing (length <= 0 -> 0) */
 public function int.wrapIndex(int length) returns int
 	if length <= 0
 		return 0

@@ -20,9 +20,10 @@ public function boolean.toInt() returns int
 public function int.toBool() returns boolean
 	return this != 0
 
-
+/** Returns true if exactly one of the arguments is true */
 public function xor(bool a, bool b) returns boolean
 	return (a or b) and not (a and b)
 
+/** Returns true if exactly one of the arguments is true */
 public function boolean.xor(bool other) returns boolean
 	return xor(this, other)
