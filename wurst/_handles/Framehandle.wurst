@@ -46,8 +46,9 @@ import ErrorHandling
 		ORIGIN_FRAME_UNIT_MSG                   --> Frame of the UpKeep change warning message, below the clock
 */
 
-public constant GAME_UI  = BlzGetOriginFrame(ORIGIN_FRAME_GAME_UI, 0)
-public constant WORLD_UI = BlzGetOriginFrame(ORIGIN_FRAME_WORLD_FRAME, 0)
+public constant GAME_UI    = BlzGetOriginFrame(ORIGIN_FRAME_GAME_UI, 0)
+public constant WORLD_UI   = BlzGetOriginFrame(ORIGIN_FRAME_WORLD_FRAME, 0)
+public constant CONSOLE_UI = BlzGetFrameByName("ConsoleUIBackdrop", 0)
 
 public constant SCREEN_CENTER             = vec2(0.4, 0.3)
 public constant SCREEN_TOPRIGHT           = vec2(0.8, 0.6)
