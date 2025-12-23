@@ -1,11 +1,12 @@
 package Reference
+import NoWurst
 
 /**
 	A simple wrapper class which contains a reference to a value of the given type.
 	The main usage is to wrap primitives to modify them inside closures.
 
 	> function limited_sum(LinkedList someList) returns real
-	> 	let dist_ref = new Reference(0.)
+	> 	let dist_ref = reference(0.)
 	> 	someList.for_each() (real elem) ->
 	> 		if dist_ref.val < 500
 	> 			dist_ref.val += elem
@@ -25,3 +26,6 @@ public class Reference<T:>
 		let val = this.val
 		destroy this
 		return val
+
+public function reference<T:>(T val) returns Reference<T>
+	return new Reference<T>(val)
