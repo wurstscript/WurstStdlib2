@@ -134,6 +134,17 @@ function testIMRemoveValue()
 	map.hasKey(3).assertEquals(false)
 
 @Test
+function testIMRemoveValueSingle()
+	let map = new IterableMap<int, int>
+		..put(5, 1)
+		..put(8, 3)
+		..put(6, 1)
+
+	map.removeValue(1, false)
+	map.hasKey(5).assertEquals(false)
+	map.hasKey(6).assertEquals(true)
+
+@Test
 function testIMAddAll()
 	let map = new IterableMap<int, int>
 		..put(5, 1)
