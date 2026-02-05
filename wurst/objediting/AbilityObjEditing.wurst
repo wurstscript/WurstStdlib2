@@ -16284,3 +16284,28 @@ public class AbilityDefinitionSunderingBlades extends AbilityDefinition
 
 	function hasStackingType(StackingType stackingType) returns boolean
 		return armorTypes.get(stackingType castTo int)
+
+public class AbilityDefinitionItemChainLightning extends AbilityDefinition
+	construct(int newAbilityId)
+		super(newAbilityId, AbilityIds.chainLightning)
+
+	function setDamageperTarget(int level, real value)
+		def.setLvlDataUnreal("Ocl1", level, 1, value)
+
+	function presetDamageperTarget(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Ocl1", lvls, 1, lc)
+		addTooltipProperty("Damage per Target", lc)
+
+	function setNumberofTargetsHit(int level, int value)
+		def.setLvlDataInt("Ocl2", level, 2, value)
+
+	function presetNumberofTargetsHit(IntLevelClosure lc)
+		def.setLevelsDataInt("Ocl2", lvls, 2, lc)
+		addTooltipProperty("Number of Targets Hit", lc)
+
+	function setDamageReductionperTarget(int level, real value)
+		def.setLvlDataUnreal("Ocl3", level, 3, value)
+
+	function presetDamageReductionperTarget(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Ocl3", lvls, 3, lc)
+		addTooltipProperty("Damage Reduction per Target", lc)

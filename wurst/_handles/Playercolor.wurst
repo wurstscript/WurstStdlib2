@@ -72,19 +72,19 @@ public function playercolor.getPlayers() returns force
 	return matchingPlayers
 
 
-@test public function testToInt()
+@Test public function testToInt()
 	PLAYER_COLOR_RED.toInt().assertEquals(0)
 	PLAYER_COLOR_PEANUT.toInt().assertEquals(23)
 
-@test public function testToPlayerColor()
+@Test public function testToPlayerColor()
 	assertTrue((0).toPlayerColor() == PLAYER_COLOR_RED)
 	assertTrue((23).toPlayerColor() == PLAYER_COLOR_PEANUT)
 
-@test public function testGetPlayer()
+@Test public function testGetPlayer()
 	assertTrue(PLAYER_COLOR_RED.getPlayer() == Player(0))
 	assertTrue(PLAYER_COLOR_PEANUT.getPlayer() == Player(23))
 
-@test public function testGetPlayers()
+@Test public function testGetPlayers()
 	// Test some Player package methods that this file depends on
 	(players[0] != null).assertTrue()
 	players[0].setColor(PLAYER_COLOR_RED)
