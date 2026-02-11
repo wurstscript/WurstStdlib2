@@ -33,8 +33,25 @@ public function force.enumAllies(player whichPlayer, boolexpr filter)
 public function force.enumEnemies(player whichPlayer, boolexpr filter)
 	ForceEnumEnemies(this, whichPlayer, filter)
 
+/** Use with GetEnumPlayer() */
 public function force.forEach(code callback)
 	ForForce(this, callback)
+
+ForceCallback array cbStack
+int stackSize = 0
+public interface ForceCallback
+	function run(player p)
+
+/** Use with GetEnumPlayer() */
+public function force.forEach(ForceCallback callback)
+	stackSize++
+	cbStack[stackSize] = callback
+	ForForce(this, () -> begin
+		cbStack[stackSize].run(GetEnumPlayer())
+	end)
+	destroy cbStack[stackSize]
+	cbStack[stackSize] = null
+	stackSize--
 
 public function force.getRandomPlayer() returns player
 	return ForcePickRandomPlayer(this)
@@ -48,7 +65,7 @@ public function force.containsPlayer(player whichPlayer) returns boolean
 /* Force iterator */
 force iterForce
 
-/** Creates a new iterator for this group. */
+/** Creates a new unordered iterator for this group. */
 public function force.iterator() returns force
 	iterForce = CreateForce()
 	ForForce(this, () -> iterForce.addPlayer(GetEnumPlayer()))
