@@ -184,10 +184,10 @@ public abstract class EventListener
 	static function generalEventCallback()
 		let trigUnit = GetTriggerUnit()
 		let id = GetTriggerEventId().toIntId()
-		let index = trigUnit.getIndex()
 		// Unit Listeners
-		if trigUnit != null and fireEvents(trigUnit) and index > 0
-			if unitListenersFirsts[index] != null
+		if trigUnit != null
+			let index = trigUnit.getIndex()
+			if fireEvents(trigUnit) and index > 0 and unitListenersFirsts[index] != null
 				var listener = unitListenersFirsts[index]
 				while listener != null
 					let nextListener = listener.next
