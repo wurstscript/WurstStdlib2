@@ -76,7 +76,8 @@ public abstract class OnCastListener
 			else if prev != null
 				prev.next = next
 
-		next.prev = prev
+		if next != null
+			next.prev = prev
 
 		next = null
 		prev = null
@@ -172,9 +173,10 @@ public abstract class EventListener
 				listener.next = castMapCasters[index]
 			castMapCasters[index] = listener
 		else
-			if castMap.has(abilId)
-				castMap.get(abilId).prev = listener
-				listener.next = castMap.get(abilId)
+			let entry = castMap.get(abilId)
+			if entry != null
+				entry.prev = listener
+				listener.next = entry
 
 			castMap.put(abilId, listener)
 		return listener
@@ -183,9 +185,10 @@ public abstract class EventListener
 		let trigUnit = GetTriggerUnit()
 		let id = GetTriggerEventId().toIntId()
 		// Unit Listeners
-		if trigUnit != null and fireEvents(trigUnit) and trigUnit.getIndex() > 0
-			if unitListenersFirsts[trigUnit.getIndex()] != null
-				var listener = unitListenersFirsts[trigUnit.getIndex()]
+		if trigUnit != null
+			let index = trigUnit.getIndex()
+			if fireEvents(trigUnit) and index > 0 and unitListenersFirsts[index] != null
+				var listener = unitListenersFirsts[index]
 				while listener != null
 					let nextListener = listener.next
 					if listener.eventId == id
