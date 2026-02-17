@@ -130,9 +130,11 @@ class GroupIterator
 		return u
 
 	function close()
+		destroy this
+
+	ondestroy
 		g.clear()
 		g.destr()
-		destroy this
 
 /** Creates a new iterator for this group. */
 public function group.iterator() returns GroupIterator
