@@ -111,14 +111,32 @@ public function group.get(int index) returns unit
 	return BlzGroupUnitAt(this, index)
 
 /* Group iterator */
+class GroupIterator
+	private group g
+	private int i = 0
+	private int n = 0
 
-group iterGroup
+	construct(group source)
+		g = CreateGroup()
+		g.add(source)
+		n = g.size()
+
+	function hasNext() returns bool
+		return i < n
+
+	function next() returns unit
+		let u = g.get(i)
+		i += 1
+		return u
+
+	function close()
+		g.clear()
+		g.destr()
+		destroy this
 
 /** Creates a new iterator for this group. */
-public function group.iterator() returns group
-	iterGroup = CreateGroup()
-	iterGroup.add(this)
-	return iterGroup
+public function group.iterator() returns GroupIterator
+	return new GroupIterator(this)
 
 /** Returns whether the iterator has the next item */
 public function group.hasNext() returns bool
