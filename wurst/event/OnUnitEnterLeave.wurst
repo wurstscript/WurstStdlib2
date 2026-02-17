@@ -77,7 +77,9 @@ init
 
 		// Process preplaced units
 		preplacedUnits.enumUnitsInRect(boundRect)
-		ForGroup(preplacedUnits, () -> prepareUnit(GetEnumUnit()))
+		let count = preplacedUnits.size()
+		for i = 0 to count - 1
+			prepareUnit(preplacedUnits.get(i))
 		preplacedUnits..clear()..destr()
 
 @compiletime function generateAbility()

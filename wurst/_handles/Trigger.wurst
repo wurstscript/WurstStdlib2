@@ -76,7 +76,8 @@ public function trigger.getExecCount() returns int
 	return GetTriggerExecCount(this)
 
 public function trigger.registerAnyUnitEvent(playerunitevent whichEvent)
-	TriggerRegisterAnyUnitEventBJ(this, whichEvent)
+	for i = 0 to bj_MAX_PLAYER_SLOTS - 1
+		TriggerRegisterPlayerUnitEvent(this, Player(i), whichEvent, null)
 
 public function trigger.registerDeathEvent(widget whichWidget) returns event
 	return TriggerRegisterDeathEvent(this, whichWidget)
