@@ -37,6 +37,8 @@ function popUnit()
 
 /** Returns the unit that caused the enter/leave event to happen */
 public function getEnterLeaveUnit() returns unit
+	if tempUnitsCount <= 0
+		return null
 	return tempUnits[tempUnitsCount - 1]
 
 /** Adds a callback that is run when a unit enters the map */
