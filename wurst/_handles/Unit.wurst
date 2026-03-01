@@ -233,7 +233,6 @@ public function unit.getMissingHP() returns real
 public function unit.getMissingMana() returns real
 	return this.getMaxMana() - this.getMana()
 
-
 public function unit.getMoveSpeed() returns real
 	return GetUnitMoveSpeed(this)
 
@@ -936,3 +935,130 @@ public function unit.setFieldWeapon(unitweaponrealfield field, int weaponIndex, 
 
 public function unit.setFieldWeapon(unitweaponstringfield field, int weaponIndex, string value) returns bool
 	return BlzSetUnitWeaponStringField(this, field, weaponIndex, value)
+
+public function unit.reviveHeroLoc(location loc, boolean doEyecandy) returns boolean
+	return ReviveHeroLoc(this, loc, doEyecandy)
+
+public function unit.selectUnit(boolean flag)
+	SelectUnit(this, flag)
+
+public function unit.suspendDecay(boolean suspend)
+	UnitSuspendDecay(this, suspend)
+
+public function unit.removeBuffs(boolean removePositive, boolean removeNegative)
+	UnitRemoveBuffs(this, removePositive, removeNegative)
+
+public function unit.removeBuffsEx(boolean removePositive, boolean removeNegative, boolean magic, boolean physical, boolean timedLife, boolean aura, boolean autoDispel)
+	UnitRemoveBuffsEx(this, removePositive, removeNegative, magic, physical, timedLife, aura, autoDispel)
+
+public function unit.hasBuffsEx(boolean removePositive, boolean removeNegative, boolean magic, boolean physical, boolean timedLife, boolean aura, boolean autoDispel) returns boolean
+	return UnitHasBuffsEx(this, removePositive, removeNegative, magic, physical, timedLife, aura, autoDispel)
+
+public function unit.countBuffsEx(boolean removePositive, boolean removeNegative, boolean magic, boolean physical, boolean timedLife, boolean aura, boolean autoDispel) returns integer
+	return UnitCountBuffsEx(this, removePositive, removeNegative, magic, physical, timedLife, aura, autoDispel)
+
+public function unit.addSleep(boolean add)
+	UnitAddSleep(this, add)
+
+public function unit.addSleepPerm(boolean add)
+	UnitAddSleepPerm(this, add)
+
+public function unit.ignoreAlarm(boolean flag) returns boolean
+	return UnitIgnoreAlarm(this, flag)
+
+public function unit.setConstructionProgress(integer constructionPercentage)
+	UnitSetConstructionProgress(this, constructionPercentage)
+
+public function unit.setUpgradeProgress(integer upgradePercentage)
+	UnitSetUpgradeProgress(this, upgradePercentage)
+
+public function unit.pauseTimedLife(boolean flag)
+	UnitPauseTimedLife(this, flag)
+
+public function unit.setUsesAltIcon(boolean flag)
+	UnitSetUsesAltIcon(this, flag)
+
+public function unit.damagePoint(real delay, real radius, real x, real y, real amount, boolean attack, boolean ranged, attacktype attackType, damagetype damageType, weapontype weaponType) returns boolean
+	return UnitDamagePoint(this, delay, radius, x, y, amount, attack, ranged, attackType, damageType, weaponType)
+
+public function unit.issuePointOrderLoc(string order, location whichLocation) returns boolean
+	return IssuePointOrderLoc(this, order, whichLocation)
+
+public function unit.issuePointOrderByIdLoc(integer order, location whichLocation) returns boolean
+	return IssuePointOrderByIdLoc(this, order, whichLocation)
+
+public function unit.issueInstantPointOrder(string order, real x, real y, widget instantTargetWidget) returns boolean
+	return IssueInstantPointOrder(this, order, x, y, instantTargetWidget)
+
+public function unit.issueInstantPointOrderById(integer order, real x, real y, widget instantTargetWidget) returns boolean
+	return IssueInstantPointOrderById(this, order, x, y, instantTargetWidget)
+
+public function unit.issueInstantTargetOrder(string order, widget targetWidget, widget instantTargetWidget) returns boolean
+	return IssueInstantTargetOrder(this, order, targetWidget, instantTargetWidget)
+
+public function unit.issueInstantTargetOrderById(integer order, widget targetWidget, widget instantTargetWidget) returns boolean
+	return IssueInstantTargetOrderById(this, order, targetWidget, instantTargetWidget)
+
+public function unit.issueBuildOrder(string unitToBuild, real x, real y) returns boolean
+	return IssueBuildOrder(this, unitToBuild, x, y)
+
+public function unit.issueBuildOrderById(integer unitId, real x, real y) returns boolean
+	return IssueBuildOrderById(this, unitId, x, y)
+
+public function unit.setResourceAmount(integer amount)
+	SetResourceAmount(this, amount)
+
+public function unit.addResourceAmount(integer amount)
+	AddResourceAmount(this, amount)
+
+public function unit.waygateSetDestination(real x, real y)
+	WaygateSetDestination(this, x, y)
+
+public function unit.waygateActivate(boolean activate)
+	WaygateActivate(this, activate)
+
+public function unit.setItemTypeSlots(integer slots)
+	SetItemTypeSlots(this, slots)
+
+public function unit.addIndicator(integer red, integer green, integer blue, integer alpha)
+	UnitAddIndicator(this, red, green, blue, alpha)
+
+public function unit.createMinimapIconOnUnit(integer red, integer green, integer blue, string pingPath, fogstate fogVisibility) returns minimapicon
+	return CreateMinimapIconOnUnit(this, red, green, blue, pingPath, fogVisibility)
+
+public function unit.setCameraTargetController(real xoffset, real yoffset, boolean inheritOrientation)
+	SetCameraTargetController(this, xoffset, yoffset, inheritOrientation)
+
+public function unit.setCameraOrientController(real xoffset, real yoffset)
+	SetCameraOrientController(this, xoffset, yoffset)
+
+public function unit.setFacingEx(real facingAngle)
+	BlzSetUnitFacingEx(this, facingAngle)
+
+public function unit.setSkin(integer skinId)
+	BlzSetUnitSkin(this, skinId)
+
+public function unit.queueImmediateOrderById(integer order) returns boolean
+	return BlzQueueImmediateOrderById(this, order)
+
+public function unit.queuePointOrderById(integer order, real x, real y) returns boolean
+	return BlzQueuePointOrderById(this, order, x, y)
+
+public function unit.queueTargetOrderById(integer order, widget targetWidget) returns boolean
+	return BlzQueueTargetOrderById(this, order, targetWidget)
+
+public function unit.queueInstantPointOrderById(integer order, real x, real y, widget instantTargetWidget) returns boolean
+	return BlzQueueInstantPointOrderById(this, order, x, y, instantTargetWidget)
+
+public function unit.queueInstantTargetOrderById(integer order, widget targetWidget, widget instantTargetWidget) returns boolean
+	return BlzQueueInstantTargetOrderById(this, order, targetWidget, instantTargetWidget)
+
+public function unit.queueBuildOrderById(integer unitId, real x, real y) returns boolean
+	return BlzQueueBuildOrderById(this, unitId, x, y)
+
+public function unit.clearOrders(boolean onlyQueued)
+	BlzUnitClearOrders(this, onlyQueued)
+
+public function unit.forceStopOrder(boolean clearQueue)
+	BlzUnitForceStopOrder(this, clearQueue)
+

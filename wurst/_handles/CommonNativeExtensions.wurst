@@ -1,0 +1,280 @@
+package CommonNativeExtensions
+import NoWurst
+import Annotations
+import Vectors
+
+public function gametype.setGameTypeSupported(boolean value)
+	SetGameTypeSupported(this, value)
+
+public function mapflag.setMapFlag(boolean value)
+	SetMapFlag(this, value)
+
+public function placement.setGamePlacement()
+	SetGamePlacement(this)
+
+public function gamespeed.setGameSpeed()
+	SetGameSpeed(this)
+
+public function gamedifficulty.setGameDifficulty()
+	SetGameDifficulty(this)
+
+public function mapdensity.setResourceDensity()
+	SetResourceDensity(this)
+
+public function mapdensity.setCreatureDensity()
+	SetCreatureDensity(this)
+
+public function gametype.isGameTypeSupported() returns boolean
+	return IsGameTypeSupported(this)
+
+public function mapflag.isMapFlagSet() returns boolean
+	return IsMapFlagSet(this)
+
+@deprecated("Use vec2.rectFrom(vec2) to avoid location handles.")
+public function location.rectFromLoc(location max) returns rect
+	return RectFromLoc(this, max)
+
+public function vec2.rectFrom(vec2 max) returns rect
+	return Rect(this.x, this.y, max.x, max.y)
+
+public function conditionfunc.destroyCondition()
+	DestroyCondition(this)
+
+public function filterfunc.destroyFilter()
+	DestroyFilter(this)
+
+@deprecated("Use player.hasVisibility(vec2) or vec2.isVisibleToPlayer(player).")
+public function location.isLocationVisibleToPlayer(player whichPlayer) returns boolean
+	return IsLocationVisibleToPlayer(this, whichPlayer)
+
+@deprecated("Use vec2.isFoggedToPlayer(player) to avoid location handles.")
+public function location.isLocationFoggedToPlayer(player whichPlayer) returns boolean
+	return IsLocationFoggedToPlayer(this, whichPlayer)
+
+@deprecated("Use vec2.isMaskedToPlayer(player) to avoid location handles.")
+public function location.isLocationMaskedToPlayer(player whichPlayer) returns boolean
+	return IsLocationMaskedToPlayer(this, whichPlayer)
+
+public function vec2.isVisibleToPlayer(player whichPlayer) returns boolean
+	return IsVisibleToPlayer(this.x, this.y, whichPlayer)
+
+public function vec2.isFoggedToPlayer(player whichPlayer) returns boolean
+	return IsFoggedToPlayer(this.x, this.y, whichPlayer)
+
+public function vec2.isMaskedToPlayer(player whichPlayer) returns boolean
+	return IsMaskedToPlayer(this.x, this.y, whichPlayer)
+
+public function vec2.pingMinimap(real duration)
+	PingMinimap(this.x, this.y, duration)
+
+public function vec2.pingMinimapEx(real duration, integer red, integer green, integer blue, boolean extraEffects)
+	PingMinimapEx(this.x, this.y, duration, red, green, blue, extraEffects)
+
+public function vec2.createMinimapIcon(integer red, integer green, integer blue, string pingPath, fogstate fogVisibility) returns minimapicon
+	return CreateMinimapIcon(this.x, this.y, red, green, blue, pingPath, fogVisibility)
+
+public function vec2.terrainDeformRipple(real radius, real depth, integer duration, integer count, real spaceWaves, real timeWaves, real radiusStartPct, boolean limitNeg) returns terraindeformation
+	return TerrainDeformRipple(this.x, this.y, radius, depth, duration, count, spaceWaves, timeWaves, radiusStartPct, limitNeg)
+
+public function vec2.terrainDeformWave(vec2 direction, real distance, real speed, real radius, real depth, integer trailTime, integer count) returns terraindeformation
+	return TerrainDeformWave(this.x, this.y, direction.x, direction.y, distance, speed, radius, depth, trailTime, count)
+
+public function vec2.terrainDeformRandom(real radius, real minDelta, real maxDelta, integer duration, integer updateInterval) returns terraindeformation
+	return TerrainDeformRandom(this.x, this.y, radius, minDelta, maxDelta, duration, updateInterval)
+
+public function vec2.getTerrainCliffLevel() returns integer
+	return GetTerrainCliffLevel(this.x, this.y)
+
+public function vec2.createUbersplat(string name, integer red, integer green, integer blue, integer alpha, boolean forcePaused, boolean noBirthTime) returns ubersplat
+	return CreateUbersplat(this.x, this.y, name, red, green, blue, alpha, forcePaused, noBirthTime)
+
+public function vec2.isPointBlighted() returns boolean
+	return IsPointBlighted(this.x, this.y)
+
+public function vec2.setDoodadAnimation(real radius, integer doodadID, boolean nearestOnly, string animName, boolean animRandom)
+	SetDoodadAnimation(this.x, this.y, radius, doodadID, nearestOnly, animName, animRandom)
+
+public function version.versionCompatible() returns boolean
+	return VersionCompatible(this)
+
+public function version.versionSupported() returns boolean
+	return VersionSupported(this)
+
+public function race.setCampaignMenuRace()
+	SetCampaignMenuRace(this)
+
+public function fgamestate.setFloatGameState(real value)
+	SetFloatGameState(this, value)
+
+public function fgamestate.getFloatGameState() returns real
+	return GetFloatGameState(this)
+
+public function igamestate.setIntegerGameState(integer value)
+	SetIntegerGameState(this, value)
+
+public function igamestate.getIntegerGameState() returns integer
+	return GetIntegerGameState(this)
+
+public function gamedifficulty.setDefaultDifficulty()
+	SetDefaultDifficulty(this)
+
+public function unitpool.destroyUnitPool()
+	DestroyUnitPool(this)
+
+public function unitpool.unitPoolAddUnitType(integer unitId, real weight)
+	UnitPoolAddUnitType(this, unitId, weight)
+
+public function unitpool.unitPoolRemoveUnitType(integer unitId)
+	UnitPoolRemoveUnitType(this, unitId)
+
+public function unitpool.placeRandomUnit(player forWhichPlayer, real x, real y, real facing) returns unit
+	return PlaceRandomUnit(this, forWhichPlayer, x, y, facing)
+
+public function unitpool.placeRandomUnit(player forWhichPlayer, vec2 pos, real facing) returns unit
+	return PlaceRandomUnit(this, forWhichPlayer, pos.x, pos.y, facing)
+
+public function itempool.destroyItemPool()
+	DestroyItemPool(this)
+
+public function itempool.itemPoolAddItemType(integer itemId, real weight)
+	ItemPoolAddItemType(this, itemId, weight)
+
+public function itempool.itemPoolRemoveItemType(integer itemId)
+	ItemPoolRemoveItemType(this, itemId)
+
+public function itempool.placeRandomItem(real x, real y) returns item
+	return PlaceRandomItem(this, x, y)
+
+public function itempool.placeRandomItem(vec2 pos) returns item
+	return PlaceRandomItem(this, pos.x, pos.y)
+
+public function itemtype.chooseRandomItemEx(integer level) returns integer
+	return ChooseRandomItemEx(this, level)
+
+@deprecated("Use vec2.createMinimapIcon(...) to avoid location handles.")
+public function location.createMinimapIconAtLoc(integer red, integer green, integer blue, string pingPath, fogstate fogVisibility) returns minimapicon
+	return CreateMinimapIconAtLoc(this, red, green, blue, pingPath, fogVisibility)
+
+public function minimapicon.destroyMinimapIcon()
+	DestroyMinimapIcon(this)
+
+public function minimapicon.setMinimapIconVisible(boolean visible)
+	SetMinimapIconVisible(this, visible)
+
+public function minimapicon.setMinimapIconOrphanDestroy(boolean doDestroy)
+	SetMinimapIconOrphanDestroy(this, doDestroy)
+
+public function defeatcondition.destroyDefeatCondition()
+	DestroyDefeatCondition(this)
+
+public function defeatcondition.defeatConditionSetDescription(string description)
+	DefeatConditionSetDescription(this, description)
+
+public function leaderboard.destroyLeaderboard()
+	DestroyLeaderboard(this)
+
+public function leaderboard.leaderboardDisplay(boolean show)
+	LeaderboardDisplay(this, show)
+
+public function leaderboard.isLeaderboardDisplayed() returns boolean
+	return IsLeaderboardDisplayed(this)
+
+public function leaderboard.leaderboardGetItemCount() returns integer
+	return LeaderboardGetItemCount(this)
+
+public function leaderboard.leaderboardSetSizeByItemCount(integer count)
+	LeaderboardSetSizeByItemCount(this, count)
+
+public function leaderboard.leaderboardAddItem(string label, integer value, player p)
+	LeaderboardAddItem(this, label, value, p)
+
+public function leaderboard.leaderboardRemoveItem(integer index)
+	LeaderboardRemoveItem(this, index)
+
+public function leaderboard.leaderboardRemovePlayerItem(player p)
+	LeaderboardRemovePlayerItem(this, p)
+
+public function leaderboard.leaderboardClear()
+	LeaderboardClear(this)
+
+public function leaderboard.leaderboardSortItemsByValue(boolean ascending)
+	LeaderboardSortItemsByValue(this, ascending)
+
+public function leaderboard.leaderboardSortItemsByPlayer(boolean ascending)
+	LeaderboardSortItemsByPlayer(this, ascending)
+
+public function leaderboard.leaderboardSortItemsByLabel(boolean ascending)
+	LeaderboardSortItemsByLabel(this, ascending)
+
+public function leaderboard.leaderboardHasPlayerItem(player p) returns boolean
+	return LeaderboardHasPlayerItem(this, p)
+
+public function leaderboard.leaderboardGetPlayerIndex(player p) returns integer
+	return LeaderboardGetPlayerIndex(this, p)
+
+public function leaderboard.leaderboardSetLabel(string label)
+	LeaderboardSetLabel(this, label)
+
+public function leaderboard.leaderboardGetLabelText() returns string
+	return LeaderboardGetLabelText(this)
+
+public function leaderboard.leaderboardSetLabelColor(integer red, integer green, integer blue, integer alpha)
+	LeaderboardSetLabelColor(this, red, green, blue, alpha)
+
+public function leaderboard.leaderboardSetValueColor(integer red, integer green, integer blue, integer alpha)
+	LeaderboardSetValueColor(this, red, green, blue, alpha)
+
+public function leaderboard.leaderboardSetStyle(boolean showLabel, boolean showNames, boolean showValues, boolean showIcons)
+	LeaderboardSetStyle(this, showLabel, showNames, showValues, showIcons)
+
+public function leaderboard.leaderboardSetItemValue(integer whichItem, integer val)
+	LeaderboardSetItemValue(this, whichItem, val)
+
+public function leaderboard.leaderboardSetItemLabel(integer whichItem, string val)
+	LeaderboardSetItemLabel(this, whichItem, val)
+
+public function leaderboard.leaderboardSetItemStyle(integer whichItem, boolean showLabel, boolean showValue, boolean showIcon)
+	LeaderboardSetItemStyle(this, whichItem, showLabel, showValue, showIcon)
+
+public function leaderboard.leaderboardSetItemLabelColor(integer whichItem, integer red, integer green, integer blue, integer alpha)
+	LeaderboardSetItemLabelColor(this, whichItem, red, green, blue, alpha)
+
+public function leaderboard.leaderboardSetItemValueColor(integer whichItem, integer red, integer green, integer blue, integer alpha)
+	LeaderboardSetItemValueColor(this, whichItem, red, green, blue, alpha)
+
+@deprecated("Use camerasetup.getDestPosition() from package Camera.")
+public function camerasetup.cameraSetupGetDestPositionLoc() returns location
+	return CameraSetupGetDestPositionLoc(this)
+
+public function camerasetup.cameraSetupSetLabel(string label)
+	BlzCameraSetupSetLabel(this, label)
+
+public function camerasetup.cameraSetupGetLabel() returns string
+	return BlzCameraSetupGetLabel(this)
+
+public function volumegroup.volumeGroupSetVolume(real scale)
+	VolumeGroupSetVolume(this, scale)
+
+public function terraindeformation.terrainDeformStop(integer duration)
+	TerrainDeformStop(this, duration)
+
+public function ubersplat.destroyUbersplat()
+	DestroyUbersplat(this)
+
+public function ubersplat.resetUbersplat()
+	ResetUbersplat(this)
+
+public function ubersplat.finishUbersplat()
+	FinishUbersplat(this)
+
+public function ubersplat.showUbersplat(boolean flag)
+	ShowUbersplat(this, flag)
+
+public function ubersplat.setUbersplatRender(boolean flag)
+	SetUbersplatRender(this, flag)
+
+public function ubersplat.setUbersplatRenderAlways(boolean flag)
+	SetUbersplatRenderAlways(this, flag)
+
+public function commandbuttoneffect.destroyCommandButtonEffect()
+	DestroyCommandButtonEffect(this)

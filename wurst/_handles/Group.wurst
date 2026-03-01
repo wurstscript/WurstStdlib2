@@ -154,3 +154,7 @@ public function group.next() returns unit
 public function group.close()
 	this.clear()
 	this.destr()
+
+public function group.forGroup(code callback)
+	ForGroup(this, callback)
+

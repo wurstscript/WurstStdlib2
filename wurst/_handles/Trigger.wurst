@@ -164,3 +164,16 @@ public function trigger.removeCondition(triggercondition condition)
 
 public function trigger.reset()
 	ResetTrigger(this)
+
+public function trigger.registerVariableEvent(string varName, limitop opcode, real limitval) returns event
+	return TriggerRegisterVariableEvent(this, varName, opcode, limitval)
+
+public function trigger.registerCommandEvent(integer whichAbility, string order) returns event
+	return TriggerRegisterCommandEvent(this, whichAbility, order)
+
+public function trigger.registerUpgradeCommandEvent(integer whichUpgrade) returns event
+	return TriggerRegisterUpgradeCommandEvent(this, whichUpgrade)
+
+public function trigger.blzTriggerRegisterPlayerSyncEvent(player whichPlayer, string prefix, boolean fromServer) returns event
+	return BlzTriggerRegisterPlayerSyncEvent(this, whichPlayer, prefix, fromServer)
+

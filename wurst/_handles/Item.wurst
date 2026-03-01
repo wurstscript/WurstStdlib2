@@ -122,6 +122,12 @@ public function item.getIconPath() returns string
 public function item.setIconPath(string path)
 	BlzSetItemIconPath(this, path)
 
+public function item.getSkin() returns int
+	return BlzGetItemSkin(this)
+
+public function item.setSkin(int skinId)
+	BlzSetItemSkin(this, skinId)
+
 // Item-Ability Get/Setters
 public function item.getAbilityByIndex(int index) returns ability
 	return BlzGetItemAbilityByIndex(this, index)
@@ -191,3 +197,10 @@ public function item.updateDetailsForPlayer(player p, string itemName, string it
 	Returns false if no player is given. */
 public function item.updateDetailsForAll(string itemName, string itemTooltip, string itemExtendedTooltip, string itemDesc, string itemIcon) returns bool
 	return this.updateDetails(null, itemName, itemTooltip, itemExtendedTooltip, itemDesc, itemIcon)
+
+public function item.setItemDropID(integer unitId)
+	SetItemDropID(this, unitId)
+
+public function item.blzSetItemSkin(integer skinId)
+	BlzSetItemSkin(this, skinId)
+

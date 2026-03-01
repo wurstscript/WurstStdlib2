@@ -79,3 +79,9 @@ public function image.remove()
 		error("Nullpointer exeption by destroying an image")
 	DestroyImage(this)
 
+public function image.setImageRender(boolean flag)
+	SetImageRender(this, flag)
+
+public function image.setImageAboveWater(boolean flag, boolean useWaterAlpha)
+	SetImageAboveWater(this, flag, useWaterAlpha)
+
