@@ -187,39 +187,40 @@ public abstract class EventListener
 		// Unit Listeners
 		if trigUnit != null
 			let index = trigUnit.getIndex()
-			if fireEvents(trigUnit) and index > 0 and unitListenersFirsts[index] != null
+			if index > 0
 				var listener = unitListenersFirsts[index]
-				while listener != null
-					let nextListener = listener.next
-					if listener.eventId == id
-						listener.onEvent()
-					listener = nextListener
+				if listener != null and fireEvents(trigUnit)
+					while listener != null
+						let nextListener = listener.next
+						if listener.eventId == id
+							listener.onEvent()
+						listener = nextListener
 		// Global Listeners
-		if generalListenersFirsts[id] != null
-			var listener = generalListenersFirsts[id]
-			while listener != null
-				let nextListener = listener.next
-				listener.onEvent()
-				listener = nextListener
+		var globalListener = generalListenersFirsts[id]
+		if globalListener != null
+			while globalListener != null
+				let nextListener = globalListener.next
+				globalListener.onEvent()
+				globalListener = nextListener
 
 	static function onSpellEffect()
 		let trigUnit = GetTriggerUnit()
 		let abilId = GetSpellAbilityId()
+		let caster = GetSpellAbilityUnit()
 		let index = trigUnit.getIndex()
-		if castMapCasters[index] != null
-			var listener = castMapCasters[index]
-			while listener != null
-				let nextListener = listener.next
-				if listener.abilId == -1 or listener.abilId == abilId
-					listener.fire(GetSpellAbilityUnit())
-				listener = nextListener
-		if castMap.has(abilId)
-			var listener = castMap.get(abilId)
-			while listener != null
-				let nextListener = listener.next
-				if listener.eventUnit == null or listener.eventUnit == trigUnit
-					listener.fire(GetSpellAbilityUnit())
-				listener = nextListener
+		var listener = castMapCasters[index]
+		while listener != null
+			let nextListener = listener.next
+			if listener.abilId == -1 or listener.abilId == abilId
+				listener.fire(caster)
+			listener = nextListener
+
+		listener = castMap.get(abilId)
+		while listener != null
+			let nextListener = listener.next
+			if listener.eventUnit == null or listener.eventUnit == trigUnit
+				listener.fire(caster)
+			listener = nextListener
 
 	ondestroy
 		if uid < 0
@@ -240,7 +241,6 @@ public abstract class EventListener
 		next = null
 		prev = null
 
-let unitTrig = CreateTrigger()
 let leaveTrig = CreateTrigger()
 let keyTrig = CreateTrigger()
 
@@ -257,10 +257,16 @@ function registerEventId(eventid evnt) returns int
 	let eventId = evnt.getHandleId()
 	eventTypeCounter++
 	eventidToIndex[eventId] = eventTypeCounter
-	if evnt.isPlayerunitEvent()
+	if evnt == EVENT_UNIT_DAMAGED
+		eventidToIndex[EVENT_PLAYER_UNIT_DAMAGED.getHandleId()] = eventTypeCounter
+		registerPlayerUnitEvent(EVENT_PLAYER_UNIT_DAMAGED, function EventListener.generalEventCallback)
+	else if evnt == EVENT_PLAYER_UNIT_DAMAGED
+		eventidToIndex[EVENT_UNIT_DAMAGED.getHandleId()] = eventTypeCounter
+		registerPlayerUnitEvent(EVENT_PLAYER_UNIT_DAMAGED, function EventListener.generalEventCallback)
+	else if evnt.isPlayerunitEvent()
 		registerPlayerUnitEvent(ConvertPlayerUnitEvent(eventId), function EventListener.generalEventCallback)
-	else if evnt != EVENT_UNIT_DAMAGED and evnt != EVENT_PLAYER_LEAVE and evnt != EVENT_PLAYER_CHAT_FILTER and not evnt.isKeyboardEvent() and not evnt.isMouseEvent()
-		error("registering handleid: " + eventId.toString() + " non-playerunitevent. Except EVENT_UNIT_DAMAGED and EVENT_PLAYER_LEAVE these are not supported right now.")
+	else if evnt != EVENT_PLAYER_LEAVE and evnt != EVENT_PLAYER_CHAT_FILTER and not evnt.isKeyboardEvent() and not evnt.isMouseEvent()
+		error("registering handleid: " + eventId.toString() + " non-playerunitevent. Except EVENT_PLAYER_LEAVE these are not supported right now.")
 	if evnt.isMouseEvent() and not EventListener.useMouseEvents
 		EventListener.useMouseEvents = true
 		for i = 0 to bj_MAX_PLAYERS - 1
@@ -268,10 +274,6 @@ function registerEventId(eventid evnt) returns int
 			..registerPlayerEvent(players[i], EVENT_PLAYER_MOUSE_DOWN)
 			..registerPlayerEvent(players[i], EVENT_PLAYER_MOUSE_MOVE)
 	return eventTypeCounter
-
-function registerEventsForUnit(unit u)
-	if fireEvents(u)
-		unitTrig.registerUnitEvent(u, EVENT_UNIT_DAMAGED)
 
 public function unregisterEventsForUnit(unit u)
 	if fireEvents(u)
@@ -298,12 +300,10 @@ public function unregisterEvents(int id)
 
 
 init
-	// Un/Register Events when unit enters map
-	onUnitIndex(() -> registerEventsForUnit(getIndexingUnit()))
+	// Clean up per-unit listener lists when units are deindexed.
 	onUnitDeindex(() -> unregisterEventsForUnit(getIndexingUnit()))
 
 	nullTimer() ->
-		unitTrig.addAction(() -> EventListener.generalEventCallback())
 		leaveTrig.addAction(() -> EventListener.generalEventCallback())
 		keyTrig.addAction(() -> EventListener.generalEventCallback())
 

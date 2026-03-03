@@ -85,3 +85,7 @@ public function force.next() returns player
 public function force.close()
 	this.clear()
 	this.destr()
+
+public function force.has(player whichPlayer) returns boolean
+	return BlzForceHasPlayer(this, whichPlayer)
+

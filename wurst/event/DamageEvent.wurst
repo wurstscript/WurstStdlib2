@@ -279,7 +279,8 @@ public class DamageEvent
         else if listener.prev != null
             listener.prev.next = listener.next
 
-        listener.next.prev = listener.prev
+        if listener.next != null
+            listener.next.prev = listener.prev
 
     /** Adds a damage event listener that fires before any damage reduction is applied (such as armor).
     If The order of firing is important, use addListener(priority, listener) */
@@ -315,7 +316,8 @@ public class DamageEvent
         else if listener.prev != null
             listener.prev.next = listener.next
 
-        listener.next.prev = listener.prev
+        if listener.next != null
+            listener.next.prev = listener.prev
 
     /* GETTERS */
     /** Returns the id of the damage instance being currently fired */

@@ -89,3 +89,21 @@ function rectTest()
 	rekt.getCenterX().assertEquals(2)
 	rekt.getCenterY().assertEquals(2)
 
+public function rect.setRectFromLoc(location min, location max)
+	SetRectFromLoc(this, min, max)
+
+public function rect.moveRectToLoc(location newCenterLoc)
+	MoveRectToLoc(this, newCenterLoc)
+
+public function rect.enumDestructablesInRect(boolexpr filter, code actionFunc)
+	EnumDestructablesInRect(this, filter, actionFunc)
+
+public function rect.enumItemsInRect(boolexpr filter, code actionFunc)
+	EnumItemsInRect(this, filter, actionFunc)
+
+public function rect.addWeatherEffect(integer effectID) returns weathereffect
+	return AddWeatherEffect(this, effectID)
+
+public function rect.setDoodadAnimationRect(integer doodadID, string animName, boolean animRandom)
+	SetDoodadAnimationRect(this, doodadID, animName, animRandom)
+
