@@ -20,7 +20,7 @@ import DummyRecycler
 */
 
 public class DummyDamage
-	private unit dummy = DummyRecycler.get(origin, angle(0))
+	private unit dummy = null
 	private widget target = null
 	private var amount = 0.
 	private var attack = false
@@ -35,6 +35,9 @@ public class DummyDamage
 		apply(false)
 
 	function apply(boolean terminate)
+		if dummy == null
+			dummy = DummyRecycler.get(origin, angle(0))
+		dummy.setPos(origin)
 		dummy
 		..setOwner(attacker, false)
 		..damageTarget(target, amount, attack, ranged, attackType, damageType, weaponType)
@@ -70,4 +73,5 @@ public class DummyDamage
 		this.weaponType = weaponType
 
 	ondestroy
-		DummyRecycler.recycle(dummy)
+		if dummy != null
+			DummyRecycler.recycle(dummy)
