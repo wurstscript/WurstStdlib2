@@ -659,6 +659,70 @@ public class AbilityDefinitionAgilityBonusPlus1 extends AbilityDefinition
 		def.setLevelsDataInt("Istr", lvls, 3, lc)
 		addTooltipProperty("Strength Bonus", lc)
 
+public class AbilityDefinitionAgilityBonusPlus2 extends AbilityDefinition
+	construct(int newAbilityId)
+		super(newAbilityId, AbilityIds.agilityBonusPlus2)
+
+	function setHideButton(int level, bool value)
+		def.setLvlDataBoolean("Ihid", level, 4, value)
+
+	function presetHideButton(BooleanLevelClosure lc)
+		def.setLevelsDataBoolean("Ihid", lvls, 4, lc)
+		addTooltipProperty("Hide Button", lc)
+
+	function setIntelligenceBonus(int level, int value)
+		def.setLvlDataInt("Iint", level, 2, value)
+
+	function presetIntelligenceBonus(IntLevelClosure lc)
+		def.setLevelsDataInt("Iint", lvls, 2, lc)
+		addTooltipProperty("Intelligence Bonus", lc)
+
+	function setAgilityBonus(int level, int value)
+		def.setLvlDataInt("Iagi", level, 1, value)
+
+	function presetAgilityBonus(IntLevelClosure lc)
+		def.setLevelsDataInt("Iagi", lvls, 1, lc)
+		addTooltipProperty("Agility Bonus", lc)
+
+	function setStrengthBonus(int level, int value)
+		def.setLvlDataInt("Istr", level, 3, value)
+
+	function presetStrengthBonus(IntLevelClosure lc)
+		def.setLevelsDataInt("Istr", lvls, 3, lc)
+		addTooltipProperty("Strength Bonus", lc)
+
+public class AbilityDefinitionAgilityBonusPlus5 extends AbilityDefinition
+	construct(int newAbilityId)
+		super(newAbilityId, AbilityIds.agilityBonusPlus5)
+
+	function setHideButton(int level, bool value)
+		def.setLvlDataBoolean("Ihid", level, 4, value)
+
+	function presetHideButton(BooleanLevelClosure lc)
+		def.setLevelsDataBoolean("Ihid", lvls, 4, lc)
+		addTooltipProperty("Hide Button", lc)
+
+	function setIntelligenceBonus(int level, int value)
+		def.setLvlDataInt("Iint", level, 2, value)
+
+	function presetIntelligenceBonus(IntLevelClosure lc)
+		def.setLevelsDataInt("Iint", lvls, 2, lc)
+		addTooltipProperty("Intelligence Bonus", lc)
+
+	function setAgilityBonus(int level, int value)
+		def.setLvlDataInt("Iagi", level, 1, value)
+
+	function presetAgilityBonus(IntLevelClosure lc)
+		def.setLevelsDataInt("Iagi", lvls, 1, lc)
+		addTooltipProperty("Agility Bonus", lc)
+
+	function setStrengthBonus(int level, int value)
+		def.setLvlDataInt("Istr", level, 3, value)
+
+	function presetStrengthBonus(IntLevelClosure lc)
+		def.setLevelsDataInt("Istr", lvls, 3, lc)
+		addTooltipProperty("Strength Bonus", lc)
+
 public class AbilityDefinitionThornyShieldCreep extends AbilityDefinition
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.thornyShieldCreep)
@@ -2993,9 +3057,42 @@ public class AbilityDefinitionExperienceModgreater extends AbilityDefinition
 		def.setLevelsDataInt("Ixpg", lvls, 1, lc)
 		addTooltipProperty("Experience Gained", lc)
 
-public class AbilityDefinitionAIde extends AbilityDefinition
+public class AbilityDefinitionArmorBonus extends AbilityDefinition
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.itemArmorBonus)
+
+	function setDefenseBonus(int level, int value)
+		def.setLvlDataInt("Idef", level, 1, value)
+
+	function presetDefenseBonus(IntLevelClosure lc)
+		def.setLevelsDataInt("Idef", lvls, 1, lc)
+		addTooltipProperty("Defense Bonus", lc)
+
+public class AbilityDefinitionDefenseBonusPlus7 extends AbilityDefinition
+	construct(int newAbilityId)
+		super(newAbilityId, AbilityIds.defenseBonusPlus7)
+
+	function setDefenseBonus(int level, int value)
+		def.setLvlDataInt("Idef", level, 1, value)
+
+	function presetDefenseBonus(IntLevelClosure lc)
+		def.setLevelsDataInt("Idef", lvls, 1, lc)
+		addTooltipProperty("Defense Bonus", lc)
+
+public class AbilityDefinitionDefenseBonusPlus8 extends AbilityDefinition
+	construct(int newAbilityId)
+		super(newAbilityId, AbilityIds.defenseBonusPlus8)
+
+	function setDefenseBonus(int level, int value)
+		def.setLvlDataInt("Idef", level, 1, value)
+
+	function presetDefenseBonus(IntLevelClosure lc)
+		def.setLevelsDataInt("Idef", lvls, 1, lc)
+		addTooltipProperty("Defense Bonus", lc)
+
+public class AbilityDefinitionDefenseBonusPlus10 extends AbilityDefinition
+	construct(int newAbilityId)
+		super(newAbilityId, AbilityIds.defenseBonusPlus10)
 
 	function setDefenseBonus(int level, int value)
 		def.setLvlDataInt("Idef", level, 1, value)
@@ -4306,6 +4403,70 @@ public class AbilityDefinitionGiveGold extends AbilityDefinition
 public class AbilityDefinitionIntelligenceBonusPlus1 extends AbilityDefinition
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.intelligenceBonusPlus1)
+
+	function setHideButton(int level, bool value)
+		def.setLvlDataBoolean("Ihid", level, 4, value)
+
+	function presetHideButton(BooleanLevelClosure lc)
+		def.setLevelsDataBoolean("Ihid", lvls, 4, lc)
+		addTooltipProperty("Hide Button", lc)
+
+	function setIntelligenceBonus(int level, int value)
+		def.setLvlDataInt("Iint", level, 2, value)
+
+	function presetIntelligenceBonus(IntLevelClosure lc)
+		def.setLevelsDataInt("Iint", lvls, 2, lc)
+		addTooltipProperty("Intelligence Bonus", lc)
+
+	function setAgilityBonus(int level, int value)
+		def.setLvlDataInt("Iagi", level, 1, value)
+
+	function presetAgilityBonus(IntLevelClosure lc)
+		def.setLevelsDataInt("Iagi", lvls, 1, lc)
+		addTooltipProperty("Agility Bonus", lc)
+
+	function setStrengthBonus(int level, int value)
+		def.setLvlDataInt("Istr", level, 3, value)
+
+	function presetStrengthBonus(IntLevelClosure lc)
+		def.setLevelsDataInt("Istr", lvls, 3, lc)
+		addTooltipProperty("Strength Bonus", lc)
+
+public class AbilityDefinitionIntelligenceBonusPlus2 extends AbilityDefinition
+	construct(int newAbilityId)
+		super(newAbilityId, AbilityIds.intelligenceBonusPlus2)
+
+	function setHideButton(int level, bool value)
+		def.setLvlDataBoolean("Ihid", level, 4, value)
+
+	function presetHideButton(BooleanLevelClosure lc)
+		def.setLevelsDataBoolean("Ihid", lvls, 4, lc)
+		addTooltipProperty("Hide Button", lc)
+
+	function setIntelligenceBonus(int level, int value)
+		def.setLvlDataInt("Iint", level, 2, value)
+
+	function presetIntelligenceBonus(IntLevelClosure lc)
+		def.setLevelsDataInt("Iint", lvls, 2, lc)
+		addTooltipProperty("Intelligence Bonus", lc)
+
+	function setAgilityBonus(int level, int value)
+		def.setLvlDataInt("Iagi", level, 1, value)
+
+	function presetAgilityBonus(IntLevelClosure lc)
+		def.setLevelsDataInt("Iagi", lvls, 1, lc)
+		addTooltipProperty("Agility Bonus", lc)
+
+	function setStrengthBonus(int level, int value)
+		def.setLvlDataInt("Istr", level, 3, value)
+
+	function presetStrengthBonus(IntLevelClosure lc)
+		def.setLevelsDataInt("Istr", lvls, 3, lc)
+		addTooltipProperty("Strength Bonus", lc)
+
+public class AbilityDefinitionIntelligenceBonusPlus5 extends AbilityDefinition
+	construct(int newAbilityId)
+		super(newAbilityId, AbilityIds.intelligenceBonusPlus5)
 
 	function setHideButton(int level, bool value)
 		def.setLvlDataBoolean("Ihid", level, 4, value)
@@ -10370,6 +10531,38 @@ public class AbilityDefinitionAnimateDeadcreep extends AbilityDefinition
 public class AbilityDefinitionStrengthBonusPlus1 extends AbilityDefinition
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.strengthBonusPlus1)
+
+	function setHideButton(int level, bool value)
+		def.setLvlDataBoolean("Ihid", level, 4, value)
+
+	function presetHideButton(BooleanLevelClosure lc)
+		def.setLevelsDataBoolean("Ihid", lvls, 4, lc)
+		addTooltipProperty("Hide Button", lc)
+
+	function setIntelligenceBonus(int level, int value)
+		def.setLvlDataInt("Iint", level, 2, value)
+
+	function presetIntelligenceBonus(IntLevelClosure lc)
+		def.setLevelsDataInt("Iint", lvls, 2, lc)
+		addTooltipProperty("Intelligence Bonus", lc)
+
+	function setAgilityBonus(int level, int value)
+		def.setLvlDataInt("Iagi", level, 1, value)
+
+	function presetAgilityBonus(IntLevelClosure lc)
+		def.setLevelsDataInt("Iagi", lvls, 1, lc)
+		addTooltipProperty("Agility Bonus", lc)
+
+	function setStrengthBonus(int level, int value)
+		def.setLvlDataInt("Istr", level, 3, value)
+
+	function presetStrengthBonus(IntLevelClosure lc)
+		def.setLevelsDataInt("Istr", lvls, 3, lc)
+		addTooltipProperty("Strength Bonus", lc)
+
+public class AbilityDefinitionStrengthBonusPlus5 extends AbilityDefinition
+	construct(int newAbilityId)
+		super(newAbilityId, AbilityIds.strengthBonusPlus5)
 
 	function setHideButton(int level, bool value)
 		def.setLvlDataBoolean("Ihid", level, 4, value)
