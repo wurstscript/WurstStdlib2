@@ -1,0 +1,45 @@
+package DoodadObjEditing
+import ObjEditingNatives
+import NoWurst
+
+public class W3DDefinition
+	ObjectDefinition def
+
+	protected int newId
+	protected int baseId
+
+	function getNewId() returns int
+		return newId
+
+	function getBaseId() returns int
+		return baseId
+
+	construct(int newId, int baseId)
+		this.newId = newId
+		this.baseId = baseId
+		def = createObjectDefinition("w3d", newId, baseId)
+
+public class DoodadDefinition extends W3DDefinition
+	construct(int newID, int origID)
+		super(newID, origID)
+
+	function setName(int level, string data)
+		def.setLvlDataString("dnam", level, 0, data)
+
+	function setModel(int level, string data)
+		def.setLvlDataString("dfil", level, 0, data)
+
+	function setTilesets(int level, string data)
+		def.setLvlDataString("dtil", level, 0, data)
+
+	function setMaximumScale(int level, real data)
+		def.setLvlDataUnreal("dmas", level, 0, data)
+
+	function setMinimumScale(int level, real data)
+		def.setLvlDataUnreal("dmis", level, 0, data)
+
+	function setMaxAllowed(int level, int data)
+		def.setLvlDataInt("dsmm", level, 0, data)
+
+	function setPathTexture(int level, string data)
+		def.setLvlDataString("dptx", level, 0, data)

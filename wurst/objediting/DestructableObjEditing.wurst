@@ -43,3 +43,33 @@ public class DestructableDefinition extends W3BDefinition
 
 	function setSoundOnDestroy(string data)
 		def.setString("bdsn",data)
+
+	function setHitPoints(real data)
+		def.setUnreal("bhps", data)
+
+	function setTargetedAs(string data)
+		def.setString("btar", data)
+
+	function setMaximumScale(real data)
+		def.setUnreal("bmas", data)
+
+	function setMinimumScale(real data)
+		def.setUnreal("bmis", data)
+
+	function setNumVariations(int data)
+		def.setInt("bvar", data)
+
+	function setFixedRotation(real data)
+		def.setUnreal("bfxr", data)
+
+	function setShadow(string data)
+		def.setString("bshd", data)
+
+	function setVertexColorRed(int data)
+		def.setInt("bvcr", data)
+
+	function setVertexColorGreen(int data)
+		def.setInt("bvcg", data)
+
+	function setVertexColorBlue(int data)
+		def.setInt("bvcb", data)
