@@ -558,6 +558,13 @@ public function unit.setPos(real x, real y)
 public function unit.setPropWindow(angle value)
 	SetUnitPropWindow(this, value.radians())
 
+public function unit.setAcquireRange(real value)
+	SetUnitAcquireRange(this, value)
+
+public function unit.setCreepGuard(boolean value)
+	SetUnitCreepGuard(this, value)
+
+
 public function unit.setScale(real scale)
 	SetUnitScale(this, scale, scale, scale)
 
