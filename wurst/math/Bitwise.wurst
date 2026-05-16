@@ -60,7 +60,7 @@ public function byte4.toInt() returns int
 public function int.toUnsigned() returns int
 	int result
 	if this < 0
-		result = -2147483648 + this
+		result = INT_MAX + this + 1
 	else
 		result = this
 	return result
@@ -82,7 +82,7 @@ public function int.bytes() returns byte4
 	var value = this
 	var isNegative = 0
 	if value < 0
-		value = -2147483648 + value
+		value = INT_MAX + value + 1
 		isNegative = 1
 
 	let b1 = value mod 0x100
@@ -159,7 +159,7 @@ function bwShiftr32(int num, int shift) returns int
 	var value = num
 	var isNegative = 0
 	if value < 0
-		value = -2147483648 + value
+		value = INT_MAX + value + 1
 		isNegative = 1
 	return isNegative * powShift[31-shift] + value div powShift[shift]
 

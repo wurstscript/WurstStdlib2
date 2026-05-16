@@ -77,7 +77,8 @@ public abstract class OnCastListener
 			else if prev != null
 				prev.next = next
 
-		next.prev = prev
+		if next != null
+			next.prev = prev
 
 		next = null
 		prev = null
@@ -92,14 +93,16 @@ public abstract class OnCast extends OnCastListener
 public abstract class OnPointCast extends OnCastListener
 
 	override function fire(unit caster)
-		fireEx(caster, EventData.getSpellTargetPos())
+		if EventData.getSpellTargetUnit() == null
+			fireEx(caster, EventData.getSpellTargetPos())
 
 	abstract function fireEx(unit caster, vec2 target)
 
 public abstract class OnUnitCast extends OnCastListener
 
 	override function fire(unit caster)
-		fireEx(caster, GetSpellTargetUnit())
+		if EventData.getSpellTargetUnit() != null
+			fireEx(caster, EventData.getSpellTargetUnit())
 
 	abstract function fireEx(unit caster, unit target)
 
@@ -129,6 +132,8 @@ public abstract class EventListener
 	static function add(unit u, eventid eventId, EventListener listener) returns EventListener
 		let uid = u.getIndex()
 		if uid <= 0
+			Log.warn("Attempting to register event listener for a unit that is not indexed by UnitIndexer. " +
+				"If this happens during initialization, consider registering the EventListener in a callback to nullTimer() instead.")
 			return listener
 		listener.eventId = eventId.toIntId()
 		listener.uid = uid
@@ -169,9 +174,10 @@ public abstract class EventListener
 				listener.next = castMapCasters[index]
 			castMapCasters[index] = listener
 		else
-			if castMap.has(abilId)
-				castMap.get(abilId).prev = listener
-				listener.next = castMap.get(abilId)
+			let entry = castMap.get(abilId)
+			if entry != null
+				entry.prev = listener
+				listener.next = entry
 
 			castMap.put(abilId, listener)
 		return listener
@@ -180,9 +186,10 @@ public abstract class EventListener
 		let trigUnit = GetTriggerUnit()
 		let id = GetTriggerEventId().toIntId()
 		// Unit Listeners
-		if trigUnit != null and fireEvents(trigUnit) and trigUnit.getIndex() > 0
-			if unitListenersFirsts[trigUnit.getIndex()] != null
-				var listener = unitListenersFirsts[trigUnit.getIndex()]
+		if trigUnit != null
+			let index = trigUnit.getIndex()
+			if fireEvents(trigUnit) and index > 0 and unitListenersFirsts[index] != null
+				var listener = unitListenersFirsts[index]
 				while listener != null
 					let nextListener = listener.next
 					if listener.eventId == id
