@@ -97,7 +97,7 @@ public class ChunkedString
 		let lastChunk = endIndex div chunkSize
 		for i = startChunk to lastChunk
 			if i == startChunk
-				out += getChunk(i).substring(startIndex - startChunk * chunkSize, min(endIndex, chunkSize))
+				out += getChunk(i).substring(startIndex - startChunk * chunkSize, min(endIndex - startChunk * chunkSize, chunkSize))
 			else if i == lastChunk
 				out += getChunk(i).substring(0, endIndex - lastChunk * chunkSize)
 			else
