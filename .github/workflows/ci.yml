@@ -14,9 +14,6 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Install project dependencies
-        run: grill install
-
       - name: Typecheck
         run: grill typecheck
 
