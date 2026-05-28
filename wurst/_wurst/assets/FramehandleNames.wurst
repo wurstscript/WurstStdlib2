@@ -36,6 +36,18 @@ public class FramehandleTypeNames
 	static constant control											= "CONTROL"
 	/** The frame type SIMPLEFRAME is used for a less complex definition for frames, that does not allow different inherit types */
 	static constant simpleframe										= "SIMPLEFRAME"
+	/** The SimpleFrame type SIMPLEBUTTON is used for clickable SimpleFrame buttons. */
+	static constant simplebutton									= "SIMPLEBUTTON"
+	/** The SimpleFrame type SIMPLESTATUSBAR is used for SimpleFrame status bars. */
+	static constant simplestatusbar									= "SIMPLESTATUSBAR"
+	/** The SimpleFrame type SIMPLECHECKBOX is used for SimpleFrame checkboxes. */
+	static constant simplecheckbox									= "SIMPLECHECKBOX"
+	/** The SimpleFrame child type String is used for text children of SimpleFrames.
+		Do not treat these children like generic frames; several BlzFrame* natives can crash on them. */
+	static constant stringframe										= "String"
+	/** The SimpleFrame child type Texture is used for texture children of SimpleFrames.
+		Do not treat these children like generic frames; several BlzFrame* natives can crash on them. */
+	static constant textureframe									= "Texture"
 	/** The frame type DIALOG is used for nothing special, (origin SuspendDialogs will pause the game in singleplayer) */
 	static constant dialogframe										= "DIALOG"
 	/** The frame type HIGHLIGHT is used for frame template to define how buttons/texts are hightlingt on hovering/click/enter/focus of the mouse */
@@ -90,6 +102,7 @@ public class FramehandleDefaultNames
 	static constant confirmQuitQuitButtonText						= "ConfirmQuitQuitButtonText"
 	static constant confirmQuitTitleText							= "ConfirmQuitTitleText"
 	static constant consoleUI										= "ConsoleUI"
+	static constant consoleUIBackdrop								= "ConsoleUIBackdrop"
 	static constant customKeysLabel									= "CustomKeysLabel"
 	static constant customKeysValue									= "CustomKeysValue"
 	static constant decoratedMapListBox								= "DecoratedMapListBox"
