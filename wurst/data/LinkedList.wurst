@@ -3,7 +3,6 @@ import NoWurst
 import TypeCasting
 import Integer
 import String
-import ClosureForGroups
 import Real
 import Annotations
 
@@ -586,12 +585,6 @@ public function LinkedList<int>.sort()
 constant Comparator<string> stringComparator = (s1, s2) -> stringCompare(s1, s2)
 public function LinkedList<string>.sort()
 	this.sortWith(stringComparator)
-
-public function group.asList() returns LinkedList<unit>
-	let result = new LinkedList<unit>()
-	this.forEachFrom() u ->
-		result.add(u)
-	return result
 
 /** Joins elements from a string list into one string using a separator */
 public function LinkedList<string>.joinBy(string separator) returns string

@@ -1,24 +1,40 @@
 package TimerUtils
 import NoWurst
-import Table
 import ErrorHandling
 import Basics
 import public Timer
 
-/* Basic Timer Recycling and data attachment */	
+/* Basic Timer Recycling and data attachment */
 
 timer array freeTimers
 int freeTimersCount = 0
-constant timerData = new Table()
 constant HELD = 0x28829022
+
+// Pre-1.24 has no GetHandleId, so a timer cannot be used directly as a key.
+// Instead every timer is assigned a stable slot id on first use and the data
+// is stored in a parallel array indexed by that slot. Slots are looked up by
+// timer equality; the set of distinct timers is the pool size, so this stays
+// bounded.
+timer array slotTimers
+int array slotData
+int slotCount = 0
+
+function timer.slot() returns int
+	for i = 0 to slotCount - 1
+		if slotTimers[i] == this
+			return i
+	slotTimers[slotCount] = this
+	slotData[slotCount] = 0
+	slotCount++
+	return slotCount - 1
 
 /** Attach Data to this timer */
 public function timer.setData(int data)
-	timerData.saveInt(this.getHandleId(), data )
-	
+	slotData[this.slot()] = data
+
 /** Retrieve the data attached to this timer */
 public function timer.getData() returns int
-	return timerData.loadInt(this.getHandleId())
+	return slotData[this.slot()]
 
 /** Get a new timer. Use this instead of "CreateTimer".
 You can attach data to the timer with .setData and retrieve it with .getData

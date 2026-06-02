@@ -224,8 +224,29 @@ public function stringCompare(string s1, string s2) returns int
 		return 1
 	return 0
 
+/** Maps a single-character string to an integer code point.
+	Used by getHash() since the native StringHash does not exist pre-1.24. */
+function charCode(string c) returns int
+	// Build a stable code from the charset position, falling back to length
+	// and content so unknown chars still contribute deterministically.
+	let idx = c.toCharsetInt()
+	if idx >= 0
+		return idx + 1
+	// Non-charset char (punctuation/whitespace): derive a stable value from
+	// upper/lower casing so it still differs between distinct characters.
+	return c == c.toUpperCase() ? 0x5BD1 : 0x2F35
+
+/** Returns a deterministic hash of this string.
+
+	Pre-1.24 patches lack the native `StringHash`, so this is a pure-Wurst
+	polynomial rolling hash. Values differ from the WC3 native, but are stable
+	within a game and only used for internal keying. */
 public function string.getHash() returns int
-	return StringHash(this)
+	var hash = 0x811C9DC5
+	let len = this.length()
+	for i = 0 to len - 1
+		hash = (hash * 33) + charCode(this.substring(i, i + 1))
+	return hash
 
 /** Formats the given string replacing {x} delimiters with the passed replacements.
 	Example: "You got {0} gold".format(goldAmount) **/

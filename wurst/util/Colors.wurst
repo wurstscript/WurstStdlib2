@@ -231,7 +231,7 @@ public function toDec(string twochar) returns int
 	let first = twochar.substring(0,1).toUpperCase()
 	let second = twochar.substring(1,2).toUpperCase()
 
-	return decs.loadInt(StringHash(first)) * 16 + decs.loadInt(StringHash(second))
+	return decs.loadInt(first.getHash()) * 16 + decs.loadInt(second.getHash())
 
 /** Gets the name of the color. Only works on player colors. See PLAYER_COLORS. */
 public function color.getName() returns string

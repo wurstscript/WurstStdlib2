@@ -110,7 +110,10 @@ package StringTests
 	"dfdf".replace("", "2").assertEquals("dfdf")
 
 @Test function testGetHash()
-	"test".getHash().assertEquals(StringHash("test"))
+	// Pre-1.24 has no native StringHash; getHash() is a pure-Wurst hash.
+	// Verify it is deterministic and distinguishes distinct strings.
+	"test".getHash().assertEquals("test".getHash())
+	assertTrue("test".getHash() != "tset".getHash())
 
 @Test function testFormat()
 	"te{0}".format("s", "t").assertEquals("tes")

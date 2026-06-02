@@ -10,7 +10,6 @@ import Annotations
 import UnitIds
 import Icons
 import ObjectIdGenerator
-import LinkedList
 import TypeCasting
 import ClosureTimers
 import MagicFunctions
@@ -36,24 +35,29 @@ constant SAVED_UNITS_PER_ANGLE	= 6
 
 
 public class DummyRecycler
-	static LinkedList<unit> array angleQueues
+	// Pre-1.24 cannot store units in a generic LinkedList<unit> (no unit -> int
+	// conversion), so the per-angle queues are plain unit arrays with counts.
+	static unit array angleQueue
+	static int array angleCount
 
 	static function get(vec2 pos, angle a) returns unit
 		let angleIndex = (a.degrees() % 360 / ANGLE_DEGREE).round() mod DIFFERENT_ANGLES
-		if angleQueues[angleIndex].size() > 0
-			return angleQueues[angleIndex].dequeue()..setXY(pos)..unpause()
+		if angleCount[angleIndex] > 0
+			angleCount[angleIndex]--
+			return angleQueue[queueIndex(angleIndex, angleCount[angleIndex])]..setXY(pos)..unpause()
 		else
 			return createDummy(pos, a)
 
 	static function recycle(unit u)
 		var smallestQueue = 0
 		for i = 1 to DIFFERENT_ANGLES - 1
-			if angleQueues[smallestQueue].size() > angleQueues[i].size()
+			if angleCount[smallestQueue] > angleCount[i]
 				smallestQueue = i
-		if angleQueues[smallestQueue].size() >= SAVED_UNITS_PER_ANGLE
+		if angleCount[smallestQueue] >= SAVED_UNITS_PER_ANGLE
 			u.remove()
 		else
-			angleQueues[smallestQueue].enqueue(u)
+			angleQueue[queueIndex(smallestQueue, angleCount[smallestQueue])] = u
+			angleCount[smallestQueue]++
 			u..setXY(boundMax - vec2(16, 16))
 			..pause()
 			..setFacing((smallestQueue * ANGLE_DEGREE).asAngleDegrees())
@@ -64,6 +68,9 @@ public class DummyRecycler
 	static function recycle(unit u, real delay)
 		doAfter(delay) ->
 			DummyRecycler.recycle(u)
+
+function queueIndex(int angleIndex, int slot) returns int
+	return angleIndex * SAVED_UNITS_PER_ANGLE + slot
 
 function createDummy(vec2 pos, angle facing) returns unit
 	let u = createUnit(DUMMY_PLAYER, DUMMY_UNIT_ID, pos, facing)
@@ -76,11 +83,11 @@ function createDummy(vec2 pos, angle facing) returns unit
 init
 	realToIndex(1)
 	for i = 0 to DIFFERENT_ANGLES - 1
-		DummyRecycler.angleQueues[i] = new LinkedList<unit>()
 		let facing = angle(i * ANGLE_DEGREE)
 		for j = 0 to SAVED_UNITS_PER_ANGLE - 1
 			let dummy = createDummy(boundMax - vec2(16, 16), facing)
-			DummyRecycler.angleQueues[i].enqueue(dummy)
+			DummyRecycler.angleQueue[queueIndex(i, j)] = dummy
+		DummyRecycler.angleCount[i] = SAVED_UNITS_PER_ANGLE
 
 @compiletime function generateDummyUnit()
 	new AbilityDefinitionRootAncients(ROOT_ENABLER)

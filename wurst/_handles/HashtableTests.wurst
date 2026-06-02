@@ -2,7 +2,7 @@ package HashtableTests
 
 @Test
 function testBasicDatatypes()
-	let ht = InitHashtable()
+	let ht = initHashtable()
 	ht.saveBoolean(0, 0, true)
 	ht.saveInt(0, 0, 1)
 	ht.saveReal(0, 0, 2.)
@@ -20,7 +20,7 @@ function testBasicDatatypes()
 
 @Test
 function testFlushing()
-	let ht = InitHashtable()
+	let ht = initHashtable()
 	ht.saveReal(0, 0, 2.)
 	ht.saveReal(1, 0, 4.)
 	ht.flushChild(0)
@@ -34,7 +34,7 @@ function testFlushing()
 
 @Test
 function testOverwrite()
-	let ht = InitHashtable()
+	let ht = initHashtable()
 	ht.saveReal(0, 0, 2.)
 	ht.saveReal(0, 0, 4.)
 
@@ -43,7 +43,7 @@ function testOverwrite()
 
 @Test
 function testRemove()
-	let ht = InitHashtable()
+	let ht = initHashtable()
 	ht.saveReal(0, 0, 2.)
 	assertTrue(ht.hasReal(0,0))
 

@@ -12,7 +12,6 @@ import ErrorHandling
  */
 
 string array c2s
-int array s2c
 int array width
 constant MAX_INDEX = '~' + 1
 constant DEFAULT_WIDTH = 0
@@ -49,10 +48,13 @@ public function char(string s) returns char
 		return char('/')
 	else if "\\" == s
 		return char('\')
-	let a = s2c[s.getHash() div 0x1F0748 + 0x3EA]
-	if s != c2s[a]
-		return char(a + 32)
-	return char(a)
+	// Pre-1.24 has no native StringHash to bucket chars, so resolve the code
+	// point by an exact scan of the code -> string table. The table is tiny
+	// (<= MAX_INDEX entries), so this is cheap and collision-free.
+	for i = 0 to MAX_INDEX
+		if c2s[i] == s
+			return char(i)
+	return char(0)
 
 public function char.toString() returns string
 	if this.c > MAX_INDEX
@@ -179,7 +181,6 @@ public function string.replaceChars(string charset, string replacementChar) retu
 
 @compiletime function initialize()
 	c2sInit()
-	s2cInit()
 	widthInit()
 
 init
@@ -315,11 +316,6 @@ function widthInit()
 	width['}'] = 80
 	width['~'] = 140
 	width[127] = 0
-
-function s2cInit()
-	for i = 0 to MAX_INDEX
-		if c2s[i].toUpperCase() == c2s[i]
-			s2c[StringHash(c2s[i]) div 0x1F0748 + 0x3EA] = i
 
 function c2sInit()
 	c2s[0] = ""
