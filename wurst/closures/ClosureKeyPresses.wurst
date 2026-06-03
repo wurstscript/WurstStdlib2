@@ -28,7 +28,25 @@ import HashMap
 
 constant KEY_TRIGGER = CreateTrigger()..addAction(function onEvent)
 constant KEY_MAP = new HashMap<int, KeyPressListener>
-    
+
+// Tracks which (player, key, metaKey, onKeyDown) combos are already registered on KEY_TRIGGER, so a
+// second listener for the same combo does NOT register the event twice on one trigger (which fires the
+// trigger, and therefore every matching listener, twice per key press). Keyed by key handle id, then by
+// a small composite of player id + meta + up/down. Never cleared: WC3 has no per-event unregister, so
+// "ever registered" equals "currently registered".
+constant KEY_REGISTERED = new HashMap<int, HashMap<int, bool>>
+
+function registerKeyOnce(player whichPlayer, oskeytype key, OSKEY_META metaKey, bool onKeyDown)
+    let keyId = key.getHandleId()
+    var combos = KEY_REGISTERED.get(keyId)
+    if combos == null
+        combos = new HashMap<int, bool>
+        KEY_REGISTERED.put(keyId, combos)
+    let combo = whichPlayer.getId() * 64 + metaKey.toInt() * 2 + (onKeyDown ? 1 : 0)
+    if not combos.has(combo)
+        combos.put(combo, true)
+        KEY_TRIGGER.registerPlayerKeyPress(whichPlayer, key, metaKey, onKeyDown)
+
 
 /* CLOSURES */
 
@@ -42,9 +60,9 @@ public function onKeyRelease(oskeytype key, KeyPressListener listener) returns K
     return onKeyPress(key, OSKEY_META.NONE, false, listener)
 
 public function onKeyPress(oskeytype key, OSKEY_META metaKey, bool onKeyDown, KeyPressListener listener) returns KeyPressListener
-    for i = 0 to bj_MAX_PLAYERS
+    for i = 0 to bj_MAX_PLAYERS - 1
         if players[i].isIngame()
-            KEY_TRIGGER.registerPlayerKeyPress(players[i], key, metaKey, onKeyDown)
+            registerKeyOnce(players[i], key, metaKey, onKeyDown)
     return registerListener(listener, key, metaKey, onKeyDown)
 
 public function onKeyPress(player whichPlayer, oskeytype key, KeyPressListener listener) returns KeyPressListener
@@ -57,7 +75,7 @@ public function onKeyRelease(player whichPlayer, oskeytype key, KeyPressListener
     return onKeyPress(whichPlayer, key, OSKEY_META.NONE, false, listener)
 
 public function onKeyPress(player whichPlayer, oskeytype key, OSKEY_META metaKey, bool onKeyDown, KeyPressListener listener) returns KeyPressListener
-    KEY_TRIGGER.registerPlayerKeyPress(whichPlayer, key, metaKey, onKeyDown)
+    registerKeyOnce(whichPlayer, key, metaKey, onKeyDown)
     return registerListener(listener, key, metaKey, onKeyDown)
 
 function registerListener(KeyPressListener listener, oskeytype key, OSKEY_META metaKey, bool onKeyDown) returns KeyPressListener
@@ -106,4 +124,5 @@ abstract class KeyPressListener
                 KEY_MAP.put(id, next)
         else if prev != null
             prev.next = next
-        next.prev = prev
+        if next != null
+            next.prev = prev
