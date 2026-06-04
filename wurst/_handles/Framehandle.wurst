@@ -453,6 +453,11 @@ public function framehandle.getAlpha() returns int
 	return BlzFrameGetAlpha(this)
 
 /** Sets the alpha value of the frame in the range 0 to 255, for frame types that support alpha.
+	Verified to work on backdrops, images and glue buttons (on a glue button the fade covers the whole
+	button, child backdrops included). Apply it AFTER the frame has been parented, anchored and sized:
+	alpha set on a freshly created frame before a layout positions it is wiped, so set it once the
+	frame is in its final place. Reads as "disabled" to players, so prefer it for genuinely inactive
+	elements rather than as a "selected / active" highlight.
 	Do not call on String or Texture SimpleFrame children. */
 public function framehandle.setAlpha(integer alpha)
 	BlzFrameSetAlpha(this, alpha)
@@ -530,17 +535,22 @@ public function framehandle.setHeight(real height)
 public function framehandle.setSize(real width, real height)
 	BlzFrameSetSize(this, width, height)
 
-/** Sets the vertex color of the model frame.
-	The color channels are expected in the range 0 to 255. */
+/** Tints a MODEL or sprite frame by its vertex colour; channels in the range 0 to 255.
+	This does NOT recolour ordinary UI textures: verified in-game to have no visible effect on a
+	BACKDROP, an image (which is a backdrop), or a glue button. To recolour such elements, swap the
+	texture (setTexture) or use a differently coloured FDF backdrop; for text use the font colour or
+	|cAARRGGBB ... |r colour codes. */
 public function framehandle.setVertexColor(color pcolor)
 	BlzFrameSetVertexColor(this, BlzConvertColor(255, pcolor.red, pcolor.green, pcolor.blue))
 
-/** Sets the vertex color of the model frame.
-	The color channels are expected in the range 0 to 255. */
+/** Sets the vertex colour (with alpha) of a MODEL or sprite frame; channels in the range 0 to 255.
+	Model/sprite only: it does not recolour BACKDROP / image / glue-button UI textures (see the
+	color overload above). */
 public function framehandle.setVertexColor(colorA color)
 	BlzFrameSetVertexColor(this, BlzConvertColor(color.alpha, color.red, color.green, color.blue))
 
-/** Sets the vertex color of the model frame as a packed Warcraft III color integer. */
+/** Sets the vertex colour of a MODEL or sprite frame as a packed Warcraft III colour integer.
+	Model/sprite only: it does not recolour BACKDROP / image / glue-button UI textures. */
 public function framehandle.setVertexColor(integer color)
 	BlzFrameSetVertexColor(this, color)
 
