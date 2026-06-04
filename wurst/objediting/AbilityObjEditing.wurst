@@ -251,28 +251,28 @@ public class AbilityDefinition
 
 	function presetTooltipNormal(StringLevelClosure lc)
 		def.setLevelsDataString("atp1", lvls, 0, lc)
-		addTooltipProperty("Tooltip Normal", lc)
+		addTooltipProperty("Tooltip - Normal", lc)
 
 	function setTooltipTurnOff(int level, string value)
 		def.setLvlDataString("aut1", level, 0, value)
 
 	function presetTooltipTurnOff(StringLevelClosure lc)
 		def.setLevelsDataString("aut1", lvls, 0, lc)
-		addTooltipProperty("Tooltip Turn Off", lc)
+		addTooltipProperty("Tooltip - Turn Off", lc)
 
 	function setTooltipNormalExtended(int level, string value)
 		def.setLvlDataString("aub1", level, 0, value)
 
 	function presetTooltipNormalExtended(StringLevelClosure lc)
 		def.setLevelsDataString("aub1", lvls, 0, lc)
-		addTooltipProperty("Tooltip Normal Extended", lc)
+		addTooltipProperty("Tooltip - Normal - Extended", lc)
 
 	function setTooltipTurnOffExtended(int level, string value)
 		def.setLvlDataString("auu1", level, 0, value)
 
 	function presetTooltipTurnOffExtended(StringLevelClosure lc)
 		def.setLevelsDataString("auu1", lvls, 0, lc)
-		addTooltipProperty("Tooltip Turn Off Extended", lc)
+		addTooltipProperty("Tooltip - Turn Off - Extended", lc)
 
 	function setTooltipLearn(string value)
 		def.setLvlDataString("aret", 0, 0, value)
@@ -355,14 +355,14 @@ public class AbilityDefinition
 
 	function presetDurationNormal(RealLevelClosure lc)
 		def.setLevelsDataUnreal("adur", lvls, 0, lc)
-		addTooltipProperty("Duration Normal", lc)
+		addTooltipProperty("Duration - Normal", lc)
 
 	function setDurationHero(int level, real value)
 		def.setLvlDataUnreal("ahdu", level, 0, value)
 
 	function presetDurationHero(RealLevelClosure lc)
 		def.setLevelsDataUnreal("ahdu", lvls, 0, lc)
-		addTooltipProperty("Duration Hero", lc)
+		addTooltipProperty("Duration - Hero", lc)
 
 	function setCooldown(int level, real value)
 		def.setLvlDataUnreal("acdn", level, 0, value)
@@ -431,23 +431,38 @@ public class AbilityDefinitionTaunt extends AbilityDefinition
 		def.setLevelsDataInt("Tau3", lvls, 3, lc)
 		addTooltipProperty("Max Units", lc)
 
+	function setNumberOfPulses(int level, int value)
+		def.setLvlDataInt("Tau4", level, 4, value)
+
+	function presetNumberOfPulses(IntLevelClosure lc)
+		def.setLevelsDataInt("Tau4", lvls, 4, lc)
+		addTooltipProperty("Number of Pulses", lc)
+
+	function setIntervalBetweenPulses(int level, real value)
+		def.setLvlDataUnreal("Tau5", level, 5, value)
+
+	function presetIntervalBetweenPulses(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Tau5", lvls, 5, lc)
+		addTooltipProperty("Interval between Pulses", lc)
+
+
 public class AbilityDefinitionPoisonArrows extends AbilityDefinition
 	private bitset stackingTypesSet = bitset(0)
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.poisonArrows)
 
-	function setAttackSpeedFactor(int level, real value)
+	function setMovementSpeedFactor(int level, real value)
 		def.setLvlDataUnreal("Poa3", level, 3, value)
 
-	function presetAttackSpeedFactor(RealLevelClosure lc)
+	function presetMovementSpeedFactor(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Poa3", lvls, 3, lc)
-		addTooltipProperty("Attack Speed Factor", lc)
+		addTooltipProperty("Movement Speed Factor", lc)
 
 	function setStackingType(int level, int value)
-		def.setLvlDataInt("Poa5", level, 4, value)
+		def.setLvlDataInt("Poa5", level, 5, value)
 
 	function presetStackingTypes(IntLevelClosure lc)
-		def.setLevelsDataInt("Poa5", lvls, 4, lc)
+		def.setLevelsDataInt("Poa5", lvls, 5, lc)
 		addTooltipProperty("Stacking Type", lc)
 
 	function presetStackingType(StackingType stackingType, boolean flag)
@@ -464,12 +479,12 @@ public class AbilityDefinitionPoisonArrows extends AbilityDefinition
 		def.setLevelsDataUnreal("Poa1", lvls, 1, lc)
 		addTooltipProperty("Extra Damage", lc)
 
-	function setMovementSpeedFactor(int level, real value)
+	function setAttackSpeedFactor(int level, real value)
 		def.setLvlDataUnreal("Poa4", level, 4, value)
 
-	function presetMovementSpeedFactor(RealLevelClosure lc)
+	function presetAttackSpeedFactor(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Poa4", lvls, 4, lc)
-		addTooltipProperty("Movement Speed Factor", lc)
+		addTooltipProperty("Attack Speed Factor", lc)
 
 	function setDamageperSecond(int level, real value)
 		def.setLvlDataUnreal("Poa2", level, 2, value)
@@ -796,7 +811,7 @@ public class AbilityDefinitionBloodMageSiphonMana extends AbilityDefinition
 
 	function presetDrainIntervalseconds(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Ndr3", lvls, 3, lc)
-		addTooltipProperty("Drain Interval Seconds", lc)
+		addTooltipProperty("Drain Interval (seconds)", lc)
 
 	function setHitPointsDrained(int level, real value)
 		def.setLvlDataUnreal("Ndr1", level, 1, value)
@@ -924,7 +939,7 @@ public class AbilityDefinitionRoarcreepSkeletalOrc extends AbilityDefinition
 
 	function presetDamageIncrease(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Roa1", lvls, 1, lc)
-		addTooltipProperty("Damage Increase", lc)
+		addTooltipProperty("Damage Increase (%)", lc)
 
 	function setDefenseIncrease(int level, int value)
 		def.setLvlDataInt("Roa2", level, 2, value)
@@ -993,6 +1008,21 @@ public class AbilityDefinitionTauntCreep extends AbilityDefinition
 		def.setLevelsDataInt("Tau3", lvls, 3, lc)
 		addTooltipProperty("Max Units", lc)
 
+	function setNumberOfPulses(int level, int value)
+		def.setLvlDataInt("Tau4", level, 4, value)
+
+	function presetNumberOfPulses(IntLevelClosure lc)
+		def.setLevelsDataInt("Tau4", lvls, 4, lc)
+		addTooltipProperty("Number of Pulses", lc)
+
+	function setIntervalBetweenPulses(int level, real value)
+		def.setLvlDataUnreal("Tau5", level, 5, value)
+
+	function presetIntervalBetweenPulses(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Tau5", lvls, 5, lc)
+		addTooltipProperty("Interval between Pulses", lc)
+
+
 public class AbilityDefinitionRejuvinationFurbolg extends AbilityDefinition
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.rejuvenation)
@@ -1009,7 +1039,7 @@ public class AbilityDefinitionRejuvinationFurbolg extends AbilityDefinition
 
 	function presetNoTargetRequired(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("Rej4", lvls, 4, lc)
-		addTooltipProperty("NoTargetRequired", lc)
+		addTooltipProperty("No Target Required", lc)
 
 	function setHitPointsGained(int level, real value)
 		def.setLvlDataUnreal("Rej1", level, 1, value)
@@ -1055,7 +1085,7 @@ public class AbilityDefinitionPulverizecreep extends AbilityDefinition
 
 	function presetChancetoStomp(RealLevelClosure lc)
 		def.setLevelsDataUnreal("War1", lvls, 1, lc)
-		addTooltipProperty("Chance to Stomp", lc)
+		addTooltipProperty("Chance to Stomp (%)", lc)
 
 public class AbilityDefinitionBeastMasterSummonHawk extends AbilityDefinition
 	construct(int newAbilityId)
@@ -1098,14 +1128,14 @@ public class AbilityDefinitionTinkererSummonFactoryLevel0 extends AbilityDefinit
 
 	function presetSpawnUnitID(StringLevelClosure lc)
 		def.setLevelsDataString("Nsy2", lvls, 2, lc)
-		addTooltipProperty("SpawnUnitID", lc)
+		addTooltipProperty("Spawn Unit ID", lc)
 
 	function setFactoryUnitID(int level, string value)
 		def.setLvlDataString("Nsyu", level, 0, value)
 
 	function presetFactoryUnitID(StringLevelClosure lc)
 		def.setLevelsDataString("Nsyu", lvls, 0, lc)
-		addTooltipProperty("FactoryUnitID", lc)
+		addTooltipProperty("Factory Unit ID", lc)
 
 	function setSpawnUnitOffset(int level, real value)
 		def.setLvlDataUnreal("Nsy4", level, 4, value)
@@ -1130,28 +1160,28 @@ public class AbilityDefinitionPolymorphcreep extends AbilityDefinition
 
 	function presetMorphUnitsGround(StringLevelClosure lc)
 		def.setLevelsDataString("Ply2", lvls, 2, lc)
-		addTooltipProperty("Morph Units Ground", lc)
+		addTooltipProperty("Morph Units - Ground", lc)
 
 	function setMorphUnitsWater(int level, string value)
 		def.setLvlDataString("Ply5", level, 5, value)
 
 	function presetMorphUnitsWater(StringLevelClosure lc)
 		def.setLevelsDataString("Ply5", lvls, 5, lc)
-		addTooltipProperty("Morph Units Water", lc)
+		addTooltipProperty("Morph Units - Water", lc)
 
 	function setMorphUnitsAmphibious(int level, string value)
 		def.setLvlDataString("Ply4", level, 4, value)
 
 	function presetMorphUnitsAmphibious(StringLevelClosure lc)
 		def.setLevelsDataString("Ply4", lvls, 4, lc)
-		addTooltipProperty("Morph Units Amphibious", lc)
+		addTooltipProperty("Morph Units - Amphibious", lc)
 
 	function setMorphUnitsAir(int level, string value)
 		def.setLvlDataString("Ply3", level, 3, value)
 
 	function presetMorphUnitsAir(StringLevelClosure lc)
 		def.setLevelsDataString("Ply3", lvls, 3, lc)
-		addTooltipProperty("Morph Units Air", lc)
+		addTooltipProperty("Morph Units - Air", lc)
 
 	function setMaximumCreepLevel(int level, int value)
 		def.setLvlDataInt("Ply1", level, 1, value)
@@ -1208,7 +1238,7 @@ public class AbilityDefinitionFirelordSoulBurn extends AbilityDefinition
 
 	function presetAttackSpeedReduction(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Nso5", lvls, 5, lc)
-		addTooltipProperty("Attack Speed Reduction", lc)
+		addTooltipProperty("Attack Speed Reduction (%)", lc)
 
 	function setDamageAmount(int level, real value)
 		def.setLvlDataUnreal("Nso1", level, 1, value)
@@ -1229,7 +1259,7 @@ public class AbilityDefinitionFirelordSoulBurn extends AbilityDefinition
 
 	function presetMovementSpeedReduction(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Nso4", lvls, 4, lc)
-		addTooltipProperty("Movement Speed Reduction", lc)
+		addTooltipProperty("Movement Speed Reduction (%)", lc)
 
 	function setDamagePenalty(int level, real value)
 		def.setLvlDataUnreal("Nso3", level, 3, value)
@@ -1265,14 +1295,14 @@ public class AbilityDefinitionFrenzy extends AbilityDefinition
 
 	function presetMovementSpeedIncrease(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Blo2", lvls, 2, lc)
-		addTooltipProperty("Movement Speed Increase", lc)
+		addTooltipProperty("Movement Speed Increase (%)", lc)
 
 	function setAttackSpeedIncrease(int level, real value)
 		def.setLvlDataUnreal("Blo1", level, 1, value)
 
 	function presetAttackSpeedIncrease(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Blo1", lvls, 1, lc)
-		addTooltipProperty("Attack Speed Increase", lc)
+		addTooltipProperty("Attack Speed Increase (%)", lc)
 
 	function setScalingFactor(int level, real value)
 		def.setLvlDataUnreal("Blo3", level, 3, value)
@@ -1333,7 +1363,7 @@ public class AbilityDefinitionDarkRangerSilence extends AbilityDefinition
 
 	function presetChanceToMiss(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Nsi2", lvls, 2, lc)
-		addTooltipProperty("Chance To Miss", lc)
+		addTooltipProperty("Chance To Miss (%)", lc)
 
 	function setAttacksPrevented(int level, int value)
 		def.setLvlDataInt("Nsi1", level, 1, value)
@@ -1390,7 +1420,7 @@ public class AbilityDefinitionShadowMeldInstant extends AbilityDefinition
 
 	function presetDayNightDuration(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Shm2", lvls, 2, lc)
-		addTooltipProperty("Day Night Duration", lc)
+		addTooltipProperty("Day/Night Duration", lc)
 
 	function setActionDuration(int level, real value)
 		def.setLvlDataUnreal("Shm3", level, 3, value)
@@ -1405,6 +1435,14 @@ public class AbilityDefinitionShadowMeldInstant extends AbilityDefinition
 	function presetFadeDuration(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Shm1", lvls, 1, lc)
 		addTooltipProperty("Fade Duration", lc)
+
+	function setPermanentCloak(int level, bool value)
+		def.setLvlDataBoolean("Shm4", level, 4, value)
+
+	function presetPermanentCloak(BooleanLevelClosure lc)
+		def.setLevelsDataBoolean("Shm4", lvls, 4, lc)
+		addTooltipProperty("Permanent Cloak", lc)
+
 
 public class AbilityDefinitionSpellShieldAOE extends AbilityDefinition
 	construct(int newAbilityId)
@@ -1426,14 +1464,14 @@ public class AbilityDefinitionItemAuraEndurance extends AbilityDefinition
 
 	function presetMovementSpeedIncrease(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Oae1", lvls, 1, lc)
-		addTooltipProperty("Movement Speed Increase", lc)
+		addTooltipProperty("Movement Speed Increase (%)", lc)
 
 	function setAttackSpeedIncrease(int level, real value)
 		def.setLvlDataUnreal("Oae2", level, 2, value)
 
 	function presetAttackSpeedIncrease(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Oae2", lvls, 2, lc)
-		addTooltipProperty("Attack Speed Increase", lc)
+		addTooltipProperty("Attack Speed Increase (%)", lc)
 
 public class AbilityDefinitionSpiritPigcreep extends AbilityDefinition
 	construct(int newAbilityId)
@@ -1726,21 +1764,21 @@ public class AbilityDefinitionRaiseDeadCreep extends AbilityDefinition
 
 	function presetUnitsSummonedTypeOne(IntLevelClosure lc)
 		def.setLevelsDataInt("Rai1", lvls, 1, lc)
-		addTooltipProperty("Units Summoned Type One", lc)
+		addTooltipProperty("Units Summoned (Type One)", lc)
 
 	function setUnitTypeForLimitCheck(int level, string value)
 		def.setLvlDataString("Raiu", level, 0, value)
 
 	function presetUnitTypeForLimitCheck(StringLevelClosure lc)
 		def.setLevelsDataString("Raiu", lvls, 0, lc)
-		addTooltipProperty("UnitTypeForLimitCheck", lc)
+		addTooltipProperty("Unit Type For Limit Check", lc)
 
 	function setUnitsSummonedTypeTwo(int level, int value)
 		def.setLvlDataInt("Rai2", level, 2, value)
 
 	function presetUnitsSummonedTypeTwo(IntLevelClosure lc)
 		def.setLevelsDataInt("Rai2", lvls, 2, lc)
-		addTooltipProperty("Units Summoned Type Two", lc)
+		addTooltipProperty("Units Summoned (Type Two)", lc)
 
 	function setUnitTypeTwo(int level, string value)
 		def.setLvlDataString("Rai4", level, 4, value)
@@ -1783,7 +1821,7 @@ public class AbilityDefinitionUnholyFrenzyWarlock extends AbilityDefinition
 
 	function presetAttackSpeedBonus(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Uhf1", lvls, 1, lc)
-		addTooltipProperty("Attack Speed Bonus", lc)
+		addTooltipProperty("Attack Speed Bonus (%)", lc)
 
 	function setDamageperSecond(int level, real value)
 		def.setLvlDataUnreal("Uhf2", level, 2, value)
@@ -1888,7 +1926,7 @@ public class AbilityDefinitionRejuvinationcreep extends AbilityDefinition
 
 	function presetNoTargetRequired(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("Rej4", lvls, 4, lc)
-		addTooltipProperty("NoTargetRequired", lc)
+		addTooltipProperty("No Target Required", lc)
 
 	function setHitPointsGained(int level, real value)
 		def.setLvlDataUnreal("Rej1", level, 1, value)
@@ -1959,7 +1997,7 @@ public class AbilityDefinitionItemAuraVampiric extends AbilityDefinition
 
 	function presetAttackDamageStolen(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Uav1", lvls, 1, lc)
-		addTooltipProperty("Attack Damage Stolen", lc)
+		addTooltipProperty("Attack Damage Stolen (%)", lc)
 
 public class AbilityDefinitionItemAuraUnholy extends AbilityDefinition
 	construct(int newAbilityId)
@@ -1977,14 +2015,14 @@ public class AbilityDefinitionItemAuraUnholy extends AbilityDefinition
 
 	function presetLifeRegenerationIncrease(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Uau2", lvls, 2, lc)
-		addTooltipProperty("Life Regeneration Increase", lc)
+		addTooltipProperty("Life Regeneration Increase (%)", lc)
 
 	function setMovementSpeedIncrease(int level, real value)
 		def.setLvlDataUnreal("Uau1", level, 1, value)
 
 	function presetMovementSpeedIncrease(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Uau1", lvls, 1, lc)
-		addTooltipProperty("Movement Speed Increase", lc)
+		addTooltipProperty("Movement Speed Increase (%)", lc)
 
 public class AbilityDefinitionArchMageBrillianceAura extends AbilityDefinition
 	construct(int newAbilityId)
@@ -2031,7 +2069,7 @@ public class AbilityDefinitionRoarcreep extends AbilityDefinition
 
 	function presetDamageIncrease(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Roa1", lvls, 1, lc)
-		addTooltipProperty("Damage Increase", lc)
+		addTooltipProperty("Damage Increase (%)", lc)
 
 	function setDefenseIncrease(int level, int value)
 		def.setLvlDataInt("Roa2", level, 2, value)
@@ -2131,7 +2169,7 @@ public class AbilityDefinitionItemAuraTrueshot extends AbilityDefinition
 
 	function presetDamageBonus(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Ear1", lvls, 1, lc)
-		addTooltipProperty("Damage Bonus", lc)
+		addTooltipProperty("Damage Bonus (%)", lc)
 
 	function setMeleeBonus(int level, bool value)
 		def.setLvlDataBoolean("Ear2", level, 2, value)
@@ -2156,7 +2194,7 @@ public class AbilityDefinitionThunderClapThunderLizard extends AbilityDefinition
 
 	function presetExtraDamageToTarget(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Ctc2", lvls, 2, lc)
-		addTooltipProperty("ExtraDamageToTarget", lc)
+		addTooltipProperty("Extra Damage To Target", lc)
 
 	function setAttackSpeedReduction(int level, real value)
 		def.setLvlDataUnreal("Ctc4", level, 4, value)
@@ -2220,14 +2258,14 @@ public class AbilityDefinitionBloodMageBanish extends AbilityDefinition
 
 	function presetAttackSpeedReduction(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Hbn2", lvls, 2, lc)
-		addTooltipProperty("Attack Speed Reduction", lc)
+		addTooltipProperty("Attack Speed Reduction (%)", lc)
 
 	function setMovementSpeedReduction(int level, real value)
 		def.setLvlDataUnreal("Hbn1", level, 1, value)
 
 	function presetMovementSpeedReduction(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Hbn1", lvls, 1, lc)
-		addTooltipProperty("Movement Speed Reduction", lc)
+		addTooltipProperty("Movement Speed Reduction (%)", lc)
 
 public class AbilityDefinitionItemAuraBrilliance extends AbilityDefinition
 	construct(int newAbilityId)
@@ -2256,7 +2294,7 @@ public class AbilityDefinitionRainofChaos extends AbilityDefinition
 
 	function presetAbilityforUnitCreation(StringLevelClosure lc)
 		def.setLevelsDataString("Nrc1", lvls, 1, lc)
-		addTooltipProperty("Abilityfor Unit Creation", lc)
+		addTooltipProperty("Ability for Unit Creation", lc)
 
 	function setNumberofUnitsCreated(int level, int value)
 		def.setLvlDataInt("Nrc2", level, 2, value)
@@ -2274,7 +2312,7 @@ public class AbilityDefinitionBuildTinyGreatHall extends AbilityDefinition
 
 	function presetUnitCreatedperplayerrace(StringLevelClosure lc)
 		def.setLevelsDataString("Ibl1", lvls, 0, lc)
-		addTooltipProperty("Unit Created per player race", lc)
+		addTooltipProperty("Unit Created (per player race)", lc)
 
 public class AbilityDefinitionCryptLordSpikedCarapace extends AbilityDefinition
 	construct(int newAbilityId)
@@ -2442,14 +2480,14 @@ public class AbilityDefinitionTinkererSummonFactoryLevel1 extends AbilityDefinit
 
 	function presetSpawnUnitID(StringLevelClosure lc)
 		def.setLevelsDataString("Nsy2", lvls, 2, lc)
-		addTooltipProperty("SpawnUnitID", lc)
+		addTooltipProperty("Spawn Unit ID", lc)
 
 	function setFactoryUnitID(int level, string value)
 		def.setLvlDataString("Nsyu", level, 0, value)
 
 	function presetFactoryUnitID(StringLevelClosure lc)
 		def.setLevelsDataString("Nsyu", lvls, 0, lc)
-		addTooltipProperty("FactoryUnitID", lc)
+		addTooltipProperty("Factory Unit ID", lc)
 
 	function setSpawnUnitOffset(int level, real value)
 		def.setLvlDataUnreal("Nsy4", level, 4, value)
@@ -2510,14 +2548,14 @@ public class AbilityDefinitionTinkererSummonFactoryLevel3 extends AbilityDefinit
 
 	function presetSpawnUnitID(StringLevelClosure lc)
 		def.setLevelsDataString("Nsy2", lvls, 2, lc)
-		addTooltipProperty("SpawnUnitID", lc)
+		addTooltipProperty("Spawn Unit ID", lc)
 
 	function setFactoryUnitID(int level, string value)
 		def.setLvlDataString("Nsyu", level, 0, value)
 
 	function presetFactoryUnitID(StringLevelClosure lc)
 		def.setLevelsDataString("Nsyu", lvls, 0, lc)
-		addTooltipProperty("FactoryUnitID", lc)
+		addTooltipProperty("Factory Unit ID", lc)
 
 	function setSpawnUnitOffset(int level, real value)
 		def.setLvlDataUnreal("Nsy4", level, 4, value)
@@ -2574,14 +2612,14 @@ public class AbilityDefinitionTinkererSummonFactoryLevel2 extends AbilityDefinit
 
 	function presetSpawnUnitID(StringLevelClosure lc)
 		def.setLevelsDataString("Nsy2", lvls, 2, lc)
-		addTooltipProperty("SpawnUnitID", lc)
+		addTooltipProperty("Spawn Unit ID", lc)
 
 	function setFactoryUnitID(int level, string value)
 		def.setLvlDataString("Nsyu", level, 0, value)
 
 	function presetFactoryUnitID(StringLevelClosure lc)
 		def.setLevelsDataString("Nsyu", lvls, 0, lc)
-		addTooltipProperty("FactoryUnitID", lc)
+		addTooltipProperty("Factory Unit ID", lc)
 
 	function setSpawnUnitOffset(int level, real value)
 		def.setLvlDataUnreal("Nsy4", level, 4, value)
@@ -2649,7 +2687,7 @@ public class AbilityDefinitionBuildTinyCastle extends AbilityDefinition
 
 	function presetUnitCreatedperplayerrace(StringLevelClosure lc)
 		def.setLevelsDataString("Ibl1", lvls, 0, lc)
-		addTooltipProperty("Unit Created per player race", lc)
+		addTooltipProperty("Unit Created (per player race)", lc)
 
 public class AbilityDefinitionSilenceCreep extends AbilityDefinition
 	construct(int newAbilityId)
@@ -2674,7 +2712,7 @@ public class AbilityDefinitionSilenceCreep extends AbilityDefinition
 
 	function presetChanceToMiss(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Nsi2", lvls, 2, lc)
-		addTooltipProperty("Chance To Miss", lc)
+		addTooltipProperty("Chance To Miss (%)", lc)
 
 	function setAttacksPrevented(int level, int value)
 		def.setLvlDataInt("Nsi1", level, 1, value)
@@ -2704,6 +2742,35 @@ public class AbilityDefinitionBashitem extends AbilityDefinition
 	function presetNeverMiss(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("Hbh5", lvls, 5, lc)
 		addTooltipProperty("Never Miss", lc)
+
+	function setChancetoBash(int level, real value)
+		def.setLvlDataUnreal("Hbh1", level, 1, value)
+
+	function presetChancetoBash(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Hbh1", lvls, 1, lc)
+		addTooltipProperty("Chance to Bash", lc)
+
+	function setDamageMultiplier(int level, real value)
+		def.setLvlDataUnreal("Hbh2", level, 2, value)
+
+	function presetDamageMultiplier(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Hbh2", lvls, 2, lc)
+		addTooltipProperty("Damage Multiplier", lc)
+
+	function setDamageBonus(int level, real value)
+		def.setLvlDataUnreal("Hbh3", level, 3, value)
+
+	function presetDamageBonus(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Hbh3", lvls, 3, lc)
+		addTooltipProperty("Damage Bonus", lc)
+
+	function setChancetoMiss(int level, real value)
+		def.setLvlDataUnreal("Hbh4", level, 4, value)
+
+	function presetChancetoMiss(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Hbh4", lvls, 4, lc)
+		addTooltipProperty("Chance to Miss", lc)
+
 
 public class AbilityDefinitionDefenseBonusPlus5 extends AbilityDefinition
 	construct(int newAbilityId)
@@ -2801,6 +2868,28 @@ public class AbilityDefinitionSiphonManaCreep extends AbilityDefinition
 		def.setLevelsDataUnreal("Ndr4", lvls, 4, lc)
 		addTooltipProperty("Life Transferred Per Second", lc)
 
+	function setHitPointsDrained(int level, real value)
+		def.setLvlDataUnreal("Ndr1", level, 1, value)
+
+	function presetHitPointsDrained(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Ndr1", lvls, 1, lc)
+		addTooltipProperty("Hit Points Drained", lc)
+
+	function setManaPointsDrained(int level, real value)
+		def.setLvlDataUnreal("Ndr2", level, 2, value)
+
+	function presetManaPointsDrained(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Ndr2", lvls, 2, lc)
+		addTooltipProperty("Mana Points Drained", lc)
+
+	function setDrainIntervalseconds(int level, real value)
+		def.setLvlDataUnreal("Ndr3", level, 3, value)
+
+	function presetDrainIntervalseconds(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Ndr3", lvls, 3, lc)
+		addTooltipProperty("Drain Interval (seconds)", lc)
+
+
 public class AbilityDefinitionDefenseBonusPlus4 extends AbilityDefinition
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.defenseBonusPlus4)
@@ -2821,7 +2910,7 @@ public class AbilityDefinitionBuildTinyScoutTower extends AbilityDefinition
 
 	function presetUnitCreatedperplayerrace(StringLevelClosure lc)
 		def.setLevelsDataString("Ibl1", lvls, 0, lc)
-		addTooltipProperty("Unit Created per player race", lc)
+		addTooltipProperty("Unit Created (per player race)", lc)
 
 public class AbilityDefinitionItemCloakOfFlames extends AbilityDefinition
 	construct(int newAbilityId)
@@ -2979,14 +3068,14 @@ public class AbilityDefinitionItemChangeTOD extends AbilityDefinition
 
 	function presetNewTimeofDayMinute(IntLevelClosure lc)
 		def.setLevelsDataInt("ict2", lvls, 2, lc)
-		addTooltipProperty("New Time of Day Minute", lc)
+		addTooltipProperty("New Time of Day - Minute", lc)
 
 	function setNewTimeofDayHour(int level, int value)
 		def.setLvlDataInt("ict1", level, 1, value)
 
 	function presetNewTimeofDayHour(IntLevelClosure lc)
 		def.setLevelsDataInt("ict1", lvls, 1, lc)
-		addTooltipProperty("New Time of Day Hour", lc)
+		addTooltipProperty("New Time of Day - Hour", lc)
 
 public class AbilityDefinitionMoonPriestessScout extends AbilityDefinition
 	construct(int newAbilityId)
@@ -3015,7 +3104,7 @@ public class AbilityDefinitionCycloneAIcy extends AbilityDefinition
 
 	function presetCanBeDispelled(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("cyc1", lvls, 1, lc)
-		addTooltipProperty("CanBeDispelled", lc)
+		addTooltipProperty("Can Be Dispelled", lc)
 
 public class AbilityDefinitionExhume extends AbilityDefinition
 	construct(int newAbilityId)
@@ -3110,7 +3199,7 @@ public class AbilityDefinitionDefendItem extends AbilityDefinition
 
 	function presetDamageTaken(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Def1", lvls, 1, lc)
-		addTooltipProperty("Damage Taken", lc)
+		addTooltipProperty("Damage Taken (%)", lc)
 
 	function setChancetoDeflect(int level, real value)
 		def.setLvlDataUnreal("Def6", level, 6, value)
@@ -3138,21 +3227,21 @@ public class AbilityDefinitionDefendItem extends AbilityDefinition
 
 	function presetDamageDealt(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Def2", lvls, 2, lc)
-		addTooltipProperty("Damage Dealt", lc)
+		addTooltipProperty("Damage Dealt (%)", lc)
 
 	function setDeflectDamageTakenSpells(int level, real value)
 		def.setLvlDataUnreal("Def8", level, 8, value)
 
 	function presetDeflectDamageTakenSpells(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Def8", lvls, 8, lc)
-		addTooltipProperty("Deflect Damage Taken Spells", lc)
+		addTooltipProperty("Deflect Damage Taken (Spells)", lc)
 
 	function setDeflectDamageTakenPiercing(int level, real value)
 		def.setLvlDataUnreal("Def7", level, 7, value)
 
 	function presetDeflectDamageTakenPiercing(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Def7", lvls, 7, lc)
-		addTooltipProperty("Deflect Damage Taken Piercing", lc)
+		addTooltipProperty("Deflect Damage Taken (Piercing)", lc)
 
 	function setMagicDamageReduction(int level, real value)
 		def.setLvlDataUnreal("Def5", level, 5, value)
@@ -3170,7 +3259,7 @@ public class AbilityDefinitionOrbofDarkness extends AbilityDefinition
 
 	function presetChanceToHitUnits(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Iob2", lvls, 2, lc)
-		addTooltipProperty("Chance To Hit Units", lc)
+		addTooltipProperty("Chance To Hit Units (%)", lc)
 
 	function setEnabledAttackIndex(int level, int value)
 		def.setLvlDataInt("Iob5", level, 5, value)
@@ -3184,14 +3273,14 @@ public class AbilityDefinitionOrbofDarkness extends AbilityDefinition
 
 	function presetChanceToHitSummons(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Iob4", lvls, 4, lc)
-		addTooltipProperty("Chance To Hit Summons", lc)
+		addTooltipProperty("Chance To Hit Summons (%)", lc)
 
 	function setChanceToHitHeros(int level, real value)
 		def.setLvlDataUnreal("Iob3", level, 3, value)
 
 	function presetChanceToHitHeros(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Iob3", lvls, 3, lc)
-		addTooltipProperty("Chance To Hit Heros", lc)
+		addTooltipProperty("Chance To Hit Heros (%)", lc)
 
 	function setDamageBonus(int level, real value)
 		def.setLvlDataUnreal("Idam", level, 1, value)
@@ -3216,7 +3305,7 @@ public class AbilityDefinitionItemDispelAoe extends AbilityDefinition
 
 	function presetDamageToSummonedUnits(IntLevelClosure lc)
 		def.setLevelsDataInt("Idid", lvls, 2, lc)
-		addTooltipProperty("DamageToSummonedUnits", lc)
+		addTooltipProperty("Damage To Summoned Units", lc)
 
 	function setManaLossPerUnit(int level, int value)
 		def.setLvlDataInt("Idim", level, 1, value)
@@ -3357,14 +3446,14 @@ public class AbilityDefinitionTaurenChieftainEnduranceAura extends AbilityDefini
 
 	function presetMovementSpeedIncrease(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Oae1", lvls, 1, lc)
-		addTooltipProperty("Movement Speed Increase", lc)
+		addTooltipProperty("Movement Speed Increase (%)", lc)
 
 	function setAttackSpeedIncrease(int level, real value)
 		def.setLvlDataUnreal("Oae2", level, 2, value)
 
 	function presetAttackSpeedIncrease(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Oae2", lvls, 2, lc)
-		addTooltipProperty("Attack Speed Increase", lc)
+		addTooltipProperty("Attack Speed Increase (%)", lc)
 
 public class AbilityDefinitionItemDefenseAoePlusHealing extends AbilityDefinition
 	construct(int newAbilityId)
@@ -3427,6 +3516,14 @@ public class AbilityDefinitionKeeperoftheGroveTranquility extends AbilityDefinit
 		def.setLevelsDataUnreal("Etq1", lvls, 1, lc)
 		addTooltipProperty("Life Healed", lc)
 
+	function setInitialImmunityDuration(int level, real value)
+		def.setLvlDataUnreal("Etq4", level, 4, value)
+
+	function presetInitialImmunityDuration(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Etq4", lvls, 4, lc)
+		addTooltipProperty("Initial Immunity Duration", lc)
+
+
 public class AbilityDefinitionWindWalk extends AbilityDefinition
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.windWalk1)
@@ -3443,14 +3540,14 @@ public class AbilityDefinitionWindWalk extends AbilityDefinition
 
 	function presetBackstabDamage(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("Owk4", lvls, 4, lc)
-		addTooltipProperty("Backstab Damage Enabled", lc)
+		addTooltipProperty("Backstab Damage", lc)
 
 	function setMovementSpeedIncrease(int level, real value)
 		def.setLvlDataUnreal("Owk2", level, 2, value)
 
 	function presetMovementSpeedIncrease(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Owk2", lvls, 2, lc)
-		addTooltipProperty("Movement Speed Increase", lc)
+		addTooltipProperty("Movement Speed Increase (%)", lc)
 
 	function setTransitionTime(int level, real value)
 		def.setLvlDataUnreal("Owk1", level, 1, value)
@@ -3458,6 +3555,14 @@ public class AbilityDefinitionWindWalk extends AbilityDefinition
 	function presetTransitionTime(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Owk1", lvls, 1, lc)
 		addTooltipProperty("Transition Time", lc)
+
+	function setStartCooldownWhenDecloak(int level, bool value)
+		def.setLvlDataBoolean("Owk5", level, 5, value)
+
+	function presetStartCooldownWhenDecloak(BooleanLevelClosure lc)
+		def.setLevelsDataBoolean("Owk5", lvls, 5, lc)
+		addTooltipProperty("Start Cooldown when Decloak", lc)
+
 
 public class AbilityDefinitionManaShieldCreep extends AbilityDefinition
 	construct(int newAbilityId)
@@ -3468,7 +3573,7 @@ public class AbilityDefinitionManaShieldCreep extends AbilityDefinition
 
 	function presetDamageAbsorbed(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Nms2", lvls, 2, lc)
-		addTooltipProperty("Damage Absorbed", lc)
+		addTooltipProperty("Damage Absorbed (%)", lc)
 
 	function setManaperHitPoint(int level, real value)
 		def.setLvlDataUnreal("Nms1", level, 1, value)
@@ -3504,7 +3609,7 @@ public class AbilityDefinitionItemDispelAoeWithCooldown extends AbilityDefinitio
 
 	function presetDamageToSummonedUnits(IntLevelClosure lc)
 		def.setLevelsDataInt("Idid", lvls, 2, lc)
-		addTooltipProperty("DamageToSummonedUnits", lc)
+		addTooltipProperty("Damage To Summoned Units", lc)
 
 	function setManaLossPerUnit(int level, int value)
 		def.setLvlDataInt("Idim", level, 1, value)
@@ -3559,7 +3664,7 @@ public class AbilityDefinitionEvilIllidanMetamorphosis extends AbilityDefinition
 
 	function presetAlternateFormHitPointBonus(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Eme5", lvls, 5, lc)
-		addTooltipProperty("AlternateFormHitPointBonus", lc)
+		addTooltipProperty("Alternate Form Hit Point Bonus", lc)
 
 	function setAlternateFormUnit(int level, string value)
 		def.setLvlDataString("Emeu", level, 0, value)
@@ -3577,14 +3682,14 @@ public class AbilityDefinitionImpaleCreep extends AbilityDefinition
 
 	function presetWaveTimeseconds(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Uim2", lvls, 2, lc)
-		addTooltipProperty("Wave Time Seconds", lc)
+		addTooltipProperty("Wave Time (seconds)", lc)
 
 	function setAirTimeseconds(int level, real value)
 		def.setLvlDataUnreal("Uim4", level, 4, value)
 
 	function presetAirTimeseconds(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Uim4", lvls, 4, lc)
-		addTooltipProperty("Air Time Seconds", lc)
+		addTooltipProperty("Air Time (seconds)", lc)
 
 	function setDamageDealt(int level, real value)
 		def.setLvlDataUnreal("Uim3", level, 3, value)
@@ -3599,6 +3704,21 @@ public class AbilityDefinitionImpaleCreep extends AbilityDefinition
 	function presetWaveDistance(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Uim1", lvls, 1, lc)
 		addTooltipProperty("Wave Distance", lc)
+
+	function setUninterruptible(int level, bool value)
+		def.setLvlDataBoolean("Uim5", level, 5, value)
+
+	function presetUninterruptible(BooleanLevelClosure lc)
+		def.setLevelsDataBoolean("Uim5", lvls, 5, lc)
+		addTooltipProperty("Uninterruptible", lc)
+
+	function setAirborneTargetsVulnerable(int level, bool value)
+		def.setLvlDataBoolean("Uim6", level, 6, value)
+
+	function presetAirborneTargetsVulnerable(BooleanLevelClosure lc)
+		def.setLevelsDataBoolean("Uim6", lvls, 6, lc)
+		addTooltipProperty("Airborne Targets Vulnerable", lc)
+
 
 public class AbilityDefinitionMonsooncreep extends AbilityDefinition
 	construct(int newAbilityId)
@@ -3741,7 +3861,7 @@ public class AbilityDefinitionCloudofFogItem extends AbilityDefinition
 
 	function presetChanceToMiss(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Nsi2", lvls, 2, lc)
-		addTooltipProperty("Chance To Miss", lc)
+		addTooltipProperty("Chance To Miss (%)", lc)
 
 	function setAttacksPrevented(int level, int value)
 		def.setLvlDataInt("Nsi1", level, 1, value)
@@ -3809,7 +3929,7 @@ public class AbilityDefinitionInventoryPackMule extends AbilityDefinition
 
 	function presetDropItemsOnDeath(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("inv2", lvls, 2, lc)
-		addTooltipProperty("DropItemsOnDeath", lc)
+		addTooltipProperty("Drop Items On Death", lc)
 
 	function setCanGetItems(int level, bool value)
 		def.setLvlDataBoolean("inv4", level, 4, value)
@@ -3834,28 +3954,28 @@ public class AbilityDefinitionFigurineFurbolg extends AbilityDefinition
 
 	function presetSummonUnitType(StringLevelClosure lc)
 		def.setLevelsDataString("Ist2", lvls, 4, lc)
-		addTooltipProperty("Summon Unit Type", lc)
+		addTooltipProperty("Summon 2 - Unit Type", lc)
 
 	function setSummonAmount(int level, int value)
 		def.setLvlDataInt("Isn2", level, 2, value)
 
 	function presetSummonAmount(IntLevelClosure lc)
 		def.setLevelsDataInt("Isn2", lvls, 2, lc)
-		addTooltipProperty("Summon Amount", lc)
+		addTooltipProperty("Summon 2 - Amount", lc)
 
 	function setSummonUnitType1(int level, string value)
 		def.setLvlDataString("Ist1", level, 3, value)
 
 	function presetSummonUnitType1(StringLevelClosure lc)
 		def.setLevelsDataString("Ist1", lvls, 3, lc)
-		addTooltipProperty("SummonUnitType1", lc)
+		addTooltipProperty("Summon 1 - Unit Type", lc)
 
 	function setSummonAmount1(int level, int value)
 		def.setLvlDataInt("Isn1", level, 1, value)
 
 	function presetSummonAmount1(IntLevelClosure lc)
 		def.setLevelsDataInt("Isn1", lvls, 1, lc)
-		addTooltipProperty("SummonAmount1", lc)
+		addTooltipProperty("Summon 1 - Amount", lc)
 
 public class AbilityDefinitionFigurineFelHound extends AbilityDefinition
 	construct(int newAbilityId)
@@ -3866,28 +3986,28 @@ public class AbilityDefinitionFigurineFelHound extends AbilityDefinition
 
 	function presetSummonUnitType(StringLevelClosure lc)
 		def.setLevelsDataString("Ist2", lvls, 4, lc)
-		addTooltipProperty("Summon Unit Type", lc)
+		addTooltipProperty("Summon 2 - Unit Type", lc)
 
 	function setSummonAmount(int level, int value)
 		def.setLvlDataInt("Isn2", level, 2, value)
 
 	function presetSummonAmount(IntLevelClosure lc)
 		def.setLevelsDataInt("Isn2", lvls, 2, lc)
-		addTooltipProperty("Summon Amount", lc)
+		addTooltipProperty("Summon 2 - Amount", lc)
 
 	function setSummonUnitType1(int level, string value)
 		def.setLvlDataString("Ist1", level, 3, value)
 
 	function presetSummonUnitType1(StringLevelClosure lc)
 		def.setLevelsDataString("Ist1", lvls, 3, lc)
-		addTooltipProperty("SummonUnitType1", lc)
+		addTooltipProperty("Summon 1 - Unit Type", lc)
 
 	function setSummonAmount1(int level, int value)
 		def.setLvlDataInt("Isn1", level, 1, value)
 
 	function presetSummonAmount1(IntLevelClosure lc)
 		def.setLevelsDataInt("Isn1", lvls, 1, lc)
-		addTooltipProperty("SummonAmount1", lc)
+		addTooltipProperty("Summon 1 - Amount", lc)
 
 public class AbilityDefinitionFireDamageBonus extends AbilityDefinition
 	construct(int newAbilityId)
@@ -3930,7 +4050,7 @@ public class AbilityDefinitionHealReductionBonus extends AbilityDefinition
 
 	function presetHealingMultiplier(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Iofr", lvls, 2, lc)
-		addTooltipProperty("Heal Reduction", lc)
+		addTooltipProperty("Healing Multiplier", lc)
 
 public class AbilityDefinitionDetectMagicSentinel extends AbilityDefinition
 	construct(int newAbilityId)
@@ -3952,7 +4072,7 @@ public class AbilityDefinitionFirelordVolcano extends AbilityDefinition
 
 	function presetDestructibleID(StringLevelClosure lc)
 		def.setLevelsDataString("Nvcu", lvls, 0, lc)
-		addTooltipProperty("DestructibleID", lc)
+		addTooltipProperty("Destructible ID", lc)
 
 	function setBuildingDamageFactor(int level, real value)
 		def.setLvlDataUnreal("Nvc4", level, 4, value)
@@ -4005,28 +4125,28 @@ public class AbilityDefinitionFigurineRedDrake extends AbilityDefinition
 
 	function presetSummonUnitType(StringLevelClosure lc)
 		def.setLevelsDataString("Ist2", lvls, 4, lc)
-		addTooltipProperty("Summon Unit Type", lc)
+		addTooltipProperty("Summon 2 - Unit Type", lc)
 
 	function setSummonAmount(int level, int value)
 		def.setLvlDataInt("Isn2", level, 2, value)
 
 	function presetSummonAmount(IntLevelClosure lc)
 		def.setLevelsDataInt("Isn2", lvls, 2, lc)
-		addTooltipProperty("Summon Amount", lc)
+		addTooltipProperty("Summon 2 - Amount", lc)
 
 	function setSummonUnitType1(int level, string value)
 		def.setLvlDataString("Ist1", level, 3, value)
 
 	function presetSummonUnitType1(StringLevelClosure lc)
 		def.setLevelsDataString("Ist1", lvls, 3, lc)
-		addTooltipProperty("SummonUnitType1", lc)
+		addTooltipProperty("Summon 1 - Unit Type", lc)
 
 	function setSummonAmount1(int level, int value)
 		def.setLvlDataInt("Isn1", level, 1, value)
 
 	function presetSummonAmount1(IntLevelClosure lc)
 		def.setLevelsDataInt("Isn1", lvls, 1, lc)
-		addTooltipProperty("SummonAmount1", lc)
+		addTooltipProperty("Summon 1 - Amount", lc)
 
 public class AbilityDefinitionHealingWard extends AbilityDefinition
 	construct(int newAbilityId)
@@ -4124,7 +4244,7 @@ public class AbilityDefinitionInvisibility extends AbilityDefinition
 
 	function presetTransitionTimeseconds(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Ivs1", lvls, 1, lc)
-		addTooltipProperty("Transition Time Seconds", lc)
+		addTooltipProperty("Transition Time (seconds)", lc)
 
 public class AbilityDefinitionSentryWard extends AbilityDefinition
 	construct(int newAbilityId)
@@ -4146,28 +4266,28 @@ public class AbilityDefinitionFigurineRockGolem extends AbilityDefinition
 
 	function presetSummonUnitType(StringLevelClosure lc)
 		def.setLevelsDataString("Ist2", lvls, 4, lc)
-		addTooltipProperty("Summon Unit Type", lc)
+		addTooltipProperty("Summon 2 - Unit Type", lc)
 
 	function setSummonAmount(int level, int value)
 		def.setLvlDataInt("Isn2", level, 2, value)
 
 	function presetSummonAmount(IntLevelClosure lc)
 		def.setLevelsDataInt("Isn2", lvls, 2, lc)
-		addTooltipProperty("Summon Amount", lc)
+		addTooltipProperty("Summon 2 - Amount", lc)
 
 	function setSummonUnitType1(int level, string value)
 		def.setLvlDataString("Ist1", level, 3, value)
 
 	function presetSummonUnitType1(StringLevelClosure lc)
 		def.setLevelsDataString("Ist1", lvls, 3, lc)
-		addTooltipProperty("SummonUnitType1", lc)
+		addTooltipProperty("Summon 1 - Unit Type", lc)
 
 	function setSummonAmount1(int level, int value)
 		def.setLvlDataInt("Isn1", level, 1, value)
 
 	function presetSummonAmount1(IntLevelClosure lc)
 		def.setLevelsDataInt("Isn1", lvls, 1, lc)
-		addTooltipProperty("SummonAmount1", lc)
+		addTooltipProperty("Summon 1 - Amount", lc)
 
 public class AbilityDefinitionFigurineSkeleton extends AbilityDefinition
 	construct(int newAbilityId)
@@ -4178,28 +4298,28 @@ public class AbilityDefinitionFigurineSkeleton extends AbilityDefinition
 
 	function presetSummonUnitType(StringLevelClosure lc)
 		def.setLevelsDataString("Ist2", lvls, 4, lc)
-		addTooltipProperty("Summon Unit Type", lc)
+		addTooltipProperty("Summon 2 - Unit Type", lc)
 
 	function setSummonAmount(int level, int value)
 		def.setLvlDataInt("Isn2", level, 2, value)
 
 	function presetSummonAmount(IntLevelClosure lc)
 		def.setLevelsDataInt("Isn2", lvls, 2, lc)
-		addTooltipProperty("Summon Amount", lc)
+		addTooltipProperty("Summon 2 - Amount", lc)
 
 	function setSummonUnitType1(int level, string value)
 		def.setLvlDataString("Ist1", level, 3, value)
 
 	function presetSummonUnitType1(StringLevelClosure lc)
 		def.setLevelsDataString("Ist1", lvls, 3, lc)
-		addTooltipProperty("SummonUnitType1", lc)
+		addTooltipProperty("Summon 1 - Unit Type", lc)
 
 	function setSummonAmount1(int level, int value)
 		def.setLvlDataInt("Isn1", level, 1, value)
 
 	function presetSummonAmount1(IntLevelClosure lc)
 		def.setLevelsDataInt("Isn1", lvls, 1, lc)
-		addTooltipProperty("SummonAmount1", lc)
+		addTooltipProperty("Summon 1 - Amount", lc)
 
 public class AbilityDefinitionSubmergeMyrmidon extends AbilityDefinition
 	private bitset morphingFlagsSet = bitset(1)
@@ -4292,28 +4412,28 @@ public class AbilityDefinitionFigurineDoomGuard extends AbilityDefinition
 
 	function presetSummonUnitType(StringLevelClosure lc)
 		def.setLevelsDataString("Ist2", lvls, 4, lc)
-		addTooltipProperty("Summon Unit Type", lc)
+		addTooltipProperty("Summon 2 - Unit Type", lc)
 
 	function setSummonAmount(int level, int value)
 		def.setLvlDataInt("Isn2", level, 2, value)
 
 	function presetSummonAmount(IntLevelClosure lc)
 		def.setLevelsDataInt("Isn2", lvls, 2, lc)
-		addTooltipProperty("Summon Amount", lc)
+		addTooltipProperty("Summon 2 - Amount", lc)
 
 	function setSummonUnitType1(int level, string value)
 		def.setLvlDataString("Ist1", level, 3, value)
 
 	function presetSummonUnitType1(StringLevelClosure lc)
 		def.setLevelsDataString("Ist1", lvls, 3, lc)
-		addTooltipProperty("SummonUnitType1", lc)
+		addTooltipProperty("Summon 1 - Unit Type", lc)
 
 	function setSummonAmount1(int level, int value)
 		def.setLvlDataInt("Isn1", level, 1, value)
 
 	function presetSummonAmount1(IntLevelClosure lc)
 		def.setLevelsDataInt("Isn1", lvls, 1, lc)
-		addTooltipProperty("SummonAmount1", lc)
+		addTooltipProperty("Summon 1 - Amount", lc)
 
 public class AbilityDefinitionSubmergeSnapDragon extends AbilityDefinition
 	private bitset morphingFlagsSet = bitset(1)
@@ -4797,7 +4917,7 @@ public class AbilityDefinitionReplenishLifeMana extends AbilityDefinition
 
 	function presetMaximumUnitsChargedToCaster(IntLevelClosure lc)
 		def.setLevelsDataInt("Rpb5", lvls, 5, lc)
-		addTooltipProperty("MaximumUnitsChargedToCaster", lc)
+		addTooltipProperty("Maximum Units Charged To Caster", lc)
 
 	function setMinimumLifeRequired(int level, real value)
 		def.setLvlDataUnreal("Rpb3", level, 3, value)
@@ -4861,7 +4981,7 @@ public class AbilityDefinitionReplenishLife extends AbilityDefinition
 
 	function presetMaximumUnitsChargedToCaster(IntLevelClosure lc)
 		def.setLevelsDataInt("Rpb5", lvls, 5, lc)
-		addTooltipProperty("MaximumUnitsChargedToCaster", lc)
+		addTooltipProperty("Maximum Units Charged To Caster", lc)
 
 	function setMaximumUnitsAffected(int level, int value)
 		def.setLvlDataInt("Rpb6", level, 0, value)
@@ -4900,7 +5020,7 @@ public class AbilityDefinitionInventory2slotunitUndead extends AbilityDefinition
 
 	function presetDropItemsOnDeath(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("inv2", lvls, 2, lc)
-		addTooltipProperty("DropItemsOnDeath", lc)
+		addTooltipProperty("Drop Items On Death", lc)
 
 	function setCanGetItems(int level, bool value)
 		def.setLvlDataBoolean("inv4", level, 4, value)
@@ -4953,7 +5073,7 @@ public class AbilityDefinitionManaBattery extends AbilityDefinition
 
 	function presetRegenerateOnlyAtNight(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("Mbt5", lvls, 5, lc)
-		addTooltipProperty("RegenerateOnlyAtNight", lc)
+		addTooltipProperty("Regenerate Only At Night", lc)
 
 public class AbilityDefinitionReplenishMana extends AbilityDefinition
 	construct(int newAbilityId)
@@ -4971,7 +5091,7 @@ public class AbilityDefinitionReplenishMana extends AbilityDefinition
 
 	function presetMaximumUnitsChargedToCaster(IntLevelClosure lc)
 		def.setLevelsDataInt("Rpb5", lvls, 5, lc)
-		addTooltipProperty("MaximumUnitsChargedToCaster", lc)
+		addTooltipProperty("Maximum Units Charged To Caster", lc)
 
 	function setManaPointsGained(int level, real value)
 		def.setLvlDataUnreal("Rej2", level, 2, value)
@@ -5054,7 +5174,7 @@ public class AbilityDefinitionSuperEarthquake extends AbilityDefinition
 
 	function presetUnitsSlowed(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Oeq3", lvls, 3, lc)
-		addTooltipProperty("Units Slowed", lc)
+		addTooltipProperty("Units Slowed (%)", lc)
 
 	function setEffectDelay(int level, real value)
 		def.setLvlDataUnreal("Oeq1", level, 1, value)
@@ -5238,7 +5358,7 @@ public class AbilityDefinitionIllidanMetamorphosis extends AbilityDefinition
 
 	function presetAlternateFormHitPointBonus(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Eme5", lvls, 5, lc)
-		addTooltipProperty("AlternateFormHitPointBonus", lc)
+		addTooltipProperty("Alternate Form Hit Point Bonus", lc)
 
 	function setAlternateFormUnit(int level, string value)
 		def.setLvlDataString("Emeu", level, 0, value)
@@ -5256,28 +5376,28 @@ public class AbilityDefinitionHexCreep extends AbilityDefinition
 
 	function presetMorphUnitsGround(StringLevelClosure lc)
 		def.setLevelsDataString("Ply2", lvls, 2, lc)
-		addTooltipProperty("Morph Units Ground", lc)
+		addTooltipProperty("Morph Units - Ground", lc)
 
 	function setMorphUnitsWater(int level, string value)
 		def.setLvlDataString("Ply5", level, 5, value)
 
 	function presetMorphUnitsWater(StringLevelClosure lc)
 		def.setLevelsDataString("Ply5", lvls, 5, lc)
-		addTooltipProperty("Morph Units Water", lc)
+		addTooltipProperty("Morph Units - Water", lc)
 
 	function setMorphUnitsAmphibious(int level, string value)
 		def.setLvlDataString("Ply4", level, 4, value)
 
 	function presetMorphUnitsAmphibious(StringLevelClosure lc)
 		def.setLevelsDataString("Ply4", lvls, 4, lc)
-		addTooltipProperty("Morph Units Amphibious", lc)
+		addTooltipProperty("Morph Units - Amphibious", lc)
 
 	function setMorphUnitsAir(int level, string value)
 		def.setLvlDataString("Ply3", level, 3, value)
 
 	function presetMorphUnitsAir(StringLevelClosure lc)
 		def.setLevelsDataString("Ply3", lvls, 3, lc)
-		addTooltipProperty("Morph Units Air", lc)
+		addTooltipProperty("Morph Units - Air", lc)
 
 	function setMaximumCreepLevel(int level, int value)
 		def.setLvlDataInt("Ply1", level, 1, value)
@@ -5370,7 +5490,7 @@ public class AbilityDefinitionInnerFireCreep extends AbilityDefinition
 
 	function presetDamageIncrease(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Inf1", lvls, 1, lc)
-		addTooltipProperty("Damage Increase", lc)
+		addTooltipProperty("Damage Increase (%)", lc)
 
 public class AbilityDefinitionAncestralSpirit extends AbilityDefinition
 	construct(int newAbilityId)
@@ -5406,7 +5526,7 @@ public class AbilityDefinitionHarvestLumbershredder extends AbilityDefinition
 
 	function presetDamagetoTree(IntLevelClosure lc)
 		def.setLevelsDataInt("Har1", lvls, 1, lc)
-		addTooltipProperty("Damageto Tree", lc)
+		addTooltipProperty("Damage to Tree", lc)
 
 public class AbilityDefinitionItemHealAoeGreater extends AbilityDefinition
 	construct(int newAbilityId)
@@ -5449,7 +5569,7 @@ public class AbilityDefinitionPulverize extends AbilityDefinition
 
 	function presetChancetoStomp(RealLevelClosure lc)
 		def.setLevelsDataUnreal("War1", lvls, 1, lc)
-		addTooltipProperty("Chance to Stomp", lc)
+		addTooltipProperty("Chance to Stomp (%)", lc)
 
 public class AbilityDefinitionItemHealAoe extends AbilityDefinition
 	construct(int newAbilityId)
@@ -5482,7 +5602,7 @@ public class AbilityDefinitionFarseerEarthquake extends AbilityDefinition
 
 	function presetUnitsSlowed(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Oeq3", lvls, 3, lc)
-		addTooltipProperty("Units Slowed", lc)
+		addTooltipProperty("Units Slowed (%)", lc)
 
 	function setEffectDelay(int level, real value)
 		def.setLvlDataUnreal("Oeq1", level, 1, value)
@@ -5589,28 +5709,28 @@ public class AbilityDefinitionFigurineIceRevenant extends AbilityDefinition
 
 	function presetSummonUnitType(StringLevelClosure lc)
 		def.setLevelsDataString("Ist2", lvls, 4, lc)
-		addTooltipProperty("Summon Unit Type", lc)
+		addTooltipProperty("Summon 2 - Unit Type", lc)
 
 	function setSummonAmount(int level, int value)
 		def.setLvlDataInt("Isn2", level, 2, value)
 
 	function presetSummonAmount(IntLevelClosure lc)
 		def.setLevelsDataInt("Isn2", lvls, 2, lc)
-		addTooltipProperty("Summon Amount", lc)
+		addTooltipProperty("Summon 2 - Amount", lc)
 
 	function setSummonUnitType1(int level, string value)
 		def.setLvlDataString("Ist1", level, 3, value)
 
 	function presetSummonUnitType1(StringLevelClosure lc)
 		def.setLevelsDataString("Ist1", lvls, 3, lc)
-		addTooltipProperty("SummonUnitType1", lc)
+		addTooltipProperty("Summon 1 - Unit Type", lc)
 
 	function setSummonAmount1(int level, int value)
 		def.setLvlDataInt("Isn1", level, 1, value)
 
 	function presetSummonAmount1(IntLevelClosure lc)
 		def.setLevelsDataInt("Isn1", lvls, 1, lc)
-		addTooltipProperty("SummonAmount1", lc)
+		addTooltipProperty("Summon 1 - Amount", lc)
 
 public class AbilityDefinitionSuperDeathandDecay extends AbilityDefinition
 	construct(int newAbilityId)
@@ -5628,7 +5748,7 @@ public class AbilityDefinitionSuperDeathandDecay extends AbilityDefinition
 
 	function presetMaxLifeDrainedperSecond(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Udd1", lvls, 1, lc)
-		addTooltipProperty("Max Life Drained per Second", lc)
+		addTooltipProperty("Max Life Drained per Second (%)", lc)
 
 public class AbilityDefinitionDarkConversionFast extends AbilityDefinition
 	construct(int newAbilityId)
@@ -5753,7 +5873,7 @@ public class AbilityDefinitionItemIllusion extends AbilityDefinition
 
 	function presetDamageDealtofnormal(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Iild", lvls, 1, lc)
-		addTooltipProperty("Damage Dealt of normal", lc)
+		addTooltipProperty("Damage Dealt (% of normal)", lc)
 
 public class AbilityDefinitionMagicDefense extends AbilityDefinition
 	construct(int newAbilityId)
@@ -5764,7 +5884,7 @@ public class AbilityDefinitionMagicDefense extends AbilityDefinition
 
 	function presetDamageTaken(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Def1", lvls, 1, lc)
-		addTooltipProperty("Damage Taken", lc)
+		addTooltipProperty("Damage Taken (%)", lc)
 
 	function setChancetoDeflect(int level, real value)
 		def.setLvlDataUnreal("Def6", level, 6, value)
@@ -5792,21 +5912,21 @@ public class AbilityDefinitionMagicDefense extends AbilityDefinition
 
 	function presetDamageDealt(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Def2", lvls, 2, lc)
-		addTooltipProperty("Damage Dealt", lc)
+		addTooltipProperty("Damage Dealt (%)", lc)
 
 	function setDeflectDamageTakenSpells(int level, real value)
 		def.setLvlDataUnreal("Def8", level, 8, value)
 
 	function presetDeflectDamageTakenSpells(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Def8", lvls, 8, lc)
-		addTooltipProperty("Deflect Damage Taken Spells", lc)
+		addTooltipProperty("Deflect Damage Taken (Spells)", lc)
 
 	function setDeflectDamageTakenPiercing(int level, real value)
 		def.setLvlDataUnreal("Def7", level, 7, value)
 
 	function presetDeflectDamageTakenPiercing(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Def7", lvls, 7, lc)
-		addTooltipProperty("Deflect Damage Taken Piercing", lc)
+		addTooltipProperty("Deflect Damage Taken (Piercing)", lc)
 
 	function setMagicDamageReduction(int level, real value)
 		def.setLvlDataUnreal("Def5", level, 5, value)
@@ -5861,7 +5981,7 @@ public class AbilityDefinitionAvengerForm extends AbilityDefinition
 
 	function presetLifeRegenerationRatepersecond(RealLevelClosure lc)
 		def.setLevelsDataUnreal("ave5", lvls, 5, lc)
-		addTooltipProperty("Life Regeneration Rate per second", lc)
+		addTooltipProperty("Life Regeneration Rate (per second)", lc)
 
 	function setAlternateFormUnit(int level, string value)
 		def.setLvlDataString("Emeu", level, 0, value)
@@ -5886,7 +6006,7 @@ public class AbilityDefinitionHarvestLumber extends AbilityDefinition
 
 	function presetDamagetoTree(IntLevelClosure lc)
 		def.setLevelsDataInt("Har1", lvls, 1, lc)
-		addTooltipProperty("Damageto Tree", lc)
+		addTooltipProperty("Damage to Tree", lc)
 
 public class AbilityDefinitionNeutralBuilding extends AbilityDefinition
 	construct(int newAbilityId)
@@ -6007,7 +6127,7 @@ public class AbilityDefinitionAhrs extends AbilityDefinition
 
 	function presetTerrainDeformationDurationms(IntLevelClosure lc)
 		def.setLevelsDataInt("Wrs3", lvls, 3, lc)
-		addTooltipProperty("Terrain Deformation Duration ms", lc)
+		addTooltipProperty("Terrain Deformation Duration (ms)", lc)
 
 	function setDamage(int level, real value)
 		def.setLvlDataUnreal("Wrs1", level, 1, value)
@@ -6126,14 +6246,14 @@ public class AbilityDefinitionCryptLordLocustSwarm extends AbilityDefinition
 
 	function presetUnitReleaseIntervalseconds(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Uls2", lvls, 2, lc)
-		addTooltipProperty("Unit Release Interval Seconds", lc)
+		addTooltipProperty("Unit Release Interval (seconds)", lc)
 
 	function setMaxSwarmUnitsPerTarget(int level, int value)
 		def.setLvlDataInt("Uls3", level, 3, value)
 
 	function presetMaxSwarmUnitsPerTarget(IntLevelClosure lc)
 		def.setLevelsDataInt("Uls3", lvls, 3, lc)
-		addTooltipProperty("MaxSwarmUnitsPerTarget", lc)
+		addTooltipProperty("Max Swarm Units Per Target", lc)
 
 	function setSwarmUnitType(int level, string value)
 		def.setLvlDataString("Ulsu", level, 0, value)
@@ -6296,6 +6416,42 @@ public class AbilityDefinitionPurgeApg2 extends AbilityDefinition
 		def.setLevelsDataInt("Prg6", lvls, 6, lc)
 		addTooltipProperty("Mana Loss", lc)
 
+	function setMovementUpdateFrequency(int level, int value)
+		def.setLvlDataInt("Prg1", level, 1, value)
+
+	function presetMovementUpdateFrequency(IntLevelClosure lc)
+		def.setLevelsDataInt("Prg1", lvls, 1, lc)
+		addTooltipProperty("Movement Update Frequency", lc)
+
+	function setAttackUpdateFrequency(int level, int value)
+		def.setLvlDataInt("Prg2", level, 2, value)
+
+	function presetAttackUpdateFrequency(IntLevelClosure lc)
+		def.setLevelsDataInt("Prg2", lvls, 2, lc)
+		addTooltipProperty("Attack Update Frequency", lc)
+
+	function setSummonedUnitDamage(int level, real value)
+		def.setLvlDataUnreal("Prg3", level, 3, value)
+
+	function presetSummonedUnitDamage(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Prg3", lvls, 3, lc)
+		addTooltipProperty("Summoned Unit Damage", lc)
+
+	function setUnitPauseDuration(int level, real value)
+		def.setLvlDataUnreal("Prg4", level, 4, value)
+
+	function presetUnitPauseDuration(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Prg4", lvls, 4, lc)
+		addTooltipProperty("Unit Pause Duration", lc)
+
+	function setHeroPauseDuration(int level, real value)
+		def.setLvlDataUnreal("Prg5", level, 5, value)
+
+	function presetHeroPauseDuration(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Prg5", lvls, 5, lc)
+		addTooltipProperty("Hero Pause Duration", lc)
+
+
 public class AbilityDefinitionBladeMasterCriticalStrike extends AbilityDefinition
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.criticalStrike1)
@@ -6334,6 +6490,14 @@ public class AbilityDefinitionBladeMasterCriticalStrike extends AbilityDefinitio
 	function presetNeverMiss(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("Ocr5", lvls, 5, lc)
 		addTooltipProperty("Never Miss", lc)
+
+	function setExcludeItemDamage(int level, bool value)
+		def.setLvlDataBoolean("Ocr6", level, 6, value)
+
+	function presetExcludeItemDamage(BooleanLevelClosure lc)
+		def.setLevelsDataBoolean("Ocr6", lvls, 6, lc)
+		addTooltipProperty("Exclude Item Damage", lc)
+
 
 public class AbilityDefinitionAuraPlagueAbomination extends AbilityDefinition
 	construct(int newAbilityId)
@@ -6465,7 +6629,7 @@ public class AbilityDefinitionCyclonecreep extends AbilityDefinition
 
 	function presetCanBeDispelled(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("cyc1", lvls, 1, lc)
-		addTooltipProperty("CanBeDispelled", lc)
+		addTooltipProperty("Can Be Dispelled", lc)
 
 public class AbilityDefinitionAuraPlagueCreepnodamage extends AbilityDefinition
 	construct(int newAbilityId)
@@ -6660,7 +6824,7 @@ public class AbilityDefinitionShadowMeldAkama extends AbilityDefinition
 
 	function presetDayNightDuration(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Shm2", lvls, 2, lc)
-		addTooltipProperty("Day Night Duration", lc)
+		addTooltipProperty("Day/Night Duration", lc)
 
 	function setActionDuration(int level, real value)
 		def.setLvlDataUnreal("Shm3", level, 3, value)
@@ -6692,14 +6856,14 @@ public class AbilityDefinitionCripplecreep extends AbilityDefinition
 
 	function presetAttackSpeedReduction(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Cri2", lvls, 2, lc)
-		addTooltipProperty("Attack Speed Reduction", lc)
+		addTooltipProperty("Attack Speed Reduction (%)", lc)
 
 	function setMovementSpeedReduction(int level, real value)
 		def.setLvlDataUnreal("Cri1", level, 1, value)
 
 	function presetMovementSpeedReduction(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Cri1", lvls, 1, lc)
-		addTooltipProperty("Movement Speed Reduction", lc)
+		addTooltipProperty("Movement Speed Reduction (%)", lc)
 
 public class AbilityDefinitionCursecreep extends AbilityDefinition
 	construct(int newAbilityId)
@@ -6751,6 +6915,14 @@ public class AbilityDefinitionCriticalStrikecreep extends AbilityDefinition
 		def.setLevelsDataBoolean("Ocr5", lvls, 5, lc)
 		addTooltipProperty("Never Miss", lc)
 
+	function setExcludeItemDamage(int level, bool value)
+		def.setLvlDataBoolean("Ocr6", level, 6, value)
+
+	function presetExcludeItemDamage(BooleanLevelClosure lc)
+		def.setLevelsDataBoolean("Ocr6", lvls, 6, lc)
+		addTooltipProperty("Exclude Item Damage", lc)
+
+
 public class AbilityDefinitionCannibalizecreep extends AbilityDefinition
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.cannibalizecreep)
@@ -6778,7 +6950,7 @@ public class AbilityDefinitionCycloneCenarius extends AbilityDefinition
 
 	function presetCanBeDispelled(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("cyc1", lvls, 1, lc)
-		addTooltipProperty("CanBeDispelled", lc)
+		addTooltipProperty("Can Be Dispelled", lc)
 
 public class AbilityDefinitionItemManaRestoreGreater extends AbilityDefinition
 	construct(int newAbilityId)
@@ -6848,7 +7020,7 @@ public class AbilityDefinitionStoneForm extends AbilityDefinition
 
 	function presetLifeRegenerationRatepersecond(RealLevelClosure lc)
 		def.setLevelsDataUnreal("ave5", lvls, 5, lc)
-		addTooltipProperty("Life Regeneration Rate per second", lc)
+		addTooltipProperty("Life Regeneration Rate (per second)", lc)
 
 	function setAlternateFormUnit(int level, string value)
 		def.setLvlDataString("Emeu", level, 0, value)
@@ -6941,14 +7113,14 @@ public class AbilityDefinitionManaSteal extends AbilityDefinition
 
 	function presetLifeConversionAsPercent(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("Udp4", lvls, 4, lc)
-		addTooltipProperty("LifeConversionAsPercent", lc)
+		addTooltipProperty("Life Conversion As Percent", lc)
 
 	function setManaConversionAsPercent(int level, bool value)
 		def.setLvlDataBoolean("Udp3", level, 3, value)
 
 	function presetManaConversionAsPercent(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("Udp3", lvls, 3, lc)
-		addTooltipProperty("ManaConversionAsPercent", lc)
+		addTooltipProperty("Mana Conversion As Percent", lc)
 
 public class AbilityDefinitionAuraEnduranceCreep extends AbilityDefinition
 	construct(int newAbilityId)
@@ -6959,14 +7131,14 @@ public class AbilityDefinitionAuraEnduranceCreep extends AbilityDefinition
 
 	function presetMovementSpeedIncrease(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Oae1", lvls, 1, lc)
-		addTooltipProperty("Movement Speed Increase", lc)
+		addTooltipProperty("Movement Speed Increase (%)", lc)
 
 	function setAttackSpeedIncrease(int level, real value)
 		def.setLvlDataUnreal("Oae2", level, 2, value)
 
 	function presetAttackSpeedIncrease(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Oae2", lvls, 2, lc)
-		addTooltipProperty("Attack Speed Increase", lc)
+		addTooltipProperty("Attack Speed Increase (%)", lc)
 
 public class AbilityDefinitionTichondriusInferno extends AbilityDefinition
 	construct(int newAbilityId)
@@ -7009,14 +7181,14 @@ public class AbilityDefinitionCryptLordImpale extends AbilityDefinition
 
 	function presetWaveTimeseconds(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Uim2", lvls, 2, lc)
-		addTooltipProperty("Wave Time Seconds", lc)
+		addTooltipProperty("Wave Time (seconds)", lc)
 
 	function setAirTimeseconds(int level, real value)
 		def.setLvlDataUnreal("Uim4", level, 4, value)
 
 	function presetAirTimeseconds(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Uim4", lvls, 4, lc)
-		addTooltipProperty("Air Time Seconds", lc)
+		addTooltipProperty("Air Time (seconds)", lc)
 
 	function setDamageDealt(int level, real value)
 		def.setLvlDataUnreal("Uim3", level, 3, value)
@@ -7031,6 +7203,21 @@ public class AbilityDefinitionCryptLordImpale extends AbilityDefinition
 	function presetWaveDistance(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Uim1", lvls, 1, lc)
 		addTooltipProperty("Wave Distance", lc)
+
+	function setUninterruptible(int level, bool value)
+		def.setLvlDataBoolean("Uim5", level, 5, value)
+
+	function presetUninterruptible(BooleanLevelClosure lc)
+		def.setLevelsDataBoolean("Uim5", lvls, 5, lc)
+		addTooltipProperty("Uninterruptible", lc)
+
+	function setAirborneTargetsVulnerable(int level, bool value)
+		def.setLvlDataBoolean("Uim6", level, 6, value)
+
+	function presetAirborneTargetsVulnerable(BooleanLevelClosure lc)
+		def.setLevelsDataBoolean("Uim6", lvls, 6, lc)
+		addTooltipProperty("Airborne Targets Vulnerable", lc)
+
 
 public class AbilityDefinitionFrostBolt extends AbilityDefinition
 	construct(int newAbilityId)
@@ -7237,7 +7424,7 @@ public class AbilityDefinitionGhost extends AbilityDefinition
 
 	function presetAutoAcquireAttackTargets(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("Gho1", lvls, 1, lc)
-		addTooltipProperty("Auto Acquire Attack Targets", lc)
+		addTooltipProperty("Auto-Acquire Attack Targets", lc)
 
 public class AbilityDefinitionDevourCreep extends AbilityDefinition
 	construct(int newAbilityId)
@@ -7288,7 +7475,7 @@ public class AbilityDefinitionDrainLifeCreep extends AbilityDefinition
 
 	function presetDrainInterval(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Ndr3", lvls, 3, lc)
-		addTooltipProperty("Drain Interval", lc)
+		addTooltipProperty("Drain Interval (seconds)", lc)
 
 	function setBonusLifeDecay(int level, real value)
 		def.setLvlDataUnreal("Ndr7", level, 7, value)
@@ -7332,6 +7519,14 @@ public class AbilityDefinitionDrainLifeCreep extends AbilityDefinition
 		def.setLevelsDataUnreal("Ndr4", lvls, 4, lc)
 		addTooltipProperty("Life Transferred Per Second", lc)
 
+	function setManaPointsDrained(int level, real value)
+		def.setLvlDataUnreal("Ndr2", level, 2, value)
+
+	function presetManaPointsDrained(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Ndr2", lvls, 2, lc)
+		addTooltipProperty("Mana Points Drained", lc)
+
+
 public class AbilityDefinitionPaladinHolyLight extends AbilityDefinition
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.holyLight)
@@ -7341,7 +7536,7 @@ public class AbilityDefinitionPaladinHolyLight extends AbilityDefinition
 
 	function presetAmountHealedDamaged(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Hhb1", lvls, 1, lc)
-		addTooltipProperty("Amount Healed Damaged", lc)
+		addTooltipProperty("Amount Healed/Damaged", lc)
 
 public class AbilityDefinitionLevelMod extends AbilityDefinition
 	construct(int newAbilityId)
@@ -7363,7 +7558,7 @@ public class AbilityDefinitionOrbofLightning extends AbilityDefinition
 
 	function presetChanceToHitUnits(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Iob2", lvls, 2, lc)
-		addTooltipProperty("Chance To Hit Units", lc)
+		addTooltipProperty("Chance To Hit Units (%)", lc)
 
 	function setEnabledAttackIndex(int level, int value)
 		def.setLvlDataInt("Iob5", level, 5, value)
@@ -7377,14 +7572,14 @@ public class AbilityDefinitionOrbofLightning extends AbilityDefinition
 
 	function presetChanceToHitSummons(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Iob4", lvls, 4, lc)
-		addTooltipProperty("Chance To Hit Summons", lc)
+		addTooltipProperty("Chance To Hit Summons (%)", lc)
 
 	function setChanceToHitHeros(int level, real value)
 		def.setLvlDataUnreal("Iob3", level, 3, value)
 
 	function presetChanceToHitHeros(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Iob3", lvls, 3, lc)
-		addTooltipProperty("Chance To Hit Heros", lc)
+		addTooltipProperty("Chance To Hit Heros (%)", lc)
 
 	function setDamageBonus(int level, real value)
 		def.setLvlDataUnreal("Idam", level, 1, value)
@@ -7410,6 +7605,14 @@ public class AbilityDefinitionLightningShieldAIls extends AbilityDefinition
 	function presetDamagePerSecond(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Idps", lvls, 1, lc)
 		addTooltipProperty("Damage Per Second", lc)
+
+	function setDamageperSecond(int level, real value)
+		def.setLvlDataUnreal("Lsh1", level, 1, value)
+
+	function presetDamageperSecond(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Lsh1", lvls, 1, lc)
+		addTooltipProperty("Damage per Second", lc)
+
 
 public class AbilityDefinitionAbolishMagicCreep extends AbilityDefinition
 	construct(int newAbilityId)
@@ -7519,12 +7722,12 @@ public class AbilityDefinitionParasite extends AbilityDefinition
 		def.setLevelsDataInt("Npa5", lvls, 5, lc)
 		addTooltipProperty("Summoned Unit Count", lc)
 
-	function setAttackSpeedFactor(int level, real value)
+	function setMovementSpeedFactor(int level, real value)
 		def.setLvlDataUnreal("Poi2", level, 2, value)
 
-	function presetAttackSpeedFactor(RealLevelClosure lc)
+	function presetMovementSpeedFactor(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Poi2", lvls, 2, lc)
-		addTooltipProperty("Attack Speed Factor", lc)
+		addTooltipProperty("Movement Speed Factor", lc)
 
 	function setDamageperSecond(int level, real value)
 		def.setLvlDataUnreal("Poi1", level, 1, value)
@@ -7533,12 +7736,12 @@ public class AbilityDefinitionParasite extends AbilityDefinition
 		def.setLevelsDataUnreal("Poi1", lvls, 1, lc)
 		addTooltipProperty("Damage per Second", lc)
 
-	function setMovementSpeedFactor(int level, real value)
+	function setAttackSpeedFactor(int level, real value)
 		def.setLvlDataUnreal("Poi3", level, 3, value)
 
-	function presetMovementSpeedFactor(RealLevelClosure lc)
+	function presetAttackSpeedFactor(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Poi3", lvls, 3, lc)
-		addTooltipProperty("Movement Speed Factor", lc)
+		addTooltipProperty("Attack Speed Factor", lc)
 
 	function setUnitType(int level, string value)
 		def.setLvlDataString("ipmu", level, 0, value)
@@ -7592,7 +7795,7 @@ public class AbilityDefinitionDemonHunterMetamorphosis extends AbilityDefinition
 
 	function presetAlternateFormHitPointBonus(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Eme5", lvls, 5, lc)
-		addTooltipProperty("AlternateFormHitPointBonus", lc)
+		addTooltipProperty("Alternate Form Hit Point Bonus", lc)
 
 	function setAlternateFormUnit(int level, string value)
 		def.setLvlDataString("Emeu", level, 0, value)
@@ -7611,6 +7814,42 @@ public class AbilityDefinitionDevourMagiccreep extends AbilityDefinition
 	function presetIgnoreFriendlyBuffs(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("dvm6", lvls, 6, lc)
 		addTooltipProperty("Ignore Friendly Buffs", lc)
+
+	function setLifePerUnit(int level, real value)
+		def.setLvlDataUnreal("dvm1", level, 1, value)
+
+	function presetLifePerUnit(RealLevelClosure lc)
+		def.setLevelsDataUnreal("dvm1", lvls, 1, lc)
+		addTooltipProperty("Life Per Unit", lc)
+
+	function setManaPerUnit(int level, real value)
+		def.setLvlDataUnreal("dvm2", level, 2, value)
+
+	function presetManaPerUnit(RealLevelClosure lc)
+		def.setLevelsDataUnreal("dvm2", lvls, 2, lc)
+		addTooltipProperty("Mana Per Unit", lc)
+
+	function setLifePerBuff(int level, real value)
+		def.setLvlDataUnreal("dvm3", level, 3, value)
+
+	function presetLifePerBuff(RealLevelClosure lc)
+		def.setLevelsDataUnreal("dvm3", lvls, 3, lc)
+		addTooltipProperty("Life Per Buff", lc)
+
+	function setManaPerBuff(int level, real value)
+		def.setLvlDataUnreal("dvm4", level, 4, value)
+
+	function presetManaPerBuff(RealLevelClosure lc)
+		def.setLevelsDataUnreal("dvm4", lvls, 4, lc)
+		addTooltipProperty("Mana Per Buff", lc)
+
+	function setSummonedUnitDamage(int level, real value)
+		def.setLvlDataUnreal("dvm5", level, 5, value)
+
+	function presetSummonedUnitDamage(RealLevelClosure lc)
+		def.setLevelsDataUnreal("dvm5", lvls, 5, lc)
+		addTooltipProperty("Summoned Unit Damage", lc)
+
 
 public class AbilityDefinitionAapl extends AbilityDefinition
 	construct(int newAbilityId)
@@ -7653,7 +7892,7 @@ public class AbilityDefinitionDeathCoilcreep extends AbilityDefinition
 
 	function presetAmountHealedDamaged(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Udc1", lvls, 1, lc)
-		addTooltipProperty("Amount Healed Damaged", lc)
+		addTooltipProperty("Amount Healed/Damaged", lc)
 
 public class AbilityDefinitionDemonHunterManaBurn extends AbilityDefinition
 	construct(int newAbilityId)
@@ -7708,6 +7947,21 @@ public class AbilityDefinitionAnimateDeaditemspecial extends AbilityDefinition
 	function presetInheritUpgrades(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("Uan3", lvls, 3, lc)
 		addTooltipProperty("Inherit Upgrades", lc)
+
+	function setRaisedUnitsAreInvulnerable(int level, bool value)
+		def.setLvlDataBoolean("Hre2", level, 2, value)
+
+	function presetRaisedUnitsAreInvulnerable(BooleanLevelClosure lc)
+		def.setLevelsDataBoolean("Hre2", lvls, 2, lc)
+		addTooltipProperty("Raised Units Are Invulnerable", lc)
+
+	function setNumberofCorpsesRaised(int level, int value)
+		def.setLvlDataInt("Cad1", level, 1, value)
+
+	function presetNumberofCorpsesRaised(IntLevelClosure lc)
+		def.setLevelsDataInt("Cad1", lvls, 1, lc)
+		addTooltipProperty("Number of Corpses Raised", lc)
+
 
 public class AbilityDefinitionFrostArmorcreep extends AbilityDefinition
 	construct(int newAbilityId)
@@ -7764,7 +8018,7 @@ public class AbilityDefinitionManaBatteryObsidianStatue extends AbilityDefinitio
 
 	function presetRegenerateOnlyAtNight(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("Mbt5", lvls, 5, lc)
-		addTooltipProperty("RegenerateOnlyAtNight", lc)
+		addTooltipProperty("Regenerate Only At Night", lc)
 
 public class AbilityDefinitionFireBoltcreep extends AbilityDefinition
 	construct(int newAbilityId)
@@ -7793,12 +8047,12 @@ public class AbilityDefinitionVenomSpears extends AbilityDefinition
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.envenomedSpears)
 
-	function setAttackSpeedFactor(int level, real value)
+	function setMovementSpeedFactor(int level, real value)
 		def.setLvlDataUnreal("Poi2", level, 2, value)
 
-	function presetAttackSpeedFactor(RealLevelClosure lc)
+	function presetMovementSpeedFactor(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Poi2", lvls, 2, lc)
-		addTooltipProperty("Attack Speed Factor", lc)
+		addTooltipProperty("Movement Speed Factor", lc)
 
 	function setStackingType(int level, int value)
 		def.setLvlDataInt("Poi4", level, 4, value)
@@ -7821,12 +8075,12 @@ public class AbilityDefinitionVenomSpears extends AbilityDefinition
 		def.setLevelsDataUnreal("Poi1", lvls, 1, lc)
 		addTooltipProperty("Damage per Second", lc)
 
-	function setMovementSpeedFactor(int level, real value)
+	function setAttackSpeedFactor(int level, real value)
 		def.setLvlDataUnreal("Poi3", level, 3, value)
 
-	function presetMovementSpeedFactor(RealLevelClosure lc)
+	function presetAttackSpeedFactor(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Poi3", lvls, 3, lc)
-		addTooltipProperty("Movement Speed Factor", lc)
+		addTooltipProperty("Attack Speed Factor", lc)
 
 public class AbilityDefinitionEvasioncreep extends AbilityDefinition
 	construct(int newAbilityId)
@@ -7918,7 +8172,7 @@ public class AbilityDefinitionCyclone extends AbilityDefinition
 
 	function presetCanBeDispelled(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("cyc1", lvls, 1, lc)
-		addTooltipProperty("CanBeDispelled", lc)
+		addTooltipProperty("Can Be Dispelled", lc)
 
 public class AbilityDefinitionItemManaRestoreAoe extends AbilityDefinition
 	construct(int newAbilityId)
@@ -8063,7 +8317,7 @@ public class AbilityDefinitionNeutralSpell extends AbilityDefinition
 
 	function presetBaseOrderID(StringLevelClosure lc)
 		def.setLevelsDataString("Ans5", lvls, 5, lc)
-		addTooltipProperty("BaseOrderID", lc)
+		addTooltipProperty("Base Order ID", lc)
 
 	function setLumberCost(int level, int value)
 		def.setLvlDataInt("Ndt2", level, 2, value)
@@ -8117,28 +8371,28 @@ public class AbilityDefinitionShadowHunterHex extends AbilityDefinition
 
 	function presetMorphUnitsGround(StringLevelClosure lc)
 		def.setLevelsDataString("Ply2", lvls, 2, lc)
-		addTooltipProperty("Morph Units Ground", lc)
+		addTooltipProperty("Morph Units - Ground", lc)
 
 	function setMorphUnitsWater(int level, string value)
 		def.setLvlDataString("Ply5", level, 5, value)
 
 	function presetMorphUnitsWater(StringLevelClosure lc)
 		def.setLevelsDataString("Ply5", lvls, 5, lc)
-		addTooltipProperty("Morph Units Water", lc)
+		addTooltipProperty("Morph Units - Water", lc)
 
 	function setMorphUnitsAmphibious(int level, string value)
 		def.setLvlDataString("Ply4", level, 4, value)
 
 	function presetMorphUnitsAmphibious(StringLevelClosure lc)
 		def.setLevelsDataString("Ply4", lvls, 4, lc)
-		addTooltipProperty("Morph Units Amphibious", lc)
+		addTooltipProperty("Morph Units - Amphibious", lc)
 
 	function setMorphUnitsAir(int level, string value)
 		def.setLvlDataString("Ply3", level, 3, value)
 
 	function presetMorphUnitsAir(StringLevelClosure lc)
 		def.setLevelsDataString("Ply3", lvls, 3, lc)
-		addTooltipProperty("Morph Units Air", lc)
+		addTooltipProperty("Morph Units - Air", lc)
 
 	function setMaximumCreepLevel(int level, int value)
 		def.setLvlDataInt("Ply1", level, 1, value)
@@ -8177,7 +8431,7 @@ public class AbilityDefinitionItemMonsterLure extends AbilityDefinition
 
 	function presetLureIntervalseconds(RealLevelClosure lc)
 		def.setLevelsDataUnreal("imo3", lvls, 3, lc)
-		addTooltipProperty("Lure Interval Seconds", lc)
+		addTooltipProperty("Lure Interval (seconds)", lc)
 
 public class AbilityDefinitionAImi extends AbilityDefinition
 	construct(int newAbilityId)
@@ -8221,28 +8475,28 @@ public class AbilityDefinitionFeedbackArcaneTower extends AbilityDefinition
 
 	function presetMaxManaDrainedUnits(RealLevelClosure lc)
 		def.setLevelsDataUnreal("fbk1", lvls, 1, lc)
-		addTooltipProperty("Max Mana Drained Units", lc)
+		addTooltipProperty("Max Mana Drained - Units", lc)
 
 	function setDamageRatioUnits(int level, real value)
 		def.setLvlDataUnreal("fbk2", level, 2, value)
 
 	function presetDamageRatioUnits(RealLevelClosure lc)
 		def.setLevelsDataUnreal("fbk2", lvls, 2, lc)
-		addTooltipProperty("Damage Ratio Units", lc)
+		addTooltipProperty("Damage Ratio - Units (%)", lc)
 
 	function setMaxManaDrainedHeros(int level, real value)
 		def.setLvlDataUnreal("fbk3", level, 3, value)
 
 	function presetMaxManaDrainedHeros(RealLevelClosure lc)
 		def.setLevelsDataUnreal("fbk3", lvls, 3, lc)
-		addTooltipProperty("Max Mana Drained Heros", lc)
+		addTooltipProperty("Max Mana Drained - Heros", lc)
 
 	function setDamageRatioHeros(int level, real value)
 		def.setLvlDataUnreal("fbk4", level, 4, value)
 
 	function presetDamageRatioHeros(RealLevelClosure lc)
 		def.setLevelsDataUnreal("fbk4", lvls, 4, lc)
-		addTooltipProperty("Damage Ratio Heros", lc)
+		addTooltipProperty("Damage Ratio - Heros (%)", lc)
 
 	function setSummonedDamage(int level, real value)
 		def.setLvlDataUnreal("fbk5", level, 5, value)
@@ -8436,7 +8690,7 @@ public class AbilityDefinitionInnerFire extends AbilityDefinition
 
 	function presetDamageIncrease(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Inf1", lvls, 1, lc)
-		addTooltipProperty("Damage Increase", lc)
+		addTooltipProperty("Damage Increase (%)", lc)
 
 public class AbilityDefinitionMoonPriestessSearingArrows extends AbilityDefinition
 	construct(int newAbilityId)
@@ -8497,7 +8751,7 @@ public class AbilityDefinitionInventory extends AbilityDefinition
 
 	function presetDropItemsOnDeath(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("inv2", lvls, 2, lc)
-		addTooltipProperty("DropItemsOnDeath", lc)
+		addTooltipProperty("Drop Items On Death", lc)
 
 	function setCanGetItems(int level, bool value)
 		def.setLvlDataBoolean("inv4", level, 4, value)
@@ -8545,6 +8799,28 @@ public class AbilityDefinitionnullroarsummoner extends AbilityDefinition
 		def.setLevelsDataUnreal("Roa4", lvls, 4, lc)
 		addTooltipProperty("Mana Regen", lc)
 
+	function setDamageIncrease(int level, real value)
+		def.setLvlDataUnreal("Roa1", level, 1, value)
+
+	function presetDamageIncrease(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Roa1", lvls, 1, lc)
+		addTooltipProperty("Damage Increase (%)", lc)
+
+	function setDefenseIncrease(int level, int value)
+		def.setLvlDataInt("Roa2", level, 2, value)
+
+	function presetDefenseIncrease(IntLevelClosure lc)
+		def.setLevelsDataInt("Roa2", lvls, 2, lc)
+		addTooltipProperty("Defense Increase", lc)
+
+	function setLifeRegenerationRate(int level, real value)
+		def.setLvlDataUnreal("Roa3", level, 3, value)
+
+	function presetLifeRegenerationRate(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Roa3", lvls, 3, lc)
+		addTooltipProperty("Life Regeneration Rate", lc)
+
+
 public class AbilityDefinitionSeaWitchManaShield extends AbilityDefinition
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.seaWitchManaShield)
@@ -8554,7 +8830,7 @@ public class AbilityDefinitionSeaWitchManaShield extends AbilityDefinition
 
 	function presetDamageAbsorbed(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Nms2", lvls, 2, lc)
-		addTooltipProperty("Damage Absorbed", lc)
+		addTooltipProperty("Damage Absorbed (%)", lc)
 
 	function setManaperHitPoint(int level, real value)
 		def.setLvlDataUnreal("Nms1", level, 1, value)
@@ -8590,14 +8866,14 @@ public class AbilityDefinitionScrollofRejuvII extends AbilityDefinition
 
 	function presetNoTargetRequired(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("irl4", lvls, 4, lc)
-		addTooltipProperty("NoTargetRequired", lc)
+		addTooltipProperty("No Target Required", lc)
 
 	function setDispelOnAttack(int level, bool value)
 		def.setLvlDataBoolean("irl5", level, 5, value)
 
 	function presetDispelOnAttack(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("irl5", lvls, 5, lc)
-		addTooltipProperty("DispelOnAttack", lc)
+		addTooltipProperty("Dispel On Attack", lc)
 
 	function setManaRegenerated(int level, real value)
 		def.setLvlDataUnreal("irl2", level, 2, value)
@@ -8649,6 +8925,14 @@ public class AbilityDefinitionFrostNovacreep extends AbilityDefinition
 		def.setLevelsDataUnreal("Ufn2", lvls, 2, lc)
 		addTooltipProperty("Specific Target Damage", lc)
 
+	function setMaximumDamage(int level, real value)
+		def.setLvlDataUnreal("Ufn5", level, 5, value)
+
+	function presetMaximumDamage(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Ufn5", lvls, 5, lc)
+		addTooltipProperty("Maximum Damage", lc)
+
+
 public class AbilityDefinitionScrollofRejuvI extends AbilityDefinition
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.scrollofRejuvI)
@@ -8658,14 +8942,14 @@ public class AbilityDefinitionScrollofRejuvI extends AbilityDefinition
 
 	function presetNoTargetRequired(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("irl4", lvls, 4, lc)
-		addTooltipProperty("NoTargetRequired", lc)
+		addTooltipProperty("No Target Required", lc)
 
 	function setDispelOnAttack(int level, bool value)
 		def.setLvlDataBoolean("irl5", level, 5, value)
 
 	function presetDispelOnAttack(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("irl5", lvls, 5, lc)
-		addTooltipProperty("DispelOnAttack", lc)
+		addTooltipProperty("Dispel On Attack", lc)
 
 	function setManaRegenerated(int level, real value)
 		def.setLvlDataUnreal("irl2", level, 2, value)
@@ -8697,7 +8981,7 @@ public class AbilityDefinitionPermanentInvisibility extends AbilityDefinition
 
 	function presetAutoAcquireAttackTargets(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("Gho1", lvls, 1, lc)
-		addTooltipProperty("Auto Acquire Attack Targets", lc)
+		addTooltipProperty("Auto-Acquire Attack Targets", lc)
 
 public class AbilityDefinitionFeedbackSpiritBeast extends AbilityDefinition
 	construct(int newAbilityId)
@@ -8710,6 +8994,35 @@ public class AbilityDefinitionFeedbackSpiritBeast extends AbilityDefinition
 		def.setLevelsDataUnreal("fbk5", lvls, 5, lc)
 		addTooltipProperty("Summoned Damage", lc)
 
+	function setMaxManaDrainedUnits(int level, real value)
+		def.setLvlDataUnreal("fbk1", level, 1, value)
+
+	function presetMaxManaDrainedUnits(RealLevelClosure lc)
+		def.setLevelsDataUnreal("fbk1", lvls, 1, lc)
+		addTooltipProperty("Max Mana Drained - Units", lc)
+
+	function setDamageRatioUnits(int level, real value)
+		def.setLvlDataUnreal("fbk2", level, 2, value)
+
+	function presetDamageRatioUnits(RealLevelClosure lc)
+		def.setLevelsDataUnreal("fbk2", lvls, 2, lc)
+		addTooltipProperty("Damage Ratio - Units (%)", lc)
+
+	function setMaxManaDrainedHeros(int level, real value)
+		def.setLvlDataUnreal("fbk3", level, 3, value)
+
+	function presetMaxManaDrainedHeros(RealLevelClosure lc)
+		def.setLevelsDataUnreal("fbk3", lvls, 3, lc)
+		addTooltipProperty("Max Mana Drained - Heros", lc)
+
+	function setDamageRatioHeros(int level, real value)
+		def.setLvlDataUnreal("fbk4", level, 4, value)
+
+	function presetDamageRatioHeros(RealLevelClosure lc)
+		def.setLevelsDataUnreal("fbk4", lvls, 4, lc)
+		addTooltipProperty("Damage Ratio - Heros (%)", lc)
+
+
 public class AbilityDefinitionPotionofRejuvIV extends AbilityDefinition
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.potionofRejuvIV)
@@ -8719,14 +9032,14 @@ public class AbilityDefinitionPotionofRejuvIV extends AbilityDefinition
 
 	function presetNoTargetRequired(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("irl4", lvls, 4, lc)
-		addTooltipProperty("NoTargetRequired", lc)
+		addTooltipProperty("No Target Required", lc)
 
 	function setDispelOnAttack(int level, bool value)
 		def.setLvlDataBoolean("irl5", level, 5, value)
 
 	function presetDispelOnAttack(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("irl5", lvls, 5, lc)
-		addTooltipProperty("DispelOnAttack", lc)
+		addTooltipProperty("Dispel On Attack", lc)
 
 	function setManaRegenerated(int level, real value)
 		def.setLvlDataUnreal("irl2", level, 2, value)
@@ -8758,14 +9071,14 @@ public class AbilityDefinitionPotionofRejuvIII extends AbilityDefinition
 
 	function presetNoTargetRequired(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("irl4", lvls, 4, lc)
-		addTooltipProperty("NoTargetRequired", lc)
+		addTooltipProperty("No Target Required", lc)
 
 	function setDispelOnAttack(int level, bool value)
 		def.setLvlDataBoolean("irl5", level, 5, value)
 
 	function presetDispelOnAttack(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("irl5", lvls, 5, lc)
-		addTooltipProperty("DispelOnAttack", lc)
+		addTooltipProperty("Dispel On Attack", lc)
 
 	function setManaRegenerated(int level, real value)
 		def.setLvlDataUnreal("irl2", level, 2, value)
@@ -8868,14 +9181,14 @@ public class AbilityDefinitionPotionofRejuvII extends AbilityDefinition
 
 	function presetNoTargetRequired(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("irl4", lvls, 4, lc)
-		addTooltipProperty("NoTargetRequired", lc)
+		addTooltipProperty("No Target Required", lc)
 
 	function setDispelOnAttack(int level, bool value)
 		def.setLvlDataBoolean("irl5", level, 5, value)
 
 	function presetDispelOnAttack(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("irl5", lvls, 5, lc)
-		addTooltipProperty("DispelOnAttack", lc)
+		addTooltipProperty("Dispel On Attack", lc)
 
 	function setManaRegenerated(int level, real value)
 		def.setLvlDataUnreal("irl2", level, 2, value)
@@ -8928,7 +9241,7 @@ public class AbilityDefinitionHardenedSkin extends AbilityDefinition
 
 	function presetChancetoReduceDamage(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Ssk1", lvls, 1, lc)
-		addTooltipProperty("Chance to Reduce Damage", lc)
+		addTooltipProperty("Chance to Reduce Damage (%)", lc)
 
 	function setIncludeMeleeDamage(int level, bool value)
 		def.setLvlDataBoolean("Ssk5", level, 5, value)
@@ -8964,14 +9277,14 @@ public class AbilityDefinitionPotionofRejuvI extends AbilityDefinition
 
 	function presetNoTargetRequired(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("irl4", lvls, 4, lc)
-		addTooltipProperty("NoTargetRequired", lc)
+		addTooltipProperty("No Target Required", lc)
 
 	function setDispelOnAttack(int level, bool value)
 		def.setLvlDataBoolean("irl5", level, 5, value)
 
 	function presetDispelOnAttack(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("irl5", lvls, 5, lc)
-		addTooltipProperty("DispelOnAttack", lc)
+		addTooltipProperty("Dispel On Attack", lc)
 
 	function setManaRegenerated(int level, real value)
 		def.setLvlDataUnreal("irl2", level, 2, value)
@@ -9010,28 +9323,28 @@ public class AbilityDefinitionFeedback extends AbilityDefinition
 
 	function presetDamageRatioUnits(RealLevelClosure lc)
 		def.setLevelsDataUnreal("fbk2", lvls, 2, lc)
-		addTooltipProperty("Damage Ratio Units", lc)
+		addTooltipProperty("Damage Ratio - Units (%)", lc)
 
 	function setMaxManaDrainedHeros(int level, real value)
 		def.setLvlDataUnreal("fbk3", level, 3, value)
 
 	function presetMaxManaDrainedHeros(RealLevelClosure lc)
 		def.setLevelsDataUnreal("fbk3", lvls, 3, lc)
-		addTooltipProperty("Max Mana Drained Heros", lc)
+		addTooltipProperty("Max Mana Drained - Heros", lc)
 
 	function setMaxManaDrainedUnits(int level, real value)
 		def.setLvlDataUnreal("fbk1", level, 1, value)
 
 	function presetMaxManaDrainedUnits(RealLevelClosure lc)
 		def.setLevelsDataUnreal("fbk1", lvls, 1, lc)
-		addTooltipProperty("Max Mana Drained Units", lc)
+		addTooltipProperty("Max Mana Drained - Units", lc)
 
 	function setDamageRatioHeros(int level, real value)
 		def.setLvlDataUnreal("fbk4", level, 4, value)
 
 	function presetDamageRatioHeros(RealLevelClosure lc)
 		def.setLevelsDataUnreal("fbk4", lvls, 4, lc)
-		addTooltipProperty("Damage Ratio Heros", lc)
+		addTooltipProperty("Damage Ratio - Heros (%)", lc)
 
 public class AbilityDefinitionStrengthModPlus2 extends AbilityDefinition
 	construct(int newAbilityId)
@@ -9156,14 +9469,14 @@ public class AbilityDefinitionBloodlustCreep extends AbilityDefinition
 
 	function presetMovementSpeedIncrease(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Blo2", lvls, 2, lc)
-		addTooltipProperty("Movement Speed Increase", lc)
+		addTooltipProperty("Movement Speed Increase (%)", lc)
 
 	function setAttackSpeedIncrease(int level, real value)
 		def.setLvlDataUnreal("Blo1", level, 1, value)
 
 	function presetAttackSpeedIncrease(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Blo1", lvls, 1, lc)
-		addTooltipProperty("Attack Speed Increase", lc)
+		addTooltipProperty("Attack Speed Increase (%)", lc)
 
 	function setScalingFactor(int level, real value)
 		def.setLvlDataUnreal("Blo3", level, 3, value)
@@ -9181,7 +9494,7 @@ public class AbilityDefinitionRoarAIrr extends AbilityDefinition
 
 	function presetDamageIncrease(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Roa1", lvls, 1, lc)
-		addTooltipProperty("Damage Increase", lc)
+		addTooltipProperty("Damage Increase (%)", lc)
 
 	function setDefenseIncrease(int level, int value)
 		def.setLvlDataInt("Roa2", level, 2, value)
@@ -9333,7 +9646,7 @@ public class AbilityDefinitionAlchemistChemicalRage extends AbilityDefinition
 
 	function presetAttackSpeedBonusInfoPanelOnly(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Ncr6", lvls, 6, lc)
-		addTooltipProperty("AttackSpeedBonusInfoPanelOnly", lc)
+		addTooltipProperty("Attack Speed Bonus (Info Panel Only)", lc)
 
 	function setNormalFormUnit(int level, string value)
 		def.setLvlDataString("Eme1", level, 1, value)
@@ -9347,7 +9660,7 @@ public class AbilityDefinitionAlchemistChemicalRage extends AbilityDefinition
 
 	function presetMoveSpeedBonusInfoPanelOnly(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Ncr5", lvls, 5, lc)
-		addTooltipProperty("MoveSpeedBonusInfoPanelOnly", lc)
+		addTooltipProperty("Move Speed Bonus (Info Panel Only)", lc)
 
 	function setLandingDelayTime(int level, real value)
 		def.setLvlDataUnreal("Eme4", level, 4, value)
@@ -9461,14 +9774,14 @@ public class AbilityDefinitionPotionofLifeRegen extends AbilityDefinition
 
 	function presetNoTargetRequired(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("irl4", lvls, 4, lc)
-		addTooltipProperty("NoTargetRequired", lc)
+		addTooltipProperty("No Target Required", lc)
 
 	function setDispelOnAttack(int level, bool value)
 		def.setLvlDataBoolean("irl5", level, 5, value)
 
 	function presetDispelOnAttack(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("irl5", lvls, 5, lc)
-		addTooltipProperty("DispelOnAttack", lc)
+		addTooltipProperty("Dispel On Attack", lc)
 
 	function setManaRegenerated(int level, real value)
 		def.setLvlDataUnreal("irl2", level, 2, value)
@@ -9550,7 +9863,7 @@ public class AbilityDefinitionItemRegenMana extends AbilityDefinition
 
 	function presetManaRegenerationBonusasfractionofnormal(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Imrp", lvls, 1, lc)
-		addTooltipProperty("Mana Regeneration Bonus as fraction of normal", lc)
+		addTooltipProperty("Mana Regeneration Bonus (as fraction of normal)", lc)
 
 public class AbilityDefinitionItemRegenManalesser extends AbilityDefinition
 	construct(int newAbilityId)
@@ -9561,7 +9874,7 @@ public class AbilityDefinitionItemRegenManalesser extends AbilityDefinition
 
 	function presetManaRegenerationBonusasfractionofnormal(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Imrp", lvls, 1, lc)
-		addTooltipProperty("Mana Regeneration Bonus as fraction of normal", lc)
+		addTooltipProperty("Mana Regeneration Bonus (as fraction of normal)", lc)
 
 public class AbilityDefinitionAuraBrilliancecreep extends AbilityDefinition
 	construct(int newAbilityId)
@@ -9597,7 +9910,7 @@ public class AbilityDefinitionIllidanChannel extends AbilityDefinition
 
 	function presetBaseOrderID(StringLevelClosure lc)
 		def.setLevelsDataString("Ncl6", lvls, 6, lc)
-		addTooltipProperty("BaseOrderID", lc)
+		addTooltipProperty("Base Order ID", lc)
 
 	function setDisableOtherAbilities(int level, bool value)
 		def.setLvlDataBoolean("Ncl5", level, 5, value)
@@ -9700,7 +10013,7 @@ public class AbilityDefinitionSilenceItem extends AbilityDefinition
 
 	function presetChanceToMiss(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Nsi2", lvls, 2, lc)
-		addTooltipProperty("Chance To Miss", lc)
+		addTooltipProperty("Chance To Miss (%)", lc)
 
 	function setAttacksPrevented(int level, int value)
 		def.setLvlDataInt("Nsi1", level, 1, value)
@@ -9807,7 +10120,7 @@ public class AbilityDefinitionCloudofFog extends AbilityDefinition
 
 	function presetChanceToMiss(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Nsi2", lvls, 2, lc)
-		addTooltipProperty("Chance To Miss", lc)
+		addTooltipProperty("Chance To Miss (%)", lc)
 
 	function setAttacksPrevented(int level, int value)
 		def.setLvlDataInt("Nsi1", level, 1, value)
@@ -9826,6 +10139,28 @@ public class AbilityDefinitionAntimagicShieldMatrix extends AbilityDefinition
 	function presetManaLoss(IntLevelClosure lc)
 		def.setLevelsDataInt("Ams4", lvls, 4, lc)
 		addTooltipProperty("Mana Loss", lc)
+
+	function setSummonedUnitDamage(int level, real value)
+		def.setLvlDataUnreal("Ams1", level, 1, value)
+
+	function presetSummonedUnitDamage(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Ams1", lvls, 1, lc)
+		addTooltipProperty("Summoned Unit Damage", lc)
+
+	function setMagicDamageReduction(int level, real value)
+		def.setLvlDataUnreal("Ams2", level, 2, value)
+
+	function presetMagicDamageReduction(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Ams2", lvls, 2, lc)
+		addTooltipProperty("Magic Damage Reduction", lc)
+
+	function setShieldLife(int level, int value)
+		def.setLvlDataInt("Ams3", level, 3, value)
+
+	function presetShieldLife(IntLevelClosure lc)
+		def.setLevelsDataInt("Ams3", lvls, 3, lc)
+		addTooltipProperty("Shield Life", lc)
+
 
 public class AbilityDefinitionLoad extends AbilityDefinition
 	construct(int newAbilityId)
@@ -9847,7 +10182,7 @@ public class AbilityDefinitionBladeMasterMirrorImage extends AbilityDefinition
 
 	function presetDamageDealt(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Omi2", lvls, 2, lc)
-		addTooltipProperty("Damage Dealt", lc)
+		addTooltipProperty("Damage Dealt (%)", lc)
 
 	function setNumberofImages(int level, int value)
 		def.setLvlDataInt("Omi1", level, 1, value)
@@ -9861,7 +10196,7 @@ public class AbilityDefinitionBladeMasterMirrorImage extends AbilityDefinition
 
 	function presetDamageTaken(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Omi3", lvls, 3, lc)
-		addTooltipProperty("Damage Taken", lc)
+		addTooltipProperty("Damage Taken (%)", lc)
 
 	function setAnimationDelay(int level, real value)
 		def.setLvlDataUnreal("Omi4", level, 4, value)
@@ -9894,12 +10229,12 @@ public class AbilityDefinitionPoisonAttack extends AbilityDefinition
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.poisonSting)
 
-	function setAttackSpeedFactor(int level, real value)
+	function setMovementSpeedFactor(int level, real value)
 		def.setLvlDataUnreal("Poi2", level, 2, value)
 
-	function presetAttackSpeedFactor(RealLevelClosure lc)
+	function presetMovementSpeedFactor(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Poi2", lvls, 2, lc)
-		addTooltipProperty("Attack Speed Factor", lc)
+		addTooltipProperty("Movement Speed Factor", lc)
 
 	function setStackingType(int level, int value)
 		def.setLvlDataInt("Poi4", level, 4, value)
@@ -9922,12 +10257,12 @@ public class AbilityDefinitionPoisonAttack extends AbilityDefinition
 		def.setLevelsDataUnreal("Poi1", lvls, 1, lc)
 		addTooltipProperty("Damage per Second", lc)
 
-	function setMovementSpeedFactor(int level, real value)
+	function setAttackSpeedFactor(int level, real value)
 		def.setLvlDataUnreal("Poi3", level, 3, value)
 
-	function presetMovementSpeedFactor(RealLevelClosure lc)
+	function presetAttackSpeedFactor(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Poi3", lvls, 3, lc)
-		addTooltipProperty("Movement Speed Factor", lc)
+		addTooltipProperty("Attack Speed Factor", lc)
 
 public class AbilityDefinitionOrbofSpells extends AbilityDefinition
 	construct(int newAbilityId)
@@ -9938,7 +10273,7 @@ public class AbilityDefinitionOrbofSpells extends AbilityDefinition
 
 	function presetChanceToHitUnits(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Iob2", lvls, 2, lc)
-		addTooltipProperty("Chance To Hit Units", lc)
+		addTooltipProperty("Chance To Hit Units (%)", lc)
 
 	function setEnabledAttackIndex(int level, int value)
 		def.setLvlDataInt("Iob5", level, 5, value)
@@ -9952,14 +10287,14 @@ public class AbilityDefinitionOrbofSpells extends AbilityDefinition
 
 	function presetChanceToHitSummons(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Iob4", lvls, 4, lc)
-		addTooltipProperty("Chance To Hit Summons", lc)
+		addTooltipProperty("Chance To Hit Summons (%)", lc)
 
 	function setChanceToHitHeros(int level, real value)
 		def.setLvlDataUnreal("Iob3", level, 3, value)
 
 	function presetChanceToHitHeros(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Iob3", lvls, 3, lc)
-		addTooltipProperty("Chance To Hit Heros", lc)
+		addTooltipProperty("Chance To Hit Heros (%)", lc)
 
 	function setDamageBonus(int level, real value)
 		def.setLvlDataUnreal("Idam", level, 1, value)
@@ -9995,7 +10330,7 @@ public class AbilityDefinitionUnholyFrenzy extends AbilityDefinition
 
 	function presetAttackSpeedBonus(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Uhf1", lvls, 1, lc)
-		addTooltipProperty("Attack Speed Bonus", lc)
+		addTooltipProperty("Attack Speed Bonus (%)", lc)
 
 	function setDamageperSecond(int level, real value)
 		def.setLvlDataUnreal("Uhf2", level, 2, value)
@@ -10070,7 +10405,7 @@ public class AbilityDefinitionDarkRangerDrain extends AbilityDefinition
 
 	function presetDrainIntervalseconds(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Ndr3", lvls, 3, lc)
-		addTooltipProperty("Drain Interval Seconds", lc)
+		addTooltipProperty("Drain Interval (seconds)", lc)
 
 	function setHitPointsDrained(int level, real value)
 		def.setLvlDataUnreal("Ndr1", level, 1, value)
@@ -10120,6 +10455,14 @@ public class AbilityDefinitionDarkRangerDrain extends AbilityDefinition
 	function presetLifeTransferredPerSecond(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Ndr4", lvls, 4, lc)
 		addTooltipProperty("Life Transferred Per Second", lc)
+
+	function setNdrA(int level, bool value)
+		def.setLvlDataBoolean("NdrA", level, 10, value)
+
+	function presetNdrA(BooleanLevelClosure lc)
+		def.setLevelsDataBoolean("NdrA", lvls, 10, lc)
+		addTooltipProperty("Use Black Arrow Effect", lc)
+
 
 public class AbilityDefinitionFlare extends AbilityDefinition
 	construct(int newAbilityId)
@@ -10208,7 +10551,22 @@ public class AbilityDefinitionPitLordDoom extends AbilityDefinition
 
 	function presetSummonedUnitDurationseconds(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Ndo3", lvls, 3, lc)
-		addTooltipProperty("Summoned Unit Duration Seconds", lc)
+		addTooltipProperty("Summoned Unit Duration (seconds)", lc)
+
+	function setMaximumCreepLevel(int level, int value)
+		def.setLvlDataInt("Ndo4", level, 4, value)
+
+	function presetMaximumCreepLevel(IntLevelClosure lc)
+		def.setLevelsDataInt("Ndo4", lvls, 4, lc)
+		addTooltipProperty("Maximum Creep Level", lc)
+
+	function setMovementSpeedFactor(int level, real value)
+		def.setLvlDataUnreal("Ndo5", level, 5, value)
+
+	function presetMovementSpeedFactor(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Ndo5", lvls, 5, lc)
+		addTooltipProperty("Movement Speed Factor", lc)
+
 
 public class AbilityDefinitionSpellBook extends AbilityDefinition
 	construct(int newAbilityId)
@@ -10247,7 +10605,7 @@ public class AbilityDefinitionSpellBook extends AbilityDefinition
 
 	function presetBaseOrderID(StringLevelClosure lc)
 		def.setLevelsDataString("spb5", lvls, 5, lc)
-		addTooltipProperty("BaseOrderID", lc)
+		addTooltipProperty("Base Order ID", lc)
 
 public class AbilityDefinitionStrengthBonusPlus3 extends AbilityDefinition
 	construct(int newAbilityId)
@@ -10329,7 +10687,7 @@ public class AbilityDefinitionMoonPriestessTrueshotAura extends AbilityDefinitio
 
 	function presetDamageBonus(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Ear1", lvls, 1, lc)
-		addTooltipProperty("Damage Bonus", lc)
+		addTooltipProperty("Damage Bonus (%)", lc)
 
 	function setMeleeBonus(int level, bool value)
 		def.setLvlDataBoolean("Ear2", level, 2, value)
@@ -10430,6 +10788,14 @@ public class AbilityDefinitionAuraWarDrumsKodobeast extends AbilityDefinition
 	function presetMeleeBonus(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("Ear2", lvls, 2, lc)
 		addTooltipProperty("Melee Bonus", lc)
+
+	function setPlayChannelAnimation(int level, bool value)
+		def.setLvlDataBoolean("Akb2", level, 5, value)
+
+	function presetPlayChannelAnimation(BooleanLevelClosure lc)
+		def.setLevelsDataBoolean("Akb2", lvls, 5, lc)
+		addTooltipProperty("Play Channel Animation", lc)
+
 
 public class AbilityDefinitionArchMageMassTeleport extends AbilityDefinition
 	construct(int newAbilityId)
@@ -10536,7 +10902,7 @@ public class AbilityDefinitionBrewmasterDrunkenHaze extends AbilityDefinition
 
 	function presetChanceToMiss(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Nsi2", lvls, 2, lc)
-		addTooltipProperty("Chance To Miss", lc)
+		addTooltipProperty("Chance To Miss (%)", lc)
 
 	function setAttacksPrevented(int level, int value)
 		def.setLvlDataInt("Nsi1", level, 1, value)
@@ -10702,6 +11068,14 @@ public class AbilityDefinitionBrewmasterDrunkenBrawler extends AbilityDefinition
 		def.setLevelsDataBoolean("Ocr5", lvls, 5, lc)
 		addTooltipProperty("Never Miss", lc)
 
+	function setExcludeItemDamage(int level, bool value)
+		def.setLvlDataBoolean("Ocr6", level, 6, value)
+
+	function presetExcludeItemDamage(BooleanLevelClosure lc)
+		def.setLevelsDataBoolean("Ocr6", lvls, 6, lc)
+		addTooltipProperty("Exclude Item Damage", lc)
+
+
 public class AbilityDefinitionRaiseDeadItem extends AbilityDefinition
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.raiseDeadItem)
@@ -10711,21 +11085,21 @@ public class AbilityDefinitionRaiseDeadItem extends AbilityDefinition
 
 	function presetUnitsSummonedTypeOne(IntLevelClosure lc)
 		def.setLevelsDataInt("Rai1", lvls, 1, lc)
-		addTooltipProperty("Units Summoned Type One", lc)
+		addTooltipProperty("Units Summoned (Type One)", lc)
 
 	function setUnitTypeForLimitCheck(int level, string value)
 		def.setLvlDataString("Raiu", level, 0, value)
 
 	function presetUnitTypeForLimitCheck(StringLevelClosure lc)
 		def.setLevelsDataString("Raiu", lvls, 0, lc)
-		addTooltipProperty("UnitTypeForLimitCheck", lc)
+		addTooltipProperty("Unit Type For Limit Check", lc)
 
 	function setUnitsSummonedTypeTwo(int level, int value)
 		def.setLvlDataInt("Rai2", level, 2, value)
 
 	function presetUnitsSummonedTypeTwo(IntLevelClosure lc)
 		def.setLevelsDataInt("Rai2", lvls, 2, lc)
-		addTooltipProperty("Units Summoned Type Two", lc)
+		addTooltipProperty("Units Summoned (Type Two)", lc)
 
 	function setUnitTypeTwo(int level, string value)
 		def.setLvlDataString("Rai4", level, 4, value)
@@ -10775,14 +11149,14 @@ public class AbilityDefinitionItemReincarnation extends AbilityDefinition
 
 	function presetDelayAfterDeathseconds(IntLevelClosure lc)
 		def.setLevelsDataInt("Ircd", lvls, 1, lc)
-		addTooltipProperty("Delay After Death Seconds", lc)
+		addTooltipProperty("Delay After Death (seconds)", lc)
 
 	function setRestoredManaforcurrent(int level, int value)
 		def.setLvlDataInt("irc3", level, 3, value)
 
 	function presetRestoredManaforcurrent(IntLevelClosure lc)
 		def.setLevelsDataInt("irc3", lvls, 3, lc)
-		addTooltipProperty("Restored Mana for current", lc)
+		addTooltipProperty("Restored Mana (-1 for current)", lc)
 
 public class AbilityDefinitionTinkererDemolishLevel0 extends AbilityDefinition
 	construct(int newAbilityId)
@@ -10793,21 +11167,21 @@ public class AbilityDefinitionTinkererDemolishLevel0 extends AbilityDefinition
 
 	function presetDamageMultiplierBuildings(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Nde2", lvls, 2, lc)
-		addTooltipProperty("Damage Multiplier Buildings", lc)
+		addTooltipProperty("Damage Multiplier (Buildings)", lc)
 
 	function setDamageMultiplierUnits(int level, real value)
 		def.setLvlDataUnreal("Nde3", level, 3, value)
 
 	function presetDamageMultiplierUnits(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Nde3", lvls, 3, lc)
-		addTooltipProperty("Damage Multiplier Units", lc)
+		addTooltipProperty("Damage Multiplier (Units)", lc)
 
 	function setDamageMultiplierHeroes(int level, real value)
 		def.setLvlDataUnreal("Nde4", level, 4, value)
 
 	function presetDamageMultiplierHeroes(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Nde4", lvls, 4, lc)
-		addTooltipProperty("Damage Multiplier Heroes", lc)
+		addTooltipProperty("Damage Multiplier (Heroes)", lc)
 
 	function setChancetoDemolish(int level, real value)
 		def.setLvlDataUnreal("Nde1", level, 1, value)
@@ -10826,6 +11200,14 @@ public class AbilityDefinitionRuneofSpiritLink extends AbilityDefinition
 	function presetDistributedDamageFactor(RealLevelClosure lc)
 		def.setLevelsDataUnreal("spl1", lvls, 1, lc)
 		addTooltipProperty("Distributed Damage Factor", lc)
+
+	function setMaximumNumberofTargets(int level, int value)
+		def.setLvlDataInt("spl2", level, 2, value)
+
+	function presetMaximumNumberofTargets(IntLevelClosure lc)
+		def.setLevelsDataInt("spl2", lvls, 2, lc)
+		addTooltipProperty("Maximum Number of Targets", lc)
+
 
 public class AbilityDefinitionSlowPoison extends AbilityDefinition
 	private bitset stackingTypesSet = bitset(1)
@@ -10926,7 +11308,7 @@ public class AbilityDefinitionAuraTrueshotCreep extends AbilityDefinition
 
 	function presetDamageBonus(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Ear1", lvls, 1, lc)
-		addTooltipProperty("Damage Bonus", lc)
+		addTooltipProperty("Damage Bonus (%)", lc)
 
 	function setMeleeBonus(int level, bool value)
 		def.setLvlDataBoolean("Ear2", level, 2, value)
@@ -10962,7 +11344,7 @@ public class AbilityDefinitionKeeperoftheGroveThornsAura extends AbilityDefiniti
 
 	function presetDamageisPercentReceived(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("Eah2", lvls, 2, lc)
-		addTooltipProperty("Damageis Percent Received", lc)
+		addTooltipProperty("Damage is Percent Received", lc)
 
 	function setDamageDealttoAttackers(int level, real value)
 		def.setLvlDataUnreal("Eah1", level, 1, value)
@@ -11092,7 +11474,7 @@ public class AbilityDefinitionDreadlordVampiricAura extends AbilityDefinition
 
 	function presetAttackDamageStolen(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Uav1", lvls, 1, lc)
-		addTooltipProperty("Attack Damage Stolen", lc)
+		addTooltipProperty("Attack Damage Stolen (%)", lc)
 
 public class AbilityDefinitionTinkererClusterRocketsLevel3 extends AbilityDefinition
 	construct(int newAbilityId)
@@ -11156,14 +11538,14 @@ public class AbilityDefinitionDeathKnightUnholyAura extends AbilityDefinition
 
 	function presetLifeRegenerationIncrease(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Uau2", lvls, 2, lc)
-		addTooltipProperty("Life Regeneration Increase", lc)
+		addTooltipProperty("Life Regeneration Increase (%)", lc)
 
 	function setMovementSpeedIncrease(int level, real value)
 		def.setLvlDataUnreal("Uau1", level, 1, value)
 
 	function presetMovementSpeedIncrease(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Uau1", lvls, 1, lc)
-		addTooltipProperty("Movement Speed Increase", lc)
+		addTooltipProperty("Movement Speed Increase (%)", lc)
 
 public class AbilityDefinitionItemPotionVampirism extends AbilityDefinition
 	construct(int newAbilityId)
@@ -11174,7 +11556,7 @@ public class AbilityDefinitionItemPotionVampirism extends AbilityDefinition
 
 	function presetAmountIsRawValue(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("ipv3", lvls, 3, lc)
-		addTooltipProperty("AmountIsRawValue", lc)
+		addTooltipProperty("Amount Is Raw Value", lc)
 
 	function setDamageBonus(int level, real value)
 		def.setLvlDataUnreal("ipv1", level, 1, value)
@@ -11195,12 +11577,12 @@ public class AbilityDefinitionOrbofVenomPoisonAttack extends AbilityDefinition
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.orbofVenomPoisonAttack)
 
-	function setAttackSpeedFactor(int level, real value)
+	function setMovementSpeedFactor(int level, real value)
 		def.setLvlDataUnreal("Poi2", level, 2, value)
 
-	function presetAttackSpeedFactor(RealLevelClosure lc)
+	function presetMovementSpeedFactor(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Poi2", lvls, 2, lc)
-		addTooltipProperty("Attack Speed Factor", lc)
+		addTooltipProperty("Movement Speed Factor", lc)
 
 	function setStackingType(int level, int value)
 		def.setLvlDataInt("Poi4", level, 4, value)
@@ -11223,12 +11605,12 @@ public class AbilityDefinitionOrbofVenomPoisonAttack extends AbilityDefinition
 		def.setLevelsDataUnreal("Poi1", lvls, 1, lc)
 		addTooltipProperty("Damage per Second", lc)
 
-	function setMovementSpeedFactor(int level, real value)
+	function setAttackSpeedFactor(int level, real value)
 		def.setLvlDataUnreal("Poi3", level, 3, value)
 
-	function presetMovementSpeedFactor(RealLevelClosure lc)
+	function presetAttackSpeedFactor(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Poi3", lvls, 3, lc)
-		addTooltipProperty("Movement Speed Factor", lc)
+		addTooltipProperty("Attack Speed Factor", lc)
 
 public class AbilityDefinitionCoupleInstantArcher extends AbilityDefinition
 	construct(int newAbilityId)
@@ -11239,7 +11621,7 @@ public class AbilityDefinitionCoupleInstantArcher extends AbilityDefinition
 
 	function presetMoveToPartner(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("coa2", lvls, 2, lc)
-		addTooltipProperty("MoveToPartner", lc)
+		addTooltipProperty("Move To Partner", lc)
 
 	function setResultingUnitType(int level, string value)
 		def.setLvlDataString("coau", level, 0, value)
@@ -11264,14 +11646,14 @@ public class AbilityDefinitionPotionofManaRegengreater extends AbilityDefinition
 
 	function presetNoTargetRequired(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("irl4", lvls, 4, lc)
-		addTooltipProperty("NoTargetRequired", lc)
+		addTooltipProperty("No Target Required", lc)
 
 	function setDispelOnAttack(int level, bool value)
 		def.setLvlDataBoolean("irl5", level, 5, value)
 
 	function presetDispelOnAttack(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("irl5", lvls, 5, lc)
-		addTooltipProperty("DispelOnAttack", lc)
+		addTooltipProperty("Dispel On Attack", lc)
 
 	function setManaRegenerated(int level, real value)
 		def.setLvlDataUnreal("irl2", level, 2, value)
@@ -11349,7 +11731,7 @@ public class AbilityDefinitionCoupleInstantHippogryph extends AbilityDefinition
 
 	function presetMoveToPartner(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("coa2", lvls, 2, lc)
-		addTooltipProperty("MoveToPartner", lc)
+		addTooltipProperty("Move To Partner", lc)
 
 	function setResultingUnitType(int level, string value)
 		def.setLvlDataString("coau", level, 0, value)
@@ -11392,14 +11774,14 @@ public class AbilityDefinitionPotionofManaRegenlesser extends AbilityDefinition
 
 	function presetNoTargetRequired(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("irl4", lvls, 4, lc)
-		addTooltipProperty("NoTargetRequired", lc)
+		addTooltipProperty("No Target Required", lc)
 
 	function setDispelOnAttack(int level, bool value)
 		def.setLvlDataBoolean("irl5", level, 5, value)
 
 	function presetDispelOnAttack(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("irl5", lvls, 5, lc)
-		addTooltipProperty("DispelOnAttack", lc)
+		addTooltipProperty("Dispel On Attack", lc)
 
 	function setManaRegenerated(int level, real value)
 		def.setLvlDataUnreal("irl2", level, 2, value)
@@ -11499,7 +11881,7 @@ public class AbilityDefinitionAlchemistAcidBomb extends AbilityDefinition
 
 	function presetMovementSpeedReduction(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Nab1", lvls, 1, lc)
-		addTooltipProperty("Movement Speed Reduction", lc)
+		addTooltipProperty("Movement Speed Reduction (%)", lc)
 
 	function setArmorPenalty(int level, int value)
 		def.setLvlDataInt("Nab3", level, 3, value)
@@ -11520,7 +11902,7 @@ public class AbilityDefinitionAlchemistAcidBomb extends AbilityDefinition
 
 	function presetAttackSpeedReduction(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Nab2", lvls, 2, lc)
-		addTooltipProperty("Attack Speed Reduction", lc)
+		addTooltipProperty("Attack Speed Reduction (%)", lc)
 
 public class AbilityDefinitionPermanentImmolationflying extends AbilityDefinition
 	construct(int newAbilityId)
@@ -11556,14 +11938,14 @@ public class AbilityDefinitionTornadoSpin extends AbilityDefinition
 
 	function presetMinimumHitIntervalseconds(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Tsp2", lvls, 2, lc)
-		addTooltipProperty("Minimum Hit Interval Seconds", lc)
+		addTooltipProperty("Minimum Hit Interval (seconds)", lc)
 
 	function setAirTimeseconds(int level, real value)
 		def.setLvlDataUnreal("Tsp1", level, 1, value)
 
 	function presetAirTimeseconds(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Tsp1", lvls, 1, lc)
-		addTooltipProperty("Air Time Seconds", lc)
+		addTooltipProperty("Air Time (seconds)", lc)
 
 public class AbilityDefinitionAntimagicShield extends AbilityDefinition
 	construct(int newAbilityId)
@@ -11627,7 +12009,7 @@ public class AbilityDefinitionOrbofDarknessBlackArrow extends AbilityDefinition
 
 	function presetSummonedUnitDurationseconds(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Nba3", lvls, 3, lc)
-		addTooltipProperty("Summoned Unit Duration Seconds", lc)
+		addTooltipProperty("Summoned Unit Duration (seconds)", lc)
 
 public class AbilityDefinitionTinkererDemolishLevel3 extends AbilityDefinition
 	construct(int newAbilityId)
@@ -11638,21 +12020,21 @@ public class AbilityDefinitionTinkererDemolishLevel3 extends AbilityDefinition
 
 	function presetDamageMultiplierBuildings(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Nde2", lvls, 2, lc)
-		addTooltipProperty("Damage Multiplier Buildings", lc)
+		addTooltipProperty("Damage Multiplier (Buildings)", lc)
 
 	function setDamageMultiplierUnits(int level, real value)
 		def.setLvlDataUnreal("Nde3", level, 3, value)
 
 	function presetDamageMultiplierUnits(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Nde3", lvls, 3, lc)
-		addTooltipProperty("Damage Multiplier Units", lc)
+		addTooltipProperty("Damage Multiplier (Units)", lc)
 
 	function setDamageMultiplierHeroes(int level, real value)
 		def.setLvlDataUnreal("Nde4", level, 4, value)
 
 	function presetDamageMultiplierHeroes(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Nde4", lvls, 4, lc)
-		addTooltipProperty("Damage Multiplier Heroes", lc)
+		addTooltipProperty("Damage Multiplier (Heroes)", lc)
 
 	function setChancetoDemolish(int level, real value)
 		def.setLvlDataUnreal("Nde1", level, 1, value)
@@ -11748,21 +12130,21 @@ public class AbilityDefinitionTinkererDemolishLevel1 extends AbilityDefinition
 
 	function presetDamageMultiplierBuildings(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Nde2", lvls, 2, lc)
-		addTooltipProperty("Damage Multiplier Buildings", lc)
+		addTooltipProperty("Damage Multiplier (Buildings)", lc)
 
 	function setDamageMultiplierUnits(int level, real value)
 		def.setLvlDataUnreal("Nde3", level, 3, value)
 
 	function presetDamageMultiplierUnits(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Nde3", lvls, 3, lc)
-		addTooltipProperty("Damage Multiplier Units", lc)
+		addTooltipProperty("Damage Multiplier (Units)", lc)
 
 	function setDamageMultiplierHeroes(int level, real value)
 		def.setLvlDataUnreal("Nde4", level, 4, value)
 
 	function presetDamageMultiplierHeroes(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Nde4", lvls, 4, lc)
-		addTooltipProperty("Damage Multiplier Heroes", lc)
+		addTooltipProperty("Damage Multiplier (Heroes)", lc)
 
 	function setChancetoDemolish(int level, real value)
 		def.setLvlDataUnreal("Nde1", level, 1, value)
@@ -11780,21 +12162,21 @@ public class AbilityDefinitionTinkererDemolishLevel2 extends AbilityDefinition
 
 	function presetDamageMultiplierBuildings(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Nde2", lvls, 2, lc)
-		addTooltipProperty("Damage Multiplier Buildings", lc)
+		addTooltipProperty("Damage Multiplier (Buildings)", lc)
 
 	function setDamageMultiplierUnits(int level, real value)
 		def.setLvlDataUnreal("Nde3", level, 3, value)
 
 	function presetDamageMultiplierUnits(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Nde3", lvls, 3, lc)
-		addTooltipProperty("Damage Multiplier Units", lc)
+		addTooltipProperty("Damage Multiplier (Units)", lc)
 
 	function setDamageMultiplierHeroes(int level, real value)
 		def.setLvlDataUnreal("Nde4", level, 4, value)
 
 	function presetDamageMultiplierHeroes(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Nde4", lvls, 4, lc)
-		addTooltipProperty("Damage Multiplier Heroes", lc)
+		addTooltipProperty("Damage Multiplier (Heroes)", lc)
 
 	function setChancetoDemolish(int level, real value)
 		def.setLvlDataUnreal("Nde1", level, 1, value)
@@ -11864,6 +12246,35 @@ public class AbilityDefinitionBashBeastmasterBear extends AbilityDefinition
 		def.setLevelsDataBoolean("Hbh5", lvls, 5, lc)
 		addTooltipProperty("Never Miss", lc)
 
+	function setChancetoBash(int level, real value)
+		def.setLvlDataUnreal("Hbh1", level, 1, value)
+
+	function presetChancetoBash(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Hbh1", lvls, 1, lc)
+		addTooltipProperty("Chance to Bash", lc)
+
+	function setDamageMultiplier(int level, real value)
+		def.setLvlDataUnreal("Hbh2", level, 2, value)
+
+	function presetDamageMultiplier(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Hbh2", lvls, 2, lc)
+		addTooltipProperty("Damage Multiplier", lc)
+
+	function setDamageBonus(int level, real value)
+		def.setLvlDataUnreal("Hbh3", level, 3, value)
+
+	function presetDamageBonus(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Hbh3", lvls, 3, lc)
+		addTooltipProperty("Damage Bonus", lc)
+
+	function setChancetoMiss(int level, real value)
+		def.setLvlDataUnreal("Hbh4", level, 4, value)
+
+	function presetChancetoMiss(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Hbh4", lvls, 4, lc)
+		addTooltipProperty("Chance to Miss", lc)
+
+
 public class AbilityDefinitionBrewmasterBreathofFire extends AbilityDefinition
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.brewmasterBreathofFire)
@@ -11912,28 +12323,28 @@ public class AbilityDefinitionPolymorph extends AbilityDefinition
 
 	function presetMorphUnitsGround(StringLevelClosure lc)
 		def.setLevelsDataString("Ply2", lvls, 2, lc)
-		addTooltipProperty("Morph Units Ground", lc)
+		addTooltipProperty("Morph Units - Ground", lc)
 
 	function setMorphUnitsWater(int level, string value)
 		def.setLvlDataString("Ply5", level, 5, value)
 
 	function presetMorphUnitsWater(StringLevelClosure lc)
 		def.setLevelsDataString("Ply5", lvls, 5, lc)
-		addTooltipProperty("Morph Units Water", lc)
+		addTooltipProperty("Morph Units - Water", lc)
 
 	function setMorphUnitsAmphibious(int level, string value)
 		def.setLvlDataString("Ply4", level, 4, value)
 
 	function presetMorphUnitsAmphibious(StringLevelClosure lc)
 		def.setLevelsDataString("Ply4", lvls, 4, lc)
-		addTooltipProperty("Morph Units Amphibious", lc)
+		addTooltipProperty("Morph Units - Amphibious", lc)
 
 	function setMorphUnitsAir(int level, string value)
 		def.setLvlDataString("Ply3", level, 3, value)
 
 	function presetMorphUnitsAir(StringLevelClosure lc)
 		def.setLevelsDataString("Ply3", lvls, 3, lc)
-		addTooltipProperty("Morph Units Air", lc)
+		addTooltipProperty("Morph Units - Air", lc)
 
 	function setMaximumCreepLevel(int level, int value)
 		def.setLvlDataInt("Ply1", level, 1, value)
@@ -12018,7 +12429,7 @@ public class AbilityDefinitionDarkRangerBlackArrow extends AbilityDefinition
 
 	function presetSummonedUnitDurationseconds(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Nba3", lvls, 3, lc)
-		addTooltipProperty("Summoned Unit Duration Seconds", lc)
+		addTooltipProperty("Summoned Unit Duration (seconds)", lc)
 
 public class AbilityDefinitionCargoHoldEntangledGoldMine extends AbilityDefinition
 	construct(int newAbilityId)
@@ -12347,7 +12758,7 @@ public class AbilityDefinitionFactory extends AbilityDefinition
 
 	function presetSpawnUnitID(StringLevelClosure lc)
 		def.setLevelsDataString("Nfyu", lvls, 0, lc)
-		addTooltipProperty("SpawnUnitID", lc)
+		addTooltipProperty("Spawn Unit ID", lc)
 
 	function setLeashRange(int level, real value)
 		def.setLvlDataUnreal("Nfy2", level, 2, value)
@@ -12397,7 +12808,7 @@ public class AbilityDefinitionLichDeathandDecay extends AbilityDefinition
 
 	function presetMaxLifeDrainedperSecond(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Udd1", lvls, 1, lc)
-		addTooltipProperty("Max Life Drained per Second", lc)
+		addTooltipProperty("Max Life Drained per Second (%)", lc)
 
 public class AbilityDefinitionItemWeb extends AbilityDefinition
 	construct(int newAbilityId)
@@ -12531,7 +12942,7 @@ public class AbilityDefinitionDeathKnightDeathCoil extends AbilityDefinition
 
 	function presetAmountHealedDamaged(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Udc1", lvls, 1, lc)
-		addTooltipProperty("Amount Healed Damaged", lc)
+		addTooltipProperty("Amount Healed/Damaged", lc)
 
 public class AbilityDefinitionPhaseShift extends AbilityDefinition
 	construct(int newAbilityId)
@@ -12542,14 +12953,14 @@ public class AbilityDefinitionPhaseShift extends AbilityDefinition
 
 	function presetAttackSpeedReduction(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Hbn2", lvls, 2, lc)
-		addTooltipProperty("Attack Speed Reduction", lc)
+		addTooltipProperty("Attack Speed Reduction (%)", lc)
 
 	function setMovementSpeedReduction(int level, real value)
 		def.setLvlDataUnreal("Hbn1", level, 1, value)
 
 	function presetMovementSpeedReduction(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Hbn1", lvls, 1, lc)
-		addTooltipProperty("Movement Speed Reduction", lc)
+		addTooltipProperty("Movement Speed Reduction (%)", lc)
 
 public class AbilityDefinitionSleepAlways extends AbilityDefinition
 	construct(int newAbilityId)
@@ -12567,7 +12978,7 @@ public class AbilityDefinitionSleepAlways extends AbilityDefinition
 
 	function presetAllowOnAnyPlayerSlot(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("sla2", lvls, 2, lc)
-		addTooltipProperty("AllowOnAnyPlayerSlot", lc)
+		addTooltipProperty("Allow On Any Player Slot", lc)
 
 public class AbilityDefinitionFigurineUrsaWarrior extends AbilityDefinition
 	construct(int newAbilityId)
@@ -12578,28 +12989,28 @@ public class AbilityDefinitionFigurineUrsaWarrior extends AbilityDefinition
 
 	function presetSummonUnitType(StringLevelClosure lc)
 		def.setLevelsDataString("Ist2", lvls, 4, lc)
-		addTooltipProperty("Summon Unit Type", lc)
+		addTooltipProperty("Summon 2 - Unit Type", lc)
 
 	function setSummonAmount(int level, int value)
 		def.setLvlDataInt("Isn2", level, 2, value)
 
 	function presetSummonAmount(IntLevelClosure lc)
 		def.setLevelsDataInt("Isn2", lvls, 2, lc)
-		addTooltipProperty("Summon Amount", lc)
+		addTooltipProperty("Summon 2 - Amount", lc)
 
 	function setSummonUnitType1(int level, string value)
 		def.setLvlDataString("Ist1", level, 3, value)
 
 	function presetSummonUnitType1(StringLevelClosure lc)
 		def.setLevelsDataString("Ist1", lvls, 3, lc)
-		addTooltipProperty("SummonUnitType1", lc)
+		addTooltipProperty("Summon 1 - Unit Type", lc)
 
 	function setSummonAmount1(int level, int value)
 		def.setLvlDataInt("Isn1", level, 1, value)
 
 	function presetSummonAmount1(IntLevelClosure lc)
 		def.setLevelsDataInt("Isn1", lvls, 1, lc)
-		addTooltipProperty("SummonAmount1", lc)
+		addTooltipProperty("Summon 1 - Amount", lc)
 
 public class AbilityDefinitionElunesGrace extends AbilityDefinition
 	construct(int newAbilityId)
@@ -12617,14 +13028,14 @@ public class AbilityDefinitionElunesGrace extends AbilityDefinition
 
 	function presetDeflectDamageTakenSpells(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Def8", lvls, 8, lc)
-		addTooltipProperty("Deflect Damage Taken Spells", lc)
+		addTooltipProperty("Deflect Damage Taken (Spells)", lc)
 
 	function setDeflectDamageTakenPiercing(int level, real value)
 		def.setLvlDataUnreal("Def7", level, 7, value)
 
 	function presetDeflectDamageTakenPiercing(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Def7", lvls, 7, lc)
-		addTooltipProperty("Deflect Damage Taken Piercing", lc)
+		addTooltipProperty("Deflect Damage Taken (Piercing)", lc)
 
 	function setMagicDamageReduction(int level, real value)
 		def.setLvlDataUnreal("Def5", level, 5, value)
@@ -12638,14 +13049,29 @@ public class AbilityDefinitionElunesGrace extends AbilityDefinition
 
 	function presetDamageTaken(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Def1", lvls, 1, lc)
-		addTooltipProperty("Damage Taken", lc)
+		addTooltipProperty("Damage Taken (%)", lc)
 
 	function setDamageDealt(int level, real value)
 		def.setLvlDataUnreal("Def2", level, 2, value)
 
 	function presetDamageDealt(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Def2", lvls, 2, lc)
-		addTooltipProperty("Damage Dealt", lc)
+		addTooltipProperty("Damage Dealt (%)", lc)
+
+	function setMovementSpeedFactor(int level, real value)
+		def.setLvlDataUnreal("Def3", level, 3, value)
+
+	function presetMovementSpeedFactor(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Def3", lvls, 3, lc)
+		addTooltipProperty("Movement Speed Factor", lc)
+
+	function setAttackSpeedFactor(int level, real value)
+		def.setLvlDataUnreal("Def4", level, 4, value)
+
+	function presetAttackSpeedFactor(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Def4", lvls, 4, lc)
+		addTooltipProperty("Attack Speed Factor", lc)
+
 
 public class AbilityDefinitionReturnLumber extends AbilityDefinition
 	construct(int newAbilityId)
@@ -12674,7 +13100,7 @@ public class AbilityDefinitionRegenLifeArll extends AbilityDefinition
 
 	function presetHitPointsRegeneratedPerSecond(IntLevelClosure lc)
 		def.setLevelsDataInt("Ihpr", lvls, 1, lc)
-		addTooltipProperty("HitPointsRegeneratedPerSecond", lc)
+		addTooltipProperty("Hit Points Regenerated Per Second", lc)
 
 public class AbilityDefinitionDemonHunterEvasion extends AbilityDefinition
 	construct(int newAbilityId)
@@ -12696,7 +13122,7 @@ public class AbilityDefinitionPitLordHowlofTerror extends AbilityDefinition
 
 	function presetDamageIncrease(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Roa1", lvls, 1, lc)
-		addTooltipProperty("Damage Increase", lc)
+		addTooltipProperty("Damage Increase (%)", lc)
 
 	function setDefenseIncrease(int level, int value)
 		def.setLvlDataInt("Roa2", level, 2, value)
@@ -12882,21 +13308,21 @@ public class AbilityDefinitionCryptLordCarrionScarabs extends AbilityDefinition
 
 	function presetUnitsSummonedTypeOne(IntLevelClosure lc)
 		def.setLevelsDataInt("Rai1", lvls, 1, lc)
-		addTooltipProperty("Units Summoned Type One", lc)
+		addTooltipProperty("Units Summoned (Type One)", lc)
 
 	function setUnitsSummonedTypeTwo(int level, int value)
 		def.setLvlDataInt("Rai2", level, 2, value)
 
 	function presetUnitsSummonedTypeTwo(IntLevelClosure lc)
 		def.setLevelsDataInt("Rai2", lvls, 2, lc)
-		addTooltipProperty("Units Summoned Type Two", lc)
+		addTooltipProperty("Units Summoned (Type Two)", lc)
 
 	function setKillOnCasterDeath(int level, bool value)
 		def.setLvlDataBoolean("Ucb6", level, 6, value)
 
 	function presetKillOnCasterDeath(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("Ucb6", lvls, 6, lc)
-		addTooltipProperty("KillOnCasterDeath", lc)
+		addTooltipProperty("Kill On Caster Death", lc)
 
 	function setMaxUnitsSummoned(int level, int value)
 		def.setLvlDataInt("Ucb5", level, 5, value)
@@ -12941,6 +13367,14 @@ public class AbilityDefinitionRuneofGreaterResurrection extends AbilityDefinitio
 		def.setLevelsDataBoolean("Hre2", lvls, 2, lc)
 		addTooltipProperty("Raised Units Are Invulnerable", lc)
 
+	function setNumberofCorpsesRaised(int level, int value)
+		def.setLvlDataInt("Hre1", level, 1, value)
+
+	function presetNumberofCorpsesRaised(IntLevelClosure lc)
+		def.setLevelsDataInt("Hre1", lvls, 1, lc)
+		addTooltipProperty("Number of Corpses Raised", lc)
+
+
 public class AbilityDefinitionManaFlare extends AbilityDefinition
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.manaFlare)
@@ -12950,14 +13384,14 @@ public class AbilityDefinitionManaFlare extends AbilityDefinition
 
 	function presetHeroMaximumDamage(RealLevelClosure lc)
 		def.setLevelsDataUnreal("mfl4", lvls, 4, lc)
-		addTooltipProperty("Hero Maximum Damage", lc)
+		addTooltipProperty("Hero - Maximum Damage", lc)
 
 	function setHeroDamagePerManaPoint(int level, real value)
 		def.setLvlDataUnreal("mfl2", level, 2, value)
 
 	function presetHeroDamagePerManaPoint(RealLevelClosure lc)
 		def.setLevelsDataUnreal("mfl2", lvls, 2, lc)
-		addTooltipProperty("HeroDamagePerManaPoint", lc)
+		addTooltipProperty("Hero - Damage Per Mana Point", lc)
 
 	function setCasterOnlySplash(int level, bool value)
 		def.setLvlDataBoolean("mfl6", level, 6, value)
@@ -12978,14 +13412,14 @@ public class AbilityDefinitionManaFlare extends AbilityDefinition
 
 	function presetUnitDamagePerManaPoint(RealLevelClosure lc)
 		def.setLevelsDataUnreal("mfl1", lvls, 1, lc)
-		addTooltipProperty("UnitDamagePerManaPoint", lc)
+		addTooltipProperty("Unit - Damage Per Mana Point", lc)
 
 	function setUnitMaximumDamage(int level, real value)
 		def.setLvlDataUnreal("mfl3", level, 3, value)
 
 	function presetUnitMaximumDamage(RealLevelClosure lc)
 		def.setLevelsDataUnreal("mfl3", lvls, 3, lc)
-		addTooltipProperty("Unit Maximum Damage", lc)
+		addTooltipProperty("Unit - Maximum Damage", lc)
 
 public class AbilityDefinitionTaurenChieftainReincarnation extends AbilityDefinition
 	construct(int newAbilityId)
@@ -13144,6 +13578,14 @@ public class AbilityDefinitionRuneofLesserResurrection extends AbilityDefinition
 		def.setLevelsDataBoolean("Hre2", lvls, 2, lc)
 		addTooltipProperty("Raised Units Are Invulnerable", lc)
 
+	function setNumberofCorpsesRaised(int level, int value)
+		def.setLvlDataInt("Hre1", level, 1, value)
+
+	function presetNumberofCorpsesRaised(IntLevelClosure lc)
+		def.setLevelsDataInt("Hre1", lvls, 1, lc)
+		addTooltipProperty("Number of Corpses Raised", lc)
+
+
 public class AbilityDefinitionItemTownPortal extends AbilityDefinition
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.itemTownPortal)
@@ -13251,14 +13693,14 @@ public class AbilityDefinitionVengeance extends AbilityDefinition
 
 	function presetUnitsSummonedTypeTwo(IntLevelClosure lc)
 		def.setLevelsDataInt("Rai2", lvls, 2, lc)
-		addTooltipProperty("Units Summoned Type Two", lc)
+		addTooltipProperty("Units Summoned (Type Two)", lc)
 
 	function setKillOnCasterDeath(int level, bool value)
 		def.setLvlDataBoolean("Ucb6", level, 6, value)
 
 	function presetKillOnCasterDeath(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("Ucb6", lvls, 6, lc)
-		addTooltipProperty("KillOnCasterDeath", lc)
+		addTooltipProperty("Kill On Caster Death", lc)
 
 	function setMaxUnitsSummoned(int level, int value)
 		def.setLvlDataInt("Ucb5", level, 5, value)
@@ -13279,14 +13721,14 @@ public class AbilityDefinitionVengeance extends AbilityDefinition
 
 	function presetUnitsSummonedTypeOne(IntLevelClosure lc)
 		def.setLevelsDataInt("Rai1", lvls, 1, lc)
-		addTooltipProperty("Units Summoned Type One", lc)
+		addTooltipProperty("Units Summoned (Type One)", lc)
 
 	function setUnitTypeForLimitCheck(int level, string value)
 		def.setLvlDataString("Raiu", level, 0, value)
 
 	function presetUnitTypeForLimitCheck(StringLevelClosure lc)
 		def.setLevelsDataString("Raiu", lvls, 0, lc)
-		addTooltipProperty("UnitTypeForLimitCheck", lc)
+		addTooltipProperty("Unit Type For Limit Check", lc)
 
 	function setUnitTypeTwo(int level, string value)
 		def.setLvlDataString("Rai4", level, 4, value)
@@ -13582,14 +14024,14 @@ public class AbilityDefinitionCripple extends AbilityDefinition
 
 	function presetAttackSpeedReduction(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Cri2", lvls, 2, lc)
-		addTooltipProperty("Attack Speed Reduction", lc)
+		addTooltipProperty("Attack Speed Reduction (%)", lc)
 
 	function setMovementSpeedReduction(int level, real value)
 		def.setLvlDataUnreal("Cri1", level, 1, value)
 
 	function presetMovementSpeedReduction(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Cri1", lvls, 1, lc)
-		addTooltipProperty("Movement Speed Reduction", lc)
+		addTooltipProperty("Movement Speed Reduction (%)", lc)
 
 public class AbilityDefinitionFlakCannon extends AbilityDefinition
 	construct(int newAbilityId)
@@ -13639,7 +14081,7 @@ public class AbilityDefinitionPossessionChanneling extends AbilityDefinition
 
 	function presetTargetIsMagicImmune(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("Pos4", lvls, 4, lc)
-		addTooltipProperty("TargetIsMagicImmune", lc)
+		addTooltipProperty("Target Is Magic Immune", lc)
 
 	function setMaximumCreepLevel(int level, int value)
 		def.setLvlDataInt("Pos1", level, 1, value)
@@ -13660,7 +14102,7 @@ public class AbilityDefinitionPossessionChanneling extends AbilityDefinition
 
 	function presetTargetIsInvulnerable(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("Pos3", lvls, 3, lc)
-		addTooltipProperty("TargetIsInvulnerable", lc)
+		addTooltipProperty("Target Is Invulnerable", lc)
 
 public class AbilityDefinitionRocketAttack extends AbilityDefinition
 	construct(int newAbilityId)
@@ -13707,21 +14149,21 @@ public class AbilityDefinitionTinkererEngineeringUpgrade extends AbilityDefiniti
 
 	function presetAbilityUpgrade(StringLevelClosure lc)
 		def.setLevelsDataString("Neg5", lvls, 5, lc)
-		addTooltipProperty("Ability Upgrade", lc)
+		addTooltipProperty("Ability Upgrade 3", lc)
 
 	function setAbilityUpgrade1(int level, string value)
 		def.setLvlDataString("Neg4", level, 4, value)
 
 	function presetAbilityUpgrade1(StringLevelClosure lc)
 		def.setLevelsDataString("Neg4", lvls, 4, lc)
-		addTooltipProperty("AbilityUpgrade1", lc)
+		addTooltipProperty("Ability Upgrade 2", lc)
 
 	function setAbilityUpgrade2(int level, string value)
 		def.setLvlDataString("Neg6", level, 6, value)
 
 	function presetAbilityUpgrade2(StringLevelClosure lc)
 		def.setLevelsDataString("Neg6", lvls, 6, lc)
-		addTooltipProperty("AbilityUpgrade2", lc)
+		addTooltipProperty("Ability Upgrade 4", lc)
 
 	function setMoveSpeedBonus(int level, real value)
 		def.setLvlDataUnreal("Neg1", level, 1, value)
@@ -13742,7 +14184,7 @@ public class AbilityDefinitionTinkererEngineeringUpgrade extends AbilityDefiniti
 
 	function presetAbilityUpgrade3(StringLevelClosure lc)
 		def.setLevelsDataString("Neg3", lvls, 3, lc)
-		addTooltipProperty("AbilityUpgrade3", lc)
+		addTooltipProperty("Ability Upgrade 1", lc)
 
 public class AbilityDefinitionMine extends AbilityDefinition
 	construct(int newAbilityId)
@@ -13791,6 +14233,14 @@ public class AbilityDefinitionLichFrostNova extends AbilityDefinition
 		def.setLevelsDataUnreal("Ufn2", lvls, 2, lc)
 		addTooltipProperty("Specific Target Damage", lc)
 
+	function setMaximumDamage(int level, real value)
+		def.setLvlDataUnreal("Ufn5", level, 5, value)
+
+	function presetMaximumDamage(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Ufn5", lvls, 5, lc)
+		addTooltipProperty("Maximum Damage", lc)
+
+
 public class AbilityDefinitionRoar extends AbilityDefinition
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.roar)
@@ -13800,7 +14250,7 @@ public class AbilityDefinitionRoar extends AbilityDefinition
 
 	function presetDamageIncrease(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Roa1", lvls, 1, lc)
-		addTooltipProperty("Damage Increase", lc)
+		addTooltipProperty("Damage Increase (%)", lc)
 
 	function setDefenseIncrease(int level, int value)
 		def.setLvlDataInt("Roa2", level, 2, value)
@@ -13892,14 +14342,14 @@ public class AbilityDefinitionLichDarkRitual extends AbilityDefinition
 
 	function presetLifeConversionAsPercent(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("Udp4", lvls, 4, lc)
-		addTooltipProperty("LifeConversionAsPercent", lc)
+		addTooltipProperty("Life Conversion As Percent", lc)
 
 	function setManaConversionAsPercent(int level, bool value)
 		def.setLvlDataBoolean("Udp3", level, 3, value)
 
 	function presetManaConversionAsPercent(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("Udp3", lvls, 3, lc)
-		addTooltipProperty("ManaConversionAsPercent", lc)
+		addTooltipProperty("Mana Conversion As Percent", lc)
 
 public class AbilityDefinitionTichondriusDarkSummoning extends AbilityDefinition
 	construct(int newAbilityId)
@@ -13924,7 +14374,7 @@ public class AbilityDefinitionTichondriusDarkSummoning extends AbilityDefinition
 
 	function presetCastingDelayseconds(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Uds2", lvls, 2, lc)
-		addTooltipProperty("Casting Delay Seconds", lc)
+		addTooltipProperty("Casting Delay (seconds)", lc)
 
 public class AbilityDefinitionItemSpeed extends AbilityDefinition
 	construct(int newAbilityId)
@@ -13946,14 +14396,14 @@ public class AbilityDefinitionBloodlust extends AbilityDefinition
 
 	function presetMovementSpeedIncrease(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Blo2", lvls, 2, lc)
-		addTooltipProperty("Movement Speed Increase", lc)
+		addTooltipProperty("Movement Speed Increase (%)", lc)
 
 	function setAttackSpeedIncrease(int level, real value)
 		def.setLvlDataUnreal("Blo1", level, 1, value)
 
 	function presetAttackSpeedIncrease(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Blo1", lvls, 1, lc)
-		addTooltipProperty("Attack Speed Increase", lc)
+		addTooltipProperty("Attack Speed Increase (%)", lc)
 
 	function setScalingFactor(int level, real value)
 		def.setLvlDataUnreal("Blo3", level, 3, value)
@@ -13992,14 +14442,14 @@ public class AbilityDefinitionDeathKnightDeathPact extends AbilityDefinition
 
 	function presetLifeConversionAsPercent(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("Udp4", lvls, 4, lc)
-		addTooltipProperty("LifeConversionAsPercent", lc)
+		addTooltipProperty("Life Conversion As Percent", lc)
 
 	function setManaConversionAsPercent(int level, bool value)
 		def.setLvlDataBoolean("Udp3", level, 3, value)
 
 	function presetManaConversionAsPercent(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("Udp3", lvls, 3, lc)
-		addTooltipProperty("ManaConversionAsPercent", lc)
+		addTooltipProperty("Mana Conversion As Percent", lc)
 
 public class AbilityDefinitionBlightPlacement extends AbilityDefinition
 	construct(int newAbilityId)
@@ -14092,14 +14542,14 @@ public class AbilityDefinitionScrollofLifeRegen extends AbilityDefinition
 
 	function presetNoTargetRequired(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("irl4", lvls, 4, lc)
-		addTooltipProperty("NoTargetRequired", lc)
+		addTooltipProperty("No Target Required", lc)
 
 	function setDispelOnAttack(int level, bool value)
 		def.setLvlDataBoolean("irl5", level, 5, value)
 
 	function presetDispelOnAttack(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("irl5", lvls, 5, lc)
-		addTooltipProperty("DispelOnAttack", lc)
+		addTooltipProperty("Dispel On Attack", lc)
 
 	function setManaRegenerated(int level, real value)
 		def.setLvlDataUnreal("irl2", level, 2, value)
@@ -14153,7 +14603,7 @@ public class AbilityDefinitionDefend extends AbilityDefinition
 
 	function presetDamageTaken(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Def1", lvls, 1, lc)
-		addTooltipProperty("Damage Taken", lc)
+		addTooltipProperty("Damage Taken (%)", lc)
 
 	function setChancetoDeflect(int level, real value)
 		def.setLvlDataUnreal("Def6", level, 6, value)
@@ -14181,21 +14631,21 @@ public class AbilityDefinitionDefend extends AbilityDefinition
 
 	function presetDamageDealt(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Def2", lvls, 2, lc)
-		addTooltipProperty("Damage Dealt", lc)
+		addTooltipProperty("Damage Dealt (%)", lc)
 
 	function setDeflectDamageTakenSpells(int level, real value)
 		def.setLvlDataUnreal("Def8", level, 8, value)
 
 	function presetDeflectDamageTakenSpells(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Def8", lvls, 8, lc)
-		addTooltipProperty("Deflect Damage Taken Spells", lc)
+		addTooltipProperty("Deflect Damage Taken (Spells)", lc)
 
 	function setDeflectDamageTakenPiercing(int level, real value)
 		def.setLvlDataUnreal("Def7", level, 7, value)
 
 	function presetDeflectDamageTakenPiercing(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Def7", lvls, 7, lc)
-		addTooltipProperty("Deflect Damage Taken Piercing", lc)
+		addTooltipProperty("Deflect Damage Taken (Piercing)", lc)
 
 	function setMagicDamageReduction(int level, real value)
 		def.setLvlDataUnreal("Def5", level, 5, value)
@@ -14369,7 +14819,7 @@ public class AbilityDefinitionMountainKingThunderClap extends AbilityDefinition
 
 	function presetAttackSpeedReduction(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Htc4", lvls, 4, lc)
-		addTooltipProperty("Attack Speed Reduction", lc)
+		addTooltipProperty("Attack Speed Reduction (%)", lc)
 
 	function setSpecificTargetDamage(int level, real value)
 		def.setLvlDataUnreal("Htc2", level, 2, value)
@@ -14383,13 +14833,13 @@ public class AbilityDefinitionMountainKingThunderClap extends AbilityDefinition
 
 	function presetAOEDamage(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Htc1", lvls, 1, lc)
-		addTooltipProperty("AOEDamage", lc)
+		addTooltipProperty("AOE Damage", lc)
 
 	function setMaximumDamage(int level, real value)
-		def.setLvlDataUnreal("Htc5", level, 1, value)
+		def.setLvlDataUnreal("Htc5", level, 5, value)
 
 	function presetMaximumDamage(RealLevelClosure lc)
-		def.setLevelsDataUnreal("Htc5", lvls, 1, lc)
+		def.setLevelsDataUnreal("Htc5", lvls, 5, lc)
 		addTooltipProperty("Maximum Damage", lc)
 
 	function setMovementSpeedReduction(int level, real value)
@@ -14397,7 +14847,7 @@ public class AbilityDefinitionMountainKingThunderClap extends AbilityDefinition
 
 	function presetMovementSpeedReduction(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Htc3", lvls, 3, lc)
-		addTooltipProperty("Movement Speed Reduction", lc)
+		addTooltipProperty("Movement Speed Reduction (%)", lc)
 
 public class AbilityDefinitionAttackBonusAItf extends AbilityDefinition
 	construct(int newAbilityId)
@@ -14537,7 +14987,7 @@ public class AbilityDefinitionSentinel extends AbilityDefinition
 
 	function presetInFlightSightRadius(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Esn1", lvls, 1, lc)
-		addTooltipProperty("InFlightSightRadius", lc)
+		addTooltipProperty("In Flight Sight Radius", lc)
 
 	function setNumberofOwls(int level, int value)
 		def.setLvlDataInt("Esn4", level, 4, value)
@@ -14552,6 +15002,14 @@ public class AbilityDefinitionSentinel extends AbilityDefinition
 	function presetHoveringHeight(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Esn3", lvls, 3, lc)
 		addTooltipProperty("Hovering Height", lc)
+
+	function setDurationOfOwls(int level, real value)
+		def.setLvlDataUnreal("Esn5", level, 5, value)
+
+	function presetDurationOfOwls(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Esn5", lvls, 5, lc)
+		addTooltipProperty("Duration of Owls", lc)
+
 
 public class AbilityDefinitionArchMageSummonWaterElemental extends AbilityDefinition
 	construct(int newAbilityId)
@@ -14677,21 +15135,21 @@ public class AbilityDefinitionRaiseDead extends AbilityDefinition
 
 	function presetUnitsSummonedTypeOne(IntLevelClosure lc)
 		def.setLevelsDataInt("Rai1", lvls, 1, lc)
-		addTooltipProperty("Units Summoned Type One", lc)
+		addTooltipProperty("Units Summoned (Type One)", lc)
 
 	function setUnitTypeForLimitCheck(int level, string value)
 		def.setLvlDataString("Raiu", level, 0, value)
 
 	function presetUnitTypeForLimitCheck(StringLevelClosure lc)
 		def.setLevelsDataString("Raiu", lvls, 0, lc)
-		addTooltipProperty("UnitTypeForLimitCheck", lc)
+		addTooltipProperty("Unit Type For Limit Check", lc)
 
 	function setUnitsSummonedTypeTwo(int level, int value)
 		def.setLvlDataInt("Rai2", level, 2, value)
 
 	function presetUnitsSummonedTypeTwo(IntLevelClosure lc)
 		def.setLevelsDataInt("Rai2", lvls, 2, lc)
-		addTooltipProperty("Units Summoned Type Two", lc)
+		addTooltipProperty("Units Summoned (Type Two)", lc)
 
 	function setUnitTypeTwo(int level, string value)
 		def.setLvlDataString("Rai4", level, 4, value)
@@ -14737,17 +15195,17 @@ public class AbilityDefinitionRayOfDisruption extends AbilityDefinition
 		addTooltipProperty("Mana Loss Per Unit", lc)
 
 	function setMaximumDispelledUnits(int level, int value)
-		def.setLvlDataInt("idc3", level, 1, value)
+		def.setLvlDataInt("idc3", level, 3, value)
 
 	function presetMaximumDispelledUnits(IntLevelClosure lc)
-		def.setLevelsDataInt("idc3", lvls, 1, lc)
+		def.setLevelsDataInt("idc3", lvls, 3, lc)
 		addTooltipProperty("Maximum Dispelled Units", lc)
 
 	function setSummonedUnitDamage(int level, real value)
-		def.setLvlDataUnreal("idc2", level, 1, value)
+		def.setLvlDataUnreal("idc2", level, 2, value)
 
 	function presetSummonedUnitDamage(RealLevelClosure lc)
-		def.setLevelsDataUnreal("idc2", lvls, 1, lc)
+		def.setLevelsDataUnreal("idc2", lvls, 2, lc)
 		addTooltipProperty("Summoned Unit Damage", lc)
 public class AbilityDefinitionShadowMeld extends AbilityDefinition
 	construct(int newAbilityId)
@@ -14758,7 +15216,7 @@ public class AbilityDefinitionShadowMeld extends AbilityDefinition
 
 	function presetDayNightDuration(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Shm2", lvls, 2, lc)
-		addTooltipProperty("Day Night Duration", lc)
+		addTooltipProperty("Day/Night Duration", lc)
 
 	function setActionDuration(int level, real value)
 		def.setLvlDataUnreal("Shm3", level, 3, value)
@@ -14774,6 +15232,14 @@ public class AbilityDefinitionShadowMeld extends AbilityDefinition
 		def.setLevelsDataUnreal("Shm1", lvls, 1, lc)
 		addTooltipProperty("Fade Duration", lc)
 
+	function setPermanentCloak(int level, bool value)
+		def.setLvlDataBoolean("Shm4", level, 4, value)
+
+	function presetPermanentCloak(BooleanLevelClosure lc)
+		def.setLevelsDataBoolean("Shm4", lvls, 4, lc)
+		addTooltipProperty("Permanent Cloak", lc)
+
+
 public class AbilityDefinitionRoarAra2 extends AbilityDefinition
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.roarAra2)
@@ -14783,7 +15249,7 @@ public class AbilityDefinitionRoarAra2 extends AbilityDefinition
 
 	function presetDamageIncrease(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Roa1", lvls, 1, lc)
-		addTooltipProperty("Damage Increase", lc)
+		addTooltipProperty("Damage Increase (%)", lc)
 
 	function setDefenseIncrease(int level, int value)
 		def.setLvlDataInt("Roa2", level, 2, value)
@@ -14956,7 +15422,7 @@ public class AbilityDefinitionDetonate extends AbilityDefinition
 
 	function presetManaLossperunit(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Dtn1", lvls, 1, lc)
-		addTooltipProperty("Mana Loss per unit", lc)
+		addTooltipProperty("Mana Loss (per unit)", lc)
 
 public class AbilityDefinitionRavenFormMedivh extends AbilityDefinition
 	private bitset morphingFlagsSet = bitset(5)
@@ -15126,14 +15592,14 @@ public class AbilityDefinitionCrippleWarlock extends AbilityDefinition
 
 	function presetAttackSpeedReduction(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Cri2", lvls, 2, lc)
-		addTooltipProperty("Attack Speed Reduction", lc)
+		addTooltipProperty("Attack Speed Reduction (%)", lc)
 
 	function setMovementSpeedReduction(int level, real value)
 		def.setLvlDataUnreal("Cri1", level, 1, value)
 
 	function presetMovementSpeedReduction(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Cri1", lvls, 1, lc)
-		addTooltipProperty("Movement Speed Reduction", lc)
+		addTooltipProperty("Movement Speed Reduction (%)", lc)
 
 public class AbilityDefinitionFarseerSpiritWolf extends AbilityDefinition
 	construct(int newAbilityId)
@@ -15187,7 +15653,7 @@ public class AbilityDefinitionAntimagicShieldAIxs extends AbilityDefinition
 
 	function presetDamageToSummonedUnits(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Ixs1", lvls, 1, lc)
-		addTooltipProperty("DamageToSummonedUnits", lc)
+		addTooltipProperty("Damage To Summoned Units", lc)
 
 	function setManaLoss(int level, int value)
 		def.setLvlDataInt("Ams4", level, 4, value)
@@ -15368,7 +15834,7 @@ public class AbilityDefinitionUnholyFrenzycreep extends AbilityDefinition
 
 	function presetAttackSpeedBonus(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Uhf1", lvls, 1, lc)
-		addTooltipProperty("Attack Speed Bonus", lc)
+		addTooltipProperty("Attack Speed Bonus (%)", lc)
 
 	function setDamageperSecond(int level, real value)
 		def.setLvlDataUnreal("Uhf2", level, 2, value)
@@ -15425,7 +15891,7 @@ public class AbilityDefinitionRegenLife extends AbilityDefinition
 
 	function presetHitPointsRegeneratedPerSecond(IntLevelClosure lc)
 		def.setLevelsDataInt("Ihpr", lvls, 1, lc)
-		addTooltipProperty("HitPointsRegeneratedPerSecond", lc)
+		addTooltipProperty("Hit Points Regenerated Per Second", lc)
 
 public class AbilityDefinitionBlightGrowthLarge extends AbilityDefinition
 	construct(int newAbilityId)
@@ -15493,14 +15959,14 @@ public class AbilityDefinitionUnholyAuracreep extends AbilityDefinition
 
 	function presetLifeRegenerationIncrease(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Uau2", lvls, 2, lc)
-		addTooltipProperty("Life Regeneration Increase", lc)
+		addTooltipProperty("Life Regeneration Increase (%)", lc)
 
 	function setMovementSpeedIncrease(int level, real value)
 		def.setLvlDataUnreal("Uau1", level, 1, value)
 
 	function presetMovementSpeedIncrease(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Uau1", lvls, 1, lc)
-		addTooltipProperty("Movement Speed Increase", lc)
+		addTooltipProperty("Movement Speed Increase (%)", lc)
 
 public class AbilityDefinitionRepairOrc extends AbilityDefinition
 	construct(int newAbilityId)
@@ -15604,7 +16070,7 @@ public class AbilityDefinitionRejuvination extends AbilityDefinition
 
 	function presetNoTargetRequired(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("Rej4", lvls, 4, lc)
-		addTooltipProperty("NoTargetRequired", lc)
+		addTooltipProperty("No Target Required", lc)
 
 	function setHitPointsGained(int level, real value)
 		def.setLvlDataUnreal("Rej1", level, 1, value)
@@ -15836,7 +16302,7 @@ public class AbilityDefinitionThunderClapCreep extends AbilityDefinition
 
 	function presetExtraDamageToTarget(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Ctc2", lvls, 2, lc)
-		addTooltipProperty("ExtraDamageToTarget", lc)
+		addTooltipProperty("Extra Damage To Target", lc)
 
 	function setAttackSpeedReduction(int level, real value)
 		def.setLvlDataUnreal("Ctc4", level, 4, value)
@@ -15862,6 +16328,42 @@ public class AbilityDefinitionSelfDestructClockwerkGoblins extends AbilityDefini
 	function presetExplodesonDeath(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("Sds6", lvls, 6, lc)
 		addTooltipProperty("Explodes on Death", lc)
+
+	function setFullDamageRadius(int level, real value)
+		def.setLvlDataUnreal("Dda1", level, 1, value)
+
+	function presetFullDamageRadius(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Dda1", lvls, 1, lc)
+		addTooltipProperty("Full Damage Radius", lc)
+
+	function setFullDamageAmount(int level, real value)
+		def.setLvlDataUnreal("Dda2", level, 2, value)
+
+	function presetFullDamageAmount(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Dda2", lvls, 2, lc)
+		addTooltipProperty("Full Damage Amount", lc)
+
+	function setPartialDamageRadius(int level, real value)
+		def.setLvlDataUnreal("Dda3", level, 3, value)
+
+	function presetPartialDamageRadius(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Dda3", lvls, 3, lc)
+		addTooltipProperty("Partial Damage Radius", lc)
+
+	function setPartialDamageAmount(int level, real value)
+		def.setLvlDataUnreal("Dda4", level, 4, value)
+
+	function presetPartialDamageAmount(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Dda4", lvls, 4, lc)
+		addTooltipProperty("Partial Damage Amount", lc)
+
+	function setBuildingDamageFactor(int level, real value)
+		def.setLvlDataUnreal("Sds1", level, 5, value)
+
+	function presetBuildingDamageFactor(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Sds1", lvls, 5, lc)
+		addTooltipProperty("Building Damage Factor", lc)
+
 
 public class AbilityDefinitionDeathDamageAOEmine extends AbilityDefinition
 	construct(int newAbilityId)
@@ -16002,6 +16504,35 @@ public class AbilityDefinitionBashmaulSPBearlevel3 extends AbilityDefinition
 		def.setLevelsDataBoolean("Hbh5", lvls, 5, lc)
 		addTooltipProperty("Never Miss", lc)
 
+	function setChancetoBash(int level, real value)
+		def.setLvlDataUnreal("Hbh1", level, 1, value)
+
+	function presetChancetoBash(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Hbh1", lvls, 1, lc)
+		addTooltipProperty("Chance to Bash", lc)
+
+	function setDamageMultiplier(int level, real value)
+		def.setLvlDataUnreal("Hbh2", level, 2, value)
+
+	function presetDamageMultiplier(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Hbh2", lvls, 2, lc)
+		addTooltipProperty("Damage Multiplier", lc)
+
+	function setDamageBonus(int level, real value)
+		def.setLvlDataUnreal("Hbh3", level, 3, value)
+
+	function presetDamageBonus(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Hbh3", lvls, 3, lc)
+		addTooltipProperty("Damage Bonus", lc)
+
+	function setChancetoMiss(int level, real value)
+		def.setLvlDataUnreal("Hbh4", level, 4, value)
+
+	function presetChancetoMiss(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Hbh4", lvls, 4, lc)
+		addTooltipProperty("Chance to Miss", lc)
+
+
 public class AbilityDefinitionSlowCreep extends AbilityDefinition
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.slow1)
@@ -16061,7 +16592,7 @@ public class AbilityDefinitionWarStompseagiant extends AbilityDefinition
 
 	function presetTerrainDeformationDurationms(IntLevelClosure lc)
 		def.setLevelsDataInt("Wrs3", lvls, 3, lc)
-		addTooltipProperty("Terrain Deformation Duration ms", lc)
+		addTooltipProperty("Terrain Deformation Duration (ms)", lc)
 
 	function setDamage(int level, real value)
 		def.setLvlDataUnreal("Wrs1", level, 1, value)
@@ -16115,7 +16646,7 @@ public class AbilityDefinitionWarStomphydra extends AbilityDefinition
 
 	function presetTerrainDeformationDurationms(IntLevelClosure lc)
 		def.setLevelsDataInt("Wrs3", lvls, 3, lc)
-		addTooltipProperty("Terrain Deformation Duration ms", lc)
+		addTooltipProperty("Terrain Deformation Duration (ms)", lc)
 
 	function setDamage(int level, real value)
 		def.setLvlDataUnreal("Wrs1", level, 1, value)
@@ -16140,7 +16671,7 @@ public class AbilityDefinitionBladeMasterWindWalk extends AbilityDefinition
 
 	function presetMovementSpeedIncrease(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Owk2", lvls, 2, lc)
-		addTooltipProperty("Movement Speed Increase", lc)
+		addTooltipProperty("Movement Speed Increase (%)", lc)
 
 	function setTransitionTime(int level, real value)
 		def.setLvlDataUnreal("Owk1", level, 1, value)
@@ -16154,7 +16685,15 @@ public class AbilityDefinitionBladeMasterWindWalk extends AbilityDefinition
 
 	function presetBackstabDamage1(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Owk3", lvls, 3, lc)
-		addTooltipProperty("BackstabDamage1", lc)
+		addTooltipProperty("Backstab Damage", lc)
+
+	function setStartCooldownWhenDecloak(int level, bool value)
+		def.setLvlDataBoolean("Owk5", level, 5, value)
+
+	function presetStartCooldownWhenDecloak(BooleanLevelClosure lc)
+		def.setLevelsDataBoolean("Owk5", lvls, 5, lc)
+		addTooltipProperty("Start Cooldown when Decloak", lc)
+
 
 public class AbilityDefinitionSummonSeaElemental extends AbilityDefinition
 	construct(int newAbilityId)
@@ -16228,6 +16767,42 @@ public class AbilityDefinitionSelfDestruct3ClockwerkGoblins extends AbilityDefin
 		def.setLevelsDataBoolean("Sds6", lvls, 6, lc)
 		addTooltipProperty("Explodes on Death", lc)
 
+	function setFullDamageRadius(int level, real value)
+		def.setLvlDataUnreal("Dda1", level, 1, value)
+
+	function presetFullDamageRadius(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Dda1", lvls, 1, lc)
+		addTooltipProperty("Full Damage Radius", lc)
+
+	function setFullDamageAmount(int level, real value)
+		def.setLvlDataUnreal("Dda2", level, 2, value)
+
+	function presetFullDamageAmount(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Dda2", lvls, 2, lc)
+		addTooltipProperty("Full Damage Amount", lc)
+
+	function setPartialDamageRadius(int level, real value)
+		def.setLvlDataUnreal("Dda3", level, 3, value)
+
+	function presetPartialDamageRadius(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Dda3", lvls, 3, lc)
+		addTooltipProperty("Partial Damage Radius", lc)
+
+	function setPartialDamageAmount(int level, real value)
+		def.setLvlDataUnreal("Dda4", level, 4, value)
+
+	function presetPartialDamageAmount(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Dda4", lvls, 4, lc)
+		addTooltipProperty("Partial Damage Amount", lc)
+
+	function setBuildingDamageFactor(int level, real value)
+		def.setLvlDataUnreal("Sds1", level, 5, value)
+
+	function presetBuildingDamageFactor(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Sds1", lvls, 5, lc)
+		addTooltipProperty("Building Damage Factor", lc)
+
+
 public class AbilityDefinitionSelfDestruct2ClockwerkGoblins extends AbilityDefinition
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.selfDestruct2ClockwerkGoblins)
@@ -16238,6 +16813,42 @@ public class AbilityDefinitionSelfDestruct2ClockwerkGoblins extends AbilityDefin
 	function presetExplodesonDeath(BooleanLevelClosure lc)
 		def.setLevelsDataBoolean("Sds6", lvls, 6, lc)
 		addTooltipProperty("Explodes on Death", lc)
+
+	function setFullDamageRadius(int level, real value)
+		def.setLvlDataUnreal("Dda1", level, 1, value)
+
+	function presetFullDamageRadius(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Dda1", lvls, 1, lc)
+		addTooltipProperty("Full Damage Radius", lc)
+
+	function setFullDamageAmount(int level, real value)
+		def.setLvlDataUnreal("Dda2", level, 2, value)
+
+	function presetFullDamageAmount(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Dda2", lvls, 2, lc)
+		addTooltipProperty("Full Damage Amount", lc)
+
+	function setPartialDamageRadius(int level, real value)
+		def.setLvlDataUnreal("Dda3", level, 3, value)
+
+	function presetPartialDamageRadius(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Dda3", lvls, 3, lc)
+		addTooltipProperty("Partial Damage Radius", lc)
+
+	function setPartialDamageAmount(int level, real value)
+		def.setLvlDataUnreal("Dda4", level, 4, value)
+
+	function presetPartialDamageAmount(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Dda4", lvls, 4, lc)
+		addTooltipProperty("Partial Damage Amount", lc)
+
+	function setBuildingDamageFactor(int level, real value)
+		def.setLvlDataUnreal("Sds1", level, 5, value)
+
+	function presetBuildingDamageFactor(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Sds1", lvls, 5, lc)
+		addTooltipProperty("Building Damage Factor", lc)
+
 
 public class AbilityDefinitionGraveyard extends AbilityDefinition
 	construct(int newAbilityId)
@@ -16287,7 +16898,7 @@ public class AbilityDefinitionWarStompcreep extends AbilityDefinition
 
 	function presetTerrainDeformationDurationms(IntLevelClosure lc)
 		def.setLevelsDataInt("Wrs3", lvls, 3, lc)
-		addTooltipProperty("Terrain Deformation Duration ms", lc)
+		addTooltipProperty("Terrain Deformation Duration (ms)", lc)
 
 	function setDamage(int level, real value)
 		def.setLvlDataUnreal("Wrs1", level, 1, value)
@@ -16323,19 +16934,19 @@ public class AbilityDefinitionVampiricAuracreep extends AbilityDefinition
 
 	function presetAttackDamageStolen(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Uav1", lvls, 1, lc)
-		addTooltipProperty("Attack Damage Stolen", lc)
+		addTooltipProperty("Attack Damage Stolen (%)", lc)
 
 public class AbilityDefinitionVenomSpearsCreep extends AbilityDefinition
 	private bitset stackingTypesSet = bitset(1)
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.envenomedWeapons)
 
-	function setAttackSpeedFactor(int level, real value)
+	function setMovementSpeedFactor(int level, real value)
 		def.setLvlDataUnreal("Poi2", level, 2, value)
 
-	function presetAttackSpeedFactor(RealLevelClosure lc)
+	function presetMovementSpeedFactor(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Poi2", lvls, 2, lc)
-		addTooltipProperty("Attack Speed Factor", lc)
+		addTooltipProperty("Movement Speed Factor", lc)
 
 	function setStackingType(int level, int value)
 		def.setLvlDataInt("Poi4", level, 4, value)
@@ -16358,12 +16969,12 @@ public class AbilityDefinitionVenomSpearsCreep extends AbilityDefinition
 		def.setLevelsDataUnreal("Poi1", lvls, 1, lc)
 		addTooltipProperty("Damage per Second", lc)
 
-	function setMovementSpeedFactor(int level, real value)
+	function setAttackSpeedFactor(int level, real value)
 		def.setLvlDataUnreal("Poi3", level, 3, value)
 
-	function presetMovementSpeedFactor(RealLevelClosure lc)
+	function presetAttackSpeedFactor(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Poi3", lvls, 3, lc)
-		addTooltipProperty("Movement Speed Factor", lc)
+		addTooltipProperty("Attack Speed Factor", lc)
 
 public class AbilityDefinitionBurrowDetectionFlyers extends AbilityDefinition
 	construct(int newAbilityId)
@@ -16495,20 +17106,20 @@ public class AbilityDefinitionSunderingBlades extends AbilityDefinition
 
 	function presetBonusDamageFlat(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Hsb1", lvls, 1, lc)
-		addTooltipProperty("Bonus Damage Flat", lc)
+		addTooltipProperty("Bonus Damage (Flat)", lc)
 
 	function setBonusDamagePercent(int level, real value)
 		def.setLvlDataUnreal("Hsb2", level, 2, value)
 
 	function presetBonusDamagePercent(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Hsb2", lvls, 2, lc)
-		addTooltipProperty("Bonus Damage Flat", lc)
+		addTooltipProperty("Bonus Damage (Percent)", lc)
 
 	function setDefenseTypeAffected(int level, int types)
 		def.setLvlDataInt("Hsb3", level, 3, types)
 
 	function presetDefenseTypeAffected(IntLevelClosure lc)
-		def.setLevelsDataInt("Poi4", lvls, 4, lc)
+		def.setLevelsDataInt("Hsb3", lvls, 3, lc)
 		addTooltipProperty("Defense Type Affected", lc)
 
 	function presetDefenseTypeAffected(ArmorType atype, boolean flag)
@@ -16708,7 +17319,7 @@ public class AbilityDefinitionChenDrunkenBrawler extends AbilityDefinition
 	function setNeverMiss(int level, bool value)
 		def.setLvlDataBoolean("Ocr5", level, 5, value)
 
-	function setData(int level, bool value)
+	function setExcludeItemDamage(int level, bool value)
 		def.setLvlDataBoolean("Ocr6", level, 6, value)
 
 	function setDamageBonus(int level, real value)
@@ -16969,7 +17580,7 @@ public class AbilityDefinitionItemAuraWarDrums extends AbilityDefinition
 	function setFlatBonus(int level, bool value)
 		def.setLvlDataBoolean("Ear4", level, 4, value)
 
-	function setData(int level, bool value)
+	function setPlayChannelAnimation(int level, bool value)
 		def.setLvlDataBoolean("Akb2", level, 5, value)
 
 	function setRangedBonus(int level, bool value)
@@ -17164,10 +17775,10 @@ public class AbilityDefinitionParasiteEredar extends AbilityDefinition
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.parasiteEredar)
 
-	function setAttackSpeedFactor(int level, real value)
+	function setMovementSpeedFactor(int level, real value)
 		def.setLvlDataUnreal("Poi2", level, 2, value)
 
-	function setMovementSpeedFactor(int level, real value)
+	function setAttackSpeedFactor(int level, real value)
 		def.setLvlDataUnreal("Poi3", level, 3, value)
 
 	function setUnitType(int level, string value)
@@ -17251,7 +17862,7 @@ public class AbilityDefinitionSentinelNoResearch extends AbilityDefinition
 	function setHoveringSightRadius(int level, real value)
 		def.setLvlDataUnreal("Esn2", level, 2, value)
 
-	function setData(int level, real value)
+	function setDurationOfOwls(int level, real value)
 		def.setLvlDataUnreal("Esn5", level, 5, value)
 
 
@@ -17638,7 +18249,7 @@ public class AbilityDefinitionCriticalStrikeItem extends AbilityDefinition
 	function setNeverMiss(int level, bool value)
 		def.setLvlDataBoolean("Ocr5", level, 5, value)
 
-	function setData(int level, bool value)
+	function setExcludeItemDamage(int level, bool value)
 		def.setLvlDataBoolean("Ocr6", level, 6, value)
 
 	function setDamageBonus(int level, real value)
