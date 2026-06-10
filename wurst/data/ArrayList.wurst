@@ -29,7 +29,8 @@ constant int MAX_FREE_SECTIONS = 256
  * ========================
  * Each ArrayList<T> type gets its own static storage array.
  * - ArrayList<int>, ArrayList<unit>, ArrayList<string> = 3 separate arrays
- * - Each type can hold up to JASS_MAX_ARRAY_SIZE elements total across all instances
+ * - On the Jass target each type holds up to JASS_MAX_ARRAY_SIZE elements total across all
+ *   instances (the Lua target grows dynamically and is not bounded by this)
  *
  * Choose wisely based on how many types you have.
  *
@@ -87,11 +88,12 @@ constant int MAX_FREE_SECTIONS = 256
  * Fragmentation occurs when lists grow - the old section becomes a gap.
  * This is why presizing matters: growth = copy to new location = wasted space.
  *
- * Hard limit (wc3 native-array target): the shared store is bounded by
- * JASS_MAX_ARRAY_SIZE total slots per type across all live instances; exceeding
- * it raises an error. On the Lua target the backing store grows dynamically, so
- * this cap does not apply - there ArrayList is still valuable mainly for keeping
- * element types static instead of relying on typecasting.
+ * Hard limit (wc3 / Jass native target): the shared store is a fixed-size array, so it is
+ * bounded by JASS_MAX_ARRAY_SIZE total slots per type across all live instances; exceeding
+ * it raises an error. On the Lua target the store is a dynamically growing table, so the
+ * cap does not apply - allocateStorage branches on the magic isLua constant and skips the
+ * error. ArrayList's added value on Lua is keeping element types static instead of relying
+ * on typecasting.
  **/
 public class ArrayList<T:>
     private static T array store
@@ -139,10 +141,12 @@ public class ArrayList<T:>
 
         // No suitable free section, allocate new
         if nextFreeIndex + cap > JASS_MAX_ARRAY_SIZE
-            // Try to compact free sections
+            // Past the native array bound - compact to reclaim trailing freed space first
             compactFreeList()
 
-            if nextFreeIndex + cap > JASS_MAX_ARRAY_SIZE
+            // The Jass target is a fixed-size array and must error here. On Lua the store
+            // is a dynamically growing table, so the bound doesn't apply and we let it grow.
+            if not isLua and nextFreeIndex + cap > JASS_MAX_ARRAY_SIZE
                 error("ArrayList: Storage limit exceeded for type")
 
         startIndex = nextFreeIndex
