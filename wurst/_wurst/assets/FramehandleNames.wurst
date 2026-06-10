@@ -94,6 +94,14 @@ public class FramehandleDefaultNames
 	static constant colorBackdrop									= "ColorBackdrop"
 	/** The framehandle name colorBorder has the subframes [0 to 23] */
 	static constant colorBorder										= "ColorBorder"
+	/** Container of the 12 command card buttons (1.32+). See commandButton(index) for the buttons. */
+	static constant commandBarFrame									= "CommandBarFrame"
+	/** Name of a command card button, index 0 to 11 (1.32+): 0 is the top-left (0,0) button, 11 the
+		bottom-right (3,2). Move/hide via these named frames, not ORIGIN_FRAME_COMMAND_BUTTON (moving
+		the origin frames glitches in 1.32+). NOTE: command buttons reappear/update on every unit
+		selection, even while hidden via BlzHideOriginFrames - re-hide on selection if needed. */
+	static function commandButton(int index) returns string
+		return "CommandButton_" + I2S(index)
 	static constant confirmQuitCancelButton							= "ConfirmQuitCancelButton"
 	static constant confirmQuitCancelButtonText						= "ConfirmQuitCancelButtonText"
 	static constant confirmQuitMessageText							= "ConfirmQuitMessageText"
@@ -101,7 +109,17 @@ public class FramehandleDefaultNames
 	static constant confirmQuitQuitButton							= "ConfirmQuitQuitButton"
 	static constant confirmQuitQuitButtonText						= "ConfirmQuitQuitButtonText"
 	static constant confirmQuitTitleText							= "ConfirmQuitTitleText"
+	/** Reforged 2.0+: parent of the bottom console art (CommandBarFrame, info panel parent, idle worker,
+		ORIGIN_FRAME_UBERTOOLTIP are its children). Does not exist before 2.0 (getter returns null).
+		Hiding it also hides those children - reparent the ones you want to keep to ConsoleUI first. */
+	static constant consoleBottomBar								= "ConsoleBottomBar"
+	/** Reforged 2.0+: parent of the top console art (resource bar / menu button background textures).
+		Does not exist before 2.0 (getter returns null). */
+	static constant consoleTopBar									= "ConsoleTopBar"
 	static constant consoleUI										= "ConsoleUI"
+	/** Reforged+: the black BACKDROP behind the bottom console; NOT hidden by BlzHideOriginFrames and
+		it blocks mouse clicks. Standard treatment is collapsing it (setSize(0, 0.0001)) rather than
+		hiding: it stays useful as a console-level Frame parent (e.g. to move the minimap out of 4:3). */
 	static constant consoleUIBackdrop								= "ConsoleUIBackdrop"
 	static constant customKeysLabel									= "CustomKeysLabel"
 	static constant customKeysValue									= "CustomKeysValue"
@@ -169,6 +187,9 @@ public class FramehandleDefaultNames
 	static constant extraHighLatencyLabel							= "ExtraHighLatencyLabel"
 	static constant extraHighLatencyRadio							= "ExtraHighLatencyRadio"
 	static constant fileListFrame									= "FileListFrame"
+	/** The bottom minimap button (formation toggle), 1.32+. One of the five minimap buttons; see
+		miniMapButtonBar for the container and the inconsistent in-game casing of the others. */
+	static constant formationButton									= "FormationButton"
 	static constant formationToggleCheckBox							= "FormationToggleCheckBox"
 	static constant formationToggleLabel							= "FormationToggleLabel"
 	static constant gameplayButton									= "GameplayButton"
@@ -241,6 +262,14 @@ public class FramehandleDefaultNames
 	static constant insideHelpPanel									= "InsideHelpPanel"
 	static constant insideMainPanel									= "InsideMainPanel"
 	static constant insideTipsPanel									= "InsideTipsPanel"
+	/** Name of an inventory item button, index 0 to 5 (1.32+). Move/hide via these named frames, not
+		ORIGIN_FRAME_ITEM_BUTTON (moving the origin frames glitches in 1.32+). NOTE: like command
+		buttons, they reappear/update on every unit selection. */
+	static function inventoryButton(int index) returns string
+		return "InventoryButton_" + I2S(index)
+	/** Reforged 2.0+ texture covering the inventory area when no unit with inventory is selected.
+		Pre-2.0 this is simpleInventoryCover. Standard treatment: setAlpha(0). */
+	static constant inventoryCoverTexture							= "InventoryCoverTexture"
 	static constant keyScrollFastLabel								= "KeyScrollFastLabel"
 	static constant keyScrollLabel									= "KeyScrollLabel"
 	static constant keyScrollSlider									= "KeyScrollSlider"
@@ -278,6 +307,23 @@ public class FramehandleDefaultNames
 	static constant mainPanel										= "MainPanel"
 	static constant mapListBoxBackdrop								= "MapListBoxBackdrop"
 	static constant mapListScrollBar								= "MapListScrollBar"
+	/** Minimap ally-filter button (1.32+). Casing of the five minimap buttons is inconsistent in-game;
+		these constants reproduce it exactly. Individual buttons can only be shown while their container
+		miniMapButtonBar is visible. */
+	static constant miniMapAllyButton								= "MiniMapAllyButton"
+	/** Container of the five minimap buttons (ConsoleUI child [4], 1.32.6+ via name). Buttons top to
+		bottom: minimapSignalButton, miniMapTerrainButton, miniMapAllyButton, miniMapCreepButton,
+		formationButton (= ORIGIN_FRAME_MINIMAP_BUTTON 0 to 4). */
+	static constant miniMapButtonBar								= "MiniMapButtonBar"
+	/** Minimap creep-camp filter button (1.32+). */
+	static constant miniMapCreepButton								= "MiniMapCreepButton"
+	/** The minimap (1.32+); equal to ORIGIN_FRAME_MINIMAP. Quirk: repositioning it a SECOND time in
+		1.31.1 desyncs minimap clicks from the visual (clicks act relative to the first position). */
+	static constant miniMapFrame									= "MiniMapFrame"
+	/** Minimap ping/signal button (1.32+). Note the lowercase 'm' in "Minimap": in-game casing. */
+	static constant minimapSignalButton								= "MinimapSignalButton"
+	/** Minimap terrain-toggle button (1.32+). */
+	static constant miniMapTerrainButton							= "MiniMapTerrainButton"
 	static constant modelDetailLabel								= "ModelDetailLabel"
 	static constant modelDetailValue								= "ModelDetailValue"
 	static constant mouseScrollDisable								= "MouseScrollDisable"
@@ -414,6 +460,9 @@ public class FramehandleDefaultNames
 	/** The framehandle name simpleInfoPanelItemDetail has the subframe [3] */
 	static constant simpleInfoPanelItemDetail						= "SimpleInfoPanelItemDetail"
 	static constant simpleInfoPanelUnitDetail						= "SimpleInfoPanelUnitDetail"
+	/** Pre-2.0 texture covering the inventory area when no unit with inventory is selected; Reforged
+		2.0+ uses inventoryCoverTexture instead. Standard treatment: setAlpha(0). */
+	static constant simpleInventoryCover							= "SimpleInventoryCover"
 	/** The framehandle name simpleItemDescriptionValue has the subframe [3] */
 	static constant simpleItemDescriptionValue						= "SimpleItemDescriptionValue"
 	/** The framehandle name simpleItemNameValue has the subframe [3] */
