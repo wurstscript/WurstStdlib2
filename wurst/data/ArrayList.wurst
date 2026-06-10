@@ -1,9 +1,10 @@
 package ArrayList
 import NoWurst
-import Integer
-import String
-import Printing
-import Real
+import ErrorHandling
+import Annotations
+
+constant int INITIAL_CAPACITY = 16
+constant int MAX_FREE_SECTIONS = 256
 
 /**
  * High-performance array-based list using static shared storage per type.
@@ -48,16 +49,17 @@ import Real
  *    Why: Allocation/Deallocation is moderately expensive and causes fragmentation
  *
  * 3. ORDERED REMOVAL IS SLOW
- *    Bad:  list.removeAt(i)           // O(n) - shifts all elements
- *    Good: list.removeSwap(i)         // O(1) - swaps with last element
+ *    Bad:  list.removeAt(i)              // O(n) - shifts all elements
+ *    Good: list.removeAtUnordered(i)     // O(1) - swaps with last element
  *
- *    Only use removeSwap() if order doesn't matter
+ *    Only use removeAtUnordered() if order doesn't matter
  *
- * 4. ITERATORS ALLOCATE
- *    Bad:  for elem in list: process(elem)           // Allocates iterator
+ * 4. ITERATE BY INDEX
  *    Good: for i = 0 to list.size()-1                // Zero allocation
+ *    Good: list[i]                                   // Indexing operator
  *
- *    Use iterators for convenience, index loops for performance
+ *    ArrayList has no iterator by design - index loops keep hot paths
+ *    allocation-free.
  *
  * 5. AVOID FREQUENT INSERTS AT START
  *    Bad:  list.addtoStart(x)         // O(n) every time
@@ -71,7 +73,7 @@ import Real
  * addtoStart(elem)   | O(n)      | O(1)       | Shifts all elements
  * get(index)         | O(1)      | O(n)       | Major ArrayList advantage
  * removeAt(index)    | O(n)      | O(1)       | Shifts remaining elements
- * removeSwap(index)  | O(1)      | N/A        | Doesn't preserve order
+ * removeAtUnordered  | O(1)      | N/A        | Doesn't preserve order
  * Iterate all        | Faster    | Fast       | LinkedList does double the work, but is still fast
  * Memory per element | 1 slot    | 3 slots    | Element + 2 pointers
  * Create/destroy     | Varies    | High       | AL might need memory management, LL needs to process Nodes
@@ -85,14 +87,17 @@ import Real
  * Fragmentation occurs when lists grow - the old section becomes a gap.
  * This is why presizing matters: growth = copy to new location = wasted space.
  *
- * Hard limit: JASS_MAX_ARRAY_SIZE total slots per type across all instances.
+ * Hard limit (wc3 native-array target): the shared store is bounded by
+ * JASS_MAX_ARRAY_SIZE total slots per type across all live instances; exceeding
+ * it raises an error. On the Lua target the backing store grows dynamically, so
+ * this cap does not apply - there ArrayList is still valuable mainly for keeping
+ * element types static instead of relying on typecasting.
  **/
 public class ArrayList<T:>
     private static T array store
     private static int nextFreeIndex = 0
 
     // Memory management structures
-    private static constant int MAX_FREE_SECTIONS = 256
     private static int array freeSectionStart
     private static int array freeSectionCapacity
     private static int freeSectionCount = 0
@@ -100,10 +105,6 @@ public class ArrayList<T:>
     private int startIndex
     private int capacity
     private int size = 0
-    private static constant int INITIAL_CAPACITY = 16
-
-    static function getNextFreeIndex() returns int
-        return nextFreeIndex
 
     /** Creates a new empty list with default capacity (16) */
     construct()
@@ -111,16 +112,18 @@ public class ArrayList<T:>
 
     /** Creates a new list with specified initial capacity - RECOMMENDED for performance */
     construct(int initialCapacity)
-        allocateStorage(initialCapacity)
+        allocateStorage(initialCapacity > 0 ? initialCapacity : INITIAL_CAPACITY)
 
     /** Creates a new list by copying all elements from another list */
     construct(thistype base)
         allocateStorage(base.size > INITIAL_CAPACITY ? base.size : INITIAL_CAPACITY)
-        for elem in base
-            add(elem)
+        addAll(base)
+
 
     /** Allocates storage section - tries to reuse freed sections first */
     private function allocateStorage(int cap)
+        if cap <= 0
+            error("ArrayList: allocateStorage capacity must be > 0")
         // Try to find a freed section that fits
         for i = 0 to freeSectionCount - 1
             if freeSectionCapacity[i] >= cap
@@ -140,9 +143,7 @@ public class ArrayList<T:>
             compactFreeList()
 
             if nextFreeIndex + cap > JASS_MAX_ARRAY_SIZE
-                // Still not enough, wrap around (dangerous!)
-                print("ArrayList: WARNING - Memory store exhausted, wrapping around!")
-                nextFreeIndex = 0
+                error("ArrayList: Storage limit exceeded for type")
 
         startIndex = nextFreeIndex
         capacity = cap
@@ -237,20 +238,12 @@ public class ArrayList<T:>
         capacity = tempCap
 
     ondestroy
-        // Clear references to allow garbage collection
+        // Clear references
         for i = 0 to size - 1
             store[startIndex + i] = null
 
         // Return storage to free pool
         freeStorage()
-
-    /** Debug function to get memory layout info */
-    function getMemoryInfo() returns string
-        return "Start: " + startIndex.toString() + ", Capacity: " + capacity.toString() + ", Size: " + size.toString()
-
-    /** Static function to get global memory state */
-    static function getGlobalMemoryInfo() returns string
-        return "NextFree: " + nextFreeIndex.toString() + ", FreeSections: " + freeSectionCount.toString() + ", Used: " + (nextFreeIndex - freeSectionCount).toString()
 
     // ============================================================================
     // BASIC OPERATIONS
@@ -271,20 +264,21 @@ public class ArrayList<T:>
         while needed > capacity
             grow()
 
-        for elem in other
-            store[startIndex + size] = elem
+        for i = 0 to other.size - 1
+            store[startIndex + size] = other.get(i)
             size++
 
     /** Returns the element at the specified index (O(1)) */
     function get(int index) returns T
         if index < 0 or index >= size
-            print("ArrayList: Index out of bounds: " + index.toString())
+            error("ArrayList: Index out of bounds: " + index.toString())
+
         return store[startIndex + index]
 
     /** Sets the element at the specified index (O(1)) */
     function set(int index, T elem)
         if index < 0 or index >= size
-            print("ArrayList: Index out of bounds: " + index.toString())
+            error("ArrayList: Index out of bounds: " + index.toString())
         store[startIndex + index] = elem
 
     /** Returns the index of the specified element or -1 if it doesn't exist (O(n)) */
@@ -298,10 +292,9 @@ public class ArrayList<T:>
     function has(T elem) returns boolean
         return indexOf(elem) >= 0
 
-    /** Removes the element at the given index and returns it (O(n) - shifts elements) */
-    function removeAt(int index) returns T
+    function removeAtOrdered(int index) returns T
         if index < 0 or index >= size
-            print("ArrayList: Index out of bounds: " + index.toString())
+            error("ArrayList: Index out of bounds: " + index.toString())
 
         let elem = store[startIndex + index]
 
@@ -312,10 +305,15 @@ public class ArrayList<T:>
         size--
         return elem
 
+    /** Removes the element at the given index and returns it (O(n) - shifts elements) */
+    @Deprecated("This operation shifts elements, consider using #removeAtUnordered if order is not important.")
+    function removeAt(int index) returns T
+        return removeAtOrdered(index)
+
     /** Removes the element at the given index by swapping with last element (O(1) - DOES NOT PRESERVE ORDER!) */
-    function removeSwap(int index) returns T
+    function removeAtUnordered(int index) returns T
         if index < 0 or index >= size
-            print("ArrayList: Index out of bounds: " + index.toString())
+            error("ArrayList: Index out of bounds: " + index.toString())
 
         let elem = store[startIndex + index]
 
@@ -327,10 +325,19 @@ public class ArrayList<T:>
         return elem
 
     /** Removes the first occurrence of the element from the list (O(n)) */
+    @Deprecated("This operation shifts elements, consider using #removeUnordered if order is not important.")
     function remove(T elem) returns bool
         let index = indexOf(elem)
         if index >= 0
-            removeAt(index)
+            removeAtOrdered(index)
+            return true
+        return false
+
+    /** Removes the first occurrence of the element from the list (O(n)) */
+    function removeUnordered(T elem) returns bool
+        let index = indexOf(elem)
+        if index >= 0
+            removeAtUnordered(index)
             return true
         return false
 
@@ -342,16 +349,16 @@ public class ArrayList<T:>
     function isEmpty() returns boolean
         return size == 0
 
-    /** Returns the first element in the list (O(1)) */
+    /** Returns the first element in the list, or null if empty (O(1)) */
     function getFirst() returns T
         if size == 0
-            print("ArrayList: getFirst on empty list")
+            return null
         return store[startIndex]
 
-    /** Returns the last element in the list (O(1)) */
+    /** Returns the last element in the list, or null if empty (O(1)) */
     function getLast() returns T
         if size == 0
-            print("ArrayList: getLast on empty list")
+            return null
         return store[startIndex + size - 1]
 
     /** Clears all elements from the list (O(1) - reuse this list instead of creating new ones!) */
@@ -394,7 +401,7 @@ public class ArrayList<T:>
         size--
         return store[startIndex + size]
 
-    /** Returns the lastly added element without removing it */
+    /** Returns the lastly added element without removing it, or null if empty */
     function peek() returns T
         return getLast()
 
@@ -410,7 +417,7 @@ public class ArrayList<T:>
     function dequeue() returns T
         if size == 0
             return null
-        return removeAt(0)
+        return removeAtOrdered(0)
 
     // ============================================================================
     // INSERTION OPERATIONS
@@ -431,7 +438,7 @@ public class ArrayList<T:>
     /** Adds the given element at the given index - WARNING: O(n) operation! */
     function addAt(T elem, int index)
         if index < 0 or index > size
-            print("ArrayList: Index out of bounds: " + index.toString())
+            error("ArrayList: Index out of bounds: " + index.toString())
 
         if size >= capacity
             grow()
@@ -447,17 +454,28 @@ public class ArrayList<T:>
     // ITERATOR & FUNCTIONAL OPERATIONS
     // ============================================================================
 
-    /** Get an iterator for this list - NOTE: Creates an object, use index loops in hot paths! */
-    function iterator() returns ALIterator<T>
-        return new ALIterator<T>(this)
-
-    /** Removes elements that satisfy the predicate */
+    /** Removes elements that satisfy the predicate (O(n), preserves order).
+        If order is not important, use #removeUnorderedIf */
     function removeIf(ArrayListPredicate<T> predicate)
-        let itr = iterator()
-        for elem from itr
-            if predicate.isTrueFor(elem)
-                itr.remove()
-        itr.close()
+        // Single pass compaction: keep elements that fail the predicate
+        var writeIndex = 0
+        for readIndex = 0 to size - 1
+            let elem = store[startIndex + readIndex]
+            if not predicate.isTrueFor(elem)
+                store[startIndex + writeIndex] = elem
+                writeIndex++
+        size = writeIndex
+        destroy predicate
+
+    /** Removes elements that satisfy the predicate (O(n), does NOT preserve order) */
+    function removeUnorderedIf(ArrayListPredicate<T> predicate)
+        var i = 0
+        while i < size
+            if predicate.isTrueFor(store[startIndex + i])
+                // swaps the last element into i and shrinks - don't advance i
+                removeAtUnordered(i)
+            else
+                i++
         destroy predicate
 
     /** Executes the closure for each element */
@@ -592,62 +610,6 @@ public function asArrayList<T:>(vararg T ts) returns ArrayList<T>
     return al
 
 // ============================================================================
-// ITERATOR
-// ============================================================================
-
-/** Iterator for ArrayList - NOTE: Allocates an object, prefer index loops in hot paths! */
-public class ALIterator<T:>
-    private ArrayList<T> parent
-    private int currentIndex
-    private bool destroyOnClose = true
-    private bool canRemove = false
-
-    construct(ArrayList<T> parent)
-        this.parent = parent
-        reset()
-
-    construct(ArrayList<T> parent, bool destroyOnClose)
-        this.parent = parent
-        this.destroyOnClose = destroyOnClose
-        reset()
-
-    function reset()
-        currentIndex = -1
-        canRemove = false
-
-    function hasNext() returns boolean
-        return currentIndex + 1 < parent.size()
-
-    function next() returns T
-        currentIndex++
-        canRemove = true
-        return parent.get(currentIndex)
-
-    function lookahead() returns T
-        if currentIndex + 1 < parent.size()
-            return parent.get(currentIndex + 1)
-        return null
-
-    /** Removes the last element returned by next() */
-    function remove() returns T
-        if not canRemove or currentIndex < 0
-            return null
-
-        let removed = parent.removeSwap(currentIndex)
-        currentIndex--
-        canRemove = false
-        return removed
-
-    /** Modifies the last element returned by next() */
-    function modify(T newval)
-        if canRemove and currentIndex >= 0
-            parent.set(currentIndex, newval)
-
-    function close()
-        if destroyOnClose
-            destroy this
-
-// ============================================================================
 // INTERFACES
 // ============================================================================
 
@@ -701,3 +663,10 @@ public function ArrayList<string>.joinBy(string separator) returns string
 /** Joins elements from a string list into one string */
 public function ArrayList<string>.join() returns string
     return this.joinBy("")
+
+
+public function ArrayList<T>.op_index<T>(int index) returns T
+    return this.get(index)
+
+public function ArrayList<T>.op_indexAssign<T>(int index, T value)
+    this.set(index, value)
