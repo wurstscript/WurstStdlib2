@@ -37,6 +37,8 @@ function popUnit()
 
 /** Returns the unit that caused the enter/leave event to happen */
 public function getEnterLeaveUnit() returns unit
+	if tempUnitsCount <= 0
+		return null
 	return tempUnits[tempUnitsCount - 1]
 
 /** Adds a callback that is run when a unit enters the map */
@@ -75,7 +77,9 @@ init
 
 		// Process preplaced units
 		preplacedUnits.enumUnitsInRect(boundRect)
-		ForGroup(preplacedUnits, () -> prepareUnit(GetEnumUnit()))
+		let count = preplacedUnits.size()
+		for i = 0 to count - 1
+			prepareUnit(preplacedUnits.get(i))
 		preplacedUnits..clear()..destr()
 
 @compiletime function generateAbility()

@@ -63,7 +63,6 @@ public class Quest
 	function isCompleted() returns boolean
 		return q.isCompleted()
 
-
 	function getState() returns QuestState
 		return qState
 
@@ -84,3 +83,7 @@ public class Quest
 
 	ondestroy
 		q.remove()
+
+public function quest.setEnabled(boolean enabled)
+	QuestSetEnabled(this, enabled)
+

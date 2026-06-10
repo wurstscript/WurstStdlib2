@@ -92,14 +92,21 @@ public class IterableMap<K,V> extends HashMap<K, V>
 	function removeValue(V val, bool all)
 		K array toRemove
 		int num = 0
+		K firstMatch = null
 		for elem in this
 			if get(elem) == val
 				if all
 					toRemove[num] = elem
 					num++
+				else
+					if firstMatch == null
+						firstMatch = elem
+
 		if all and num > 0
 			for i = 0 to num - 1
 				remove(toRemove[i])
+		else if not all and firstMatch != null
+			remove(firstMatch)
 
 	/** Copies all elements from another map into this one
 		Use with caution, since it will replace elements that were under the same key! */

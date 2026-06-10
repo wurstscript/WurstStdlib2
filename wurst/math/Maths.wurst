@@ -68,7 +68,7 @@ public function min(vararg real numbers) returns real
 		minNumber = number < minNumber ? number : minNumber
 	return minNumber
 
-@test function minmax()
+@Test function minmax()
 	let three = 3
 	max(three,4,21,43,51,30).assertEquals(51)
 	max(3.,4.,5.).assertEquals(5)
@@ -76,7 +76,7 @@ public function min(vararg real numbers) returns real
 	min(three,4,0,-2,-1).assertEquals(-2)
 	min(3.,4.,-20.,-3.).assertEquals(-20.)
 
-@test function test_hypot()
+@Test function test_hypot()
 	test_hypot_help(5,6)
 	test_hypot_help(5000000.,6)
 	test_hypot_help(3.,123456789.)

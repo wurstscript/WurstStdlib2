@@ -1,6 +1,5 @@
 package Board
 import LinkedList
-import Reference
 
 /**
  * This Board library allows you to create a simple multi board with dynamic cell values.
@@ -185,7 +184,7 @@ public class Board
     function removeRow(BoardRow row)
         rows.remove(row)
         board.setRowCount(rows.size())
-        let i = new Reference<int>(0)
+        let i = reference(0)
         rows.forEach() row ->
             row.rowIndex = i.val
             row.invalidate()

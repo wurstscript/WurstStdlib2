@@ -76,7 +76,8 @@ public function trigger.getExecCount() returns int
 	return GetTriggerExecCount(this)
 
 public function trigger.registerAnyUnitEvent(playerunitevent whichEvent)
-	TriggerRegisterAnyUnitEventBJ(this, whichEvent)
+	for i = 0 to bj_MAX_PLAYER_SLOTS - 1
+		TriggerRegisterPlayerUnitEvent(this, Player(i), whichEvent, null)
 
 public function trigger.registerDeathEvent(widget whichWidget) returns event
 	return TriggerRegisterDeathEvent(this, whichWidget)
@@ -163,3 +164,16 @@ public function trigger.removeCondition(triggercondition condition)
 
 public function trigger.reset()
 	ResetTrigger(this)
+
+public function trigger.registerVariableEvent(string varName, limitop opcode, real limitval) returns event
+	return TriggerRegisterVariableEvent(this, varName, opcode, limitval)
+
+public function trigger.registerCommandEvent(integer whichAbility, string order) returns event
+	return TriggerRegisterCommandEvent(this, whichAbility, order)
+
+public function trigger.registerUpgradeCommandEvent(integer whichUpgrade) returns event
+	return TriggerRegisterUpgradeCommandEvent(this, whichUpgrade)
+
+public function trigger.blzTriggerRegisterPlayerSyncEvent(player whichPlayer, string prefix, boolean fromServer) returns event
+	return BlzTriggerRegisterPlayerSyncEvent(this, whichPlayer, prefix, fromServer)
+

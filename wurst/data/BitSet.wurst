@@ -82,7 +82,7 @@ public function bitsetFromIndex(int index) returns bitset
 
 // Tests
 
-@test function testGet()
+@Test function testGet()
 	let set = bitset(45)
 	set.get(0).assertTrue()
 	set.get(1).assertFalse()
@@ -91,32 +91,32 @@ public function bitsetFromIndex(int index) returns bitset
 	set.get(4).assertFalse()
 	set.get(5).assertTrue()
 
-@test function testSet()
+@Test function testSet()
 	emptyBitset().set(0).set(2).set(3).set(5).val.assertEquals(45)
 
-@test function testReset()
+@Test function testReset()
 	bitset(45).reset(3).val.assertEquals(37)
 
-@test function testFlip()
+@Test function testFlip()
 	emptyBitset().set(3).flip(3).get(3).assertFalse()
 	emptyBitset().flip(3).get(3).assertTrue()
 
-@test function testHighestBit()
+@Test function testHighestBit()
 	let bit = BITSET_SIZE - 1
 	emptyBitset().set(bit).get(bit).assertTrue()
 	emptyBitset().set(bit).reset(bit).get(bit).assertFalse()
 	emptyBitset().flip(bit).get(bit).assertTrue()
 	emptyBitset().set(bit).flip(bit).get(bit).assertFalse()
 
-@test function testIsEmpty()
+@Test function testIsEmpty()
 	emptyBitset().isEmpty().assertTrue()
 	emptyBitset().set(7).isEmpty().assertFalse()
 
-@test function testIntersects()
+@Test function testIntersects()
 	emptyBitset().set(2).set(5).set(7).intersects(emptyBitset().set(1).set(4).set(21)).assertFalse()
 	emptyBitset().set(3).set(11).intersects(emptyBitset().set(5).set(11)).assertTrue()
 
-@test function testOverall()
+@Test function testOverall()
 	var bitset = emptyBitset().set(0).set(3).set(8)
 
 	for i = 0 to 8

@@ -1,6 +1,7 @@
 package Region
 import NoWurst
 import Vectors
+import Annotations
 
 public function vec2.isInRegion(region whichRegion) returns boolean
 	return IsPointInRegion(whichRegion, this.x, this.y)
@@ -22,3 +23,16 @@ public function region.clearCell(vec2 point)
 
 public function region.destr()
 	RemoveRegion(this)
+
+@deprecated("Use region.addCell(vec2) to avoid location handles.")
+public function region.regionAddCellAtLoc(location whichLocation)
+	RegionAddCellAtLoc(this, whichLocation)
+
+@deprecated("Use region.clearCell(vec2) to avoid location handles.")
+public function region.regionClearCellAtLoc(location whichLocation)
+	RegionClearCellAtLoc(this, whichLocation)
+
+@deprecated("Use vec2.isInRegion(region) to avoid location handles.")
+public function region.isLocationInRegion(location whichLocation) returns boolean
+	return IsLocationInRegion(this, whichLocation)
+

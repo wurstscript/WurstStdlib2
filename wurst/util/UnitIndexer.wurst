@@ -140,6 +140,8 @@ function popUnit()
 	That's the last indexed unit or
 	the one about to be deindexed. */
 public function getIndexingUnit() returns unit
+	if tempUnitsCount <= 0
+		return null
 	return tempUnits[tempUnitsCount - 1]
 
 /**  Adds a function to be called before a unit is deindexed.

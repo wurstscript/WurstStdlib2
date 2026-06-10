@@ -3,34 +3,75 @@ package ClosureForGroups
 public interface ForGroupCallback
 	function callback(unit u)
 
+/** Return true to continue iteration, false to stop. */
+public interface ForGroupCallbackUntil
+	function callback(unit u) returns bool
+
 /** This is used as dummy in the GroupEnum calls and should not be used */
 constant DUMMY_GROUP = CreateGroup()
 
 // ====Callback stack for nested usage====
 ForGroupCallback array tempCallbacks
+ForGroupCallbackUntil array tempCallbacksUntil
+int array callbackMode
+int array countLimits
+int array countIters
+bool array stopRequested
 var tempCallbacksCount = 0
-var maxCount = INT_MAX
-var iterCount = 0
 constant filter = Filter(() -> filterCallback(GetFilterUnit()))
+constant MODE_NORMAL = 0
+constant MODE_COUNTED = 1
+constant MODE_UNTIL = 2
 
 function filterCallback(unit filter)
-	if iterCount < maxCount
+	let idx = tempCallbacksCount - 1
+	let mode = callbackMode[idx]
+	if mode == MODE_NORMAL
 		currentCallback().callback(filter)
-	iterCount++
+	else if mode == MODE_COUNTED
+		if countIters[idx] < countLimits[idx]
+			currentCallback().callback(filter)
+		countIters[idx]++
+	else if not stopRequested[idx]
+		if not currentCallbackUntil().callback(filter)
+			stopRequested[idx] = true
 
 function pushCallback(ForGroupCallback c)
-	tempCallbacks[tempCallbacksCount] = c
+	let idx = tempCallbacksCount
+	tempCallbacks[idx] = c
+	callbackMode[idx] = MODE_NORMAL
 	tempCallbacksCount++
-	iterCount = 0
-	maxCount = INT_MAX
 
-function popCallback()
+function pushCallbackUntil(ForGroupCallbackUntil c)
+	let idx = tempCallbacksCount
+	tempCallbacksUntil[idx] = c
+	callbackMode[idx] = MODE_UNTIL
+	stopRequested[idx] = false
+	tempCallbacksCount++
+
+function pushCallbackCounted(ForGroupCallback c, int count)
+	let idx = tempCallbacksCount
+	tempCallbacks[idx] = c
+	callbackMode[idx] = MODE_COUNTED
+	countLimits[idx] = count
+	countIters[idx] = 0
+	tempCallbacksCount++
+
+function popCallback(bool destroyCallback)
 	DUMMY_GROUP.clear()
 	tempCallbacksCount--
-	destroy tempCallbacks[tempCallbacksCount]
+	let idx = tempCallbacksCount
+	if destroyCallback
+		if callbackMode[idx] == MODE_UNTIL
+			destroy tempCallbacksUntil[idx]
+		else
+			destroy tempCallbacks[idx]
 
 function currentCallback() returns ForGroupCallback
 	return tempCallbacks[tempCallbacksCount - 1]
+
+function currentCallbackUntil() returns ForGroupCallbackUntil
+	return tempCallbacksUntil[tempCallbacksCount - 1]
 // ====Stack end====
 
 /** Executes the given closure for every unit in this group,
@@ -52,44 +93,41 @@ public function group.forEachIn(ForGroupCallback cb)
 public function forUnitsOfType(string unitname, ForGroupCallback c)
 	pushCallback(c)
 	GroupEnumUnitsOfType(DUMMY_GROUP, unitname, filter)
-	popCallback()
+	popCallback(true)
 
 /** Executes the given closure for every unit of the given player.
 	Cancels itself after *count* iterations */
 public function forUnitsOfTypeCounted(string unitname, int count, ForGroupCallback c)
-	pushCallback(c)
-	maxCount = count
+	pushCallbackCounted(c, count)
 	GroupEnumUnitsOfType(DUMMY_GROUP, unitname, filter)
-	popCallback()
+	popCallback(true)
 
 /** Executes the given closure for every unit of the given player */
 public function forUnitsOfPlayer(player p, ForGroupCallback c)
 	pushCallback(c)
 	GroupEnumUnitsOfPlayer(DUMMY_GROUP, p, filter)
-	popCallback()
+	popCallback(true)
 
 /** Executes the given closure for every existing unit */
 public function forUnitsAll(ForGroupCallback c)
 	for i = 0 to bj_MAX_PLAYER_SLOTS - 1
 		pushCallback(c)
 		GroupEnumUnitsOfPlayer(DUMMY_GROUP, players[i], filter)
-		DUMMY_GROUP.clear()
-		tempCallbacksCount--
+		popCallback(false)
 	destroy c
 
 /** Executes the given closure for every unit in the given rect */
 public function forUnitsInRect(rect r, ForGroupCallback c)
 	pushCallback(c)
 	GroupEnumUnitsInRect(DUMMY_GROUP, r, filter)
-	popCallback()
+	popCallback(true)
 
 /** Executes the given closure for every unit in the given rect.
 	Cancels itself after *count* iterations */
 public function forUnitsInRectCounted(rect r, int count, ForGroupCallback c)
-	pushCallback(c)
-	maxCount = count
+	pushCallbackCounted(c, count)
 	GroupEnumUnitsInRect(DUMMY_GROUP, r, filter)
-	popCallback()
+	popCallback(true)
 
 /** Executes the given closure for every unit in range of the given position */
 public function forUnitsInRange(vec2 pos, real radius, ForGroupCallback c)
@@ -104,25 +142,24 @@ public function forUnitsInRange(vec2 pos, real radius, bool collisionSizeFilteri
 		for u from ENUM_GROUP
 			if IsUnitInRangeXY(u, pos.x, pos.y, radius)
 				c.callback(u)
-		popCallback()
+		popCallback(true)
 	else
 		pushCallback(c)
 		GroupEnumUnitsInRange(DUMMY_GROUP, pos.x, pos.y, radius, filter)
-		popCallback()
+		popCallback(true)
 
 /** Executes the given closure for every unit in range of the given position
 	Cancels itself after *count* iterations */
 public function forUnitsInRangeCounted(vec2 pos, real radius, int count, ForGroupCallback c)
-	pushCallback(c)
-	maxCount = count
+	pushCallbackCounted(c, count)
 	GroupEnumUnitsInRange(DUMMY_GROUP, pos.x, pos.y, radius, filter)
-	popCallback()
+	popCallback(true)
 
 /** Executes the given closure for every unit selected by the given player */
 public function forUnitsSelected(player p, ForGroupCallback c)
 	pushCallback(c)
 	GroupEnumUnitsSelected(DUMMY_GROUP, p, filter)
-	popCallback()
+	popCallback(true)
 
 /** Executes the given closure for the closest unit inside the given range of the given position,
 	matching the provided filter. If there is no unit in range, the closure will be run with "null" */
@@ -137,7 +174,72 @@ public function forNearestUnit(vec2 pos, real range, filterfunc filter, ForGroup
 			nearest = u
 			bestDist = distSq
 	c.callback(nearest)
-	popCallback()
+	popCallback(true)
+
+/** Executes the given closure for every unit in this group,
+	removing the units from the group as processed.
+	Return true to continue iteration, false to stop. */
+public function group.forEachFromUntil(ForGroupCallbackUntil cb)
+	while this.hasNext()
+		if not cb.callback(this.next())
+			break
+	destroy cb
+
+/** Executes the given closure for every unit in this group,
+	keeping all units in the group.
+	Return true to continue iteration, false to stop. */
+public function group.forEachInUntil(ForGroupCallbackUntil cb)
+	let itr = this.iterator()
+	while itr.hasNext()
+		if not cb.callback(itr.next())
+			break
+	itr.close()
+	destroy cb
+
+/** Executes the given closure for every unit of the given type.
+	Return true to continue iteration, false to stop callback invocation. */
+public function forUnitsOfTypeUntil(string unitname, ForGroupCallbackUntil c)
+	pushCallbackUntil(c)
+	GroupEnumUnitsOfType(DUMMY_GROUP, unitname, filter)
+	popCallback(true)
+
+/** Executes the given closure for every unit of the given player.
+	Return true to continue iteration, false to stop callback invocation. */
+public function forUnitsOfPlayerUntil(player p, ForGroupCallbackUntil c)
+	pushCallbackUntil(c)
+	GroupEnumUnitsOfPlayer(DUMMY_GROUP, p, filter)
+	popCallback(true)
+
+/** Executes the given closure for every existing unit.
+	Return true to continue iteration, false to stop callback invocation. */
+public function forUnitsAllUntil(ForGroupCallbackUntil c)
+	pushCallbackUntil(c)
+	for i = 0 to bj_MAX_PLAYER_SLOTS - 1
+		GroupEnumUnitsOfPlayer(DUMMY_GROUP, players[i], filter)
+		if stopRequested[tempCallbacksCount - 1]
+			break
+	popCallback(true)
+
+/** Executes the given closure for every unit in the given rect.
+	Return true to continue iteration, false to stop callback invocation. */
+public function forUnitsInRectUntil(rect r, ForGroupCallbackUntil c)
+	pushCallbackUntil(c)
+	GroupEnumUnitsInRect(DUMMY_GROUP, r, filter)
+	popCallback(true)
+
+/** Executes the given closure for every unit in range of the given position.
+	Return true to continue iteration, false to stop callback invocation. */
+public function forUnitsInRangeUntil(vec2 pos, real radius, ForGroupCallbackUntil c)
+	pushCallbackUntil(c)
+	GroupEnumUnitsInRange(DUMMY_GROUP, pos.x, pos.y, radius, filter)
+	popCallback(true)
+
+/** Executes the given closure for every unit selected by the given player.
+	Return true to continue iteration, false to stop callback invocation. */
+public function forUnitsSelectedUntil(player p, ForGroupCallbackUntil c)
+	pushCallbackUntil(c)
+	GroupEnumUnitsSelected(DUMMY_GROUP, p, filter)
+	popCallback(true)
 
 // Destructables
 // ====Callback stack for nested usage====

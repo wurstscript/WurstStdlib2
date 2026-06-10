@@ -1,7 +1,7 @@
 package BitwiseTests
 import Bitwise
 
-@test
+@Test
 function byteTestsNegative()
 	let bytes = 0xFABCDE10.bytes()
 
@@ -10,7 +10,7 @@ function byteTestsNegative()
 	bytes.b3.assertEquals(0xBC)
 	bytes.b4.assertEquals(0xFA)
 
-@test
+@Test
 function byteTestsPositive()
 	let bytes = 0x0FBCDE10.bytes()
 
@@ -19,7 +19,7 @@ function byteTestsPositive()
 	bytes.b3.assertEquals(0xBC)
 	bytes.b4.assertEquals(0x0F)
 
-@test
+@Test
 function bitStringTests()
 	"1".fromBitString().assertEquals(1)
 	"01".fromBitString().assertEquals(1)
@@ -29,7 +29,7 @@ function bitStringTests()
 	"10000000 00000000 00000000 00000000".fromBitString().assertEquals(INT_MIN)
 	"11111111 11111111 11111111 11111111".fromBitString().assertEquals(-1)
 
-@test
+@Test
 function shiftTests()
 	0xFF.shiftl(4).assertEquals(0xFF0)
 	0xFF.shiftl(8).assertEquals(0xFF00)
@@ -43,7 +43,7 @@ function shiftTests()
 	0xFF0000FF.shiftr(16).assertEquals(0xFF00)
 	0xFF0000FF.shiftr(24).assertEquals(0xFF)
 
-@test
+@Test
 function tests32()
 	"1001 0001 0100 0010".fromBitString().and32("1000 0100 0010 0110".fromBitString()).assertEquals("1000 0000 0000 0010".fromBitString())
 	"1000 0000 0000 0000 1001 0001 0100 0010".fromBitString().and32("1000 0000 0000 0000 1000 0100 0010 0110".fromBitString()).assertEquals("1000 0000 0000 0000 1000 0000 0000 0010".fromBitString())

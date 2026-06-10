@@ -43,3 +43,48 @@ public function sound.getDuration() returns int
 public function sound.isPlaying() returns boolean
 	return GetSoundIsPlaying(this)
 
+public function sound.triggerWaitForSound(real offset)
+	TriggerWaitForSound(this, offset)
+
+public function sound.setSoundParamsFromLabel(string soundLabel)
+	SetSoundParamsFromLabel(this, soundLabel)
+
+public function sound.setSoundDistances(real minDist, real maxDist)
+	SetSoundDistances(this, minDist, maxDist)
+
+public function sound.setSoundConeOrientation(real x, real y, real z)
+	SetSoundConeOrientation(this, x, y, z)
+
+public function sound.setSoundPosition(real x, real y, real z)
+	SetSoundPosition(this, x, y, z)
+
+public function sound.setSoundVelocity(real x, real y, real z)
+	SetSoundVelocity(this, x, y, z)
+
+public function sound.attachSoundToUnit(unit whichUnit)
+	AttachSoundToUnit(this, whichUnit)
+
+public function sound.startSoundEx(boolean fadeIn)
+	StartSoundEx(this, fadeIn)
+
+public function sound.registerStackedSound(boolean byPosition, real rectwidth, real rectheight)
+	RegisterStackedSound(this, byPosition, rectwidth, rectheight)
+
+public function sound.unregisterStackedSound(boolean byPosition, real rectwidth, real rectheight)
+	UnregisterStackedSound(this, byPosition, rectwidth, rectheight)
+
+public function sound.setSoundFacialAnimationLabel(string animationLabel) returns boolean
+	return SetSoundFacialAnimationLabel(this, animationLabel)
+
+public function sound.setSoundFacialAnimationGroupLabel(string groupLabel) returns boolean
+	return SetSoundFacialAnimationGroupLabel(this, groupLabel)
+
+public function sound.setSoundFacialAnimationSetFilepath(string animationSetFilepath) returns boolean
+	return SetSoundFacialAnimationSetFilepath(this, animationSetFilepath)
+
+public function sound.setDialogueSpeakerNameKey(string speakerName) returns boolean
+	return SetDialogueSpeakerNameKey(this, speakerName)
+
+public function sound.setDialogueTextKey(string dialogueText) returns boolean
+	return SetDialogueTextKey(this, dialogueText)
+

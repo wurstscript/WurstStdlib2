@@ -4,6 +4,7 @@ import Player
 import Vectors
 import Colors
 import ErrorHandling
+import Annotations
 
 /*
 	Custom frames can be defined in a frame definition file (*.fdf).
@@ -46,8 +47,9 @@ import ErrorHandling
 		ORIGIN_FRAME_UNIT_MSG                   --> Frame of the UpKeep change warning message, below the clock
 */
 
-public constant GAME_UI  = BlzGetOriginFrame(ORIGIN_FRAME_GAME_UI, 0)
-public constant WORLD_UI = BlzGetOriginFrame(ORIGIN_FRAME_WORLD_FRAME, 0)
+public constant GAME_UI    = BlzGetOriginFrame(ORIGIN_FRAME_GAME_UI, 0)
+public constant WORLD_UI   = BlzGetOriginFrame(ORIGIN_FRAME_WORLD_FRAME, 0)
+public constant CONSOLE_UI = BlzGetFrameByName("ConsoleUIBackdrop", 0)
 
 public constant SCREEN_CENTER             = vec2(0.4, 0.3)
 public constant SCREEN_TOPRIGHT           = vec2(0.8, 0.6)
@@ -78,25 +80,35 @@ function verifyFrameNameLength(string name) returns boolean
 		return false
 	return true
 
-/** Returns the orgin frame of the given type */
+/** Returns the origin frame of the given type.
+	Do not first-call frame handle getters inside GetLocalPlayer(); acquire/cache handles for all players first.
+	For custom UI setup, prefer elapsed game time 0.00 or later. */
 public function getOriginFrame(originframetype frameType) returns framehandle
 	return BlzGetOriginFrame(frameType, 0)
 
-/** Returns the orgin frame of the given type and index */
+/** Returns the origin frame of the given type and index.
+	Do not first-call frame handle getters inside GetLocalPlayer(); acquire/cache handles for all players first.
+	For custom UI setup, prefer elapsed game time 0.00 or later. */
 public function getOriginFrame(originframetype frameType, integer index) returns framehandle
 	return BlzGetOriginFrame(frameType, index)
 
-/**	Returns the framehandle of the given name and createContext index (children inherit the createContext value of their parent) */
+/**	Returns the framehandle of the given name and createContext index (children inherit the createContext value of their parent).
+	Do not first-call frame handle getters inside GetLocalPlayer(); acquire/cache handles for all players first.
+	For custom UI setup, prefer elapsed game time 0.00 or later. */
 public function getFrame(string name, integer createContext) returns framehandle
 	verifyFrameNameLength(name)
 	return BlzGetFrameByName(name, createContext)
 
-/**	Returns the framehandle of the given name */
+/**	Returns the framehandle of the given name.
+	Do not first-call frame handle getters inside GetLocalPlayer(); acquire/cache handles for all players first.
+	For custom UI setup, prefer elapsed game time 0.00 or later. */
 public function getFrame(string name) returns framehandle
 	verifyFrameNameLength(name)
 	return getFrame(name, 0)
 
-/** Creates a non simple frame of the given name (the name of the frame which must be defined in the imported fdf files) */
+/** Creates a non simple frame of the given name (the name of the frame which must be defined in the imported fdf files).
+	Do not create custom frames at map init; use elapsed game time 0.00 or later.
+	Do not create frame handles only inside GetLocalPlayer(); create/cache them for all players first. */
 public function createFrame(string name) returns framehandle
 	verifyFrameNameLength(name)
 	return createFrame(name, GAME_UI, 0, 0)
@@ -105,12 +117,16 @@ public function createFrame(string name) returns framehandle
 		name: the name of the frame which must be defined in the imported fdf files.
 		owner: the parent of the frame
 		priority: unknown
-		createContext: the unique id assigned to the frame and its children (useful for creating multiple frames of the same name) */
+		createContext: the unique id assigned to the frame and its children (useful for creating multiple frames of the same name)
+	Do not create custom frames at map init; use elapsed game time 0.00 or later.
+	Do not create frame handles only inside GetLocalPlayer(); create/cache them for all players first. */
 public function createFrame(string name, framehandle owner, integer priority, integer createContext) returns framehandle
 	verifyFrameNameLength(name)
 	return BlzCreateFrame(name, owner, priority, createContext)
 
-/** Creates a simple frame of the given name (the name of the frame which must be defined in the imported fdf files.) */
+/** Creates a simple frame of the given name (the name of the frame which must be defined in the imported fdf files).
+	Do not create custom frames at map init; use elapsed game time 0.00 or later.
+	Do not create frame handles only inside GetLocalPlayer(); create/cache them for all players first. */
 public function createSimpleFrame(string name) returns framehandle
 	verifyFrameNameLength(name)
 	return BlzCreateSimpleFrame(name, GAME_UI, 0)
@@ -118,7 +134,9 @@ public function createSimpleFrame(string name) returns framehandle
 /** Creates a simple frame:
 		name: the name of the frame which must be defined in the imported fdf files.
 		owner: the parent of the frame
-		createContext: the unique id assigned to the frame and its children (useful for creating multiple frames of the same name) */
+		createContext: the unique id assigned to the frame and its children (useful for creating multiple frames of the same name)
+	Do not create custom frames at map init; use elapsed game time 0.00 or later.
+	Do not create frame handles only inside GetLocalPlayer(); create/cache them for all players first. */
 public function createSimpleFrame(string name, framehandle owner, integer createContext) returns framehandle
 	verifyFrameNameLength(name)
 	return BlzCreateSimpleFrame(name, owner, createContext)
@@ -128,30 +146,89 @@ public function createSimpleFrame(string name, framehandle owner, integer create
 		name: the name of the created frame
 		owner: the parent of the frame
 		inherits: the name of the frame frome which the created frame will be inhereting (which must be defined in the imported .fdf files)
-		createContext: the unique id assigned to the frame and its children (useful for creating multiple frames of the same name) */
+		createContext: the unique id assigned to the frame and its children (useful for creating multiple frames of the same name)
+	Do not create custom frames at map init; use elapsed game time 0.00 or later.
+	Do not create frame handles only inside GetLocalPlayer(); create/cache them for all players first. */
 public function createFrame(string typeName, string name, framehandle owner, string inherits, integer createContext) returns framehandle
 	verifyFrameNameLength(name)
 	return BlzCreateFrameByType(typeName, name, owner, inherits, createContext)
 
-/** Removes a frame */
-public function framehandle.remove()
+/** Creates a BACKDROP frame by type without requiring custom FDF.
+	Use this for simple images, borders and background panels. */
+public function createBackdrop(string name, framehandle owner, integer createContext) returns framehandle
+	return createFrame("BACKDROP", name, owner, "", createContext)
+
+/** Creates a TEXT frame by type without requiring custom FDF. */
+public function createTextFrame(string name, framehandle owner, integer createContext) returns framehandle
+	return createFrame("TEXT", name, owner, "", createContext)
+
+/** Creates a disabled TEXT tooltip frame by type without requiring custom FDF.
+	After positioning the tooltip, call owner.setTooltip(tooltip). */
+public function createTextTooltip(string name, framehandle owner, string text, integer createContext) returns framehandle
+	let tooltip = createTextFrame(name, owner, createContext)
+	tooltip.setText(text)
+	tooltip.disable()
+	return tooltip
+
+/** Creates a GLUETEXTBUTTON by type without requiring custom FDF.
+	inheritTemplate is commonly "ScriptDialogButton" for Blizzard's default dialog button style. */
+public function createGlueTextButton(string name, framehandle owner, string inheritTemplate, integer createContext) returns framehandle
+	return createFrame("GLUETEXTBUTTON", name, owner, inheritTemplate, createContext)
+
+/** Returns the named command button frame.
+	In WC3 1.32+, moving command buttons through origin frames can glitch, so the named frames are usually safer. */
+public function getCommandButton(int index) returns framehandle
+	return getFrame("CommandButton_" + index.toString(), 0)
+
+/** Returns the named inventory button frame.
+	In WC3 1.32+, moving item buttons through origin frames can glitch, so the named frames are usually safer. */
+public function getInventoryButton(int index) returns framehandle
+	return getFrame("InventoryButton_" + index.toString(), 0)
+
+/** Destroys a frame.
+	Unsafe for most multiplayer UI because destroying frames can desync or destabilize frame state after save/load.
+	Do not call on String or Texture SimpleFrame children.
+	Prefer hide(), disable() and reuse cached frames. */
+public function framehandle.destroyUnsafe()
 	BlzDestroyFrame(this)
+
+/** Removes a frame.
+	Unsafe for most multiplayer UI because destroying frames can desync or destabilize frame state after save/load.
+	Do not call on String or Texture SimpleFrame children.
+	Prefer hide(), disable() and reuse cached frames. */
+@deprecated("Destroying UI frames can desync or break save/load. Prefer hide()/disable() and reuse frames; use destroyUnsafe() only if you know it is safe.")
+public function framehandle.remove()
+	this.destroyUnsafe()
 
 /**	Places the frame at the center of the screen */
 public function framehandle.setCenter()
 	BlzFrameSetAbsPoint(this, FRAMEPOINT_CENTER, SCREEN_CENTER.x, SCREEN_CENTER.y)
 
 /**	Sets the frame position to an absolute x, y point on the screen.
-For the the x-axis, the value is between 0 and 0.8
-For the the y-axis, the value is between 0 and 0.6 */
+	For the x-axis, the normal 4:3 UI range is 0.0 to 0.8.
+	For the y-axis, the normal 4:3 UI range is 0.0 to 0.6.
+	Some SimpleFrames and specially parented frames can leave this area. */
 public function framehandle.setAbsPoint(framepointtype point, real x, real y)
 	BlzFrameSetAbsPoint(this, point, x, y)
 
 /**	Sets the frame position to an absolute x, y point on the screen.
-	For the the x-axis, the value is between 0 and 0.8
-	For the the y-axis, the value is between 0 and 0.6 */
+	For the x-axis, the normal 4:3 UI range is 0.0 to 0.8.
+	For the y-axis, the normal 4:3 UI range is 0.0 to 0.6.
+	Some SimpleFrames and specially parented frames can leave this area. */
 public function framehandle.setAbsPoint(framepointtype point, vec2 pos)
 	BlzFrameSetAbsPoint(this, point, pos.x, pos.y)
+
+/** Clears all existing anchors and then places the frame at an absolute screen point.
+	This is the safer default when repositioning existing/default frames. */
+public function framehandle.clearAndSetAbsPoint(framepointtype point, real x, real y)
+	this.clearAllPoints()
+	this.setAbsPoint(point, x, y)
+
+/** Clears all existing anchors and then places the frame at an absolute screen point.
+	This is the safer default when repositioning existing/default frames. */
+public function framehandle.clearAndSetAbsPoint(framepointtype point, vec2 pos)
+	this.clearAllPoints()
+	this.setAbsPoint(point, pos)
 
 /** Sets the frame's anchor point position to the one of the given frame's anchor */
 public function framehandle.setPoint(framepointtype point, framehandle relative, framepointtype relativePoint)
@@ -165,6 +242,24 @@ public function framehandle.setPoint(framepointtype point, framehandle relative,
 public function framehandle.setPoint(framepointtype point, framehandle relative, framepointtype relativePoint, real offsetX, real offsetY)
 	BlzFrameSetPoint(this, point, relative, relativePoint, offsetX, offsetY)
 
+/** Clears all existing anchors and then anchors this frame to another frame.
+	This is the safer default when repositioning existing/default frames. */
+public function framehandle.clearAndSetPoint(framepointtype point, framehandle relative, framepointtype relativePoint)
+	this.clearAllPoints()
+	this.setPoint(point, relative, relativePoint)
+
+/** Clears all existing anchors and then anchors this frame to another frame with an offset.
+	This is the safer default when repositioning existing/default frames. */
+public function framehandle.clearAndSetPoint(framepointtype point, framehandle relative, framepointtype relativePoint, vec2 offset)
+	this.clearAllPoints()
+	this.setPoint(point, relative, relativePoint, offset)
+
+/** Clears all existing anchors and then anchors this frame to another frame with an offset.
+	This is the safer default when repositioning existing/default frames. */
+public function framehandle.clearAndSetPoint(framepointtype point, framehandle relative, framepointtype relativePoint, real offsetX, real offsetY)
+	this.clearAllPoints()
+	this.setPoint(point, relative, relativePoint, offsetX, offsetY)
+
 /** Frees the frame from any relative or absolute anchor points */
 public function framehandle.clearAllPoints()
 	BlzFrameClearAllPoints(this)
@@ -173,11 +268,13 @@ public function framehandle.clearAllPoints()
 public function framehandle.setAllPoints(framehandle relative)
 	BlzFrameSetAllPoints(this, relative)
 
-/** Shows or hides the frame */
+/** Shows or hides the frame.
+	Do not call on String or Texture SimpleFrame children. */
 public function framehandle.setVisible(bool flag)
 	BlzFrameSetVisible(this, flag)
 
-/** Shows or hides the frame to the given player */
+/** Shows or hides the frame to the given player.
+	This is a local visual update; acquire/create the frame handle for all players before using player-local changes. */
 public function framehandle.setVisible(player p, bool flag)
 	if localPlayer == p or p == null
 		this.setVisible(flag)
@@ -198,11 +295,33 @@ public function framehandle.hide()
 public function framehandle.hide(player p)
 	this.setVisible(p, false)
 
-/** Returns whether the frame is visible or not */
+/** Hides and disables the frame so it cannot block mouse input while invisible. */
+public function framehandle.hideAndDisable()
+	this.hide()
+	this.disable()
+
+/** Hides and disables the frame for the specific player so it cannot block mouse input while invisible. */
+public function framehandle.hideAndDisable(player p)
+	this.hide(p)
+	this.disable(p)
+
+/** Shows and enables the frame. */
+public function framehandle.showAndEnable()
+	this.show()
+	this.enable()
+
+/** Shows and enables the frame for the specific player. */
+public function framehandle.showAndEnable(player p)
+	this.show(p)
+	this.enable(p)
+
+/** Returns whether the frame is visible or not.
+	This is local UI state and can differ per player. Do not use it directly for synced game logic. */
 public function framehandle.isVisible() returns bool
 	return BlzFrameIsVisible(this)
 
-/** Returns whether the frame is visible or not for given player */
+/** Returns whether the frame is visible or not for given player.
+	This is local UI state and can differ per player. Do not use it directly for synced game logic. */
 public function framehandle.isVisible(player p) returns boolean
 	return localPlayer == p or p == null ? this.isVisible() : false
 
@@ -214,7 +333,8 @@ public function framehandle.getName() returns string
 public function framehandle.click()
 	BlzFrameClick(this)
 
-/** Returns the text value of the text frame */
+/** Returns the text value of the text frame.
+	This is local UI state and can differ per player. Use BlzGetTriggerFrameText() inside editbox frame events for synced input. */
 public function framehandle.getText() returns string
 	return BlzFrameGetText(this)
 
@@ -222,7 +342,8 @@ public function framehandle.getText() returns string
 public function framehandle.setText(string text)
 	BlzFrameSetText(this, text)
 
-/** Sets the text value of the text frame for the specific player*/
+/** Sets the text value of the text frame for the specific player.
+	This is a local visual update; acquire/create the frame handle for all players before using player-local changes. */
 public function framehandle.setText(player p, string text)
 	if localPlayer == p or p == null
 		this.setText(text)
@@ -231,23 +352,27 @@ public function framehandle.setText(player p, string text)
 public function framehandle.getTextSizeLimit() returns integer
 	return BlzFrameGetTextSizeLimit(this)
 
-/** Sets the maximum allowed text size of the text frame */
+/** Sets the maximum allowed text size of the text frame.
+	Editbox event text returned by BlzGetTriggerFrameText() is limited by Warcraft III to roughly 255 characters. */
 public function framehandle.setTextSizeLimit(integer size)
 	BlzFrameSetTextSizeLimit(this, size)
 
-/** Sets the text color of the text frame */
+/** Sets the text color of the text frame.
+	The color channels are expected in the range 0 to 255. */
 public function framehandle.setTextColor(colorA color)
 	BlzFrameSetTextColor(this, BlzConvertColor(color.alpha, color.red, color.green, color.blue))
 
-/** Sets the text color of the text frame */
+/** Sets the text color of the text frame as a packed Warcraft III color integer. */
 public function framehandle.setTextColor(integer color)
 	BlzFrameSetTextColor(this, color)
 
-/** Enables or disables the user interaction for the frame */
+/** Enables or disables the user interaction for the frame.
+	Do not call on String or Texture SimpleFrame children. */
 public function framehandle.setFocus(bool flag)
 	BlzFrameSetFocus(this, flag)
 
-/** Enables or disables the user interaction for the frame for given player */
+/** Enables or disables the user interaction for the frame for given player.
+	This is a local visual update; acquire/create the frame handle for all players before using player-local changes. */
 public function framehandle.setFocus(player p, bool flag)
 	if localPlayer == p or p == null
 		this.setFocus(flag)
@@ -274,19 +399,31 @@ public function framehandle.unfocus(player p)
 
 	this.setFocus(p, false)
 
+/** Releases keyboard focus from a clicked frame by toggling enable state and clearing focus.
+	Useful for buttons and editboxes that would otherwise steal Warcraft III hotkeys. */
+public function framehandle.releaseKeyboardFocus()
+	this.unfocus()
+
+/** Releases keyboard focus from a clicked frame for the specific player by toggling enable state and clearing focus. */
+public function framehandle.releaseKeyboardFocus(player p)
+	this.unfocus(p)
+
 /** Sets the model of the model frame */
 public function framehandle.setModel(string modelFile, integer cameraIndex)
 	BlzFrameSetModel(this, modelFile, cameraIndex)
 
-/** Returns the state of the frame */
+/** Returns the state of the frame.
+	This is local UI state and can differ per player. Do not use it directly for synced game logic. */
 public function framehandle.isEnabled() returns bool
 	return BlzFrameGetEnable(this)
 
-/** Returns the state of the frame for given player */
+/** Returns the state of the frame for given player.
+	This is local UI state and can differ per player. Do not use it directly for synced game logic. */
 public function framehandle.isEnabled(player p) returns boolean
 	return localPlayer == p or p == null ? this.isEnabled() : false
 
-/** Enables or disables the frame */
+/** Enables or disables the frame.
+	Do not call on String or Texture SimpleFrame children. Disable non-interactive text/backdrops to keep them from blocking mouse input. */
 public function framehandle.setEnabled(bool enabled)
 	BlzFrameSetEnable(this, enabled)
 
@@ -298,25 +435,35 @@ public function framehandle.enable()
 public function framehandle.disable()
 	this.setEnabled(false)
 
-/** Enables the frame for the player p */
+/** Enables the frame for the player p.
+	This is a local visual update; acquire/create the frame handle for all players before using player-local changes. */
 public function framehandle.enable(player p)
 	if localPlayer == p or p == null
 		this.enable()
 
-/** Disables the frame for the player p */
+/** Disables the frame for the player p.
+	This is a local visual update; acquire/create the frame handle for all players before using player-local changes. */
 public function framehandle.disable(player p)
 	if localPlayer == p or p == null
 		this.disable()
 
-/** Returns the decimal alpha value of the frame (only for specific frames) */
+/** Returns the alpha value of the frame in the range 0 to 255, for frame types that support alpha.
+	This is local UI state and can differ per player. Do not use it directly for synced game logic. */
 public function framehandle.getAlpha() returns int
 	return BlzFrameGetAlpha(this)
 
-/** Sets the decimal alpha value of the frame (only for specific frames) */
+/** Sets the alpha value of the frame in the range 0 to 255, for frame types that support alpha.
+	Verified to work on backdrops, images and glue buttons (on a glue button the fade covers the whole
+	button, child backdrops included). Apply it AFTER the frame has been parented, anchored and sized:
+	alpha set on a freshly created frame before a layout positions it is wiped, so set it once the
+	frame is in its final place. Reads as "disabled" to players, so prefer it for genuinely inactive
+	elements rather than as a "selected / active" highlight.
+	Do not call on String or Texture SimpleFrame children. */
 public function framehandle.setAlpha(integer alpha)
 	BlzFrameSetAlpha(this, alpha)
 
-/** Sets the decimal alpha value of the frame (only for specific frames) to the given player */
+/** Sets the alpha value of the frame in the range 0 to 255 for the given player, for frame types that support alpha.
+	Do not call on String or Texture SimpleFrame children. */
 public function framehandle.setAlpha(player p, integer alpha)
 	if localPlayer == p or p == null
 		this.setAlpha(alpha)
@@ -325,27 +472,31 @@ public function framehandle.setAlpha(player p, integer alpha)
 public function framehandle.setSpriteAnimate(integer primaryProp, integer flags)
 	BlzFrameSetSpriteAnimate(this, primaryProp, flags)
 
-/** Sets the texture of the frame
+/** Sets the texture of the frame.
 		texFile: the path of the texture
-		flags: unknown
+		flag: texture flag passed to BlzFrameSetTexture, usually 0
 		blend: true to keep transparency */
 public function framehandle.setTexture(string texFile, integer flag, bool blend)
 	BlzFrameSetTexture(this, texFile, flag, blend)
 
 /** Sets the texture of the frame for the specific player
 	texFile: the path of the texture
-	flags: unknown
-	blend: true to keep transparency */
+	flag: texture flag passed to BlzFrameSetTexture, usually 0
+	blend: true to keep transparency
+	This is a local visual update; acquire/create the frame handle for all players before using player-local changes. */
 public function framehandle.setTexture(player p, string texFile, integer flag, bool blend)
 	if localPlayer == p or p == null
 		this.setTexture(texFile, flag, blend)
 
 /** Sets the frame's scaling value.
-	Frame's size, children frames and relative anchor points scale */
+	Frame's size, children frames and relative anchor point offsets scale.
+	Do not call on String or Texture SimpleFrame children. */
 public function framehandle.setScale(real scale)
 	BlzFrameSetScale(this, scale)
 
-/** Sets a frame's tooltip frame, if it has some tooltip subframe */
+/** Sets a frame's tooltip frame, if it has some tooltip subframe.
+	Tooltip owner and tooltip frame should belong to the same Frame/SimpleFrame group.
+	This cannot really be undone, and calling it repeatedly with the same owner/tooltip pair can crash on hover. */
 public function framehandle.setTooltip(framehandle tooltip)
 	BlzFrameSetTooltip(this, tooltip)
 
@@ -353,7 +504,8 @@ public function framehandle.setTooltip(framehandle tooltip)
 public function framehandle.cageMouse(bool enable)
 	BlzFrameCageMouse(this, enable)
 
-/** Returns the specific value of the frame (e.g. for sliders) */
+/** Returns the specific value of the frame, e.g. for sliders.
+	This is local UI state and can differ per player. Prefer BlzGetTriggerFrameValue() inside frame events for synced input. */
 public function framehandle.getValue() returns real
 	return BlzFrameGetValue(this)
 
@@ -369,31 +521,41 @@ public function framehandle.setMinMax(real minValue, real maxValue)
 public function framehandle.setStepSize(real stepSize)
 	BlzFrameSetStepSize(this, stepSize)
 
-/** Sets the width of the frame (sets the height to its current height) */
+/** Sets the width of the frame in UI coordinate units, preserving its current height.
+	The current height is local UI state and can differ per player. */
 public function framehandle.setWidth(real width)
 	BlzFrameSetSize(this, width, this.getHeight())
 
-/** Sets the height of the frame (sets the width to its current width) */
+/** Sets the height of the frame in UI coordinate units, preserving its current width.
+	The current width is local UI state and can differ per player. */
 public function framehandle.setHeight(real height)
 	BlzFrameSetSize(this, this.getWidth(), height)
 
-/** Sets the width and height of the frame */
+/** Sets the width and height of the frame in UI coordinate units. */
 public function framehandle.setSize(real width, real height)
 	BlzFrameSetSize(this, width, height)
 
-/** Sets the vertex color of the model frame */
+/** Tints a MODEL or sprite frame by its vertex colour; channels in the range 0 to 255.
+	This does NOT recolour ordinary UI textures: verified in-game to have no visible effect on a
+	BACKDROP, an image (which is a backdrop), or a glue button. To recolour such elements, swap the
+	texture (setTexture) or use a differently coloured FDF backdrop; for text use the font colour or
+	|cAARRGGBB ... |r colour codes. */
 public function framehandle.setVertexColor(color pcolor)
 	BlzFrameSetVertexColor(this, BlzConvertColor(255, pcolor.red, pcolor.green, pcolor.blue))
 
-/** Sets the vertex color of the model frame */
+/** Sets the vertex colour (with alpha) of a MODEL or sprite frame; channels in the range 0 to 255.
+	Model/sprite only: it does not recolour BACKDROP / image / glue-button UI textures (see the
+	color overload above). */
 public function framehandle.setVertexColor(colorA color)
 	BlzFrameSetVertexColor(this, BlzConvertColor(color.alpha, color.red, color.green, color.blue))
 
-/** Sets the vertex color of the model frame */
+/** Sets the vertex colour of a MODEL or sprite frame as a packed Warcraft III colour integer.
+	Model/sprite only: it does not recolour BACKDROP / image / glue-button UI textures. */
 public function framehandle.setVertexColor(integer color)
 	BlzFrameSetVertexColor(this, color)
 
-/** If multiple frames cover each other, the one with the highest level will receive mouse events and will be drawn above the others. If several frames have the same level, the last created one is prioritized */
+/** If multiple frames cover each other, the one with the highest level will receive mouse events and will be drawn above the others. If several frames have the same level, the last created one is prioritized.
+	Do not call on String or Texture SimpleFrame children. */
 public function framehandle.setLevel(integer level)
 	BlzFrameSetLevel(this, level)
 
@@ -402,19 +564,23 @@ public function framehandle.setLevel(integer level)
 public function framehandle.getParent() returns framehandle
 	return BlzFrameGetParent(this)
 
-/** Sets the parent frame of the frame */
+/** Sets the parent frame of the frame.
+	Do not mix Frame and SimpleFrame groups, and never set a frame's parent to itself or one of its descendants. */
 public function framehandle.setParent(framehandle parent)
 	BlzFrameSetParent(this, parent)
 
-/** Returns the frame's height */
+/** Returns the frame's height in UI coordinate units.
+	This is local UI state and can differ per player. Do not use it directly for synced game logic. */
 public function framehandle.getHeight() returns real
 	return BlzFrameGetHeight(this)
 
-/** Returns the frame's width */
+/** Returns the frame's width in UI coordinate units.
+	This is local UI state and can differ per player. Do not use it directly for synced game logic. */
 public function framehandle.getWidth() returns real
 	return BlzFrameGetWidth(this)
 
-/** Sets the text font of the text frame */
+/** Sets the text font of the text frame.
+	Use for TEXT frames and String SimpleFrame children. Calling it on generic SimpleFrames can crash. */
 public function framehandle.setFont(string fileName, real height, integer flags)
 	BlzFrameSetFont(this, fileName, height, flags)
 
@@ -438,23 +604,51 @@ public function hideOriginFrames()
 public function showOriginFrames()
 	setOriginFramesVisible(true)
 
-/** Loads a toc file from the given path, to include custom fdf files from, returns true on success */
+/** Loads a toc file from the given path, to include custom fdf files from, returns true on success.
+	Load the TOC before creating or inheriting templates from it.
+	TOC order matters: list included/base FDF files before FDF files that depend on them.
+	TOC file endings are fragile; keep at least one empty final line for CRLF files and two for LF-only files. */
 public function loadTOCFile(string tocFile) returns bool
 	return BlzLoadTOCFile(tocFile)
 
-let mouseCage = createFrame("FRAME", "SetMousePositionCage", GAME_UI, null, 0)
-	..setSize(0.0001, 0.0001)
+/** Returns the local fullscreen frame width in Warcraft III UI coordinate units.
+	A fullscreen reference frame usually uses this width and height 0.6, anchored by FRAMEPOINT_BOTTOM at (0.4, 0.0).
+	The value depends on the local client's aspect ratio and can differ per player. */
+public function getFullscreenFrameWidth() returns real
+	let height = BlzGetLocalClientHeight()
+	if height <= 0
+		return 0.8
+	return I2R(BlzGetLocalClientWidth()) / I2R(height) * 0.6
+
+/** Returns the local fullscreen frame size in Warcraft III UI coordinate units.
+	The value depends on the local client's aspect ratio and can differ per player. */
+public function getFullscreenFrameSize() returns vec2
+	return vec2(getFullscreenFrameWidth(), 0.6)
+
+/** Sizes and positions this frame as a fullscreen reference frame.
+	The size depends on the local client's aspect ratio and can differ per player. */
+public function framehandle.setFullscreenReference()
+	this.setSize(getFullscreenFrameWidth(), 0.6)
+	this.setAbsPoint(FRAMEPOINT_BOTTOM, 0.4, 0.0)
+
+framehandle mouseCage = null
+
+function getMouseCage() returns framehandle
+	if mouseCage == null
+		mouseCage = createFrame("FRAME", "SetMousePositionCage", GAME_UI, null, 0)
+		mouseCage.setSize(0.0001, 0.0001)
+	return mouseCage
 
 /** Places the mouse cursor at the given point of the screen. Uses the same coodinate system as framehandles */
 public function setMousePos(vec2 pos)
-	mouseCage..clearAllPoints()
+	getMouseCage()..clearAllPoints()
 	..setPoint(FRAMEPOINT_BOTTOMLEFT, GAME_UI, FRAMEPOINT_BOTTOMLEFT, pos)
 	..cageMouse(true)
 	..cageMouse(false)
 
 /** Places the mouse cursor in the center of the frame */
 public function framehandle.setMousePos()
-	mouseCage..clearAllPoints()
+	getMouseCage()..clearAllPoints()
 	..setPoint(FRAMEPOINT_CENTER, this, FRAMEPOINT_CENTER)
 	..cageMouse(true)
 	..cageMouse(false)
@@ -476,6 +670,7 @@ public function setCursorEnabled(bool flag)
 public function framehandle.getChildrenCount() returns int
 	return BlzFrameGetChildrenCount(this)
 
-/** Get child frame handle from given index */
+/** Get child frame handle from given index.
+	The index must be in the range 0 <= index < getChildrenCount(). Out-of-bounds access can crash. */
 public function framehandle.getChild(int index) returns framehandle
 	return BlzFrameGetChild(this, index)

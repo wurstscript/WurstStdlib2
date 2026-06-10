@@ -37,6 +37,12 @@ It is always false at runtime and true during compiletime.
 */
 public constant compiletime = false
 
+/** This is a magic constant.
+It is always false when compiling to Jass and true when compiling to Lua.
+Use it to write backend-specific code paths.
+*/
+public constant isLua = false
+
 /** This is a builtin magic function.
  * It evaluates it's argument at compiletime and replaces the call with the result.
  */
