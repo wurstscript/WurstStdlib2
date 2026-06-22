@@ -247,6 +247,12 @@ public class ArrayList<T:>
         for i = 0 to size - 1
             store[startIndex + i] = store[oldStart + i]
 
+        // The old section now holds duplicate references and no longer belongs to any
+        // live list once freed. Clear it so the Lua GC can reclaim them (no-op on Jass).
+        if isLua
+            for i = 0 to size - 1
+                store[oldStart + i] = null
+
         // Free old section
         let tempStart = startIndex
         let tempCap = capacity
@@ -335,6 +341,9 @@ public class ArrayList<T:>
             store[startIndex + i] = store[startIndex + i + 1]
 
         size--
+        // The last slot now holds a stale duplicate - release it for the Lua GC
+        if isLua
+            store[startIndex + size] = null
         return elem
 
     /** Removes the element at the given index and returns it (O(n) - shifts elements) */
@@ -353,6 +362,10 @@ public class ArrayList<T:>
         size--
         if index < size
             store[startIndex + index] = store[startIndex + size]
+
+        // The old last slot is now vacated (or held the removed element) - release it
+        if isLua
+            store[startIndex + size] = null
 
         return elem
 
@@ -393,8 +406,12 @@ public class ArrayList<T:>
             return null
         return store[startIndex + size - 1]
 
-    /** Clears all elements from the list (O(1) - reuse this list instead of creating new ones!) */
+    /** Clears all elements from the list (reuse this list instead of creating new ones!).
+        O(1) on Jass; O(n) on Lua, where the slots are nulled so the GC can reclaim them. */
     function clear()
+        if isLua
+            for i = 0 to size - 1
+                store[startIndex + i] = null
         size = 0
 
     /** Returns a shallow copy of this list */
@@ -431,7 +448,11 @@ public class ArrayList<T:>
         if size == 0
             return null
         size--
-        return store[startIndex + size]
+        let elem = store[startIndex + size]
+        // Release the popped slot so the Lua GC can reclaim the reference
+        if isLua
+            store[startIndex + size] = null
+        return elem
 
     /** Returns the lastly added element without removing it, or null if empty */
     function peek() returns T
@@ -496,6 +517,10 @@ public class ArrayList<T:>
             if not predicate.isTrueFor(elem)
                 store[startIndex + writeIndex] = elem
                 writeIndex++
+        // Release the compacted-away tail (still the old size here) for the Lua GC
+        if isLua
+            for i = writeIndex to size - 1
+                store[startIndex + i] = null
         size = writeIndex
         destroy predicate
 
