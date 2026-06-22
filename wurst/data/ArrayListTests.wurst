@@ -1,0 +1,647 @@
+package ArrayListTests
+import ArrayList
+
+// ============================================================================
+// CORE API
+// ============================================================================
+
+@Test
+function testAddGetSet()
+    let list = new ArrayList<int>()
+    list.add(10, 20, 30)
+    list.size().assertEquals(3)
+    list.get(0).assertEquals(10)
+    list.get(2).assertEquals(30)
+    list.set(1, 99)
+    list.get(1).assertEquals(99)
+    destroy list
+
+@Test
+function testForLoop()
+    let list = new ArrayList<int>()
+    list.add(1, 2, 3, 4)
+    list.updateAll(i -> i + 1)
+
+    var result = 0
+    for i = 0 to list.size() - 1
+        result += list.get(i)
+
+    result.assertEquals(2 + 3 + 4 + 5)
+    destroy list
+
+@Test
+function testIndexOperator()
+    let list = new ArrayList<int>()
+    list.add(10, 20, 30)
+    // read via []
+    list[0].assertEquals(10)
+    list[2].assertEquals(30)
+    // write via []
+    list[1] = 99
+    list.get(1).assertEquals(99)
+    list[1].assertEquals(99)
+    destroy list
+
+@Test
+function testIndexOperatorReal()
+    // regression: the [] operator must work for non-int element types too
+    let list = new ArrayList<real>()
+    list.add(1.5, 2.5, 3.5)
+    list[1].assertEquals(2.5)
+    list[0] = 9.5
+    list[0].assertEquals(9.5)
+    destroy list
+
+@Test
+function testAddAll()
+    let list = new ArrayList<int>()
+    let list2 = new ArrayList<int>()
+
+    list.add(1, 2)
+    list2.add(3, 4)
+    list.addAll(list2)
+
+    list.get(2).assertEquals(3)
+    list.get(3).assertEquals(4)
+
+    var result = 0
+    for i = 0 to list.size() - 1
+        result += list.get(i)
+    result.assertEquals(1 + 2 + 3 + 4)
+
+    destroy list
+    destroy list2
+
+@Test
+function testClosures()
+    let list = new ArrayList<int>()
+    list.add(1, 2, 3, 4)
+
+    list.updateAll(i -> i * 2)          // [2, 4, 6, 8]
+    list.get(3).assertEquals(8)
+
+    list.removeIf(i -> i > 4)           // [2, 4]
+    list.size().assertEquals(2)
+
+    let realList = list.map<real>(i -> i * 10.)
+    realList.get(1).assertEquals(40.)
+
+    destroy list
+    destroy realList
+
+@Test
+function testRemoveIf()
+    // ordered removal preserves the order of the survivors
+    let list = new ArrayList<int>()
+    for i = 1 to 6
+        list.add(i)
+    list.removeIf(i -> i % 2 == 0)      // remove evens -> [1, 3, 5]
+    list.size().assertEquals(3)
+    list.get(0).assertEquals(1)
+    list.get(1).assertEquals(3)
+    list.get(2).assertEquals(5)
+    destroy list
+
+@Test
+function testRemoveIf_all()
+    // removing everything must not run out of bounds
+    let list = asArrayList(1, 2, 3, 4)
+    list.removeIf(i -> true)
+    list.size().assertEquals(0)
+    destroy list
+
+@Test
+function testRemoveUnorderedIf()
+    let list = new ArrayList<int>()
+    for i = 1 to 6
+        list.add(i)
+    list.removeUnorderedIf(i -> i > 3)  // remove 4, 5, 6 (order not preserved)
+    list.size().assertEquals(3)
+    list.has(1).assertTrue()
+    list.has(2).assertTrue()
+    list.has(3).assertTrue()
+    list.has(4).assertFalse()
+    destroy list
+
+@Test
+function testFilter()
+    let list = new ArrayList<int>()
+    for i = 1 to 6
+        list.add(i)
+    let filtered = list.filter(i -> i > 3)
+    filtered.size().assertEquals(3)
+    filtered.get(2).assertEquals(6)
+    destroy list
+    destroy filtered
+
+@Test
+function testFoldl()
+    let list = new ArrayList<int>()
+    for i = 1 to 6
+        list.add(i)
+    list.foldl<int>(0, (i, q) -> q + i).assertEquals(21)
+    destroy list
+
+@Test
+function testFind()
+    let list = asArrayList(1, 2, 3, 4)
+    list.find(i -> i > 2).assertEquals(3)
+    destroy list
+
+@Test
+function testGenerics()
+    let list = new ArrayList<string>()
+    list.add("a", "b", "c")
+    list.get(1).assertEquals("b")
+
+    let list2 = new ArrayList<real>()
+    list2.add(1.230, 2.563, 1213143.)
+    list2.get(0).assertEquals(1.230)
+    list2.get(2).assertEquals(1213143.)
+
+    destroy list
+    destroy list2
+
+@Test
+function testSort()
+    let list = new ArrayList<int>()
+    for i = 0 to 500
+        list.add(GetRandomInt(-100, 100) * 2 + 1)
+    list.sort()
+    for i = 0 to list.size() - 2
+        list.get(i).assertLessThanOrEqual(list.get(i + 1))
+    destroy list
+
+@Test
+function testSortReal()
+    let list = new ArrayList<real>()
+    for i = 6 downto 1
+        list.add(i.toReal())
+    list.sort()
+    list.get(0).assertEquals(1.)
+    list.get(5).assertEquals(6.)
+    destroy list
+
+@Test
+function testSortRealFractional()
+    // regression: reals within 1.0 of each other must still be ordered correctly
+    // (a truncating comparator would treat them as equal and leave them unsorted)
+    let list = new ArrayList<real>()
+    list.add(1.4, 1.1, 1.3, 1.2, 1.0)
+    list.sort()
+    for i = 0 to list.size() - 2
+        list.get(i).assertLessThanOrEqual(list.get(i + 1))
+    list.get(0).assertEquals(1.0)
+    list.get(4).assertEquals(1.4)
+    destroy list
+
+@Test
+function testSortIntExtremes()
+    // regression: a subtraction-based comparator overflows when the difference
+    // exceeds the 32-bit range, flipping the order of extreme values
+    let list = new ArrayList<int>()
+    list.add(INT_MAX, INT_MIN, 0)
+    list.sort()
+    list.get(0).assertEquals(INT_MIN)
+    list.get(1).assertEquals(0)
+    list.get(2).assertEquals(INT_MAX)
+    destroy list
+
+@Test
+function testAddAt()
+    let list = new ArrayList<int>()
+    for i = 1 to 6
+        list.add(i)
+    list.addAt(7, 4)                    // 1 2 3 4 7 5 6
+    list.size().assertEquals(7)
+    list.get(4).assertEquals(7)
+    list.get(5).assertEquals(5)
+    destroy list
+
+@Test
+function testAddtoStart()
+    let list = asArrayList(2, 3)
+    list.addtoStart(1)
+    list.get(0).assertEquals(1)
+    list.get(1).assertEquals(2)
+    list.addAt(4, list.size())         // insert at end
+    list.getLast().assertEquals(4)
+    destroy list
+
+@Test
+function testRemoveAtOrdered()
+    let list = asArrayList(1, 2, 3, 4)
+    list.removeAtOrdered(1).assertEquals(2)
+    list.size().assertEquals(3)
+    list.get(1).assertEquals(3)        // shifted over
+    list.get(2).assertEquals(4)
+    destroy list
+
+@Test
+function testRemoveAtUnordered()
+    let list = asArrayList(1, 2, 3, 4)
+    list.removeAtUnordered(0).assertEquals(1)   // last element swapped into 0
+    list.size().assertEquals(3)
+    list.get(0).assertEquals(4)
+    destroy list
+
+@Test
+function testRemoveUnordered()
+    let list = asArrayList(1, 2, 3)
+    list.removeUnordered(2).assertTrue()
+    list.size().assertEquals(2)
+    list.has(2).assertFalse()
+    list.removeUnordered(99).assertFalse()
+    destroy list
+
+@Test
+function testIndexOfHasReplace()
+    let list = new ArrayList<string>()
+    list.add("a", "b", "c")
+    list.indexOf("b").assertEquals(1)
+    list.indexOf("x").assertEquals(-1)
+    list.has("c").assertTrue()
+    list.has("x").assertFalse()
+    list.replace("b", "z").assertTrue()
+    list.get(1).assertEquals("z")
+    list.replace("nope", "y").assertFalse()
+    destroy list
+
+@Test
+function testGetters()
+    let list = new ArrayList<string>()
+    list.add("a", "c", "b")
+    list.getFirst().assertEquals("a")
+    list.getLast().assertEquals("b")
+    list.peek().assertEquals("b")
+    list.get(1).assertEquals("c")
+    destroy list
+
+@Test
+function testGetRandomElement()
+    let list = asArrayList(5, 5, 5)
+    list.getRandomElement().assertEquals(5)
+    destroy list
+
+@Test
+function testQueue()
+    let list = new ArrayList<string>()
+        ..enqueue("a")
+        ..enqueue("b")
+        ..enqueue("c")
+    list.dequeue().assertEquals("a")
+    list.dequeue().assertEquals("b")
+    list.dequeue().assertEquals("c")
+    list.isEmpty().assertTrue()
+    destroy list
+
+@Test
+function testStack()
+    let list = new ArrayList<string>()
+        ..push("a")
+        ..push("b")
+        ..push("c")
+    list.peek().assertEquals("c")
+    list.pop().assertEquals("c")
+    list.pop().assertEquals("b")
+    list.pop().assertEquals("a")
+    destroy list
+
+@Test
+function testGrowth()
+    let list = new ArrayList<int>(2)
+    for i = 1 to 100
+        list.add(i)
+    list.size().assertEquals(100)
+    list.get(99).assertEquals(100)
+    destroy list
+
+@Test
+function testCopy()
+    let list = new ArrayList<int>()
+    list.add(1, 2, 3, 4, 5)
+    let cp = list.copy()
+    cp.size().assertEquals(5)
+    cp.get(2).assertEquals(3)
+
+    cp.set(2, 99)
+    list.get(2).assertEquals(3)        // copy is independent
+    cp.get(2).assertEquals(99)
+
+    destroy list
+    destroy cp
+
+@Test
+function testCopyEmpty()
+    // regression: copying an empty list must not error on a 0-capacity request
+    let empty = new ArrayList<int>()
+    let cp = empty.copy()
+    cp.size().assertEquals(0)
+    cp.add(1)
+    cp.get(0).assertEquals(1)
+    destroy empty
+    destroy cp
+
+@Test
+function testMapEmpty()
+    // regression: mapping an empty list must not error on a 0-capacity request
+    let empty = new ArrayList<int>()
+    let mapped = empty.map<string>(i -> i.toString())
+    mapped.size().assertEquals(0)
+    destroy empty
+    destroy mapped
+
+@Test
+function testClearKeepsStorage()
+    let list = new ArrayList<int>(32)
+    for i = 0 to 15
+        list.add(i)
+    list.clear()
+    list.size().assertEquals(0)
+    // still usable and reuses the same storage (no realloc needed)
+    list.add(99)
+    list.get(0).assertEquals(99)
+    destroy list
+
+@Test
+function testJoin()
+    let list = new ArrayList<string>()
+        ..add("this", "is", "a", "string")
+    list.join().assertEquals("thisisastring")
+    list.joinBy(" ").assertEquals("this is a string")
+    destroy list
+
+@Test
+function testAsArrayList()
+    asArrayList(1, 2, 3, 4).foldl<int>(0, (i, q) -> q + i)
+        .assertEquals(asArrayList(4, 3, 2, 1).foldl<int>(0, (i, q) -> q + i))
+
+@Test
+function testNestedArrayList()
+    let outer = new ArrayList<ArrayList<int>>()
+    outer.add(asArrayList(1, 2, 3))
+    outer.add(asArrayList(4, 5))
+
+    outer.size().assertEquals(2)
+    outer.get(0).size().assertEquals(3)
+    outer.get(1).get(0).assertEquals(4)
+
+    // mutate inner list via reference
+    outer.get(0).set(1, 99)
+    outer.get(0).get(1).assertEquals(99)
+
+@Test
+function testNullElements()
+    let list = new ArrayList<string>()
+    list.add("a", null, "b")
+    list.size().assertEquals(3)
+    (list.get(1) == null).assertTrue()
+    list.indexOf(null).assertEquals(1)
+    destroy list
+
+// ============================================================================
+// REGRESSION TESTS (addAll aliasing + tuple payload integrity)
+// ============================================================================
+
+/** Minimal stand-in for a building shape (only what the search loop uses). */
+class CFBuildingTest
+    boolean isAntiAir = false
+    ArrayList<CFBuildingTest> upgrades = null
+
+    construct(boolean isAntiAir, ArrayList<CFBuildingTest> upgrades)
+        this.isAntiAir = isAntiAir
+        this.upgrades = upgrades
+
+
+/**
+ * Structurally a worklist search, with a hard iteration guard so the test
+ * fails instead of hanging if toCheck grows without bound.
+ */
+function iterativeSearchHasAntiAir(ArrayList<CFBuildingTest> startUpgrades) returns boolean
+    let toCheck = new ArrayList<CFBuildingTest>()
+    toCheck.addAll(startUpgrades)
+
+    var result = false
+    var guard = 0
+
+    while not toCheck.isEmpty()
+        guard++
+        // If addAll(self) ran away, size would explode and this guard would trip.
+        if guard > 2000
+            testFail("iterativeSearch did not terminate (likely addAll(self) via aliasing upgrades==toCheck)")
+
+        let b = toCheck.removeAtUnordered(toCheck.size() - 1)
+        if b.isAntiAir
+            result = true
+            break
+        if b.upgrades != null
+            toCheck.addAll(b.upgrades)
+
+    destroy toCheck
+    return result
+
+
+@Test
+function testIterativeSearch_NormalTree_TerminatesAndFindsAA()
+    // A -> B -> C(AA)
+    let cUp = new ArrayList<CFBuildingTest>()
+    let c = new CFBuildingTest(true, null)
+
+    let bUp = new ArrayList<CFBuildingTest>()
+    bUp.add(c)
+    let b = new CFBuildingTest(false, bUp)
+
+    let aUp = new ArrayList<CFBuildingTest>()
+    aUp.add(b)
+    let a = new CFBuildingTest(false, aUp)
+
+    let start = new ArrayList<CFBuildingTest>()
+    start.add(a)
+
+    iterativeSearchHasAntiAir(start).assertTrue()
+
+    destroy start
+    destroy aUp
+    destroy bUp
+    destroy cUp
+    destroy a
+    destroy b
+    destroy c
+
+
+@Test
+function testIterativeSearch_AliasingUpgradesToToCheck_Terminates()
+    /*
+     * Recreates the nasty case:
+     * - pop element b from toCheck
+     * - b.upgrades points to the SAME list instance as toCheck
+     * - toCheck.addAll(b.upgrades) becomes toCheck.addAll(toCheck)
+     *
+     * addAll captures the source size up front, so this terminates (it may
+     * duplicate elements once, but it stops).
+     */
+    let start = new ArrayList<CFBuildingTest>()
+
+    let aUp = new ArrayList<CFBuildingTest>()
+    let a = new CFBuildingTest(false, aUp)
+    start.add(a)
+
+    // Inlined search so we can build the alias to 'toCheck' itself.
+    let toCheck = new ArrayList<CFBuildingTest>()
+    toCheck.addAll(start)
+
+    // Alias: a.upgrades points at the toCheck list itself
+    a.upgrades = toCheck
+
+    var result = false
+    var guard = 0
+    while not toCheck.isEmpty()
+        guard++
+        if guard > 2000
+            testFail("Loop did not terminate: addAll(self) alias reproduced")
+
+        let b = toCheck.removeAtUnordered(toCheck.size() - 1)
+        if b.isAntiAir
+            result = true
+            break
+        if b.upgrades != null
+            toCheck.addAll(b.upgrades)
+
+    result.assertFalse()
+
+    destroy toCheck
+    destroy start
+    destroy aUp
+    destroy a
+
+
+/**
+ * Tuple payloads:
+ * - one purely primitive
+ * - one with a reference-type field to catch aliasing/reuse bugs
+ */
+tuple Pair(int a, int b)
+
+class Dummy
+    int id
+    construct(int id)
+        this.id = id
+
+tuple ObjPair(Dummy d, int idx)
+
+
+@Test
+function testTupleInArrayList_PreservesDistinctValues_Primitives()
+    let l = new ArrayList<Pair>()
+
+    // push enough to force growth/realloc
+    for i = 0 to 99
+        l.enqueue(Pair(i, i * 10))
+
+    // verify each slot retained its own values
+    for i = 0 to 99
+        let p = l.get(i)
+        (p.a == i).assertTrue()
+        (p.b == i * 10).assertTrue()
+
+    destroy l
+
+
+@Test
+function testTupleInArrayList_NoImplicitAliasingFromLocalVarReuse()
+    let l = new ArrayList<Pair>()
+
+    var t = Pair(1, 10)
+    l.enqueue(t)
+
+    // reassign local variable; list must keep the old tuple value
+    t = Pair(2, 20)
+    l.enqueue(t)
+
+    (l.get(0).a == 1).assertTrue()
+    (l.get(0).b == 10).assertTrue()
+    (l.get(1).a == 2).assertTrue()
+    (l.get(1).b == 20).assertTrue()
+
+    destroy l
+
+
+@Test
+function testTupleInArrayList_WithReferenceField_PreservesPerElementObject()
+    let l = new ArrayList<ObjPair>()
+
+    for i = 0 to 49
+        let d = new Dummy(1000 + i)
+        l.enqueue(ObjPair(d, i))
+
+    for i = 0 to 49
+        let op = l.get(i)
+        (op.idx == i).assertTrue()
+        (op.d != null).assertTrue()
+        (op.d.id == 1000 + i).assertTrue()
+
+    destroy l
+
+
+@Test
+function testTwoArrayListsOfSameTupleType_DoNotCrossContaminate()
+    let a = new ArrayList<Pair>()
+    let b = new ArrayList<Pair>()
+
+    for i = 0 to 49
+        a.enqueue(Pair(i, 1000 + i))
+        b.enqueue(Pair(i, 2000 + i))
+
+    for i = 0 to 49
+        (a.get(i).b == 1000 + i).assertTrue()
+        (b.get(i).b == 2000 + i).assertTrue()
+
+    destroy a
+    destroy b
+
+
+@Test
+function testFindAndSet_OnTupleList()
+    let l = new ArrayList<Pair>()
+    for i = 0 to 20
+        l.enqueue(Pair(i, 100 + i))
+
+    let p = l.find(x -> x.a == 7)
+    (p.a == 7).assertTrue()
+    (p.b == 107).assertTrue()
+
+    l.set(7, Pair(7, 7777))
+
+    (l.get(7).b == 7777).assertTrue()
+    (l.get(6).b == 106).assertTrue()
+    (l.get(8).b == 108).assertTrue()
+
+    destroy l
+
+
+/**
+ * Catches a "repeated slots" failure mode: enqueue distinct payloads, then
+ * read them back and confirm every distinct value survives.
+ */
+@Test
+function testDetectRepeatedSlotsBug()
+    let l = new ArrayList<Pair>()
+
+    for i = 0 to 30
+        l.enqueue(Pair(i, 10000 + i))
+
+    let seen = new ArrayList<int>()
+    for i = 0 to 30
+        let aVal = l.get(i).a
+        var found = false
+        for j = 0 to seen.size() - 1
+            if seen.get(j) == aVal
+                found = true
+        if not found
+            seen.enqueue(aVal)
+
+    // should see all 31 distinct values
+    seen.size().assertEquals(31)
+
+    destroy seen
+    destroy l

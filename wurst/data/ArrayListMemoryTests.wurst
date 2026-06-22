@@ -1,0 +1,169 @@
+package ArrayListMemoryTests
+import ArrayList
+
+// Behavioral tests for ArrayList's section allocator (one shared static store per type).
+// They assert observable effects - data integrity and that storage is actually reclaimed
+// and reused - rather than internal addresses, so they stay valid across compile targets.
+
+@Test
+function testStorageIsReclaimedOnDestroy()
+    // The shared store is bounded by JASS_MAX_ARRAY_SIZE per type. If destroyed sections
+    // were not returned to the free pool, allocating far more total capacity than the store
+    // can hold would raise "Storage limit exceeded". Looping 300x500 (=150k slots) well past
+    // the cap without erroring proves reclamation works.
+    for i = 0 to 299
+        let list = new ArrayList<int>(500)
+        for j = 0 to 9
+            list.add(j)
+        list.get(9).assertEquals(9)
+        destroy list
+    // A fresh allocation after the churn must still succeed and behave correctly.
+    let after = new ArrayList<int>(500)
+    after.add(7)
+    after.get(0).assertEquals(7)
+    destroy after
+
+@Test
+function testFragmentationReuseKeepsDataIntact()
+    // Layout A | B | C, then destroy B and allocate D into the gap.
+    // Reusing B's freed slot must not disturb the surviving lists.
+    let a = new ArrayList<int>(10)
+    let b = new ArrayList<int>(20)
+    let c = new ArrayList<int>(15)
+    a.add(1, 2, 3)
+    b.add(100)
+    c.add(7, 8)
+
+    destroy b
+
+    let d = new ArrayList<int>(10)
+    d.add(42)
+
+    a.get(0).assertEquals(1)
+    a.get(2).assertEquals(3)
+    c.get(0).assertEquals(7)
+    c.get(1).assertEquals(8)
+    d.get(0).assertEquals(42)
+
+    destroy a
+    destroy c
+    destroy d
+
+@Test
+function testGrowthPreservesData()
+    // Growth copies the whole section to a new location; every element must survive the move.
+    let list = new ArrayList<int>(2)
+    for i = 0 to 99
+        list.add(i)
+    list.size().assertEquals(100)
+    for i = 0 to 99
+        list.get(i).assertEquals(i)
+    destroy list
+
+@Test
+function testGrowthDoesNotCorruptNeighbour()
+    // grow() frees the old section after copying. A neighbouring list of the same type
+    // must keep its own data regardless of where the grower ends up.
+    let neighbour = new ArrayList<int>(4)
+    neighbour.add(11, 22, 33, 44)
+
+    let grower = new ArrayList<int>(2)
+    for i = 0 to 49
+        grower.add(i)
+
+    neighbour.get(0).assertEquals(11)
+    neighbour.get(3).assertEquals(44)
+    grower.get(0).assertEquals(0)
+    grower.get(49).assertEquals(49)
+
+    destroy neighbour
+    destroy grower
+
+@Test
+function testClearThenRefillReusesStorage()
+    // clear() keeps the section, so repeated fill/clear cycles must not exhaust the store.
+    let list = new ArrayList<int>(50)
+    for round = 0 to 9
+        for i = 0 to 49
+            list.add(i)
+        list.size().assertEquals(50)
+        list.get(49).assertEquals(49)
+        list.clear()
+        list.size().assertEquals(0)
+    destroy list
+
+@Test
+function testCopyIsIndependentInStore()
+    let original = new ArrayList<int>()
+    original.add(1, 2, 3, 4, 5)
+    let clone = original.copy()
+
+    original.set(0, 99)
+    clone.get(0).assertEquals(1)
+    original.get(0).assertEquals(99)
+
+    // mutating the clone must not bleed back into the original
+    clone.set(4, -1)
+    original.get(4).assertEquals(5)
+
+    destroy original
+    destroy clone
+
+@Test
+function testLargeAllocationAndAccess()
+    let list = new ArrayList<int>(1000)
+    for i = 0 to 999
+        list.add(i)
+    list.size().assertEquals(1000)
+    list.get(0).assertEquals(0)
+    list.get(500).assertEquals(500)
+    list.get(999).assertEquals(999)
+    destroy list
+
+@Test
+function testManyConcurrentListsStayIsolated()
+    // Many live lists of the same type share one store; each must retain only its own data.
+    let lists = new ArrayList<ArrayList<int>>()
+    for i = 0 to 20
+        let l = new ArrayList<int>(8)
+        l.add(i * 1000)
+        l.add(i * 1000 + 1)
+        lists.add(l)
+
+    for i = 0 to 20
+        lists.get(i).get(0).assertEquals(i * 1000)
+        lists.get(i).get(1).assertEquals(i * 1000 + 1)
+
+    for i = 0 to 20
+        destroy lists.get(i)
+    destroy lists
+
+// Dedicated element type so this test gets its own pristine static store and cannot
+// exhaust or fragment the shared store used by the other (int) tests.
+class FragElem
+
+@Test
+function testFragmentedMergeReuseNearCap()
+    // With the store near the cap, two adjacent freed sections that are each too small
+    // for a later request but together large enough must be merged and reused, rather
+    // than raising "Storage limit exceeded" while reclaimable space exists.
+    let big = JASS_MAX_ARRAY_SIZE - 200      // push nextFreeIndex close to the cap
+    let x = new ArrayList<FragElem>(big)
+    x.add(new FragElem())
+    let p = new ArrayList<FragElem>(60)
+    let q = new ArrayList<FragElem>(60)
+    let r = new ArrayList<FragElem>(60)      // stays live so p and q remain interior gaps
+    p.add(new FragElem())
+    q.add(new FragElem())
+    r.add(new FragElem())
+    destroy p
+    destroy q                                // free list: [big, 60] and [big + 60, 60]
+    // request 100: neither 60-slot gap fits, but the merged 120-slot gap does;
+    // the remaining tail (~20 slots) is far too small to satisfy it.
+    let d = new ArrayList<FragElem>(100)
+    let marker = new FragElem()
+    d.add(marker)
+    (d.get(0) == marker).assertTrue()
+    destroy x
+    destroy r
+    destroy d
