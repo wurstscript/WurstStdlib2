@@ -43,6 +43,16 @@ function testIndexOperator()
     destroy list
 
 @Test
+function testIndexOperatorReal()
+    // regression: the [] operator must work for non-int element types too
+    let list = new ArrayList<real>()
+    list.add(1.5, 2.5, 3.5)
+    list[1].assertEquals(2.5)
+    list[0] = 9.5
+    list[0].assertEquals(9.5)
+    destroy list
+
+@Test
 function testAddAll()
     let list = new ArrayList<int>()
     let list2 = new ArrayList<int>()
@@ -170,6 +180,31 @@ function testSortReal()
     list.sort()
     list.get(0).assertEquals(1.)
     list.get(5).assertEquals(6.)
+    destroy list
+
+@Test
+function testSortRealFractional()
+    // regression: reals within 1.0 of each other must still be ordered correctly
+    // (a truncating comparator would treat them as equal and leave them unsorted)
+    let list = new ArrayList<real>()
+    list.add(1.4, 1.1, 1.3, 1.2, 1.0)
+    list.sort()
+    for i = 0 to list.size() - 2
+        list.get(i).assertLessThanOrEqual(list.get(i + 1))
+    list.get(0).assertEquals(1.0)
+    list.get(4).assertEquals(1.4)
+    destroy list
+
+@Test
+function testSortIntExtremes()
+    // regression: a subtraction-based comparator overflows when the difference
+    // exceeds the 32-bit range, flipping the order of extreme values
+    let list = new ArrayList<int>()
+    list.add(INT_MAX, INT_MIN, 0)
+    list.sort()
+    list.get(0).assertEquals(INT_MIN)
+    list.get(1).assertEquals(0)
+    list.get(2).assertEquals(INT_MAX)
     destroy list
 
 @Test

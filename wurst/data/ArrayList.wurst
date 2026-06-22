@@ -83,7 +83,13 @@ constant int MAX_FREE_SECTIONS = 256
  * ==================
  * ArrayList uses section allocation in a shared static array per type.
  * Destroyed lists return sections to a free pool for reuse.
- * Free sections are compacted to reduce fragmentation.
+ * Reuse is first-fit and claims the whole freed section (sections are never split).
+ * Adjacent free sections are merged (compacted) when the store approaches its cap or
+ * when the free pool is full, so interior gaps may persist until then.
+ * The free pool itself is bounded (MAX_FREE_SECTIONS): if it is full and compaction
+ * cannot shrink it, a freed section's space is dropped (it leaks until the type's
+ * store is reset). Element references are always cleared, so this is a space leak, not
+ * a dangling-reference leak. Presize and reuse lists to avoid reaching this state.
  *
  * Fragmentation occurs when lists grow - the old section becomes a gap.
  * This is why presizing matters: growth = copy to new location = wasted space.
@@ -127,6 +133,28 @@ public class ArrayList<T:>
         if cap <= 0
             error("ArrayList: allocateStorage capacity must be > 0")
         // Try to find a freed section that fits
+        if tryReuseFreeSection(cap)
+            return
+
+        // No suitable free section, allocate new
+        if nextFreeIndex + cap > JASS_MAX_ARRAY_SIZE
+            // Past the native array bound - compact to merge adjacent freed sections, then
+            // retry the reuse search since compaction may have produced a section that fits.
+            compactFreeList()
+            if tryReuseFreeSection(cap)
+                return
+
+            // The Jass target is a fixed-size array and must error here. On Lua the store
+            // is a dynamically growing table, so the bound doesn't apply and we let it grow.
+            if not isLua and nextFreeIndex + cap > JASS_MAX_ARRAY_SIZE
+                error("ArrayList: Storage limit exceeded for type")
+
+        startIndex = nextFreeIndex
+        capacity = cap
+        nextFreeIndex += cap
+
+    /** Claims the first freed section that fits cap and returns true; false if none fit */
+    private function tryReuseFreeSection(int cap) returns boolean
         for i = 0 to freeSectionCount - 1
             if freeSectionCapacity[i] >= cap
                 startIndex = freeSectionStart[i]
@@ -137,21 +165,8 @@ public class ArrayList<T:>
                     freeSectionStart[j] = freeSectionStart[j + 1]
                     freeSectionCapacity[j] = freeSectionCapacity[j + 1]
                 freeSectionCount--
-                return
-
-        // No suitable free section, allocate new
-        if nextFreeIndex + cap > JASS_MAX_ARRAY_SIZE
-            // Past the native array bound - compact to reclaim trailing freed space first
-            compactFreeList()
-
-            // The Jass target is a fixed-size array and must error here. On Lua the store
-            // is a dynamically growing table, so the bound doesn't apply and we let it grow.
-            if not isLua and nextFreeIndex + cap > JASS_MAX_ARRAY_SIZE
-                error("ArrayList: Storage limit exceeded for type")
-
-        startIndex = nextFreeIndex
-        capacity = cap
-        nextFreeIndex += cap
+                return true
+        return false
 
     /** Compacts the free list by merging adjacent sections */
     private static function compactFreeList()
@@ -285,6 +300,17 @@ public class ArrayList<T:>
             error("ArrayList: Index out of bounds: " + index.toString())
         store[startIndex + index] = elem
 
+    /** Reads the element at the given index via the [] operator (O(1)).
+        Note: for tuple element types use get()/set() instead - the [] operator on
+        tuple-typed lists currently hits a compiler limitation. */
+    function op_index(int index) returns T
+        return get(index)
+
+    /** Writes the element at the given index via the [] operator (O(1)).
+        See op_index for the tuple element-type caveat. */
+    function op_indexAssign(int index, T value)
+        set(index, value)
+
     /** Returns the index of the specified element or -1 if it doesn't exist (O(n)) */
     function indexOf(T elem) returns int
         for i = 0 to size - 1
@@ -296,6 +322,8 @@ public class ArrayList<T:>
     function has(T elem) returns boolean
         return indexOf(elem) >= 0
 
+    /** Removes the element at the given index and returns it, shifting the
+        remaining elements left to preserve order (O(n)) */
     function removeAtOrdered(int index) returns T
         if index < 0 or index >= size
             error("ArrayList: Index out of bounds: " + index.toString())
@@ -543,7 +571,9 @@ public class ArrayList<T:>
             store[startIndex + i] = store[startIndex + j]
             store[startIndex + j] = tmp
 
-    /** Sorts the list using optimized quicksort with median-of-three pivot */
+    /** Sorts the list using optimized quicksort with median-of-three pivot.
+        Unlike the other higher-order methods, the comparator is NOT destroyed so it
+        can be reused; destroy it yourself if it was allocated for a single sort. */
     function sortWith(Comparator<T> comparator)
         if comparator != null and size > 1
             quicksort(comparator, 0, size - 1)
@@ -639,11 +669,11 @@ public interface Comparator<T:>
 // SPECIALIZED SORT FUNCTIONS
 // ============================================================================
 
-constant Comparator<int> intComparator = (i1, i2) -> i1 - i2
+constant Comparator<int> intComparator = (i1, i2) -> i1 < i2 ? -1 : (i1 > i2 ? 1 : 0)
 public function ArrayList<int>.sort()
     this.sortWith(intComparator)
 
-constant Comparator<real> realComparator = (r1, r2) -> (r1 - r2).toInt()
+constant Comparator<real> realComparator = (r1, r2) -> r1 < r2 ? -1 : (r1 > r2 ? 1 : 0)
 public function ArrayList<real>.sort()
     this.sortWith(realComparator)
 
@@ -667,10 +697,3 @@ public function ArrayList<string>.joinBy(string separator) returns string
 /** Joins elements from a string list into one string */
 public function ArrayList<string>.join() returns string
     return this.joinBy("")
-
-
-public function ArrayList<T>.op_index<T>(int index) returns T
-    return this.get(index)
-
-public function ArrayList<T>.op_indexAssign<T>(int index, T value)
-    this.set(index, value)

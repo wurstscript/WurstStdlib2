@@ -137,3 +137,33 @@ function testManyConcurrentListsStayIsolated()
     for i = 0 to 20
         destroy lists.get(i)
     destroy lists
+
+// Dedicated element type so this test gets its own pristine static store and cannot
+// exhaust or fragment the shared store used by the other (int) tests.
+class FragElem
+
+@Test
+function testFragmentedMergeReuseNearCap()
+    // With the store near the cap, two adjacent freed sections that are each too small
+    // for a later request but together large enough must be merged and reused, rather
+    // than raising "Storage limit exceeded" while reclaimable space exists.
+    let big = JASS_MAX_ARRAY_SIZE - 200      // push nextFreeIndex close to the cap
+    let x = new ArrayList<FragElem>(big)
+    x.add(new FragElem())
+    let p = new ArrayList<FragElem>(60)
+    let q = new ArrayList<FragElem>(60)
+    let r = new ArrayList<FragElem>(60)      // stays live so p and q remain interior gaps
+    p.add(new FragElem())
+    q.add(new FragElem())
+    r.add(new FragElem())
+    destroy p
+    destroy q                                // free list: [big, 60] and [big + 60, 60]
+    // request 100: neither 60-slot gap fits, but the merged 120-slot gap does;
+    // the remaining tail (~20 slots) is far too small to satisfy it.
+    let d = new ArrayList<FragElem>(100)
+    let marker = new FragElem()
+    d.add(marker)
+    (d.get(0) == marker).assertTrue()
+    destroy x
+    destroy r
+    destroy d
