@@ -17292,8 +17292,8 @@ public class AbilityDefinitionChenDrunkenHaze extends AbilityDefinition
 	function setAttackSpeedModifier(int level, real value)
 		def.setLvlDataUnreal("Nsi4", level, 4, value)
 
-	function setAttacksPrevented(int level, string value)
-		def.setLvlDataString("Nsi1", level, 1, value)
+	function setAttacksPrevented(int level, int value)
+		def.setLvlDataInt("Nsi1", level, 1, value)
 
 	function setChanceToMiss(int level, real value)
 		def.setLvlDataUnreal("Nsi2", level, 2, value)
@@ -17403,8 +17403,8 @@ public class AbilityDefinitionSlowPoisonItem extends AbilityDefinition
 	function setMovementSpeedFactor(int level, real value)
 		def.setLvlDataUnreal("Spo2", level, 2, value)
 
-	function setStackingType(int level, string value)
-		def.setLvlDataString("Spo4", level, 4, value)
+	function setStackingType(int level, int value)
+		def.setLvlDataInt("Spo4", level, 4, value)
 
 	function setAttackSpeedFactor(int level, real value)
 		def.setLvlDataUnreal("Spo3", level, 3, value)
@@ -17787,8 +17787,8 @@ public class AbilityDefinitionParasiteEredar extends AbilityDefinition
 	function setDamageperSecond(int level, real value)
 		def.setLvlDataUnreal("Poi1", level, 1, value)
 
-	function setStackingType(int level, string value)
-		def.setLvlDataString("Poi4", level, 4, value)
+	function setStackingType(int level, int value)
+		def.setLvlDataInt("Poi4", level, 4, value)
 
 	function setSummonedUnitCount(int level, int value)
 		def.setLvlDataInt("Npa5", level, 5, value)
@@ -18180,8 +18180,8 @@ public class AbilityDefinitionBurrowBarbedArachnathid extends AbilityDefinition
 	function setAlternateFormUnit(int level, string value)
 		def.setLvlDataString("Emeu", level, 0, value)
 
-	function setMorphingFlags(int level, string value)
-		def.setLvlDataString("Eme2", level, 2, value)
+	function setMorphingFlags(int level, int value)
+		def.setLvlDataInt("Eme2", level, 2, value)
 
 	function setLandingDelayTime(int level, real value)
 		def.setLvlDataUnreal("Eme4", level, 4, value)
@@ -18417,8 +18417,8 @@ public class AbilityDefinitionColdArrows extends AbilityDefinition
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.coldArrows)
 
-	function setStackFlags(int level, string value)
-		def.setLvlDataString("Hca4", level, 4, value)
+	function setStackFlags(int level, int value)
+		def.setLvlDataInt("Hca4", level, 4, value)
 
 	function setExtraDamage(int level, real value)
 		def.setLvlDataUnreal("Hca1", level, 1, value)
