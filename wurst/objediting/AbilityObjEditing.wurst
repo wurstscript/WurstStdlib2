@@ -19168,7 +19168,7 @@ public class AbilityDefinitionStandDown extends AbilityDefinition
 
 public class AbilityDefinitionSellUnit extends AbilityDefinition
 	construct(int newAbilityId)
-		super(newAbilityId, AbilityIds.sellUnit)
+		super(newAbilityId, AbilityIds.sellUnitDynamic)
 
 
 
@@ -19322,6 +19322,267 @@ public class AbilityDefinitionAlarm extends AbilityDefinition
 
 
 
+public class AbilityDefinitionRally extends AbilityDefinition
+	construct(int newAbilityId)
+		super(newAbilityId, AbilityIds.rallyPoint)
+
+
+
+public class AbilityDefinitionShadowHunterVoodooo extends AbilityDefinition
+	construct(int newAbilityId)
+		super(newAbilityId, AbilityIds.bigBadVoodoo)
+
+
+
+public class AbilityDefinitionAcolyteHarvest extends AbilityDefinition
+	construct(int newAbilityId)
+		super(newAbilityId, AbilityIds.gather2)
+
+
+
+public class AbilityDefinitionAwaken extends AbilityDefinition
+	construct(int newAbilityId)
+		super(newAbilityId, AbilityIds.awakenHero)
+
+
+
+public class AbilityDefinitionBuildNeutral extends AbilityDefinition
+	construct(int newAbilityId)
+		super(newAbilityId, AbilityIds.neutralBuild)
+
+
+
+public class AbilityDefinitionBuildHuman extends AbilityDefinition
+	construct(int newAbilityId)
+		super(newAbilityId, AbilityIds.humanBuild)
+
+
+
+public class AbilityDefinitionBuildOrc extends AbilityDefinition
+	construct(int newAbilityId)
+		super(newAbilityId, AbilityIds.orcBuild)
+
+
+
+public class AbilityDefinitionBuildNightElf extends AbilityDefinition
+	construct(int newAbilityId)
+		super(newAbilityId, AbilityIds.nightElfBuild)
+
+
+
+public class AbilityDefinitionBuildNaga extends AbilityDefinition
+	construct(int newAbilityId)
+		super(newAbilityId, AbilityIds.nagaBuild)
+
+
+
+public class AbilityDefinitionCreepSleep extends AbilityDefinition
+	construct(int newAbilityId)
+		super(newAbilityId, AbilityIds.sleep)
+
+
+
+public class AbilityDefinitionDropInstant extends AbilityDefinition
+	construct(int newAbilityId)
+		super(newAbilityId, AbilityIds.unloadInstant)
+
+
+
+public class AbilityDefinitionDrop extends AbilityDefinition
+	construct(int newAbilityId)
+		super(newAbilityId, AbilityIds.unload)
+
+
+
+public class AbilityDefinitionMeatDrop extends AbilityDefinition
+	construct(int newAbilityId)
+		super(newAbilityId, AbilityIds.dropCorpse)
+
+
+
+public class AbilityDefinitionMeatLoad extends AbilityDefinition
+	construct(int newAbilityId)
+		super(newAbilityId, AbilityIds.getCorpse)
+
+
+
+public class AbilityDefinitionMilitiaConversion extends AbilityDefinition
+	construct(int newAbilityId)
+		super(newAbilityId, AbilityIds.callToArms)
+
+
+
+public class AbilityDefinitionPurchaseItem extends AbilityDefinition
+	construct(int newAbilityId)
+		super(newAbilityId, AbilityIds.shopPurchaseItem)
+
+
+
+public class AbilityDefinitionRevive extends AbilityDefinition
+	construct(int newAbilityId)
+		super(newAbilityId, AbilityIds.reviveHero)
+
+
+
+public class AbilityDefinitionSacrificeSacrificialPit extends AbilityDefinition
+	construct(int newAbilityId)
+		super(newAbilityId, AbilityIds.sacrifice1)
+
+
+
+public class AbilityDefinitionSacrificeAcolyte extends AbilityDefinition
+	construct(int newAbilityId)
+		super(newAbilityId, AbilityIds.sacrifice)
+
+
+
+public class AbilityDefinitionSellItem extends AbilityDefinition
+	construct(int newAbilityId)
+		super(newAbilityId, AbilityIds.sellItems)
+
+
+
+public class AbilityDefinitionTreeOfLifeForAttachingArt extends AbilityDefinition
+	construct(int newAbilityId)
+		super(newAbilityId, AbilityIds.treeofLifeupgradeability)
+
+
+
+public class AbilityDefinitionFlag extends AbilityDefinition
+	construct(int newAbilityId)
+		super(newAbilityId, AbilityIds.itemCaptureTheFlag)
+
+
+
+public class AbilityDefinitionFlagHuman extends AbilityDefinition
+	construct(int newAbilityId)
+		super(newAbilityId, AbilityIds.itemCaptureTheFlag1)
+
+
+
+public class AbilityDefinitionFlagOrc extends AbilityDefinition
+	construct(int newAbilityId)
+		super(newAbilityId, AbilityIds.itemCaptureTheFlag3)
+
+
+
+public class AbilityDefinitionFlagNightElf extends AbilityDefinition
+	construct(int newAbilityId)
+		super(newAbilityId, AbilityIds.itemCaptureTheFlag2)
+
+
+
+public class AbilityDefinitionFlagUndead extends AbilityDefinition
+	construct(int newAbilityId)
+		super(newAbilityId, AbilityIds.itemCaptureTheFlag4)
+
+
+
+public class AbilityDefinitionSoulTrap extends AbilityDefinition
+	construct(int newAbilityId)
+		super(newAbilityId, AbilityIds.itemSoulTheft)
+
+
+
+public class AbilityDefinitionSoulPossession extends AbilityDefinition
+	construct(int newAbilityId)
+		super(newAbilityId, AbilityIds.itemSoulPossession)
+
+
+
+public class AbilityDefinitionItemDamageAoe extends AbilityDefinition
+	construct(int newAbilityId)
+		super(newAbilityId, AbilityIds.itemAreatreewalldamage)
+
+
+
+public class AbilityDefinitionItemInvulNormal extends AbilityDefinition
+	construct(int newAbilityId)
+		super(newAbilityId, AbilityIds.itemTemporaryInvulnerability)
+
+	function setData(int level, bool value)
+		def.setLvlDataBoolean("AIvu", level, 1, value)
+
+
+
+public class AbilityDefinitionItemRitualDaggerInstant extends AbilityDefinition
+	construct(int newAbilityId)
+		super(newAbilityId, AbilityIds.ritualDaggerInstantHeal)
+
+	function setLeaveTargetAlive(int level, bool value)
+		def.setLvlDataBoolean("Udp5", level, 5, value)
+
+	function setData(int level, bool value)
+		def.setLvlDataBoolean("Idg1", level, 2, value)
+
+	function setData1(int level, bool value)
+		def.setLvlDataBoolean("Idg2", level, 3, value)
+
+	function setData2(int level, string value)
+		def.setLvlDataString("Idg3", level, 8, value)
+
+	function setHitPointsGained(int level, int value)
+		def.setLvlDataInt("Ihpg", level, 1, value)
+
+
+
+public class AbilityDefinitionItemRitualDaggerRegen extends AbilityDefinition
+	construct(int newAbilityId)
+		super(newAbilityId, AbilityIds.ritualDaggerRegenerate)
+
+	function setLeaveTargetAlive(int level, bool value)
+		def.setLvlDataBoolean("Udp5", level, 5, value)
+
+	function setData(int level, bool value)
+		def.setLvlDataBoolean("Idg1", level, 2, value)
+
+	function setData1(int level, bool value)
+		def.setLvlDataBoolean("Idg2", level, 3, value)
+
+	function setData2(int level, string value)
+		def.setLvlDataString("Idg3", level, 8, value)
+
+	function setHitPointsGained(int level, int value)
+		def.setLvlDataInt("Ihpg", level, 1, value)
+
+
+
+public class AbilityDefinitionSlow2 extends AbilityDefinition
+	construct(int newAbilityId)
+		super(newAbilityId, AbilityIds.itemOrbOfVenom)
+
+	function setAlwaysAutocast(int level, bool value)
+		def.setLvlDataBoolean("Slo3", level, 3, value)
+
+	function setAttackSpeedFactor(int level, real value)
+		def.setLvlDataUnreal("Slo2", level, 2, value)
+
+	function setMovementSpeedFactor(int level, real value)
+		def.setLvlDataUnreal("Slo1", level, 1, value)
+
+
+
+public class AbilityDefinitionDeathKnightAnimateDead1 extends AbilityDefinition
+	construct(int newAbilityId)
+		super(newAbilityId, AbilityIds.animateDeadDk)
+
+	function setInheritUpgrades(int level, bool value)
+		def.setLvlDataBoolean("Uan3", level, 3, value)
+
+	function setRaisedUnitsAreInvulnerable(int level, bool value)
+		def.setLvlDataBoolean("Hre2", level, 2, value)
+
+	function setNumberofCorpsesRaised(int level, int value)
+		def.setLvlDataInt("Uan1", level, 1, value)
+
+
+
+public class AbilityDefinitionResistantSkinCreep extends AbilityDefinition
+	construct(int newAbilityId)
+		super(newAbilityId, AbilityIds.resistantSkinCreep)
+
+
+
 public class AbilityDefinitionResistantSkin31PosCreep extends AbilityDefinition
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.resistantSkin31PosCreep)
@@ -19355,6 +19616,12 @@ public class AbilityDefinitionTornadoWander extends AbilityDefinition
 public class AbilityDefinitionResistantSkin extends AbilityDefinition
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.resistantSkin)
+
+
+
+public class AbilityDefinitionBuildUndead extends AbilityDefinition
+	construct(int newAbilityId)
+		super(newAbilityId, AbilityIds.undeadBuild)
 
 
 
