@@ -884,6 +884,17 @@ public class AbilityDefinitionPaladinDivineShield extends AbilityDefinition
 		def.setLevelsDataBoolean("Hds1", lvls, 1, lc)
 		addTooltipProperty("Can Deactivate", lc)
 
+public class AbilityDefinitionDivineShieldCreep extends AbilityDefinition
+	construct(int newAbilityId)
+		super(newAbilityId, AbilityIds.divineShield1)
+
+	function setCanDeactivate(int level, bool value)
+		def.setLvlDataBoolean("Hds1", level, 1, value)
+
+	function presetCanDeactivate(BooleanLevelClosure lc)
+		def.setLevelsDataBoolean("Hds1", lvls, 1, lc)
+		addTooltipProperty("Can Deactivate", lc)
+
 public class AbilityDefinitionPurgeCreep extends AbilityDefinition
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.purgeCreep)
@@ -7358,6 +7369,45 @@ public class AbilityDefinitionOrbofAnnihilation extends AbilityDefinition
 		def.setLevelsDataUnreal("fak4", lvls, 4, lc)
 		addTooltipProperty("Full Damage Radius", lc)
 
+public class AbilityDefinitionOrbOfAnnihilationQuillSpray extends AbilityDefinition
+	construct(int newAbilityId)
+		super(newAbilityId, AbilityIds.quillSpray)
+
+	function setSmallDamageFactor(int level, real value)
+		def.setLvlDataUnreal("fak3", level, 3, value)
+
+	function presetSmallDamageFactor(RealLevelClosure lc)
+		def.setLevelsDataUnreal("fak3", lvls, 3, lc)
+		addTooltipProperty("Small Damage Factor", lc)
+
+	function setDamageBonus(int level, real value)
+		def.setLvlDataUnreal("fak1", level, 1, value)
+
+	function presetDamageBonus(RealLevelClosure lc)
+		def.setLevelsDataUnreal("fak1", lvls, 1, lc)
+		addTooltipProperty("Damage Bonus", lc)
+
+	function setHalfDamageRadius(int level, real value)
+		def.setLvlDataUnreal("fak5", level, 5, value)
+
+	function presetHalfDamageRadius(RealLevelClosure lc)
+		def.setLevelsDataUnreal("fak5", lvls, 5, lc)
+		addTooltipProperty("Half Damage Radius", lc)
+
+	function setMediumDamageFactor(int level, real value)
+		def.setLvlDataUnreal("fak2", level, 2, value)
+
+	function presetMediumDamageFactor(RealLevelClosure lc)
+		def.setLevelsDataUnreal("fak2", lvls, 2, lc)
+		addTooltipProperty("Medium Damage Factor", lc)
+
+	function setFullDamageRadius(int level, real value)
+		def.setLvlDataUnreal("fak4", level, 4, value)
+
+	function presetFullDamageRadius(RealLevelClosure lc)
+		def.setLevelsDataUnreal("fak4", lvls, 4, lc)
+		addTooltipProperty("Full Damage Radius", lc)
+
 public class AbilityDefinitionMaxManaBonusLeast extends AbilityDefinition
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.maxManaBonusLeast)
@@ -9990,6 +10040,17 @@ public class AbilityDefinitionPitLordCleavingAttack extends AbilityDefinition
 		def.setLevelsDataUnreal("nca1", lvls, 1, lc)
 		addTooltipProperty("Distributed Damage Factor", lc)
 
+public class AbilityDefinitionCleavingAttackCreep extends AbilityDefinition
+	construct(int newAbilityId)
+		super(newAbilityId, AbilityIds.cleavingAttack)
+
+	function setDistributedDamageFactor(int level, real value)
+		def.setLvlDataUnreal("nca1", level, 1, value)
+
+	function presetDistributedDamageFactor(RealLevelClosure lc)
+		def.setLevelsDataUnreal("nca1", lvls, 1, lc)
+		addTooltipProperty("Distributed Damage Factor", lc)
+
 public class AbilityDefinitionSilenceItem extends AbilityDefinition
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.silenceItem)
@@ -11338,6 +11399,24 @@ public class AbilityDefinitionItemRestoreAoe extends AbilityDefinition
 public class AbilityDefinitionKeeperoftheGroveThornsAura extends AbilityDefinition
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.thornsAura1)
+
+	function setDamageisPercentReceived(int level, bool value)
+		def.setLvlDataBoolean("Eah2", level, 2, value)
+
+	function presetDamageisPercentReceived(BooleanLevelClosure lc)
+		def.setLevelsDataBoolean("Eah2", lvls, 2, lc)
+		addTooltipProperty("Damage is Percent Received", lc)
+
+	function setDamageDealttoAttackers(int level, real value)
+		def.setLvlDataUnreal("Eah1", level, 1, value)
+
+	function presetDamageDealttoAttackers(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Eah1", lvls, 1, lc)
+		addTooltipProperty("Damage Dealt to Attackers", lc)
+
+public class AbilityDefinitionThornsAuraCreep extends AbilityDefinition
+	construct(int newAbilityId)
+		super(newAbilityId, AbilityIds.thornsAura)
 
 	function setDamageisPercentReceived(int level, bool value)
 		def.setLvlDataBoolean("Eah2", level, 2, value)
@@ -15210,6 +15289,38 @@ public class AbilityDefinitionRayOfDisruption extends AbilityDefinition
 public class AbilityDefinitionShadowMeld extends AbilityDefinition
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.shadowMeld)
+
+	function setDayNightDuration(int level, real value)
+		def.setLvlDataUnreal("Shm2", level, 2, value)
+
+	function presetDayNightDuration(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Shm2", lvls, 2, lc)
+		addTooltipProperty("Day/Night Duration", lc)
+
+	function setActionDuration(int level, real value)
+		def.setLvlDataUnreal("Shm3", level, 3, value)
+
+	function presetActionDuration(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Shm3", lvls, 3, lc)
+		addTooltipProperty("Action Duration", lc)
+
+	function setFadeDuration(int level, real value)
+		def.setLvlDataUnreal("Shm1", level, 1, value)
+
+	function presetFadeDuration(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Shm1", lvls, 1, lc)
+		addTooltipProperty("Fade Duration", lc)
+
+	function setPermanentCloak(int level, bool value)
+		def.setLvlDataBoolean("Shm4", level, 4, value)
+
+	function presetPermanentCloak(BooleanLevelClosure lc)
+		def.setLevelsDataBoolean("Shm4", lvls, 4, lc)
+		addTooltipProperty("Permanent Cloak", lc)
+
+public class AbilityDefinitionShadowMeldItem extends AbilityDefinition
+	construct(int newAbilityId)
+		super(newAbilityId, AbilityIds.itemShadowMeld)
 
 	function setDayNightDuration(int level, real value)
 		def.setLvlDataUnreal("Shm2", level, 2, value)
