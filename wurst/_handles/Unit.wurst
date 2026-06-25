@@ -575,7 +575,11 @@ public function unit.setTimeScale(real scale)
 	SetUnitTimeScale(this, scale)
 
 public function unit.setTimedLife(real time)
-	UnitApplyTimedLife(this, 'BTLF', time)
+	this.setTimedLife(time, 'BTLF')
+
+/** Applies a timed life over `time` seconds using the given decay buff id (instead of the default 'BTLF'). */
+public function unit.setTimedLife(real time, int buffId)
+	UnitApplyTimedLife(this, buffId, time)
 
 public function unit.setTurnSpeed(real speed)
 	SetUnitTurnSpeed(this, speed)
