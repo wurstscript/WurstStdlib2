@@ -27,10 +27,6 @@ import ClosureTimers
 function check(string name, boolean condition)
 	print((condition ? "[ok] " : "|cffff0000[FAIL]|r ") + name)
 
-init
-	doAfter(1) ->
-		runMultibyteDiagnostics()
-
 public function runMultibyteDiagnostics()
 	print("ENABLE_MULTIBYTE_SUPPORT = " + ENABLE_MULTIBYTE_SUPPORT.toString())
 	print("PARTIAL_CHAR_HASH = " + PARTIAL_CHAR_HASH.toString() + " (legacy = 1843378377)")
