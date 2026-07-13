@@ -43,8 +43,13 @@ public class ChunkedString
 
 		while true
 			var remain = chunkSize - buffer.length()
-			if ENABLE_MULTIBYTE_SUPPORT and remain > 0 and data.length() >= remain and data.substring(remain - 1, remain).getHash() == 1843378377
-				remain++
+			if ENABLE_MULTIBYTE_SUPPORT and remain > 0
+				// If the cut would split a multibyte character, widen the chunk
+				// by up to 3 bytes until the cut lands on a character boundary
+				var widened = 0
+				while widened < 3 and remain < data.length() and not data.isCharBoundary(remain)
+					remain++
+					widened++
 
 			buffer += data.substring(0, remain)
 

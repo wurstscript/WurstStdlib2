@@ -4,7 +4,60 @@ import Integer
 import Annotations
 import Maths
 
-@configurable public constant ENABLE_MULTIBYTE_SUPPORT = false
+@configurable public constant ENABLE_MULTIBYTE_SUPPORT = true
+
+/**	A SubString slice that cuts a multibyte (non-latin) character in half does not
+	contain valid data. On current game versions such invalid slices are collapsed
+	to a marker string with a constant string hash. Since this behavior is
+	undocumented and has changed between game versions, the marker hash is computed
+	at runtime from a known 2-byte character, so a future engine change degrades
+	gracefully (multibyte detection turns off) instead of corrupting data.
+	The historically observed hash 1843378377 is kept as an additional fallback. */
+public constant PARTIAL_CHAR_MARKER = "ä".substring(0, 1)
+public constant PARTIAL_CHAR_HASH = PARTIAL_CHAR_MARKER.getHash()
+constant LEGACY_PARTIAL_CHAR_HASH = 1843378377
+/** False if slicing cannot produce invalid data on this game version
+	(SubString returned the whole character for a partial slice). */
+constant PARTIAL_CHAR_DETECTABLE = PARTIAL_CHAR_MARKER != "ä" and PARTIAL_CHAR_MARKER != ""
+
+/** Returns true if this string is an invalid slice of a multibyte character.
+	Only meaningful when ENABLE_MULTIBYTE_SUPPORT is enabled. */
+public function string.isMultibytePartial() returns boolean
+	if not PARTIAL_CHAR_DETECTABLE
+		return false
+	let hash = this.getHash()
+	return hash == PARTIAL_CHAR_HASH or hash == LEGACY_PARTIAL_CHAR_HASH
+
+/**	The partial char marker only applies to slices starting with the lead byte
+	of a 2-3 byte character. A slice of a single continuation byte keeps a
+	per-byte hash instead. All 64 continuation byte values 0x80-0xBF occur as
+	the second byte of the characters U+0400-U+043F, so slicing this literal
+	yields every possible continuation byte, whose hashes we store in a table. */
+constant CONT_BYTE_PROBE = "ЀЁЂЃЄЅІЇЈЉЊЋЌЍЎЏАБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдежзийклмноп"
+constant CONT_BYTE_MAP = InitHashtable()
+/** Hash of a slice containing only the lead byte 0xF0 of a 4-byte character
+	(emoji and other astral plane chars), which the game does not collapse
+	to the partial char marker. */
+public constant LEAD4_HASH = "😀".substring(0, 1).getHash()
+
+init
+	for i = 0 to 63
+		SaveBoolean(CONT_BYTE_MAP, 0, CONT_BYTE_PROBE.substring(i * 2 + 1, i * 2 + 2).getHash(), true)
+
+/** Returns true if this string can be split at the given position without
+	cutting a multibyte character in half, i.e. the byte at the given position
+	starts a new character instead of continuing a preceding one.
+	Positions at or outside the string's bounds count as boundaries.
+	Only meaningful when ENABLE_MULTIBYTE_SUPPORT is enabled. */
+public function string.isCharBoundary(int pos) returns boolean
+	if pos <= 0 or pos >= this.length()
+		return true
+	let slice = this.substring(pos, pos + 1)
+	if slice.isMultibytePartial()
+		// lead byte of a 2-3 byte character, starts a new character
+		return true
+	// ascii and 4-byte lead bytes are boundaries, continuation bytes are not
+	return not LoadBoolean(CONT_BYTE_MAP, 0, slice.getHash())
 
 constant charset = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 constant numberset = "0123456789"
@@ -258,11 +311,21 @@ public class StringIterator
 
 	function next() returns string
 		var val = s.substring(currentpos, currentpos + 1)
-		if ENABLE_MULTIBYTE_SUPPORT and val.getHash() == 1843378377
-			val = s.substring(currentpos, currentpos + 2)
-			currentpos += 2
-		else
-			currentpos++
+		var width = 1
+		if ENABLE_MULTIBYTE_SUPPORT and PARTIAL_CHAR_DETECTABLE
+			let hash = val.getHash()
+			if LEAD4_HASH != PARTIAL_CHAR_HASH and hash == LEAD4_HASH
+				// 4-byte character (e.g. emoji) whose slices are not collapsed to the marker
+				width = 4
+				val = s.substring(currentpos, currentpos + width)
+			else if hash == PARTIAL_CHAR_HASH or hash == LEGACY_PARTIAL_CHAR_HASH
+				// A multibyte character is 2-4 bytes long - widen the slice until it is valid
+				width = 2
+				val = s.substring(currentpos, currentpos + width)
+				while width < 4 and currentpos + width < stringLen and val.isMultibytePartial()
+					width++
+					val = s.substring(currentpos, currentpos + width)
+		currentpos += width
 		return val
 
 	function close()

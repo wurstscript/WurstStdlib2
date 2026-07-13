@@ -1,0 +1,78 @@
+package MultibyteDiagnostics
+import ChunkedString
+import ClosureTimers
+
+/*	In-game diagnostics for multibyte (non-latin) string support.
+
+	The behavior of SubString/StringHash for slices of multibyte characters is
+	undocumented and has changed between game versions, and the wurst interpreter
+	(unit tests) does not emulate it. The only way to verify that multibyte
+	support works on the current patch is to check in game.
+
+	Configure the stdlib with `ENABLE_MULTIBYTE_SUPPORT = true`, then call
+	`runMultibyteDiagnostics()` from your map (e.g. via a chat command) and
+	inspect the output. Lines prefixed with [FAIL] indicate that multibyte
+	support is broken on the current game version, in which case non-latin
+	characters (player names, chat input) are not safe to store in save data.
+
+	Observed semantics on 2.0 era patches:
+	- SubString is byte-indexed, raw and lossless - slices keep their bytes
+	  even when they cut a character in half.
+	- StringHash collapses slices starting with the lead byte of a 2-3 byte
+	  character to a constant marker hash (PARTIAL_CHAR_HASH).
+	- Slices of a single continuation byte and slices starting with a 4-byte
+	  lead byte (emoji) are NOT collapsed and keep per-content hashes.
+*/
+
+function check(string name, boolean condition)
+	print((condition ? "[ok] " : "|cffff0000[FAIL]|r ") + name)
+
+init
+	doAfter(1) ->
+		runMultibyteDiagnostics()
+
+public function runMultibyteDiagnostics()
+	print("ENABLE_MULTIBYTE_SUPPORT = " + ENABLE_MULTIBYTE_SUPPORT.toString())
+	print("PARTIAL_CHAR_HASH = " + PARTIAL_CHAR_HASH.toString() + " (legacy = 1843378377)")
+	print("LEAD4_HASH = " + LEAD4_HASH.toString())
+
+	// Raw engine semantics: 2-byte (cyrillic/umlauts), 3-byte (CJK), 4-byte (emoji)
+	let two = "дä"
+	let three = "中文"
+	let four = "😀"
+	check("2-byte char has length 2", "д".length() == 2)
+	check("3-byte char has length 3", "中".length() == 3)
+	check("4-byte char has length 4", four.length() == 4)
+	check("partial 2-byte slice is detected", "д".substring(0, 1).isMultibytePartial())
+	check("partial 3-byte slices are detected", "中".substring(0, 1).isMultibytePartial() and "中".substring(0, 2).isMultibytePartial())
+	check("full char slice is valid", two.substring(0, 2) == "д")
+	check("slices are lossless", two.substring(0, 1) + two.substring(1, 4) == two)
+	// 4-byte lead slices are expected to keep their own hash instead of the marker
+	print("4-byte slice hashes: " + four.substring(0, 1).getHash().toString() + ", "
+		+ four.substring(0, 2).getHash().toString() + ", " + four.substring(0, 3).getHash().toString())
+	check("4-byte lead slice matches LEAD4_HASH", four.substring(0, 1).getHash() == LEAD4_HASH)
+
+	// Boundary classification
+	check("boundary detected at start of char", two.isCharBoundary(2))
+	check("boundary rejected inside 2-byte char", not two.isCharBoundary(1) and not two.isCharBoundary(3))
+	check("boundary rejected inside 3-byte char", not three.isCharBoundary(1) and not three.isCharBoundary(2))
+	check("boundary detected between 3-byte chars", three.isCharBoundary(3))
+	check("boundary rejected inside 4-byte char", not four.isCharBoundary(1) and not four.isCharBoundary(2) and not four.isCharBoundary(3))
+	check("boundary detected before 4-byte char", ("a" + four).isCharBoundary(1))
+
+	// Character-wise iteration
+	var iterated = ""
+	var count = 0
+	for c in "aд中😀b"
+		iterated += c
+		count++
+	check("iteration reassembles string", iterated == "aд中😀b")
+	check("iteration counts 5 chars, got " + count.toString(), count == 5)
+
+	// ChunkedString round trips with cuts landing inside multibyte chars
+	let input = "абвгдеёжз中文漢字😀🙂ab"
+	for chunkSize = 3 to 8
+		let cstring = new ChunkedString(chunkSize)
+		cstring.append(input)
+		check("ChunkedString round trip, chunkSize " + chunkSize.toString(), cstring.getUnsafeString() == input)
+		destroy cstring

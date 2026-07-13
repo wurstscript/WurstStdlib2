@@ -154,3 +154,19 @@ package StringTests
 
 	"invalid".toReal().assertEquals(0)
 
+
+@Test function testCharBoundary()
+	// ASCII strings may be split anywhere
+	"abc".isCharBoundary(0).assertTrue()
+	"abc".isCharBoundary(1).assertTrue()
+	"abc".isCharBoundary(2).assertTrue()
+	// positions at or outside the bounds count as boundaries
+	"abc".isCharBoundary(3).assertTrue()
+	"abc".isCharBoundary(-1).assertTrue()
+	"".isCharBoundary(0).assertTrue()
+
+@Test function testMultibytePartial()
+	// ASCII slices are never partial characters
+	"a".isMultibytePartial().assertFalse()
+	"abc".substring(1, 2).isMultibytePartial().assertFalse()
+	"".isMultibytePartial().assertFalse()
