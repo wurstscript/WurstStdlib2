@@ -1,5 +1,5 @@
 package SQLite
-import LinkedList
+import ArrayList
 
 // ============================================================================
 // COMPILETIME ONLY — SQLite JDBC bindings exposed by the WurstScript compiler.
@@ -39,10 +39,8 @@ import LinkedList
 @extern public native sqlite_close(int conn)
 @extern public native sqlite_exec(int conn, string q)
 
-// SQLite default SQLITE_MAX_COLUMN is 2000; used to cap the column array
-// in SqlResult. The compiletime interpreter runs on JVM, so this is not
-// constrained by JASS array limits.
-constant SQLITE_MAX_COLUMNS = 2000
+// The compiletime interpreter runs on JVM, so columns are dynamically
+// allocated in ArrayList without hitting JASS array limits.
 
 // ============================================================================
 // SqlResult — a single row from a SELECT query
@@ -50,29 +48,31 @@ constant SQLITE_MAX_COLUMNS = 2000
 
 /** A row returned from a SELECT query. Access columns by index via col(). */
 public class SqlResult
-    string array[2000] cols
-    int columnCount = 0
+    ArrayList<string> cols = new ArrayList<string>()
+
+    ondestroy
+        destroy this.cols
 
     /** Raw string value at column index. */
     function col(int index) returns string
-        return this.cols[index]
+        return this.cols.get(index)
 
     /** Column value parsed as int. */
     function colInt(int index) returns int
-        return this.cols[index].toInt()
+        return this.cols.get(index).toInt()
 
     /** Column value parsed as real. */
     function colReal(int index) returns real
-        return this.cols[index].toReal()
+        return this.cols.get(index).toReal()
 
     /** Column value as boolean ("1" or "true", case-insensitive → true). */
     function colBool(int index) returns boolean
-        let v = this.cols[index]
+        let v = this.cols.get(index)
         return v == "1" or v == "true" or v == "TRUE" or v == "True"
 
     /** Number of columns in this row. */
     function size() returns int
-        return this.columnCount
+        return this.cols.size()
 
 // ============================================================================
 // SqliteDb — OOP wrapper around a database connection
@@ -101,9 +101,8 @@ public class SqliteDb
 
     private function readRow(int stmt, int colCount) returns SqlResult
         let row = new SqlResult()
-        row.columnCount = colCount
         for i = 0 to colCount - 1
-            row.cols[i] = sqlite_column_string(stmt, i)
+            row.cols.add(sqlite_column_string(stmt, i))
         return row
 
     /** Executes a SELECT and returns all result rows. Caller owns the list
@@ -111,17 +110,16 @@ public class SqliteDb
 
         Column count is determined after the first sqlite_step to ensure the
         JDBC ResultSet metadata is available. */
-    function select(string query) returns LinkedList<SqlResult>
-        let list = new LinkedList<SqlResult>()
+    function select(string query) returns ArrayList<SqlResult>
+        let list = new ArrayList<SqlResult>()
         let stmt = sqlite_prepare(this.conn, query)
 
         if sqlite_step(stmt)
             let numCols = sqlite_column_count(stmt)
-            let limit = numCols > SQLITE_MAX_COLUMNS ? SQLITE_MAX_COLUMNS : numCols
-            list.add(readRow(stmt, limit))
+            list.add(readRow(stmt, numCols))
 
             while sqlite_step(stmt)
-                list.add(readRow(stmt, limit))
+                list.add(readRow(stmt, numCols))
 
         sqlite_finalize(stmt)
         return list
@@ -134,8 +132,7 @@ public class SqliteDb
 
         if sqlite_step(stmt)
             let numCols = sqlite_column_count(stmt)
-            let limit = numCols > SQLITE_MAX_COLUMNS ? SQLITE_MAX_COLUMNS : numCols
-            row = readRow(stmt, limit)
+            row = readRow(stmt, numCols)
 
         sqlite_finalize(stmt)
         return row
@@ -158,12 +155,12 @@ public class SqliteDb
 
     // -- Parameterised query methods -------------------------------------------
     // These use sqlite_prepare + sqlite_bind_* under the hood. Pass parameter
-    // values as a LinkedList<string>. Each "?" placeholder in the query is bound
+    // values as a ArrayList<string>. Each "?" placeholder in the query is bound
     // to the corresponding list entry (index 1-based for JDBC). All values are
     // bound as strings; SQLite's type affinity handles coercion.
 
     /** Binds a list of string parameters to a prepared statement, 1-indexed. */
-    private function bindParams(int stmt, LinkedList<string> params)
+    private function bindParams(int stmt, ArrayList<string> params)
         var idx = 1
         for p in params
             sqlite_bind_string(stmt, idx, p)
@@ -171,7 +168,7 @@ public class SqliteDb
 
     /** Executes a parameterised statement that returns no rows.
         Example: db.execPrepared("INSERT INTO t VALUES (?, ?)", asList("foo", "42")) */
-    function execPrepared(string query, LinkedList<string> params)
+    function execPrepared(string query, ArrayList<string> params)
         let stmt = sqlite_prepare(this.conn, query)
         bindParams(stmt, params)
         sqlite_step(stmt)
@@ -179,38 +176,36 @@ public class SqliteDb
 
     /** Executes a parameterised SELECT and returns all result rows.
         Caller owns the list and its SqlResult entries — destroy both when done. */
-    function selectPrepared(string query, LinkedList<string> params) returns LinkedList<SqlResult>
-        let list = new LinkedList<SqlResult>()
+    function selectPrepared(string query, ArrayList<string> params) returns ArrayList<SqlResult>
+        let list = new ArrayList<SqlResult>()
         let stmt = sqlite_prepare(this.conn, query)
         bindParams(stmt, params)
 
         if sqlite_step(stmt)
             let numCols = sqlite_column_count(stmt)
-            let limit = numCols > SQLITE_MAX_COLUMNS ? SQLITE_MAX_COLUMNS : numCols
-            list.add(readRow(stmt, limit))
+            list.add(readRow(stmt, numCols))
 
             while sqlite_step(stmt)
-                list.add(readRow(stmt, limit))
+                list.add(readRow(stmt, numCols))
 
         sqlite_finalize(stmt)
         return list
 
     /** Executes a parameterised SELECT and returns only the first row, or null. */
-    function selectFirstPrepared(string query, LinkedList<string> params) returns SqlResult
+    function selectFirstPrepared(string query, ArrayList<string> params) returns SqlResult
         let stmt = sqlite_prepare(this.conn, query)
         bindParams(stmt, params)
         SqlResult row = null
 
         if sqlite_step(stmt)
             let numCols = sqlite_column_count(stmt)
-            let limit = numCols > SQLITE_MAX_COLUMNS ? SQLITE_MAX_COLUMNS : numCols
-            row = readRow(stmt, limit)
+            row = readRow(stmt, numCols)
 
         sqlite_finalize(stmt)
         return row
 
     /** Returns true if the parameterised query produces at least one row. */
-    function existsPrepared(string query, LinkedList<string> params) returns boolean
+    function existsPrepared(string query, ArrayList<string> params) returns boolean
         let stmt = sqlite_prepare(this.conn, query)
         bindParams(stmt, params)
         let found = sqlite_step(stmt)
@@ -239,7 +234,7 @@ public class SQL
     static function exec(string query)
         connection().exec(query)
 
-    static function select(string query) returns LinkedList<SqlResult>
+    static function select(string query) returns ArrayList<SqlResult>
         return connection().select(query)
 
     static function selectFirst(string query) returns SqlResult
@@ -253,16 +248,16 @@ public class SQL
 
     // -- Parameterised convenience methods --
 
-    static function execPrepared(string query, LinkedList<string> params)
+    static function execPrepared(string query, ArrayList<string> params)
         connection().execPrepared(query, params)
 
-    static function selectPrepared(string query, LinkedList<string> params) returns LinkedList<SqlResult>
+    static function selectPrepared(string query, ArrayList<string> params) returns ArrayList<SqlResult>
         return connection().selectPrepared(query, params)
 
-    static function selectFirstPrepared(string query, LinkedList<string> params) returns SqlResult
+    static function selectFirstPrepared(string query, ArrayList<string> params) returns SqlResult
         return connection().selectFirstPrepared(query, params)
 
-    static function existsPrepared(string query, LinkedList<string> params) returns boolean
+    static function existsPrepared(string query, ArrayList<string> params) returns boolean
         return connection().existsPrepared(query, params)
 
     /** Returns the underlying SqliteDb instance. */

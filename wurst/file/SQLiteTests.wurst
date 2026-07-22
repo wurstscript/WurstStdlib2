@@ -1,6 +1,6 @@
 package SQLiteTests
 import SQLite
-import LinkedList
+import ArrayList
 
 function _createTestDb() returns SqliteDb
     let db = new SqliteDb(":memory:")
@@ -186,7 +186,7 @@ function _createTestDb() returns SqliteDb
 
 @test function test_SqliteDb_execPrepared_insertsWithParams()
     let db = _createTestDb()
-    let params = new LinkedList<string>()
+    let params = new ArrayList<string>()
     params.add("Lancelot")
     params.add("Knight")
     params.add("8800")
@@ -202,7 +202,7 @@ function _createTestDb() returns SqliteDb
 
 @test function test_SqliteDb_selectPrepared_returnsFilteredRows()
     let db = _createTestDb()
-    let params = new LinkedList<string>()
+    let params = new ArrayList<string>()
     params.add("Paladin")
     let rows = db.selectPrepared("SELECT name FROM heroes WHERE role = ?", params)
     destroy params
@@ -215,7 +215,7 @@ function _createTestDb() returns SqliteDb
 
 @test function test_SqliteDb_selectFirstPrepared_returnsSingleRow()
     let db = _createTestDb()
-    let params = new LinkedList<string>()
+    let params = new ArrayList<string>()
     params.add("Arthur")
     let row = db.selectFirstPrepared("SELECT power_level FROM heroes WHERE name = ?", params)
     destroy params
@@ -225,7 +225,7 @@ function _createTestDb() returns SqliteDb
 
 @test function test_SqliteDb_selectFirstPrepared_returnsNullWhenNoMatch()
     let db = _createTestDb()
-    let params = new LinkedList<string>()
+    let params = new ArrayList<string>()
     params.add("Nobody")
     let row = db.selectFirstPrepared("SELECT name FROM heroes WHERE name = ?", params)
     destroy params
@@ -234,7 +234,7 @@ function _createTestDb() returns SqliteDb
 
 @test function test_SqliteDb_existsPrepared_trueWhenPresent()
     let db = _createTestDb()
-    let params = new LinkedList<string>()
+    let params = new ArrayList<string>()
     params.add("Arthur")
     db.existsPrepared("SELECT 1 FROM heroes WHERE name = ?", params).assertEquals(true)
     destroy params
@@ -242,7 +242,7 @@ function _createTestDb() returns SqliteDb
 
 @test function test_SqliteDb_existsPrepared_falseWhenMissing()
     let db = _createTestDb()
-    let params = new LinkedList<string>()
+    let params = new ArrayList<string>()
     params.add("Nobody")
     db.existsPrepared("SELECT 1 FROM heroes WHERE name = ?", params).assertEquals(false)
     destroy params
@@ -251,7 +251,7 @@ function _createTestDb() returns SqliteDb
 @test function test_SqliteDb_execPrepared_preventsInjection()
     let db = _createTestDb()
     // This malicious name would drop the table if interpolated as raw SQL
-    let params = new LinkedList<string>()
+    let params = new ArrayList<string>()
     params.add("'); DROP TABLE heroes; --")
     params.add("Evil")
     params.add("0")
@@ -322,7 +322,7 @@ function _createTestDb() returns SqliteDb
 @test function test_SQL_singleton_execPrepared()
     SQL.exec("DROP TABLE IF EXISTS _sgtest6")
     SQL.exec("CREATE TABLE _sgtest6 (name TEXT, val TEXT)")
-    let params = new LinkedList<string>()
+    let params = new ArrayList<string>()
     params.add("key1")
     params.add("value1")
     SQL.execPrepared("INSERT INTO _sgtest6 VALUES (?, ?)", params)
