@@ -1,0 +1,280 @@
+package SQLite
+import LinkedList
+
+// ============================================================================
+// COMPILETIME ONLY — SQLite JDBC bindings exposed by the WurstScript compiler.
+// These run during compilation (@compiletime functions) and unit tests (@test).
+// They do NOT exist inside Warcraft III at runtime. Do not call any sqlite_*
+// native or use SqlResult / SqliteDb / SQL from code that runs in-game.
+//
+// UPSTREAM DEPENDENCY: Requires wurstscript/WurstScript PR #1180 which adds
+// compiletime SQLite native support to the interpreter. These bindings will
+// not function without that compiler-side change.
+//
+// ERROR BEHAVIOUR: The compiler-side natives throw InterpreterExceptions on
+// failure (invalid handles, SQL errors, JDBC failures). These exceptions are
+// fatal and will abort the compiletime run with an error message. There is no
+// recoverable error path — if sqlite_open, sqlite_prepare, or sqlite_exec
+// fails, compilation stops.
+//
+// SQL INJECTION WARNING: The convenience methods (exec, select, selectFirst,
+// exists, count) accept raw query strings with NO parameterisation. For any
+// query involving dynamic values (user input, computed strings), use the
+// parameterised variants (execPrepared, selectPrepared, selectFirstPrepared)
+// or call the sqlite_prepare/sqlite_bind_* natives directly.
+// ============================================================================
+
+@extern public native sqlite_open(string path) returns int
+@extern public native sqlite_prepare(int conn, string q) returns int
+@extern public native sqlite_bind_int(int stmt, int idx, int val)
+@extern public native sqlite_bind_real(int stmt, int idx, real val)
+@extern public native sqlite_bind_string(int stmt, int idx, string val)
+@extern public native sqlite_step(int stmt) returns boolean
+@extern public native sqlite_column_count(int stmt) returns int
+@extern public native sqlite_column_int(int stmt, int idx) returns int
+@extern public native sqlite_column_real(int stmt, int idx) returns real
+@extern public native sqlite_column_string(int stmt, int idx) returns string
+@extern public native sqlite_reset(int stmt)
+@extern public native sqlite_finalize(int stmt)
+@extern public native sqlite_close(int conn)
+@extern public native sqlite_exec(int conn, string q)
+
+// SQLite default SQLITE_MAX_COLUMN is 2000; used to cap the column array
+// in SqlResult. The compiletime interpreter runs on JVM, so this is not
+// constrained by JASS array limits.
+constant SQLITE_MAX_COLUMNS = 2000
+
+// ============================================================================
+// SqlResult — a single row from a SELECT query
+// ============================================================================
+
+/** A row returned from a SELECT query. Access columns by index via col(). */
+public class SqlResult
+    string array[2000] cols
+    int columnCount = 0
+
+    /** Raw string value at column index. */
+    function col(int index) returns string
+        return this.cols[index]
+
+    /** Column value parsed as int. */
+    function colInt(int index) returns int
+        return this.cols[index].toInt()
+
+    /** Column value parsed as real. */
+    function colReal(int index) returns real
+        return this.cols[index].toReal()
+
+    /** Column value as boolean ("1" or "true", case-insensitive → true). */
+    function colBool(int index) returns boolean
+        let v = this.cols[index]
+        return v == "1" or v == "true" or v == "TRUE" or v == "True"
+
+    /** Number of columns in this row. */
+    function size() returns int
+        return this.columnCount
+
+// ============================================================================
+// SqliteDb — OOP wrapper around a database connection
+// ============================================================================
+
+/** Wraps an SQLite database connection with convenience methods. */
+public class SqliteDb
+    private int conn
+
+    /** Opens (or creates) the database at the given path. Use ":memory:" for temporary databases. */
+    construct(string path)
+        this.conn = sqlite_open(path)
+
+    /** Returns the raw connection handle for direct native calls. */
+    function getHandle() returns int
+        return this.conn
+
+    // -- Raw query methods (no parameterisation) --------------------------------
+    // WARNING: These accept raw SQL strings. Do not interpolate untrusted values
+    // into the query string. Use the parameterised variants or the native
+    // sqlite_prepare/sqlite_bind_* functions for dynamic values.
+
+    /** Executes a statement that returns no rows (DDL, INSERT, UPDATE, DELETE). */
+    function exec(string query)
+        sqlite_exec(this.conn, query)
+
+    private function readRow(int stmt, int colCount) returns SqlResult
+        let row = new SqlResult()
+        row.columnCount = colCount
+        for i = 0 to colCount - 1
+            row.cols[i] = sqlite_column_string(stmt, i)
+        return row
+
+    /** Executes a SELECT and returns all result rows. Caller owns the list
+        and its SqlResult entries — destroy both when done.
+
+        Column count is determined after the first sqlite_step to ensure the
+        JDBC ResultSet metadata is available. */
+    function select(string query) returns LinkedList<SqlResult>
+        let list = new LinkedList<SqlResult>()
+        let stmt = sqlite_prepare(this.conn, query)
+
+        if sqlite_step(stmt)
+            let numCols = sqlite_column_count(stmt)
+            let limit = numCols > SQLITE_MAX_COLUMNS ? SQLITE_MAX_COLUMNS : numCols
+            list.add(readRow(stmt, limit))
+
+            while sqlite_step(stmt)
+                list.add(readRow(stmt, limit))
+
+        sqlite_finalize(stmt)
+        return list
+
+    /** Executes a SELECT and returns only the first row, or null if no rows match.
+        Caller owns the returned SqlResult — destroy it when done. */
+    function selectFirst(string query) returns SqlResult
+        let stmt = sqlite_prepare(this.conn, query)
+        SqlResult row = null
+
+        if sqlite_step(stmt)
+            let numCols = sqlite_column_count(stmt)
+            let limit = numCols > SQLITE_MAX_COLUMNS ? SQLITE_MAX_COLUMNS : numCols
+            row = readRow(stmt, limit)
+
+        sqlite_finalize(stmt)
+        return row
+
+    /** Returns true if the query produces at least one row. */
+    function exists(string query) returns boolean
+        let stmt = sqlite_prepare(this.conn, query)
+        let found = sqlite_step(stmt)
+        sqlite_finalize(stmt)
+        return found
+
+    /** Runs a "SELECT count(…)" query and returns the first column of the first row as int. */
+    function count(string query) returns int
+        let row = this.selectFirst(query)
+        if row != null
+            let c = row.colInt(0)
+            destroy row
+            return c
+        return 0
+
+    // -- Parameterised query methods -------------------------------------------
+    // These use sqlite_prepare + sqlite_bind_* under the hood. Pass parameter
+    // values as a LinkedList<string>. Each "?" placeholder in the query is bound
+    // to the corresponding list entry (index 1-based for JDBC). All values are
+    // bound as strings; SQLite's type affinity handles coercion.
+
+    /** Binds a list of string parameters to a prepared statement, 1-indexed. */
+    private function bindParams(int stmt, LinkedList<string> params)
+        var idx = 1
+        for p in params
+            sqlite_bind_string(stmt, idx, p)
+            idx++
+
+    /** Executes a parameterised statement that returns no rows.
+        Example: db.execPrepared("INSERT INTO t VALUES (?, ?)", asList("foo", "42")) */
+    function execPrepared(string query, LinkedList<string> params)
+        let stmt = sqlite_prepare(this.conn, query)
+        bindParams(stmt, params)
+        sqlite_step(stmt)
+        sqlite_finalize(stmt)
+
+    /** Executes a parameterised SELECT and returns all result rows.
+        Caller owns the list and its SqlResult entries — destroy both when done. */
+    function selectPrepared(string query, LinkedList<string> params) returns LinkedList<SqlResult>
+        let list = new LinkedList<SqlResult>()
+        let stmt = sqlite_prepare(this.conn, query)
+        bindParams(stmt, params)
+
+        if sqlite_step(stmt)
+            let numCols = sqlite_column_count(stmt)
+            let limit = numCols > SQLITE_MAX_COLUMNS ? SQLITE_MAX_COLUMNS : numCols
+            list.add(readRow(stmt, limit))
+
+            while sqlite_step(stmt)
+                list.add(readRow(stmt, limit))
+
+        sqlite_finalize(stmt)
+        return list
+
+    /** Executes a parameterised SELECT and returns only the first row, or null. */
+    function selectFirstPrepared(string query, LinkedList<string> params) returns SqlResult
+        let stmt = sqlite_prepare(this.conn, query)
+        bindParams(stmt, params)
+        SqlResult row = null
+
+        if sqlite_step(stmt)
+            let numCols = sqlite_column_count(stmt)
+            let limit = numCols > SQLITE_MAX_COLUMNS ? SQLITE_MAX_COLUMNS : numCols
+            row = readRow(stmt, limit)
+
+        sqlite_finalize(stmt)
+        return row
+
+    /** Returns true if the parameterised query produces at least one row. */
+    function existsPrepared(string query, LinkedList<string> params) returns boolean
+        let stmt = sqlite_prepare(this.conn, query)
+        bindParams(stmt, params)
+        let found = sqlite_step(stmt)
+        sqlite_finalize(stmt)
+        return found
+
+    ondestroy
+        sqlite_close(this.conn)
+
+// ============================================================================
+// SQL — configurable singleton for the common single-database workflow
+// ============================================================================
+
+/** Override this in your package to point at your project database. */
+@configurable public constant SQL_DATABASE_PATH = ":memory:"
+
+/** Singleton database access. Configure the path via SQL_DATABASE_PATH. */
+public class SQL
+    private static SqliteDb db = null
+
+    private static function connection() returns SqliteDb
+        if db == null
+            db = new SqliteDb(SQL_DATABASE_PATH)
+        return db
+
+    static function exec(string query)
+        connection().exec(query)
+
+    static function select(string query) returns LinkedList<SqlResult>
+        return connection().select(query)
+
+    static function selectFirst(string query) returns SqlResult
+        return connection().selectFirst(query)
+
+    static function exists(string query) returns boolean
+        return connection().exists(query)
+
+    static function count(string query) returns int
+        return connection().count(query)
+
+    // -- Parameterised convenience methods --
+
+    static function execPrepared(string query, LinkedList<string> params)
+        connection().execPrepared(query, params)
+
+    static function selectPrepared(string query, LinkedList<string> params) returns LinkedList<SqlResult>
+        return connection().selectPrepared(query, params)
+
+    static function selectFirstPrepared(string query, LinkedList<string> params) returns SqlResult
+        return connection().selectFirstPrepared(query, params)
+
+    static function existsPrepared(string query, LinkedList<string> params) returns boolean
+        return connection().existsPrepared(query, params)
+
+    /** Returns the underlying SqliteDb instance. */
+    static function getDb() returns SqliteDb
+        return connection()
+
+    /** Returns the raw connection handle for direct native calls. */
+    static function getHandle() returns int
+        return connection().getHandle()
+
+    /** Closes the singleton connection. Next call reopens it. */
+    static function close()
+        if db != null
+            destroy db
+            db = null
