@@ -69,8 +69,8 @@ function _createTestDb() returns SqliteDb
     rows.get(0).col(0).assertEquals("Arthur")
     rows.get(1).col(0).assertEquals("Merlin")
     rows.get(2).col(0).assertEquals("Robin")
-    for row in rows
-        destroy row
+    for i = 0 to rows.size() - 1
+        destroy rows.get(i)
     destroy rows
     destroy db
 
@@ -208,8 +208,8 @@ function _createTestDb() returns SqliteDb
     destroy params
     rows.size().assertEquals(1)
     rows.get(0).col(0).assertEquals("Arthur")
-    for row in rows
-        destroy row
+    for i = 0 to rows.size() - 1
+        destroy rows.get(i)
     destroy rows
     destroy db
 
@@ -272,8 +272,8 @@ function _createTestDb() returns SqliteDb
     let rows = SQL.select("SELECT val FROM _sgtest1 WHERE id = 1")
     rows.size().assertEquals(1)
     rows.get(0).col(0).assertEquals("hello")
-    for row in rows
-        destroy row
+    for i = 0 to rows.size() - 1
+        destroy rows.get(i)
     destroy rows
     SQL.exec("DROP TABLE _sgtest1")
     SQL.close()
@@ -342,8 +342,8 @@ function _createTestDb() returns SqliteDb
     rows.get(0).colInt(1).assertEquals(9000)
     rows.get(1).col(0).assertEquals("Merlin")
     rows.get(2).col(0).assertEquals("Robin")
-    for row in rows
-        destroy row
+    for i = 0 to rows.size() - 1
+        destroy rows.get(i)
     destroy rows
     destroy db
 
@@ -353,8 +353,8 @@ function _createTestDb() returns SqliteDb
     rows.size().assertEquals(2)
     rows.get(0).col(0).assertEquals("Merlin")
     rows.get(1).col(0).assertEquals("Robin")
-    for row in rows
-        destroy row
+    for i = 0 to rows.size() - 1
+        destroy rows.get(i)
     destroy rows
     destroy db
 
@@ -365,6 +365,23 @@ function _createTestDb() returns SqliteDb
     let row = db.selectFirst("SELECT a, b FROM nullable")
     row.col(0).assertEquals("present")
     row.col(1).assertEquals("")
+    destroy row
+    destroy db
+
+@test function test_SqlResult_colIsNull_distinguishesNullFromEmptyString()
+    let db = new SqliteDb(":memory:")
+    db.exec("CREATE TABLE t (a TEXT, b TEXT, c TEXT)")
+    // a = 'x' (value), b = '' (empty string, NOT null), c = NULL (omitted)
+    db.exec("INSERT INTO t (a, b) VALUES ('x', '')")
+    let row = db.selectFirst("SELECT a, b, c FROM t")
+    // col() cannot tell '' apart from NULL — both come back as ""
+    row.col(0).assertEquals("x")
+    row.col(1).assertEquals("")
+    row.col(2).assertEquals("")
+    // colIsNull() is the only reliable discriminator
+    row.colIsNull(0).assertEquals(false)
+    row.colIsNull(1).assertEquals(false)
+    row.colIsNull(2).assertEquals(true)
     destroy row
     destroy db
 
@@ -387,4 +404,164 @@ function _createTestDb() returns SqliteDb
     row.colInt(1).assertEquals(9000)
     row.size().assertEquals(3)
     destroy row
+    destroy db
+
+// ============================================================================
+// Native surface coverage — proves every @extern native behaves as documented.
+// These use the raw handle (db.getHandle()) so each native is exercised directly.
+// ============================================================================
+
+// --- sqlite_bind_int / sqlite_bind_real / sqlite_column_int / sqlite_column_real ---
+
+@test function test_native_bindTypedAndReadBack()
+    let db = new SqliteDb(":memory:")
+    let h = db.getHandle()
+    sqlite_exec(h, "CREATE TABLE t (i INTEGER, r REAL)")
+    let ins = sqlite_prepare(h, "INSERT INTO t VALUES (?, ?)")
+    sqlite_bind_int(ins, 1, 42)
+    sqlite_bind_real(ins, 2, 2.5)
+    // stepping an INSERT executes it and yields no row
+    sqlite_step(ins).assertEquals(false)
+    sqlite_finalize(ins)
+    let sel = sqlite_prepare(h, "SELECT i, r FROM t")
+    sqlite_step(sel).assertEquals(true)
+    sqlite_column_int(sel, 0).assertEquals(42)
+    sqlite_column_real(sel, 1).assertEquals(2.5, 0.0001)
+    sqlite_finalize(sel)
+    destroy db
+
+// --- sqlite_column_count ---
+
+@test function test_native_columnCount_matchesSelectedColumns()
+    let db = new SqliteDb(":memory:")
+    let h = db.getHandle()
+    sqlite_exec(h, "CREATE TABLE t (a INTEGER, b INTEGER, c INTEGER)")
+    sqlite_exec(h, "INSERT INTO t VALUES (1, 2, 3)")
+    let stmt = sqlite_prepare(h, "SELECT a, b, c FROM t")
+    sqlite_step(stmt).assertEquals(true)
+    sqlite_column_count(stmt).assertEquals(3)
+    sqlite_finalize(stmt)
+    destroy db
+
+// --- sqlite_column_is_null (native) ---
+
+@test function test_native_columnIsNull()
+    let db = new SqliteDb(":memory:")
+    let h = db.getHandle()
+    sqlite_exec(h, "CREATE TABLE t (a INTEGER, b INTEGER)")
+    sqlite_exec(h, "INSERT INTO t (a) VALUES (7)")
+    let stmt = sqlite_prepare(h, "SELECT a, b FROM t")
+    sqlite_step(stmt).assertEquals(true)
+    sqlite_column_is_null(stmt, 0).assertEquals(false)
+    sqlite_column_is_null(stmt, 1).assertEquals(true)
+    sqlite_finalize(stmt)
+    destroy db
+
+// --- sqlite_step past the last row ---
+
+@test function test_native_stepReturnsFalsePastLastRow()
+    let db = new SqliteDb(":memory:")
+    let h = db.getHandle()
+    sqlite_exec(h, "CREATE TABLE t (v INTEGER)")
+    sqlite_exec(h, "INSERT INTO t VALUES (1)")
+    let stmt = sqlite_prepare(h, "SELECT v FROM t")
+    sqlite_step(stmt).assertEquals(true)
+    sqlite_step(stmt).assertEquals(false)
+    sqlite_finalize(stmt)
+    destroy db
+
+// --- sqlite_reset: rewinds the cursor AND preserves bound parameters ---
+
+@test function test_native_reset_rewindsAndPreservesBindings()
+    let db = new SqliteDb(":memory:")
+    let h = db.getHandle()
+    sqlite_exec(h, "CREATE TABLE t (v INTEGER)")
+    sqlite_exec(h, "INSERT INTO t VALUES (10), (20), (30)")
+    let stmt = sqlite_prepare(h, "SELECT v FROM t WHERE v >= ? ORDER BY v")
+    sqlite_bind_int(stmt, 1, 20)
+    // first pass: 20, 30
+    sqlite_step(stmt).assertEquals(true)
+    sqlite_column_int(stmt, 0).assertEquals(20)
+    sqlite_step(stmt).assertEquals(true)
+    sqlite_column_int(stmt, 0).assertEquals(30)
+    sqlite_step(stmt).assertEquals(false)
+    // reset rewinds; the binding (20) must still be in effect
+    sqlite_reset(stmt)
+    sqlite_step(stmt).assertEquals(true)
+    sqlite_column_int(stmt, 0).assertEquals(20)
+    sqlite_finalize(stmt)
+    destroy db
+
+// --- sqlite_clear_bindings: unbinds parameters (they become NULL) ---
+
+@test function test_native_clearBindings_resetsParamsToNull()
+    let db = new SqliteDb(":memory:")
+    let h = db.getHandle()
+    let stmt = sqlite_prepare(h, "SELECT ?")
+    sqlite_bind_string(stmt, 1, "bound")
+    sqlite_step(stmt).assertEquals(true)
+    sqlite_column_is_null(stmt, 0).assertEquals(false)
+    sqlite_column_string(stmt, 0).assertEquals("bound")
+    // clear the binding, rewind, step again — the parameter is now NULL
+    sqlite_clear_bindings(stmt)
+    sqlite_reset(stmt)
+    sqlite_step(stmt).assertEquals(true)
+    sqlite_column_is_null(stmt, 0).assertEquals(true)
+    sqlite_finalize(stmt)
+    destroy db
+
+// --- sqlite_reset then rebind allows reusing one statement with new values ---
+
+@test function test_native_resetAndRebind_reusesStatement()
+    let db = new SqliteDb(":memory:")
+    let h = db.getHandle()
+    sqlite_exec(h, "CREATE TABLE t (v INTEGER)")
+    let ins = sqlite_prepare(h, "INSERT INTO t VALUES (?)")
+    sqlite_bind_int(ins, 1, 100)
+    sqlite_step(ins).assertEquals(false)
+    sqlite_reset(ins)
+    sqlite_bind_int(ins, 1, 200)
+    sqlite_step(ins).assertEquals(false)
+    sqlite_finalize(ins)
+    db.count("SELECT count(*) FROM t").assertEquals(2)
+    db.count("SELECT count(*) FROM t WHERE v = 100").assertEquals(1)
+    db.count("SELECT count(*) FROM t WHERE v = 200").assertEquals(1)
+    destroy db
+
+// --- sqlite_exec runs a full multi-statement script (native sqlite3_exec) ---
+
+@test function test_native_exec_runsMultiStatementScript()
+    let db = new SqliteDb(":memory:")
+    let h = db.getHandle()
+    sqlite_exec(h, "CREATE TABLE a (x INTEGER); CREATE TABLE b (y INTEGER); INSERT INTO a VALUES (1); INSERT INTO b VALUES (2);")
+    db.count("SELECT count(*) FROM a").assertEquals(1)
+    db.count("SELECT count(*) FROM b").assertEquals(1)
+    destroy db
+
+// --- sqlite_exec runs a CREATE TRIGGER ... BEGIN ... END block (compound SQL) ---
+
+@test function test_native_exec_runsTriggerBlock()
+    let db = new SqliteDb(":memory:")
+    let h = db.getHandle()
+    sqlite_exec(h, "CREATE TABLE src (v INTEGER); CREATE TABLE log (v INTEGER)")
+    sqlite_exec(h, "CREATE TRIGGER cp AFTER INSERT ON src BEGIN INSERT INTO log VALUES (NEW.v); END;")
+    sqlite_exec(h, "INSERT INTO src VALUES (5)")
+    db.count("SELECT count(*) FROM log WHERE v = 5").assertEquals(1)
+    destroy db
+
+// --- sqlite_finalize + fresh prepare on the same connection ---
+
+@test function test_native_finalizeThenReprepare()
+    let db = new SqliteDb(":memory:")
+    let h = db.getHandle()
+    sqlite_exec(h, "CREATE TABLE t (v INTEGER)")
+    sqlite_exec(h, "INSERT INTO t VALUES (1)")
+    let s1 = sqlite_prepare(h, "SELECT v FROM t")
+    sqlite_step(s1).assertEquals(true)
+    sqlite_finalize(s1)
+    // a second prepare/step on the same connection still works after finalize
+    let s2 = sqlite_prepare(h, "SELECT v FROM t")
+    sqlite_step(s2).assertEquals(true)
+    sqlite_column_int(s2, 0).assertEquals(1)
+    sqlite_finalize(s2)
     destroy db

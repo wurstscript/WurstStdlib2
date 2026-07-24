@@ -34,7 +34,9 @@ import ArrayList
 @extern public native sqlite_column_int(int stmt, int idx) returns int
 @extern public native sqlite_column_real(int stmt, int idx) returns real
 @extern public native sqlite_column_string(int stmt, int idx) returns string
+@extern public native sqlite_column_is_null(int stmt, int idx) returns boolean
 @extern public native sqlite_reset(int stmt)
+@extern public native sqlite_clear_bindings(int stmt)
 @extern public native sqlite_finalize(int stmt)
 @extern public native sqlite_close(int conn)
 @extern public native sqlite_exec(int conn, string q)
@@ -49,13 +51,23 @@ import ArrayList
 /** A row returned from a SELECT query. Access columns by index via col(). */
 public class SqlResult
     ArrayList<string> cols = new ArrayList<string>()
+    // Parallel to cols: 1 if the column was SQL NULL, 0 otherwise. Stored as
+    // int because ArrayList<bool> has no precedent/guarantee in this stdlib.
+    ArrayList<int> nulls = new ArrayList<int>()
 
     ondestroy
         destroy this.cols
+        destroy this.nulls
 
-    /** Raw string value at column index. */
+    /** Raw string value at column index. SQL NULL is returned as "" — use
+        colIsNull() to distinguish a genuine NULL from an empty string. */
     function col(int index) returns string
         return this.cols.get(index)
+
+    /** True if the column at index was SQL NULL. This is the only reliable way
+        to tell NULL apart from an empty string, since col() returns "" for both. */
+    function colIsNull(int index) returns boolean
+        return this.nulls.get(index) == 1
 
     /** Column value parsed as int. */
     function colInt(int index) returns int
@@ -102,6 +114,7 @@ public class SqliteDb
     private function readRow(int stmt, int colCount) returns SqlResult
         let row = new SqlResult()
         for i = 0 to colCount - 1
+            row.nulls.add(sqlite_column_is_null(stmt, i) ? 1 : 0)
             row.cols.add(sqlite_column_string(stmt, i))
         return row
 
@@ -159,12 +172,11 @@ public class SqliteDb
     // to the corresponding list entry (index 1-based for JDBC). All values are
     // bound as strings; SQLite's type affinity handles coercion.
 
-    /** Binds a list of string parameters to a prepared statement, 1-indexed. */
+    /** Binds a list of string parameters to a prepared statement, 1-indexed.
+        ArrayList has no iterator by design, so this loops by index. */
     private function bindParams(int stmt, ArrayList<string> params)
-        var idx = 1
-        for p in params
-            sqlite_bind_string(stmt, idx, p)
-            idx++
+        for i = 0 to params.size() - 1
+            sqlite_bind_string(stmt, i + 1, params.get(i))
 
     /** Executes a parameterised statement that returns no rows.
         Example: db.execPrepared("INSERT INTO t VALUES (?, ?)", asList("foo", "42")) */
