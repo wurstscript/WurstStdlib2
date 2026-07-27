@@ -6,6 +6,8 @@ import GameStatus
 
 /* 	Comfort wrapper for player based, synced access to save data.
 	For small data you can use strings, otherwise use ChunkedString.
+	Multibyte (non-latin) content such as cyrillic or chinese player names is
+	supported while ENABLE_MULTIBYTE_SUPPORT is enabled, which it is by default.
 
 	Save data for a player:
 	>	myPlayer.saveData("myFileName", "someDataString")

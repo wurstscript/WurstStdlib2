@@ -18,19 +18,38 @@ import ClosureTimers
 	Observed semantics on 2.0 era patches:
 	- SubString is byte-indexed, raw and lossless - slices keep their bytes
 	  even when they cut a character in half.
-	- StringHash collapses slices starting with the lead byte of a 2-3 byte
-	  character to a constant marker hash (PARTIAL_CHAR_HASH).
-	- Slices of a single continuation byte and slices starting with a 4-byte
-	  lead byte (emoji) are NOT collapsed and keep per-content hashes.
+	- StringHash collapses every slice that starts with the lead byte of a
+	  multibyte character, 2 to 4 bytes wide, but does not contain the whole
+	  character, to a constant marker hash (PARTIAL_CHAR_HASH).
+	- Slices starting with a continuation byte are NOT collapsed and keep
+	  per-content hashes.
 */
 
+var checksRun = 0
+var checksFailed = 0
+
 function check(string name, boolean condition)
+	checksRun++
+	if not condition
+		checksFailed++
 	print((condition ? "[ok] " : "|cffff0000[FAIL]|r ") + name)
 
+init
+	doAfter(1) ->
+		runMultibyteDiagnostics()
+
 public function runMultibyteDiagnostics()
+	checksRun = 0
+	checksFailed = 0
 	print("ENABLE_MULTIBYTE_SUPPORT = " + ENABLE_MULTIBYTE_SUPPORT.toString())
 	print("PARTIAL_CHAR_HASH = " + PARTIAL_CHAR_HASH.toString() + " (legacy = 1843378377)")
 	print("LEAD4_HASH = " + LEAD4_HASH.toString())
+
+	// Which normalized form the game hashes invalid slices as - all invalid slices
+	// share one hash, so they are collapsed to a single replacement form first.
+	print("hash of empty string: " + "".getHash().toString())
+	print("hash of replacement char: " + "�".getHash().toString())
+	print("hash of question mark: " + "?".getHash().toString())
 
 	// Raw engine semantics: 2-byte (cyrillic/umlauts), 3-byte (CJK), 4-byte (emoji)
 	let two = "дä"
@@ -72,3 +91,10 @@ public function runMultibyteDiagnostics()
 		cstring.append(input)
 		check("ChunkedString round trip, chunkSize " + chunkSize.toString(), cstring.getUnsafeString() == input)
 		destroy cstring
+
+	let mode = isLua ? "lua" : "jass"
+	if checksFailed == 0
+		print("|cff00ff00All " + checksRun.toString() + " checks passed|r (" + mode + " mode)")
+	else
+		print("|cffff0000" + checksFailed.toString() + " of " + checksRun.toString()
+			+ " checks FAILED|r (" + mode + " mode)")

@@ -6,6 +6,8 @@ import Table
 	and to prepare data for chunked storage, e.g. for FileIO.
 	Make sure to flush the chunked string when done writing to it,
 	so the unfilled buffer gets written as well.
+	Chunks are measured in bytes, and with ENABLE_MULTIBYTE_SUPPORT they are cut
+	at character boundaries so every chunk on its own stays valid text.
 
 	Write Data:
 	>	let cstring = new ChunkedString()
@@ -23,7 +25,8 @@ import Table
 	>		let chunk = cstring.getChunk(i)
 	>		Log.info("read chunk: " + chunk)
 */
-/** Maximum length of one chunk */
+/** Maximum length of one chunk in bytes. With ENABLE_MULTIBYTE_SUPPORT a chunk
+	may exceed this by up to 3 bytes to avoid splitting a multibyte character. */
 @configurable public constant DEFAULT_CHUNK_SIZE = 200
 
 public class ChunkedString
@@ -82,7 +85,9 @@ public class ChunkedString
 	function getChunkCount() returns int
 		return chunkCount + 1
 
-	/** Returns the length of every chunk in the string. The last chunk's size may be smaller than this number. */
+	/** Returns the configured length of every chunk in the string, in bytes.
+		The last chunk's size may be smaller than this number, and with
+		ENABLE_MULTIBYTE_SUPPORT any chunk may be up to 3 bytes larger. */
 	function getChunkSize() returns int
 		return chunkSize
 

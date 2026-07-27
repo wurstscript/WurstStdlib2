@@ -28,16 +28,18 @@ public function string.isMultibytePartial() returns boolean
 	let hash = this.getHash()
 	return hash == PARTIAL_CHAR_HASH or hash == LEGACY_PARTIAL_CHAR_HASH
 
-/**	The partial char marker only applies to slices starting with the lead byte
-	of a 2-3 byte character. A slice of a single continuation byte keeps a
-	per-byte hash instead. All 64 continuation byte values 0x80-0xBF occur as
+/**	The partial char marker only applies to slices that start with the lead byte
+	of a multibyte character. A slice starting with a continuation byte keeps a
+	per-byte hash instead, so the marker alone cannot tell a continuation byte
+	apart from an ascii byte. All 64 continuation byte values 0x80-0xBF occur as
 	the second byte of the characters U+0400-U+043F, so slicing this literal
 	yields every possible continuation byte, whose hashes we store in a table. */
 constant CONT_BYTE_PROBE = "ЀЁЂЃЄЅІЇЈЉЊЋЌЍЎЏАБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдежзийклмноп"
 constant CONT_BYTE_MAP = InitHashtable()
-/** Hash of a slice containing only the lead byte 0xF0 of a 4-byte character
-	(emoji and other astral plane chars), which the game does not collapse
-	to the partial char marker. */
+/**	Hash of a slice containing only the lead byte of a 4-byte character (emoji and
+	other astral plane chars). Current game versions collapse these to the partial
+	char marker like any other lead byte, making this equal to PARTIAL_CHAR_HASH.
+	It is kept as a fallback for versions that hash them per byte instead. */
 public constant LEAD4_HASH = "😀".substring(0, 1).getHash()
 
 init
@@ -54,9 +56,9 @@ public function string.isCharBoundary(int pos) returns boolean
 		return true
 	let slice = this.substring(pos, pos + 1)
 	if slice.isMultibytePartial()
-		// lead byte of a 2-3 byte character, starts a new character
+		// lead byte of a multibyte character, so it starts a new character
 		return true
-	// ascii and 4-byte lead bytes are boundaries, continuation bytes are not
+	// the remaining bytes are either ascii (a boundary) or continuation bytes (not)
 	return not LoadBoolean(CONT_BYTE_MAP, 0, slice.getHash())
 
 constant charset = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -93,19 +95,26 @@ public function string.toInt() returns int
 public function int.toCharsetString() returns string
 	return charset.substring(this, this + 1)
 
-/** returns a substring specified by end and start position. */
+/** returns a substring specified by end and start position.
+	Positions are byte offsets, so slicing a string containing multibyte
+	(non-latin) characters can cut one in half. See string.isCharBoundary. */
 public function string.substring(int start, int stop) returns string
 	return SubString(this, start, stop)
 
-/** returns a substring specified by end and start position. */
+/** returns a substring specified by end and start position.
+	Positions are byte offsets, see string.substring(int, int). */
 public function string.substring(int start) returns string
 	return SubString(this, start, this.length())
 
-/** Length of the string */
+/** Length of the string in bytes. Multibyte (non-latin) characters count as
+	2-4 bytes each, so this is not the number of characters. Iterate the string
+	to count those, e.g. `for c in s`. */
 public function string.length() returns int
 	return StringLength(this)
 
-/** Returns the char at the given position. 0 = first char */
+/** Returns the byte at the given position. 0 = first byte.
+	This only returns a whole character for single byte (latin) characters,
+	iterate the string instead to read multibyte characters. */
 public function string.charAt(int index) returns string
 	return SubString(this, index, index + 1)
 
@@ -293,6 +302,8 @@ public function string.format(vararg string replacements) returns string
 		i++
 	return result
 
+/** Iterates the string one character at a time. With ENABLE_MULTIBYTE_SUPPORT
+	this yields whole multibyte (non-latin) characters, otherwise single bytes. */
 public function string.iterator() returns StringIterator
 	return new StringIterator(this, 0, this.length())
 
@@ -315,7 +326,7 @@ public class StringIterator
 		if ENABLE_MULTIBYTE_SUPPORT and PARTIAL_CHAR_DETECTABLE
 			let hash = val.getHash()
 			if LEAD4_HASH != PARTIAL_CHAR_HASH and hash == LEAD4_HASH
-				// 4-byte character (e.g. emoji) whose slices are not collapsed to the marker
+				// only on versions that do not collapse 4-byte lead bytes to the marker
 				width = 4
 				val = s.substring(currentpos, currentpos + width)
 			else if hash == PARTIAL_CHAR_HASH or hash == LEGACY_PARTIAL_CHAR_HASH
