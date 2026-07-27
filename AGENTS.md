@@ -10,7 +10,7 @@ backwards compatibility matter more than in app code.
 - Prefer simple, maintainable code. Fix root causes; avoid brittle workarounds, duplicated branches, and special-case patches.
 - Keep packages focused and below ~500 lines; split by feature, responsibility, or data type.
 - Treat the public API as a contract. Avoid breaking signatures, names, or behavior of exported members without good reason.
-- When unsure about Wurst syntax or local APIs, inspect nearby working code before guessing.
+- When unsure about Wurst syntax or local APIs, inspect nearby working code before guessing; for language details read https://wurstlang.org/manual.html on demand.
 - Keep tests narrow. Add/update tests for behavior, parsing, compiletime generation, or shared utilities.
 - Avoid broad refactors unless they directly reduce risk or complexity for the requested change.
 - Fix compiler warnings unless they are intentionally suppressed.
@@ -62,6 +62,7 @@ Naming: packages/classes `UpperCamelCase`; tuples/functions/members/locals `lowe
 ## Preferred Wurst Style
 
 - Prefer extension functions for readable APIs and the `..` cascade operator for setup chains.
+- Prefer null-safe access `x?.foo()` over `if x != null` guards when the null case does nothing; receiver must be a nullable type, and a non-nullable result (`int`, `real`, `boolean`) may only be discarded, not used as a value.
 - Prefer `vec2` tuples over `location` handles unless required.
 - Prefer polymorphism/data modeling over large `instanceof`/`typeId` chains. Avoid unchecked `castTo` unless proven safe.
 - Use the highest practical abstraction (e.g. hashmap-style over raw hashtables); drop to lower-level only in critical hot paths.
@@ -116,7 +117,7 @@ Tests should be small, deterministic, self-contained, and assertion-driven. If q
 
 ## Formatting
 
-- spaces around binary operators (`a + b`); no space before call parentheses (`foo(1)`); no spaces around `.`/`..`; no spaces inside `(` `)` / `[` `]`.
+- spaces around binary operators (`a + b`); no space before call parentheses (`foo(1)`); no spaces around `.`/`..`/`?.`; no spaces inside `(` `)` / `[` `]`.
 - comments use `// Comment`; doc comments `/** ... */` appear in autocomplete.
 - avoid manual horizontal alignment; prefix intentionally unused variables with `_`.
 
