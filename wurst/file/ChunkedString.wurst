@@ -21,7 +21,7 @@ import Table
 	>		Log.info("read chunk: " + chunk)
 
 	Read Data iteratively:
-	>	for i = 0 to cstring.getChunkCount()
+	>	for i = 0 to cstring.getChunkCount() - 1
 	>		let chunk = cstring.getChunk(i)
 	>		Log.info("read chunk: " + chunk)
 */
@@ -106,7 +106,7 @@ public class ChunkedString
 		above the maximum allowed string length. */
 	function getUnsafeString() returns string
 		var out = ""
-		for i = 0 to getChunkCount()
+		for i = 0 to getChunkCount() - 1
 			out += getChunk(i)
 		return out
 
@@ -183,7 +183,7 @@ function chunkedStringIteration()
 
 	var result = ""
 
-	for i = 0 to cstring.getChunkCount()
+	for i = 0 to cstring.getChunkCount() - 1
 		result += cstring.getChunk(i)
 
 	result.assertEquals("abcdef")

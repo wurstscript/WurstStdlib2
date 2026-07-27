@@ -110,6 +110,15 @@ public class Knockback3
 	*/
 	static var isAirborneThreshold = 5.
 
+	/**
+	A sliding unit only takes ground friction while its vertical speed stays
+	below this. Units per second.
+
+	This used to be isAirborneThreshold, which is a *height*; the default here
+	reproduces that comparison exactly while keeping the units honest.
+	*/
+	static var slidingVerticalSpeedThreshold = 5. / ANIMATION_PERIOD
+
 	/** Below this speed, sliding units will stop. */
 	static var minimumSlideSpeed = 30.
 
@@ -127,6 +136,8 @@ public class Knockback3
 	 	Apply a knockback vector to unit u. `velocity` is initial speed in units
 	 	per second. `groundAngle` and `airAngle` are the direction and trajectory
 	 	parameters, respectively. Example:
+
+	 	> Knockback3.add(u, 1000., 0 .fromDeg(), 45 .fromDeg())
 	 */
 	static function add(unit u, real velocity, angle groundAngle, angle airAngle)
 		if not UNIT_FILTER.get(u)
@@ -153,8 +164,12 @@ public class Knockback3
 		throw the unit to the position at vec2 `target`. Along the XY-plane, the
 		unit will move `groundSpeed` units per second. Note that the more vertical
 		angle will always be used from the pair of possible trajectories. Example:
+
+		> Knockback3.add(caster, getSpellTargetPos(), 500.)
 	*/
 	static function add(unit u, vec2 target, real groundSpeed)
+		if groundSpeed == 0.
+			return
 		let t = (target - u.getPos()).length() / groundSpeed
 		let theta = u.getPos().angleTo(target)
 		let velZ = gravity * t / 2. / ANIMATION_PERIOD
@@ -179,10 +194,19 @@ public class Knockback3
 
 
 	/**
-		Getter for the knockback vector on unit u.  If the unit is not already tracked, returns (0, 0, 0).
+		Getter for the knockback vector on unit u, as a per-tick displacement
+		(speed * ANIMATION_PERIOD) - note that `add` and `setVel` take units per
+		*second*. Returns (0, 0, 0) if the unit is not tracked.
 	*/
 	static function getVel(unit u) returns vec3
 		return unitNodes.has(u) ? unitNodes.get(u).del : ZERO3
+
+	/**
+		Getter for the knockback velocity on unit u in units per second, i.e. in
+		the same units that `add` and `setVel` accept.
+	*/
+	static function getVelPerSecond(unit u) returns vec3
+		return getVel(u) * (1. / ANIMATION_PERIOD)
 
 
 	/**
@@ -196,7 +220,20 @@ public class Knockback3
 
 	// Instance Variables
 	private unit u
+	/** Displacement applied per tick, i.e. speed * ANIMATION_PERIOD */
 	private vec3 del
+
+	/**
+	Converts a speed in units per second into the squared per-tick speed that
+	`del` and velXySquared are measured in.
+
+	The thresholds are documented in units per second but compared against a
+	squared per-tick speed, so both the tick scaling and the squaring have to
+	be applied to the threshold, not just one of them.
+	*/
+	private static function tickSpeedSq(real unitsPerSecond) returns real
+		let perTick = unitsPerSecond * ANIMATION_PERIOD
+		return perTick * perTick
 
 
 	private static function tickNearGround(Knockback3 knockback, vec3 newPos3, vec3 pos3, real velXySquared)
@@ -207,10 +244,10 @@ public class Knockback3
 		)
 			knockback.u.setXY(newPos3)
 
-			if knockback.del.z <= isAirborneThreshold
+			if knockback.del.z <= slidingVerticalSpeedThreshold * ANIMATION_PERIOD
 				knockback.del *= (1. - frictionCoefficientGround)
 
-				if velXySquared > frictionFxThreshold * frictionFxThreshold * ANIMATION_PERIOD
+				if velXySquared > tickSpeedSq(frictionFxThreshold)
 					addEffect(frictionFxPath, pos3).destr()
 
 			if USE_MOVE_SPEED_MODIFIERS
@@ -291,10 +328,10 @@ public class Knockback3
 			else
 				tickAboveGround(knockback, newPos3, pos3)
 
-			if velXySquared > destroyDestructableSpeedThreshold * ANIMATION_PERIOD and pos3.z < destroyDestructableHeightThreshold
+			if velXySquared > tickSpeedSq(destroyDestructableSpeedThreshold) and pos3.z < destroyDestructableHeightThreshold
 				tickTryDestructable(knockback, newPos3)
 
-			let isVelxyLow = velXySquared < (minimumSlideSpeed * minimumSlideSpeed) * ANIMATION_PERIOD
+			let isVelxyLow = velXySquared < tickSpeedSq(minimumSlideSpeed)
 			let isVelzLow = knockback.del.z.abs() < -1. * elasticityThreshold * ANIMATION_PERIOD
 			let isAirborne = pos3.z > isAirborneThreshold
 			if isVelxyLow and isVelzLow and not isAirborne

@@ -172,6 +172,87 @@ function testSort()
         list.get(i).assertLessThanOrEqual(list.get(i + 1))
     destroy list
 
+/** Exercises the insertion-sort cutoff and the recurse-into-smaller-partition
+    path with inputs that are worst cases for a naive quicksort. */
+@Test
+function testSortAdversarialInputs()
+    // already sorted
+    let ascending = new ArrayList<int>(600)
+    for i = 0 to 500
+        ascending.add(i)
+    ascending.sort()
+    for i = 0 to ascending.size() - 2
+        ascending.get(i).assertLessThanOrEqual(ascending.get(i + 1))
+    ascending.get(0).assertEquals(0)
+    ascending.get(500).assertEquals(500)
+    destroy ascending
+
+    // reverse sorted
+    let descending = new ArrayList<int>(600)
+    for i = 500 downto 0
+        descending.add(i)
+    descending.sort()
+    for i = 0 to descending.size() - 2
+        descending.get(i).assertLessThanOrEqual(descending.get(i + 1))
+    descending.get(0).assertEquals(0)
+    descending.get(500).assertEquals(500)
+    destroy descending
+
+    // all equal
+    let uniform = new ArrayList<int>(200)
+    for i = 0 to 199
+        uniform.add(7)
+    uniform.sort()
+    uniform.get(0).assertEquals(7)
+    uniform.get(199).assertEquals(7)
+    destroy uniform
+
+@Test
+function testSortSmallLists()
+    // sizes at and around the insertion sort cutoff
+    for length = 0 to 15
+        let list = new ArrayList<int>(16)
+        for i = length downto 1
+            list.add(i)
+        list.sort()
+        list.size().assertEquals(length)
+        for i = 0 to list.size() - 2
+            list.get(i).assertLessThanOrEqual(list.get(i + 1))
+        if length > 0
+            list.get(0).assertEquals(1)
+            list.get(length - 1).assertEquals(length)
+        destroy list
+
+@Test
+function testAddAllGrowsOnce()
+    let source = new ArrayList<int>(64)
+    for i = 1 to 50
+        source.add(i)
+
+    // target starts far too small, so addAll has to reserve in one step
+    let target = new ArrayList<int>(2)
+    target.add(-1)
+    target.addAll(source)
+
+    target.size().assertEquals(51)
+    target.get(0).assertEquals(-1)
+    target.get(1).assertEquals(1)
+    target.get(50).assertEquals(50)
+    destroy target
+    destroy source
+
+@Test
+function testAddAllSelf()
+    let list = new ArrayList<int>(2)
+    list.add(1, 2, 3)
+    list.addAll(list)
+    list.size().assertEquals(6)
+    list.get(0).assertEquals(1)
+    list.get(2).assertEquals(3)
+    list.get(3).assertEquals(1)
+    list.get(5).assertEquals(3)
+    destroy list
+
 @Test
 function testSortReal()
     let list = new ArrayList<real>()

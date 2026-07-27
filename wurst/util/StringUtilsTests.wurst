@@ -60,6 +60,18 @@ import ObjectIds
 	"1251FDSFA".isValidDescription().assertTrue()
 	"-1232.32".isNumber().assertTrue()
 	"-1231.3a1".isNumber().assertFalse()
+
+@Test function testIsNumberRequiresADigit()
+	// a sign or decimal point alone used to be accepted as a number
+	"-".isNumber().assertFalse()
+	"-.".isNumber().assertFalse()
+	".".isNumber().assertFalse()
+	"".isNumber().assertFalse()
+	"-0".isNumber().assertTrue()
+	".5".isNumber().assertTrue()
+	"-.5".isNumber().assertTrue()
+	"1.2.3".isNumber().assertFalse()
+	"1-2".isNumber().assertFalse()
 	
 @Test function testReplaceChars()
 	"abca".replaceChars("ca", "d").assertEquals("dbdd")

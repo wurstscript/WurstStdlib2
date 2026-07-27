@@ -170,11 +170,11 @@ public function instant.durationUntil() returns duration
 
 /// Comparisons ///
 
-/** Instant > instant ? */
+/** True if this instant happened before `other`. */
 public function instant.isOlderThan(instant other) returns bool
 	return this.timestamp_seconds < other.timestamp_seconds
 
-/** Instant < instant ? */
+/** True if this instant happens after `other`. */
 public function instant.isNewerThan(instant other) returns bool
 	return this.timestamp_seconds > other.timestamp_seconds
 
@@ -196,10 +196,19 @@ public function instant.isInThePast() returns bool
 
 /// Printing ///
 
-function duration.display(string hrs, string mins, string secs, string ms) returns string
-	let hours = (this.seconds / (60. * 60.)).toInt()
-	let minutes = (this.seconds / 60.).toInt() - (hours * 60)
-	let seconds = (this.seconds).toInt() - (minutes * 60) - (hours * 60 * 60)
+/** "-" for negative durations, "" otherwise. A zero duration has no sign. */
+function duration.signPrefix() returns string
+	return this.seconds < 0. ? "-" : ""
+
+/**	Renders the magnitude of this duration. The sign is applied by the public
+	wrappers, so that it lands in front of any prefix (ISO-8601 writes
+	"-PT1H", not "PT-1H") and so the "> 0" component checks below still work
+	for negative durations. */
+function duration.displayMagnitude(string hrs, string mins, string secs, string ms) returns string
+	let total = this.seconds.abs()
+	let hours = (total / (60. * 60.)).toInt()
+	let minutes = (total / 60.).toInt() - (hours * 60)
+	let seconds = total.toInt() - (minutes * 60) - (hours * 60 * 60)
 
 	var result = ""
 	if hours > 0
@@ -214,8 +223,8 @@ function duration.display(string hrs, string mins, string secs, string ms) retur
 		result += seconds.toString()
 		result += secs
 
-	if result.length() == 0 and this.greaterThan(0..seconds())
-		return (this.seconds * 1000.0).toInt().toString() + ms
+	if result.length() == 0 and total > 0.
+		return (total * 1000.0).toInt().toString() + ms
 
 	if result.length() == 0
 		return "0"
@@ -223,22 +232,22 @@ function duration.display(string hrs, string mins, string secs, string ms) retur
 	return result
 
 /**
-	Tranform a duration to a verbose string. Example:
+	Transform a duration to a verbose string. Example:
 
 	61..seconds().displayVerbose()
 	> "1 minutes, and 1 seconds"
 */
 public function duration.displayVerbose() returns string
-	return this.display(" hours, ", " minutes, and ", " seconds", " milliseconds")
+	return this.signPrefix() + this.displayMagnitude(" hours, ", " minutes, and ", " seconds", " milliseconds")
 
 /**
-	Tranform a duration to a short string. Example:
+	Transform a duration to a short string. Example:
 
 	61..minutes().display("T-")
 	> "T-1H1M0S"
 */
 public function duration.display(string prefix) returns string
-	return prefix + this.display("H", "M", "S", "MS")
+	return this.signPrefix() + prefix + this.displayMagnitude("H", "M", "S", "MS")
 
 /**
 	ISO-8601 compatible duration representation. Example:
@@ -289,3 +298,27 @@ public function durationFromIndex(int index) returns duration
 @Test function testNewerThan()
 	assertTrue(5..minutesFromNow().isNewerThan(5..secondsFromNow()))
 	assertTrue(5..minutesFromNow().isInTheFuture())
+
+/** Built from explicit timestamps rather than instantNow(), because the
+	compiletime interpreter's game clock is a unix epoch value whose 32 bit
+	real precision swallows small offsets. See GameTimer.getElapsedGameTime. */
+@Test function testInstantComparisons()
+	let earlier = instant(10.)
+	let later = instant(20.)
+
+	earlier.isOlderThan(later).assertTrue()
+	later.isNewerThan(earlier).assertTrue()
+	later.isOlderThan(earlier).assertFalse()
+	earlier.isNewerThan(later).assertFalse()
+	earlier.isOlderThan(earlier).assertFalse()
+	earlier.isNewerThan(earlier).assertFalse()
+
+	(later - earlier).seconds.assertEquals(10., 0.0001)
+
+/** Negative durations used to render as "0", because every component was
+	gated behind a "> 0" check. */
+@Test function testNegativeDurationDisplay()
+	(-61.).seconds().displayVerbose().assertEquals("-1 minutes, and 1 seconds")
+	(-1.).hours().display().assertEquals("-PT1H0M0S")
+	(0.).seconds().displayVerbose().assertEquals("0")
+	(61.).seconds().displayVerbose().assertEquals("1 minutes, and 1 seconds")

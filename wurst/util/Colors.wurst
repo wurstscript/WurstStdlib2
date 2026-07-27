@@ -15,6 +15,8 @@ public constant hexs = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "
 constant decs = new Table()
 
 public constant COLOR_WHITE = colorA(255,255,255,255)
+/** Black with alpha 0, i.e. fully transparent. COLOR_BLACK_STR therefore
+	renders text invisible - use colorA(0, 0, 0, 255) for opaque black. */
 public constant COLOR_BLACK = colorA(0,0,0,0)
 public constant COLOR_GOLD  = colorA(255, 204, 0, 255)
 

@@ -105,7 +105,8 @@ public module TimedLoop
 	abstract function onTimedLoop()
 
 	/** Returns the period of the timed loop.
-		Ovewrite this to set a custom period */
+		Overwrite this to set a custom period. It is read once, when the first
+		instance of this class starts its loop. */
 	function getPeriod() returns real
 		return ANIMATION_PERIOD
 
@@ -139,8 +140,18 @@ public module TimedLoop
 	function stopTimedLoopAndDestroy()
 		timedLoopState = STOPPED_FOR_GOOD
 
-	/** Starts the periodic updates for this object */
+	/** Starts the periodic updates for this object.
+		Calling this on an already running instance has no effect. */
 	function startTimedLoop()
+		if timedLoopState == RUNNING
+			// registering twice would run onTimedLoop twice per tick and leave
+			// a stale slot behind when the object is stopped or destroyed
+			return
+		if timedLoopState != PAUSED
+			// stopped this tick but not yet swept out of `instances`; the entry
+			// is still there, so just mark it live again
+			timedLoopState = RUNNING
+			return
 		instances[instanceCount] = this
 		instanceCount++
 		if instanceCount == 1

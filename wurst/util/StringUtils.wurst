@@ -38,8 +38,10 @@ public function createCenteredTexttag(vec3 pos, string message, real size) retur
 public tuple char(int c)
 
 /** Returns the width of the string.
-	Only accounts for single byte (latin) characters, multibyte characters
-	contribute no width. */
+	Only meaningful for single byte (latin) characters. Each byte of a
+	multibyte (non-latin) character is looked up individually and falls back to
+	the width of a space, so the result for non-latin text is an approximation
+	rather than a true width. */
 public function string.getWidth() returns int
 	var width = 0
 	for i = 0 to this.length() - 1
@@ -151,19 +153,25 @@ public function string.forEachIn(string delim, ForStringSplitCallback cb)
 			if pos == -1
 				cb.callback(this.substring(i, this.length()))
 
-/** Checks whether a string is a number or not.*/
+/** Checks whether a string is a decimal number: an optional leading "-",
+	at least one digit, and at most one decimal point.
+	"", "-", "." and "-." are not numbers. */
 public function string.isNumber() returns bool
-	var isNumber = false
+	var hasDigit = false
 	var hasDecimalPlaces = false
 	for int i = 0 to this.length()-1
-		if (this.charAt(i) == "-" and i == 0) or this.charAt(i) == "0" or this.charAt(i) == "1" or this.charAt(i) == "2" or this.charAt(i) == "3" or this.charAt(i) == "4"
-		or this.charAt(i) == "5" or this.charAt(i) == "6" or this.charAt(i) == "7" or this.charAt(i) == "8" or this.charAt(i) == "9"
-			isNumber = true
-		else if this.charAt(i) == "." and not hasDecimalPlaces
+		let c = this.charAt(i)
+		if c == "-" and i == 0
+			// a sign on its own is not a number, so this does not set hasDigit
+			skip
+		else if c == "0" or c == "1" or c == "2" or c == "3" or c == "4"
+		or c == "5" or c == "6" or c == "7" or c == "8" or c == "9"
+			hasDigit = true
+		else if c == "." and not hasDecimalPlaces
 			hasDecimalPlaces = true
 		else
 			return false
-	return isNumber
+	return hasDigit
 
 /** Checks whether a string is valid in terms of max WC3 string length for various usages (Ability Description, Quest Description,...).*/
 public function string.isValidDescription() returns bool
@@ -177,7 +185,9 @@ public function string.isValidDescription() returns bool
 public function string.replaceChars(string charset, string replacementChar) returns string
 	var newString = this
 	for replaceChar in charset
-		newString = newString.contains(replaceChar) ? newString.replace(replaceChar, replacementChar) : newString
+		// replace() is already a no-op when the needle is absent, so the extra
+		// contains() scan only doubled the work
+		newString = newString.replace(replaceChar, replacementChar)
 	return newString
 
 

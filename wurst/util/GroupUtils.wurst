@@ -38,27 +38,27 @@ var numTotal = 0
 	Creates new groups if none are found on the reusable stack.
 	If that is not possible, returns a non-recyclable group and displays a warning. */
 public function getGroup() returns group
-	group retVal
 	if numStack > 0
-		retVal = pop()
-	else if numStack <= 0 and numTotal < GROUP_NUMBER_LIMIT
+		return pop()
+	if numTotal < GROUP_NUMBER_LIMIT
 		createGroups(NEED_CREATE_GROUPS)
-		retVal = pop()
-	else
-		retVal = CreateGroup()
-	return retVal
+		// createGroups can be clamped to zero by the limit, so re-check rather
+		// than popping an empty stack
+		if numStack > 0
+			return pop()
+	return CreateGroup()
 
 /** Recycles a group if it is created through GroupUtils, otherwise just destroys it.
 	Doesn't affect ENUM_GROUP. */
 public function group.release()
 	if this == ENUM_GROUP
-		Log.warn("Attemping to release ENUM_GROUP!")
+		Log.warn("Attempting to release ENUM_GROUP!")
 	else
 		if this.isRecyclable()
 			if this.isUsed()
 				this.recycle()
 			else
-				Log.warn("Attemping to release an already released group!")
+				Log.warn("Attempting to release an already released group!")
 		else
 			this.clear()
 			this.destr()
@@ -67,6 +67,12 @@ public function group.release()
 
 group iterGroup
 
+/** Copies this group's units into a freshly acquired recyclable group and
+	returns it, so the copy can be iterated while the original is modified.
+	The caller owns the result and must call .release() on it.
+
+	Not re-entrant: the copy is staged through a single package global, so this
+	must not be called again from inside an iteration over its own result. */
 public function group.recyclableIterator() returns group
 	iterGroup = getGroup()
 	ForGroup(this, () -> iterGroup.add(GetEnumUnit()))
@@ -78,10 +84,10 @@ var shownMaxError = false
 
 function createGroups(int number)
 	let maxCreatePerCycle = 256
-	let actualLimit = max(JASS_MAX_ARRAY_SIZE - 1, GROUP_NUMBER_LIMIT)
-	let numTarget = numTotal + number
-	let overflow  = max(0, numTarget - actualLimit)
-	var toCreate  = max(0, numTarget - overflow)
+	// the stack is a jass array, so the configured limit can never exceed it
+	let actualLimit = min(JASS_MAX_ARRAY_SIZE - 1, GROUP_NUMBER_LIMIT)
+	// how many *additional* groups to make, not the running total
+	var toCreate = max(0, min(number, actualLimit - numTotal))
 
 	while toCreate > 0
 		let createNow = min(toCreate, maxCreatePerCycle)

@@ -47,3 +47,61 @@ function test()
 	for x in TestClass
 		destroy x
 	allToString().assertEquals("")
+
+function allToStringReversed() returns string
+	var res = ""
+	let itr = TestClass.backIterator()
+	while itr.hasNext()
+		res += itr.next().str
+	itr.close()
+	return res
+
+/** The constructor used to link first.prev back to the tail, which made the
+	list circular in the prev direction and left backIterator spinning forever. */
+@Test
+function testBackIteratorTerminates()
+	new TestClass("a")
+	new TestClass("b")
+	new TestClass("c")
+
+	allToStringReversed().assertEquals("cba")
+
+	for x in TestClass
+		destroy x
+
+@Test
+function testBackIteratorSingleAndEmpty()
+	allToStringReversed().assertEquals("")
+
+	let only = new TestClass("a")
+	allToStringReversed().assertEquals("a")
+	destroy only
+
+	allToStringReversed().assertEquals("")
+
+/** Removing the tail must not leave first.prev pointing at the removed node. */
+@Test
+function testRemoveTailRepairsLinks()
+	let a = new TestClass("a")
+	let b = new TestClass("b")
+
+	destroy b
+	(a.getPrev() == a).assertTrue()
+	(a.getNext() == a).assertTrue()
+	allToStringReversed().assertEquals("a")
+
+	destroy a
+
+@Test
+function testRemoveHeadRepairsLinks()
+	let a = new TestClass("a")
+	let b = new TestClass("b")
+	let c = new TestClass("c")
+
+	destroy a
+	allToString().assertEquals("bc")
+	allToStringReversed().assertEquals("cb")
+	(b.getPrev() == c).assertTrue()
+
+	destroy b
+	destroy c

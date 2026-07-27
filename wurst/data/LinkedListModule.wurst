@@ -17,18 +17,19 @@ public module LinkedListModule
 		else
 			prev = last
 			last.next = this
-			first.prev = this
 		next = null
 		last = this
 
 	static function getFirst() returns thistype
 		return first
 
+	/** The next instance, wrapping around to the first one at the end of the list */
 	function getNext() returns thistype
 		if next == null
 			return first
 		return next
 
+	/** The previous instance, wrapping around to the last one at the start of the list */
 	function getPrev() returns thistype
 		if prev == null
 			return last
@@ -44,6 +45,8 @@ public module LinkedListModule
 			next.prev = prev
 		else
 			last = prev
+		// next/prev are deliberately left pointing into the list: an iterator
+		// parked on this instance when it is removed still walks on correctly.
 
 	ondestroy
 		remove()

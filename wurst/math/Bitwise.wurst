@@ -109,9 +109,13 @@ public function string.fromBitString() returns int
 	return result
 
 /**
-	Produces a bistring from this integer.
+	Produces a bitstring from this integer. Zero yields "0", and negative
+	values yield their full 32 bit two's complement representation.
 **/
 public function int.toBitString() returns string
+	if this == 0
+		return "0"
+
 	var result = ""
 	var value = this
 
@@ -269,14 +273,18 @@ public function int.xor32(int other) returns int
 	32-bit SHIFTL (<<)
 
 	number.shiftl(amount) equivalent to (number << amount)
+	`amount` must be in [0, 32]; bits shifted past bit 31 are discarded.
 **/
 public function int.shiftl(int amount) returns int
 	return bwShiftl32(this, amount)
 
 /**
-	32-bit SHIFTR (>>)
+	32-bit logical SHIFTR (>>>)
 
-	number.shiftr(amount) equivalent to (number >> amount)
+	number.shiftr(amount) equivalent to (number >>> amount): the sign bit is
+	shifted in as data rather than replicated, so negative inputs produce a
+	positive result for any amount > 0.
+	`amount` must be in [0, 32].
 **/
 public function int.shiftr(int amount) returns int
 	return bwShiftr32(this, amount)

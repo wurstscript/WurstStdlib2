@@ -1,10 +1,9 @@
 package LinkedList
 import NoWurst
 import TypeCasting
-import Integer
-import String
 import ClosureForGroups
-import Real
+// re-exports Integer, String, Real and Printing
+import ErrorHandling
 
 /**
  * Doubly-linked list implementation that implements all common list, stack and queue operations.
@@ -60,7 +59,8 @@ public class LinkedList<T>
 		other.dummy.prev = other.dummy
 		other.size = 0
 
-	/** Returns the element at the specified index */
+	/** Returns the element at the specified index.
+		Errors if the index is outside [0, size). */
 	function get(int index) returns T
 		return getEntry(index).elem
 
@@ -75,7 +75,8 @@ public class LinkedList<T>
 			idx++
 		return -1
 
-	/** Sets the element at the specified index */
+	/** Sets the element at the specified index.
+		Errors if the index is outside [0, size). */
 	function set(int index, T elem)
 		getEntry(index).elem = elem
 
@@ -83,11 +84,11 @@ public class LinkedList<T>
 	function push(T elem)
 		add(elem)
 
-	/** Returns the first element in the list */
+	/** Returns the first element in the list, or null if it is empty */
 	function getFirst() returns T
 		return dummy.next.elem
 
-	/** Returns the last element in the list */
+	/** Returns the last element in the list, or null if it is empty */
 	function getLast() returns T
 		return dummy.prev.elem
 
@@ -233,36 +234,39 @@ public class LinkedList<T>
 			r = r.next
 		destroy f
 
-	/** Performs a Fisher–Yates shuffle on this list */
+	/** Performs a Fisher-Yates shuffle on this list.
+		Permutes the elements in place - no nodes are destroyed or reallocated. */
 	function shuffle()
-		T array _a
-		let n = size()
-		var i0 = 0
+		if size < 2
+			return
 
-		let itr = iterator()
-		while itr.hasNext()
-			itr.next()
-			_a[i0] = itr.remove()
-			i0++
+		LLEntry<T> array entries
+		var count = 0
+		var entry = dummy.next
+		while entry != dummy
+			entries[count] = entry
+			count++
+			entry = entry.next
 
-		for i = n-1 downto 1
+		for i = count - 1 downto 1
 			let j = GetRandomInt(0, i)
-			let tmp = _a[i]
-			_a[i] = _a[j]
-			_a[j] = tmp
+			let tmp = entries[i].elem
+			entries[i].elem = entries[j].elem
+			entries[j].elem = tmp
 
-		for i = 0 to n-1
-			add(_a[i])
-
-		itr.close()
-
-	/** Returns a random element from this list or null, if empty */
+	/** Returns a random element from this list, or null if it is empty */
 	function getRandomElement() returns T
+		if size == 0
+			return null
 		return getEntry(GetRandomInt(0, size - 1)).elem
 
-	/** Adds the given element directly behind the element at the given index */
+	/** Inserts the given element at the given index, shifting the element that
+		was there (and everything after it) one position to the right.
+		An index equal to the list's size appends to the end. */
 	function addAt(T elem, int index)
-		let entryAtIndex = getEntry(index)
+		if index < 0 or index > size
+			error("LinkedList: Index out of bounds: " + index.toString())
+		let entryAtIndex = getEntryUnchecked(index)
 		let entry = new LLEntry<T>(elem, entryAtIndex.prev, entryAtIndex)
 		entryAtIndex.prev.next = entry
 		entryAtIndex.prev = entry
@@ -285,10 +289,16 @@ public class LinkedList<T>
 		destroy itr
 		return output
 
-	/** Returns a new list of the elements that satisfy the predicate */
+	/** Returns a new list of the elements that satisfy the predicate.
+		Builds the result directly instead of copying and pruning, so only the
+		matching elements are ever allocated. */
 	function filter(LinkedListPredicate<T> predicate) returns LinkedList<T>
-		let result = copy()
-		result.removeIf(t -> not predicate.isTrueFor(t))
+		let result = new LinkedList<T>()
+		var entry = dummy.next
+		while entry != dummy
+			if predicate.isTrueFor(entry.elem)
+				result.add(entry.elem)
+			entry = entry.next
 		destroy predicate
 		return result
 
@@ -376,8 +386,10 @@ public class LinkedList<T>
 		halfRef.next = dummy
 		return tmp
 
-	/** Prints the content of the list */
+	/** Prints the content of the list. Only meaningful for int-like element types. */
 	function toString() returns string
+		if size == 0
+			return "[]"
 		let fold = foldl<string>("[", (i, q) -> q + (i castTo int).toString() + ",")
 		return fold.substring(0, fold.length()-1) + "]"
 
@@ -394,8 +406,18 @@ public class LinkedList<T>
 	protected function getDummy() returns LLEntry<T>
 		return dummy
 
-	/** Returns the entry at the given index */
+	/** Returns the entry at the given index, erroring if it is out of bounds.
+		Without the check the walk simply wraps past the dummy entry and back
+		into the list, silently returning the wrong element. */
 	private function getEntry(int index) returns LLEntry<T>
+		if index < 0 or index >= size
+			error("LinkedList: Index out of bounds: " + index.toString())
+		return getEntryUnchecked(index)
+
+	/** Walks to the entry at the given index without validating it.
+		An index equal to size yields the dummy entry, which is what addAt uses
+		to append to the end. */
+	private function getEntryUnchecked(int index) returns LLEntry<T>
 		var entry = dummy
 		for i = 0 to index
 			entry = entry.next
@@ -458,9 +480,11 @@ public class LLIterator<T>
 	 	This call can only be made once per call to next */
 	function remove() returns T
 		if current != dummy
-			parent.removeEntry(current)
+			// Read both fields before removeEntry destroys the node.
 			let removed = current.elem
-			current = current.prev
+			let previous = current.prev
+			parent.removeEntry(current)
+			current = previous
 			return removed
 		return null
 
@@ -562,11 +586,13 @@ public interface FoldClosure<T, Q>
 public interface Comparator<T>
 	function compare(T o1, T o2) returns int
 
-constant Comparator<real> realComparator = (r1, r2) -> (r1 - r2).toInt()
+// Three-way comparisons: subtracting truncates sub-1.0 real differences to
+// "equal" and overflows for far-apart ints.
+constant Comparator<real> realComparator = (r1, r2) -> r1 < r2 ? -1 : (r1 > r2 ? 1 : 0)
 public function LinkedList<real>.sort()
 	this.sortWith(realComparator)
 
-constant Comparator<int> intComparator = (i1, i2) -> i1 - i2
+constant Comparator<int> intComparator = (i1, i2) -> i1 < i2 ? -1 : (i1 > i2 ? 1 : 0)
 public function LinkedList<int>.sort()
 	this.sortWith(intComparator)
 

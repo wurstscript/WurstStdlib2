@@ -69,11 +69,14 @@ public class HashList<T>
 
 	/** Removes and returns the element at the given index */
 	function removeAt(int index) returns T
-		decrOccurences(ht.loadInt(this castTo int, index) castTo T)
 		let tmp = ht.loadInt(this castTo int, index) castTo T
-		for i = index to size
+		decrOccurences(tmp)
+		// shift the tail left; the last valid destination is size - 2, going
+		// further only wrote phantom entries past the end of the list
+		for i = index to size - 2
 			ht.saveInt(this castTo int, i, ht.loadInt(this castTo int, i + 1))
 		size--
+		ht.removeInt(this castTo int, size)
 		return tmp
 
 	/** Removes the first occurence of t from this list.
@@ -95,7 +98,8 @@ public class HashList<T>
 	function isEmpty() returns bool
 		return size == 0
 
-	/** Get the element at the given index from this list */
+	/** Get the element at the given index from this list.
+		Indices outside [0, size) are not validated and yield the null/zero value. */
 	function get(int index) returns T
 		return ht.loadInt(this castTo int, index) castTo T
 
@@ -132,13 +136,23 @@ public class HashList<T>
 		staticItr.reset()
 		return staticItr
 
-	/** Removes the element if the predicates returns true */
+	/** Removes the element if the predicates returns true.
+		Single pass compaction - removing through the iterator instead would
+		shift the tail once per removal, making this O(n^2). */
 	function removeIf(RemovePredicate<T> predicate)
-		let itr = iterator()
-		for elem from itr
+		let key = this castTo int
+		var writeIndex = 0
+		for readIndex = 0 to size - 1
+			let elem = ht.loadInt(key, readIndex) castTo T
 			if predicate.shouldRemove(elem)
-				itr.remove()
-		itr.close()
+				decrOccurences(elem)
+			else
+				if writeIndex != readIndex
+					ht.saveInt(key, writeIndex, elem castTo int)
+				writeIndex++
+		for i = writeIndex to size - 1
+			ht.removeInt(key, i)
+		size = writeIndex
 
 		destroy predicate
 

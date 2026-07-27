@@ -73,11 +73,11 @@ public class IterableMap<K,V> extends HashMap<K, V>
 			keys.clear()
 		super.flush()
 
-	/** Retrieves the value saved under the given key and removes it */
+	/** Retrieves the value saved under the given key and removes it.
+		super.getAndRemove dispatches back into this class's remove(), which
+		already drops the key, so no second keys.remove() is needed here. */
 	override function getAndRemove(K key) returns V
-		let result = super.getAndRemove(key)
-		keys.remove(key)
-		return result
+		return super.getAndRemove(key)
 
 	/** Returns an iterator that iterates over the map's keys */
 	function iterator() returns HLIterator<K>
@@ -91,21 +91,24 @@ public class IterableMap<K,V> extends HashMap<K, V>
 	/** Removes either a single occurence or all occurences from of the value from the map */
 	function removeValue(V val, bool all)
 		K array toRemove
-		int num = 0
+		var num = 0
 		K firstMatch = null
+		// a separate flag rather than "firstMatch != null", so a key whose
+		// underlying int is 0 is still removed
+		var foundFirst = false
 		for elem in this
 			if get(elem) == val
 				if all
 					toRemove[num] = elem
 					num++
-				else
-					if firstMatch == null
-						firstMatch = elem
+				else if not foundFirst
+					firstMatch = elem
+					foundFirst = true
 
-		if all and num > 0
+		if all
 			for i = 0 to num - 1
 				remove(toRemove[i])
-		else if not all and firstMatch != null
+		else if foundFirst
 			remove(firstMatch)
 
 	/** Copies all elements from another map into this one
