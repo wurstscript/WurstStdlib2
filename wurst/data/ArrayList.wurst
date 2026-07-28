@@ -575,9 +575,17 @@ public class ArrayList<T:>
         return output
 
     /** Returns a new list of elements that satisfy the predicate.
-        Presized to this list's size so the result never has to grow. */
+
+        Deliberately NOT presized to this list's size. The result shares the
+        per-type store with the source, so reserving `size` up front would need
+        2 * size slots at once and hit JASS_MAX_ARRAY_SIZE for any source
+        holding more than half the store - even when a selective predicate
+        matches only a handful of elements. Growth is amortised O(n) anyway.
+
+        If you do not need to keep the original, prefer #removeIf, which filters
+        in place and needs no second section at all. */
     function filter(ArrayListPredicate<T> predicate) returns ArrayList<T>
-        let result = new ArrayList<T>(size)
+        let result = new ArrayList<T>()
         for i = 0 to size - 1
             let elem = store[startIndex + i]
             if predicate.isTrueFor(elem)
