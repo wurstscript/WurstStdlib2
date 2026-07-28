@@ -183,6 +183,25 @@ public class DamageEvent
     protected static DamageListener array lastUnreducedListeners
     protected static int maxUnreducedPriority = 0
 
+    /*  Cursor of every traversal currently in progress, one slot per nesting
+        level (a listener that deals damage re-enters these loops).
+
+        A traversal caches the successor of the listener it is about to invoke.
+        If that callback destroys the successor, the cached pointer would dangle,
+        so removeListener repairs every cursor pointing at the node it unlinks.
+        Listeners further down the list need no repair: the cursor is re-read
+        from the live current node on each iteration, and unlinking has already
+        corrected that node's next pointer. */
+    protected static DamageListener array iterNext
+    protected static int iterDepth = 0
+
+    /** Advances any in-flight cursor that is about to step onto this listener.
+        Must run before the listener's own next pointer is cleared. */
+    protected static function repairCursors(DamageListener removed)
+        for d = 0 to iterDepth - 1
+            if iterNext[d] == removed
+                iterNext[d] = removed.next
+
 
     /* ON DAMAGE */
     protected static function onUnreducedDamage()
@@ -202,20 +221,24 @@ public class DamageEvent
         nextDamageType = UNKNOWN
         nextDamageElement = null
 
+        let depth = iterDepth
+        iterDepth++
         for i = 0 to maxUnreducedPriority
             var listener = firstUnreducedListeners[i]
             while listener != null
-                // cache the successor: a listener may destroy itself in onEvent,
-                // which unlinks it and would leave us reading a freed object
-                let nextListener = listener.next
+                // Publish the successor so removeListener can advance it if the
+                // callback destroys that listener (or this one).
+                iterNext[depth] = listener.next
                 listener.onEvent()
                 if abort
                     dmg.amount = 0
                     break
                 else
-                    listener = nextListener
+                    listener = iterNext[depth]
             if abort
                 break
+        iterDepth--
+        iterNext[depth] = null
 
         BlzSetEventAttackType(dmg.nativeAttackType)
         BlzSetEventDamageType(dmg.nativeDamageType)
@@ -243,18 +266,22 @@ public class DamageEvent
 
         if not abort
             dmg.setReducedAmount(GetEventDamage())
+            let depth = iterDepth
+            iterDepth++
             for i = 0 to maxPriority
                 var listener = firstListeners[i]
                 while listener != null
-                    let nextListener = listener.next
+                    iterNext[depth] = listener.next
                     listener.onEvent()
                     if abort
                         dmg.amount = 0
                         break
                     else
-                        listener = nextListener
+                        listener = iterNext[depth]
                 if abort
                     break
+            iterDepth--
+            iterNext[depth] = null
 
             BlzSetEventAttackType(dmg.nativeAttackType)
             BlzSetEventDamageType(dmg.nativeDamageType)
@@ -296,6 +323,8 @@ public class DamageEvent
     protected static function removeListener(DamageListener listener)
         if not listener.registered
             return
+        // before any pointer on this node is cleared
+        repairCursors(listener)
         if listener.unreduced
             removeUnreducedListener(listener)
             return
@@ -348,6 +377,8 @@ public class DamageEvent
     protected static function removeUnreducedListener(DamageListener listener)
         if not listener.registered
             return
+        // no-op when reached via removeListener, which already repaired
+        repairCursors(listener)
         let prio = listener.priority
         if listener.prev != null
             listener.prev.next = listener.next

@@ -331,14 +331,16 @@ public function vec3.project(vec3 direction) returns vec3
 public function vec3.toVec2() returns vec2
 	return vec2(this.x, this.y)
 
-/** Is this vector inside the given sphere. Unlike the 2d variants this takes
-	the z coordinate into account - use inRange2d for the old xy-only test. */
+/** Is this vector inside the given circle. Only the x and y coordinates are
+	compared - the height difference is ignored. Use inRange3d for a spherical
+	test that includes z. */
 public function vec3.inRange(vec3 v2, real radius) returns boolean
-	return this.distanceToSq(v2) <= radius * radius
-
-/** Is this vector inside the given circle, ignoring the z coordinate */
-public function vec3.inRange2d(vec3 v2, real radius) returns boolean
 	return (this.x - v2.x).squared() + (this.y - v2.y).squared() <= radius * radius
+
+/** Is this vector inside the given sphere, taking the z coordinate into
+	account. Compare vec3.inRange, which only compares x and y. */
+public function vec3.inRange3d(vec3 v2, real radius) returns boolean
+	return this.distanceToSq(v2) <= radius * radius
 
 /** Get the distance to another Vector */
 public function vec3.distanceTo(vec3 v) returns real
@@ -486,12 +488,17 @@ function vectorTests()
 	v.setLengthSq(-1.).assertEquals(ZERO3)
 
 @Test function testVec3InRange()
-	// inRange is spherical, inRange2d ignores z
-	vec3(0, 0, 1000).inRange(vec3(0, 0, 0), 10.).assertFalse()
-	vec3(0, 0, 1000).inRange2d(vec3(0, 0, 0), 10.).assertTrue()
-	vec3(3, 4, 0).inRange(vec3(0, 0, 0), 5.).assertTrue()
-	vec3(0, 0, 5).inRange(vec3(0, 0, 0), 5.).assertTrue()
-	vec3(0, 0, 6).inRange(vec3(0, 0, 0), 5.).assertFalse()
+	// inRange keeps its long standing xy-only contract
+	vec3(0, 0, 1000).inRange(vec3(0, 0, 0), 10.).assertTrue()
+	vec3(3, 4, 1000).inRange(vec3(0, 0, 0), 5.).assertTrue()
+	vec3(3, 4, 0).inRange(vec3(0, 0, 0), 4.).assertFalse()
+
+	// inRange3d is the spherical variant
+	vec3(0, 0, 1000).inRange3d(vec3(0, 0, 0), 10.).assertFalse()
+	vec3(3, 4, 0).inRange3d(vec3(0, 0, 0), 5.).assertTrue()
+	vec3(0, 0, 5).inRange3d(vec3(0, 0, 0), 5.).assertTrue()
+	vec3(0, 0, 6).inRange3d(vec3(0, 0, 0), 5.).assertFalse()
+	vec3(3, 4, 12).inRange3d(vec3(0, 0, 0), 13.).assertTrue()
 
 @Test function testIsInTriangle()
 	let point2d = vec2(10, 15)

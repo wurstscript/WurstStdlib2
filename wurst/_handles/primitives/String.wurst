@@ -63,18 +63,25 @@ constant numbersetlength = numberset.length()
 constant charsetlength = charset.length()
 
 /**	Every printable ascii character, in code point order from space (32) to
-	tilde (126). Used to give stringCompare a real lexicographic ordering
-	without scanning `charset` once per character. */
+	tilde (126). Used to build stringCompare's sort keys. */
 constant PRINTABLE_ASCII = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~"
 constant CHAR_ORDER_MAP = InitHashtable()
-/**	Sort key for anything that is not a printable ascii byte (control bytes and
-	the individual bytes of multibyte characters), placing them after all
-	printable ascii characters. */
-constant UNKNOWN_CHAR_ORDER = 256
+/**	Sort keys for characters outside `charset` start here, so the established
+	ordering of alphanumerics (digits, then lowercase, then uppercase - the
+	order of `charset` itself) is preserved and everything else sorts after
+	them. Offset by the ascii code so they are ordered among themselves. */
+constant NON_CHARSET_ORDER_BASE = charsetlength
+/**	Sort key for anything that is not a printable ascii byte: control bytes and
+	the individual bytes of multibyte characters. */
+constant UNKNOWN_CHAR_ORDER = 1000
 
-/**	Ascii sort keys for stringCompare. StringHash is case insensitive, so 'a'
-	and 'A' share a key - only the uppercase form is stored and the lowercase
-	code point is recovered at lookup time (same trick as StringUtils.char).
+/**	Sort keys for stringCompare, one hashtable lookup instead of a linear scan
+	over `charset` per character.
+
+	StringHash is case insensitive, so 'a' and 'A' share a key. Only the
+	uppercase form is stored and the lowercase key is recovered at lookup time
+	(the same trick as StringUtils.char). Values are stored offset by one so
+	that a missing entry (0) is distinguishable from the key of '0'.
 
 	Marked @compiletime as well as being called from init, because init blocks
 	do not run in the compiletime interpreter and @Test/@compiletime code needs
@@ -84,7 +91,9 @@ constant UNKNOWN_CHAR_ORDER = 256
 	for i = 0 to PRINTABLE_ASCII.length() - 1
 		let c = PRINTABLE_ASCII.substring(i, i + 1)
 		if c == StringCase(c, true)
-			SaveInteger(CHAR_ORDER_MAP, 0, c.getHash(), i + 32)
+			let charsetIndex = charset.indexOf(c)
+			let key = charsetIndex >= 0 ? charsetIndex : NON_CHARSET_ORDER_BASE + i + 32
+			SaveInteger(CHAR_ORDER_MAP, 0, c.getHash(), key + 1)
 
 init
 	initCharOrder()
@@ -95,15 +104,17 @@ init
 	for i = 0 to 63
 		SaveBoolean(CONT_BYTE_MAP, 0, CONT_BYTE_PROBE.substring(i * 2 + 1, i * 2 + 2).getHash(), true)
 
-/** Sort key of a single byte: its ascii code, or UNKNOWN_CHAR_ORDER if it is
-	not printable ascii. */
+/** Sort key of a single byte: its index in `charset` for alphanumerics, a
+	value after those for other printable ascii, or UNKNOWN_CHAR_ORDER. */
 function charOrder(string c) returns int
 	let stored = LoadInteger(CHAR_ORDER_MAP, 0, c.getHash())
 	if stored == 0
 		return UNKNOWN_CHAR_ORDER
-	// a letter that differs from its own uppercase form is the lowercase one,
-	// which sits 32 code points above the stored uppercase entry
-	return c == StringCase(c, true) ? stored : stored + 32
+	let key = stored - 1
+	// A letter that differs from its own uppercase form is the lowercase one.
+	// In `charset` the 26 lowercase letters sit immediately before the 26
+	// uppercase ones, so the lowercase key is 26 positions earlier.
+	return c == StringCase(c, true) ? key : key - 26
 
 /** Returns true if this string is non-null and
 	not empty or only consisting of whitespace. */
@@ -313,10 +324,12 @@ public function string.replace(string oldSubstring, string newSubstring) returns
 /**	Returns a negative number if s1 sorts before s2, a positive number if it
 	sorts after, and 0 only if the two strings are equal.
 
-	Ordering is by ascii code point, so digits sort before uppercase letters,
-	which sort before lowercase letters. Bytes outside printable ascii - control
-	characters and the individual bytes of multibyte characters - all sort after
-	printable ascii, ordered by string hash so the result stays consistent. */
+	Alphanumerics keep their long standing order: digits, then lowercase, then
+	uppercase, so "Hello" sorts after "hello". Every other printable ascii
+	character sorts after all alphanumerics, ordered by ascii code point among
+	themselves. Bytes outside printable ascii - control characters and the
+	individual bytes of multibyte characters - sort last, tie-broken by string
+	hash so the result stays consistent. */
 public function stringCompare(string s1, string s2) returns int
 	let s1Len = s1.length()
 	let s2Len = s2.length()

@@ -107,17 +107,13 @@ public class Knockback3
 	/**
 	For the purposes of friction, distinguish a unit which is airborne
 	versus one which is sliding. Height in units.
+
+	Note that this constant is used for two different quantities: as a height
+	when deciding whether a unit is airborne, and as a per-tick vertical speed
+	when deciding whether a sliding unit takes ground friction. Changing it
+	affects both.
 	*/
 	static var isAirborneThreshold = 5.
-
-	/**
-	A sliding unit only takes ground friction while its vertical speed stays
-	below this. Units per second.
-
-	This used to be isAirborneThreshold, which is a *height*; the default here
-	reproduces that comparison exactly while keeping the units honest.
-	*/
-	static var slidingVerticalSpeedThreshold = 5. / ANIMATION_PERIOD
 
 	/** Below this speed, sliding units will stop. */
 	static var minimumSlideSpeed = 30.
@@ -223,17 +219,27 @@ public class Knockback3
 	/** Displacement applied per tick, i.e. speed * ANIMATION_PERIOD */
 	private vec3 del
 
-	/**
-	Converts a speed in units per second into the squared per-tick speed that
-	`del` and velXySquared are measured in.
+	/*
+	KNOWN ISSUE - threshold units
+	=============================
+	velXySquared below is a *squared per-tick* speed, but the speed thresholds
+	are compared against `threshold^2 * ANIMATION_PERIOD` (and, for
+	destroyDestructableSpeedThreshold, against `threshold * ANIMATION_PERIOD`
+	with no squaring at all). A dimensionally correct comparison would be
+	`(threshold * ANIMATION_PERIOD)^2`.
 
-	The thresholds are documented in units per second but compared against a
-	squared per-tick speed, so both the tick scaling and the squaring have to
-	be applied to the threshold, not just one of them.
+	The comparisons are therefore not in units per second as documented. At the
+	default ANIMATION_PERIOD the effective cut-offs are roughly:
+
+	  minimumSlideSpeed              30 -> behaves like ~173 units/s
+	  frictionFxThreshold           180 -> behaves like ~1039 units/s
+	  destroyDestructableSpeedThreshold 300 -> behaves like ~100 units/s
+
+	This is deliberately left as-is: correcting the maths would silently
+	re-tune every existing consumer of this package. Treat the numbers above as
+	the real scale when tuning, and change the comparisons only as a conscious
+	behavioural change.
 	*/
-	private static function tickSpeedSq(real unitsPerSecond) returns real
-		let perTick = unitsPerSecond * ANIMATION_PERIOD
-		return perTick * perTick
 
 
 	private static function tickNearGround(Knockback3 knockback, vec3 newPos3, vec3 pos3, real velXySquared)
@@ -244,10 +250,13 @@ public class Knockback3
 		)
 			knockback.u.setXY(newPos3)
 
-			if knockback.del.z <= slidingVerticalSpeedThreshold * ANIMATION_PERIOD
+			// isAirborneThreshold used as a per-tick vertical speed here; see
+			// its doc comment and the threshold units note above
+			if knockback.del.z <= isAirborneThreshold
 				knockback.del *= (1. - frictionCoefficientGround)
 
-				if velXySquared > tickSpeedSq(frictionFxThreshold)
+				// see the threshold units note above
+				if velXySquared > frictionFxThreshold * frictionFxThreshold * ANIMATION_PERIOD
 					addEffect(frictionFxPath, pos3).destr()
 
 			if USE_MOVE_SPEED_MODIFIERS
@@ -328,10 +337,11 @@ public class Knockback3
 			else
 				tickAboveGround(knockback, newPos3, pos3)
 
-			if velXySquared > tickSpeedSq(destroyDestructableSpeedThreshold) and pos3.z < destroyDestructableHeightThreshold
+			// see the threshold units note above
+			if velXySquared > destroyDestructableSpeedThreshold * ANIMATION_PERIOD and pos3.z < destroyDestructableHeightThreshold
 				tickTryDestructable(knockback, newPos3)
 
-			let isVelxyLow = velXySquared < tickSpeedSq(minimumSlideSpeed)
+			let isVelxyLow = velXySquared < (minimumSlideSpeed * minimumSlideSpeed) * ANIMATION_PERIOD
 			let isVelzLow = knockback.del.z.abs() < -1. * elasticityThreshold * ANIMATION_PERIOD
 			let isAirborne = pos3.z > isAirborneThreshold
 			if isVelxyLow and isVelzLow and not isAirborne

@@ -123,12 +123,12 @@ package StringTests
 	stringCompare("hello, world 4234", "hello, world 4321").assertLessThan(0)
 	stringCompare("", "hello, world 1234").assertLessThan(0)
 	stringCompare("4331", "4321").assertGreaterThan(0)
-	// ascii code point order: uppercase (65-90) sorts before lowercase (97-122)
-	stringCompare("Hello", "hello").assertLessThan(0)
-	stringCompare("hello", "Hello").assertGreaterThan(0)
+	stringCompare("Hello", "hello").assertGreaterThan(0) // uppercase > lowercase
 
-/** Punctuation used to collapse to a single sort key, so any two strings made
-	of non-alphanumeric characters compared as equal. */
+/** Every character outside `charset` used to share one sort key, so any two
+	strings of non-alphanumeric characters compared as equal.
+	They are now ordered by ascii code among themselves, while still sorting
+	after all alphanumerics. */
 @Test function testComparePunctuation()
 	stringCompare("#)!*#&", "~ @#*)").assertLessThan(0) // '#' (35) < '~' (126)
 	stringCompare("~ @#*)", "#)!*#&").assertGreaterThan(0)
@@ -138,6 +138,10 @@ package StringTests
 	// distinct strings must never compare equal
 	stringCompare("_", ".").assertGreaterThan(0)
 	stringCompare(".", "_").assertLessThan(0)
+	// alphanumerics still sort before punctuation
+	stringCompare("z", "!").assertLessThan(0)
+	stringCompare("Z", "!").assertLessThan(0)
+	stringCompare("0", "~").assertLessThan(0)
 
 @Test function testCompareIsAntisymmetric()
 	let samples = ["", " ", "!", "0", "9", "A", "Z", "_", "a", "z", "~", "ab", "abc"]
