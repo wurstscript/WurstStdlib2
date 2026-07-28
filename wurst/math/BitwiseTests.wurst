@@ -60,6 +60,19 @@ function shiftByZeroTests()
 	minusOne.shiftl(0).assertEquals(-1)
 
 @Test
+function shiftBoundsTests()
+	let one = 1
+	let minusOne = -1
+	// powShift[31] wraps to 0x80000000 and powShift[32] overflows to 0, so a
+	// left shift of 32 correctly discards every bit
+	one.shiftl(31).assertEquals(INT_MIN)
+	one.shiftl(32).assertEquals(0)
+	// 31 is the largest amount shiftr supports: at 32 it would divide by
+	// powShift[32] == 0
+	minusOne.shiftr(31).assertEquals(1)
+	INT_MIN.shiftr(31).assertEquals(1)
+
+@Test
 function toBitStringTests()
 	let zero = 0
 	let one = 1

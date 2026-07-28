@@ -273,7 +273,8 @@ public function int.xor32(int other) returns int
 	32-bit SHIFTL (<<)
 
 	number.shiftl(amount) equivalent to (number << amount)
-	`amount` must be in [0, 32]; bits shifted past bit 31 are discarded.
+	Bits shifted past bit 31 are discarded, so a shift of 32 yields 0.
+	`amount` must be in [0, 32]; other values read outside the shift table.
 **/
 public function int.shiftl(int amount) returns int
 	return bwShiftl32(this, amount)
@@ -284,7 +285,10 @@ public function int.shiftl(int amount) returns int
 	number.shiftr(amount) equivalent to (number >>> amount): the sign bit is
 	shifted in as data rather than replicated, so negative inputs produce a
 	positive result for any amount > 0.
-	`amount` must be in [0, 32].
+
+	`amount` must be in [0, 31] - one less than shiftl accepts. The shift table
+	holds 2^32 as 0 after wrapping, so an amount of 32 divides by zero rather
+	than returning 0. Guard the call if the amount is computed.
 **/
 public function int.shiftr(int amount) returns int
 	return bwShiftr32(this, amount)

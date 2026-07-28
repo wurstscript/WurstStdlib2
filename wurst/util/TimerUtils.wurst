@@ -101,6 +101,11 @@ public module TimedLoop
 	static private triggercondition condition
 
 	protected TimedLoopState timedLoopState = PAUSED
+	/** True exactly while this instance has a slot in `instances`. Tracked
+		separately from timedLoopState, because a stopped instance stays
+		registered until the next tick sweeps it out, while an instance that was
+		stopped before it ever started was never registered at all. */
+	private bool timedLoopRegistered = false
 
 	abstract function onTimedLoop()
 
@@ -118,6 +123,7 @@ public module TimedLoop
 			if t.timedLoopState != RUNNING
 				instanceCount--
 				instances[i] = instances[instanceCount]
+				t.timedLoopRegistered = false
 				if t.timedLoopState == STOPPED_FOR_GOOD
 					t.timedLoopState = PAUSED
 					destroy t
@@ -143,22 +149,20 @@ public module TimedLoop
 	/** Starts the periodic updates for this object.
 		Calling this on an already running instance has no effect. */
 	function startTimedLoop()
-		if timedLoopState == RUNNING
-			// registering twice would run onTimedLoop twice per tick and leave
-			// a stale slot behind when the object is stopped or destroyed
+		timedLoopState = RUNNING
+		if timedLoopRegistered
+			// Already holds a slot, either because it is running or because it
+			// was stopped and this tick's sweep has not removed it yet.
+			// Registering again would run onTimedLoop twice per tick and leave a
+			// stale slot behind once the object is stopped or destroyed.
 			return
-		if timedLoopState != PAUSED
-			// stopped this tick but not yet swept out of `instances`; the entry
-			// is still there, so just mark it live again
-			timedLoopState = RUNNING
-			return
+		timedLoopRegistered = true
 		instances[instanceCount] = this
 		instanceCount++
 		if instanceCount == 1
 			if condition == null
 				timedLoopTimer = TimedLoopTimer.get(getPeriod())
 				condition = timedLoopTimer.add(Condition(function onExpire))
-		timedLoopState = RUNNING
 
 	ondestroy
 		if timedLoopState != PAUSED
