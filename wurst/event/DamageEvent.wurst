@@ -245,22 +245,36 @@ public class DamageEvent
         BlzSetEventWeaponType(dmg.nativeWeaponType)
         BlzSetEventDamage(dmg.amount)
 
-        // EVENT_PLAYER_UNIT_DAMAGED does not fire for non-positive damage, so
-        // onDamage() would never run to release this instance or clear `abort`.
-        // Without this, aborting (or zeroing damage) in an unreduced listener
-        // leaks the instance and nulls every later damage instance too.
+        /*  EVENT_PLAYER_UNIT_DAMAGED does not fire for non-positive damage, so
+            onDamage() would never run to release this instance or clear
+            `abort`. Without closing it out here, aborting (or zeroing damage)
+            in an unreduced listener leaks the instance, leaves
+            DamageInstance.current stale, and nulls every later damage instance
+            because `abort` is never reset.
+
+            ASSUMPTION: a DAMAGING that ends with amount <= 0 is never followed
+            by a DAMAGED. This is the behaviour the package header documents and
+            the behaviour of current game versions.
+
+            If a future patch ever does emit DAMAGED after a zeroed DAMAGING,
+            this is where it breaks: onDamage() would find the *enclosing*
+            instance as `current` and consume it. That cannot be detected
+            locally - after this pop, the state seen by a nested DAMAGED and by
+            the enclosing one is identical, and the engine exposes no event
+            identity to tell them apart. Matching on source/target only appears
+            to work and silently corrupts the enclosing instance whenever the
+            two events share both handles. */
         if dmg.amount <= 0.
             destroy dmg
             abort = false
 
     protected static function onDamage()
         let dmg = DamageInstance.current
-        // onUnreducedDamage closes the instance out early when the damage ended
-        // up non-positive, because DAMAGED does not fire in that case. Confirm
-        // the live instance really belongs to this event before consuming it,
-        // so that a game version which does fire DAMAGED anyway cannot destroy
-        // an enclosing instance instead.
-        if dmg == null or dmg.source != GetEventDamageSource() or dmg.target != GetTriggerUnit()
+        // Under the assumption documented in onUnreducedDamage, every DAMAGED
+        // is preceded by a DAMAGING that left its instance on the stack, so
+        // `current` is always this event's instance. A null here means the
+        // stack is empty and there is nothing to consume.
+        if dmg == null
             abort = false
             return
 
