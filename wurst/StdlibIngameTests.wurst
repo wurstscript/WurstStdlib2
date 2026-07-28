@@ -1,0 +1,497 @@
+package StdlibIngameTests
+import DamageEvent
+import ClosureTimers
+import ClosureForGroups
+import TimerUtils
+import UnitIds
+import Execute
+import ErrorHandling
+
+/*	Manual, in-game checks for behaviour the compiletime interpreter cannot
+	reach: real damage events, real timers and real unit enumeration.
+
+	This package has no init block and no @compiletime function, so it costs
+	nothing unless a map explicitly calls into it. It is deliberately NOT a
+	@Test suite - `grill test` runs in the interpreter, where none of these
+	events exist.
+
+	HOW TO RUN
+	==========
+	Importing the package is enough:
+
+	>	import StdlibIngameTests
+
+	The suite starts one second into the game and prints its results. Type
+	-stdlibtest to run it again, or call runStdlibIngameTests() yourself from a
+	timer callback - not straight from init, since it creates units.
+
+	Results print as PASS / FAIL / INFO lines, followed by a summary. The whole
+	run takes about three seconds because the TimedLoop checks wait for ticks.
+
+	Each check runs inside try(), so one crashing check reports CRASH and the
+	rest still run.
+
+	WHAT QUESTION THIS ANSWERS
+	==========================
+	DamageEvent assumes that a DAMAGING which ends with amount <= 0 is never
+	followed by a DAMAGED, and closes the damage instance out early on that
+	basis.
+
+	Check 1 *observes* whether DAMAGED fires and prints the answer as an INFO
+	line - it cannot fail, because either answer is a legitimate engine
+	behaviour.
+
+	Check 10 is the one that decides whether the assumption is safe. Top level
+	hits are harmless either way, since the early close leaves nothing behind
+	for onDamage to consume. Only a nested zeroed hit can consume the enclosing
+	instance, so check 10 is the one that must pass.
+*/
+
+// ============================================================================
+// Reporting
+// ============================================================================
+
+var checksRun = 0
+var checksFailed = 0
+
+function check(bool passed, string label)
+	checksRun++
+	if passed
+		print("|cff44ff44PASS|r  " + label)
+	else
+		checksFailed++
+		print("|cffff4444FAIL|r  " + label)
+
+function note(string label)
+	print("|cffffcc00INFO|r  " + label)
+
+function section(string label)
+	print("|cff8888ff" + label + "|r")
+
+/**	Runs one test in an isolated thread. Without this a single crashing check
+	kills the whole run, and everything after it silently never happens. */
+function runGuarded(string label, ForForceCallback cb)
+	if not try(cb)
+		checksRun++
+		checksFailed++
+		print("|cffff4444CRASH|r " + label + " -> " + (lastError == "" ? "thread crashed" : lastError))
+
+// ============================================================================
+// Test units
+// ============================================================================
+
+constant TEST_POS = vec2(0, 0)
+constant GROUP_TEST_POS = vec2(2000, 2000)
+
+unit attacker = null
+unit victim = null
+/** Target for nested damage, so check 10 never re-enters the same widget. */
+unit victim2 = null
+
+function setupUnits()
+	attacker = createUnit(players[0], UnitIds.footman, TEST_POS, angle(0))
+	victim = createUnit(players[0], UnitIds.footman, TEST_POS.add(150., 0.), angle(0))
+	victim..setMaxHP(1000000)..setHP(1000000.)
+	victim2 = createUnit(players[0], UnitIds.footman, TEST_POS.add(300., 0.), angle(0))
+	victim2..setMaxHP(1000000)..setHP(1000000.)
+
+function teardownUnits()
+	// null tolerant: setupUnits may itself have been the thing that crashed
+	if attacker != null
+		attacker.remove()
+		attacker = null
+	if victim != null
+		victim.remove()
+		victim = null
+	if victim2 != null
+		victim2.remove()
+		victim2 = null
+
+/**	Heals the victim, then deals `amount` as CODE damage.
+	Ordinary physical damage rather than the DAMAGE_TYPE_UNIVERSAL default of
+	the short damageTarget overload, so armour applies and the reduced amount
+	really does differ from the unreduced one. */
+function dealDamage(real amount)
+	victim.setHP(victim.getMaxHP())
+	DamageEvent.setNextDamageFromCode()
+	attacker.damageTarget(victim, amount, false, false, ATTACK_TYPE_CHAOS, DAMAGE_TYPE_NORMAL,
+		WEAPON_TYPE_WHOKNOWS)
+
+// ============================================================================
+// 1. Does DAMAGED fire after a DAMAGING that ended at zero?
+// ============================================================================
+
+var unreducedFired = false
+var reducedFired = false
+var observedAmount = 0.
+
+function testZeroedDamaging()
+	section("--- 1. DAMAGED after a zeroed DAMAGING (the load bearing one) ---")
+	unreducedFired = false
+	reducedFired = false
+
+	let ul = DamageEvent.addUnreducedListener() ->
+		unreducedFired = true
+		DamageEvent.setAmount(0.)
+
+	let rl = DamageEvent.addListener() ->
+		reducedFired = true
+
+	dealDamage(50.)
+
+	check(unreducedFired, "unreduced listener fired")
+	if reducedFired
+		note("DAMAGED *DOES* fire after a zeroed DAMAGING.")
+		note("  The early close in DamageEvent.onUnreducedDamage is wrong for")
+		note("  this game version and must be replaced. Report this result.")
+	else
+		note("DAMAGED does NOT fire after a zeroed DAMAGING - assumption holds.")
+		note("  The early close in DamageEvent.onUnreducedDamage is correct.")
+
+	destroy ul
+	destroy rl
+
+// ============================================================================
+// 2. A zeroed hit must not poison later damage instances
+// ============================================================================
+
+function testZeroDoesNotPoisonNextInstance()
+	section("--- 2. a zeroed hit must not poison later damage ---")
+
+	let ul = DamageEvent.addUnreducedListener() ->
+		DamageEvent.setAmount(0.)
+	dealDamage(50.)
+	destroy ul
+
+	reducedFired = false
+	observedAmount = 0.
+	let rl = DamageEvent.addListener() ->
+		reducedFired = true
+		observedAmount = DamageEvent.getAmount()
+	dealDamage(40.)
+
+	check(reducedFired, "later damage still reaches reduced listeners")
+	check(observedAmount > 0., "later damage is not nulled (amount " + observedAmount.toString(1) + ")")
+	check(not DamageEvent.isFiring(), "no damage instance left on the stack")
+
+	destroy rl
+
+// ============================================================================
+// 3. abortCurrent() in an unreduced listener must not poison later damage
+// ============================================================================
+
+function testAbortInUnreducedListener()
+	section("--- 3. abortCurrent() in an unreduced listener ---")
+
+	let ul = DamageEvent.addUnreducedListener() ->
+		DamageEvent.abortCurrent()
+	dealDamage(50.)
+	destroy ul
+
+	reducedFired = false
+	observedAmount = 0.
+	let rl = DamageEvent.addListener() ->
+		reducedFired = true
+		observedAmount = DamageEvent.getAmount()
+	dealDamage(40.)
+
+	check(reducedFired, "damage after an abort still fires listeners")
+	check(observedAmount > 0., "damage after an abort is not nulled (amount " + observedAmount.toString(1) + ")")
+	check(not DamageEvent.isFiring(), "no damage instance left on the stack")
+
+	destroy rl
+
+// ============================================================================
+// 4. Same priority listeners fire in registration order (FIFO)
+// ============================================================================
+
+var order = ""
+
+function testListenerOrder()
+	section("--- 4. same priority listeners fire FIFO ---")
+	order = ""
+
+	let a = DamageEvent.addListener(3) ->
+		order += "A"
+	let b = DamageEvent.addListener(3) ->
+		order += "B"
+	let c = DamageEvent.addListener(3) ->
+		order += "C"
+
+	dealDamage(30.)
+
+	check(order == "ABC", "registration order preserved (expected ABC, got " + order + ")")
+
+	destroy a
+	destroy b
+	destroy c
+
+// ============================================================================
+// 5. A listener that destroys the NEXT listener mid-event
+// ============================================================================
+
+DamageListener victimListener = null
+var firedFirst = false
+var firedVictim = false
+var firedThird = false
+
+function testDestroyNextListener()
+	section("--- 5. a listener destroying the NEXT listener mid-event ---")
+	firedFirst = false
+	firedVictim = false
+	firedThird = false
+
+	let first = DamageEvent.addListener(4) ->
+		firedFirst = true
+		if victimListener != null
+			destroy victimListener
+			victimListener = null
+
+	victimListener = DamageEvent.addListener(4) ->
+		firedVictim = true
+
+	let third = DamageEvent.addListener(4) ->
+		firedThird = true
+
+	dealDamage(30.)
+
+	check(firedFirst, "first listener fired")
+	check(not firedVictim, "the destroyed listener did not fire")
+	check(firedThird, "traversal continued past the destroyed listener")
+
+	destroy first
+	destroy third
+	if victimListener != null
+		destroy victimListener
+		victimListener = null
+
+// ============================================================================
+// 6. A listener that destroys itself mid-event
+// ============================================================================
+
+DamageListener selfDestroyer = null
+var firedSelf = false
+var firedAfterSelf = false
+
+function testSelfDestroyingListener()
+	section("--- 6. a listener destroying itself mid-event ---")
+	firedSelf = false
+	firedAfterSelf = false
+
+	selfDestroyer = DamageEvent.addListener(5) ->
+		firedSelf = true
+		if selfDestroyer != null
+			destroy selfDestroyer
+			selfDestroyer = null
+
+	let after = DamageEvent.addListener(5) ->
+		firedAfterSelf = true
+
+	dealDamage(30.)
+
+	check(firedSelf, "self destroying listener fired")
+	check(firedAfterSelf, "traversal continued after it destroyed itself")
+
+	destroy after
+	if selfDestroyer != null
+		destroy selfDestroyer
+		selfDestroyer = null
+
+// ============================================================================
+// 10. A zeroed NESTED hit must not consume the enclosing damage instance
+// ============================================================================
+
+/*	The check that decides whether a zeroed hit may be closed out early.
+	Checks 1-3 are all top level hits, where an early close leaves
+	DamageInstance.current == null and onDamage bails out safely whichever way
+	the engine behaves - so they cannot tell the two worlds apart.
+
+	Nesting can:
+
+	  early close is safe   - no DAMAGED for the zeroed inner hit.
+	  early close corrupts  - DAMAGED fires for the inner hit, finds the
+	                          *enclosing* instance as current, and consumes it
+	                          with the inner event's damage of 0. The outer hit
+	                          then reports 0 to its own reduced listeners.
+
+	Measured in game: DAMAGED *does* fire for a zeroed hit, so there is no
+	early close any more and the outer hit must keep its own amount.
+
+	Listeners filter on the target unit rather than call order, so the result
+	does not depend on which DAMAGED arrives first. */
+
+var damageDepth = 0
+var innerZeroed = false
+var outerReducedFired = false
+var outerAmount = 0.
+var innerReducedFired = false
+var reducedCalls = 0
+
+function testNestedZeroedDamage()
+	section("--- 10. a zeroed NESTED hit must not consume the outer instance ---")
+	damageDepth = 0
+	innerZeroed = false
+	outerReducedFired = false
+	outerAmount = 0.
+	innerReducedFired = false
+	reducedCalls = 0
+
+	let ul = DamageEvent.addUnreducedListener() ->
+		damageDepth++
+		if damageDepth == 1
+			// outer hit: deal a nested hit from inside this listener
+			DamageEvent.setNextDamageFromCode()
+			attacker.damageTarget(victim2, 20., false, false, ATTACK_TYPE_CHAOS, DAMAGE_TYPE_NORMAL,
+				WEAPON_TYPE_WHOKNOWS)
+		else
+			// inner hit: zero it
+			innerZeroed = true
+			DamageEvent.setAmount(0.)
+		damageDepth--
+
+	let rl = DamageEvent.addListener() ->
+		reducedCalls++
+		if DamageEvent.getTarget() == victim
+			outerReducedFired = true
+			outerAmount = DamageEvent.getAmount()
+		else if DamageEvent.getTarget() == victim2
+			innerReducedFired = true
+
+	dealDamage(60.)
+
+	check(innerZeroed, "the nested hit reached the unreduced listeners")
+	check(outerReducedFired, "the outer hit reached its own reduced listeners")
+	check(outerAmount > 1., "the outer hit kept its own amount (" + outerAmount.toString(1) + ")")
+	check(not DamageEvent.isFiring(), "no damage instance left on the stack")
+
+	note("DAMAGED fired " + reducedCalls.toString() + " time(s); zeroed nested hit "
+		+ (innerReducedFired ? "DID" : "did NOT") + " reach reduced listeners")
+
+	destroy ul
+	destroy rl
+
+// ============================================================================
+// 7. Nested group enumeration
+// ============================================================================
+
+var outerCount = 0
+var innerCalls = 0
+
+function testGroupNesting()
+	section("--- 7. a group enumeration nested inside another ---")
+
+	unit array probes
+	for i = 0 to 3
+		probes[i] = createUnit(players[0], UnitIds.footman, GROUP_TEST_POS.add(i * 64., 0.), angle(0))
+
+	outerCount = 0
+	innerCalls = 0
+
+	// the collision filtering path and forNearestUnit both used to iterate the
+	// engine wide ENUM_GROUP, so the inner call clobbered the outer one
+	forUnitsInRange(GROUP_TEST_POS.add(96., 0.), 400., true) (unit u) ->
+		outerCount++
+		forNearestUnit(u.getPos(), 300., null) (unit nearest) ->
+			if nearest != null
+				innerCalls++
+
+	check(outerCount >= 4, "outer enumeration visited every unit (" + outerCount.toString() + ")")
+	check(innerCalls == outerCount, "nested enumeration ran exactly once per outer unit ("
+		+ innerCalls.toString() + " vs " + outerCount.toString() + ")")
+
+	for i = 0 to 3
+		probes[i].remove()
+
+// ============================================================================
+// 8 + 9. TimedLoop registration
+// ============================================================================
+
+class LoopProbe
+	use TimedLoop
+	var ticks = 0
+
+	override function onTimedLoop()
+		ticks++
+
+function testTimedLoopStopBeforeStart()
+	section("--- 8. TimedLoop: stop() before the first start() ---")
+	let probe = new LoopProbe()
+	// a defensive stop on an instance that was never started
+	probe.stopTimedLoop()
+	probe.startTimedLoop()
+
+	doAfter(0.5) ->
+		check(probe.ticks > 0, "onTimedLoop runs after stop-then-start (ticks " + probe.ticks.toString() + ")")
+		probe.stopTimedLoopAndDestroy()
+
+function testTimedLoopDoubleStart()
+	section("--- 9. TimedLoop: repeated start() must not double register ---")
+	let single = new LoopProbe()
+	let tripled = new LoopProbe()
+	single.startTimedLoop()
+	tripled..startTimedLoop()..startTimedLoop()..startTimedLoop()
+
+	doAfter(0.5) ->
+		check(tripled.ticks == single.ticks, "three starts tick as often as one ("
+			+ tripled.ticks.toString() + " vs " + single.ticks.toString() + ")")
+		single.stopTimedLoopAndDestroy()
+		tripled.stopTimedLoopAndDestroy()
+
+// ============================================================================
+// Runner
+// ============================================================================
+
+/**	Runs every in-game check. Call from a timer callback rather than straight
+	from init, because it creates units. */
+public function runStdlibIngameTests()
+	checksRun = 0
+	checksFailed = 0
+	print("|cff8888ff=== Wurst stdlib in-game tests ===|r")
+
+	runGuarded("setup") ->
+		setupUnits()
+	runGuarded("1. zeroed DAMAGING") ->
+		testZeroedDamaging()
+	runGuarded("2. zeroed hit poisoning") ->
+		testZeroDoesNotPoisonNextInstance()
+	runGuarded("3. abortCurrent poisoning") ->
+		testAbortInUnreducedListener()
+	runGuarded("4. listener order") ->
+		testListenerOrder()
+	runGuarded("5. destroy next listener") ->
+		testDestroyNextListener()
+	runGuarded("6. self destroying listener") ->
+		testSelfDestroyingListener()
+	runGuarded("10. zeroed nested hit") ->
+		testNestedZeroedDamage()
+	runGuarded("teardown") ->
+		teardownUnits()
+
+	runGuarded("7. nested enumeration") ->
+		testGroupNesting()
+
+	// these finish asynchronously, so the summary waits for them
+	runGuarded("8. TimedLoop stop before start") ->
+		testTimedLoopStopBeforeStart()
+	runGuarded("9. TimedLoop double start") ->
+		testTimedLoopDoubleStart()
+
+	doAfter(1.5) ->
+		print("|cff8888ff=== " + (checksRun - checksFailed).toString() + "/" + checksRun.toString()
+			+ " checks passed ===|r")
+		if checksFailed > 0
+			print("|cffff4444" + checksFailed.toString() + " check(s) FAILED|r")
+
+/** Registers "-stdlibtest" as a chat command that runs the suite. */
+public function registerStdlibIngameTestCommand()
+	let trig = CreateTrigger()
+	for i = 0 to bj_MAX_PLAYERS - 1
+		trig.registerPlayerChatEvent(players[i], "-stdlibtest", true)
+	trig.addAction(() -> runStdlibIngameTests())
+
+init
+	// Importing the package is enough to run the suite. The delay lets the map
+	// and the stdlib's own init blocks finish before units are created.
+	doAfter(1.) ->
+		runStdlibIngameTests()
+	registerStdlibIngameTestCommand()

@@ -4,7 +4,10 @@
     **IMPORTANT**
         This package **doesn't** provide protection from cyclic damage.
         Damage from code **must** be declared by the user using DamageEvent.setNextDamageFromCode() before dealing damage.
-        If you set damage amount to zero or less in the unreduced listeners, reduced listeners will not fire.
+        Setting the damage amount to zero or less in the unreduced listeners does **not** skip the reduced
+        listeners: EVENT_PLAYER_UNIT_DAMAGED still fires and they run with an amount of zero.
+        (This corrects an older note here which claimed the opposite. Verified in game by check 10 of
+        package StdlibIngameTests.)
 
         if DETECT_NATIVE_ABILITIES is true:
             > Any damage instance of attacktype ATTACK_TYPE_NORMAL is passed with DamageType SPELL
@@ -245,35 +248,27 @@ public class DamageEvent
         BlzSetEventWeaponType(dmg.nativeWeaponType)
         BlzSetEventDamage(dmg.amount)
 
-        /*  EVENT_PLAYER_UNIT_DAMAGED does not fire for non-positive damage, so
-            onDamage() would never run to release this instance or clear
-            `abort`. Without closing it out here, aborting (or zeroing damage)
-            in an unreduced listener leaks the instance, leaves
-            DamageInstance.current stale, and nulls every later damage instance
-            because `abort` is never reset.
+        /*  Do NOT close the instance out here when the damage ended at <= 0.
 
-            ASSUMPTION: a DAMAGING that ends with amount <= 0 is never followed
-            by a DAMAGED. This is the behaviour the package header documents and
-            the behaviour of current game versions.
+            The package header claims that "if you set damage amount to zero or
+            less in the unreduced listeners, reduced listeners will not fire".
+            That claim is wrong on current game versions: EVENT_PLAYER_UNIT_DAMAGED
+            fires for a zeroed DAMAGING just like any other, and onDamage()
+            below releases the instance normally.
 
-            If a future patch ever does emit DAMAGED after a zeroed DAMAGING,
-            this is where it breaks: onDamage() would find the *enclosing*
-            instance as `current` and consume it. That cannot be detected
-            locally - after this pop, the state seen by a nested DAMAGED and by
-            the enclosing one is identical, and the engine exposes no event
-            identity to tell them apart. Matching on source/target only appears
-            to work and silently corrupts the enclosing instance whenever the
-            two events share both handles. */
-        if dmg.amount <= 0.
-            destroy dmg
-            abort = false
+            Verified in game by check 10 of package StdlibIngameTests. Closing
+            the instance out here made a zeroed *nested* hit pop its own entry,
+            so the following DAMAGED found the enclosing instance as `current`
+            and consumed it with the inner event's damage of 0 - the outer hit
+            then reported 0 damage to its own reduced listeners. Leave the
+            instance on the stack and let its DAMAGED reclaim it. */
 
     protected static function onDamage()
         let dmg = DamageInstance.current
-        // Under the assumption documented in onUnreducedDamage, every DAMAGED
-        // is preceded by a DAMAGING that left its instance on the stack, so
-        // `current` is always this event's instance. A null here means the
-        // stack is empty and there is nothing to consume.
+        // Every DAMAGED is preceded by a DAMAGING that left its instance on the
+        // stack, including zeroed ones, so `current` is this event's instance.
+        // A null here would mean an unpaired DAMAGED; bail rather than
+        // dereference it.
         if dmg == null
             abort = false
             return
