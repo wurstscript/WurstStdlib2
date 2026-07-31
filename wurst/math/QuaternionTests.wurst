@@ -126,6 +126,13 @@ import Quaternion
 	expected = vec3(0, 0, 1).toQuat((-45) .asAngleDegrees())
 	start.slerpShort(finish, 0.5).assertEquals(expected)
 
+@Test function testSlerpNearIdentical()
+	// dot is close to 1 here, exercising the nlerp fast path instead of acos/sin.
+	let start = IDENTITYQ
+	let finish = vec3(0, 0, 1).toQuat(1 .asAngleDegrees())
+	let expected = vec3(0, 0, 1).toQuat(0.5 .asAngleDegrees())
+	start.slerp(finish, 0.5).assertEquals(expected)
+
 @Test function testGetGimbalPole()
 	let north = vec3(0, 1, 0).toQuat(270 .asAngleDegrees())
 	let south = vec3(0, 1, 0).toQuat(90 .asAngleDegrees())

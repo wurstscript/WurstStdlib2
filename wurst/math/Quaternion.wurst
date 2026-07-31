@@ -165,6 +165,11 @@ public function quat.slerp(quat q, real p) returns quat
 	let dot = this.dot(q)
 	if dot.abs() < EPSILON
 		result = q
+	else if 1 - dot.abs() < EPSILON
+		// Rotations are nearly identical: theta is close to zero, which makes
+		// the acos/sin below numerically unstable (division by ~0) for no
+		// visible benefit, so fall back to the cheaper nlerp instead.
+		result = this.nlerp(q, p)
 	else
 		let theta = dot.acos()
 		result = ((1 - p) * theta).sin() / theta.sin() * this + (p * theta).sin() / theta.sin() * q

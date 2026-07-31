@@ -44,8 +44,8 @@ public tuple char(int c)
 	rather than a true width. */
 public function string.getWidth() returns int
 	var width = 0
-	for i = 0 to this.length() - 1
-		width += char(this.charAt(i)).getWidth()
+	for c in this.toCharList()
+		width += c.getWidth()
 	return width
 
 public function char(string s) returns char
