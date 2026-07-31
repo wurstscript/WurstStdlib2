@@ -56,6 +56,9 @@ constant CHARMAP = [
 ]
 
 // RFC 4648 compliant Base64 reverse charmap.
+// Characters outside the base64 alphabet map to 0, the same slot as 'A', so
+// malformed input decodes to plausible-looking bytes rather than being
+// rejected. Validate untrusted input before decoding.
 constant REVERSE_CHARMAP = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,

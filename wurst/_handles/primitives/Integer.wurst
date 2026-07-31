@@ -29,9 +29,11 @@ public function int.toReal() returns real
 public function int.toString() returns string
 	return I2S(this)
 
-/** Returns this int to the power of the argument int */
+/** Returns this int to the power of the argument int.
+	A negative exponent yields 1, since the true result is not an integer.
+	Overflow wraps silently. */
 public function int.pow(int x) returns int
-	int result = 1
+	var result = 1
 	for int i = 1 to x
 		result *= this
 	return result

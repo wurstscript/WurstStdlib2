@@ -9,10 +9,27 @@ import ObjectIds
 	Reads and writes using preload files by manipulating default ability tooltips.
 
 	Read a file:
-	>	let fileContent = new File("MyFileName.pld").readAsString()
+	>	let fileContent = new File("MyFileName.pld").readAsString(localPlayer)
 
 	Write a file:
-	>	new File("MyFileName.pld")..write("MyContent")..close()
+	>	new File("MyFileName.pld")..write(localPlayer, "MyContent")..close()
+
+	DESYNC WARNING
+	==============
+	File contents live on one player's disk, so read() and readAsString() only
+	return data on that player's machine and return an empty result everywhere
+	else. The returned value is therefore *not* synchronised.
+
+	Never branch game state on it directly:
+
+	>	// DESYNCS: only one player takes this branch
+	>	if new File("save.pld").readAsString(localPlayer) == "unlocked"
+	>		unlockHero()
+
+	Send the value through a sync layer first (see package SyncSimple), and act
+	only on the synchronised copy.
+
+	Writing has no such issue as long as every player writes the same content.
 */
 
 @configurable public constant CHUNKS_PER_FILE = 64
@@ -46,12 +63,16 @@ public class File
 	function close()
 		destroy this
 
+	/** Reads the file's contents. Only the given player actually reads from
+		disk; every other client gets an empty ChunkedString, so the result is
+		not synchronised - see the desync warning at the top of this package. */
 	function read(player p) returns ChunkedString
 		let out = new ChunkedString(DEFAULT_CHUNK_SIZE)
 		if localPlayer == p
 			readPreload(out)
 		return out
 
+	/** Reads the file's contents as one string. Not synchronised - see read(). */
 	function readAsString(player p) returns string
 		let out = read(p)
 		let str = out.getUnsafeString()
@@ -87,16 +108,21 @@ public class File
 			output.append(chunk)
 
 
+	/** Returns the first character that cannot be embedded in a preload line,
+		or null if the content is safe.
+		Backslash and quote would escape the generated string literal;
+		newlines and carriage returns would break out of the line entirely. */
 	private static function validateInput(string content) returns string
 		for char in content
-			if (char == "\\")
-				return char
-			else if (char == "\"")
+			if char == "\\" or char == "\"" or char == "\n" or char == "\r"
 				return char
 		return null
 
 init
-	CAN_READ_FILES = new File("FileTester.pld")..write(localPlayer, "test").readAsString(localPlayer) == "test"
+	let tester = new File("FileTester.pld")
+	tester.write(localPlayer, "test")
+	CAN_READ_FILES = tester.readAsString(localPlayer) == "test"
+	destroy tester
 
 
 @compiletime function generateDummy()

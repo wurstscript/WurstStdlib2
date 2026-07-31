@@ -74,6 +74,25 @@ function currentCallbackUntil() returns ForGroupCallbackUntil
 	return tempCallbacksUntil[tempCallbacksCount - 1]
 // ====Stack end====
 
+// ====Scratch groups====
+// Helpers that need a real group to iterate (rather than the filter trick) take
+// one from here instead of using the engine-wide ENUM_GROUP, so that nesting a
+// second enumeration inside a callback cannot clobber the outer one.
+group array scratchGroups
+var scratchGroupCount = 0
+
+function getScratchGroup() returns group
+	if scratchGroupCount > 0
+		scratchGroupCount--
+		return scratchGroups[scratchGroupCount]
+	return CreateGroup()
+
+function releaseScratchGroup(group g)
+	g.clear()
+	scratchGroups[scratchGroupCount] = g
+	scratchGroupCount++
+// ====Scratch groups end====
+
 /** Executes the given closure for every unit in this group,
 	removing the units from the group as processed */
 public function group.forEachFrom(ForGroupCallback cb)
@@ -95,8 +114,9 @@ public function forUnitsOfType(string unitname, ForGroupCallback c)
 	GroupEnumUnitsOfType(DUMMY_GROUP, unitname, filter)
 	popCallback(true)
 
-/** Executes the given closure for every unit of the given player.
-	Cancels itself after *count* iterations */
+/** Executes the given closure for every unit of the given type.
+	Stops invoking the closure after *count* units. The underlying enumeration
+	cannot be aborted, so it still visits every match. */
 public function forUnitsOfTypeCounted(string unitname, int count, ForGroupCallback c)
 	pushCallbackCounted(c, count)
 	GroupEnumUnitsOfType(DUMMY_GROUP, unitname, filter)
@@ -123,7 +143,8 @@ public function forUnitsInRect(rect r, ForGroupCallback c)
 	popCallback(true)
 
 /** Executes the given closure for every unit in the given rect.
-	Cancels itself after *count* iterations */
+	Stops invoking the closure after *count* units. The underlying enumeration
+	cannot be aborted, so it still visits every unit in the rect. */
 public function forUnitsInRectCounted(rect r, int count, ForGroupCallback c)
 	pushCallbackCounted(c, count)
 	GroupEnumUnitsInRect(DUMMY_GROUP, r, filter)
@@ -137,19 +158,23 @@ public function forUnitsInRange(vec2 pos, real radius, ForGroupCallback c)
 	With collisionSizeFiltering true it will take the units' collision into account. */
 public function forUnitsInRange(vec2 pos, real radius, bool collisionSizeFiltering, ForGroupCallback c)
 	if collisionSizeFiltering
-		pushCallback(c)
-		GroupEnumUnitsInRange(ENUM_GROUP, pos.x, pos.y, radius + MAX_COLLISION_SIZE, null)
-		for u from ENUM_GROUP
+		// A private group per nesting level: ENUM_GROUP is shared engine-wide,
+		// so a nested enumeration inside the callback would clobber it.
+		let g = getScratchGroup()
+		GroupEnumUnitsInRange(g, pos.x, pos.y, radius + MAX_COLLISION_SIZE, null)
+		for u from g
 			if IsUnitInRangeXY(u, pos.x, pos.y, radius)
 				c.callback(u)
-		popCallback(true)
+		releaseScratchGroup(g)
+		destroy c
 	else
 		pushCallback(c)
 		GroupEnumUnitsInRange(DUMMY_GROUP, pos.x, pos.y, radius, filter)
 		popCallback(true)
 
-/** Executes the given closure for every unit in range of the given position
-	Cancels itself after *count* iterations */
+/** Executes the given closure for every unit in range of the given position.
+	Stops invoking the closure after *count* units. The underlying enumeration
+	cannot be aborted, so it still visits every unit in range. */
 public function forUnitsInRangeCounted(vec2 pos, real radius, int count, ForGroupCallback c)
 	pushCallbackCounted(c, count)
 	GroupEnumUnitsInRange(DUMMY_GROUP, pos.x, pos.y, radius, filter)
@@ -164,17 +189,18 @@ public function forUnitsSelected(player p, ForGroupCallback c)
 /** Executes the given closure for the closest unit inside the given range of the given position,
 	matching the provided filter. If there is no unit in range, the closure will be run with "null" */
 public function forNearestUnit(vec2 pos, real range, filterfunc filter, ForGroupCallback c)
-	pushCallback(c)
-	GroupEnumUnitsInRange(ENUM_GROUP, pos.x, pos.y, range, filter)
+	let g = getScratchGroup()
+	GroupEnumUnitsInRange(g, pos.x, pos.y, range, filter)
 	unit nearest = null
-	var bestDist = REAL_MAX
-	for u from ENUM_GROUP
+	var bestDistSq = REAL_MAX
+	for u from g
 		let distSq = pos.distanceToSq(u.getPos())
-		if distSq < bestDist
+		if distSq < bestDistSq
 			nearest = u
-			bestDist = distSq
+			bestDistSq = distSq
+	releaseScratchGroup(g)
 	c.callback(nearest)
-	popCallback(true)
+	destroy c
 
 /** Executes the given closure for every unit in this group,
 	removing the units from the group as processed.
@@ -265,18 +291,32 @@ function currentCallbackD() returns ForGroupCallbackD
 	return tempCallbacksD[tempCallbacksDCount - 1]
 // ====Stack end====
 
-let enumRect = Rect(0,0,0,0)
+// Scratch rects, pooled for the same reason as the scratch groups above: a
+// single shared rect would be moved out from under an outer enumeration.
+rect array scratchRects
+var scratchRectCount = 0
+
+function getScratchRect(vec2 min, vec2 max) returns rect
+	if scratchRectCount > 0
+		scratchRectCount--
+		return scratchRects[scratchRectCount]..resize(min, max)
+	return Rect(min.x, min.y, max.x, max.y)
+
+function releaseScratchRect(rect r)
+	scratchRects[scratchRectCount] = r
+	scratchRectCount++
 
 /** Executes the given closure for all destructables in a rect
-	that incompasses the circle with the range radius at the given position. */
+	that encompasses the circle with the range radius at the given position. */
 public function forDestructablesInRange(vec2 pos, real range, ForGroupCallbackD cb)
 	forDestructablesInRange(pos, range, null, cb)
 
 /** Executes the given closure for all destructables in a rect
-	that incompasses the circle with the range radius at the given position. */
+	that encompasses the circle with the range radius at the given position. */
 public function forDestructablesInRange(vec2 pos, real range, boolexpr filter, ForGroupCallbackD cb)
-	enumRect.resize(vec2(pos.x - range, pos.y - range), vec2(pos.x + range, pos.y + range))
-	forDestructablesInRect(enumRect, filter, cb)
+	let r = getScratchRect(vec2(pos.x - range, pos.y - range), vec2(pos.x + range, pos.y + range))
+	forDestructablesInRect(r, filter, cb)
+	releaseScratchRect(r)
 
 /** Executes the given closure for all destructables in the given rect */
 public function forDestructablesInRect(rect r, ForGroupCallbackD cb)
@@ -288,23 +328,33 @@ public function forDestructablesInRect(rect r, boolexpr filter, ForGroupCallback
 	EnumDestructablesInRect(r, filter, () -> filterD())
 	popCallbackD()
 
-// Nearest Destructable helpers
-destructable nearestD = null
-var nearestDDist = REAL_MAX
-var gpos = ZERO2
+// Nearest Destructable helpers.
+// The enum callback is a `code` lambda and so cannot capture locals; the search
+// state therefore lives in globals. They are kept as a stack so that a nested
+// forNearestDestructable inside the callback does not corrupt the outer search.
+destructable array nearestD
+real array nearestDDist
+vec2 array gpos
+var nearestDCount = 0
 
-/** Executes the given closure for the closes destructable in the given rect.
+/** Executes the given closure for the closest destructable in the given range.
 	If there is no destructable in range, the closure will be run with "null" */
 public function forNearestDestructable(vec2 pos, real range, ForGroupCallbackD c)
-	nearestD = null
-	nearestDDist = range
-	gpos = pos
-	enumRect.resize(vec2(pos.x - range, pos.y - range), vec2(pos.x + range, pos.y + range))
-	EnumDestructablesInRect(enumRect, null) ->
-		let dist = gpos.distanceTo(GetEnumDestructable().getPos())
-		if dist < nearestDDist
-			nearestD = GetEnumDestructable()
-			nearestDDist = dist
+	let idx = nearestDCount
+	nearestD[idx] = null
+	nearestDDist[idx] = range
+	gpos[idx] = pos
+	nearestDCount++
 
-	c.callback(nearestD)
+	let r = getScratchRect(vec2(pos.x - range, pos.y - range), vec2(pos.x + range, pos.y + range))
+	EnumDestructablesInRect(r, null) ->
+		let top = nearestDCount - 1
+		let dist = gpos[top].distanceTo(GetEnumDestructable().getPos())
+		if dist < nearestDDist[top]
+			nearestD[top] = GetEnumDestructable()
+			nearestDDist[top] = dist
+	releaseScratchRect(r)
+
+	nearestDCount--
+	c.callback(nearestD[idx])
 	destroy c

@@ -26,6 +26,52 @@ function testRemove()
 	map.remove(3)
 	map.has(3).assertEquals(false)
 
+/** removeValue used "firstMatch != null" as its found-flag, so a key whose
+	underlying int is 0 was never removed. */
+@Test
+function testRemoveValueZeroKey()
+	let map = new IterableMap<int, int>
+		..put(0, 42)
+		..put(1, 42)
+
+	map.removeValue(42, false)
+	map.size().assertEquals(1)
+
+	map.removeValue(42, false)
+	map.size().assertEquals(0)
+	map.hasKey(0).assertFalse()
+	map.hasKey(1).assertFalse()
+
+@Test
+function testRemoveValueAll()
+	let map = new IterableMap<int, int>
+		..put(0, 7)
+		..put(1, 7)
+		..put(2, 9)
+
+	map.removeValue(7, true)
+	map.size().assertEquals(1)
+	map.hasKey(2).assertTrue()
+	map.get(2).assertEquals(9)
+
+	// removing a value that is not present must be a no-op
+	map.removeValue(1234, true)
+	map.size().assertEquals(1)
+	map.removeValue(1234, false)
+	map.size().assertEquals(1)
+
+@Test
+function testIterableMapGetAndRemove()
+	let map = new IterableMap<int, int>
+		..put(1, 100)
+		..put(2, 200)
+
+	map.getAndRemove(1).assertEquals(100)
+	map.size().assertEquals(1)
+	map.hasKey(1).assertFalse()
+	map.hasKey(2).assertTrue()
+	map.get(2).assertEquals(200)
+
 @Test
 function testBooleanHashmap()
 	let hm = new HashMap<int, boolean>

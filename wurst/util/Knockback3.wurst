@@ -107,6 +107,11 @@ public class Knockback3
 	/**
 	For the purposes of friction, distinguish a unit which is airborne
 	versus one which is sliding. Height in units.
+
+	Note that this constant is used for two different quantities: as a height
+	when deciding whether a unit is airborne, and as a per-tick vertical speed
+	when deciding whether a sliding unit takes ground friction. Changing it
+	affects both.
 	*/
 	static var isAirborneThreshold = 5.
 
@@ -127,6 +132,8 @@ public class Knockback3
 	 	Apply a knockback vector to unit u. `velocity` is initial speed in units
 	 	per second. `groundAngle` and `airAngle` are the direction and trajectory
 	 	parameters, respectively. Example:
+
+	 	> Knockback3.add(u, 1000., 0 .fromDeg(), 45 .fromDeg())
 	 */
 	static function add(unit u, real velocity, angle groundAngle, angle airAngle)
 		if not UNIT_FILTER.get(u)
@@ -153,8 +160,12 @@ public class Knockback3
 		throw the unit to the position at vec2 `target`. Along the XY-plane, the
 		unit will move `groundSpeed` units per second. Note that the more vertical
 		angle will always be used from the pair of possible trajectories. Example:
+
+		> Knockback3.add(caster, getSpellTargetPos(), 500.)
 	*/
 	static function add(unit u, vec2 target, real groundSpeed)
+		if groundSpeed == 0.
+			return
 		let t = (target - u.getPos()).length() / groundSpeed
 		let theta = u.getPos().angleTo(target)
 		let velZ = gravity * t / 2. / ANIMATION_PERIOD
@@ -179,10 +190,19 @@ public class Knockback3
 
 
 	/**
-		Getter for the knockback vector on unit u.  If the unit is not already tracked, returns (0, 0, 0).
+		Getter for the knockback vector on unit u, as a per-tick displacement
+		(speed * ANIMATION_PERIOD) - note that `add` and `setVel` take units per
+		*second*. Returns (0, 0, 0) if the unit is not tracked.
 	*/
 	static function getVel(unit u) returns vec3
 		return unitNodes.has(u) ? unitNodes.get(u).del : ZERO3
+
+	/**
+		Getter for the knockback velocity on unit u in units per second, i.e. in
+		the same units that `add` and `setVel` accept.
+	*/
+	static function getVelPerSecond(unit u) returns vec3
+		return getVel(u) * (1. / ANIMATION_PERIOD)
 
 
 	/**
@@ -196,7 +216,30 @@ public class Knockback3
 
 	// Instance Variables
 	private unit u
+	/** Displacement applied per tick, i.e. speed * ANIMATION_PERIOD */
 	private vec3 del
+
+	/*
+	KNOWN ISSUE - threshold units
+	=============================
+	velXySquared below is a *squared per-tick* speed, but the speed thresholds
+	are compared against `threshold^2 * ANIMATION_PERIOD` (and, for
+	destroyDestructableSpeedThreshold, against `threshold * ANIMATION_PERIOD`
+	with no squaring at all). A dimensionally correct comparison would be
+	`(threshold * ANIMATION_PERIOD)^2`.
+
+	The comparisons are therefore not in units per second as documented. At the
+	default ANIMATION_PERIOD the effective cut-offs are roughly:
+
+	  minimumSlideSpeed              30 -> behaves like ~173 units/s
+	  frictionFxThreshold           180 -> behaves like ~1039 units/s
+	  destroyDestructableSpeedThreshold 300 -> behaves like ~100 units/s
+
+	This is deliberately left as-is: correcting the maths would silently
+	re-tune every existing consumer of this package. Treat the numbers above as
+	the real scale when tuning, and change the comparisons only as a conscious
+	behavioural change.
+	*/
 
 
 	private static function tickNearGround(Knockback3 knockback, vec3 newPos3, vec3 pos3, real velXySquared)
@@ -207,9 +250,12 @@ public class Knockback3
 		)
 			knockback.u.setXY(newPos3)
 
+			// isAirborneThreshold used as a per-tick vertical speed here; see
+			// its doc comment and the threshold units note above
 			if knockback.del.z <= isAirborneThreshold
 				knockback.del *= (1. - frictionCoefficientGround)
 
+				// see the threshold units note above
 				if velXySquared > frictionFxThreshold * frictionFxThreshold * ANIMATION_PERIOD
 					addEffect(frictionFxPath, pos3).destr()
 
@@ -291,6 +337,7 @@ public class Knockback3
 			else
 				tickAboveGround(knockback, newPos3, pos3)
 
+			// see the threshold units note above
 			if velXySquared > destroyDestructableSpeedThreshold * ANIMATION_PERIOD and pos3.z < destroyDestructableHeightThreshold
 				tickTryDestructable(knockback, newPos3)
 

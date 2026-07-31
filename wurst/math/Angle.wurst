@@ -27,11 +27,11 @@ public function real.asAngleDegrees() returns angle
 public function real.fromDeg() returns angle
 	return angle(this * DEGTORAD)
 
-/** interpret this real as an angle given in degrees */
+/** interpret this real as an angle given in radians */
 public function real.fromRad() returns angle
 	return angle(this)
 
-/** interpret this int as an angle given in degrees */
+/** interpret this int as an angle given in radians */
 public function int.fromRad() returns angle
 	return angle(this * 1.)
 
@@ -82,3 +82,9 @@ public function angle.op_divReal(real scalar) returns angle
 
 	(0 .fromDeg()).sin().assertEquals(0)
 	(90 .fromDeg()).sin().assertEquals(1)
+
+@Test function testFromRadIsRadians()
+	let halfTurn = 3.141592654
+	halfTurn.fromRad().degrees().assertEquals(180., 0.001)
+	let three = 3
+	three.fromRad().radians().assertEquals(3., 0.0001)

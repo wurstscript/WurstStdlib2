@@ -5,6 +5,8 @@ import Annotations
 
 constant int INITIAL_CAPACITY = 16
 constant int MAX_FREE_SECTIONS = 256
+/** Partitions shorter than this are finished off with insertion sort */
+constant int INSERTION_SORT_CUTOFF = 12
 
 /**
  * High-performance array-based list using static shared storage per type.
@@ -160,11 +162,13 @@ public class ArrayList<T:>
                 startIndex = freeSectionStart[i]
                 capacity = freeSectionCapacity[i]
 
-                // Remove this section from free list
-                for j = i to freeSectionCount - 2
-                    freeSectionStart[j] = freeSectionStart[j + 1]
-                    freeSectionCapacity[j] = freeSectionCapacity[j + 1]
+                // Remove this section by swapping the tail entry into its slot.
+                // The pool is only ordered transiently inside compactFreeList,
+                // so no shifting is required here.
                 freeSectionCount--
+                if i != freeSectionCount
+                    freeSectionStart[i] = freeSectionStart[freeSectionCount]
+                    freeSectionCapacity[i] = freeSectionCapacity[freeSectionCount]
                 return true
         return false
 
@@ -236,7 +240,11 @@ public class ArrayList<T:>
 
     /** Grows the capacity (doubles it) - EXPENSIVE OPERATION! */
     private function grow()
-        let newCapacity = capacity * 2
+        regrow(capacity * 2)
+
+    /** Moves this list into a freshly allocated section of newCapacity slots
+        and releases the old one - EXPENSIVE OPERATION! */
+    private function regrow(int newCapacity)
         let oldStart = startIndex
         let oldCapacity = capacity
 
@@ -284,14 +292,25 @@ public class ArrayList<T:>
 
     /** Adds all elements from another list */
     function addAll(ArrayList<T> other)
-        // Optimize: pre-grow if needed
-        let needed = size + other.size
-        while needed > capacity
-            grow()
+        let otherSize = other.size
+        // Reserve once: repeatedly calling grow() copies every live element
+        // again on each doubling.
+        reserve(size + otherSize)
 
-        for i = 0 to other.size - 1
-            store[startIndex + size] = other.get(i)
+        let otherStart = other.startIndex
+        for i = 0 to otherSize - 1
+            store[startIndex + size] = store[otherStart + i]
             size++
+
+    /** Ensures capacity for at least the given number of elements, moving the
+        section at most once instead of once per doubling. */
+    private function reserve(int needed)
+        if needed <= capacity
+            return
+        var newCapacity = capacity
+        while newCapacity < needed
+            newCapacity *= 2
+        regrow(newCapacity)
 
     /** Returns the element at the specified index (O(1)) */
     function get(int index) returns T
@@ -555,7 +574,16 @@ public class ArrayList<T:>
         destroy itr
         return output
 
-    /** Returns a new list of elements that satisfy the predicate */
+    /** Returns a new list of elements that satisfy the predicate.
+
+        Deliberately NOT presized to this list's size. The result shares the
+        per-type store with the source, so reserving `size` up front would need
+        2 * size slots at once and hit JASS_MAX_ARRAY_SIZE for any source
+        holding more than half the store - even when a selective predicate
+        matches only a handful of elements. Growth is amortised O(n) anyway.
+
+        If you do not need to keep the original, prefer #removeIf, which filters
+        in place and needs no second section at all. */
     function filter(ArrayListPredicate<T> predicate) returns ArrayList<T>
         let result = new ArrayList<T>()
         for i = 0 to size - 1
@@ -603,14 +631,37 @@ public class ArrayList<T:>
         if comparator != null and size > 1
             quicksort(comparator, 0, size - 1)
 
-    /** Optimized quicksort with median-of-three pivot selection */
-    private function quicksort(Comparator<T> comparator, int low, int high)
-        if low < high
+    /** Optimized quicksort with median-of-three pivot selection.
+        Recurses into the smaller partition and loops on the larger one, which
+        bounds the recursion depth to O(log n) even for adversarial input, and
+        hands small partitions to insertion sort. */
+    private function quicksort(Comparator<T> comparator, int lowStart, int highStart)
+        var low = lowStart
+        var high = highStart
+        while low < high
+            if high - low < INSERTION_SORT_CUTOFF
+                insertionSort(comparator, low, high)
+                return
+
             let pivot = medianOfThree(comparator, low, low + (high - low) div 2, high)
             let p = partition(comparator, low, high, pivot)
 
-            quicksort(comparator, low, p - 1)
-            quicksort(comparator, p + 1, high)
+            if p - low < high - p
+                quicksort(comparator, low, p - 1)
+                low = p + 1
+            else
+                quicksort(comparator, p + 1, high)
+                high = p - 1
+
+    /** Insertion sort for small partitions, where it beats quicksort's overhead */
+    private function insertionSort(Comparator<T> comparator, int low, int high)
+        for i = low + 1 to high
+            let value = store[startIndex + i]
+            var j = i - 1
+            while j >= low and comparator.compare(store[startIndex + j], value) > 0
+                store[startIndex + j + 1] = store[startIndex + j]
+                j--
+            store[startIndex + j + 1] = value
 
     /** Median-of-three pivot selection */
     private function medianOfThree(Comparator<T> comparator, int a, int b, int c) returns int

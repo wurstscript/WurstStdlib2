@@ -19,9 +19,9 @@ public function trigger.getSource() returns unit
 
 public function unit.clearRegister()
 	let handleId = this.getHandleId()
-	if triggerData.loadTrigger(handleId) == null
-		return
 	let t = triggerData.loadTrigger(handleId)
+	if t == null
+		return
 	let trigHandleId = t.getHandleId()
 	t.destr()
 	triggerData..removeHandle(handleId)..removeHandle(trigHandleId)
@@ -49,17 +49,25 @@ public function region.loadRegionData() returns int
 public function region.removeRegionData()
 	regionMap.remove(this)
 
-public function eventid.isPlayerunitEvent() returns boolean
-	let eventId = this.getHandleId()
+/** Shared by eventid.isPlayerunitEvent and EventData.isPlayerunitEvent, which
+	used to carry two different id lists. */
+function isPlayerunitEventId(int eventId) returns boolean
 	return (eventId >= 18 and eventId <= 51) or (eventId >= 269 and eventId <= 277) or eventId == 315 or eventId == 308
 
-public function eventid.isKeyboardEvent() returns boolean
-	let eventId = this.getHandleId()
+function isKeyboardEventId(int eventId) returns boolean
 	return (eventId >= 261 and eventId <= 268) or (eventId == 17)
 
+function isMouseEventId(int eventId) returns boolean
+	return eventId >= 305 and eventId <= 307
+
+public function eventid.isPlayerunitEvent() returns boolean
+	return isPlayerunitEventId(this.getHandleId())
+
+public function eventid.isKeyboardEvent() returns boolean
+	return isKeyboardEventId(this.getHandleId())
+
 public function eventid.isMouseEvent() returns boolean
-	let eventId = this.getHandleId()
-	return (eventId >= 305 and eventId <= 307)
+	return isMouseEventId(this.getHandleId())
 
 /** This class exposes all Getters and Setters for trigger events.
 	Note: As these functions simply wrap natives, they will only return proper values during event callbacks (actions/conditions).
@@ -75,18 +83,15 @@ public class EventData
 
 	/** Check if current trigger event is Playerunit Event. */
 	static function isPlayerunitEvent() returns boolean
-		let eventId = EventData.getEventId().getHandleId()
-		return (eventId >= 18 and eventId <= 51) or (eventId >= 269 and eventId <= 277)
+		return isPlayerunitEventId(EventData.getEventId().getHandleId())
 
 	/** Check if current trigger event is Keyboard Event. */
 	static function isKeyboardEvent() returns boolean
-		let eventId = EventData.getEventId().getHandleId()
-		return (eventId >= 261 and eventId <= 268) or (eventId == 17)
+		return isKeyboardEventId(EventData.getEventId().getHandleId())
 
 	/** Check if current trigger event is Mouse Event. */
 	static function isMouseEvent() returns boolean
-		let eventId = EventData.getEventId().getHandleId()
-		return (eventId >= 305 and eventId <= 307)
+		return isMouseEventId(EventData.getEventId().getHandleId())
 
 	static function getTriggerUnit() returns unit
 		return GetTriggerUnit()

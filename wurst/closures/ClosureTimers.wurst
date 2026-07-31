@@ -182,13 +182,20 @@ public abstract class CallbackCounted
 	function isLast() returns boolean
 		return count == 0
 
+	/** The number of this call, counting down: maxCount on the first call and
+		1 on the last. Returns maxCount before the first call. */
 	function getCount() returns int
 		return count < maxCount ? count + 1 : count
 
-	/** Returns a value between 0 and 1. */
+	/** Progress through the run as a value between 0 and 1.
+		Returns 0 if the callback was started with a call count of 0. */
 	function progress() returns real
+		if maxCount <= 0
+			return 0.
 		return 1. - count / maxCount
 
+	/** Stops the callback. The remaining calls are skipped and the object is
+		destroyed on the next tick, not immediately. */
 	function stop()
 		count = 0
 

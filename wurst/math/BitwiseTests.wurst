@@ -44,6 +44,53 @@ function shiftTests()
 	0xFF0000FF.shiftr(24).assertEquals(0xFF)
 
 @Test
+function shiftByZeroTests()
+	// powShift[31] overflows to 0x80000000, and the two's complement wrap makes
+	// a zero shift exact for negative inputs too
+	let five = 5
+	let zero = 0
+	let minusOne = -1
+	let negative = -12345
+	five.shiftr(0).assertEquals(5)
+	zero.shiftr(0).assertEquals(0)
+	minusOne.shiftr(0).assertEquals(-1)
+	negative.shiftr(0).assertEquals(-12345)
+	INT_MIN.shiftr(0).assertEquals(INT_MIN)
+	five.shiftl(0).assertEquals(5)
+	minusOne.shiftl(0).assertEquals(-1)
+
+@Test
+function shiftBoundsTests()
+	let one = 1
+	let minusOne = -1
+	// powShift[31] wraps to 0x80000000 and powShift[32] overflows to 0, so a
+	// left shift of 32 correctly discards every bit
+	one.shiftl(31).assertEquals(INT_MIN)
+	one.shiftl(32).assertEquals(0)
+	// 31 is the largest amount shiftr supports: at 32 it would divide by
+	// powShift[32] == 0
+	minusOne.shiftr(31).assertEquals(1)
+	INT_MIN.shiftr(31).assertEquals(1)
+
+@Test
+function toBitStringTests()
+	let zero = 0
+	let one = 1
+	let eight = 8
+	let nine = 9
+	let minusOne = -1
+	let negative = -12345
+	zero.toBitString().assertEquals("0")
+	one.toBitString().assertEquals("1")
+	eight.toBitString().assertEquals("1000")
+	nine.toBitString().assertEquals("1001")
+	minusOne.toBitString().assertEquals("11111111111111111111111111111111")
+	// round trips through fromBitString
+	zero.toBitString().fromBitString().assertEquals(0)
+	negative.toBitString().fromBitString().assertEquals(-12345)
+	INT_MIN.toBitString().fromBitString().assertEquals(INT_MIN)
+
+@Test
 function tests32()
 	"1001 0001 0100 0010".fromBitString().and32("1000 0100 0010 0110".fromBitString()).assertEquals("1000 0000 0000 0010".fromBitString())
 	"1000 0000 0000 0000 1001 0001 0100 0010".fromBitString().and32("1000 0000 0000 0000 1000 0100 0010 0110".fromBitString()).assertEquals("1000 0000 0000 0000 1000 0000 0000 0010".fromBitString())

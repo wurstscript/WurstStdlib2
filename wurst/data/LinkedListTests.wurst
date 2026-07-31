@@ -291,6 +291,90 @@ function testGenerics()
 	while bi.hasNext() and i.hasNext()
 		bi.next().assertEquals(i.next())
 
+/** (r1 - r2).toInt() truncated every sub-1.0 difference to "equal". */
+@Test function testSortRealSubUnitDifferences()
+	let list = new LinkedList<real>()
+	list..add(2.9, 2.1, 2.5, 2.7, 2.3)
+	list.sort()
+	list.get(0).assertEquals(2.1, 0.0001)
+	list.get(1).assertEquals(2.3, 0.0001)
+	list.get(2).assertEquals(2.5, 0.0001)
+	list.get(3).assertEquals(2.7, 0.0001)
+	list.get(4).assertEquals(2.9, 0.0001)
+	destroy list
+
+/** i1 - i2 overflows for values far apart in magnitude. */
+@Test function testSortIntNoOverflow()
+	let list = new LinkedList<int>()
+	list..add(2000000000, -2000000000, 0, INT_MAX, INT_MIN)
+	list.sort()
+	list.get(0).assertEquals(INT_MIN)
+	list.get(1).assertEquals(-2000000000)
+	list.get(2).assertEquals(0)
+	list.get(3).assertEquals(2000000000)
+	list.get(4).assertEquals(INT_MAX)
+	destroy list
+
+@Test function testToStringEmpty()
+	let list = new LinkedList<int>()
+	list.toString().assertEquals("[]")
+	destroy list
+
+/** GetRandomInt(0, -1) used to raise a native error here. */
+@Test function testGetRandomElementEmpty()
+	let list = new LinkedList<int>()
+	list.getRandomElement().assertEquals(0)
+	destroy list
+
+@Test function testShuffleKeepsContents()
+	let list = new LinkedList<int>()
+	for i = 1 to 8
+		list.add(i)
+	list.shuffle()
+
+	list.size().assertEquals(8)
+	var sum = 0
+	for i in list
+		sum += i
+	sum.assertEquals(36)
+	for i = 1 to 8
+		list.has(i).assertTrue()
+	destroy list
+
+@Test function testShuffleSmallLists()
+	let empty = new LinkedList<int>()
+	empty.shuffle()
+	empty.size().assertEquals(0)
+	destroy empty
+
+	let single = new LinkedList<int>()
+	single.add(42)
+	single.shuffle()
+	single.size().assertEquals(1)
+	single.getFirst().assertEquals(42)
+	destroy single
+
+@Test function testAddAtAppendsAtSize()
+	let list = new LinkedList<int>()
+	list..add(1, 2, 3)
+	list.addAt(4, 3)
+	list.size().assertEquals(4)
+	list.get(3).assertEquals(4)
+	destroy list
+
+@Test function testFilterKeepsSourceIntact()
+	let list = new LinkedList<int>()
+	for i = 1 to 6
+		list.add(i)
+	let filtered = list.filter(i -> i mod 2 == 0)
+	list.size().assertEquals(6)
+	filtered.size().assertEquals(3)
+	filtered.get(0).assertEquals(2)
+	filtered.get(1).assertEquals(4)
+	filtered.get(2).assertEquals(6)
+	destroy filtered
+	destroy list
+
 @Test function testAddBeforeIter()
 	let list = new LinkedList<int>()
 	let list2 = new LinkedList<int>()

@@ -42,10 +42,6 @@ constant CONT_BYTE_MAP = InitHashtable()
 	It is kept as a fallback for versions that hash them per byte instead. */
 public constant LEAD4_HASH = "😀".substring(0, 1).getHash()
 
-init
-	for i = 0 to 63
-		SaveBoolean(CONT_BYTE_MAP, 0, CONT_BYTE_PROBE.substring(i * 2 + 1, i * 2 + 2).getHash(), true)
-
 /** Returns true if this string can be split at the given position without
 	cutting a multibyte character in half, i.e. the byte at the given position
 	starts a new character instead of continuing a preceding one.
@@ -65,6 +61,60 @@ constant charset = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWX
 constant numberset = "0123456789"
 constant numbersetlength = numberset.length()
 constant charsetlength = charset.length()
+
+/**	Every printable ascii character, in code point order from space (32) to
+	tilde (126). Used to build stringCompare's sort keys. */
+constant PRINTABLE_ASCII = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~"
+constant CHAR_ORDER_MAP = InitHashtable()
+/**	Sort keys for characters outside `charset` start here, so the established
+	ordering of alphanumerics (digits, then lowercase, then uppercase - the
+	order of `charset` itself) is preserved and everything else sorts after
+	them. Offset by the ascii code so they are ordered among themselves. */
+constant NON_CHARSET_ORDER_BASE = charsetlength
+/**	Sort key for anything that is not a printable ascii byte: control bytes and
+	the individual bytes of multibyte characters. */
+constant UNKNOWN_CHAR_ORDER = 1000
+
+/**	Sort keys for stringCompare, one hashtable lookup instead of a linear scan
+	over `charset` per character.
+
+	StringHash is case insensitive, so 'a' and 'A' share a key. Only the
+	uppercase form is stored and the lowercase key is recovered at lookup time
+	(the same trick as StringUtils.char). Values are stored offset by one so
+	that a missing entry (0) is distinguishable from the key of '0'.
+
+	Marked @compiletime as well as being called from init, because init blocks
+	do not run in the compiletime interpreter and @Test/@compiletime code needs
+	the table too. The literal is pure ascii, so it behaves identically in the
+	interpreter's utf-16 strings and in the game's byte strings. */
+@compiletime function initCharOrder()
+	for i = 0 to PRINTABLE_ASCII.length() - 1
+		let c = PRINTABLE_ASCII.substring(i, i + 1)
+		if c == StringCase(c, true)
+			let charsetIndex = charset.indexOf(c)
+			let key = charsetIndex >= 0 ? charsetIndex : NON_CHARSET_ORDER_BASE + i + 32
+			SaveInteger(CHAR_ORDER_MAP, 0, c.getHash(), key + 1)
+
+init
+	initCharOrder()
+	// Every continuation byte 0x80-0xBF, so isCharBoundary can recognise them.
+	// Runtime only: this slices a multibyte literal by byte offset, which the
+	// compiletime interpreter cannot reproduce (its strings are utf-16, so the
+	// probe is 64 characters there rather than 128 bytes).
+	for i = 0 to 63
+		SaveBoolean(CONT_BYTE_MAP, 0, CONT_BYTE_PROBE.substring(i * 2 + 1, i * 2 + 2).getHash(), true)
+
+/** Sort key of a single byte: its index in `charset` for alphanumerics, a
+	value after those for other printable ascii, or UNKNOWN_CHAR_ORDER. */
+function charOrder(string c) returns int
+	let stored = LoadInteger(CHAR_ORDER_MAP, 0, c.getHash())
+	if stored == 0
+		return UNKNOWN_CHAR_ORDER
+	let key = stored - 1
+	// A letter that differs from its own uppercase form is the lowercase one.
+	// In `charset` the 26 lowercase letters sit immediately before the 26
+	// uppercase ones, so the lowercase key is 26 positions earlier.
+	return c == StringCase(c, true) ? key : key - 26
 
 /** Returns true if this string is non-null and
 	not empty or only consisting of whitespace. */
@@ -154,28 +204,28 @@ public function string.isUpper() returns boolean
 public function string.isLower() returns boolean
 	return this == StringCase(this, false)
 
-/** Returns the given string with whitespaces removed from both ends*/
+/** Returns the given string with whitespace (" ", \n, \t, \r) removed from both ends */
 public function string.trim() returns string
-	int i = 0
-	int j = this.length()
-	while (i != j and this.charAt(i) == " ")
+	var i = 0
+	var j = this.length()
+	while i != j and this.charAt(i).isWhitespace()
 		i++
-	while (i != j and this.charAt(j - 1) == " ")
+	while i != j and this.charAt(j - 1).isWhitespace()
 		j--
 	return this.substring(i, j)
 
-/** Returns the given string with whitespaces removed from the left end */
+/** Returns the given string with whitespace (" ", \n, \t, \r) removed from the left end */
 public function string.ltrim() returns string
-	int i = 0
+	var i = 0
 	let length = this.length()
-	while (i < length and this.charAt(i) == " ")
+	while i < length and this.charAt(i).isWhitespace()
 		i++
 	return this.substring(i, length)
 
-/** Returns the given string with whitespaces removed from the right end */
+/** Returns the given string with whitespace (" ", \n, \t, \r) removed from the right end */
 public function string.rtrim() returns string
-	int j = this.length()
-	while (j != 0 and this.charAt(j - 1) == " ")
+	var j = this.length()
+	while j != 0 and this.charAt(j - 1).isWhitespace()
 		j--
 	return this.substring(0, j)
 
@@ -271,17 +321,34 @@ public function string.replace(string oldSubstring, string newSubstring) returns
 			i = s.indexOf(oldSubstring, i + newSubstring.length())
 	return s
 
-/** Returns an integer result based on a lexicographic string comparison of strings s1 and s2. */
+/**	Returns a negative number if s1 sorts before s2, a positive number if it
+	sorts after, and 0 only if the two strings are equal.
+
+	Alphanumerics keep their long standing order: digits, then lowercase, then
+	uppercase, so "Hello" sorts after "hello". Every other printable ascii
+	character sorts after all alphanumerics, ordered by ascii code point among
+	themselves. Bytes outside printable ascii - control characters and the
+	individual bytes of multibyte characters - sort last, tie-broken by string
+	hash so the result stays consistent. */
 public function stringCompare(string s1, string s2) returns int
 	let s1Len = s1.length()
 	let s2Len = s2.length()
-	for int i = 0 to min(s1Len, s2Len)
-		let char1Int = s1.charAt(i).toCharsetInt()
-		let char2Int = s2.charAt(i).toCharsetInt()
-		if char1Int < char2Int
-			return -1
-		else if char1Int > char2Int
-			return 1
+	let shared = min(s1Len, s2Len)
+	for int i = 0 to shared - 1
+		let c1 = s1.charAt(i)
+		let c2 = s2.charAt(i)
+		if c1 != c2
+			let o1 = charOrder(c1)
+			let o2 = charOrder(c2)
+			if o1 != o2
+				return o1 < o2 ? -1 : 1
+			let h1 = c1.getHash()
+			let h2 = c2.getHash()
+			if h1 != h2
+				// two distinct non-ascii bytes: stable hash tie-break
+				return h1 < h2 ? -1 : 1
+			// nothing left to distinguish them by, treat as equal and move on
+			skip
 
 	if s1Len < s2Len
 		return -1

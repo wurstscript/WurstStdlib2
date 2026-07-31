@@ -7,7 +7,8 @@ import ErrorHandling
 
 /*	ByteBuffer is a utility class that allows you to write/read bytes, shorts and integer to/from it.
 	It may be useful for compacting bytes into integers or decomposing integers into bytes.
-	The byte order is Big Endian.
+	The byte order is Little Endian: the least significant byte of a short or int
+	is written first, and readShort/readInt reassemble in the same order.
 */
 
 public class ByteBuffer
@@ -23,6 +24,7 @@ public class ByteBuffer
 	private var readBufferIndex = 4
 
 	private var readIndex = -1
+	private var readBytes = 0
 
 	ondestroy
 		destroy storage
@@ -39,7 +41,7 @@ public class ByteBuffer
 	/** Writes an unsigned byte into the buffer.
     You must be sure that the provided integer is in the range [0, 255]. */
 	function writeByteUnsafe(int n)
-		if SAFETY_CHECKS_ENABLED and n < 0 or n > 255
+		if SAFETY_CHECKS_ENABLED and (n < 0 or n > 255)
 			error("ByteBuffer#writeByteUnsafe ERROR: provided argument (" + n.toString() + ") is not in the range [0, 255].")
 		buffer = buffer + n.shiftl(8 * bufferLength)
 		bufferLength++
@@ -49,7 +51,7 @@ public class ByteBuffer
 	/** Writes an unsigned short into the buffer.
     You must be sure that the provided integer is in the range [0, 65535]. */
 	function writeShortUnsafe(int n)
-		if SAFETY_CHECKS_ENABLED and n < 0 or n > 65535
+		if SAFETY_CHECKS_ENABLED and (n < 0 or n > 65535)
 			error("ByteBuffer#writeShortUnsafe ERROR: provided argument (" + n.toString() + ") is not in the range [0, 65535].")
 		writeByteUnsafe(n.bitAnd(compiletime("11111111".fromBitString())))
 		writeByteUnsafe(n.shiftr(8))
@@ -67,10 +69,15 @@ public class ByteBuffer
 		writeShortUnsafe(n.bitAnd(compiletime("11111111 11111111".fromBitString())))
 		writeShortUnsafe(n.shiftr(16))
 
+	/** Returns whether at least one unread byte remains.
+		Compares against the total byte count rather than the internal int index,
+		so a buffer whose size is an exact multiple of 4 does not report a
+		phantom trailing byte from the empty write buffer. */
 	function hasByte() returns bool
-		return readIndex < intCount or readBufferIndex < bufferLength
+		return readBytes < size()
 
-	/** Reads a single unsigned byte from this buffer. The returned value will be in the range [0, 255]. **/
+	/** Reads a single unsigned byte from this buffer. The returned value will be in the range [0, 255].
+		Reading past the end yields 0; guard with hasByte(). **/
 	function readByte() returns int
 		if readBufferIndex == 4
 			readIndex++
@@ -78,6 +85,7 @@ public class ByteBuffer
 			readBufferIndex = 0
 		let byte = selectByte(readBuffer, readBufferIndex)
 		readBufferIndex++
+		readBytes++
 		return byte
 
 	/** Reads a single unsigned short from this buffer. The returned value will be in the range [0, 65535]. **/
@@ -91,12 +99,15 @@ public class ByteBuffer
 	function resetRead()
 		readBufferIndex = 4
 		readIndex = -1
+		readBytes = 0
 
 	function getInt(int i) returns int
 		if i == intCount
 			return buffer
 		return storage.loadInt(i)
 
+	/** Number of ints backing this buffer, counting the partially filled write
+		buffer as one. An empty buffer therefore reports 1, not 0. */
 	function getIntCount() returns int
 		return intCount + 1
 
@@ -170,3 +181,59 @@ function byteBufferIterativeReadingTest()
 	bytesLength.assertEquals(expectedBytes.length)
 	for i = 0 to bytesLength - 1
 		bytes[i].assertEquals(expectedBytes[i])
+
+/** hasByte() used to compare the int cursor against intCount, which stayed
+	true after the last byte of a buffer whose size is an exact multiple of 4. */
+@Test
+function byteBufferSizeMultipleOfFourTest()
+	for length = 1 to 12
+		let byteBuffer = new ByteBuffer()
+		for i = 1 to length
+			byteBuffer.writeByte(i)
+
+		var read = 0
+		while byteBuffer.hasByte() and read < length + 4
+			byteBuffer.readByte()
+			read++
+
+		read.assertEquals(length)
+		destroy byteBuffer
+
+@Test
+function byteBufferEmptyTest()
+	let byteBuffer = new ByteBuffer()
+	byteBuffer.size().assertEquals(0)
+	byteBuffer.hasByte().assertFalse()
+	destroy byteBuffer
+
+@Test
+function byteBufferResetReadTest()
+	let byteBuffer = new ByteBuffer()
+	byteBuffer.writeInt(0x01020304)
+
+	var first = 0
+	while byteBuffer.hasByte()
+		byteBuffer.readByte()
+		first++
+
+	byteBuffer.resetRead()
+
+	var second = 0
+	while byteBuffer.hasByte()
+		byteBuffer.readByte()
+		second++
+
+	first.assertEquals(4)
+	second.assertEquals(4)
+	destroy byteBuffer
+
+/** Little endian: writeInt emits the least significant byte first. */
+@Test
+function byteBufferEndiannessTest()
+	let byteBuffer = new ByteBuffer()
+	byteBuffer.writeInt(0x01020304)
+	byteBuffer.readByte().assertEquals(0x04)
+	byteBuffer.readByte().assertEquals(0x03)
+	byteBuffer.readByte().assertEquals(0x02)
+	byteBuffer.readByte().assertEquals(0x01)
+	destroy byteBuffer

@@ -80,14 +80,16 @@ public function vec2.derivBezier4(vec2 mid1, vec2 mid2, vec2 stop, real p) retur
 // You can use Bezier 3 to graphic perfect parabolas
 // bezier4(<Start Point>, <OutTan_of_StartPoint>, <InTan_of_EndPoint>, <EndPoint>)
 
-/** Hermite Interpolation */
+/** Cubic Hermite interpolation between `start` and `stop` for s in [0, 1],
+	with `tangent1` and `tangent2` as the derivatives at s = 0 and s = 1.
+	The basis is h00 = 2s^3-3s^2+1, h10 = s^3-2s^2+s, h01 = -2s^3+3s^2, h11 = s^3-s^2. */
 public function hermite(real start, real stop, real tangent1, real tangent2, real s) returns real
 	let s2 = s * s
-	var h1 = 8.0 * s * s2 - 9.0 * s2
-	let h2 = h1 * -1
-	let h3 = s2 * (s - 2.0) + s
-	let h4 = s2 * (s - 1.0)
-	h1++
+	let s3 = s2 * s
+	let h1 = 2.0 * s3 - 3.0 * s2 + 1.0
+	let h2 = -2.0 * s3 + 3.0 * s2
+	let h3 = s3 - 2.0 * s2 + s
+	let h4 = s3 - s2
 	return h1 * start + h2 * stop + h3 * tangent1 + h4 * tangent2
 
 // TCB functions for finding the tangents among 3 points
@@ -188,3 +190,28 @@ function linearVecTest()
 	let p = 0.75
 	let expected = vec3(4.125, -0.1875, 6.1875)
 	start.derivBezier4(mid1, mid2, stop, p).assertEquals(expected)
+
+@Test function testHermiteEndpoints()
+	hermite(3., 9., 2., -5., 0.).assertEquals(3., 0.0001)
+	hermite(3., 9., 2., -5., 1.).assertEquals(9., 0.0001)
+
+/** With zero tangents the Hermite basis degenerates to smoothstep. */
+@Test function testHermiteZeroTangents()
+	hermite(0., 1., 0., 0., 0.25).assertEquals(0.15625, 0.0001)
+	hermite(0., 1., 0., 0., 0.5).assertEquals(0.5, 0.0001)
+	hermite(0., 1., 0., 0., 0.75).assertEquals(0.84375, 0.0001)
+
+/** The endpoint derivatives must equal the supplied tangents even when
+	start != stop - the old 8s^3-9s^2 basis leaked a 6*(start-stop) term here. */
+@Test function testHermiteHonoursTangents()
+	let h = 0.001
+	let start = 2.
+	let stop = 7.
+	let t1 = -3.
+	let t2 = 4.
+
+	let atStart = (hermite(start, stop, t1, t2, h) - hermite(start, stop, t1, t2, 0.)) / h
+	atStart.assertEquals(t1, 0.05)
+
+	let atStop = (hermite(start, stop, t1, t2, 1.) - hermite(start, stop, t1, t2, 1. - h)) / h
+	atStop.assertEquals(t2, 0.05)

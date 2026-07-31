@@ -44,7 +44,7 @@ public class Log
 	static function warn(string msg)
 		printLog(localPlayer, Loglevel.WARNING, msg)
 
-	/** Prints a warning logmessage */
+	/** Prints an error logmessage */
 	static function error(string msg)
 		printLog(localPlayer, Loglevel.ERROR, msg)
 
@@ -72,7 +72,7 @@ public class Log
 		msgString = "True"
 	print(msgString)
 
-/** Prints a special motification-message */
+/** Prints a special notification-message */
 @configurable public function printLog(Loglevel loglvl, string msg)
 	printLog(localPlayer, loglvl, msg)
 

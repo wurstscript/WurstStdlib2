@@ -4,7 +4,10 @@
     **IMPORTANT**
         This package **doesn't** provide protection from cyclic damage.
         Damage from code **must** be declared by the user using DamageEvent.setNextDamageFromCode() before dealing damage.
-        If you set damage amount to zero or less in the unreduced listeners, reduced listeners will not fire.
+        Setting the damage amount to zero or less in the unreduced listeners does **not** skip the reduced
+        listeners: EVENT_PLAYER_UNIT_DAMAGED still fires and they run with an amount of zero.
+        (This corrects an older note here which claimed the opposite. Verified in game by check 10 of
+        package StdlibIngameTests.)
 
         if DETECT_NATIVE_ABILITIES is true:
             > Any damage instance of attacktype ATTACK_TYPE_NORMAL is passed with DamageType SPELL
@@ -22,7 +25,7 @@
         DamageEvent.addListener(0) ->
             print("This fires before.")
 
-    If you want to catch the damage instance before it has been reduced by any damage reducing effect (such as armor) you can use the unreduced verions of the listeners:
+    If you want to catch the damage instance before it has been reduced by any damage reducing effect (such as armor) you can use the unreduced versions of the listeners:
 
         DamageEvent.addUnreducedListener() ->
             print("this fire before any damage reduction")
@@ -68,7 +71,7 @@ import ClosureEvents
 @configurable constant DETECT_NATIVE_ABILITIES = true
 
 /** A damage instance can have an element.
-    DAMAGE_ELEMENT_ATTACK is the defaut element added to any damage instances of DamageType ATTACK */
+    DAMAGE_ELEMENT_ATTACK is the default element added to any damage instances of DamageType ATTACK */
 @configurable public constant DAMAGE_ELEMENT_ATTACK = new DamageElement("Physical", colorA(223, 59, 33, 255))
 
 
@@ -93,7 +96,7 @@ public enum DamageType
         DAMAGE_ELEMENT_FIRE  = new DamageElement("Fire", colorA(255, 0, 0, 255))
         DAMAGE_ELEMENT_WATER = new DamageElement("Water", colorA(0, 0, 255, 255))
 
-    The user can extends from DamageElement to add his own settings.*/
+    DamageElement can be extended to carry additional per-element settings.*/
 public class DamageElement
     protected string name
     protected colorA color = COLOR_WHITE
@@ -174,11 +177,33 @@ public class DamageEvent
     protected static DamageElement  nextDamageElement = null
     // Mid damage instance
     protected static bool abort = false
-    // Damage listeners
+    // Damage listeners. Each priority holds a doubly linked list; the tail
+    // pointer keeps same-priority registration order (FIFO) an O(1) append.
     protected static DamageListener array firstListeners
+    protected static DamageListener array lastListeners
     protected static int maxPriority = 0
     protected static DamageListener array firstUnreducedListeners
+    protected static DamageListener array lastUnreducedListeners
     protected static int maxUnreducedPriority = 0
+
+    /*  Cursor of every traversal currently in progress, one slot per nesting
+        level (a listener that deals damage re-enters these loops).
+
+        A traversal caches the successor of the listener it is about to invoke.
+        If that callback destroys the successor, the cached pointer would dangle,
+        so removeListener repairs every cursor pointing at the node it unlinks.
+        Listeners further down the list need no repair: the cursor is re-read
+        from the live current node on each iteration, and unlinking has already
+        corrected that node's next pointer. */
+    protected static DamageListener array iterNext
+    protected static int iterDepth = 0
+
+    /** Advances any in-flight cursor that is about to step onto this listener.
+        Must run before the listener's own next pointer is cleared. */
+    protected static function repairCursors(DamageListener removed)
+        for d = 0 to iterDepth - 1
+            if iterNext[d] == removed
+                iterNext[d] = removed.next
 
 
     /* ON DAMAGE */
@@ -199,38 +224,73 @@ public class DamageEvent
         nextDamageType = UNKNOWN
         nextDamageElement = null
 
+        let depth = iterDepth
+        iterDepth++
         for i = 0 to maxUnreducedPriority
             var listener = firstUnreducedListeners[i]
             while listener != null
+                // Publish the successor so removeListener can advance it if the
+                // callback destroys that listener (or this one).
+                iterNext[depth] = listener.next
                 listener.onEvent()
                 if abort
                     dmg.amount = 0
                     break
                 else
-                    listener = listener.next
+                    listener = iterNext[depth]
             if abort
                 break
+        iterDepth--
+        iterNext[depth] = null
 
         BlzSetEventAttackType(dmg.nativeAttackType)
         BlzSetEventDamageType(dmg.nativeDamageType)
         BlzSetEventWeaponType(dmg.nativeWeaponType)
         BlzSetEventDamage(dmg.amount)
 
+        /*  Do NOT close the instance out here when the damage ended at <= 0.
+
+            The package header claims that "if you set damage amount to zero or
+            less in the unreduced listeners, reduced listeners will not fire".
+            That claim is wrong on current game versions: EVENT_PLAYER_UNIT_DAMAGED
+            fires for a zeroed DAMAGING just like any other, and onDamage()
+            below releases the instance normally.
+
+            Verified in game by check 10 of package StdlibIngameTests. Closing
+            the instance out here made a zeroed *nested* hit pop its own entry,
+            so the following DAMAGED found the enclosing instance as `current`
+            and consumed it with the inner event's damage of 0 - the outer hit
+            then reported 0 damage to its own reduced listeners. Leave the
+            instance on the stack and let its DAMAGED reclaim it. */
+
     protected static function onDamage()
         let dmg = DamageInstance.current
+        // Every DAMAGED is preceded by a DAMAGING that left its instance on the
+        // stack, including zeroed ones, so `current` is this event's instance.
+        // A null here would mean an unpaired DAMAGED; bail rather than
+        // dereference it.
+        if dmg == null
+            abort = false
+            return
+
         if not abort
             dmg.setReducedAmount(GetEventDamage())
+            let depth = iterDepth
+            iterDepth++
             for i = 0 to maxPriority
                 var listener = firstListeners[i]
                 while listener != null
+                    iterNext[depth] = listener.next
                     listener.onEvent()
                     if abort
                         dmg.amount = 0
                         break
                     else
-                        listener = listener.next
+                        listener = iterNext[depth]
                 if abort
                     break
+            iterDepth--
+            iterNext[depth] = null
 
             BlzSetEventAttackType(dmg.nativeAttackType)
             BlzSetEventDamageType(dmg.nativeDamageType)
@@ -242,8 +302,8 @@ public class DamageEvent
 
 
     /* LISTENERS */
-    /** Adds a damage event listener.
-        If The order of firing is important, use addListener(priority, listener) */
+    /** Adds a damage event listener at the current highest registered priority.
+        If the order of firing is important, use addListener(priority, listener) */
     static function addListener(DamageListener listener) returns DamageListener
         return addListener(maxPriority, listener)
 
@@ -253,11 +313,16 @@ public class DamageEvent
     static function addListener(int priority, DamageListener listener) returns DamageListener
         listener.priority = priority
         listener.unreduced = false
-        if firstListeners[priority] != null
-            firstListeners[priority].prev = listener
-            listener.next = firstListeners[priority]
-
-        firstListeners[priority] = listener
+        listener.registered = true
+        listener.next = null
+        // append at the tail so same-priority listeners fire in registration order
+        if firstListeners[priority] == null
+            listener.prev = null
+            firstListeners[priority] = listener
+        else
+            listener.prev = lastListeners[priority]
+            lastListeners[priority].next = listener
+        lastListeners[priority] = listener
 
         if maxPriority < priority
             maxPriority = priority
@@ -265,25 +330,35 @@ public class DamageEvent
         return listener
 
     protected static function removeListener(DamageListener listener)
+        if not listener.registered
+            return
+        // before any pointer on this node is cleared
+        repairCursors(listener)
         if listener.unreduced
             removeUnreducedListener(listener)
             return
-        var prio = listener.priority
-        if firstListeners[prio] == listener
-            firstListeners[prio] = listener.next
-            if listener.next == null and maxPriority == prio
-                while firstListeners[prio] == null and prio > 0
-                    prio--
-                maxPriority = prio
-
-        else if listener.prev != null
+        let prio = listener.priority
+        if listener.prev != null
             listener.prev.next = listener.next
-
+        else
+            firstListeners[prio] = listener.next
         if listener.next != null
             listener.next.prev = listener.prev
+        else
+            lastListeners[prio] = listener.prev
+
+        listener.next = null
+        listener.prev = null
+        listener.registered = false
+
+        if firstListeners[prio] == null and maxPriority == prio
+            var p = prio
+            while p > 0 and firstListeners[p] == null
+                p--
+            maxPriority = p
 
     /** Adds a damage event listener that fires before any damage reduction is applied (such as armor).
-    If The order of firing is important, use addListener(priority, listener) */
+    If the order of firing is important, use addUnreducedListener(priority, listener) */
     static function addUnreducedListener(DamageListener listener) returns DamageListener
         return addUnreducedListener(maxUnreducedPriority, listener)
 
@@ -293,11 +368,15 @@ public class DamageEvent
     static function addUnreducedListener(int priority, DamageListener listener) returns DamageListener
         listener.priority = priority
         listener.unreduced = true
-        if firstUnreducedListeners[priority] != null
-            firstUnreducedListeners[priority].prev = listener
-            listener.next = firstUnreducedListeners[priority]
-
-        firstUnreducedListeners[priority] = listener
+        listener.registered = true
+        listener.next = null
+        if firstUnreducedListeners[priority] == null
+            listener.prev = null
+            firstUnreducedListeners[priority] = listener
+        else
+            listener.prev = lastUnreducedListeners[priority]
+            lastUnreducedListeners[priority].next = listener
+        lastUnreducedListeners[priority] = listener
 
         if maxUnreducedPriority < priority
             maxUnreducedPriority = priority
@@ -305,19 +384,29 @@ public class DamageEvent
         return listener
 
     protected static function removeUnreducedListener(DamageListener listener)
-        var prio = listener.priority
-        if firstUnreducedListeners[prio] == listener
-            firstUnreducedListeners[prio] = listener.next
-            if listener.next == null and maxUnreducedPriority == prio
-                while firstUnreducedListeners[prio] == null and prio > 0
-                    prio--
-                maxUnreducedPriority = prio
-
-        else if listener.prev != null
+        if not listener.registered
+            return
+        // no-op when reached via removeListener, which already repaired
+        repairCursors(listener)
+        let prio = listener.priority
+        if listener.prev != null
             listener.prev.next = listener.next
-
+        else
+            firstUnreducedListeners[prio] = listener.next
         if listener.next != null
             listener.next.prev = listener.prev
+        else
+            lastUnreducedListeners[prio] = listener.prev
+
+        listener.next = null
+        listener.prev = null
+        listener.registered = false
+
+        if firstUnreducedListeners[prio] == null and maxUnreducedPriority == prio
+            var p = prio
+            while p > 0 and firstUnreducedListeners[p] == null
+                p--
+            maxUnreducedPriority = p
 
     /* GETTERS */
     /** Returns the id of the damage instance being currently fired */
@@ -388,7 +477,7 @@ public class DamageEvent
     static function addAmount(real amount)
         DamageInstance.current.setAmount(DamageInstance.current.amount + amount)
 
-    /** Substracts from the damage amount of the damage instance being currently fired */
+    /** Subtracts from the damage amount of the damage instance being currently fired */
     static function subAmount(real amount)
         DamageInstance.current.setAmount(DamageInstance.current.amount - amount)
 
@@ -433,6 +522,8 @@ public abstract class DamageListener
     thistype prev = null
     thistype next = null
     bool unreduced = false
+    /** Guards removeListener against listeners that were never added */
+    bool registered = false
 
     abstract function onEvent()
 

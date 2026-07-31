@@ -44,7 +44,7 @@ public function vec2.op_mult(real factor) returns vec2
 public function real.op_mult(vec2 vec) returns vec2
 	return vec2(vec.x * this, vec.y * this)
 
-/** dot product Operator */
+/** * Operator, component-wise (Hadamard) product. For the dot product use vec2.dot */
 public function vec2.op_mult(vec2 v) returns vec2
 	return vec2(this.x * v.x, this.y * v.y)
 
@@ -238,7 +238,7 @@ public function vec3.op_minus(vec2 v)	returns vec3
 public function vec3.op_mult(real factor) returns vec3
 	return vec3(this.x * factor, this.y * factor, this.z * factor)
 
-/** dot Operator */
+/** * Operator, scales the vector by this scalar */
 public function real.op_mult(vec3 v) returns vec3
 	return vec3(v.x * this, v.y * this, v.z * this)
 
@@ -284,14 +284,18 @@ public function vec3.rotate(vec3 axis, real radians) returns vec3
 	let yz = (axis.x * xy - axis.y * xx)/al //x,y - coordinate system in which we rotate
 	return vec3(xx * c + yx * s + zx, xy * c + yy * s + zy, xz * c + yz * s + zz)
 
-/** Sets the length of the given Vector */
+/** Returns this vector rescaled so that its *squared* length equals the given
+	value. Scaling by lengthSq/currentSq would give a squared length of
+	lengthSq^2/currentSq, so the factor has to be the square root of the ratio. */
 public function vec3.setLengthSq(real lengthSq) returns vec3
-	real l = this.lengthSquared()
+	let l = this.lengthSquared()
 	if l == 0.0
-		Log.warn("vector.setLength error: The length of the vector is 0.0!")
+		Log.warn("vector.setLengthSq error: The length of the vector is 0.0!")
 		return vec3(0, 0, 0)
-	l = lengthSq / l
-	return vec3(this.x * l, this.y * l, this.z * l)
+	if lengthSq <= 0.0
+		return vec3(0, 0, 0)
+	let scale = SquareRoot(lengthSq / l)
+	return vec3(this.x * scale, this.y * scale, this.z * scale)
 
 /** Sets the length of the given Vector */
 public function vec3.setLength(real length) returns vec3
@@ -327,9 +331,16 @@ public function vec3.project(vec3 direction) returns vec3
 public function vec3.toVec2() returns vec2
 	return vec2(this.x, this.y)
 
-/** Is this vector inside the given circle */
+/** Is this vector inside the given circle. Only the x and y coordinates are
+	compared - the height difference is ignored. Use inRange3d for a spherical
+	test that includes z. */
 public function vec3.inRange(vec3 v2, real radius) returns boolean
 	return (this.x - v2.x).squared() + (this.y - v2.y).squared() <= radius * radius
+
+/** Is this vector inside the given sphere, taking the z coordinate into
+	account. Compare vec3.inRange, which only compares x and y. */
+public function vec3.inRange3d(vec3 v2, real radius) returns boolean
+	return this.distanceToSq(v2) <= radius * radius
 
 /** Get the distance to another Vector */
 public function vec3.distanceTo(vec3 v) returns real
@@ -415,13 +426,13 @@ public function vec2.assertEquals(vec2 expected)
 	let delta = 0.002
 	let compare = vec2((this.x - expected.x).abs(), (this.y - expected.y).abs())
 	if compare.x > delta or compare.y > delta
-		testFail("Expected <{0}, Actual <{1} with delta {2}>".format(expected.toString(), this.toString(), delta.toString()))
+		testFail("Expected <{0}>, Actual <{1}> with delta <{2}>".format(expected.toString(), this.toString(), delta.toString()))
 
 public function vec3.assertEquals(vec3 expected)
 	let delta = 0.002
 	let compare = vec3((this.x - expected.x).abs(), (this.y - expected.y).abs(), (this.z - expected.z).abs())
 	if compare.x > delta or compare.y > delta or compare.z > delta
-		testFail("Expected <{0}, Actual <{1} with delta {2}>".format(expected.toString(), this.toString(), delta.toString()))
+		testFail("Expected <{0}>, Actual <{1}> with delta <{2}>".format(expected.toString(), this.toString(), delta.toString()))
 
 /** Checks whether the point is in a 2D triangle defined by 3 points.
 Works as for vec2.isInTriangle, Z-coords are discarded. */
@@ -466,6 +477,28 @@ function vectorTests()
 	((v1 - v2) == (vec2(-1,1))).assertTrue()
 
 	((v1.moveTowards(vec2(1,0), 10.) == (vec2(1,-8)))).assertTrue()
+
+@Test function testSetLengthSq()
+	let v = vec3(3, 4, 0) // length 5, squared length 25
+	v.setLengthSq(100.).lengthSquared().assertEquals(100., 0.01)
+	v.setLengthSq(25.).lengthSquared().assertEquals(25., 0.01)
+	v.setLengthSq(1.).lengthSquared().assertEquals(1., 0.01)
+	// degenerate inputs collapse to zero rather than producing NaN
+	vec3(0, 0, 0).setLengthSq(10.).assertEquals(ZERO3)
+	v.setLengthSq(-1.).assertEquals(ZERO3)
+
+@Test function testVec3InRange()
+	// inRange keeps its long standing xy-only contract
+	vec3(0, 0, 1000).inRange(vec3(0, 0, 0), 10.).assertTrue()
+	vec3(3, 4, 1000).inRange(vec3(0, 0, 0), 5.).assertTrue()
+	vec3(3, 4, 0).inRange(vec3(0, 0, 0), 4.).assertFalse()
+
+	// inRange3d is the spherical variant
+	vec3(0, 0, 1000).inRange3d(vec3(0, 0, 0), 10.).assertFalse()
+	vec3(3, 4, 0).inRange3d(vec3(0, 0, 0), 5.).assertTrue()
+	vec3(0, 0, 5).inRange3d(vec3(0, 0, 0), 5.).assertTrue()
+	vec3(0, 0, 6).inRange3d(vec3(0, 0, 0), 5.).assertFalse()
+	vec3(3, 4, 12).inRange3d(vec3(0, 0, 0), 13.).assertTrue()
 
 @Test function testIsInTriangle()
 	let point2d = vec2(10, 15)
