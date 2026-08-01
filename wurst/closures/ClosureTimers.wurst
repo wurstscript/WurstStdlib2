@@ -150,6 +150,7 @@ public abstract class CallbackSingle
 
 public abstract class CallbackPeriodic
 	private timer t
+	private bool enabled = true
 
 	abstract function call(thistype cb)
 
@@ -161,6 +162,17 @@ public abstract class CallbackPeriodic
 	private static function staticCallback()
 		let cb = (GetExpiredTimer().getData() castTo thistype)
 		cb.call(cb)
+
+	/** Pauses this periodic callback without destroying it. Safe to call when already disabled. */
+	function disable()
+		this.enabled = false
+		this.t.pause()
+
+	/** Resumes a previously disabled periodic callback. Safe to call when already enabled. */
+	function enable()
+		if not this.enabled
+			this.t.resume()
+		this.enabled = true
 
 	ondestroy
 		t.release()

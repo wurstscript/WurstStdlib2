@@ -6,6 +6,8 @@ import HashMap
 import Execute
 import Maths
 import Annotations
+import Unit
+import Player
 
 /*
 	Groups are a necessary evil that exists in warcraft 3, and sometimes their use
@@ -142,3 +144,24 @@ function pop() returns group
 function group.recycle()
 	this.clear()
 	push(this)
+
+/** Returns the closest unit in this group to the given position.
+	Returns null if the group is empty. */
+public function group.getClosestUnit(vec2 pos) returns unit
+	var distance = REAL_MAX
+	unit closestUnit = null
+	for u in this
+		let newDistance = u.getPos().distanceTo(pos)
+		if newDistance <= distance
+			closestUnit = u
+			distance = newDistance
+	return closestUnit
+
+/** Filters this group to include only alive units, optionally filtering by allegiance and owner.
+	mustBeEnemyOf: If not null, only units that are enemies of this unit are kept. Pass null to ignore allegiance.
+	ownerId: If not -1, only units owned by this player ID are kept. Pass -1 to ignore owner. */
+public function group.filterAliveUnits(unit mustBeEnemyOf, int ownerId) returns group
+	for u in this
+		if u == null or not u.isAlive() or (mustBeEnemyOf != null and not u.isEnemyOf(mustBeEnemyOf)) or (ownerId != -1 and ownerId != u.getOwner().getId())
+			this.remove(u)
+	return this

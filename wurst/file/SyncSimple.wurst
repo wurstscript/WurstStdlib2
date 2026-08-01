@@ -37,6 +37,12 @@ public interface StringSyncListener
 public interface BufferSyncListener
 	function onDataSynced(ChunkedString buffer)
 
+/** Generic sync listener for arbitrary types that can be cast to/from int.
+	Only works for values representable as an int (class instances, handle ids).
+	The synced object must already be in sync across all clients. */
+public interface AnySyncListener<T>
+	function onDataSynced(T data)
+
 constant syncQueue = new LinkedList<SyncData>
 
 /** Syncs a bool from the given player. */
@@ -55,6 +61,15 @@ public function int.sync(player p, IntSyncListener listener)
 public function real.sync(player p, RealSyncListener listener)
 	this.toString().sync(p) data ->
 		listener.onDataSynced(data.toReal())
+		destroy listener
+
+/** Syncs an arbitrary type from the given player.
+	Only works for values representable as an int handle/index (class instances, handle ids).
+	The synced object must already be in sync across clients. Listener is destroyed after firing. */
+public function player.sync<T>(T data, AnySyncListener<T> listener)
+	let thisData = data castTo int
+	thisData.toString().sync(this) syncedData ->
+		listener.onDataSynced(syncedData.toInt() castTo T)
 		destroy listener
 
 /** Syncs a single string from the given player. */
@@ -132,6 +147,11 @@ init
 			syncQueue.dequeue()
 			destroy syncData
 		else
+			// Defensive: syncBuffer can be null on the buffered path in rare
+			// cases (observed under Campaign Edition / replay). Recreate it so a
+			// late/duplicate sync event cannot null-crash the whole sync queue.
+			if syncData.syncBuffer == null
+				syncData.syncBuffer = new ChunkedString()
 			syncData.syncBuffer.append(eventData)
 			if eventPrefix == LAST_CHUNK_PREFIX
 				syncData.blistener.onDataSynced(syncData.syncBuffer)

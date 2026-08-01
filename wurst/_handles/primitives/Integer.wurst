@@ -29,6 +29,21 @@ public function int.toReal() returns real
 public function int.toString() returns string
 	return I2S(this)
 
+/** Returns this int with its English ordinal suffix, e.g. 1 -> "1st", 2 -> "2nd", 3 -> "3rd", 4 -> "4th".
+	Handles the 11/12/13 exceptions correctly. */
+public function int.toStringOrdinal() returns string
+	var suffix = "th"
+	let lastTwo = this.abs() mod 100
+	if lastTwo < 11 or lastTwo > 13
+		switch this.abs() mod 10
+			case 1
+				suffix = "st"
+			case 2
+				suffix = "nd"
+			case 3
+				suffix = "rd"
+	return I2S(this) + suffix
+
 /** Returns this int to the power of the argument int.
 	A negative exponent yields 1, since the true result is not an integer.
 	Overflow wraps silently. */
