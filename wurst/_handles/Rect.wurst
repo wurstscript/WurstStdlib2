@@ -66,6 +66,25 @@ public function rect.remove()
 public function rect.copy() returns rect
 	return Rect(this.getMinX(), this.getMinY(), this.getMaxX(), this.getMaxY())
 
+/** Converts this rect to a region.
+	WARNING: Creates a new region; caller owns it and must call .destr() to avoid a handle leak. */
+public function rect.toRegion() returns region
+	let reg = CreateRegion()
+	RegionAddRect(reg, this)
+	return reg
+
+/** Creates a rect centered at this rect's center with the given full width and height.
+	Example: A rect at (100,100) with sizeX=20, sizeY=30 spans from (90,85) to (110,115). */
+public function rect.fromCenter(real sizeX, real sizeY) returns rect
+	let c = this.getCenter()
+	return Rect(c.x - sizeX / 2, c.y - sizeY / 2, c.x + sizeX / 2, c.y + sizeY / 2)
+
+/** Creates a rect centered at this rect's center plus offset, with the given full width and height.
+	Example: A rect at (100,100) with offset (10,0), sizeX=20, sizeY=30 spans from (100,85) to (120,115). */
+public function rect.fromCenterWithOffset(real sizeX, real sizeY, vec2 offset) returns rect
+	let c = this.getCenter() + offset
+	return Rect(c.x - sizeX / 2, c.y - sizeY / 2, c.x + sizeX / 2, c.y + sizeY / 2)
+
 @Test
 function rectTest()
 	let rekt = Rect(2, 2, 4, 4)

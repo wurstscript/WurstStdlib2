@@ -4,6 +4,7 @@ import TypeCasting
 import ClosureForGroups
 // re-exports Integer, String, Real and Printing
 import ErrorHandling
+import Wurstunit
 
 /**
  * Doubly-linked list implementation that implements all common list, stack and queue operations.
@@ -464,10 +465,12 @@ public class LLIterator<T>
 	protected var destroyOnClose = true
 
 	construct(LinkedList<T> parent)
+		assertTrue(parent != null)
 		this.parent  = parent
 		reset()
 
 	construct(LinkedList<T> parent, bool destroyOnClose)
+		assertTrue(parent != null)
 		this.parent  = parent
 		reset()
 		this.destroyOnClose = destroyOnClose
@@ -527,11 +530,13 @@ public class LLBackIterator<T>
 	protected bool destroyOnClose = true
 
 	construct(LinkedList<T> parent, bool destroyOnClose)
+		assertTrue(parent != null)
 		this.parent = parent
 		reset()
 		this.destroyOnClose = destroyOnClose
 
 	construct(LinkedList<T> parent)
+		assertTrue(parent != null)
 		this.parent = parent
 		reset()
 
