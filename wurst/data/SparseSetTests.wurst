@@ -1,0 +1,62 @@
+package SparseSetTests
+
+import SparseSet
+
+class IntSparseSetKey implements SparseSetKey<int>
+    function getKey(int value) returns int
+        return value
+
+@Test
+function testAddAndMembership()
+    let set = new SparseSet<int>(new IntSparseSetKey())
+    set.add(4).assertTrue()
+    set.add(9).assertTrue()
+    set.add(4).assertFalse()
+
+    set.size().assertEquals(2)
+    set.has(4).assertTrue()
+    set.has(9).assertTrue()
+    set.has(7).assertFalse()
+    set.getByKey(9).assertEquals(9)
+
+    destroy set
+
+@Test
+function testUnorderedRemovalKeepsMembership()
+    let set = new SparseSet<int>(new IntSparseSetKey())
+    set.add(1)
+    set.add(2)
+    set.add(3)
+
+    set.remove(2).assertTrue()
+    set.remove(2).assertFalse()
+    set.size().assertEquals(2)
+    set.has(1).assertTrue()
+    set.has(3).assertTrue()
+    set.has(2).assertFalse()
+
+    set.removeAt(0).assertEquals(1)
+    set.has(3).assertTrue()
+    set.size().assertEquals(1)
+
+    destroy set
+
+@Test
+function testClearAndCopy()
+    let original = new SparseSet<int>(new IntSparseSetKey())
+    original.add(2)
+    original.add(5)
+
+    let copy = original.copy()
+    copy.size().assertEquals(2)
+    copy.has(2).assertTrue()
+    copy.remove(2).assertTrue()
+    original.has(2).assertTrue()
+
+    original.clear()
+    original.isEmpty().assertTrue()
+    original.add(8).assertTrue()
+    original.has(8).assertTrue()
+
+    destroy copy
+    destroy original
