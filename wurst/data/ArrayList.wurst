@@ -745,15 +745,15 @@ public interface Comparator<T:>
 // SPECIALIZED SORT FUNCTIONS
 // ============================================================================
 
-constant Comparator<int> intComparator = (i1, i2) -> i1 < i2 ? -1 : (i1 > i2 ? 1 : 0)
+public constant Comparator<int> intComparator = (i1, i2) -> i1 < i2 ? -1 : (i1 > i2 ? 1 : 0)
 public function ArrayList<int>.sort()
     this.sortWith(intComparator)
 
-constant Comparator<real> realComparator = (r1, r2) -> r1 < r2 ? -1 : (r1 > r2 ? 1 : 0)
+public constant Comparator<real> realComparator = (r1, r2) -> r1 < r2 ? -1 : (r1 > r2 ? 1 : 0)
 public function ArrayList<real>.sort()
     this.sortWith(realComparator)
 
-constant Comparator<string> stringComparator = (s1, s2) -> stringCompare(s1, s2)
+public constant Comparator<string> stringComparator = (s1, s2) -> stringCompare(s1, s2)
 public function ArrayList<string>.sort()
     this.sortWith(stringComparator)
 

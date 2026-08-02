@@ -1,0 +1,155 @@
+package SparseSet
+
+import ArrayList
+import ErrorHandling
+import Table
+import public TypeCasting
+
+/** Supplies the stable, unique integer key used by a SparseSet. */
+public interface SparseSetKey<T:>
+    function getKey(T value) returns int
+
+/**
+ * A set with O(1) membership checks, insertion, and unordered removal.
+ *
+ * Elements are stored in a dense typed array. The sparse index maps the key
+ * supplied by SparseSetKey to the element's dense index. Keys must be unique
+ * and stable for the lifetime of an element in the set. A key may be reused
+ * after its old value is gone; add() validates the stored value before
+ * accepting the new one.
+ *
+ * Removal swaps the last element into the removed element's slot, so dense
+ * iteration order is not preserved.
+ */
+public class SparseSet<T:>
+    private ArrayList<T> dense
+    private ArrayList<int> denseKeys
+    private Table sparse
+    private SparseSetKey<T> keyProvider
+
+    construct(SparseSetKey<T> keyProvider)
+        this.keyProvider = keyProvider
+        dense = new ArrayList<T>()
+        denseKeys = new ArrayList<int>()
+        sparse = new Table()
+
+    /** Adds an element and returns whether it was newly inserted. */
+    function add(T value) returns boolean
+        let key = keyProvider.getKey(value)
+        let existingIndex = indexForKey(key)
+        if existingIndex >= 0
+            if dense.get(existingIndex) == value
+                return false
+            // The key was reused by a different value. This is valid for
+            // handles whose old value has been destroyed or deindexed.
+            removeAt(existingIndex)
+
+        dense.add(value)
+        denseKeys.add(key)
+        sparse.saveInt(key, dense.size())
+        return true
+
+    /** Adds every element from another set. */
+    function addAll(SparseSet<T> other)
+        for i = 0 to other.size() - 1
+            add(other.get(i))
+
+    /** Returns whether the set contains the given element. */
+    function has(T value) returns boolean
+        return indexOf(value) >= 0
+
+    /** Returns whether the set contains an element under the given key. */
+    function hasKey(int key) returns boolean
+        return sparse.hasInt(key)
+
+    /** Returns the dense index of an element, or -1 when it is absent. */
+    function indexOf(T value) returns int
+        let key = keyProvider.getKey(value)
+        let index = indexForKey(key)
+        if index < 0 or dense.get(index) != value
+            return -1
+        return index
+
+    /** Removes an element and returns whether it was present. */
+    function remove(T value) returns boolean
+        let index = indexOf(value)
+        if index < 0
+            return false
+        removeAt(index)
+        return true
+
+    /** Removes the element at a dense index without preserving order. */
+    function removeAt(int index) returns T
+        if index < 0 or index >= dense.size()
+            error("SparseSet: Index out of bounds: " + index.toString())
+
+        let lastIndex = dense.size() - 1
+        let removed = dense.get(index)
+        let removedKey = denseKeys.get(index)
+
+        if index != lastIndex
+            let moved = dense.get(lastIndex)
+            let movedKey = denseKeys.get(lastIndex)
+            dense.set(index, moved)
+            denseKeys.set(index, movedKey)
+            sparse.saveInt(movedKey, index + 1)
+
+        dense.removeAtUnordered(lastIndex)
+        denseKeys.removeAtUnordered(lastIndex)
+        sparse.removeInt(removedKey)
+        return removed
+
+    /** Removes all elements while retaining the set object. */
+    function clear()
+        dense.clear()
+        denseKeys.clear()
+        sparse.flush()
+
+    /** Returns the number of elements in the set. */
+    function size() returns int
+        return dense.size()
+
+    /** Returns whether the set contains no elements. */
+    function isEmpty() returns boolean
+        return dense.isEmpty()
+
+    /** Returns an element by its dense index. */
+    function get(int index) returns T
+        return dense.get(index)
+
+    /** Returns an element by sparse key, or null when the key is absent. */
+    function getByKey(int key) returns T
+        if not hasKey(key)
+            return null
+        return dense.get(indexForKey(key))
+
+    /** Returns a shallow copy of this set. */
+    function copy() returns SparseSet<T>
+        let result = new SparseSet<T>(keyProvider)
+        result.addAll(this)
+        return result
+
+    private function indexForKey(int key) returns int
+        if not sparse.hasInt(key)
+            return -1
+        return sparse.loadInt(key) - 1
+
+    ondestroy
+        destroy dense
+        destroy denseKeys
+        destroy sparse
+
+/**
+ * Key provider for unit sets.
+ *
+ * This deliberately uses the native handle identity rather than UnitIndexer
+ * IDs. That matches native groups: membership is not automatically removed
+ * when a unit is deindexed. SparseSet validates the stored unit when a key is
+ * reused, so a new unit cannot silently inherit stale membership.
+ */
+public class UnitSparseSetKey implements SparseSetKey<unit>
+    override function getKey(unit value) returns int
+        return value.getTCHandleId()
+
+/** Reusable key provider for SparseSet<unit>. */
+public constant SparseSetKey<unit> UNIT_SPARSE_SET_KEY = new UnitSparseSetKey()

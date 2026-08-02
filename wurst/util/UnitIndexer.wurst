@@ -1,5 +1,6 @@
 package UnitIndexer
 import OnUnitEnterLeave
+import HashMap
 
 /*  UnitIndexer
 
@@ -7,12 +8,16 @@ import OnUnitEnterLeave
 	as well as to standardize handling of class instances when units are created
 	and destroyed.
 
-	WARNING: Other systems that use SetUnitUserData functionality are going to
-	BREAK THIS SYSTEM since it depends on being the only system to use it.
-	Conversely, it is very likely that this system is going to break them, too.
-	Always make sure you only have one system using SetUnitUserData.
+	WARNING: On the Jass target, this system stores the index in the unit's
+	native user-data slot, so other systems that use SetUnitUserData are going
+	to BREAK THIS SYSTEM since it depends on being the only system to use it,
+	and conversely, it is very likely that this system is going to break them,
+	too. Always make sure you only have one system using SetUnitUserData.
 	The maximum number of indexed units at any time is 32760, so if you have more
 	units than that at any time, the system will not be able to index them.
+	On the Lua target the index is kept in a HashMap instead (see
+	getStoredIndex/setStoredIndex below), so this conflict and the 32760 cap
+	both only apply to the Jass target.
 
 	----------------------------------------------------------------------------
 
@@ -115,6 +120,24 @@ function pushUnit(unit u)
 function popUnit()
 	tempUnitsCount--
 
+// On the Jass target the native per-unit user-data slot is the fastest option
+// available and is kept as-is. On Lua, use a HashMap so index lookups avoid
+// the user-data natives. Both paths default an unindexed unit to 0.
+let luaUnitIndices = new HashMap<unit, int>
+
+function unit.getStoredIndex() returns int
+	if isLua
+		return luaUnitIndices.get(this)
+	return this.getUserData()
+
+function unit.setStoredIndex(int value)
+	if isLua
+		if value == 0
+			luaUnitIndices.remove(this)
+		else
+			luaUnitIndices.put(this, value)
+	else
+		this.setUserData(value)
 
 @configurable public function shouldIndex(unit _u) returns boolean
 	return true
@@ -123,11 +146,11 @@ function popUnit()
 	Can be configured by the user to supply a custom unit indexer which won't break
 	other stdlib components. */
 @configurable public function unit.getIndex() returns int
-	return this.getUserData()
+	return this.getStoredIndex()
 
 /**  Returns the UnitIndex associated with this unit, creating a new one if necessary. */
 @configurable public function unit.toUnitIndex() returns UnitIndex
-	UnitIndex instance = this.getUserData() castTo UnitIndex
+	UnitIndex instance = this.getStoredIndex() castTo UnitIndex
 
 	if (instance == null)
 		instance = new UnitIndex(this)
@@ -155,7 +178,7 @@ public function onUnitIndex(code func)
 /**  Deindexes a unit.
 	Returns whether the unit was originally indexed. */
 public function unit.deindex() returns bool
-	if this.getUserData() == 0
+	if this.getStoredIndex() == 0
 		return false
 	else
 		destroy this.toUnitIndex()
@@ -172,7 +195,7 @@ public class UnitIndex
 
 	construct(unit whichUnit)
 		this._unit = whichUnit
-		this._unit.setUserData(this castTo int)
+		this._unit.setStoredIndex(this castTo int)
 		pushUnit(whichUnit)
 		onIndexTrigger.evaluate()
 		popUnit()
@@ -181,7 +204,7 @@ public class UnitIndex
 		pushUnit(this._unit)
 		onDeindexTrigger.evaluate()
 		popUnit()
-		this._unit.setUserData(0)
+		this._unit.setStoredIndex(0)
 
 // Auto instanciation/destruction
 init

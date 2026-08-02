@@ -1,0 +1,233 @@
+package SparseSetBenchmark
+
+import ClosureTimers
+import HashSet
+import SparseSet
+
+/*
+    Manual in-game benchmark for the Lua target.
+
+    This uses the classic Warcraft III method: a fixed workload is repeated
+    from a short-period timer while the player watches the game's FPS counter.
+    Compare the lowest FPS reached by the HashSet and SparseSet phases. The
+    benchmark is deliberately not a unit test and is not run automatically.
+
+    HOW TO USE
+    ===========
+    Import SparseSetBenchmark into a test map and type -sparsebench in game.
+    Keep the map, camera, graphics settings, and other running systems the
+    same for every build. After each phase the temporary set or group is
+    destroyed and the benchmark waits 2.5 seconds for FPS to recover before
+    starting the next phase. The workload is identical within each comparison
+    pair.
+
+    A timer callback can be delayed by a heavy workload. That is expected: the
+    resulting FPS drop is the measurement. Increase the per-tick round
+    constants if the phases do not visibly affect FPS on the target machine.
+*/
+
+constant MEMBERSHIP_ELEMENTS = 256
+constant MEMBERSHIP_ROUNDS_PER_TICK = 25
+constant REMOVE_ELEMENTS = 64
+constant REMOVE_ROUNDS_PER_TICK = 5
+constant ITERATION_ELEMENTS = 512
+constant ITERATION_ROUNDS_PER_TICK = 10
+constant PHASE_COUNT = 7
+
+constant BENCHMARK_INTERVAL = 0.05
+constant PHASE_TICKS = 60
+constant START_DELAY = 2.
+constant RECOVERY_DELAY = 2.5
+
+class BenchmarkIntKey implements SparseSetKey<int>
+    override function getKey(int value) returns int
+        return value
+
+constant benchmarkKey = new BenchmarkIntKey()
+constant benchmarkUnitKey = new UnitSparseSetKey()
+
+var phase = 0
+var phaseTick = 0
+var sink = 0
+var phaseStartSink = 0
+var phaseRunning = false
+unit array benchmarkUnits
+
+function runHashSetMembership()
+    let set = new HashSet<int>
+    for i = 0 to MEMBERSHIP_ELEMENTS - 1
+        set.add(i)
+
+    for round = 0 to MEMBERSHIP_ROUNDS_PER_TICK - 1
+        for i = 0 to MEMBERSHIP_ELEMENTS - 1
+            if set.has(i)
+                sink++
+            if not set.has(i + MEMBERSHIP_ELEMENTS)
+                sink++
+
+    destroy set
+
+function runSparseSetMembership()
+    let set = new SparseSet<int>(benchmarkKey)
+    for i = 0 to MEMBERSHIP_ELEMENTS - 1
+        set.add(i)
+
+    for round = 0 to MEMBERSHIP_ROUNDS_PER_TICK - 1
+        for i = 0 to MEMBERSHIP_ELEMENTS - 1
+            if set.has(i)
+                sink++
+            if not set.has(i + MEMBERSHIP_ELEMENTS)
+                sink++
+
+    destroy set
+
+function runHashSetRemove()
+    ensureBenchmarkUnits()
+    let set = new HashSet<unit>
+    for round = 0 to REMOVE_ROUNDS_PER_TICK - 1
+        for i = 0 to REMOVE_ELEMENTS - 1
+            set.add(benchmarkUnits[i])
+        for i = 0 to REMOVE_ELEMENTS - 1
+            if set.remove(benchmarkUnits[i])
+                sink++
+
+    destroy set
+
+function runSparseSetRemove()
+    ensureBenchmarkUnits()
+    let set = new SparseSet<unit>(benchmarkUnitKey)
+    for round = 0 to REMOVE_ROUNDS_PER_TICK - 1
+        for i = 0 to REMOVE_ELEMENTS - 1
+            set.add(benchmarkUnits[i])
+        for i = 0 to REMOVE_ELEMENTS - 1
+            if set.remove(benchmarkUnits[i])
+                sink++
+
+    destroy set
+
+function runGroupRemove()
+    ensureBenchmarkUnits()
+    let set = CreateGroup()
+    for round = 0 to REMOVE_ROUNDS_PER_TICK - 1
+        for i = 0 to REMOVE_ELEMENTS - 1
+            set.add(benchmarkUnits[i])
+        for i = 0 to REMOVE_ELEMENTS - 1
+            if set.remove(benchmarkUnits[i]) > 0
+                sink++
+
+    set.destr()
+
+function ensureBenchmarkUnits()
+    if benchmarkUnits[0] == null
+        for i = 0 to REMOVE_ELEMENTS - 1
+            benchmarkUnits[i] = createUnit(DUMMY_PLAYER, 'hfoo', vec2(0., 0.), 0 .fromDeg())
+            benchmarkUnits[i].hide()
+            benchmarkUnits[i].pause()
+
+function destroyBenchmarkUnits()
+    if benchmarkUnits[0] != null
+        for i = 0 to REMOVE_ELEMENTS - 1
+            benchmarkUnits[i].remove()
+            benchmarkUnits[i] = null
+
+function runHashSetIteration()
+    let set = new HashSet<int>
+    for i = 0 to ITERATION_ELEMENTS - 1
+        set.add(i)
+
+    for round = 0 to ITERATION_ROUNDS_PER_TICK - 1
+        for i = 0 to set.size() - 1
+            sink += set.get(i)
+
+    destroy set
+
+function runSparseSetIteration()
+    let set = new SparseSet<int>(benchmarkKey)
+    for i = 0 to ITERATION_ELEMENTS - 1
+        set.add(i)
+
+    for round = 0 to ITERATION_ROUNDS_PER_TICK - 1
+        for i = 0 to set.size() - 1
+            sink += set.get(i)
+
+    destroy set
+
+function phaseName() returns string
+    if phase == 1
+        return "HashSet membership"
+    else if phase == 2
+        return "SparseSet membership"
+    else if phase == 3
+        return "HashSet remove/re-add"
+    else if phase == 4
+        return "SparseSet remove/re-add"
+    else if phase == 5
+        return "Native group remove/re-add"
+    else if phase == 6
+        return "HashSet iteration"
+    else if phase == 7
+        return "SparseSet iteration"
+    return "unknown phase"
+
+function runCurrentWorkload()
+    if phase == 1
+        runHashSetMembership()
+    else if phase == 2
+        runSparseSetMembership()
+    else if phase == 3
+        runHashSetRemove()
+    else if phase == 4
+        runSparseSetRemove()
+    else if phase == 5
+        runGroupRemove()
+    else if phase == 6
+        runHashSetIteration()
+    else if phase == 7
+        runSparseSetIteration()
+
+    phaseTick++
+    if phaseTick == PHASE_TICKS
+        if phase == 5
+            destroyBenchmarkUnits()
+        phaseRunning = false
+        print("Finished " + phaseName() + ". Sink delta: " + (sink - phaseStartSink).toString())
+        print("Workload cleaned up. Waiting " + RECOVERY_DELAY.toString() + " seconds for FPS recovery.")
+        doAfter(RECOVERY_DELAY) ->
+            runNextPhase()
+
+function startPhaseWorkload()
+    phaseTick = 0
+    phaseStartSink = sink
+    phaseRunning = true
+    print("Running " + phaseName() + ": " + PHASE_TICKS.toString()
+        + " ticks at " + BENCHMARK_INTERVAL.toString() + " seconds")
+    doPeriodicallyCounted(BENCHMARK_INTERVAL, PHASE_TICKS) (CallbackCounted _cb) ->
+        runCurrentWorkload()
+
+function startPhase()
+    if phase == 3
+        ensureBenchmarkUnits()
+    print("Starting " + phaseName() + " in " + START_DELAY.toString()
+        + " seconds; watch the lowest FPS.")
+    doAfter(START_DELAY) ->
+        startPhaseWorkload()
+
+function runNextPhase()
+    phase++
+    if phase <= PHASE_COUNT
+        startPhase()
+    else
+        print("SparseSet benchmark complete. Final sink: " + sink.toString())
+
+public function startSparseSetBenchmark()
+    if phase != 0
+        print("SparseSet benchmark is already running or complete.")
+        return
+    print("SparseSet benchmark: compare equal repeated Lua workloads.")
+    runNextPhase()
+
+init
+    let benchmarkTrigger = CreateTrigger()
+    for i = 0 to bj_MAX_PLAYER_SLOTS - 1
+        benchmarkTrigger.registerPlayerChatEvent(players[i], "-sparsebench", true)
+    benchmarkTrigger.addAction(function startSparseSetBenchmark)

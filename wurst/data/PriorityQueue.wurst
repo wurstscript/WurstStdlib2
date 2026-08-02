@@ -1,0 +1,117 @@
+package PriorityQueue
+
+import ArrayList
+
+/*
+ * Usage:
+ *     let queue = new PriorityQueue<int>(intComparator)
+ *     queue.add(5)
+ *     queue.add(1)
+ *     let next = queue.poll() // 1
+ *     destroy queue
+ */
+/**
+ * A binary heap priority queue.
+ *
+ * The comparator defines priority: a negative result means that the first
+ * value has higher priority, so ArrayList.intComparator creates a min-heap.
+ * Reverse the comparator to create a max-heap. Equal-priority elements are
+ * not stable.
+ *
+ * Adding and removing the highest-priority element are O(log n). Peeking is
+ * O(1). The queue does not support changing an element's priority in place;
+ * remove and re-add it after changing any fields used by the comparator.
+ */
+public class PriorityQueue<T:>
+    private ArrayList<T> values
+    private Comparator<T> comparator
+
+    construct(Comparator<T> comparator)
+        this(comparator, 16)
+
+    construct(Comparator<T> comparator, int initialCapacity)
+        this.comparator = comparator
+        values = new ArrayList<T>(initialCapacity > 0 ? initialCapacity : 16)
+
+    /** Adds an element to the queue. */
+    function add(T value)
+        values.add(value)
+        siftUp(values.size() - 1)
+
+    /** Alias for add(). */
+    function offer(T value)
+        add(value)
+
+    /** Returns the highest-priority element, or null if empty. */
+    function peek() returns T
+        if values.size() == 0
+            return null
+        return values.get(0)
+
+    /** Removes and returns the highest-priority element, or null if empty. */
+    function poll() returns T
+        if values.size() == 0
+            return null
+
+        let result = values.get(0)
+        let lastIndex = values.size() - 1
+        if lastIndex == 0
+            values.removeAtUnordered(0)
+            return result
+
+        let last = values.removeAtUnordered(lastIndex)
+        values.set(0, last)
+        siftDown(0)
+        return result
+
+    /** Alias for poll(). */
+    function remove() returns T
+        return poll()
+
+    /** Returns the number of queued elements. */
+    function size() returns int
+        return values.size()
+
+    /** Returns whether the queue is empty. */
+    function isEmpty() returns boolean
+        return values.size() == 0
+
+    /** Removes all elements while retaining the backing storage. */
+    function clear()
+        values.clear()
+
+    private function isHigherPriority(int left, int right) returns boolean
+        return comparator.compare(values.get(left), values.get(right)) < 0
+
+    private function siftUp(int index)
+        var current = index
+        while current > 0
+            let parent = (current - 1) div 2
+            if not isHigherPriority(current, parent)
+                return
+            swap(current, parent)
+            current = parent
+
+    private function siftDown(int index)
+        var current = index
+        let count = values.size()
+        while true
+            let left = current * 2 + 1
+            if left >= count
+                return
+            let right = left + 1
+            var child = left
+            if right < count and isHigherPriority(right, left)
+                child = right
+            if not isHigherPriority(child, current)
+                return
+            swap(current, child)
+            current = child
+
+    private function swap(int left, int right)
+        let value = values.get(left)
+        values.set(left, values.get(right))
+        values.set(right, value)
+
+    ondestroy
+        destroy values
