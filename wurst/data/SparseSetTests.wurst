@@ -99,3 +99,18 @@ function testLargeKeyDoesNotMaterializeGaps()
     set.has(1000000).assertTrue()
     set.size().assertEquals(1)
     destroy set
+
+@Test
+function testSignedKeys()
+    let set = new SparseSet<int>(new IntSparseSetKey())
+    set.add(-17).assertTrue()
+    set.add(23).assertTrue()
+
+    set.has(-17).assertTrue()
+    set.hasKey(-17).assertTrue()
+    set.getByKey(-17).assertEquals(-17)
+    set.remove(-17).assertTrue()
+    set.has(-17).assertFalse()
+    set.hasKey(-17).assertFalse()
+
+    destroy set

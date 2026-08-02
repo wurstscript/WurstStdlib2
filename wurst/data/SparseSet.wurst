@@ -60,7 +60,7 @@ public class SparseSet<T:>
 
     /** Returns whether the set contains an element under the given key. */
     function hasKey(int key) returns boolean
-        return key >= 0 and sparse.hasInt(key)
+        return sparse.hasInt(key)
 
     /** Returns the dense index of an element, or -1 when it is absent. */
     function indexOf(T value) returns int
@@ -130,8 +130,6 @@ public class SparseSet<T:>
         return result
 
     private function indexForKey(int key) returns int
-        if key < 0
-            error("SparseSet: Key must be non-negative: " + key.toString())
         if not sparse.hasInt(key)
             return -1
         return sparse.loadInt(key) - 1
