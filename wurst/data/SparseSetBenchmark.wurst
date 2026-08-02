@@ -16,8 +16,10 @@ import SparseSet
     ===========
     Import SparseSetBenchmark into a test map and type -sparsebench in game.
     Keep the map, camera, graphics settings, and other running systems the
-    same for every build. Each phase has a short recovery gap before the next
-    one. The workload is identical within each HashSet/SparseSet pair.
+    same for every build. After each phase the temporary set is destroyed and
+    the benchmark waits for the player to confirm that FPS has recovered.
+    Type -sparsebench-next to start the next phase. The workload is identical
+    within each HashSet/SparseSet pair.
 
     A timer callback can be delayed by a heavy workload. That is expected: the
     resulting FPS drop is the measurement. Increase the per-tick round
@@ -25,16 +27,15 @@ import SparseSet
 */
 
 constant MEMBERSHIP_ELEMENTS = 256
-constant MEMBERSHIP_ROUNDS_PER_TICK = 250
+constant MEMBERSHIP_ROUNDS_PER_TICK = 25
 constant REMOVE_ELEMENTS = 64
-constant REMOVE_ROUNDS_PER_TICK = 40
+constant REMOVE_ROUNDS_PER_TICK = 5
 constant ITERATION_ELEMENTS = 512
-constant ITERATION_ROUNDS_PER_TICK = 100
+constant ITERATION_ROUNDS_PER_TICK = 10
 
-constant BENCHMARK_INTERVAL = 0.03
-constant PHASE_TICKS = 120
+constant BENCHMARK_INTERVAL = 0.05
+constant PHASE_TICKS = 60
 constant START_DELAY = 2.
-constant RECOVERY_DELAY = 2.
 
 class BenchmarkIntKey implements SparseSetKey<int>
     override function getKey(int value) returns int
@@ -46,6 +47,7 @@ var phase = 0
 var phaseTick = 0
 var sink = 0
 var phaseStartSink = 0
+var phaseRunning = false
 
 function runHashSetMembership()
     let set = new HashSet<int>
@@ -150,13 +152,14 @@ function runCurrentWorkload()
 
     phaseTick++
     if phaseTick == PHASE_TICKS
+        phaseRunning = false
         print("Finished " + phaseName() + ". Sink delta: " + (sink - phaseStartSink).toString())
-        doAfter(RECOVERY_DELAY) ->
-            runNextPhase()
+        print("Set cleaned up. Wait for FPS to return to normal, then type -sparsebench-next.")
 
 function startPhaseWorkload()
     phaseTick = 0
     phaseStartSink = sink
+    phaseRunning = true
     print("Running " + phaseName() + ": " + PHASE_TICKS.toString()
         + " ticks at " + BENCHMARK_INTERVAL.toString() + " seconds")
     doPeriodicallyCounted(BENCHMARK_INTERVAL, PHASE_TICKS) (CallbackCounted _cb) ->
@@ -175,6 +178,16 @@ function runNextPhase()
     else
         print("SparseSet benchmark complete. Final sink: " + sink.toString())
 
+public function continueSparseSetBenchmark()
+    if phase == 0
+        print("Start the benchmark first with -sparsebench.")
+    else if phaseRunning
+        print("The current benchmark phase is still running.")
+    else if phase < 6
+        runNextPhase()
+    else
+        print("SparseSet benchmark complete. Reload the map to run it again.")
+
 public function startSparseSetBenchmark()
     if phase != 0
         print("SparseSet benchmark is already running or complete.")
@@ -183,7 +196,10 @@ public function startSparseSetBenchmark()
     runNextPhase()
 
 init
-    let benchmarkTrigger = CreateTrigger()
+    let startTrigger = CreateTrigger()
+    let nextTrigger = CreateTrigger()
     for i = 0 to bj_MAX_PLAYER_SLOTS - 1
-        benchmarkTrigger.registerPlayerChatEvent(players[i], "-sparsebench", true)
-    benchmarkTrigger.addAction(function startSparseSetBenchmark)
+        startTrigger.registerPlayerChatEvent(players[i], "-sparsebench", true)
+        nextTrigger.registerPlayerChatEvent(players[i], "-sparsebench-next", true)
+    startTrigger.addAction(function startSparseSetBenchmark)
+    nextTrigger.addAction(function continueSparseSetBenchmark)
