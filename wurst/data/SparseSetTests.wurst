@@ -6,6 +6,18 @@ class IntSparseSetKey implements SparseSetKey<int>
     function getKey(int value) returns int
         return value
 
+class ReusedKeyValue
+    int id
+    int payload
+
+    construct(int id, int payload)
+        this.id = id
+        this.payload = payload
+
+class ReusedKeyProvider implements SparseSetKey<ReusedKeyValue>
+    function getKey(ReusedKeyValue value) returns int
+        return value.id
+
 @Test
 function testAddAndMembership()
     let set = new SparseSet<int>(new IntSparseSetKey())
@@ -60,3 +72,30 @@ function testClearAndCopy()
 
     destroy copy
     destroy original
+
+@Test
+function testReusedKeyReplacesStaleValue()
+    let set = new SparseSet<ReusedKeyValue>(new ReusedKeyProvider())
+    let oldValue = new ReusedKeyValue(17, 1)
+    let newValue = new ReusedKeyValue(17, 2)
+
+    set.add(oldValue).assertTrue()
+    set.has(newValue).assertFalse()
+    set.add(newValue).assertTrue()
+
+    set.size().assertEquals(1)
+    set.has(oldValue).assertFalse()
+    set.has(newValue).assertTrue()
+    set.get(0).payload.assertEquals(2)
+
+    destroy set
+    destroy oldValue
+    destroy newValue
+
+@Test
+function testLargeKeyDoesNotMaterializeGaps()
+    let set = new SparseSet<int>(new IntSparseSetKey())
+    set.add(1000000).assertTrue()
+    set.has(1000000).assertTrue()
+    set.size().assertEquals(1)
+    destroy set

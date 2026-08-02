@@ -2,7 +2,8 @@ package SparseSet
 
 import ArrayList
 import ErrorHandling
-import public UnitIndexer
+import Table
+import public TypeCasting
 
 /** Supplies the stable, unique integer key used by a SparseSet. */
 public interface SparseSetKey<T:>
@@ -12,8 +13,10 @@ public interface SparseSetKey<T:>
  * A set with O(1) membership checks, insertion, and unordered removal.
  *
  * Elements are stored in a dense typed array. The sparse index maps the key
- * supplied by SparseSetKey to the element's dense index. Keys must be unique,
- * non-negative, and stable for the lifetime of the element in the set.
+ * supplied by SparseSetKey to the element's dense index. Keys must be unique
+ * and stable for the lifetime of an element in the set. A key may be reused
+ * after its old value is gone; add() validates the stored value before
+ * accepting the new one.
  *
  * Removal swaps the last element into the removed element's slot, so dense
  * iteration order is not preserved.
@@ -21,25 +24,29 @@ public interface SparseSetKey<T:>
 public class SparseSet<T:>
     private ArrayList<T> dense
     private ArrayList<int> denseKeys
-    private ArrayList<int> sparse
+    private Table sparse
     private SparseSetKey<T> keyProvider
 
     construct(SparseSetKey<T> keyProvider)
         this.keyProvider = keyProvider
         dense = new ArrayList<T>()
         denseKeys = new ArrayList<int>()
-        sparse = new ArrayList<int>()
+        sparse = new Table()
 
     /** Adds an element and returns whether it was newly inserted. */
     function add(T value) returns boolean
         let key = keyProvider.getKey(value)
-        ensureKey(key)
-        if sparse.get(key) != 0
-            return false
+        let existingIndex = indexForKey(key)
+        if existingIndex >= 0
+            if dense.get(existingIndex) == value
+                return false
+            // The key was reused by a different value. This is valid for
+            // handles whose old value has been destroyed or deindexed.
+            removeAt(existingIndex)
 
         dense.add(value)
         denseKeys.add(key)
-        sparse.set(key, dense.size())
+        sparse.saveInt(key, dense.size())
         return true
 
     /** Adds every element from another set. */
@@ -49,25 +56,26 @@ public class SparseSet<T:>
 
     /** Returns whether the set contains the given element. */
     function has(T value) returns boolean
-        return hasKey(keyProvider.getKey(value))
+        return indexOf(value) >= 0
 
     /** Returns whether the set contains an element under the given key. */
     function hasKey(int key) returns boolean
-        return key >= 0 and key < sparse.size() and sparse.get(key) != 0
+        return key >= 0 and sparse.hasInt(key)
 
     /** Returns the dense index of an element, or -1 when it is absent. */
     function indexOf(T value) returns int
         let key = keyProvider.getKey(value)
-        if not hasKey(key)
+        let index = indexForKey(key)
+        if index < 0 or dense.get(index) != value
             return -1
-        return sparse.get(key) - 1
+        return index
 
     /** Removes an element and returns whether it was present. */
     function remove(T value) returns boolean
-        let key = keyProvider.getKey(value)
-        if not hasKey(key)
+        let index = indexOf(value)
+        if index < 0
             return false
-        removeAt(sparse.get(key) - 1)
+        removeAt(index)
         return true
 
     /** Removes the element at a dense index without preserving order. */
@@ -84,18 +92,18 @@ public class SparseSet<T:>
             let movedKey = denseKeys.get(lastIndex)
             dense.set(index, moved)
             denseKeys.set(index, movedKey)
-            sparse.set(movedKey, index + 1)
+            sparse.saveInt(movedKey, index + 1)
 
         dense.removeAtUnordered(lastIndex)
         denseKeys.removeAtUnordered(lastIndex)
-        sparse.set(removedKey, 0)
+        sparse.removeInt(removedKey)
         return removed
 
     /** Removes all elements while retaining the set object. */
     function clear()
         dense.clear()
         denseKeys.clear()
-        sparse.clear()
+        sparse.flush()
 
     /** Returns the number of elements in the set. */
     function size() returns int
@@ -113,7 +121,7 @@ public class SparseSet<T:>
     function getByKey(int key) returns T
         if not hasKey(key)
             return null
-        return dense.get(sparse.get(key) - 1)
+        return dense.get(indexForKey(key))
 
     /** Returns a shallow copy of this set. */
     function copy() returns SparseSet<T>
@@ -121,11 +129,12 @@ public class SparseSet<T:>
         result.addAll(this)
         return result
 
-    private function ensureKey(int key)
+    private function indexForKey(int key) returns int
         if key < 0
             error("SparseSet: Key must be non-negative: " + key.toString())
-        while sparse.size() <= key
-            sparse.add(0)
+        if not sparse.hasInt(key)
+            return -1
+        return sparse.loadInt(key) - 1
 
     ondestroy
         destroy dense
@@ -135,16 +144,14 @@ public class SparseSet<T:>
 /**
  * Key provider for unit sets.
  *
- * Units must be indexed before they are added. Importing SparseSet imports
- * UnitIndexer, which indexes map units automatically; units created before
- * that initialization should be indexed with unit.toUnitIndex() first.
+ * This deliberately uses the native handle identity rather than UnitIndexer
+ * IDs. That matches native groups: membership is not automatically removed
+ * when a unit is deindexed. SparseSet validates the stored unit when a key is
+ * reused, so a new unit cannot silently inherit stale membership.
  */
 public class UnitSparseSetKey implements SparseSetKey<unit>
     function getKey(unit value) returns int
-        let key = value.getIndex()
-        if key == 0
-            error("SparseSet: Unit is not indexed")
-        return key
+        return value.getTCHandleId()
 
 /** Reusable key provider for SparseSet<unit>. */
 public constant SparseSetKey<unit> UNIT_SPARSE_SET_KEY = new UnitSparseSetKey()
