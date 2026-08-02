@@ -3,7 +3,7 @@ package SparseSetTests
 import SparseSet
 
 class IntSparseSetKey implements SparseSetKey<int>
-    function getKey(int value) returns int
+    override function getKey(int value) returns int
         return value
 
 class ReusedKeyValue
@@ -15,7 +15,7 @@ class ReusedKeyValue
         this.payload = payload
 
 class ReusedKeyProvider implements SparseSetKey<ReusedKeyValue>
-    function getKey(ReusedKeyValue value) returns int
+    override function getKey(ReusedKeyValue value) returns int
         return value.id
 
 @Test

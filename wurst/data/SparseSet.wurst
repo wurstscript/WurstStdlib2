@@ -150,7 +150,7 @@ public class SparseSet<T:>
  * reused, so a new unit cannot silently inherit stale membership.
  */
 public class UnitSparseSetKey implements SparseSetKey<unit>
-    function getKey(unit value) returns int
+    override function getKey(unit value) returns int
         return value.getTCHandleId()
 
 /** Reusable key provider for SparseSet<unit>. */
