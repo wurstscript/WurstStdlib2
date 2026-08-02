@@ -1,0 +1,250 @@
+package ShardedIntStorage
+import NoWurst
+import ErrorHandling
+import Table
+
+/**
+	A shared integer arena spanning multiple native JASS arrays. Allocations are
+	contiguous logical address ranges and released adjacent ranges are coalesced.
+*/
+public class ShardedIntStorage
+	private static constant int SHARD_COUNT = 32
+
+	private static int array storage0
+	private static int array storage1
+	private static int array storage2
+	private static int array storage3
+	private static int array storage4
+	private static int array storage5
+	private static int array storage6
+	private static int array storage7
+	private static int array storage8
+	private static int array storage9
+	private static int array storage10
+	private static int array storage11
+	private static int array storage12
+	private static int array storage13
+	private static int array storage14
+	private static int array storage15
+	private static int array storage16
+	private static int array storage17
+	private static int array storage18
+	private static int array storage19
+	private static int array storage20
+	private static int array storage21
+	private static int array storage22
+	private static int array storage23
+	private static int array storage24
+	private static int array storage25
+	private static int array storage26
+	private static int array storage27
+	private static int array storage28
+	private static int array storage29
+	private static int array storage30
+	private static int array storage31
+	private static int storageEnd = 0
+	private static Table freeStarts = new Table()
+	private static Table freeSizes = new Table()
+	private static Table allocationSizes = new Table()
+	private static int freeCount = 0
+
+	static function capacity() returns int
+		return SHARD_COUNT * JASS_MAX_ARRAY_SIZE
+
+	static function get(int address) returns int
+		let shard = address div JASS_MAX_ARRAY_SIZE
+		let index = address - shard * JASS_MAX_ARRAY_SIZE
+		switch shard
+			case 0
+				return storage0[index]
+			case 1
+				return storage1[index]
+			case 2
+				return storage2[index]
+			case 3
+				return storage3[index]
+			case 4
+				return storage4[index]
+			case 5
+				return storage5[index]
+			case 6
+				return storage6[index]
+			case 7
+				return storage7[index]
+			case 8
+				return storage8[index]
+			case 9
+				return storage9[index]
+			case 10
+				return storage10[index]
+			case 11
+				return storage11[index]
+			case 12
+				return storage12[index]
+			case 13
+				return storage13[index]
+			case 14
+				return storage14[index]
+			case 15
+				return storage15[index]
+			case 16
+				return storage16[index]
+			case 17
+				return storage17[index]
+			case 18
+				return storage18[index]
+			case 19
+				return storage19[index]
+			case 20
+				return storage20[index]
+			case 21
+				return storage21[index]
+			case 22
+				return storage22[index]
+			case 23
+				return storage23[index]
+			case 24
+				return storage24[index]
+			case 25
+				return storage25[index]
+			case 26
+				return storage26[index]
+			case 27
+				return storage27[index]
+			case 28
+				return storage28[index]
+			case 29
+				return storage29[index]
+			case 30
+				return storage30[index]
+			case 31
+				return storage31[index]
+		return 0
+
+	static function set(int address, int value)
+		let shard = address div JASS_MAX_ARRAY_SIZE
+		let index = address - shard * JASS_MAX_ARRAY_SIZE
+		switch shard
+			case 0
+				storage0[index] = value
+			case 1
+				storage1[index] = value
+			case 2
+				storage2[index] = value
+			case 3
+				storage3[index] = value
+			case 4
+				storage4[index] = value
+			case 5
+				storage5[index] = value
+			case 6
+				storage6[index] = value
+			case 7
+				storage7[index] = value
+			case 8
+				storage8[index] = value
+			case 9
+				storage9[index] = value
+			case 10
+				storage10[index] = value
+			case 11
+				storage11[index] = value
+			case 12
+				storage12[index] = value
+			case 13
+				storage13[index] = value
+			case 14
+				storage14[index] = value
+			case 15
+				storage15[index] = value
+			case 16
+				storage16[index] = value
+			case 17
+				storage17[index] = value
+			case 18
+				storage18[index] = value
+			case 19
+				storage19[index] = value
+			case 20
+				storage20[index] = value
+			case 21
+				storage21[index] = value
+			case 22
+				storage22[index] = value
+			case 23
+				storage23[index] = value
+			case 24
+				storage24[index] = value
+			case 25
+				storage25[index] = value
+			case 26
+				storage26[index] = value
+			case 27
+				storage27[index] = value
+			case 28
+				storage28[index] = value
+			case 29
+				storage29[index] = value
+			case 30
+				storage30[index] = value
+			case 31
+				storage31[index] = value
+
+	static function tryAllocate(int size) returns int
+		if size <= 0
+			return -1
+		for i = 0 to freeCount - 1
+			let freeSize = freeSizes.loadInt(i)
+			if freeSize >= size
+				let reusedStart = freeStarts.loadInt(i)
+				freeStarts.saveInt(i, reusedStart + size)
+				freeSizes.saveInt(i, freeSize - size)
+				if freeSize == size
+					freeCount--
+					freeStarts.saveInt(i, freeStarts.loadInt(freeCount))
+					freeSizes.saveInt(i, freeSizes.loadInt(freeCount))
+					freeStarts.removeInt(freeCount)
+					freeSizes.removeInt(freeCount)
+				allocationSizes.saveInt(reusedStart, size)
+				return reusedStart
+		if size > capacity() - storageEnd
+			return -1
+		let freshStart = storageEnd
+		storageEnd += size
+		allocationSizes.saveInt(freshStart, size)
+		return freshStart
+
+	static function allocate(int size) returns int
+		let result = tryAllocate(size)
+		if result < 0
+			error(size <= 0 ? "ShardedIntStorage: allocation size must be positive" :
+				"ShardedIntStorage: capacity exhausted")
+		return result
+
+	static function release(int start, int size)
+		if start < 0 or size <= 0 or allocationSizes.loadInt(start) != size
+			error("ShardedIntStorage: released range is not an active allocation")
+			return
+		allocationSizes.removeInt(start)
+		var mergedStart = start
+		var mergedEnd = start + size
+		var i = 0
+		while i < freeCount
+			let candidateStart = freeStarts.loadInt(i)
+			let candidateEnd = candidateStart + freeSizes.loadInt(i)
+			if candidateStart <= mergedEnd and candidateEnd >= mergedStart
+				mergedStart = candidateStart < mergedStart ? candidateStart : mergedStart
+				mergedEnd = candidateEnd > mergedEnd ? candidateEnd : mergedEnd
+				freeCount--
+				freeStarts.saveInt(i, freeStarts.loadInt(freeCount))
+				freeSizes.saveInt(i, freeSizes.loadInt(freeCount))
+				freeStarts.removeInt(freeCount)
+				freeSizes.removeInt(freeCount)
+			else
+				i++
+		if mergedEnd == storageEnd
+			storageEnd = mergedStart
+		else
+			freeStarts.saveInt(freeCount, mergedStart)
+			freeSizes.saveInt(freeCount, mergedEnd - mergedStart)
+			freeCount++

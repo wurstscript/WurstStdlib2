@@ -1,0 +1,299 @@
+package PolygonTests
+import Polygon
+import ArrayList
+import ErrorHandling
+
+class RenderSpyPolygon extends Polygon
+	int debugRenderCalls = 0
+
+	construct()
+		super(0)
+		seal()
+
+	override function debugRender(color col) returns ArrayList<lightning>
+		debugRenderCalls++
+		return new ArrayList<lightning>(1)
+
+function benchmarkPolygon() returns Polygon
+	let polygon = new Polygon(64)
+	for i = 0 to 15
+		polygon.addVertex(vec2(i * 64., 0))
+	for i = 0 to 15
+		polygon.addVertex(vec2(1024, i * 64.))
+	for i = 0 to 15
+		polygon.addVertex(vec2(1024 - i * 64., 1024))
+	for i = 0 to 15
+		polygon.addVertex(vec2(0, 1024 - i * 64.))
+	return polygon.seal()
+
+function benchmarkPoint(int index) returns vec2
+	return vec2(((index * 73) mod 1152 - 64).toReal(), ((index * 151) mod 1152 - 64).toReal())
+
+@Test function builderSealsAndCachesBounds()
+	let polygon = new Polygon(4)
+		..addVertex(vec2(-2, 3))
+		..addVertex(vec2(8, 1))
+		..addVertex(vec2(10, 7))
+		..addVertex(vec2(4, 9))
+		..seal()
+	polygon.isSealed().assertTrue()
+	polygon.vertexCount().assertEquals(4)
+	polygon.vertexAt(0).assertEquals(vec2(-2, 3))
+	polygon.vertexAt(3).assertEquals(vec2(4, 9))
+	polygon.bounds().getMinX().assertEquals(-2.)
+	polygon.bounds().getMinY().assertEquals(1.)
+	polygon.bounds().getMaxX().assertEquals(10.)
+	polygon.bounds().getMaxY().assertEquals(9.)
+	polygon.boundsCenter().assertEquals(vec2(4, 5))
+	destroy polygon
+
+@Test function varargConstructorSealsAndCopiesVertices()
+	let polygon = new Polygon(vec2(0, 0), vec2(2, 0), vec2(0, 2))
+	polygon.isSealed().assertTrue()
+	polygon.vertexCount().assertEquals(3)
+	polygon.vertexAt(1).assertEquals(vec2(2, 0))
+	destroy polygon
+
+@Test function emptyPolygonHasStableBounds()
+	let polygon = new Polygon(0)..seal()
+	polygon.vertexCount().assertEquals(0)
+	polygon.boundsCenter().assertEquals(ZERO2)
+	destroy polygon
+
+@Test function repeatedSealReusesCachedBounds()
+	let polygon = new Polygon(3)
+		..addVertex(vec2(0, 0))
+		..addVertex(vec2(4, 0))
+		..addVertex(vec2(0, 4))
+		..seal()
+	let firstBounds = polygon.bounds()
+	polygon.seal()
+	(polygon.bounds() == firstBounds).assertTrue()
+	polygon.vertexCount().assertEquals(3)
+	destroy polygon
+
+@Test function classifiesConvexConcaveAndReversedPaths()
+	let square = new Polygon(vec2(0, 0), vec2(10, 0), vec2(10, 10), vec2(0, 10))
+	(square.classify(vec2(5, 5)) == PolygonPointRelation.INSIDE).assertTrue()
+	(square.classify(vec2(15, 5)) == PolygonPointRelation.OUTSIDE).assertTrue()
+	(square.classify(vec2(10, 5)) == PolygonPointRelation.BOUNDARY).assertTrue()
+	square.contains(vec2(10, 5)).assertTrue()
+	square.containsStrict(vec2(5, 5)).assertTrue()
+	square.contains(vec2(10.0001, 5)).assertFalse()
+	let reversed = new Polygon(vec2(0, 10), vec2(10, 10), vec2(10, 0), vec2(0, 0))
+	(reversed.classify(vec2(5, 5)) == PolygonPointRelation.INSIDE).assertTrue()
+	let concave = new Polygon(vec2(0, 0), vec2(8, 0), vec2(4, 4), vec2(8, 8), vec2(0, 8))
+	concave.contains(vec2(2, 4)).assertTrue()
+	concave.contains(vec2(6, 4)).assertFalse()
+	destroy square
+	destroy reversed
+	destroy concave
+
+@Test function classifiesDegenerateAndDuplicateEdges()
+	let point = new Polygon(vec2(3, 4))
+	(point.classify(vec2(3, 4)) == PolygonPointRelation.BOUNDARY).assertTrue()
+	point.containsStrict(vec2(3, 4)).assertFalse()
+	let segment = new Polygon(vec2(0, 0), vec2(10, 0))
+	(segment.classify(vec2(5, 0)) == PolygonPointRelation.BOUNDARY).assertTrue()
+	(segment.classify(vec2(5, 1)) == PolygonPointRelation.OUTSIDE).assertTrue()
+	let duplicate = new Polygon(vec2(0, 0), vec2(10, 0), vec2(10, 0), vec2(0, 10), vec2(0, 0))
+	duplicate.contains(vec2(2, 2)).assertTrue()
+	destroy point
+	destroy segment
+	destroy duplicate
+
+@Test function collinearPolygonHasBoundaryButNoInterior()
+	let polygon = new Polygon(vec2(0, 0), vec2(5, 0), vec2(10, 0), vec2(3, 0))
+	(polygon.classify(vec2(7, 0)) == PolygonPointRelation.BOUNDARY).assertTrue()
+	(polygon.classify(vec2(7, 1)) == PolygonPointRelation.OUTSIDE).assertTrue()
+	polygon.containsStrict(vec2(7, 0)).assertFalse()
+	destroy polygon
+
+@Test function horizontalRayThroughVertexUsesHalfOpenCrossing()
+	let diamond = new Polygon(vec2(0, 5), vec2(5, 10), vec2(10, 5), vec2(5, 0))
+	(diamond.classify(vec2(5, 5)) == PolygonPointRelation.INSIDE).assertTrue()
+	(diamond.classify(vec2(10, 5)) == PolygonPointRelation.BOUNDARY).assertTrue()
+	(diamond.classify(vec2(9, 5)) == PolygonPointRelation.INSIDE).assertTrue()
+	destroy diamond
+
+@Test function retracedEdgeDoesNotChangeFillParity()
+	let polygon = new Polygon(
+		vec2(0, 0), vec2(10, 0), vec2(10, 10),
+		vec2(15, 10), vec2(10, 10), vec2(0, 10))
+	polygon.containsStrict(vec2(5, 5)).assertTrue()
+	(polygon.classify(vec2(12, 10)) == PolygonPointRelation.BOUNDARY).assertTrue()
+	polygon.contains(vec2(12, 8)).assertFalse()
+	destroy polygon
+
+@Test function classifiesSelfIntersectingPathWithEvenOddRule()
+	let bowTie = new Polygon(vec2(0, 0), vec2(10, 10), vec2(0, 10), vec2(10, 0))
+	(bowTie.classify(vec2(5, 5)) == PolygonPointRelation.BOUNDARY).assertTrue()
+	bowTie.contains(vec2(5, 8)).assertTrue()
+	bowTie.contains(vec2(-1, 5)).assertFalse()
+	destroy bowTie
+
+@Test function classifiesFigureEightLobesIndependently()
+	let figureEight = new Polygon(
+		vec2(0, 0), vec2(-10, 10), vec2(-10, -10),
+		vec2(0, 0), vec2(10, 10), vec2(10, -10))
+	figureEight.containsStrict(vec2(-5, 0)).assertTrue()
+	figureEight.containsStrict(vec2(5, 0)).assertTrue()
+	(figureEight.classify(vec2(0, 0)) == PolygonPointRelation.BOUNDARY).assertTrue()
+	figureEight.contains(vec2(0, 5)).assertFalse()
+	destroy figureEight
+
+@Test function repeatedContainmentQueriesRemainStable()
+	let polygon = new Polygon(vec2(0, 0), vec2(20, 0), vec2(20, 20), vec2(0, 20))
+	for i = 0 to 999
+		polygon.containsStrict(vec2(10, 10)).assertTrue()
+		polygon.contains(vec2(20, 10)).assertTrue()
+		polygon.contains(vec2(21, 10)).assertFalse()
+	destroy polygon
+
+@Test function gridCoverageDistinguishesUniformMixedAndDisjointCells()
+	let polygon = new Polygon(vec2(0, 0), vec2(96, 0), vec2(96, 96), vec2(0, 96))
+	(polygon.cellCoverage(vec2(48, 48)) == PolygonCellCoverage.INSIDE).assertTrue()
+	(polygon.cellCoverage(vec2(16, 48)) == PolygonCellCoverage.MIXED).assertTrue()
+	(polygon.cellCoverage(vec2(-16, 48)) == PolygonCellCoverage.MIXED).assertTrue()
+	(polygon.cellCoverage(vec2(-48, 48)) == PolygonCellCoverage.OUTSIDE).assertTrue()
+	destroy polygon
+
+@Test function mixedCellsReclassifyTheActualPointExactly()
+	let polygon = new Polygon(vec2(0, 0), vec2(96, 0), vec2(96, 96), vec2(0, 96))
+	(polygon.classify(vec2(16, 48)) == PolygonPointRelation.INSIDE).assertTrue()
+	(polygon.classify(vec2(-16, 48)) == PolygonPointRelation.OUTSIDE).assertTrue()
+	(polygon.classify(vec2(0, 48)) == PolygonPointRelation.BOUNDARY).assertTrue()
+	(polygon.classify(vec2(16, 48)) == polygon.classifyLinear(vec2(16, 48))).assertTrue()
+	(polygon.classify(vec2(-16, 48)) == polygon.classifyLinear(vec2(-16, 48))).assertTrue()
+	(polygon.classify(vec2(0, 48)) == polygon.classifyLinear(vec2(0, 48))).assertTrue()
+	destroy polygon
+
+@Test function acceleratedClassificationExaminesAtMostOneBandOfEdges()
+	let polygon = new Polygon(
+		vec2(0, 0), vec2(320, 0), vec2(320, 320), vec2(256, 320),
+		vec2(256, 64), vec2(64, 64), vec2(64, 320), vec2(0, 320))
+	polygon.cellCandidateEdgeCount(vec2(1, 16)).assertEquals(3)
+	polygon.cellCandidateEdgeCount(vec2(1, 16)).assertLessThanOrEqual(polygon.vertexCount())
+	polygon.cellCandidateEdgeCount(vec2(96, 96)).assertEquals(0)
+	(polygon.classify(vec2(1, 16)) == polygon.classifyLinear(vec2(1, 16))).assertTrue()
+	(polygon.classify(vec2(96, 96)) == polygon.classifyLinear(vec2(96, 96))).assertTrue()
+	destroy polygon
+
+@Test function acceleratedClassificationMatchesLinearFor10000Points()
+	let polygon = benchmarkPolygon()
+	var totalCandidates = 0
+	var linearEdges = 0
+	var mixedQueries = 0
+	for i = 0 to 9999
+		let point = benchmarkPoint(i)
+		(polygon.classify(point) == polygon.classifyLinear(point)).assertTrue()
+		if point.x >= 0 and point.x <= 1024 and point.y >= 0 and point.y <= 1024
+			linearEdges += polygon.vertexCount()
+		let candidates = polygon.cellCandidateEdgeCount(point)
+		candidates.assertLessThanOrEqual(polygon.vertexCount())
+		if candidates > 0
+			mixedQueries++
+		totalCandidates += candidates
+	totalCandidates.assertLessThan(linearEdges)
+	print("Polygon 10000-lookups: mixed=" + mixedQueries.toString() +
+		", linearEdges=" + linearEdges.toString() + ", candidateEdges=" + totalCandidates.toString())
+	destroy polygon
+
+@Test function oversizedGridFallsBackToExactLinearClassification()
+	let polygon = new Polygon(
+		vec2(0, 0), vec2(40000000, 0), vec2(40000000, 64), vec2(0, 64))
+	(polygon.cellCoverage(vec2(16, 16)) == PolygonCellCoverage.MIXED).assertTrue()
+	(polygon.cellCoverage(vec2(-64, 16)) == PolygonCellCoverage.OUTSIDE).assertTrue()
+	polygon.cellCandidateEdgeCount(vec2(16, 16)).assertEquals(4)
+	(polygon.classify(vec2(16, 16)) == polygon.classifyLinear(vec2(16, 16))).assertTrue()
+	destroy polygon
+
+@Test function emptyDebugRenderingReturnsOwnedEmptyList()
+	let polygon = new Polygon(0)..seal()
+	let borders = polygon.debugRender()
+	borders.size().assertEquals(0)
+	destroy borders
+	destroy polygon
+
+@Test function oneVertexDebugRenderingReturnsOwnedEmptyList()
+	let polygon = new Polygon(vec2(3, 4))
+	let borders = polygon.debugRender()
+	borders.size().assertEquals(0)
+	destroy borders
+	destroy polygon
+
+/** Warcraft-runtime verification: Grill's interpreter does not implement lightning natives. */
+public function verifyDebugRenderingReturnsOneBorderPerTriangleEdgeIngame()
+	let polygon = new Polygon(vec2(0, 0), vec2(10, 0), vec2(0, 10))
+	let borders = polygon.debugRender()
+	borders.size().assertEquals(3)
+	for i = 0 to borders.size() - 1
+		(borders.get(i) != null).assertTrue()
+		borders.get(i).destr()
+	destroy borders
+	destroy polygon
+
+/** Warcraft-runtime verification: Grill's interpreter does not implement lightning color reads. */
+public function verifyDefaultDebugRenderingUsesStandardGreenIngame()
+	let polygon = new Polygon(vec2(0, 0), vec2(10, 0), vec2(0, 10))
+	let borders = polygon.debugRender()
+	for i = 0 to borders.size() - 1
+		(borders.get(i).getColor() == PLAYER_COLOR_GREEN.toColor()).assertTrue()
+		borders.get(i).destr()
+	destroy borders
+	destroy polygon
+
+/** Warcraft-runtime verification: Grill's interpreter does not implement lightning color reads. */
+public function verifyDebugRenderingPropagatesExplicitColorIngame()
+	let polygon = new Polygon(vec2(0, 0), vec2(10, 0), vec2(0, 10))
+	let requestedColor = color(12, 34, 56)
+	let borders = polygon.debugRender(requestedColor)
+	for i = 0 to borders.size() - 1
+		(borders.get(i).getColor() == requestedColor).assertTrue()
+		borders.get(i).destr()
+	destroy borders
+	destroy polygon
+
+@Test function debugRenderingOverloadsDispatchThroughColorOverride()
+	let polygon = new RenderSpyPolygon()
+	let defaultBorders = polygon.debugRender()
+	polygon.debugRenderCalls.assertEquals(1)
+	destroy defaultBorders
+	polygon.debugRenderTimed(1, color(1, 2, 3))
+	polygon.debugRenderCalls.assertEquals(2)
+	destroy polygon
+
+/** Lua-runtime verification: Grill's compile-time error handling aborts before assertions run. */
+public function verifyInvalidTimedDebugRenderingDoesNotDispatchOverrideIngame()
+	let polygon = new RenderSpyPolygon()
+	polygon.debugRenderTimed(0, color(1, 2, 3))
+	lastError.assertEquals("Polygon: timed debug duration must be positive")
+	polygon.debugRenderCalls.assertEquals(0)
+	destroy polygon
+
+/** Lua-runtime verification: guard errors return on Lua and must leave safe state/results. */
+public function verifyLuaGuardPathsReturnSafelyIngame()
+	if not isLua
+		return
+	let sealedPolygon = new Polygon(vec2(0, 0), vec2(4, 0), vec2(0, 4))
+	lastError = ""
+	sealedPolygon.addVertex(vec2(9, 9))
+	lastError.assertEquals("Polygon: cannot add vertices after seal")
+	sealedPolygon.vertexCount().assertEquals(3)
+	sealedPolygon.vertexAt(2).assertEquals(vec2(0, 4))
+	lastError = ""
+	sealedPolygon.vertexAt(3).assertEquals(ZERO2)
+	lastError.assertEquals("Polygon: vertex index out of bounds")
+	destroy sealedPolygon
+
+	let unsealedPolygon = new Polygon(3)..addVertex(vec2(2, 3))
+	lastError = ""
+	unsealedPolygon.vertexCount().assertEquals(0)
+	lastError.assertEquals("Polygon: must be sealed before querying")
+	(unsealedPolygon.classify(vec2(2, 3)) == PolygonPointRelation.OUTSIDE).assertTrue()
+	unsealedPolygon.boundsCenter().assertEquals(ZERO2)
+	(unsealedPolygon.bounds() == null).assertTrue()
+	let borders = unsealedPolygon.debugRender()
+	borders.size().assertEquals(0)
+	destroy borders
+	destroy unsealedPolygon

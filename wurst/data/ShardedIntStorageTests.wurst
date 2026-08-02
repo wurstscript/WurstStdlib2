@@ -1,0 +1,23 @@
+package ShardedIntStorageTests
+import ShardedIntStorage
+
+@Test function allocationReadsAndWritesAcrossNativeArrayBoundary()
+	let size = JASS_MAX_ARRAY_SIZE + 2
+	let start = ShardedIntStorage.allocate(size)
+	ShardedIntStorage.set(start + JASS_MAX_ARRAY_SIZE - 1, 41)
+	ShardedIntStorage.set(start + JASS_MAX_ARRAY_SIZE, 42)
+	ShardedIntStorage.get(start + JASS_MAX_ARRAY_SIZE - 1).assertEquals(41)
+	ShardedIntStorage.get(start + JASS_MAX_ARRAY_SIZE).assertEquals(42)
+	ShardedIntStorage.release(start, size)
+
+@Test function releasedAdjacentRangesAreCoalescedAndReused()
+	let first = ShardedIntStorage.allocate(10)
+	let second = ShardedIntStorage.allocate(20)
+	ShardedIntStorage.release(second, 20)
+	ShardedIntStorage.release(first, 10)
+	let combined = ShardedIntStorage.allocate(30)
+	combined.assertEquals(first)
+	ShardedIntStorage.release(combined, 30)
+
+@Test function oversizedAllocationCanFailWithoutAbortingCaller()
+	ShardedIntStorage.tryAllocate(ShardedIntStorage.capacity() + 1).assertEquals(-1)

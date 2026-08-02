@@ -184,6 +184,7 @@ public function vec2.isInTriangle(vec2 p1, vec2 p2, vec2 p3) returns bool
 	return (a <= 0 and b <= 0 and c <= 0) or (a >= 0 and b >= 0 and c >= 0)
 
 /** Checks whether the point is in a polygon defined by a sequence of connected points. */
+@deprecated("Use Polygon.contains(...) instead.")
 public function vec2.isInPolygon(vararg vec2 args) returns bool
 	var result = false
 	vec2 array points
@@ -441,6 +442,7 @@ Works as for vec2.isInTriangle, Z-coords are discarded. */
 
 /** Checks whether the point is in a 2d polygon defined by a sequence of connected points.
 Works as for vec2.isInPolygon, Z-coords are discarded. */
+@deprecated("Use Polygon.contains(...) instead.")
 public function vec3.isInPolygon2d(vararg vec3 args) returns bool
 	var result = false
 	vec3 array points
@@ -521,4 +523,3 @@ function vectorTests()
 	test1.toVec3().isInPolygon2d(points[0].toVec3(), points[1].toVec3(), points[2].toVec3(), points[3].toVec3()).assertTrue()
 	test2.toVec3().isInPolygon2d(points[0].toVec3(), points[1].toVec3(), points[2].toVec3(), points[3].toVec3()).assertFalse()
 	test3.toVec3().isInPolygon2d(points[0].toVec3(), points[1].toVec3(), points[2].toVec3()).assertTrue()
-
