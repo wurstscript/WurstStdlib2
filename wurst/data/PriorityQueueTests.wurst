@@ -1,0 +1,47 @@
+package PriorityQueueTests
+
+import ArrayList
+import PriorityQueue
+
+constant Comparator<int> maxIntComparator = (a, b) -> a > b ? -1 : (a < b ? 1 : 0)
+
+@Test
+function priorityQueueReturnsSmallestFirst()
+    let queue = new PriorityQueue<int>(intComparator)
+    queue.add(7)
+    queue.add(2)
+    queue.add(5)
+    queue.add(2)
+
+    queue.peek().assertEquals(2)
+    queue.size().assertEquals(4)
+    queue.poll().assertEquals(2)
+    queue.poll().assertEquals(2)
+    queue.poll().assertEquals(5)
+    queue.poll().assertEquals(7)
+    queue.isEmpty().assertTrue()
+    destroy queue
+
+@Test
+function priorityQueueSupportsMaxHeapComparator()
+    let queue = new PriorityQueue<int>(maxIntComparator)
+    queue.offer(3)
+    queue.offer(9)
+    queue.offer(1)
+
+    queue.remove().assertEquals(9)
+    queue.remove().assertEquals(3)
+    queue.remove().assertEquals(1)
+    destroy queue
+
+@Test
+function priorityQueueClearRetainsUsability()
+    let queue = new PriorityQueue<int>(intComparator, 2)
+    queue.add(4)
+    queue.add(1)
+    queue.clear()
+    queue.isEmpty().assertTrue()
+    queue.add(6)
+    queue.peek().assertEquals(6)
+    queue.size().assertEquals(1)
+    destroy queue
