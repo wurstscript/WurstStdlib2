@@ -16,10 +16,10 @@ import SparseSet
     ===========
     Import SparseSetBenchmark into a test map and type -sparsebench in game.
     Keep the map, camera, graphics settings, and other running systems the
-    same for every build. After each phase the temporary set is destroyed and
-    the benchmark waits for the player to confirm that FPS has recovered.
-    Type -sparsebench-next to start the next phase. The workload is identical
-    within each HashSet/SparseSet pair.
+    same for every build. After each phase the temporary set or group is
+    destroyed and the benchmark waits 2.5 seconds for FPS to recover before
+    starting the next phase. The workload is identical within each comparison
+    pair.
 
     A timer callback can be delayed by a heavy workload. That is expected: the
     resulting FPS drop is the measurement. Increase the per-tick round
@@ -32,22 +32,26 @@ constant REMOVE_ELEMENTS = 64
 constant REMOVE_ROUNDS_PER_TICK = 5
 constant ITERATION_ELEMENTS = 512
 constant ITERATION_ROUNDS_PER_TICK = 10
+constant PHASE_COUNT = 7
 
 constant BENCHMARK_INTERVAL = 0.05
 constant PHASE_TICKS = 60
 constant START_DELAY = 2.
+constant RECOVERY_DELAY = 2.5
 
 class BenchmarkIntKey implements SparseSetKey<int>
     override function getKey(int value) returns int
         return value
 
 constant benchmarkKey = new BenchmarkIntKey()
+constant benchmarkUnitKey = new UnitSparseSetKey()
 
 var phase = 0
 var phaseTick = 0
 var sink = 0
 var phaseStartSink = 0
 var phaseRunning = false
+unit array benchmarkUnits
 
 function runHashSetMembership()
     let set = new HashSet<int>
@@ -78,26 +82,53 @@ function runSparseSetMembership()
     destroy set
 
 function runHashSetRemove()
-    let set = new HashSet<int>
+    ensureBenchmarkUnits()
+    let set = new HashSet<unit>
     for round = 0 to REMOVE_ROUNDS_PER_TICK - 1
         for i = 0 to REMOVE_ELEMENTS - 1
-            set.add(i)
+            set.add(benchmarkUnits[i])
         for i = 0 to REMOVE_ELEMENTS - 1
-            if set.remove(i)
+            if set.remove(benchmarkUnits[i])
                 sink++
 
     destroy set
 
 function runSparseSetRemove()
-    let set = new SparseSet<int>(benchmarkKey)
+    ensureBenchmarkUnits()
+    let set = new SparseSet<unit>(benchmarkUnitKey)
     for round = 0 to REMOVE_ROUNDS_PER_TICK - 1
         for i = 0 to REMOVE_ELEMENTS - 1
-            set.add(i)
+            set.add(benchmarkUnits[i])
         for i = 0 to REMOVE_ELEMENTS - 1
-            if set.remove(i)
+            if set.remove(benchmarkUnits[i])
                 sink++
 
     destroy set
+
+function runGroupRemove()
+    ensureBenchmarkUnits()
+    let set = CreateGroup()
+    for round = 0 to REMOVE_ROUNDS_PER_TICK - 1
+        for i = 0 to REMOVE_ELEMENTS - 1
+            set.add(benchmarkUnits[i])
+        for i = 0 to REMOVE_ELEMENTS - 1
+            if set.remove(benchmarkUnits[i]) > 0
+                sink++
+
+    set.destr()
+
+function ensureBenchmarkUnits()
+    if benchmarkUnits[0] == null
+        for i = 0 to REMOVE_ELEMENTS - 1
+            benchmarkUnits[i] = createUnit(DUMMY_PLAYER, 'hfoo', vec2(0., 0.), 0 .fromDeg())
+            benchmarkUnits[i].hide()
+            benchmarkUnits[i].pause()
+
+function destroyBenchmarkUnits()
+    if benchmarkUnits[0] != null
+        for i = 0 to REMOVE_ELEMENTS - 1
+            benchmarkUnits[i].remove()
+            benchmarkUnits[i] = null
 
 function runHashSetIteration()
     let set = new HashSet<int>
@@ -131,8 +162,10 @@ function phaseName() returns string
     else if phase == 4
         return "SparseSet remove/re-add"
     else if phase == 5
-        return "HashSet iteration"
+        return "Native group remove/re-add"
     else if phase == 6
+        return "HashSet iteration"
+    else if phase == 7
         return "SparseSet iteration"
     return "unknown phase"
 
@@ -146,15 +179,21 @@ function runCurrentWorkload()
     else if phase == 4
         runSparseSetRemove()
     else if phase == 5
-        runHashSetIteration()
+        runGroupRemove()
     else if phase == 6
+        runHashSetIteration()
+    else if phase == 7
         runSparseSetIteration()
 
     phaseTick++
     if phaseTick == PHASE_TICKS
+        if phase == 5
+            destroyBenchmarkUnits()
         phaseRunning = false
         print("Finished " + phaseName() + ". Sink delta: " + (sink - phaseStartSink).toString())
-        print("Set cleaned up. Wait for FPS to return to normal, then type -sparsebench-next.")
+        print("Workload cleaned up. Waiting " + RECOVERY_DELAY.toString() + " seconds for FPS recovery.")
+        doAfter(RECOVERY_DELAY) ->
+            runNextPhase()
 
 function startPhaseWorkload()
     phaseTick = 0
@@ -166,6 +205,8 @@ function startPhaseWorkload()
         runCurrentWorkload()
 
 function startPhase()
+    if phase == 3
+        ensureBenchmarkUnits()
     print("Starting " + phaseName() + " in " + START_DELAY.toString()
         + " seconds; watch the lowest FPS.")
     doAfter(START_DELAY) ->
@@ -173,20 +214,10 @@ function startPhase()
 
 function runNextPhase()
     phase++
-    if phase <= 6
+    if phase <= PHASE_COUNT
         startPhase()
     else
         print("SparseSet benchmark complete. Final sink: " + sink.toString())
-
-public function continueSparseSetBenchmark()
-    if phase == 0
-        print("Start the benchmark first with -sparsebench.")
-    else if phaseRunning
-        print("The current benchmark phase is still running.")
-    else if phase < 6
-        runNextPhase()
-    else
-        print("SparseSet benchmark complete. Reload the map to run it again.")
 
 public function startSparseSetBenchmark()
     if phase != 0
@@ -196,10 +227,7 @@ public function startSparseSetBenchmark()
     runNextPhase()
 
 init
-    let startTrigger = CreateTrigger()
-    let nextTrigger = CreateTrigger()
+    let benchmarkTrigger = CreateTrigger()
     for i = 0 to bj_MAX_PLAYER_SLOTS - 1
-        startTrigger.registerPlayerChatEvent(players[i], "-sparsebench", true)
-        nextTrigger.registerPlayerChatEvent(players[i], "-sparsebench-next", true)
-    startTrigger.addAction(function startSparseSetBenchmark)
-    nextTrigger.addAction(function continueSparseSetBenchmark)
+        benchmarkTrigger.registerPlayerChatEvent(players[i], "-sparsebench", true)
+    benchmarkTrigger.addAction(function startSparseSetBenchmark)
