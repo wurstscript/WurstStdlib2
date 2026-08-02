@@ -12,7 +12,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Update Wurst
         run: grill install wurstscript
@@ -21,4 +21,4 @@ jobs:
         run: grill install
 
       - name: Test
-        run: grill test
+        run: grill test --quiet
