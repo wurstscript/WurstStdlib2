@@ -45,3 +45,19 @@ function priorityQueueClearRetainsUsability()
     queue.peek().assertEquals(6)
     queue.size().assertEquals(1)
     destroy queue
+
+@Test
+function priorityQueueHandlesEmptyAndGrowth()
+    let queue = new PriorityQueue<int>(intComparator, 1)
+    queue.isEmpty().assertTrue()
+    queue.size().assertEquals(0)
+    queue.peek()
+    queue.poll()
+
+    for i = 0 to 31
+        queue.add((i * 17) mod 32)
+    queue.size().assertEquals(32)
+    for expected = 0 to 31
+        queue.poll().assertEquals(expected)
+    queue.isEmpty().assertTrue()
+    destroy queue
