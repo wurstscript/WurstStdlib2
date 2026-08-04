@@ -1,10 +1,13 @@
 ![](https://i.imgur.com/L3xfAs4.png)
 
-[![CircleCI](https://circleci.com/gh/wurstscript/WurstStdlib2.svg?style=svg)](https://circleci.com/gh/wurstscript/WurstStdlib2)
+[![Build](https://github.com/wurstscript/WurstStdlib2/actions/workflows/build.yml/badge.svg)](https://github.com/wurstscript/WurstStdlib2/actions/workflows/build.yml)
 # Wurst Standard Library
 
-This is the repository of the WurstScript standard library which provides a vast amount of useful packages to users starting out with Wurst.
-Many commonly used data structures, wc3 specific utility packages, Object Editing as well as extension wrappers for the blizzard natives have been implemented, are unit tested and therefore ready to use in production immediately.
+This is the repository of the WurstScript standard library. It provides commonly used data structures, math and string utilities, Warcraft III native wrappers, and reusable WC3 systems for maps.
+
+The repository also contains opt-in object-editing APIs and generated Warcraft III asset catalogs. These map game data into Wurst so map authors can use typed constants instead of raw IDs and paths.
+
+Packages are unit tested and intended to be usable in production. Tests live in dedicated `*Tests` packages so production packages contain only their runtime and compiletime APIs.
 
 # Motivation
 

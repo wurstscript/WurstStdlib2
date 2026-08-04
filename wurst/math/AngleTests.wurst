@@ -1,0 +1,20 @@
+package AngleTests
+import Angle
+import Wurstunit
+
+
+@Test function testAngle()
+	(180 .fromDeg().radians).assertEquals(180 .fromDeg().degrees().fromDeg().radians)
+
+	(180 .fromDeg() + 90 .fromDeg()).degrees().assertEquals(270)
+
+	(0 .fromDeg()).sin().assertEquals(0)
+	(90 .fromDeg()).sin().assertEquals(1)
+
+
+@Test function testFromRadIsRadians()
+	let halfTurn = 3.141592654
+	halfTurn.fromRad().degrees().assertEquals(180., 0.001)
+	let three = 3
+	three.fromRad().radians().assertEquals(3., 0.0001)
+

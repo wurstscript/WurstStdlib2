@@ -1,0 +1,28 @@
+package RectTests
+import Rect
+import Wurstunit
+
+
+@Test
+function rectTest()
+	let rekt = Rect(2, 2, 4, 4)
+
+	rekt.width().assertEquals(2)
+	rekt.height().assertEquals(2)
+
+	rekt.getCenterX().assertEquals(3)
+	rekt.getCenterY().assertEquals(3)
+
+	rekt.moveTo(1, 1)
+
+	rekt.width().assertEquals(2)
+	rekt.height().assertEquals(2)
+
+	rekt.getCenterX().assertEquals(1)
+	rekt.getCenterY().assertEquals(1)
+
+	rekt.resize(ZERO2, vec2(4, 4))
+
+	rekt.getCenterX().assertEquals(2)
+	rekt.getCenterY().assertEquals(2)
+

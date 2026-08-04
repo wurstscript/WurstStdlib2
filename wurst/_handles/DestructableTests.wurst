@@ -1,0 +1,7 @@
+package DestructableTests
+import Destructable
+import Wurstunit
+
+@Test function testDestructables()
+	let destr = createDestructable(0, ZERO2, 0 .fromDeg(), 1, -1)
+	destr.getX().assertEquals(0.)

@@ -1,0 +1,30 @@
+package ClosureTimersTests
+import ClosureTimers
+import Wurstunit
+
+var x = 200
+
+@Test function testDoAfter()
+	doAfter(0.1) ->
+		x += 50
+	doAfter(0.2) ->
+		x *= 2
+	doAfter(0.3) ->
+		x = x div 2
+		x.assertEquals(250)
+
+	var _count = 3
+	let cb = doPeriodicallyCounted(3, 3) (CallbackCounted cb) ->
+		cb.getCount().assertEquals(_count)
+		if cb.isLast()
+			cb.progress().assertEquals(1, 0.0001)
+			cb.getCount().assertEquals(1)
+		else if _count == 3
+			cb.progress().assertEquals(0.33333, 0.00001)
+			cb.getCount().assertEquals(3)
+		else if _count == 2
+			cb.progress().assertEquals(0.66666, 0.00001)
+			cb.getCount().assertEquals(2)
+		_count--
+	cb.progress().assertEquals(0, 0.00001)
+	cb.getCount().assertEquals(_count)

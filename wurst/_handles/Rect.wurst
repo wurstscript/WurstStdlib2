@@ -1,7 +1,6 @@
 package Rect
 import NoWurst
 import Vectors
-import Wurstunit
 
 public function rect.randomPoint() returns vec2
 	return vec2(GetRandomReal(this.getMinX(), this.getMaxX()), GetRandomReal(this.getMinY(), this.getMaxY()))
@@ -84,30 +83,6 @@ public function rect.fromCenter(real sizeX, real sizeY) returns rect
 public function rect.fromCenterWithOffset(real sizeX, real sizeY, vec2 offset) returns rect
 	let c = this.getCenter() + offset
 	return Rect(c.x - sizeX / 2, c.y - sizeY / 2, c.x + sizeX / 2, c.y + sizeY / 2)
-
-@Test
-function rectTest()
-	let rekt = Rect(2, 2, 4, 4)
-
-	rekt.width().assertEquals(2)
-	rekt.height().assertEquals(2)
-
-	rekt.getCenterX().assertEquals(3)
-	rekt.getCenterY().assertEquals(3)
-
-	rekt.moveTo(1, 1)
-
-	rekt.width().assertEquals(2)
-	rekt.height().assertEquals(2)
-
-	rekt.getCenterX().assertEquals(1)
-	rekt.getCenterY().assertEquals(1)
-
-	rekt.resize(ZERO2, vec2(4, 4))
-
-	rekt.getCenterX().assertEquals(2)
-	rekt.getCenterY().assertEquals(2)
-
 public function rect.setRectFromLoc(location min, location max)
 	SetRectFromLoc(this, min, max)
 
@@ -125,4 +100,5 @@ public function rect.addWeatherEffect(integer effectID) returns weathereffect
 
 public function rect.setDoodadAnimationRect(integer doodadID, string animName, boolean animRandom)
 	SetDoodadAnimationRect(this, doodadID, animName, animRandom)
+
 

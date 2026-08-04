@@ -1,6 +1,5 @@
 package Dialog
 import NoWurst
-import Wurstunit
 
 /**
 	Dialogs are big dialog boxes at the center of the screen. The player can choose one button to click.
@@ -42,11 +41,3 @@ public function dialog.display(player whichPlayer, boolean flag)
 public function dialog.setMessage(string messageText)
 	DialogSetMessage(this, messageText)
 
-@Test
-function testDialog()
-	let dia = createDialog()
-	dia..addButton("text")
-	..addQuitButton(true, "test")
-	..display(Player(0), true)
-	..clear()
-	..destr()

@@ -1,7 +1,6 @@
 package ObjectIds
 import NoWurst
 import ErrorHandling
-import Wurstunit
 import AbilityIds
 import LinkedList
 import TypeCasting
@@ -76,28 +75,3 @@ public function commaList(vararg UnitTargetType tags) returns string
 		list.add(t.toObjectString())
 	return commaList(list)
 
-@Test function asListIntTest()
-	realToIndex(0.)
-	commaList(
-		AbilityIds.invulnerable,
-		AbilityIds.reveal
-	).assertEquals("Avul,Adta")
-
-@Test function asListStringTest()
-	commaList(
-		"self",
-		"structure"
-	).assertEquals("self,structure")
-
-@Test function test_idString2IdInteger()
-	fromRawCode("hfoo") .assertEquals('hfoo')
-	fromRawCode("abcd") .assertEquals('abcd')
-	fromRawCode("ABCD") .assertEquals('ABCD')
-
-@Test function test_idInteger2IdString()
-	toRawCode('hfoo') .assertEquals("hfoo")
-	toRawCode('abcd') .assertEquals("abcd")
-	toRawCode('ABCD') .assertEquals("ABCD")
-
-@Test function test_TargetTypes()
-	commaList(UnitTargetType.Self, UnitTargetType.Ground).assertEquals("self,ground")

@@ -1,0 +1,10 @@
+package MapBoundsTests
+import MapBounds
+import Wurstunit
+
+@Test function testMapBounds()
+	playableMapRect.getMinX().assertEquals(-1024)
+	playableMapRect.getMaxX().assertEquals(1024)
+	playableMapRect.getMinY().assertEquals(-1024)
+	playableMapRect.getMaxY().assertEquals(1024)
+	(playableMin + playableMax).toString().assertEquals(playableCenter.toString())
