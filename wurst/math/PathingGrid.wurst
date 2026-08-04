@@ -1,0 +1,24 @@
+package PathingGrid
+import NoWurst
+import Vectors
+
+/** Warcraft III pathing cells are 32 world units wide and high. */
+public constant real PATHING_CELL_SIZE = 32.
+
+/** Global pathing-grid coordinates. Cell bounds are inclusive at min and exclusive at max. */
+public tuple pathingCell(int x, int y)
+
+public function vec2.toPathingCell() returns pathingCell
+	return pathingCell((this.x / PATHING_CELL_SIZE).floor(), (this.y / PATHING_CELL_SIZE).floor())
+
+public function vec3.toPathingCell() returns pathingCell
+	return pathingCell((this.x / PATHING_CELL_SIZE).floor(), (this.y / PATHING_CELL_SIZE).floor())
+
+public function pathingCell.min() returns vec2
+	return vec2(this.x * PATHING_CELL_SIZE, this.y * PATHING_CELL_SIZE)
+
+public function pathingCell.max() returns vec2
+	return vec2((this.x + 1) * PATHING_CELL_SIZE, (this.y + 1) * PATHING_CELL_SIZE)
+
+public function pathingCell.center() returns vec2
+	return vec2((this.x + 0.5) * PATHING_CELL_SIZE, (this.y + 0.5) * PATHING_CELL_SIZE)

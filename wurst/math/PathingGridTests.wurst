@@ -1,0 +1,19 @@
+package PathingGridTests
+import PathingGrid
+
+@Test function vec2MapsToPathingCellsInConstantTime()
+	(vec2(0, 0).toPathingCell() == pathingCell(0, 0)).assertTrue()
+	(vec2(31.999, 31.999).toPathingCell() == pathingCell(0, 0)).assertTrue()
+	(vec2(32, 32).toPathingCell() == pathingCell(1, 1)).assertTrue()
+	(vec2(-0.001, -0.001).toPathingCell() == pathingCell(-1, -1)).assertTrue()
+	(vec2(-32, -32).toPathingCell() == pathingCell(-1, -1)).assertTrue()
+
+@Test function vec3MapsToSamePathingCellRegardlessOfHeight()
+	(vec3(95, -33, -500).toPathingCell() == pathingCell(2, -2)).assertTrue()
+	(vec3(95, -33, 9000).toPathingCell() == pathingCell(2, -2)).assertTrue()
+
+@Test function pathingCellReportsWorldBoundsAndCenter()
+	let cell = pathingCell(-2, 3)
+	cell.min().assertEquals(vec2(-64, 96))
+	cell.max().assertEquals(vec2(-32, 128))
+	cell.center().assertEquals(vec2(-48, 112))

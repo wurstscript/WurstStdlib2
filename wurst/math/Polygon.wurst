@@ -1,0 +1,414 @@
+package Polygon
+import NoWurst
+import ArrayList
+import Vectors
+import Rect
+import ErrorHandling
+import Maths
+import Lightning
+import ClosureTimers
+import Colors
+import PathingGrid
+import ShardedIntStorage
+
+public enum PolygonPointRelation
+	OUTSIDE
+	BOUNDARY
+	INSIDE
+
+/** Coverage of one cached pathing-grid cell, not the relation of one point. */
+public enum PolygonCellCoverage
+	OUTSIDE
+	MIXED
+	INSIDE
+
+/**
+	An immutable closed 2D path after seal(). Polygon owns its copied vertex
+	storage and cached bounds rect. Call destroy when finished: it releases both,
+	and invalidates every rect previously borrowed from bounds().
+*/
+public class Polygon
+	private ArrayList<vec2> vertices
+	private rect boundaryRect = null
+	private bool sealed = false
+	private pathingCell gridMinCell
+	private int gridWidth = 0
+	private int gridHeight = 0
+	private int gridCellBase = -1
+	private int gridBandOffsetBase = -1
+	private int gridCandidateBase = -1
+	private int gridStorageStart = -1
+	private int gridStorageSize = 0
+
+	/** Builder form. expectedVertexCount is a capacity hint. Call seal() before querying. */
+	construct(int expectedVertexCount)
+		vertices = new ArrayList<vec2>(expectedVertexCount)
+
+	/** Convenience form. Copies the supplied vertices and seals immediately. */
+	construct(vararg vec2 initialVertices)
+		vertices = new ArrayList<vec2>()
+		for vertex in initialVertices
+			vertices.add(vertex)
+		seal()
+
+	/** Appends a copied vertex before seal(). Adding after seal() is a programmer error. */
+	function addVertex(vec2 vertex) returns thistype
+		if sealed
+			error("Polygon: cannot add vertices after seal")
+			return this
+		vertices.add(vertex)
+		return this
+
+	/**
+		Finalizes immutable query state and creates Polygon's owned bounds rect.
+		Repeated calls preserve the same rect handle. Polygon removes that rect
+		when it is destroyed; callers must not remove its borrowed bounds().
+	*/
+	function seal() returns thistype
+		if sealed
+			return this
+		if vertices.size() == 0
+			boundaryRect = Rect(0, 0, 0, 0)
+		else
+			let firstVertex = vertices.get(0)
+			var minX = firstVertex.x
+			var minY = firstVertex.y
+			var maxX = minX
+			var maxY = minY
+			for i = 1 to vertices.size() - 1
+				let vertex = vertices.get(i)
+				minX = min(minX, vertex.x)
+				minY = min(minY, vertex.y)
+				maxX = max(maxX, vertex.x)
+				maxY = max(maxY, vertex.y)
+			boundaryRect = Rect(minX, minY, maxX, maxY)
+		sealed = true
+		buildGrid()
+		return this
+
+	private function requireSealed() returns bool
+		if not sealed
+			error("Polygon: must be sealed before querying")
+			return false
+		return true
+
+	function isSealed() returns bool
+		return sealed
+
+	function vertexCount() returns int
+		if not requireSealed()
+			return 0
+		return vertices.size()
+
+	function vertexAt(int index) returns vec2
+		if not requireSealed()
+			return ZERO2
+		if index < 0 or index >= vertices.size()
+			error("Polygon: vertex index out of bounds")
+			return ZERO2
+		return vertices.get(index)
+
+	/**
+		Returns Polygon's borrowed cached rect. Polygon retains ownership: callers
+		must not remove or destroy it, and must not use it after Polygon is
+		destroyed.
+	*/
+	function bounds() returns rect
+		if not requireSealed()
+			return null
+		return boundaryRect
+
+	function boundsCenter() returns vec2
+		if not requireSealed()
+			return ZERO2
+		return boundaryRect.getCenter()
+
+	private function isOnSegment(vec2 point, vec2 start, vec2 finish, real cross) returns bool
+		if cross != 0
+			return false
+		return (point.x - start.x) * (point.x - finish.x) <= 0 and
+			(point.y - start.y) * (point.y - finish.y) <= 0
+
+	/** Exact division-free O(n) reference implementation and grid fallback. */
+	function classifyLinear(vec2 point) returns PolygonPointRelation
+		if not requireSealed()
+			return PolygonPointRelation.OUTSIDE
+		if vertices.size() == 0
+			return PolygonPointRelation.OUTSIDE
+		if point.x < boundaryRect.getMinX() or point.x > boundaryRect.getMaxX() or
+			point.y < boundaryRect.getMinY() or point.y > boundaryRect.getMaxY()
+			return PolygonPointRelation.OUTSIDE
+		var inside = false
+		var previous = vertices.get(vertices.size() - 1)
+		for i = 0 to vertices.size() - 1
+			let current = vertices.get(i)
+			let deltaY = current.y - previous.y
+			let cross = (point.x - previous.x) * deltaY -
+				(point.y - previous.y) * (current.x - previous.x)
+			if isOnSegment(point, previous, current, cross)
+				return PolygonPointRelation.BOUNDARY
+			if (previous.y > point.y) != (current.y > point.y)
+				if (deltaY > 0 and cross < 0) or (deltaY < 0 and cross > 0)
+					inside = not inside
+			previous = current
+		return inside ? PolygonPointRelation.INSIDE : PolygonPointRelation.OUTSIDE
+
+	private function edgeIntersectsCell(vec2 start, vec2 finish, real minX, real minY, real maxX, real maxY) returns bool
+		if max(start.x, finish.x) < minX or min(start.x, finish.x) > maxX or
+			max(start.y, finish.y) < minY or min(start.y, finish.y) > maxY
+			return false
+		if start.x >= minX and start.x <= maxX and start.y >= minY and start.y <= maxY
+			return true
+		if finish.x >= minX and finish.x <= maxX and finish.y >= minY and finish.y <= maxY
+			return true
+		let bottomLeft = vec2(minX, minY)
+		let bottomRight = vec2(maxX, minY)
+		let topRight = vec2(maxX, maxY)
+		let topLeft = vec2(minX, maxY)
+		return segmentsIntersect(start, finish, bottomLeft, bottomRight) or
+			segmentsIntersect(start, finish, bottomRight, topRight) or
+			segmentsIntersect(start, finish, topRight, topLeft) or
+			segmentsIntersect(start, finish, topLeft, bottomLeft)
+
+	private function segmentsIntersect(vec2 a, vec2 b, vec2 c, vec2 d) returns bool
+		let abC = (c.x - a.x) * (b.y - a.y) - (c.y - a.y) * (b.x - a.x)
+		let abD = (d.x - a.x) * (b.y - a.y) - (d.y - a.y) * (b.x - a.x)
+		let cdA = (a.x - c.x) * (d.y - c.y) - (a.y - c.y) * (d.x - c.x)
+		let cdB = (b.x - c.x) * (d.y - c.y) - (b.y - c.y) * (d.x - c.x)
+		if abC == 0 and isOnSegment(c, a, b, abC)
+			return true
+		if abD == 0 and isOnSegment(d, a, b, abD)
+			return true
+		if cdA == 0 and isOnSegment(a, c, d, cdA)
+			return true
+		if cdB == 0 and isOnSegment(b, c, d, cdB)
+			return true
+		return (abC > 0) != (abD > 0) and (cdA > 0) != (cdB > 0)
+
+	private function edgeOverlapsBand(vec2 start, vec2 finish, real bandMinY, real bandMaxY) returns bool
+		return max(start.y, finish.y) >= bandMinY and min(start.y, finish.y) <= bandMaxY
+
+	private function classifyCandidates(vec2 point, int candidateStart, int candidateEnd) returns PolygonPointRelation
+		var inside = false
+		let count = vertices.size()
+		for candidate = candidateStart to candidateEnd - 1
+			let currentIndex = ShardedIntStorage.get(gridCandidateBase + candidate)
+			let previousIndex = currentIndex == 0 ? count - 1 : currentIndex - 1
+			let previous = vertices.get(previousIndex)
+			let current = vertices.get(currentIndex)
+			let deltaY = current.y - previous.y
+			let cross = (point.x - previous.x) * deltaY -
+				(point.y - previous.y) * (current.x - previous.x)
+			if isOnSegment(point, previous, current, cross)
+				return PolygonPointRelation.BOUNDARY
+			if (previous.y > point.y) != (current.y > point.y)
+				if (deltaY > 0 and cross < 0) or (deltaY < 0 and cross > 0)
+					inside = not inside
+		return inside ? PolygonPointRelation.INSIDE : PolygonPointRelation.OUTSIDE
+
+	private function localCellIndex(pathingCell cell) returns int
+		let localX = cell.x - gridMinCell.x
+		let localY = cell.y - gridMinCell.y
+		if localX < 0 or localX >= gridWidth or localY < 0 or localY >= gridHeight
+			return -1
+		return localY * gridWidth + localX
+
+	private function coverageAtIndex(int cellIndex) returns PolygonCellCoverage
+		if cellIndex < 0
+			return PolygonCellCoverage.OUTSIDE
+		let stored = ShardedIntStorage.get(gridCellBase + cellIndex)
+		if stored == 2
+			return PolygonCellCoverage.INSIDE
+		if stored == 1
+			return PolygonCellCoverage.MIXED
+		return PolygonCellCoverage.OUTSIDE
+
+	private function buildGrid()
+		if vertices.size() == 0
+			return
+		let capacity = ShardedIntStorage.capacity()
+		let estimatedWidth = (boundaryRect.getMaxX() - boundaryRect.getMinX()) / PATHING_CELL_SIZE + 3
+		let estimatedHeight = (boundaryRect.getMaxY() - boundaryRect.getMinY()) / PATHING_CELL_SIZE + 3
+		if estimatedWidth > capacity or estimatedHeight > capacity
+			return
+		let minCell = vec2(boundaryRect.getMinX(), boundaryRect.getMinY()).toPathingCell()
+		let maxCell = vec2(boundaryRect.getMaxX(), boundaryRect.getMaxY()).toPathingCell()
+		gridMinCell = pathingCell(minCell.x - 1, minCell.y - 1)
+		gridWidth = maxCell.x - minCell.x + 3
+		gridHeight = maxCell.y - minCell.y + 3
+		if gridWidth <= 0 or gridHeight <= 0 or gridWidth > capacity div gridHeight
+			return
+		let cellCount = gridWidth * gridHeight
+		if gridHeight + 1 > capacity - cellCount
+			return
+		let fixedStorageSize = cellCount + gridHeight + 1
+
+		var candidateCount = 0
+		for band = 0 to gridHeight - 1
+			let bandMinY = (gridMinCell.y + band) * PATHING_CELL_SIZE
+			let bandMaxY = bandMinY + PATHING_CELL_SIZE
+			var previous = vertices.get(vertices.size() - 1)
+			for edge = 0 to vertices.size() - 1
+				let current = vertices.get(edge)
+				if edgeOverlapsBand(previous, current, bandMinY, bandMaxY)
+					if candidateCount >= capacity - fixedStorageSize
+						return
+					candidateCount++
+				previous = current
+
+		gridStorageSize = fixedStorageSize + candidateCount
+		gridStorageStart = ShardedIntStorage.tryAllocate(gridStorageSize)
+		if gridStorageStart < 0
+			gridStorageSize = 0
+			return
+		gridCellBase = gridStorageStart
+		gridBandOffsetBase = gridCellBase + cellCount
+		gridCandidateBase = gridBandOffsetBase + gridHeight + 1
+
+		var candidateCursor = 0
+		for band = 0 to gridHeight - 1
+			ShardedIntStorage.set(gridBandOffsetBase + band, candidateCursor)
+			let bandMinY = (gridMinCell.y + band) * PATHING_CELL_SIZE
+			let bandMaxY = bandMinY + PATHING_CELL_SIZE
+			var previous = vertices.get(vertices.size() - 1)
+			for edge = 0 to vertices.size() - 1
+				let current = vertices.get(edge)
+				if edgeOverlapsBand(previous, current, bandMinY, bandMaxY)
+					ShardedIntStorage.set(gridCandidateBase + candidateCursor, edge)
+					candidateCursor++
+				previous = current
+		ShardedIntStorage.set(gridBandOffsetBase + gridHeight, candidateCursor)
+
+		for localY = 0 to gridHeight - 1
+			let candidateStart = ShardedIntStorage.get(gridBandOffsetBase + localY)
+			let candidateEnd = ShardedIntStorage.get(gridBandOffsetBase + localY + 1)
+			let minY = (gridMinCell.y + localY) * PATHING_CELL_SIZE
+			let maxY = minY + PATHING_CELL_SIZE
+			for localX = 0 to gridWidth - 1
+				let minX = (gridMinCell.x + localX) * PATHING_CELL_SIZE
+				let maxX = minX + PATHING_CELL_SIZE
+				var mixed = false
+				for candidate = candidateStart to candidateEnd - 1
+					let currentIndex = ShardedIntStorage.get(gridCandidateBase + candidate)
+					let previousIndex = currentIndex == 0 ? vertices.size() - 1 : currentIndex - 1
+					if edgeIntersectsCell(vertices.get(previousIndex), vertices.get(currentIndex), minX, minY, maxX, maxY)
+						mixed = true
+						break
+				let cellIndex = localY * gridWidth + localX
+				if mixed
+					ShardedIntStorage.set(gridCellBase + cellIndex, 1)
+				else
+					let relation = classifyCandidates(vec2((minX + maxX) * 0.5, (minY + maxY) * 0.5), candidateStart, candidateEnd)
+					ShardedIntStorage.set(gridCellBase + cellIndex, relation == PolygonPointRelation.INSIDE ? 2 : 0)
+
+	function cellCoverage(vec2 point) returns PolygonCellCoverage
+		if not requireSealed() or vertices.size() == 0
+			return PolygonCellCoverage.OUTSIDE
+		if gridStorageStart < 0
+			let cell = point.toPathingCell()
+			let cellMin = cell.min()
+			let cellMax = cell.max()
+			if cellMax.x < boundaryRect.getMinX() or cellMin.x > boundaryRect.getMaxX() or
+				cellMax.y < boundaryRect.getMinY() or cellMin.y > boundaryRect.getMaxY()
+				return PolygonCellCoverage.OUTSIDE
+			return PolygonCellCoverage.MIXED
+		return coverageAtIndex(localCellIndex(point.toPathingCell()))
+
+	function cellCoverage(vec3 point) returns PolygonCellCoverage
+		return cellCoverage(point.toVec2())
+
+	/** Number of exact edge candidates classify() examines for this point. */
+	function cellCandidateEdgeCount(vec2 point) returns int
+		if cellCoverage(point) != PolygonCellCoverage.MIXED
+			return 0
+		if gridStorageStart < 0
+			return vertices.size()
+		let localY = point.toPathingCell().y - gridMinCell.y
+		return ShardedIntStorage.get(gridBandOffsetBase + localY + 1) - ShardedIntStorage.get(gridBandOffsetBase + localY)
+
+	function classify(vec2 point) returns PolygonPointRelation
+		if not requireSealed() or vertices.size() == 0
+			return PolygonPointRelation.OUTSIDE
+		if gridStorageStart < 0
+			return classifyLinear(point)
+		if point.x < boundaryRect.getMinX() or point.x > boundaryRect.getMaxX() or
+			point.y < boundaryRect.getMinY() or point.y > boundaryRect.getMaxY()
+			return PolygonPointRelation.OUTSIDE
+		let cell = point.toPathingCell()
+		let coverage = coverageAtIndex(localCellIndex(cell))
+		if coverage == PolygonCellCoverage.INSIDE
+			return PolygonPointRelation.INSIDE
+		if coverage == PolygonCellCoverage.OUTSIDE
+			return PolygonPointRelation.OUTSIDE
+		let localY = cell.y - gridMinCell.y
+		return classifyCandidates(point,
+			ShardedIntStorage.get(gridBandOffsetBase + localY),
+			ShardedIntStorage.get(gridBandOffsetBase + localY + 1))
+
+	function contains(vec2 point) returns bool
+		return classify(point) != PolygonPointRelation.OUTSIDE
+
+	function containsStrict(vec2 point) returns bool
+		return classify(point) == PolygonPointRelation.INSIDE
+
+	/**
+		Draws every edge in standard green. Ownership transfers to the caller:
+		destroy every returned lightning handle, then destroy the returned list.
+	*/
+	function debugRender() returns ArrayList<lightning>
+		return this.debugRender(PLAYER_COLOR_GREEN.toColor())
+
+	/**
+		Draws every edge in the requested color. Ownership transfers to the caller:
+		destroy every returned lightning handle, then destroy the returned list.
+	*/
+	function debugRender(color col) returns ArrayList<lightning>
+		let result = new ArrayList<lightning>(max(1, vertices.size()))
+		if not requireSealed()
+			return result
+		if vertices.size() < 2
+			return result
+		var previous = vertices.get(vertices.size() - 1)
+		for i = 0 to vertices.size() - 1
+			let current = vertices.get(i)
+			let border = addLightning(LIGHTNING_MAGIC_LEASH, false, previous, current)
+			border.setColor(col)
+			result.add(border)
+			previous = current
+		return result
+
+	/**
+		Draws in standard green. Polygon retains ownership of all created lightning
+		handles and its internal list, and destroys both after duration. duration
+		must be positive.
+	*/
+	function debugRenderTimed(real duration)
+		this.debugRenderTimed(duration, PLAYER_COLOR_GREEN.toColor())
+
+	/**
+		Draws in the requested color. Polygon retains ownership of all created
+		lightning handles and its internal list, and destroys both after duration.
+		duration must be positive.
+	*/
+	function debugRenderTimed(real duration, color col)
+		if duration <= 0
+			error("Polygon: timed debug duration must be positive")
+			return
+		if not requireSealed()
+			return
+		let borders = this.debugRender(col)
+		doAfter(duration) ->
+			for i = 0 to borders.size() - 1
+				borders.get(i).destr()
+			destroy borders
+
+	ondestroy
+		if gridStorageStart >= 0
+			ShardedIntStorage.release(gridStorageStart, gridStorageSize)
+		gridStorageStart = -1
+		gridStorageSize = 0
+		if boundaryRect != null
+			boundaryRect.remove()
+			boundaryRect = null
+		destroy vertices
+		vertices = null
