@@ -266,7 +266,7 @@ function registerEventId(eventid evnt) returns int
 	else if evnt.isPlayerunitEvent()
 		registerPlayerUnitEvent(ConvertPlayerUnitEvent(eventId), function EventListener.generalEventCallback)
 	else if evnt != EVENT_PLAYER_LEAVE and evnt != EVENT_PLAYER_CHAT_FILTER and not evnt.isKeyboardEvent() and not evnt.isMouseEvent()
-		error("registering handleid: " + eventId.toString() + " non-playerunitevent. Except EVENT_PLAYER_LEAVE these are not supported right now.")
+		error("registering handleid: " + eventId + " non-playerunitevent. Except EVENT_PLAYER_LEAVE these are not supported right now.")
 	if evnt.isMouseEvent() and not EventListener.useMouseEvents
 		EventListener.useMouseEvents = true
 		for i = 0 to bj_MAX_PLAYERS - 1
@@ -290,7 +290,7 @@ public function unregisterEventsForUnit(unit u)
 public function unregisterEvents(int id)
 	if id > 0
 		if EventListener.unitListenersFirsts[id] != null
-			Log.trace("unregister unit has listeners. startid: " + id.toString())
+			Log.trace("unregister unit has listeners. startid: " + id)
 			var listener = EventListener.unitListenersFirsts[id]
 			EventListener.unitListenersFirsts[id] = null
 			while listener != null
@@ -321,3 +321,4 @@ init
 			..registerPlayerChatEvent(players[i], "", false)
 
 		registerPlayerUnitEvent(EVENT_PLAYER_UNIT_SPELL_EFFECT, null, () -> EventListener.onSpellEffect(), null)
+

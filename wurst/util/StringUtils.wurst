@@ -178,7 +178,7 @@ public function string.isValidDescription() returns bool
 	var isValid = true
 	if this.length() > WC3LIMIT_OBJECTS_DESCRIPTION_LENGTH
 		isValid = false
-		error("String <"+this+"> is too long. Length: "+this.length().toString())
+		error("String <"+this+"> is too long. Length: "+this.length())
 	return isValid
 
 /** Replaces all occurences of any character from given charlist by a given replacement string.*/
@@ -464,3 +464,4 @@ function c2sInit()
 	c2s['}'] = "}"
 	c2s['~'] = "~"
 	c2s[127] = ""
+

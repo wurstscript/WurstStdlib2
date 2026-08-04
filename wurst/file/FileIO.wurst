@@ -85,11 +85,11 @@ public class File
 			PreloadGenStart()
 
 			if buffer.getChunkCount() >= CHUNKS_PER_FILE
-				error("FileIO(" + filename + ") ERROR: String's chunk count exceeds the limit (" + CHUNKS_PER_FILE.toString() + ").|r")
+				error("FileIO(" + filename + ") ERROR: String's chunk count exceeds the limit (" + CHUNKS_PER_FILE + ").|r")
 
 			for i = 0 to buffer.getChunkCount() - 1
 				let chunk = buffer.getChunk(i)
-				Preload("\" )\ncall BlzSetAbilityTooltip('" + FILE_IO_ABIL_ID_STR + "', \"" + chunk + "\", " + i.toString() + ")\n//")
+				Preload("\" )\ncall BlzSetAbilityTooltip('" + FILE_IO_ABIL_ID_STR + "', \"" + chunk + "\", " + i + ")\n//")
 
 			Preload("\" )\nendfunction\nfunction a takes nothing returns nothing\n //")
 			PreloadGenEnd(this.filename)
@@ -131,3 +131,4 @@ init
 
 	for i = 1 to CHUNKS_PER_FILE
 		dummy.setTooltipNormal(i, " ")
+

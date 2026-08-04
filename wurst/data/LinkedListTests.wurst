@@ -151,7 +151,7 @@ function testGenerics()
 	list.addAt(7, 4)
 	string elems = ""
 	for elem in list
-		elems += elem.toString()
+		elems += elem
 	elems.assertEquals("1234756")
 
 @Test function testRemoveWhen()
@@ -395,3 +395,4 @@ function testGenerics()
 	let i = list2.backiterator()
 	while bi.hasNext() and i.hasNext()
 		bi.next().assertEquals(i.next())
+

@@ -70,7 +70,7 @@ public abstract class Serializable
         if name.length() > MAX_NAME_LENGTH
             error("name " + name + " too long.")
 
-        let prop = name + "=" + value.toString()
+        let prop = name + "=" + value
         var propLen = prop.length().toString()
         while propLen.length() < LEN_LENGTH
             propLen = "0" + propLen
@@ -82,7 +82,7 @@ public abstract class Serializable
         if name.length() > MAX_NAME_LENGTH
             error("name " + name + " too long.")
 
-        let prop = name + "=" + value.toString()
+        let prop = name + "=" + value
         var propLen = prop.length().toString()
         while propLen.length() < LEN_LENGTH
             propLen = "0" + propLen
@@ -179,3 +179,4 @@ public abstract class Serializable
     abstract function serializeProperties()
 
     abstract function deserializeProperties()
+

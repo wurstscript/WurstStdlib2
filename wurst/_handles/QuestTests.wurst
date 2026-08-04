@@ -18,7 +18,7 @@ function QuestState.toString() returns string
 
 function QuestState.assertEquals(QuestState want)
     if this != want
-        testFail("Expected <" + want.toString() + ">, Actual <" + this.toString() + ">")
+        testFail("Expected <" + want + ">, Actual <" + this + ">")
 
 @Test function testSetState()
     let q = new Quest(false /* required */)
@@ -44,3 +44,4 @@ function QuestState.assertEquals(QuestState want)
     q.setDescription("")
     q.setIcon("")
     q.setTitle("")
+

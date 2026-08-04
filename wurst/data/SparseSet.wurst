@@ -81,7 +81,7 @@ public class SparseSet<T:>
     /** Removes the element at a dense index without preserving order. */
     function removeAt(int index) returns T
         if index < 0 or index >= dense.size()
-            error("SparseSet: Index out of bounds: " + index.toString())
+            error("SparseSet: Index out of bounds: " + index)
 
         let lastIndex = dense.size() - 1
         let removed = dense.get(index)
@@ -153,3 +153,4 @@ public class UnitSparseSetKey implements SparseSetKey<unit>
 
 /** Reusable key provider for SparseSet<unit>. */
 public constant SparseSetKey<unit> UNIT_SPARSE_SET_KEY = new UnitSparseSetKey()
+

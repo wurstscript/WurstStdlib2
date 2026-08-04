@@ -101,11 +101,11 @@ function createGroups(int number)
 				push(CreateGroup())
 
 	if numTotal >= GROUP_NUMBER_LIMIT and not shownMaxError
-		Log.warn("Maximum number of GroupUtils groups (" + GROUP_NUMBER_LIMIT.toString() + ") created. "
+		Log.warn("Maximum number of GroupUtils groups (" + GROUP_NUMBER_LIMIT + ") created. "
 			+ "All newly created groups will be non-recyclable.")
 		shownMaxError = true
 
-@compiletime function initialize()
+function initialize()
 	createGroups(START_CREATE_GROUPS)
 
 init

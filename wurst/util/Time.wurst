@@ -212,19 +212,19 @@ function duration.displayMagnitude(string hrs, string mins, string secs, string 
 
 	var result = ""
 	if hours > 0
-		result += hours.toString()
+		result += hours
 		result += hrs
 
 	if minutes > 0 or result.length() > 0
-		result += minutes.toString()
+		result += minutes
 		result += mins
 
 	if seconds > 0 or result.length() > 0
-		result += seconds.toString()
+		result += seconds
 		result += secs
 
 	if result.length() == 0 and total > 0.
-		return (total * 1000.0).toInt().toString() + ms
+		return (total * 1000.0).toInt() + ms
 
 	if result.length() == 0
 		return "0"
@@ -287,3 +287,4 @@ public function durationToIndex(duration dur) returns int
 
 public function durationFromIndex(int index) returns duration
 	return duration(realFromIndex(index))
+

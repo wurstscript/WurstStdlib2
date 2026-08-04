@@ -315,14 +315,14 @@ public class ArrayList<T:>
     /** Returns the element at the specified index (O(1)) */
     function get(int index) returns T
         if index < 0 or index >= size
-            error("ArrayList: Index out of bounds: " + index.toString())
+            error("ArrayList: Index out of bounds: " + index)
 
         return store[startIndex + index]
 
     /** Sets the element at the specified index (O(1)) */
     function set(int index, T elem)
         if index < 0 or index >= size
-            error("ArrayList: Index out of bounds: " + index.toString())
+            error("ArrayList: Index out of bounds: " + index)
         store[startIndex + index] = elem
 
     /** Reads the element at the given index via the [] operator (O(1)).
@@ -351,7 +351,7 @@ public class ArrayList<T:>
         remaining elements left to preserve order (O(n)) */
     function removeAtOrdered(int index) returns T
         if index < 0 or index >= size
-            error("ArrayList: Index out of bounds: " + index.toString())
+            error("ArrayList: Index out of bounds: " + index)
 
         let elem = store[startIndex + index]
 
@@ -373,7 +373,7 @@ public class ArrayList<T:>
     /** Removes the element at the given index by swapping with last element (O(1) - DOES NOT PRESERVE ORDER!) */
     function removeAtUnordered(int index) returns T
         if index < 0 or index >= size
-            error("ArrayList: Index out of bounds: " + index.toString())
+            error("ArrayList: Index out of bounds: " + index)
 
         let elem = store[startIndex + index]
 
@@ -510,7 +510,7 @@ public class ArrayList<T:>
     /** Adds the given element at the given index - WARNING: O(n) operation! */
     function addAt(T elem, int index)
         if index < 0 or index > size
-            error("ArrayList: Index out of bounds: " + index.toString())
+            error("ArrayList: Index out of bounds: " + index)
 
         if size >= capacity
             grow()
@@ -773,3 +773,4 @@ public function ArrayList<string>.joinBy(string separator) returns string
 /** Joins elements from a string list into one string */
 public function ArrayList<string>.join() returns string
     return this.joinBy("")
+

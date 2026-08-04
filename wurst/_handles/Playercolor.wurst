@@ -1,7 +1,6 @@
 package Playercolor
 import NoWurst
 import Force
-import Player
 
 public constant PLAYER_COLOR_BLACK_AGGRESSIVE = ConvertPlayerColor(24)
 public constant PLAYER_COLOR_UNKNOWN1 = ConvertPlayerColor(25)
@@ -59,15 +58,16 @@ public function playercolor.toInt() returns int
 /** Returns the player that had this color *at the start of the game*. Does not
 	respect SetPlayerColor. */
 public function playercolor.getPlayer() returns player
-	return players[this.toInt()]
+	return Player(this.toInt())
 
 /** Returns the players who are currently using this player color. Respects calls
 	to SetPlayerColor */
 public function playercolor.getPlayers() returns force
 	let matchingPlayers = CreateForce()
 	for i = 0 to bj_MAX_PLAYER_SLOTS - 1
-		if players[i].getColor() == this
-			matchingPlayers.addPlayer(players[i])
+		let currentPlayer = Player(i)
+		if currentPlayer.getColor() == this
+			matchingPlayers.addPlayer(currentPlayer)
 	return matchingPlayers
 
 

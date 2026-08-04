@@ -195,8 +195,8 @@ function benchmarkPoint(int index) returns vec2
 			mixedQueries++
 		totalCandidates += candidates
 	totalCandidates.assertLessThan(linearEdges)
-	print("Polygon 10000-lookups: mixed=" + mixedQueries.toString() +
-		", linearEdges=" + linearEdges.toString() + ", candidateEdges=" + totalCandidates.toString())
+	print("Polygon 10000-lookups: mixed=" + mixedQueries +
+		", linearEdges=" + linearEdges + ", candidateEdges=" + totalCandidates)
 	destroy polygon
 
 @Test function oversizedGridFallsBackToExactLinearClassification()
@@ -297,3 +297,4 @@ public function verifyLuaGuardPathsReturnSafelyIngame()
 	borders.size().assertEquals(0)
 	destroy borders
 	destroy unsealedPolygon
+

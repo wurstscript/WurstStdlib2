@@ -76,7 +76,7 @@ constant BLZ_FRAMENAME_MAXLENGTH    = 560
 /** Returns whether the frame name length is valid or not */
 function verifyFrameNameLength(string name) returns boolean
 	if name.length() > BLZ_FRAMENAME_MAXLENGTH
-		error("Trying to address frame with exceeding maximum frame name length (" + BLZ_FRAMENAME_MAXLENGTH.toString() + ") for: " + name)
+		error("Trying to address frame with exceeding maximum frame name length (" + BLZ_FRAMENAME_MAXLENGTH + ") for: " + name)
 		return false
 	return true
 
@@ -178,12 +178,12 @@ public function createGlueTextButton(string name, framehandle owner, string inhe
 /** Returns the named command button frame.
 	In WC3 1.32+, moving command buttons through origin frames can glitch, so the named frames are usually safer. */
 public function getCommandButton(int index) returns framehandle
-	return getFrame("CommandButton_" + index.toString(), 0)
+	return getFrame("CommandButton_" + index, 0)
 
 /** Returns the named inventory button frame.
 	In WC3 1.32+, moving item buttons through origin frames can glitch, so the named frames are usually safer. */
 public function getInventoryButton(int index) returns framehandle
-	return getFrame("InventoryButton_" + index.toString(), 0)
+	return getFrame("InventoryButton_" + index, 0)
 
 /** Destroys a frame.
 	Unsafe for most multiplayer UI because destroying frames can desync or destabilize frame state after save/load.
@@ -674,3 +674,4 @@ public function framehandle.getChildrenCount() returns int
 	The index must be in the range 0 <= index < getChildrenCount(). Out-of-bounds access can crash. */
 public function framehandle.getChild(int index) returns framehandle
 	return BlzFrameGetChild(this, index)
+

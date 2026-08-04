@@ -270,17 +270,17 @@ public class W3QDefinition
 		def.setLevelsDataString("gub1", levels, 0, lc)
 
 	function setEffectType(int effectIndex, UpgradeEffectType effectType)
-		def.setLvlDataString(EFFECT_TAG_PREFIX + effectIndex.toString(), 0, 0,
+		def.setLvlDataString(EFFECT_TAG_PREFIX + effectIndex, 0, 0,
 			effectType.toIdentifierString())
 
 	function setEffectBase(int effectIndex, real value)
-		def.setLvlDataUnreal(BASE_TAG_PREFIX + effectIndex.toString(), 0, 0, value)
+		def.setLvlDataUnreal(BASE_TAG_PREFIX + effectIndex, 0, 0, value)
 
 	function setEffectIncrement(int effectIndex, real value)
-		def.setLvlDataUnreal(INCREMENT_TAG_PREFIX + effectIndex.toString(), 0, 0, value)
+		def.setLvlDataUnreal(INCREMENT_TAG_PREFIX + effectIndex, 0, 0, value)
 
 	function setEffectCode(int effectIndex, string value)
-		def.setLvlDataString(CODE_TAG_PREFIX + effectIndex.toString(), 0, 0, value)
+		def.setLvlDataString(CODE_TAG_PREFIX + effectIndex, 0, 0, value)
 
 	function setEffect(int effectIndex, UpgradeEffectType effectType, real base)
 		setEffectType(effectIndex, effectType)
@@ -526,4 +526,5 @@ public class UpgradeDefinition extends W3QDefinition
 		super.setEffectType(effectIndex, UpgradeEffectType.UnitAvailabilityChange)
 		super.setEffectCode(effectIndex, unitId)
 		super.setEffectBase(effectIndex, available ? -1 : 1)
+
 

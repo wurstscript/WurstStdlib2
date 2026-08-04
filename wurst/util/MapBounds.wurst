@@ -1,10 +1,9 @@
 package MapBounds
 import NoWurst
+import Annotations
 import Vectors
 import Region
 import Rect
-import MagicFunctions
-import Annotations
 
 public rect playableMapRect
 public region playableMapRegion
@@ -42,11 +41,20 @@ public function vec3.inBounds() returns boolean
 public function randomPointOnMap() returns vec2
 	return vec2(GetRandomReal(playableMin.x, playableMax.x), GetRandomReal(playableMin.y, playableMax.y))
 
-/** Must be at init because globals get initialized before map bounds */
-@compiletime function initMapBounds()
-	playableMapRect   = compiletime ? Rect(-1024, -1024, 1024, 1024) : GetPlayableMapRect()
+/** Values used while compiling tests and compiletime code. */
+@compiletime function initMapBoundsValues()
+	playableMin = vec2(-1024, -1024)
+	playableMax = vec2(1024, 1024)
+	boundMin = vec2(-1536, -1536)
+	boundMax = vec2(1536, 1536)
+	playableCenter = (playableMin + playableMax) * .5
+	boundCenter = (boundMin + boundMax) * .5
+
+/** Must be at init because globals get initialized before map bounds. */
+function initMapBounds()
+	playableMapRect   = GetPlayableMapRect()
 	playableMapRegion = CreateRegion()..addRect(playableMapRect)
-	boundRect = compiletime ? Rect(-1536, -1536, 1536, 1536) : GetWorldBounds()
+	boundRect = GetWorldBounds()
 	boundRegion	= CreateRegion()..addRect(boundRect)
 	playableMin	= vec2(playableMapRect.getMinX(), playableMapRect.getMinY())
 	playableMax	= vec2(playableMapRect.getMaxX(), playableMapRect.getMaxY())

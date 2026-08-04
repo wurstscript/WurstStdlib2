@@ -19,35 +19,35 @@ import Annotations
  */
 public function int.assertEquals(int expected)
 	if this != expected
-		testFail("Expected <" + expected.toString() + ">, Actual <" + this.toString() + ">")
+		testFail("Expected <" + expected + ">, Actual <" + this + ">")
 
 /**
  * Asserts that the passed int is greater than the parameter. If they are not, an error is thrown with a message.
  */
 public function int.assertGreaterThan(int less)
 	if this <= less
-		testFail("Expected <" + this.toString() + "> to be greater than <" + less.toString() + ">")
+		testFail("Expected <" + this + "> to be greater than <" + less + ">")
 
 /**
  * Asserts that the passed int is greater than the parameter. If they are not, an error is thrown with a message.
  */
 public function int.assertGreaterThanOrEqual(int less)
 	if this < less
-		testFail("Expected <" + this.toString() + "> to be greater than or equal to <" + less.toString() + ">")
+		testFail("Expected <" + this + "> to be greater than or equal to <" + less + ">")
 
 /**
  * Asserts that the passed int is greater than the parameter. If they are not, an error is thrown with a message.
  */
 public function int.assertLessThan(int greater)
 	if this >= greater
-		testFail("Expected <" + this.toString() + "> to be less than <" + greater.toString() + ">")
+		testFail("Expected <" + this + "> to be less than <" + greater + ">")
 
 /**
  * Asserts that the passed int is greater than the parameter. If they are not, an error is thrown with a message.
  */
 public function int.assertLessThanOrEqual(int greater)
 	if this > greater
-		testFail("Expected <" + this.toString() + "> to be less than or equal to <" + greater.toString() + ">")
+		testFail("Expected <" + this + "> to be less than or equal to <" + greater + ">")
 
 /**
  * Asserts that two strings are equal. If they are not, an error is thrown with a message.
@@ -61,35 +61,35 @@ public function string.assertEquals(string expected)
  */
 public function real.assertEquals(real expected)
 	if this != expected
-		testFail("Expected <" + expected.toString() + ">, Actual <" + this.toString() + ">")
+		testFail("Expected <" + expected + ">, Actual <" + this + ">")
 
 /**
  * Asserts that the passed real is greater than the parameter. If they are not, an error is thrown with a message.
  */
 public function real.assertGreaterThan(real less)
 	if this <= less
-		testFail("Expected <" + this.toString() + "> to be greater than <" + less.toString() + ">")
+		testFail("Expected <" + this + "> to be greater than <" + less + ">")
 
 /**
  * Asserts that the passed real is greater than the parameter. If they are not, an error is thrown with a message.
  */
 public function real.assertGreaterThanOrEqual(real less)
 	if this < less
-		testFail("Expected <" + this.toString() + "> to be greater than or equal to <" + less.toString() + ">")
+		testFail("Expected <" + this + "> to be greater than or equal to <" + less + ">")
 
 /**
  * Asserts that the passed real is greater than the parameter. If they are not, an error is thrown with a message.
  */
 public function real.assertLessThan(real greater)
 	if this >= greater
-		testFail("Expected <" + this.toString() + "> to be less than <" + greater.toString() + ">")
+		testFail("Expected <" + this + "> to be less than <" + greater + ">")
 
 /**
  * Asserts that the passed real is greater than the parameter. If they are not, an error is thrown with a message.
  */
 public function real.assertLessThanOrEqual(real greater)
 	if this > greater
-		testFail("Expected <" + this.toString() + "> to be less than or equal to <" + greater.toString() + ">")
+		testFail("Expected <" + this + "> to be less than or equal to <" + greater + ">")
 
 /**
  * Asserts that two reals are equal to within a positive delta. If they are not, an error is thrown
@@ -97,14 +97,14 @@ public function real.assertLessThanOrEqual(real greater)
  */
 public function real.assertEquals(real expected, real delta)
 	if (this - expected).abs() > delta
-		testFail("Expected <" + expected.toString() + ">, Actual <" + this.toString() + " with delta " + delta.toString() + ">")
+		testFail("Expected <" + expected + ">, Actual <" + this + " with delta " + delta + ">")
 
 /**
  * Asserts that two booleans are equal. If they are not, an error is thrown with a message.
  */
 public function boolean.assertEquals(boolean expected)
 	if this != expected
-		testFail("Expected <" + expected.toString() + ">, Actual <" + this.toString() + ">")
+		testFail("Expected <" + expected + ">, Actual <" + this + ">")
 
 /** Asserts that this booleans is true. If it is not, an error is thrown with a message. */
 public function boolean.assertTrue()
@@ -128,3 +128,4 @@ public function assertTrue(boolean b, string msg)
 public function assertNotNull<T>(T t)
 	if t == null
 		testFail("Assertion failed: Reference was null.")
+
