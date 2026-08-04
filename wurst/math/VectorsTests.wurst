@@ -1,6 +1,5 @@
 package VectorsTests
-import Vectors
-import Wurstunit
+import Polygon
 
 
 @Test
@@ -55,10 +54,13 @@ function vectorTests()
 	let test2 = vec2(-4, -6)
 	let test3 = vec2(-2, 2)
 	let points = [vec2(-3, -6), vec2(4, 5), vec2(-4, 5), vec2(3, -2)]
-	test1.isInPolygon(points[0], points[1], points[2], points[3]).assertTrue()
-	test2.isInPolygon(points[0], points[1], points[2], points[3]).assertFalse()
-	test3.isInPolygon(points[0], points[1], points[2]).assertTrue()
-	test1.toVec3().isInPolygon2d(points[0].toVec3(), points[1].toVec3(), points[2].toVec3(), points[3].toVec3()).assertTrue()
-	test2.toVec3().isInPolygon2d(points[0].toVec3(), points[1].toVec3(), points[2].toVec3(), points[3].toVec3()).assertFalse()
-	test3.toVec3().isInPolygon2d(points[0].toVec3(), points[1].toVec3(), points[2].toVec3()).assertTrue()
-
+	let polygon = new Polygon(points[0], points[1], points[2], points[3])
+	let triangle = new Polygon(points[0], points[1], points[2])
+	polygon.contains(test1).assertTrue()
+	polygon.contains(test2).assertFalse()
+	triangle.contains(test3).assertTrue()
+	polygon.contains(test1.toVec3().toVec2()).assertTrue()
+	polygon.contains(test2.toVec3().toVec2()).assertFalse()
+	triangle.contains(test3.toVec3().toVec2()).assertTrue()
+	destroy polygon
+	destroy triangle

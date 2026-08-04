@@ -1,12 +1,16 @@
 package ObjectIds
 import NoWurst
 import ErrorHandling
-import AbilityIds
 import LinkedList
+// Provides stringToIndex/stringFromIndex for legacy string generic bindings.
 import TypeCasting
 import ObjEditingCommons
 
 constant CHARMAP = ".................................!.#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[.]^_`abcdefghijklmnopqrstuvwxyz{|}~................................................................................................................................."
+
+init
+	// LinkedList<string> resolves its generic conversions through TypeCasting.
+	stringToIndex("")
 
 /** Convert a integer id value into a 4-letter id code. */
 public function toRawCode(int value) returns string
@@ -74,4 +78,3 @@ public function commaList(vararg UnitTargetType tags) returns string
 	for t in tags
 		list.add(t.toObjectString())
 	return commaList(list)
-

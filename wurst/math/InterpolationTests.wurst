@@ -1,6 +1,5 @@
 package InterpolationTests
 import Interpolation
-import Wurstunit
 
 
 @Test
@@ -120,4 +119,3 @@ function linearVecTest()
 
 	let atStop = (hermite(start, stop, t1, t2, 1.) - hermite(start, stop, t1, t2, 1. - h)) / h
 	atStop.assertEquals(t2, 0.05)
-

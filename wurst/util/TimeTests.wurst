@@ -1,6 +1,5 @@
 package TimeTests
 import Time
-import Wurstunit
 
 
 @Test function testDisplay()
@@ -40,4 +39,3 @@ import Wurstunit
 	(-1.).hours().display().assertEquals("-PT1H0M0S")
 	(0.).seconds().displayVerbose().assertEquals("0")
 	(61.).seconds().displayVerbose().assertEquals("1 minutes, and 1 seconds")
-

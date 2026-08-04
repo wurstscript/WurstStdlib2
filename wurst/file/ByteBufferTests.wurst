@@ -1,6 +1,5 @@
 package ByteBufferTests
 import ByteBuffer
-import Wurstunit
 
 
 @Test
@@ -110,4 +109,3 @@ function byteBufferEndiannessTest()
 	byteBuffer.readByte().assertEquals(0x02)
 	byteBuffer.readByte().assertEquals(0x01)
 	destroy byteBuffer
-
