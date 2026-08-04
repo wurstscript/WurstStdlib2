@@ -1,6 +1,7 @@
 package Player
 import NoWurst
 import Unit
+import Annotations
 import String
 
 /** Use this array instead of Player() to avoid leaks */
@@ -9,7 +10,7 @@ public constant localPlayer = GetLocalPlayer()
 init
 	initPlayerArray()
 
-function initPlayerArray()
+@compiletime function initPlayerArray()
 	for i = 0 to bj_MAX_PLAYER_SLOTS - 1
 		players[i] = Player(i)
 
