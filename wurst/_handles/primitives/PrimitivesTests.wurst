@@ -46,7 +46,7 @@ function testBoolean()
 @Test
 function testArrayLength()
 	let _x = [1, 2, 3]
-	print("length: " + _x.length.toString())
+	print("length: " + _x.length)
 	_x.length.assertEquals(3)
 
 @Test
@@ -60,3 +60,4 @@ function testXor()
 	xor(true, false).assertEquals(true)
 	xor(false, true).assertEquals(true)
 	xor(false, false).assertEquals(false)
+

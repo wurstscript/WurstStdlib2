@@ -364,7 +364,7 @@ function testNestedZeroedDamage()
 	check(outerAmount > 1., "the outer hit kept its own amount (" + outerAmount.toString(1) + ")")
 	check(not DamageEvent.isFiring(), "no damage instance left on the stack")
 
-	note("DAMAGED fired " + reducedCalls.toString() + " time(s); zeroed nested hit "
+	note("DAMAGED fired " + reducedCalls + " time(s); zeroed nested hit "
 		+ (innerReducedFired ? "DID" : "did NOT") + " reach reduced listeners")
 
 	destroy ul
@@ -395,9 +395,9 @@ function testGroupNesting()
 			if nearest != null
 				innerCalls++
 
-	check(outerCount >= 4, "outer enumeration visited every unit (" + outerCount.toString() + ")")
+	check(outerCount >= 4, "outer enumeration visited every unit (" + outerCount + ")")
 	check(innerCalls == outerCount, "nested enumeration ran exactly once per outer unit ("
-		+ innerCalls.toString() + " vs " + outerCount.toString() + ")")
+		+ innerCalls + " vs " + outerCount + ")")
 
 	for i = 0 to 3
 		probes[i].remove()
@@ -421,7 +421,7 @@ function testTimedLoopStopBeforeStart()
 	probe.startTimedLoop()
 
 	doAfter(0.5) ->
-		check(probe.ticks > 0, "onTimedLoop runs after stop-then-start (ticks " + probe.ticks.toString() + ")")
+		check(probe.ticks > 0, "onTimedLoop runs after stop-then-start (ticks " + probe.ticks + ")")
 		probe.stopTimedLoopAndDestroy()
 
 function testTimedLoopDoubleStart()
@@ -433,7 +433,7 @@ function testTimedLoopDoubleStart()
 
 	doAfter(0.5) ->
 		check(tripled.ticks == single.ticks, "three starts tick as often as one ("
-			+ tripled.ticks.toString() + " vs " + single.ticks.toString() + ")")
+			+ tripled.ticks + " vs " + single.ticks + ")")
 		single.stopTimedLoopAndDestroy()
 		tripled.stopTimedLoopAndDestroy()
 
@@ -477,10 +477,10 @@ public function runStdlibIngameTests()
 		testTimedLoopDoubleStart()
 
 	doAfter(1.5) ->
-		print("|cff8888ff=== " + (checksRun - checksFailed).toString() + "/" + checksRun.toString()
+		print("|cff8888ff=== " + (checksRun - checksFailed) + "/" + checksRun
 			+ " checks passed ===|r")
 		if checksFailed > 0
-			print("|cffff4444" + checksFailed.toString() + " check(s) FAILED|r")
+			print("|cffff4444" + checksFailed + " check(s) FAILED|r")
 
 /** Registers "-stdlibtest" as a chat command that runs the suite. */
 public function registerStdlibIngameTestCommand()
@@ -495,3 +495,4 @@ init
 	doAfter(1.) ->
 		runStdlibIngameTests()
 	registerStdlibIngameTestCommand()
+

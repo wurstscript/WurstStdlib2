@@ -41,15 +41,15 @@ init
 public function runMultibyteDiagnostics()
 	checksRun = 0
 	checksFailed = 0
-	print("ENABLE_MULTIBYTE_SUPPORT = " + ENABLE_MULTIBYTE_SUPPORT.toString())
-	print("PARTIAL_CHAR_HASH = " + PARTIAL_CHAR_HASH.toString() + " (legacy = 1843378377)")
-	print("LEAD4_HASH = " + LEAD4_HASH.toString())
+	print("ENABLE_MULTIBYTE_SUPPORT = " + ENABLE_MULTIBYTE_SUPPORT)
+	print("PARTIAL_CHAR_HASH = " + PARTIAL_CHAR_HASH + " (legacy = 1843378377)")
+	print("LEAD4_HASH = " + LEAD4_HASH)
 
 	// Which normalized form the game hashes invalid slices as - all invalid slices
 	// share one hash, so they are collapsed to a single replacement form first.
-	print("hash of empty string: " + "".getHash().toString())
-	print("hash of replacement char: " + "�".getHash().toString())
-	print("hash of question mark: " + "?".getHash().toString())
+	print("hash of empty string: " + "".getHash())
+	print("hash of replacement char: " + "�".getHash())
+	print("hash of question mark: " + "?".getHash())
 
 	// Raw engine semantics: 2-byte (cyrillic/umlauts), 3-byte (CJK), 4-byte (emoji)
 	let two = "дä"
@@ -63,8 +63,8 @@ public function runMultibyteDiagnostics()
 	check("full char slice is valid", two.substring(0, 2) == "д")
 	check("slices are lossless", two.substring(0, 1) + two.substring(1, 4) == two)
 	// 4-byte lead slices are expected to keep their own hash instead of the marker
-	print("4-byte slice hashes: " + four.substring(0, 1).getHash().toString() + ", "
-		+ four.substring(0, 2).getHash().toString() + ", " + four.substring(0, 3).getHash().toString())
+	print("4-byte slice hashes: " + four.substring(0, 1).getHash() + ", "
+		+ four.substring(0, 2).getHash() + ", " + four.substring(0, 3).getHash())
 	check("4-byte lead slice matches LEAD4_HASH", four.substring(0, 1).getHash() == LEAD4_HASH)
 
 	// Boundary classification
@@ -82,19 +82,20 @@ public function runMultibyteDiagnostics()
 		iterated += c
 		count++
 	check("iteration reassembles string", iterated == "aд中😀b")
-	check("iteration counts 5 chars, got " + count.toString(), count == 5)
+	check("iteration counts 5 chars, got " + count, count == 5)
 
 	// ChunkedString round trips with cuts landing inside multibyte chars
 	let input = "абвгдеёжз中文漢字😀🙂ab"
 	for chunkSize = 3 to 8
 		let cstring = new ChunkedString(chunkSize)
 		cstring.append(input)
-		check("ChunkedString round trip, chunkSize " + chunkSize.toString(), cstring.getUnsafeString() == input)
+		check("ChunkedString round trip, chunkSize " + chunkSize, cstring.getUnsafeString() == input)
 		destroy cstring
 
 	let mode = isLua ? "lua" : "jass"
 	if checksFailed == 0
-		print("|cff00ff00All " + checksRun.toString() + " checks passed|r (" + mode + " mode)")
+		print("|cff00ff00All " + checksRun + " checks passed|r (" + mode + " mode)")
 	else
-		print("|cffff0000" + checksFailed.toString() + " of " + checksRun.toString()
+		print("|cffff0000" + checksFailed + " of " + checksRun
 			+ " checks FAILED|r (" + mode + " mode)")
+

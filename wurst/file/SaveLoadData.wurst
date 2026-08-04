@@ -57,7 +57,7 @@ public function player.saveData(string slotName, string data)
 /** Blockingly saves the given data string for the given player. */
 public function player.saveData(string slotName, ChunkedString data)
 	if not this.isIngame()
-		error("Attempting to save data for player who isn't ingame! id: " + this.getId().toString())
+		error("Attempting to save data for player who isn't ingame! id: " + this.getId())
 
 	new File(slotName.endsWith(".pld") ? slotName : slotName + ".pld")
 		..write(this, data)..close()
@@ -90,3 +90,4 @@ public function player.loadData(string slotName, LoadListener listener)
 
 function shouldReadFile() returns boolean
 	return READ_FILES_IN_REPLAYS or gameStatus != REPLAY
+

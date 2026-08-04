@@ -120,7 +120,7 @@ public function vec2.inRange(vec2 v2, real radius) returns boolean
 
 /** Get a String-representation of this Vector (for debugging) */
 public function vec2.toString() returns string
-	return "Vector2 [" + this.x.toString() + ", " + this.y.toString() + "]"
+	return "Vector2 [" + this.x + ", " + this.y + "]"
 
 /** Get this vetor's angle to another one */
 public function vec2.angleTo(vec2 v) returns angle
@@ -365,7 +365,7 @@ public function vec3.distanceToSq(vec3 v) returns real
 
 /** Get a String-represantation of the vector (for debugging) */
 public function vec3.toString() returns string
-	return "Vector3 [ " + this.x.toString() + ", " + this.y.toString() + ", " + this.z.toString() + " ]"
+	return "Vector3 [ " + this.x + ", " + this.y + ", " + this.z + " ]"
 
 /** Rotate this vector around an axis */
 public function vec3.rotate(vec3 axis, angle ang) returns vec3
@@ -468,4 +468,5 @@ public function vec3.isInPolygon2d(vararg vec3 args) returns bool
 					test--
 		result = test != 0
 	return result
+
 

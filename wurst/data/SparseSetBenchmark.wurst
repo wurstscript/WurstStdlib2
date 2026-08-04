@@ -190,8 +190,8 @@ function runCurrentWorkload()
         if phase == 5
             destroyBenchmarkUnits()
         phaseRunning = false
-        print("Finished " + phaseName() + ". Sink delta: " + (sink - phaseStartSink).toString())
-        print("Workload cleaned up. Waiting " + RECOVERY_DELAY.toString() + " seconds for FPS recovery.")
+        print("Finished " + phaseName() + ". Sink delta: " + (sink - phaseStartSink))
+        print("Workload cleaned up. Waiting " + RECOVERY_DELAY + " seconds for FPS recovery.")
         doAfter(RECOVERY_DELAY) ->
             runNextPhase()
 
@@ -199,15 +199,15 @@ function startPhaseWorkload()
     phaseTick = 0
     phaseStartSink = sink
     phaseRunning = true
-    print("Running " + phaseName() + ": " + PHASE_TICKS.toString()
-        + " ticks at " + BENCHMARK_INTERVAL.toString() + " seconds")
+    print("Running " + phaseName() + ": " + PHASE_TICKS
+        + " ticks at " + BENCHMARK_INTERVAL + " seconds")
     doPeriodicallyCounted(BENCHMARK_INTERVAL, PHASE_TICKS) (CallbackCounted _cb) ->
         runCurrentWorkload()
 
 function startPhase()
     if phase == 3
         ensureBenchmarkUnits()
-    print("Starting " + phaseName() + " in " + START_DELAY.toString()
+    print("Starting " + phaseName() + " in " + START_DELAY
         + " seconds; watch the lowest FPS.")
     doAfter(START_DELAY) ->
         startPhaseWorkload()
@@ -217,7 +217,7 @@ function runNextPhase()
     if phase <= PHASE_COUNT
         startPhase()
     else
-        print("SparseSet benchmark complete. Final sink: " + sink.toString())
+        print("SparseSet benchmark complete. Final sink: " + sink)
 
 public function startSparseSetBenchmark()
     if phase != 0
@@ -231,3 +231,4 @@ init
     for i = 0 to bj_MAX_PLAYER_SLOTS - 1
         benchmarkTrigger.registerPlayerChatEvent(players[i], "-sparsebench", true)
     benchmarkTrigger.addAction(function startSparseSetBenchmark)
+

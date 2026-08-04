@@ -120,7 +120,7 @@ public function int.toBitString() returns string
 	var value = this
 
 	while value != 0
-		result = (value mod 2).toString() + result
+		result = (value mod 2) + result
 		value = bwShiftr32(value, 1)
 
 	return result
@@ -292,3 +292,4 @@ public function int.shiftl(int amount) returns int
 **/
 public function int.shiftr(int amount) returns int
 	return bwShiftr32(this, amount)
+

@@ -42,7 +42,7 @@ public function vec3.inBounds() returns boolean
 public function randomPointOnMap() returns vec2
 	return vec2(GetRandomReal(playableMin.x, playableMax.x), GetRandomReal(playableMin.y, playableMax.y))
 
-/** Must be at init because globals get initialized before map bounds */
+/** Must be at init because globals get initialized before map bounds. */
 @compiletime function initMapBounds()
 	playableMapRect   = compiletime ? Rect(-1024, -1024, 1024, 1024) : GetPlayableMapRect()
 	playableMapRegion = CreateRegion()..addRect(playableMapRect)

@@ -200,15 +200,15 @@ public function color.toColorString() returns string
 
 /** Returns the tuple in string format color(r,g,b) */
 public function color.toString() returns string
-	return "color(" + (this.red).toString() + ", " + (this.green).toString() + ", " + (this.blue).toString() + ")"
+	return "color(" + (this.red) + ", " + (this.green) + ", " + (this.blue) + ")"
 
 /** Returns the tuple in string format colorA(r,g,b,a) */
 public function colorA.toString() returns string
-	return "colorA(" + (this.red).toString() + ", " + (this.green).toString() + ", " + (this.blue).toString() + ", " + (this.alpha).toString() + ")"
+	return "colorA(" + (this.red) + ", " + (this.green) + ", " + (this.blue) + ", " + (this.alpha) + ")"
 
 /** Returns the tuple in string format colorHSV(h,s,v) */
 public function colorHSV.toString() returns string
-	return "colorHSV(" + (this.h).toString() + ", " + (this.s).toString() + ", " + (this.v).toString() + ")"
+	return "colorHSV(" + (this.h) + ", " + (this.s) + ", " + (this.v) + ")"
 
 /** Converts and int to a hexnumber */
 public function toHex(int number) returns string
@@ -274,5 +274,6 @@ public function string.color(colorA which) returns string
 
 init
 	initializeTable()
+
 
 

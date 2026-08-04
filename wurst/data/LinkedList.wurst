@@ -266,7 +266,7 @@ public class LinkedList<T>
 		An index equal to the list's size appends to the end. */
 	function addAt(T elem, int index)
 		if index < 0 or index > size
-			error("LinkedList: Index out of bounds: " + index.toString())
+			error("LinkedList: Index out of bounds: " + index)
 		let entryAtIndex = getEntryUnchecked(index)
 		let entry = new LLEntry<T>(elem, entryAtIndex.prev, entryAtIndex)
 		entryAtIndex.prev.next = entry
@@ -391,7 +391,7 @@ public class LinkedList<T>
 	function toString() returns string
 		if size == 0
 			return "[]"
-		let fold = foldl<string>("[", (i, q) -> q + (i castTo int).toString() + ",")
+		let fold = foldl<string>("[", (i, q) -> q + (i castTo int) + ",")
 		return fold.substring(0, fold.length()-1) + "]"
 
 	/** Removes all elements from the list */
@@ -412,7 +412,7 @@ public class LinkedList<T>
 		into the list, silently returning the wrong element. */
 	private function getEntry(int index) returns LLEntry<T>
 		if index < 0 or index >= size
-			error("LinkedList: Index out of bounds: " + index.toString())
+			error("LinkedList: Index out of bounds: " + index)
 		return getEntryUnchecked(index)
 
 	/** Walks to the entry at the given index without validating it.
@@ -646,3 +646,4 @@ public function LinkedList<string>.join() returns string
 
 init
 	realToIndex(0.)
+

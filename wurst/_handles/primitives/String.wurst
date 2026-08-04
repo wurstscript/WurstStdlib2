@@ -365,7 +365,7 @@ public function string.format(vararg string replacements) returns string
 	var result = this
 	var i = 0
 	for replacement in replacements
-		result = result.replace("{" + i.toString() + "}", replacement)
+		result = result.replace("{" + i + "}", replacement)
 		i++
 	return result
 
@@ -445,5 +445,6 @@ public class StringLines
 @deprecated("Use string.split(\n) instead")
 public function string.toLines() returns StringLines
 	return new StringLines(this, 0, this.countOccurences("\n") + 1)
+
 
 

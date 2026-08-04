@@ -30,7 +30,7 @@ public function standardTextTag(vec2 pos, string text) returns texttag
 /** Create a texttag that matches the style of the standard warcraft 3 Critical
 	Strike ability. */
 public function createCriticalStrikeTextTag(unit u, int damage) returns texttag
-	let text = damage.toString() + "!"
+	let text = damage + "!"
 	return standardTextTag(u.getPos(), text)
 		..setColor(255, 0, 0, 255)
 		..setVelocity(0., .04)
@@ -40,7 +40,7 @@ public function createCriticalStrikeTextTag(unit u, int damage) returns texttag
 /** Create a texttag that matches the style of the standard warcraft 3 gold
 	bounty. */
 public function createGoldBountyTextTag(unit u, int bounty, player killer) returns texttag
-	let text = "+" + bounty.toString()
+	let text = "+" + bounty
 	let pos  = u.getPos() - OFFSET
 	return standardTextTag(pos, text)
 		..setColor(255, 220, 0, 255)
@@ -49,7 +49,7 @@ public function createGoldBountyTextTag(unit u, int bounty, player killer) retur
 /** Create a texttag that matches the style of the standard warcraft 3 gold
 	bounty. */
 public function createGoldBountyTextTag(unit u, int bounty) returns texttag
-	let text = "+" + bounty.toString()
+	let text = "+" + bounty
 	let pos  = u.getPos() - OFFSET
 	return standardTextTag(pos, text)..setColor(255, 220, 0, 255)
 
@@ -57,7 +57,7 @@ public function createGoldBountyTextTag(unit u, int bounty) returns texttag
 /** Create a texttag that matches the style of the standard warcraft 3 lumber
 	bounty. */
 public function createLumberBountyTextTag(unit u, int bounty, player killer) returns texttag
-	let text = "+" + bounty.toString()
+	let text = "+" + bounty
 	let pos  = u.getPos() - OFFSET
 	return standardTextTag(pos, text)
 		..setColor(0, 200, 80, 255)
@@ -66,7 +66,7 @@ public function createLumberBountyTextTag(unit u, int bounty, player killer) ret
 /** Create a texttag that matches the style of the standard warcraft 3 lumber
 	bounty. */
 public function createLumberBountyTextTag(unit u, int bounty) returns texttag
-	let text = "+" + bounty.toString()
+	let text = "+" + bounty
 	let pos  = u.getPos() - OFFSET
 	return standardTextTag(pos, text)..setColor(0, 200, 80, 255)
 
@@ -74,7 +74,7 @@ public function createLumberBountyTextTag(unit u, int bounty) returns texttag
 /** Create a texttag that matches the style of the standard warcraft 3 Mana Burn
 	ability. */
 public function createManaBurnTextTag(unit u, int damage) returns texttag
-	let text = "-" + damage.toString()
+	let text = "-" + damage
 	let pos  = u.getPos() - OFFSET
 	return standardTextTag(pos, text)
 		..setColor(82, 82, 255, 255)
@@ -101,3 +101,4 @@ public function createShadowStrikeTextTag(unit u, int damage, bool isInitialDama
 		..setColor(160, 255, 0, 255)
 		..setVelocity(0., .04)
 		..setLifespan(5.)
+
