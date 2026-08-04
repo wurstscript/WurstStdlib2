@@ -1,0 +1,27 @@
+package ObjectIdsTests
+import ObjectIds
+import ObjEditingCommons
+import AbilityIds
+import Wurstunit
+
+@Test function asListIntTest()
+	commaList(
+		AbilityIds.invulnerable,
+		AbilityIds.reveal
+	).assertEquals("Avul,Adta")
+
+@Test function asListStringTest()
+	commaList("self", "structure").assertEquals("self,structure")
+
+@Test function testIdString2IdInteger()
+	fromRawCode("hfoo").assertEquals('hfoo')
+	fromRawCode("abcd").assertEquals('abcd')
+	fromRawCode("ABCD").assertEquals('ABCD')
+
+@Test function testIdInteger2IdString()
+	toRawCode('hfoo').assertEquals("hfoo")
+	toRawCode('abcd').assertEquals("abcd")
+	toRawCode('ABCD').assertEquals("ABCD")
+
+@Test function testTargetTypes()
+	commaList(UnitTargetType.Self, UnitTargetType.Ground).assertEquals("self,ground")

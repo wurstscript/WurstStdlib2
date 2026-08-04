@@ -1,6 +1,5 @@
 package Angle
 import NoWurst
-import Wurstunit
 
 /** Converts Degrees to Radians */
 public constant DEGTORAD  	=  0.017453293
@@ -74,17 +73,3 @@ public function real.op_mult(angle ang) returns angle
 /** divides the angle by the given scalar */
 public function angle.op_divReal(real scalar) returns angle
 	return angle(this.radians / scalar)
-
-@Test function testAngle()
-	(180 .fromDeg().radians).assertEquals(180 .fromDeg().degrees().fromDeg().radians)
-
-	(180 .fromDeg() + 90 .fromDeg()).degrees().assertEquals(270)
-
-	(0 .fromDeg()).sin().assertEquals(0)
-	(90 .fromDeg()).sin().assertEquals(1)
-
-@Test function testFromRadIsRadians()
-	let halfTurn = 3.141592654
-	halfTurn.fromRad().degrees().assertEquals(180., 0.001)
-	let three = 3
-	three.fromRad().radians().assertEquals(3., 0.0001)

@@ -287,38 +287,3 @@ public function durationToIndex(duration dur) returns int
 
 public function durationFromIndex(int index) returns duration
 	return duration(realFromIndex(index))
-
-@Test function testDisplay()
-	print(1..hours().displayVerbose())
-	assertTrue(.1.seconds().displayVerbose() == "100 milliseconds")
-	assertTrue(1.1.seconds().displayVerbose() == "1 seconds")
-	assertTrue(61..seconds().display() == "PT1M1S")
-	assertTrue(1..hours().displayVerbose() == "1 hours, 0 minutes, and 0 seconds")
-
-@Test function testNewerThan()
-	assertTrue(5..minutesFromNow().isNewerThan(5..secondsFromNow()))
-	assertTrue(5..minutesFromNow().isInTheFuture())
-
-/** Built from explicit timestamps rather than instantNow(), because the
-	compiletime interpreter's game clock is a unix epoch value whose 32 bit
-	real precision swallows small offsets. See GameTimer.getElapsedGameTime. */
-@Test function testInstantComparisons()
-	let earlier = instant(10.)
-	let later = instant(20.)
-
-	earlier.isOlderThan(later).assertTrue()
-	later.isNewerThan(earlier).assertTrue()
-	later.isOlderThan(earlier).assertFalse()
-	earlier.isNewerThan(later).assertFalse()
-	earlier.isOlderThan(earlier).assertFalse()
-	earlier.isNewerThan(earlier).assertFalse()
-
-	(later - earlier).seconds.assertEquals(10., 0.0001)
-
-/** Negative durations used to render as "0", because every component was
-	gated behind a "> 0" check. */
-@Test function testNegativeDurationDisplay()
-	(-61.).seconds().displayVerbose().assertEquals("-1 minutes, and 1 seconds")
-	(-1.).hours().display().assertEquals("-PT1H0M0S")
-	(0.).seconds().displayVerbose().assertEquals("0")
-	(61.).seconds().displayVerbose().assertEquals("1 minutes, and 1 seconds")

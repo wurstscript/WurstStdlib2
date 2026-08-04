@@ -1,0 +1,35 @@
+package PlayercolorTests
+import Playercolor
+import Wurstunit
+
+@Test public function testToInt()
+	PLAYER_COLOR_RED.toInt().assertEquals(0)
+	PLAYER_COLOR_PEANUT.toInt().assertEquals(23)
+
+@Test public function testToPlayerColor()
+	assertTrue((0).toPlayerColor() == PLAYER_COLOR_RED)
+	assertTrue((23).toPlayerColor() == PLAYER_COLOR_PEANUT)
+
+@Test public function testGetPlayer()
+	assertTrue(PLAYER_COLOR_RED.getPlayer() == Player(0))
+	assertTrue(PLAYER_COLOR_PEANUT.getPlayer() == Player(23))
+
+@Test public function testGetPlayers()
+	// Test some Player package methods that this file depends on
+	(players[0] != null).assertTrue()
+	players[0].setColor(PLAYER_COLOR_RED)
+	(players[0].getColor() == PLAYER_COLOR_RED).assertTrue()
+	// Test getting forces of players.
+	let force1 = PLAYER_COLOR_RED.getPlayers()
+	force1.containsPlayer(Player(0)).assertTrue()
+	players[1].setColor(PLAYER_COLOR_BLUE)
+	players[2].setColor(PLAYER_COLOR_BLUE)
+	let force2 = PLAYER_COLOR_BLUE.getPlayers()
+	force2.containsPlayer(Player(1)).assertTrue()
+	force2.containsPlayer(Player(2)).assertTrue()
+	force2.containsPlayer(Player(3)).assertFalse()
+
+	let p = players[5]
+	assertTrue(p.getColor() == null)
+	p.setColor(PLAYER_COLOR_AQUA)
+	assertTrue(p.getColor() == PLAYER_COLOR_AQUA)

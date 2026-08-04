@@ -1,0 +1,39 @@
+package ColorsTests
+import Colors
+import Wurstunit
+
+@Test public function testColors()
+	hexs[10].assertEquals("A")
+	let mixed = colorA(0,0,0,0).mix(colorA(255,255,255,255), 0.5)
+	assertTrue(mixed == colorA(128,128,128,128))
+	assertTrue(fromHexString("33ccff44") == colorA(204, 255, 68, 51))
+	assertTrue(PLAYER_COLOR_RED != null)
+
+@Test public function testHSV()
+	colorHSV(0, 0, 1).assert()
+	colorHSV(0, 0, 0.5).assert()
+	colorHSV(0, 0, 0).assert()
+	for h = 0 to 11
+		for s = 2 downto 1
+			for v = 2 downto 1
+				colorHSV(h / 12.0, s / 2.0, v / 2.0).assert()
+
+@Test public function testColorNames()
+	color(255, 2, 2).getName().assertEquals("red")
+	color(164, 111, 51).getName().assertEquals("peanut")
+	assertTrue("red".toColor() == color(255, 2, 2))
+	assertTrue("peanut".toColor() == color(164, 111, 51))
+	assertTrue("red".toPlayerColor() == PLAYER_COLOR_RED)
+	assertTrue("peanut".toPlayerColor() == PLAYER_COLOR_PEANUT)
+
+@Test public function testPlayerColorConversion()
+	assertTrue(PLAYER_COLOR_BLUE.toColor() == color(0,65,255))
+	assertTrue(PLAYER_COLOR_RED.toColor() == color(255, 2, 2))
+	assertTrue(PLAYER_COLOR_PEANUT.toColor() == color(164, 111, 51))
+	PLAYER_COLOR_RED.getName().assertEquals("red")
+	PLAYER_COLOR_COAL.getName().assertEquals("coal")
+
+@Test public function testPlayerFromColorName()
+	assertTrue(toPlayerFromColorName("red") == Player(0))
+	assertTrue(toPlayerFromColorName("PEANUT") == Player(23))
+	assertTrue(toPlayerFromColorName("wurstlang") == null)

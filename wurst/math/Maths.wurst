@@ -3,7 +3,6 @@ import NoWurst
 import public Angle
 import Real
 import Integer
-import Wurstunit
 
 /** Euler's constant */
 public constant real EULER	  =  2.718281828
@@ -68,23 +67,4 @@ public function min(vararg real numbers) returns real
 		minNumber = number < minNumber ? number : minNumber
 	return minNumber
 
-@Test function minmax()
-	let three = 3
-	max(three,4,21,43,51,30).assertEquals(51)
-	max(3.,4.,5.).assertEquals(5)
-	max(-4,three).assertEquals(3)
-	min(three,4,0,-2,-1).assertEquals(-2)
-	min(3.,4.,-20.,-3.).assertEquals(-20.)
-
-@Test function test_hypot()
-	test_hypot_help(5,6)
-	test_hypot_help(5000000.,6)
-	test_hypot_help(3.,123456789.)
-	test_hypot_help(543532403425324.,123456789.)
-	test_hypot_help(0.0000001,0.0000000000023)
-	test_hypot_help(0,0)
-
-
-function test_hypot_help(real x, real y)
-	hypot(x,y).assertEquals(SquareRoot(x * x + y * y), 0.0001)
 

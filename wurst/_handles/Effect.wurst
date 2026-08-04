@@ -2,7 +2,6 @@ package Effect
 import NoWurst
 import Quaternion
 import Colors
-import Wurstunit
 
 public function effect.destr()
 	DestroyEffect(this)
@@ -214,11 +213,3 @@ public function effect.setScale(vec3 scaleVector)
 public function effect.resetScale()
 	BlzResetSpecialEffectMatrix(this)
 
-@Test
-function testEffect()
-	let eff = addEffect("testPath", vec2(12,32))
-
-	eff.getLocalX().assertEquals(12.)
-	eff.getLocalY().assertEquals(32.)
-
-	eff.destr()

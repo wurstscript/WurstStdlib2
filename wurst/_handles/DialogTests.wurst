@@ -1,0 +1,11 @@
+package DialogTests
+import Dialog
+import Wurstunit
+
+@Test function testDialog()
+	let dia = createDialog()
+	dia..addButton("text")
+	..addQuitButton(true, "test")
+	..display(Player(0), true)
+	..clear()
+	..destr()

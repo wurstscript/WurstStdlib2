@@ -1,0 +1,113 @@
+package ByteBufferTests
+import ByteBuffer
+import Wurstunit
+
+
+@Test
+function byteBufferTest()
+	let byteBuffer = new ByteBuffer()
+	byteBuffer.writeByte(3)
+	byteBuffer.writeByte(200)
+	byteBuffer.writeByte(15)
+	byteBuffer.writeByte(7)
+
+	byteBuffer.writeByte(128)
+
+	byteBuffer.writeShort(0x4a2f)
+	byteBuffer.writeShort(0xfabc)
+	byteBuffer.writeShort(0x002a)
+
+	byteBuffer.writeInt(0xffaabbcc)
+
+	byteBuffer.readByte().assertEquals(3)
+	byteBuffer.readByte().assertEquals(200)
+	byteBuffer.readByte().assertEquals(15) 
+	byteBuffer.readByte().assertEquals(7)
+
+	byteBuffer.readByte().assertEquals(128)
+
+	byteBuffer.readShort().assertEquals(0x4a2f)
+	byteBuffer.readShort().assertEquals(0xfabc)
+	byteBuffer.readShort().assertEquals(0x002a)
+
+	byteBuffer.readInt().assertEquals(0xffaabbcc)
+
+
+@Test
+function byteBufferIterativeReadingTest()
+	let byteBuffer = new ByteBuffer()
+
+	let expectedBytes = [0xb3, 0xfb, 0xc6, 0xec, 0x89, 0xf9, 0x25, 0x22, 0x4a, 0xe0, 0x99, 0x08, 0x5d, 0x1a]
+	for i = 0 to expectedBytes.length - 1
+		byteBuffer.writeByte(expectedBytes[i])
+
+	int array bytes
+	var bytesLength = 0
+	while byteBuffer.hasByte()
+		bytes[bytesLength] = byteBuffer.readByte()
+		bytesLength++
+
+	bytesLength.assertEquals(expectedBytes.length)
+	for i = 0 to bytesLength - 1
+		bytes[i].assertEquals(expectedBytes[i])
+
+
+/** hasByte() used to compare the int cursor against intCount, which stayed
+	true after the last byte of a buffer whose size is an exact multiple of 4. */
+@Test
+function byteBufferSizeMultipleOfFourTest()
+	for length = 1 to 12
+		let byteBuffer = new ByteBuffer()
+		for i = 1 to length
+			byteBuffer.writeByte(i)
+
+		var read = 0
+		while byteBuffer.hasByte() and read < length + 4
+			byteBuffer.readByte()
+			read++
+
+		read.assertEquals(length)
+		destroy byteBuffer
+
+
+@Test
+function byteBufferEmptyTest()
+	let byteBuffer = new ByteBuffer()
+	byteBuffer.size().assertEquals(0)
+	byteBuffer.hasByte().assertFalse()
+	destroy byteBuffer
+
+
+@Test
+function byteBufferResetReadTest()
+	let byteBuffer = new ByteBuffer()
+	byteBuffer.writeInt(0x01020304)
+
+	var first = 0
+	while byteBuffer.hasByte()
+		byteBuffer.readByte()
+		first++
+
+	byteBuffer.resetRead()
+
+	var second = 0
+	while byteBuffer.hasByte()
+		byteBuffer.readByte()
+		second++
+
+	first.assertEquals(4)
+	second.assertEquals(4)
+	destroy byteBuffer
+
+
+/** Little endian: writeInt emits the least significant byte first. */
+@Test
+function byteBufferEndiannessTest()
+	let byteBuffer = new ByteBuffer()
+	byteBuffer.writeInt(0x01020304)
+	byteBuffer.readByte().assertEquals(0x04)
+	byteBuffer.readByte().assertEquals(0x03)
+	byteBuffer.readByte().assertEquals(0x02)
+	byteBuffer.readByte().assertEquals(0x01)
+	destroy byteBuffer
+

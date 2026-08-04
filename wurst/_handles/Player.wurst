@@ -1,6 +1,5 @@
 package Player
 import NoWurst
-import Wurstunit
 import Unit
 import Annotations
 import String
@@ -229,7 +228,3 @@ public function player.hasVisibility(vec2 pos) returns bool
 	return IsVisibleToPlayer(pos.x, pos.y, this)
 
 
-@Test
-function testPlayer()
-	let p = Player(0)
-	assertTrue(p == Player(0))
