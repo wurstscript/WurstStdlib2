@@ -1,0 +1,26 @@
+package LineGeometryTests
+import LineGeometry
+import Wurstunit
+
+@Test function testLineFormular()
+	let p1 = vec2(0, 2)
+	let p2 = vec2(4, 10)
+	let line = p1.getLineFormular(p2)
+	line.m.assertEquals(2.0, 0.001)
+	line.b.assertEquals(2.0, 0.001)
+	(0.0).getYOnLine(line).assertEquals(2.0, 0.001)
+	(4.0).getYOnLine(line).assertEquals(10.0, 0.001)
+	(2.0).getXOnLine(line).assertEquals(0.0, 0.001)
+	(10.0).getXOnLine(line).assertEquals(4.0, 0.001)
+
+@Test function testParallelLine()
+	let line = lineFormular(1, 0)
+	let parallel = line.getParallelLineWithOrthogonalDistance(SquareRoot(2))
+	parallel.m.assertEquals(1.0, 0.001)
+	assertTrue(parallel.b != 0)
+
+@Test function testOrthogonalSidePoint()
+	let horizontal = lineFormular(0, 5)
+	let point = vec2(3, 5).getOrthogonalSidePoint(horizontal, 2)
+	point.x.assertEquals(3.0, 0.001)
+	point.y.assertEquals(7.0, 0.001)
