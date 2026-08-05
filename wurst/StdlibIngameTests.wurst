@@ -371,6 +371,60 @@ function testNestedZeroedDamage()
 	destroy rl
 
 // ============================================================================
+// 11. A late default listener must remain at the default priority
+// ============================================================================
+
+var lateDefaultReducedAmount = -1.
+
+function testLateDefaultReducedListenerPriority()
+	section("--- 11. late default reduced listener stays before priority 100 ---")
+	lateDefaultReducedAmount = -1.
+
+	// Register the observer first: production systems commonly initialize a
+	// final observer before gameplay installs short-lived modifiers.
+	let observer = DamageEvent.addListener(100) ->
+		lateDefaultReducedAmount = DamageEvent.getAmount()
+	let modifier = DamageEvent.addListener() ->
+		// Expected: no-priority means priority 0, so this changes 100 to 40
+		// before the already-registered priority-100 observer runs.
+		DamageEvent.setAmount(40.)
+
+	DamageEvent.setNextDamageFromCode()
+	attacker.damageTarget(victim, 100.)
+
+	check(lateDefaultReducedAmount == 40., "late default reduced listener: expected 40.0, actual "
+		+ lateDefaultReducedAmount.toString(1))
+
+	destroy observer
+	destroy modifier
+
+// ============================================================================
+// 12. The same default-priority contract applies before native reduction
+// ============================================================================
+
+var lateDefaultUnreducedAmount = -1.
+
+function testLateDefaultUnreducedListenerPriority()
+	section("--- 12. late default unreduced listener stays before priority 100 ---")
+	lateDefaultUnreducedAmount = -1.
+
+	let observer = DamageEvent.addUnreducedListener(100) ->
+		lateDefaultUnreducedAmount = DamageEvent.getAmount()
+	let modifier = DamageEvent.addUnreducedListener() ->
+		// Expected: the default-priority modifier runs first and the explicit
+		// priority-100 observer reads its live value of 40 rather than 100.
+		DamageEvent.setAmount(40.)
+
+	DamageEvent.setNextDamageFromCode()
+	attacker.damageTarget(victim, 100.)
+
+	check(lateDefaultUnreducedAmount == 40., "late default unreduced listener: expected 40.0, actual "
+		+ lateDefaultUnreducedAmount.toString(1))
+
+	destroy observer
+	destroy modifier
+
+// ============================================================================
 // 7. Nested group enumeration
 // ============================================================================
 
@@ -464,6 +518,10 @@ public function runStdlibIngameTests()
 		testSelfDestroyingListener()
 	runGuarded("10. zeroed nested hit") ->
 		testNestedZeroedDamage()
+	runGuarded("11. late default reduced listener") ->
+		testLateDefaultReducedListenerPriority()
+	runGuarded("12. late default unreduced listener") ->
+		testLateDefaultUnreducedListenerPriority()
 	runGuarded("teardown") ->
 		teardownUnits()
 
