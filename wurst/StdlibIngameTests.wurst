@@ -8,6 +8,7 @@ import Execute
 import ErrorHandling
 import UnitSpatialIndex
 import SpatialIndexForGroups
+import UnitIndexer
 
 /*	Manual, in-game checks for behaviour the compiletime interpreter cannot
 	reach: real damage events, real timers and real unit enumeration.
@@ -471,6 +472,7 @@ function testGroupNesting()
 	which is harmless but proves nothing; the header line says which mode was exercised. */
 
 constant SPATIAL_TEST_POS = vec2(-2000, 2000)
+unit spatialInitProbe = null
 
 function collectViaClosure(vec2 pos, real radius, bool collisionFiltering, group into)
 	forUnitsInRangeIndexed(pos, radius, collisionFiltering) u ->
@@ -551,6 +553,16 @@ function testSpatialIndexParity()
 	checkRangeParity(SPATIAL_TEST_POS, 300., true, "collision-filtered query matches the engine")
 	checkRangeParity(SPATIAL_TEST_POS, 121., false, "tight radius on a probe boundary")
 	checkRangeParity(SPATIAL_TEST_POS, 2000., false, "wide radius")
+
+	// Manual UnitIndexer deindexing does not remove a live unit from native enumeration, so the
+	// independent spatial registry must retain it until OnUnitEnterLeave observes a real leave.
+	probes[0].deindex()
+	checkRangeParity(SPATIAL_TEST_POS, 300., false, "live manually deindexed unit remains enumerable")
+	probes[0].toUnitIndex()
+
+	// This unit was created directly in this package's init, after UnitSpatialIndex initialized but
+	// before the zero-timer synthetic seed. Synchronous enter tracking must have bucketed it already.
+	checkRangeParity(spatialInitProbe.getPos(), 32., false, "init-time spawn is indexed immediately")
 
 	// Eligibility is evaluated at query time. Toggling Locust must take effect immediately in both
 	// directions rather than waiting for a sweep or permanently dropping the unit from the index.
@@ -796,6 +808,8 @@ public function registerStdlibIngameTestCommand()
 	trig.addAction(() -> runStdlibIngameTests())
 
 init
+	// Created during init on purpose: this exercises the window before the deferred preplaced pass.
+	spatialInitProbe = createUnit(players[0], UnitIds.footman, SPATIAL_TEST_POS.add(-400., 0.), angle(0))
 	// Importing the package is enough to run the suite. The delay lets the map
 	// and the stdlib's own init blocks finish before units are created.
 	doAfter(1.) ->

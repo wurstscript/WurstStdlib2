@@ -521,11 +521,9 @@ public function spatialIndexEndQuery()
 	enumeration includes hidden and Locust units, so this is a complete synchronous bootstrap. */
 function seedExistingUnits()
 	let seedGroup = CreateGroup()
-	for i = 0 to bj_MAX_PLAYER_SLOTS - 1
-		GroupEnumUnitsOfPlayer(seedGroup, players[i], null)
-		for u in seedGroup
-			registerUnit(u)
-		seedGroup.clear()
+	seedGroup.enumUnitsAll(null)
+	for u in seedGroup
+		registerUnit(u)
 	seedGroup.destr()
 
 init
@@ -534,10 +532,10 @@ init
 	if isLua and USE_UNIT_SPATIAL_INDEX
 		rebuildSpatialIndexGrid(boundMin, boundMax)
 
-		// UnitIndexer gives explicit index/deindex calls immediate bucket ownership. The enter/leave
-		// hooks remain as a complete fallback when a map customizes UnitIndexer.shouldIndex.
+		// UnitIndexer gives explicit index calls immediate bucket ownership. Spatial membership is
+		// independent of manual UnitIndexer deindexing: a live recycled unit still belongs to native
+		// range/rect enums, so only an actual world leave removes it from this registry.
 		onUnitIndex(() -> registerUnit(getIndexingUnit()))
-		onUnitDeindex(() -> unregisterUnit(getIndexingUnit()))
 		onEnter(() -> registerUnit(getEnterLeaveUnit()))
 		onLeave(() -> unregisterUnit(getEnterLeaveUnit()))
 
