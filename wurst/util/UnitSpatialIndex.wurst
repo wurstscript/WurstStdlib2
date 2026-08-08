@@ -174,13 +174,12 @@ function unlinkFromCell(int idx)
 function registerUnit(unit u)
 	if u == null or spatialIndexByUnit.get(u) != 0
 		return
-	var idx = 0
+	var idx = nextSpatialIndex
 	if freeSpatialIndexCount > 0
 		freeSpatialIndexCount--
 		idx = freeSpatialIndex[freeSpatialIndexCount]
 		freeSpatialIndex[freeSpatialIndexCount] = 0
 	else
-		idx = nextSpatialIndex
 		nextSpatialIndex++
 	spatialIndexByUnit.put(u, idx)
 	indexedUnit[idx] = u
