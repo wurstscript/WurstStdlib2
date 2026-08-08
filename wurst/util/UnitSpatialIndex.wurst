@@ -227,13 +227,21 @@ function unregisterIndex(int idx)
 function unregisterUnit(unit u)
 	unregisterIndex(spatialIndexByUnit.get(u))
 
-/**	Re-buckets one unit immediately. Ordinary movement does not need this - the sweep covers it - but
-	an engine-side teleport or a raw `SetUnitX` call does, because neither is observable. */
+/**	Registers or re-buckets one unit immediately. Ordinary movement does not need this - the sweep
+	covers it - but an engine-side teleport or a raw `SetUnitX` call does, because neither is
+	observable.
+
+	Warcraft exposes no native that can discover a preplaced unit while it has Locust. If a map later
+	removes Locust from such a unit, call this immediately afterwards; the unit then becomes eligible
+	for both native and indexed enumeration at the same point. */
 public function unit.updateSpatialIndex()
-	if not isLua or not indexActive or this == null
+	if not isLua or not USE_UNIT_SPATIAL_INDEX or this == null
 		return
 	let idx = spatialIndexByUnit.get(this)
-	if idx == 0 or registrySlot[idx] == 0
+	if idx == 0
+		registerUnit(this)
+		return
+	if registrySlot[idx] == 0
 		return
 	refreshUnit(idx, this)
 
@@ -517,12 +525,19 @@ init
 	// target the whole body disappears and this package registers nothing at all.
 	if isLua and USE_UNIT_SPATIAL_INDEX
 		rebuildSpatialIndexGrid(boundMin, boundMax)
-		indexActive = true
 
-		// OnUnitEnterLeave covers preplaced units as well as later creation/removal. Keeping our own
-		// independent registry makes this complete even when a map customizes UnitIndexer.shouldIndex.
+		// OnUnitEnterLeave covers ordinary preplaced units as well as later creation/removal. Keeping
+		// our own independent registry makes this complete even when a map customizes
+		// UnitIndexer.shouldIndex. See updateSpatialIndex() for Warcraft's preplaced-Locust limitation.
 		onEnter(() -> registerUnit(getEnterLeaveUnit()))
 		onLeave(() -> unregisterUnit(getEnterLeaveUnit()))
 
 		doPeriodically(ANIMATION_PERIOD) cb ->
 			sweepStep()
+
+		// OnUnitEnterLeave seeds preplaced units from a zero-second timer. Stay unhealthy through map
+		// init and that deferred pass so early indexed calls take their native fallback rather than
+		// consulting a partially populated grid. One animation period also avoids relying on ordering
+		// between timers that share the same zero timeout.
+		doAfter(ANIMATION_PERIOD) ->
+			indexActive = true
