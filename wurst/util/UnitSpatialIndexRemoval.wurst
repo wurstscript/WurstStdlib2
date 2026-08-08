@@ -1,0 +1,54 @@
+package UnitSpatialIndexRemoval
+import NoWurst
+import Unit
+import Trigger
+import MagicFunctions
+import AbilityObjEditing
+import ObjectIdGenerator
+import RegisterEvents
+import Orders
+import Annotations
+
+/** Private removal tracking for units owned by UnitSpatialIndex.
+	Kept separate from OnUnitEnterLeave so the public event retains its legacy population and timing. */
+
+constant SPATIAL_LEAVE_ABILITY_ID = compiletime(ABIL_ID_GEN.next())
+let removalTrigger = CreateTrigger()
+unit array removingUnits
+var removingUnitCount = 0
+var initialized = false
+
+public function getSpatialRemovingUnit() returns unit
+	if removingUnitCount <= 0
+		return null
+	return removingUnits[removingUnitCount - 1]
+
+public function onSpatialUnitRemove(code callback)
+	removalTrigger.addCondition(Condition(callback))
+
+public function unit.trackSpatialRemoval()
+	this..addAbility(SPATIAL_LEAVE_ABILITY_ID)
+		..makeAbilityPermanent(SPATIAL_LEAVE_ABILITY_ID, true)
+
+public function initializeSpatialRemovalTracking()
+	if initialized
+		return
+	initialized = true
+	for i = 0 to bj_MAX_PLAYER_SLOTS - 1
+		SetPlayerAbilityAvailable(Player(i), SPATIAL_LEAVE_ABILITY_ID, false)
+	registerPlayerUnitEvent(EVENT_PLAYER_UNIT_ISSUED_ORDER) ->
+		let leavingUnit = GetTriggerUnit()
+		if GetUnitAbilityLevel(leavingUnit, SPATIAL_LEAVE_ABILITY_ID) == 0
+			and GetIssuedOrderId() == Orders.undefend
+			removingUnits[removingUnitCount] = leavingUnit
+			removingUnitCount++
+			removalTrigger.evaluate()
+			removingUnitCount--
+
+@compiletime function generateSpatialLeaveAbility()
+	new AbilityDefinitionDefend(SPATIAL_LEAVE_ABILITY_ID)
+		..setName("Spatial Leave Detect")
+		..setEditorSuffix("(UnitSpatialIndex)")
+		..setArtCaster("")
+		..setIconNormal("")
+		..setRace(Race.Unknown)

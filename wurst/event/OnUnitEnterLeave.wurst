@@ -64,10 +64,10 @@ init
 		players[i].setAbilityAvailable(ABILITY_ID, false)
 
 	nullTimer() ->
-		// Create the enter event
+		// Install the public events after init, preserving the package's existing delivery contract:
+		// every importer can register before preplaced and init-created units are dispatched once.
 		CreateTrigger()..registerEnterRegion(boundRegion, Filter(() -> prepareUnit(GetFilterUnit())))
 
-		// Create the leave event
 		registerPlayerUnitEvent(EVENT_PLAYER_UNIT_ISSUED_ORDER) ->
 			let leavingUnit = GetTriggerUnit()
 			if leavingUnit.getAbilityLevel(ABILITY_ID) == 0 and GetIssuedOrderId() == Orders.undefend

@@ -1,0 +1,36 @@
+package UnitSpatialIndexTests
+import UnitSpatialIndex
+
+/*	Grid arithmetic only. Everything that needs real units - population parity against the engine
+	enumeration, hidden/locust/corpse handling and reentrancy - lives in StdlibIngameTests, because
+	the compiletime interpreter has no units to enumerate. */
+
+@Test function gridCoversTheRequestedExtent()
+	rebuildSpatialIndexGrid(vec2(-2048., -2048.), vec2(2048., 2048.))
+	// 4096 world units at 256 per cell, plus one so the far edge lands inside the grid.
+	spatialIndexGridWidth().assertEquals(17)
+	spatialIndexGridHeight().assertEquals(17)
+
+@Test function cellsAdvanceOneStepPerCellSize()
+	rebuildSpatialIndexGrid(vec2(-2048., -2048.), vec2(2048., 2048.))
+	let origin = spatialIndexCellOf(vec2(-2048., -2048.))
+	origin.assertEquals(0)
+	// One cell east is +1, one cell north is +gridWidth.
+	spatialIndexCellOf(vec2(-2048. + 256., -2048.)).assertEquals(1)
+	spatialIndexCellOf(vec2(-2048., -2048. + 256.)).assertEquals(spatialIndexGridWidth())
+	// Within a cell nothing changes.
+	spatialIndexCellOf(vec2(-2048. + 255., -2048.)).assertEquals(0)
+
+@Test function coordinatesOutsideTheWorldClampIntoTheGrid()
+	rebuildSpatialIndexGrid(vec2(-2048., -2048.), vec2(2048., 2048.))
+	let lastCell = spatialIndexGridWidth() * spatialIndexGridHeight() - 1
+	// Far outside in either direction must still land on a real cell, never out of bounds: units
+	// can be moved beyond the world bounds and queries must not index past the grid.
+	spatialIndexCellOf(vec2(-999999., -999999.)).assertEquals(0)
+	spatialIndexCellOf(vec2(999999., 999999.)).assertEquals(lastCell)
+
+@Test function trackingIsEmptyWithoutUnits()
+	spatialIndexTrackedUnits().assertEquals(0)
+	// With nothing tracked the sweep publishes the floor staleness, so padding stays minimal
+	// instead of collapsing to zero (which would drop legitimately moving units).
+	spatialIndexPadCells().assertGreaterThan(0)
