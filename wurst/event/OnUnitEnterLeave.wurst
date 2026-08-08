@@ -76,8 +76,7 @@ init
 				popUnit()
 
 		// Process preplaced units
-		// Per-player enumeration includes hidden and Locust units; range/rect enumeration does not.
-		preplacedUnits.enumUnitsAll(null)
+		preplacedUnits.enumUnitsInRect(boundRect)
 		let count = preplacedUnits.size()
 		for i = 0 to count - 1
 			prepareUnit(preplacedUnits.get(i))
