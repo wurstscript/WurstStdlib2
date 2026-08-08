@@ -74,25 +74,6 @@ function currentCallbackUntil() returns ForGroupCallbackUntil
 	return tempCallbacksUntil[tempCallbacksCount - 1]
 // ====Stack end====
 
-// ====Scratch groups====
-// Helpers that need a real group to iterate (rather than the filter trick) take
-// one from here instead of using the engine-wide ENUM_GROUP, so that nesting a
-// second enumeration inside a callback cannot clobber the outer one.
-group array scratchGroups
-var scratchGroupCount = 0
-
-function getScratchGroup() returns group
-	if scratchGroupCount > 0
-		scratchGroupCount--
-		return scratchGroups[scratchGroupCount]
-	return CreateGroup()
-
-function releaseScratchGroup(group g)
-	g.clear()
-	scratchGroups[scratchGroupCount] = g
-	scratchGroupCount++
-// ====Scratch groups end====
-
 /** Executes the given closure for every unit in this group,
 	removing the units from the group as processed */
 public function group.forEachFrom(ForGroupCallback cb)
@@ -158,15 +139,12 @@ public function forUnitsInRange(vec2 pos, real radius, ForGroupCallback c)
 	With collisionSizeFiltering true it will take the units' collision into account. */
 public function forUnitsInRange(vec2 pos, real radius, bool collisionSizeFiltering, ForGroupCallback c)
 	if collisionSizeFiltering
-		// A private group per nesting level: ENUM_GROUP is shared engine-wide,
-		// so a nested enumeration inside the callback would clobber it.
-		let g = getScratchGroup()
-		GroupEnumUnitsInRange(g, pos.x, pos.y, radius + MAX_COLLISION_SIZE, null)
-		for u from g
+		pushCallback(c)
+		GroupEnumUnitsInRange(ENUM_GROUP, pos.x, pos.y, radius + MAX_COLLISION_SIZE, null)
+		for u from ENUM_GROUP
 			if IsUnitInRangeXY(u, pos.x, pos.y, radius)
 				c.callback(u)
-		releaseScratchGroup(g)
-		destroy c
+		popCallback(true)
 	else
 		pushCallback(c)
 		GroupEnumUnitsInRange(DUMMY_GROUP, pos.x, pos.y, radius, filter)
@@ -189,18 +167,17 @@ public function forUnitsSelected(player p, ForGroupCallback c)
 /** Executes the given closure for the closest unit inside the given range of the given position,
 	matching the provided filter. If there is no unit in range, the closure will be run with "null" */
 public function forNearestUnit(vec2 pos, real range, filterfunc filter, ForGroupCallback c)
-	let g = getScratchGroup()
-	GroupEnumUnitsInRange(g, pos.x, pos.y, range, filter)
+	pushCallback(c)
+	GroupEnumUnitsInRange(ENUM_GROUP, pos.x, pos.y, range, filter)
 	unit nearest = null
 	var bestDistSq = REAL_MAX
-	for u from g
+	for u from ENUM_GROUP
 		let distSq = pos.distanceToSq(u.getPos())
 		if distSq < bestDistSq
 			nearest = u
 			bestDistSq = distSq
-	releaseScratchGroup(g)
 	c.callback(nearest)
-	destroy c
+	popCallback(true)
 
 /** Executes the given closure for every unit in this group,
 	removing the units from the group as processed.
