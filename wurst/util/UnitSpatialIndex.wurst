@@ -14,6 +14,7 @@ import MapBounds
 import ClosureTimers
 import HashMap
 import UnitIndexer
+import Trigger
 
 // ============================================================================
 // Configuration
@@ -536,6 +537,9 @@ init
 		// independent of manual UnitIndexer deindexing: a live recycled unit still belongs to native
 		// range/rect enums, so only an actual world leave removes it from this registry.
 		onUnitIndex(() -> registerUnit(getIndexingUnit()))
+		// Keep public OnUnitEnterLeave notification timing unchanged. This private trigger exists only
+		// to give units created during later init blocks immediate spatial bucket ownership.
+		CreateTrigger()..registerEnterRegion(boundRegion, Filter(() -> registerUnit(GetFilterUnit())))
 		onEnter(() -> registerUnit(getEnterLeaveUnit()))
 		onLeave(() -> unregisterUnit(getEnterLeaveUnit()))
 

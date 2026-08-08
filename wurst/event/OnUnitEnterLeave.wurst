@@ -63,28 +63,24 @@ init
 	for i = 0 to bj_MAX_PLAYER_SLOTS - 1
 		players[i].setAbilityAvailable(ABILITY_ID, false)
 
-	// Install real enter/leave tracking synchronously. Importers can then observe units created by
-	// later package init blocks instead of waiting for the synthetic preplaced-unit pass.
-	CreateTrigger()..registerEnterRegion(boundRegion, Filter(() -> prepareUnit(GetFilterUnit())))
-
-	registerPlayerUnitEvent(EVENT_PLAYER_UNIT_ISSUED_ORDER) ->
-		let leavingUnit = GetTriggerUnit()
-		if leavingUnit.getAbilityLevel(ABILITY_ID) == 0 and GetIssuedOrderId() == Orders.undefend
-			pushUnit(leavingUnit)
-			eventTrigger.execute()
-			popUnit()
-
-	// Defer only the synthetic pass so every importing package can attach its callbacks first.
 	nullTimer() ->
+		// Install the public events after init, preserving the package's existing delivery contract:
+		// every importer can register before preplaced and init-created units are dispatched once.
+		CreateTrigger()..registerEnterRegion(boundRegion, Filter(() -> prepareUnit(GetFilterUnit())))
+
+		registerPlayerUnitEvent(EVENT_PLAYER_UNIT_ISSUED_ORDER) ->
+			let leavingUnit = GetTriggerUnit()
+			if leavingUnit.getAbilityLevel(ABILITY_ID) == 0 and GetIssuedOrderId() == Orders.undefend
+				pushUnit(leavingUnit)
+				eventTrigger.execute()
+				popUnit()
+
 		// Process preplaced units
 		// Per-player enumeration includes hidden and Locust units; range/rect enumeration does not.
 		preplacedUnits.enumUnitsAll(null)
 		let count = preplacedUnits.size()
 		for i = 0 to count - 1
-			let preplacedUnit = preplacedUnits.get(i)
-			// Units created after the synchronous region trigger was installed have already fired onEnter.
-			if preplacedUnit.getAbilityLevel(ABILITY_ID) == 0
-				prepareUnit(preplacedUnit)
+			prepareUnit(preplacedUnits.get(i))
 		preplacedUnits..clear()..destr()
 
 @compiletime function generateAbility()
