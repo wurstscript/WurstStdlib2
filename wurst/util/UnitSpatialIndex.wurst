@@ -14,6 +14,10 @@ import MapBounds
 import ClosureTimers
 import HashMap
 import UnitIndexer
+import AbilityObjEditing
+import ObjectIdGenerator
+import RegisterEvents
+import Orders
 
 // ============================================================================
 // Configuration
@@ -145,6 +149,8 @@ function currentMaxDisplacement() returns real
 // Membership
 // ============================================================================
 
+constant SPATIAL_LEAVE_ABILITY_ID = compiletime(ABIL_ID_GEN.next())
+
 function linkIntoCell(int idx, int cell, real x, real y)
 	let head = cellHead[cell]
 	prevInCell[idx] = 0
@@ -175,6 +181,9 @@ function unlinkFromCell(int idx)
 function registerUnit(unit u)
 	if u == null or spatialIndexByUnit.get(u) != 0
 		return
+	// Private removal marker. OnUnitEnterLeave deliberately keeps its legacy rect-only population,
+	// while this registry also contains hidden and Locust units found by per-player enumeration.
+	u..addAbility(SPATIAL_LEAVE_ABILITY_ID)..makeAbilityPermanent(SPATIAL_LEAVE_ABILITY_ID, true)
 	var idx = nextSpatialIndex
 	if freeSpatialIndexCount > 0
 		freeSpatialIndexCount--
@@ -531,6 +540,13 @@ init
 	// target the whole body disappears and this package registers nothing at all.
 	if isLua and USE_UNIT_SPATIAL_INDEX
 		rebuildSpatialIndexGrid(boundMin, boundMax)
+		for i = 0 to bj_MAX_PLAYER_SLOTS - 1
+			SetPlayerAbilityAvailable(Player(i), SPATIAL_LEAVE_ABILITY_ID, false)
+		registerPlayerUnitEvent(EVENT_PLAYER_UNIT_ISSUED_ORDER) ->
+			let leavingUnit = GetTriggerUnit()
+			if GetUnitAbilityLevel(leavingUnit, SPATIAL_LEAVE_ABILITY_ID) == 0
+				and GetIssuedOrderId() == Orders.undefend
+				unregisterUnit(leavingUnit)
 
 		// UnitIndexer gives explicit index calls immediate bucket ownership. Spatial membership is
 		// independent of manual UnitIndexer deindexing: a live recycled unit still belongs to native
@@ -550,3 +566,11 @@ init
 
 		doPeriodically(ANIMATION_PERIOD) cb ->
 			sweepStep()
+
+@compiletime function generateSpatialLeaveAbility()
+	new AbilityDefinitionDefend(SPATIAL_LEAVE_ABILITY_ID)
+		..setName("Spatial Leave Detect")
+		..setEditorSuffix("(UnitSpatialIndex)")
+		..setArtCaster("")
+		..setIconNormal("")
+		..setRace(Race.Unknown)
