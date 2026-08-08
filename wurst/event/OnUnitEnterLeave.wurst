@@ -81,7 +81,10 @@ init
 		preplacedUnits.enumUnitsAll(null)
 		let count = preplacedUnits.size()
 		for i = 0 to count - 1
-			prepareUnit(preplacedUnits.get(i))
+			let preplacedUnit = preplacedUnits.get(i)
+			// Units created after the synchronous region trigger was installed have already fired onEnter.
+			if preplacedUnit.getAbilityLevel(ABILITY_ID) == 0
+				prepareUnit(preplacedUnit)
 		preplacedUnits..clear()..destr()
 
 @compiletime function generateAbility()
