@@ -13,6 +13,7 @@ import OnUnitEnterLeave
 import MapBounds
 import ClosureTimers
 import HashMap
+import UnitEnumerationState
 
 // ============================================================================
 // Configuration
@@ -231,9 +232,10 @@ function unregisterUnit(unit u)
 	covers it - but an engine-side teleport or a raw `SetUnitX` call does, because neither is
 	observable.
 
-	Warcraft exposes no native that can discover a preplaced unit while it has Locust. If a map later
-	removes Locust from such a unit, call this immediately afterwards; the unit then becomes eligible
-	for both native and indexed enumeration at the same point. */
+	Warcraft exposes no native that can discover a preplaced hidden or Locust unit. The stdlib
+	`unit.show()` and `unit.removeAbility(LOCUST_ID)` wrappers register such units automatically when
+	they become enumerable. Code using raw `ShowUnit(u, true)` or `UnitRemoveAbility(u, LOCUST_ID)`
+	must call this immediately afterwards. */
 public function unit.updateSpatialIndex()
 	if not isLua or not USE_UNIT_SPATIAL_INDEX or this == null
 		return
@@ -531,6 +533,7 @@ init
 		// UnitIndexer.shouldIndex. See updateSpatialIndex() for Warcraft's preplaced-Locust limitation.
 		onEnter(() -> registerUnit(getEnterLeaveUnit()))
 		onLeave(() -> unregisterUnit(getEnterLeaveUnit()))
+		onUnitBecameEnumerable(() -> registerUnit(getBecameEnumerableUnit()))
 
 		doPeriodically(ANIMATION_PERIOD) cb ->
 			sweepStep()

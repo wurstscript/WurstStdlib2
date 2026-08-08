@@ -1,0 +1,31 @@
+package UnitEnumerationState
+/* Internal bridge for wrapper operations that can make a previously undiscoverable unit visible to
+	group enumeration. Kept independent of Unit and UnitSpatialIndex so both packages can use it
+	without an import cycle. */
+import NoWurst
+
+trigger becameEnumerableTrigger = null
+unit array becameEnumerableStack
+var becameEnumerableDepth = 0
+
+/** Registers a callback for a unit that may just have become discoverable by group enumeration. */
+public function onUnitBecameEnumerable(code callback)
+	if becameEnumerableTrigger == null
+		becameEnumerableTrigger = CreateTrigger()
+	TriggerAddAction(becameEnumerableTrigger, callback)
+
+/** Returns the unit associated with the innermost became-enumerable callback. */
+public function getBecameEnumerableUnit() returns unit
+	if becameEnumerableDepth <= 0
+		return null
+	return becameEnumerableStack[becameEnumerableDepth - 1]
+
+/** Called by stdlib unit wrappers after revealing a unit or successfully removing Locust. */
+public function notifyUnitBecameEnumerable(unit u)
+	if becameEnumerableTrigger == null
+		return
+	becameEnumerableStack[becameEnumerableDepth] = u
+	becameEnumerableDepth++
+	TriggerExecute(becameEnumerableTrigger)
+	becameEnumerableDepth--
+	becameEnumerableStack[becameEnumerableDepth] = null
