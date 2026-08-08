@@ -593,6 +593,9 @@ unit spawnedDuringQuery = null
 
 function testSpatialIndexReentrancy()
 	section("--- 14. spatial index reentrancy ---")
+	if not isLua or not USE_UNIT_SPATIAL_INDEX
+		note("indexed path inactive - snapshot-specific checks skipped")
+		return
 
 	for i = 0 to 3
 		reentrancyProbes[i] = createUnit(players[0], UnitIds.footman,
@@ -604,9 +607,12 @@ function testSpatialIndexReentrancy()
 	reentrancyVisited = 0
 	forUnitsInRangeIndexed(SPATIAL_TEST_POS.add(96., 0.), 400.) u ->
 		reentrancyVisited++
-		if u == reentrancyProbes[0] and reentrancyProbes[3] != null
-			reentrancyProbes[3].remove()
-			reentrancyProbes[3] = null
+		if reentrancyVisited == 1
+			for i = 0 to 3
+				if reentrancyProbes[i] != u
+					reentrancyProbes[i].remove()
+					reentrancyProbes[i] = null
+					break
 	check(reentrancyVisited >= 4, "removing a unit mid-iteration skips nobody ("
 		+ reentrancyVisited + " visited)")
 
