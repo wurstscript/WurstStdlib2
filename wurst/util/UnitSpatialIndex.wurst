@@ -13,7 +13,7 @@ import OnUnitEnterLeave
 import MapBounds
 import ClosureTimers
 import HashMap
-import UnitEnumerationState
+import UnitIndexer
 
 // ============================================================================
 // Configuration
@@ -230,12 +230,7 @@ function unregisterUnit(unit u)
 
 /**	Registers or re-buckets one unit immediately. Ordinary movement does not need this - the sweep
 	covers it - but an engine-side teleport or a raw `SetUnitX` call does, because neither is
-	observable.
-
-	Warcraft exposes no native that can discover a preplaced hidden or Locust unit. The stdlib
-	`unit.show()` and `unit.removeAbility(LOCUST_ID)` wrappers register such units automatically when
-	they become enumerable. Code using raw `ShowUnit(u, true)` or `UnitRemoveAbility(u, LOCUST_ID)`
-	must call this immediately afterwards. */
+	observable. */
 public function unit.updateSpatialIndex()
 	if not isLua or not USE_UNIT_SPATIAL_INDEX or this == null
 		return
@@ -522,25 +517,35 @@ public function spatialIndexEndQuery()
 // Init
 // ============================================================================
 
+/** Seeds every unit that already exists. Unlike range and rect enumeration, Warcraft's per-player
+	enumeration includes hidden and Locust units, so this is a complete synchronous bootstrap. */
+function seedExistingUnits()
+	let seedGroup = CreateGroup()
+	for i = 0 to bj_MAX_PLAYER_SLOTS - 1
+		GroupEnumUnitsOfPlayer(seedGroup, players[i], null)
+		for u in seedGroup
+			registerUnit(u)
+		seedGroup.clear()
+	seedGroup.destr()
+
 init
 	// Written as a positive guard rather than an early return: `isLua` is folded, so on the Jass
 	// target the whole body disappears and this package registers nothing at all.
 	if isLua and USE_UNIT_SPATIAL_INDEX
 		rebuildSpatialIndexGrid(boundMin, boundMax)
 
-		// OnUnitEnterLeave covers ordinary preplaced units as well as later creation/removal. Keeping
-		// our own independent registry makes this complete even when a map customizes
-		// UnitIndexer.shouldIndex. See updateSpatialIndex() for Warcraft's preplaced-Locust limitation.
+		// UnitIndexer gives explicit index/deindex calls immediate bucket ownership. The enter/leave
+		// hooks remain as a complete fallback when a map customizes UnitIndexer.shouldIndex.
+		onUnitIndex(() -> registerUnit(getIndexingUnit()))
+		onUnitDeindex(() -> unregisterUnit(getIndexingUnit()))
 		onEnter(() -> registerUnit(getEnterLeaveUnit()))
 		onLeave(() -> unregisterUnit(getEnterLeaveUnit()))
-		onUnitBecameEnumerable(() -> registerUnit(getBecameEnumerableUnit()))
+
+		// OnUnitEnterLeave defers its synthetic preplaced enter events so importers can attach their
+		// callbacks first. This index does not need to wait: per-player enumeration is complete for
+		// hidden/Locust units, and all callbacks above are already installed.
+		seedExistingUnits()
+		indexActive = true
 
 		doPeriodically(ANIMATION_PERIOD) cb ->
 			sweepStep()
-
-		// OnUnitEnterLeave seeds preplaced units from a zero-second timer. Stay unhealthy through map
-		// init and that deferred pass so early indexed calls take their native fallback rather than
-		// consulting a partially populated grid. One animation period also avoids relying on ordering
-		// between timers that share the same zero timeout.
-		doAfter(ANIMATION_PERIOD) ->
-			indexActive = true

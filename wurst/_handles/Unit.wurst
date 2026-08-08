@@ -5,7 +5,6 @@ import Item
 import Annotations
 import Destructable
 import AbilityIds
-import UnitEnumerationState
 
 @IfNotDefined public native UnitAlive(unit id) returns boolean
 @IfNotDefined public native GetUnitGoldCost(int unitid) returns int
@@ -413,10 +412,7 @@ public function unit.remove()
 	RemoveUnit(this)
 
 public function unit.removeAbility(int abil) returns boolean
-	let removed = UnitRemoveAbility(this, abil)
-	if removed and abil == 'Aloc'
-		notifyUnitBecameEnumerable(this)
-	return removed
+	return UnitRemoveAbility(this, abil)
 
 public function unit.removeItem(item itm)
 	UnitRemoveItem(this, itm)
@@ -626,7 +622,6 @@ public function unit.setY(real y)
 
 public function unit.show()
 	ShowUnit(this, true)
-	notifyUnitBecameEnumerable(this)
 
 public function unit.subHP(real val)
 	this.subState(UNIT_STATE_LIFE, val)

@@ -539,6 +539,14 @@ function testSpatialIndexParity()
 	let corpse = createUnit(players[0], UnitIds.footman, SPATIAL_TEST_POS.add(240., 0.), angle(0))
 	corpse.kill()
 
+	// The synchronous bootstrap relies on the engine's player enum, specifically because it includes
+	// states omitted by range/rect enums. Pin that engine distinction explicitly.
+	let playerUnits = CreateGroup()
+	GroupEnumUnitsOfPlayer(playerUnits, players[0], null)
+	check(playerUnits.has(hidden), "player enumeration includes hidden units")
+	check(playerUnits.has(locust), "player enumeration includes Locust units")
+	playerUnits.destr()
+
 	checkRangeParity(SPATIAL_TEST_POS, 300., false, "range query matches the engine")
 	checkRangeParity(SPATIAL_TEST_POS, 300., true, "collision-filtered query matches the engine")
 	checkRangeParity(SPATIAL_TEST_POS, 121., false, "tight radius on a probe boundary")
