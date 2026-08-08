@@ -1,8 +1,8 @@
 package UnitSpatialIndex
 /*	Lua uniform grid backing `SpatialIndexForUnits`. A fixed-count sweep maintains cached positions,
-	and conservative padding covers movement between sweeps. Unhealthy indexes fall back to native
-	enumeration. Grid traversal order differs from native order; movement beyond the configured speed
-	requires `unit.updateSpatialIndex()` for immediate visibility. */
+	and conservative padding covers movement between sweeps. Grid traversal order differs from native
+	order; movement beyond the configured speed requires `unit.updateSpatialIndex()` for immediate
+	visibility. The public native-less query package returns an empty set when this index is disabled. */
 import OnUnitEnterLeave
 import MapBounds
 import ClosureTimers
@@ -12,7 +12,7 @@ import UnitSpatialIndexRemoval
 
 // Configuration
 
-/** Master switch; override from `UnitSpatialIndex_config` to use native fallbacks. */
+/** Master switch; override from `UnitSpatialIndex_config` to disable the native-less index. */
 @configurable public constant USE_UNIT_SPATIAL_INDEX = true
 
 /** Grid cell edge in world units; smaller cells tighten windows but increase cells walked. */
