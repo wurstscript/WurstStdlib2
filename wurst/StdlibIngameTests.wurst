@@ -724,7 +724,7 @@ function testSpatialIndexReentrancy()
 	spawnedDuringQuery = null
 	let creationSnapshot = unitsInRange(SPATIAL_TEST_POS.add(96., 0.), 400.)
 	for i = 0 to creationSnapshot.size() - 1
-		let u = creationSnapshot.get(i)
+		let _u = creationSnapshot.get(i)
 		reentrancyVisited++
 		if spawnedDuringQuery == null
 			spawnedDuringQuery = createUnit(players[0], UnitIds.footman, SPATIAL_TEST_POS, angle(0))
