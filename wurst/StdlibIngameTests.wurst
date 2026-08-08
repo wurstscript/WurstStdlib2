@@ -7,7 +7,8 @@ import UnitIds
 import Execute
 import ErrorHandling
 import UnitSpatialIndex
-import SpatialIndexForGroups
+import SpatialIndexForUnits
+import SparseSet
 import UnitIndexer
 import OnUnitEnterLeave
 
@@ -480,9 +481,11 @@ function countSpatialInitProbeEnter()
 	if creatingSpatialInitProbe or getEnterLeaveUnit() == spatialInitProbe
 		spatialInitProbeEnterEvents++
 
-function collectViaClosure(vec2 pos, real radius, bool collisionFiltering, group into)
-	forUnitsInRangeIndexed(pos, radius, collisionFiltering) u ->
-		into.add(u)
+function collectViaSparseSet(vec2 pos, real radius, bool collisionFiltering, group into)
+	let matches = unitsInRange(pos, radius, collisionFiltering)
+	for i = 0 to matches.size() - 1
+		into.add(matches.get(i))
+	destroy matches
 
 function collectNative(vec2 pos, real radius, bool collisionFiltering, group into)
 	if collisionFiltering
@@ -510,7 +513,7 @@ function describeDifference(group actual, group expected) returns string
 function checkRangeParity(vec2 pos, real radius, bool collisionFiltering, string label)
 	let actual = CreateGroup()
 	let expected = CreateGroup()
-	collectViaClosure(pos, radius, collisionFiltering, actual)
+	collectViaSparseSet(pos, radius, collisionFiltering, actual)
 	collectNative(pos, radius, collisionFiltering, expected)
 	var equal = actual.size() == expected.size()
 	if equal
@@ -585,8 +588,11 @@ function testSpatialIndexParity()
 		SPATIAL_TEST_POS.x + 200., SPATIAL_TEST_POS.y + 200.)
 	let actualRect = CreateGroup()
 	let expectedRect = CreateGroup()
-	forUnitsInRectIndexed(r) u ->
-		actualRect.add(u)
+	let rectMatches = unitsInBox(vec2(r.getMinX() + 32., r.getMinY() + 32.),
+		vec2(r.getMaxX(), r.getMaxY()))
+	for i = 0 to rectMatches.size() - 1
+		actualRect.add(rectMatches.get(i))
+	destroy rectMatches
 	GroupEnumUnitsInRect(expectedRect, r, null)
 	var rectEqual = actualRect.size() == expectedRect.size()
 	if rectEqual
@@ -666,16 +672,19 @@ function testSpatialIndexReentrancy()
 	// readout which caches the group size and indexes into it: groups silently drop removed units,
 	// so every later index shifts down and a unit is skipped. A snapshot is immune.
 	reentrancyVisited = 0
-	forUnitsInRangeIndexed(SPATIAL_TEST_POS.add(96., 0.), 400.) u ->
+	let removalSnapshot = unitsInRange(SPATIAL_TEST_POS.add(96., 0.), 400.)
+	for i = 0 to removalSnapshot.size() - 1
+		let u = removalSnapshot.get(i)
 		reentrancyVisited++
 		if reentrancyVisited == 1
-			for i = 0 to 3
-				if reentrancyProbes[i] != u
-					reentrancyProbes[i].remove()
-					reentrancyProbes[i] = null
+			for j = 0 to 3
+				if reentrancyProbes[j] != u
+					reentrancyProbes[j].remove()
+					reentrancyProbes[j] = null
 					break
 	check(reentrancyVisited >= 4, "removing a unit mid-iteration skips nobody ("
 		+ reentrancyVisited + " visited)")
+	destroy removalSnapshot
 
 	for i = 0 to 3
 		if reentrancyProbes[i] != null
@@ -689,13 +698,22 @@ function testSpatialIndexReentrancy()
 	// pushes above the outer one and must not disturb it.
 	reentrancyVisited = 0
 	reentrancyNested = 0
-	forUnitsInRangeIndexed(SPATIAL_TEST_POS.add(96., 0.), 400.) outerUnit ->
+	let outerSnapshot = unitsInRange(SPATIAL_TEST_POS.add(96., 0.), 400.)
+	for outerIndex = 0 to outerSnapshot.size() - 1
+		let outerUnit = outerSnapshot.get(outerIndex)
 		reentrancyVisited++
-		forUnitsInRangeIndexed(outerUnit.getPos(), 300.) middleUnit ->
+		let middleSnapshot = unitsInRange(outerUnit.getPos(), 300.)
+		for middleIndex = 0 to middleSnapshot.size() - 1
+			let middleUnit = middleSnapshot.get(middleIndex)
 			reentrancyNested++
-			forUnitsInRangeIndexed(middleUnit.getPos(), 100.) innerUnit ->
+			let innerSnapshot = unitsInRange(middleUnit.getPos(), 100.)
+			for innerIndex = 0 to innerSnapshot.size() - 1
+				let innerUnit = innerSnapshot.get(innerIndex)
 				if innerUnit == null
 					reentrancyNested--
+			destroy innerSnapshot
+		destroy middleSnapshot
+	destroy outerSnapshot
 	check(reentrancyVisited == 4, "outer enumeration unaffected by nesting ("
 		+ reentrancyVisited + ")")
 	check(reentrancyNested > 0, "nested enumerations ran (" + reentrancyNested + ")")
@@ -704,10 +722,13 @@ function testSpatialIndexReentrancy()
 	// that is already running, and must not corrupt the iteration.
 	reentrancyVisited = 0
 	spawnedDuringQuery = null
-	forUnitsInRangeIndexed(SPATIAL_TEST_POS.add(96., 0.), 400.) u ->
+	let creationSnapshot = unitsInRange(SPATIAL_TEST_POS.add(96., 0.), 400.)
+	for i = 0 to creationSnapshot.size() - 1
+		let u = creationSnapshot.get(i)
 		reentrancyVisited++
 		if spawnedDuringQuery == null
 			spawnedDuringQuery = createUnit(players[0], UnitIds.footman, SPATIAL_TEST_POS, angle(0))
+	destroy creationSnapshot
 	check(reentrancyVisited == 4, "creating a unit mid-iteration does not extend it ("
 		+ reentrancyVisited + ")")
 	if spawnedDuringQuery != null

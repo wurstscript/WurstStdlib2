@@ -1,0 +1,51 @@
+package SpatialIndexForUnits
+import SparseSet
+import UnitSpatialIndex
+
+/**
+ * Native-less Lua spatial queries.
+ *
+ * Each call returns an owned SparseSet<unit>. The result is independent of Warcraft groups and must
+ * be destroyed by the caller. These APIs are intentionally Lua-oriented: on Jass or while disabled,
+ * they return an empty set because no native fallback is hidden behind the generic result type.
+ */
+
+function newUnitResult() returns SparseSet<unit>
+	return new SparseSet<unit>(UNIT_SPARSE_SET_KEY)
+
+function addRangeMatches(SparseSet<unit> result, vec2 center, real radius, boolean collisionFiltering)
+	let matched = spatialIndexBeginQuery(center, radius, collisionFiltering)
+	for i = 0 to matched - 1
+		result.add(spatialIndexQueryUnit(i))
+	spatialIndexEndQuery()
+
+/** Returns units whose origins are within radius of center. */
+public function unitsInRange(vec2 center, real radius) returns SparseSet<unit>
+	return unitsInRange(center, radius, false)
+
+/** Returns units in range, optionally applying collision-size filtering. */
+public function unitsInRange(vec2 center, real radius, boolean collisionFiltering) returns SparseSet<unit>
+	let result = newUnitResult()
+	if isLua and USE_UNIT_SPATIAL_INDEX
+		addRangeMatches(result, center, radius, collisionFiltering)
+	return result
+
+/** Returns units whose origins are inside the axis-aligned box. */
+public function unitsInBox(vec2 boxMin, vec2 boxMax) returns SparseSet<unit>
+	let result = newUnitResult()
+	if isLua and USE_UNIT_SPATIAL_INDEX
+		let matched = spatialIndexBeginBoxQuery(boxMin, boxMax)
+		for i = 0 to matched - 1
+			result.add(spatialIndexQueryUnit(i))
+		spatialIndexEndQuery()
+	return result
+
+/** Returns currently indexed units owned by owner. */
+public function unitsOfPlayer(player owner) returns SparseSet<unit>
+	let result = newUnitResult()
+	if isLua and USE_UNIT_SPATIAL_INDEX
+		let matched = spatialIndexBeginPlayerQuery(owner)
+		for i = 0 to matched - 1
+			result.add(spatialIndexQueryUnit(i))
+		spatialIndexEndQuery()
+	return result

@@ -1,5 +1,5 @@
 package UnitSpatialIndex
-/*	Lua uniform grid backing `SpatialIndexForGroups`. A fixed-count sweep maintains cached positions,
+/*	Lua uniform grid backing `SpatialIndexForUnits`. A fixed-count sweep maintains cached positions,
 	and conservative padding covers movement between sweeps. Unhealthy indexes fall back to native
 	enumeration. Grid traversal order differs from native order; movement beyond the configured speed
 	requires `unit.updateSpatialIndex()` for immediate visibility. */
@@ -393,19 +393,16 @@ public function spatialIndexBeginQuery(vec2 center, real radius, boolean collisi
 
 	return snapshotTop - queryBase[queryDepth - 1]
 
-/**	Collects every unit whose origin lies within `r` into the query snapshot and returns how many
-	matched. Must be paired with `spatialIndexEndQuery()`. */
-public function spatialIndexBeginRectQuery(rect r) returns int
+/** Collects units inside the box into the query snapshot. */
+public function spatialIndexBeginBoxQuery(vec2 boxMin, vec2 boxMax) returns int
 	queryBase[queryDepth] = snapshotTop
 	queryDepth++
 
 	let maxDisp = currentMaxDisplacement()
-	// `GroupEnumUnitsInRect` has an off-by-one on the minimum bounds: a unit's origin must be within
-	// [minX + 32, minY + 32, maxX, maxY]. Reproduced deliberately so results match the engine path.
-	let minX = r.getMinX() + 32.
-	let minY = r.getMinY() + 32.
-	let maxX = r.getMaxX()
-	let maxY = r.getMaxY()
+	let minX = boxMin.x
+	let minY = boxMin.y
+	let maxX = boxMax.x
+	let maxY = boxMax.y
 
 	let minCx = cellCoordX(minX - maxDisp)
 	let maxCx = cellCoordX(maxX + maxDisp)
@@ -444,6 +441,19 @@ public function spatialIndexBeginRectQuery(rect r) returns int
 			cx++
 		cy++
 
+	return snapshotTop - queryBase[queryDepth - 1]
+
+/** Collects currently indexed units owned by owner without a native group scan.
+
+    Player enumeration intentionally does not apply the range/box visibility filter: Warcraft's
+    GroupEnumUnitsOfPlayer includes hidden and Locust units, so this query does too. */
+public function spatialIndexBeginPlayerQuery(player owner) returns int
+	queryBase[queryDepth] = snapshotTop
+	queryDepth++
+	for i = 0 to registryCount - 1
+		let u = indexedUnit[registry[i]]
+		if u != null and u.getOwner() == owner
+			pushMatch(u)
 	return snapshotTop - queryBase[queryDepth - 1]
 
 /**	Returns the i-th match of the innermost open query. */
