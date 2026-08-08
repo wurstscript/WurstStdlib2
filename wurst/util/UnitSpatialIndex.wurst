@@ -253,6 +253,10 @@ function sweepStep()
 			refreshUnit(idx, u)
 			sweepCursor++
 
+/** Whether the Lua spatial index is active and can serve indexed queries. */
+public function spatialIndexHealthy() returns boolean
+	return isLua and indexActive
+
 // Diagnostics
 
 /** Guaranteed upper staleness bound in seconds used to derive query padding. */
