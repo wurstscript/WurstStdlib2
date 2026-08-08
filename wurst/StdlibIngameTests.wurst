@@ -469,8 +469,8 @@ function testGroupNesting()
 	claim that matters for membership parity, and it means the awkward
 	cases (hidden, locust, corpses, boundary distances) need no engine behaviour to be hardcoded.
 
-	With USE_UNIT_SPATIAL_INDEX off these still run and simply compare the native path to itself,
-	which is harmless but proves nothing; the header line says which mode was exercised. */
+	These checks are Lua-index checks only. On Jass or with the index disabled, the native-less API
+	returns an empty SparseSet by contract, so there is no meaningful parity assertion to run. */
 
 constant SPATIAL_TEST_POS = vec2(-2000, 2000)
 unit spatialInitProbe = null
@@ -531,8 +531,8 @@ function testSpatialIndexParity()
 			+ " units, staleness " + spatialIndexWorstStaleness()
 			+ "s, padding " + spatialIndexPadCells() + " cell(s)")
 	else
-		note("index inactive (isLua=" + isLua + ", enabled="
-			+ USE_UNIT_SPATIAL_INDEX + ") - comparing the native path to itself")
+		note("index inactive (isLua=" + isLua + ", enabled=" + USE_UNIT_SPATIAL_INDEX + ")")
+		return
 
 	// A spread of probes straddling the query boundary, so the distance test is exercised on both
 	// sides of it and inside the uncertain annulus rather than only well inside the radius.
