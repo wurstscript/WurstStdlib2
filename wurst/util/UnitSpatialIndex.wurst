@@ -1,0 +1,491 @@
+package UnitSpatialIndex
+/*	Lua-side uniform grid backing `SpatialIndexForGroups`. It avoids the engine-to-Lua filter callback
+	paid by native group enums and uses cached positions for candidates away from query boundaries.
+
+	A fixed-count sweep maintains the grid. Query padding is derived from an a-priori sweep-cycle
+	bound, so ordinary movement remains covered as the unit count grows; an unhealthy index falls back
+	to native enumeration. Indexed queries intentionally differ from native closures in two ways:
+	iteration uses grid order, and movement exceeding SPATIAL_INDEX_MAX_UNIT_SPEED times the sweep
+	interval requires `unit.updateSpatialIndex()` for immediate visibility. Existing
+	`ClosureForGroups` APIs are unchanged.
+*/
+import OnUnitEnterLeave
+import MapBounds
+import ClosureTimers
+import HashMap
+
+// ============================================================================
+// Configuration
+// ============================================================================
+
+/**	Master switch for the explicitly indexed APIs. Disable it from a `UnitSpatialIndex_config`
+	package to make them use their native fallbacks. */
+@configurable public constant USE_UNIT_SPATIAL_INDEX = true
+
+/**	Grid cell edge length in world units. Smaller cells mean tighter query windows but more cells to
+	walk; the padding below is measured in whole cells, so a cell much smaller than the typical unit
+	displacement per sweep cycle is wasted. */
+@configurable public constant SPATIAL_INDEX_CELL_SIZE = 256.
+
+/**	Units re-bucketed per tick. This is the entire per-tick cost of the index, and it is constant at
+	any unit count - raising it shortens the sweep cycle, which shrinks the query padding. */
+@configurable public constant SPATIAL_INDEX_UNITS_PER_TICK = 128
+
+/**	Engine movement-speed cap. Configurable because gameplay constants can raise the default 522. */
+@configurable public constant SPATIAL_INDEX_MAX_UNIT_SPEED = 522.
+
+/**	Queries below this radius use the engine path: a padded window can easily hold more units than a
+	small circle does. Calibrate per map; 0 disables the floor. */
+@configurable public constant SPATIAL_INDEX_MIN_RADIUS = 0.
+
+/**	If the guaranteed worst-case staleness exceeds this, the index declares itself degraded and callers
+	fall back to the engine path until the sweep catches up. */
+@configurable public constant SPATIAL_INDEX_MAX_STALENESS = 1.5
+
+/**	`GroupEnumUnitsInRange` skips hidden units. Maps that never call `ShowUnit(u, false)` can turn
+	this off to save one native per hit. */
+@configurable public constant SPATIAL_INDEX_CHECK_HIDDEN = true
+
+/**	Debug aid: run the engine enumeration alongside every indexed query and raise an error if the
+	two disagree. Expensive - it does strictly more work than not using the index at all - but it
+	turns any test run into a parity harness instead of a smoke test. Never ship with this on. */
+@configurable public constant SPATIAL_INDEX_VERIFY = false
+
+// ============================================================================
+// Grid state
+// ============================================================================
+
+// Index ids are assigned in synchronized enter-event order. Native handle ids are deliberately not
+// used: they are not stable between Lua clients and would make traversal order desync-prone.
+int array cellHead
+int array nextInCell
+int array prevInCell
+int array cellOfUnit
+real array lastX
+real array lastY
+int array lastSweepTick
+unit array indexedUnit
+let spatialIndexByUnit = new HashMap<unit, int>
+var nextSpatialIndex = 1
+
+// Dense round-robin registry of every indexed unit, holding indices rather than handles.
+int array registry
+int array registrySlot
+var registryCount = 0
+
+real gridOriginX = 0.
+real gridOriginY = 0.
+var gridWidth = 0
+var gridHeight = 0
+
+var sweepCursor = 0
+var sweepTick = 0
+/** Worst staleness (in ticks) observed during the cycle in progress. */
+var cycleWorstAge = 0
+/** Worst staleness (in ticks) observed over the last completed cycle - what the padding is built on. */
+var publishedWorstAge = 1
+var indexActive = false
+
+// ============================================================================
+// Query snapshot stack
+// ============================================================================
+
+// A visitor may kill, move or create units, which mutates the very chains a query is walking, so
+// matches are snapshotted before any callback runs. One shared stack rather than fixed per-depth
+// segments: a nested query simply pushes above its parent, so nothing can overflow a per-depth cap.
+unit array snapshotStack
+var snapshotTop = 0
+int array queryBase
+var queryDepth = 0
+
+// ============================================================================
+// Grid math
+// ============================================================================
+
+@inline function cellCoordX(real x) returns int
+	return max(0, min(gridWidth - 1, ((x - gridOriginX) / SPATIAL_INDEX_CELL_SIZE).floor()))
+
+@inline function cellCoordY(real y) returns int
+	return max(0, min(gridHeight - 1, ((y - gridOriginY) / SPATIAL_INDEX_CELL_SIZE).floor()))
+
+@inline function cellAt(real x, real y) returns int
+	return cellCoordX(x) + cellCoordY(y) * gridWidth
+
+/**	Ticks needed for the sweep to reach every tracked unit once.
+
+	This is an a-priori bound, not an observation, and that distinction is load bearing. Observed
+	staleness only tells you how old the entries the cursor has *already reached* were; a unit that
+	registered long ago and has not been reached yet has an age nobody has measured. Padding built on
+	observations would be too small right after a large spawn and would miss exactly those units.
+
+	The bound is tight because every tracked unit is guaranteed to be refreshed within one pass: the
+	cursor reaches everything ahead of it, and `unregisterUnit` refreshes any entry its swap-remove
+	drops behind the cursor. */
+function sweepCycleTicks() returns int
+	return (registryCount / SPATIAL_INDEX_UNITS_PER_TICK.toReal()).ceil() + 1
+
+/** Worst-case distance a unit may have travelled since its cached position was written. */
+function currentMaxDisplacement() returns real
+	return SPATIAL_INDEX_MAX_UNIT_SPEED * sweepCycleTicks() * ANIMATION_PERIOD
+
+// ============================================================================
+// Membership
+// ============================================================================
+
+function linkIntoCell(int idx, int cell, real x, real y)
+	let head = cellHead[cell]
+	prevInCell[idx] = 0
+	nextInCell[idx] = head
+	if head != 0
+		prevInCell[head] = idx
+	cellHead[cell] = idx
+	cellOfUnit[idx] = cell + 1
+	lastX[idx] = x
+	lastY[idx] = y
+
+function unlinkFromCell(int idx)
+	let stored = cellOfUnit[idx]
+	if stored == 0
+		return
+	let prev = prevInCell[idx]
+	let next = nextInCell[idx]
+	if prev != 0
+		nextInCell[prev] = next
+	else
+		cellHead[stored - 1] = next
+	if next != 0
+		prevInCell[next] = prev
+	cellOfUnit[idx] = 0
+	nextInCell[idx] = 0
+	prevInCell[idx] = 0
+
+function registerUnit(unit u)
+	if u == null or spatialIndexByUnit.get(u) != 0
+		return
+	let idx = nextSpatialIndex
+	nextSpatialIndex++
+	spatialIndexByUnit.put(u, idx)
+	indexedUnit[idx] = u
+	registry[registryCount] = idx
+	registrySlot[idx] = registryCount + 1
+	registryCount++
+	lastSweepTick[idx] = sweepTick
+	let pos = u.getPos()
+	linkIntoCell(idx, cellAt(pos.x, pos.y), pos.x, pos.y)
+
+function unregisterIndex(int idx)
+	let slot = registrySlot[idx]
+	if slot == 0
+		return
+	let removedUnit = indexedUnit[idx]
+	if removedUnit != null
+		spatialIndexByUnit.remove(removedUnit)
+	// Swap-remove keeps the registry dense so the round-robin cursor never walks holes.
+	let last = registryCount - 1
+	let moved = registry[last]
+	registry[slot - 1] = moved
+	registrySlot[moved] = slot
+	registry[last] = 0
+	registryCount = last
+	registrySlot[idx] = 0
+	unlinkFromCell(idx)
+	indexedUnit[idx] = null
+
+	// The swap can drop an entry from ahead of the cursor to behind it, where this pass will never
+	// reach it - it would then go a further full cycle without a refresh, breaking the one-pass
+	// bound that `sweepCycleTicks` relies on. Refresh it here instead. O(1), and only on the entries
+	// actually displaced backwards.
+	if moved != 0 and slot - 1 < sweepCursor
+		let movedUnit = indexedUnit[moved]
+		if movedUnit != null
+			refreshUnit(moved, movedUnit)
+
+function unregisterUnit(unit u)
+	unregisterIndex(spatialIndexByUnit.get(u))
+
+/**	Re-buckets one unit immediately. Ordinary movement does not need this - the sweep covers it - but
+	an engine-side teleport or a raw `SetUnitX` call does, because neither is observable. */
+public function unit.updateSpatialIndex()
+	if not isLua or not indexActive or this == null
+		return
+	let idx = spatialIndexByUnit.get(this)
+	if idx == 0 or registrySlot[idx] == 0
+		return
+	refreshUnit(idx, this)
+
+function refreshUnit(int idx, unit u)
+	let x = u.getX()
+	let y = u.getY()
+	lastSweepTick[idx] = sweepTick
+	let cell = cellAt(x, y)
+	if cellOfUnit[idx] == cell + 1
+		// Same bucket - only the cached position needs updating.
+		lastX[idx] = x
+		lastY[idx] = y
+		return
+	unlinkFromCell(idx)
+	linkIntoCell(idx, cell, x, y)
+
+// ============================================================================
+// Sweep
+// ============================================================================
+
+function sweepStep()
+	sweepTick++
+	if registryCount <= 0
+		cycleWorstAge = 0
+		publishedWorstAge = 1
+		sweepCursor = 0
+		return
+
+	// Every iteration counts against the budget, including the ones that only drop a stale entry, so
+	// the per-tick cost stays capped no matter what the registry contains.
+	var processed = 0
+	while processed < SPATIAL_INDEX_UNITS_PER_TICK and processed < registryCount
+		processed++
+		if sweepCursor >= registryCount
+			// Cycle complete: publish what the worst staleness actually was, and start measuring anew.
+			sweepCursor = 0
+			publishedWorstAge = max(cycleWorstAge, 1)
+			cycleWorstAge = 0
+		let idx = registry[sweepCursor]
+		let u = indexedUnit[idx]
+		if u == null
+			// Deindexed without an event reaching us. Drop it and do NOT advance the cursor: the
+			// swap-remove just moved a different entry into this slot.
+			unregisterIndex(idx)
+		else
+			let age = sweepTick - lastSweepTick[idx]
+			if age > cycleWorstAge
+				cycleWorstAge = age
+			refreshUnit(idx, u)
+			sweepCursor++
+
+/**	False when the sweep has fallen so far behind that the padding would make queries pointless.
+	Callers fall back to the engine path while this is false. */
+public function spatialIndexHealthy() returns boolean
+	return isLua and indexActive
+		and (sweepCycleTicks() * ANIMATION_PERIOD) <= SPATIAL_INDEX_MAX_STALENESS
+
+// ============================================================================
+// Diagnostics
+// ============================================================================
+
+/**	Guaranteed upper bound on entry staleness, in seconds - what the query padding is built on, and
+	the number to watch when tuning SPATIAL_INDEX_UNITS_PER_TICK against SPATIAL_INDEX_CELL_SIZE:
+	padding stays at one cell while
+	`spatialIndexWorstStaleness() * SPATIAL_INDEX_MAX_UNIT_SPEED <= SPATIAL_INDEX_CELL_SIZE`. */
+public function spatialIndexWorstStaleness() returns real
+	return sweepCycleTicks() * ANIMATION_PERIOD
+
+/**	Staleness the sweep has actually observed, in seconds. Always <= spatialIndexWorstStaleness();
+	a persistent gap between the two means the bound is loose and the budget could be lowered.
+	Diagnostic only - padding must never be derived from this, see `sweepCycleTicks`. */
+public function spatialIndexObservedStaleness() returns real
+	return max(publishedWorstAge, cycleWorstAge) * ANIMATION_PERIOD
+
+/** How many units the sweep currently cycles over. */
+public function spatialIndexTrackedUnits() returns int
+	return registryCount
+
+/**	Current query padding in whole cells, derived from the guaranteed staleness. Grows as the sweep
+	falls behind, which widens windows rather than producing wrong results. */
+public function spatialIndexPadCells() returns int
+	return (currentMaxDisplacement() / SPATIAL_INDEX_CELL_SIZE).ceil()
+
+/**	Rebuilds the grid for the given world extent. Called at init from `MapBounds`; public so that a
+	map which changes its world bounds - or a test that needs a deterministic grid - can rebuild it.
+	Any tracked unit is re-bucketed, so this is safe to call at any time.
+
+	Deliberately not guarded by `isLua`: it is pure arithmetic, and leaving it reachable is what lets
+	the grid math be unit-tested, since `isLua` is false inside the compiletime interpreter. */
+public function rebuildSpatialIndexGrid(vec2 worldMin, vec2 worldMax)
+	for cell = 0 to gridWidth * gridHeight - 1
+		cellHead[cell] = 0
+	gridOriginX = worldMin.x
+	gridOriginY = worldMin.y
+	gridWidth = ((worldMax.x - worldMin.x) / SPATIAL_INDEX_CELL_SIZE).ceil() + 1
+	gridHeight = ((worldMax.y - worldMin.y) / SPATIAL_INDEX_CELL_SIZE).ceil() + 1
+	for i = 0 to registryCount - 1
+		let idx = registry[i]
+		cellOfUnit[idx] = 0
+		nextInCell[idx] = 0
+		prevInCell[idx] = 0
+		let u = indexedUnit[idx]
+		if u != null
+			let pos = u.getPos()
+			linkIntoCell(idx, cellAt(pos.x, pos.y), pos.x, pos.y)
+
+/**	Which cell a position maps to. Exposed for tests and diagnostics; the value is an index into the
+	internal grid and is only meaningful relative to other cells. */
+public function spatialIndexCellOf(vec2 pos) returns int
+	return cellAt(pos.x, pos.y)
+
+/** Grid dimensions in cells, for tests and diagnostics. */
+public function spatialIndexGridWidth() returns int
+	return gridWidth
+
+public function spatialIndexGridHeight() returns int
+	return gridHeight
+
+// ============================================================================
+// Queries
+// ============================================================================
+
+@inline function pushMatch(unit u)
+	snapshotStack[snapshotTop] = u
+	snapshotTop++
+
+@inline function unit.passesEnumerationState() returns boolean
+	if this.getAbilityLevel(LOCUST_ID) != 0
+		return false
+	return not SPATIAL_INDEX_CHECK_HIDDEN or not this.isHidden()
+
+/**	Collects every unit whose origin lies within `radius` of `center` into the query snapshot and
+	returns how many matched. Must be paired with `spatialIndexEndQuery()`.
+
+	With `collisionSizeFiltering` the test becomes `IsUnitInRangeXY`, matching
+	`ClosureForGroups.forUnitsInRange(pos, radius, true, cb)`. */
+public function spatialIndexBeginQuery(vec2 center, real radius, boolean collisionSizeFiltering) returns int
+	queryBase[queryDepth] = snapshotTop
+	queryDepth++
+
+	let maxDisp = currentMaxDisplacement()
+	// The engine test for the collision variant reaches an extra collision radius outward, so the
+	// window has to widen by the largest collision size any unit can have.
+	let reach = radius + (collisionSizeFiltering ? MAX_COLLISION_SIZE : 0.) + maxDisp
+	let minCx = cellCoordX(center.x - reach)
+	let maxCx = cellCoordX(center.x + reach)
+	let minCy = cellCoordY(center.y - reach)
+	let maxCy = cellCoordY(center.y + reach)
+
+	let certainlyIn = radius - maxDisp
+	let certainlyOut = radius + maxDisp
+	let certainlyInSq = certainlyIn * certainlyIn
+	let certainlyOutSq = certainlyOut * certainlyOut
+	let radiusSq = radius * radius
+
+	var cy = minCy
+	while cy <= maxCy
+		let rowBase = cy * gridWidth
+		var cx = minCx
+		while cx <= maxCx
+			var idx = cellHead[rowBase + cx]
+			while idx != 0
+				// Read the successor first: the visitor cannot run yet, but a defensive read keeps
+				// this loop correct if the chain is ever mutated during collection.
+				let next = nextInCell[idx]
+				let dx = lastX[idx] - center.x
+				let dy = lastY[idx] - center.y
+				let cachedDistSq = dx * dx + dy * dy
+				if collisionSizeFiltering
+					// Per-unit collision size makes the "definitely inside" half unusable, but the
+					// cheap outside rejection still removes most of the padded window for free.
+					if cachedDistSq <= (certainlyOut + MAX_COLLISION_SIZE) * (certainlyOut + MAX_COLLISION_SIZE)
+						let u = indexedUnit[idx]
+						if u != null and IsUnitInRangeXY(u, center.x, center.y, radius)
+							and u.passesEnumerationState()
+							pushMatch(u)
+				else if certainlyIn > 0. and cachedDistSq <= certainlyInSq
+					let u = indexedUnit[idx]
+					if u != null and u.passesEnumerationState()
+						pushMatch(u)
+				else if cachedDistSq <= certainlyOutSq
+					// Only this annulus needs a live position read.
+					let u = indexedUnit[idx]
+					if u != null
+						let ux = u.getX() - center.x
+						let uy = u.getY() - center.y
+						if ux * ux + uy * uy <= radiusSq and u.passesEnumerationState()
+							pushMatch(u)
+				idx = next
+			cx++
+		cy++
+
+	return snapshotTop - queryBase[queryDepth - 1]
+
+/**	Collects every unit whose origin lies within `r` into the query snapshot and returns how many
+	matched. Must be paired with `spatialIndexEndQuery()`. */
+public function spatialIndexBeginRectQuery(rect r) returns int
+	queryBase[queryDepth] = snapshotTop
+	queryDepth++
+
+	let maxDisp = currentMaxDisplacement()
+	// `GroupEnumUnitsInRect` has an off-by-one on the minimum bounds: a unit's origin must be within
+	// [minX + 32, minY + 32, maxX, maxY]. Reproduced deliberately so results match the engine path.
+	let minX = r.getMinX() + 32.
+	let minY = r.getMinY() + 32.
+	let maxX = r.getMaxX()
+	let maxY = r.getMaxY()
+
+	let minCx = cellCoordX(minX - maxDisp)
+	let maxCx = cellCoordX(maxX + maxDisp)
+	let minCy = cellCoordY(minY - maxDisp)
+	let maxCy = cellCoordY(maxY + maxDisp)
+
+	var cy = minCy
+	while cy <= maxCy
+		let rowBase = cy * gridWidth
+		var cx = minCx
+		while cx <= maxCx
+			var idx = cellHead[rowBase + cx]
+			while idx != 0
+				let next = nextInCell[idx]
+				let px = lastX[idx]
+				let py = lastY[idx]
+				// Three-way split, exactly as in the circular query: the cached position decides
+				// unless it sits within maxDisp of a boundary, in which case read the live one.
+				let certainlyOut = px < minX - maxDisp or px > maxX + maxDisp
+					or py < minY - maxDisp or py > maxY + maxDisp
+				if not certainlyOut
+					let certainlyIn = px >= minX + maxDisp and px <= maxX - maxDisp
+						and py >= minY + maxDisp and py <= maxY - maxDisp
+					let u = indexedUnit[idx]
+					if u != null
+						if certainlyIn
+							if u.passesEnumerationState()
+								pushMatch(u)
+						else
+							let ux = u.getX()
+							let uy = u.getY()
+							if ux >= minX and ux <= maxX and uy >= minY and uy <= maxY
+								and u.passesEnumerationState()
+								pushMatch(u)
+				idx = next
+			cx++
+		cy++
+
+	return snapshotTop - queryBase[queryDepth - 1]
+
+/**	Returns the i-th match of the innermost open query. */
+@inline public function spatialIndexQueryUnit(int i) returns unit
+	return snapshotStack[queryBase[queryDepth - 1] + i]
+
+/**	Closes the innermost open query and releases its snapshot. */
+public function spatialIndexEndQuery()
+	queryDepth--
+	let base = queryBase[queryDepth]
+	// Null the popped slots: a lingering unit reference in a Lua table keeps the handle alive and
+	// blocks handle-id recycling.
+	for i = base to snapshotTop - 1
+		snapshotStack[i] = null
+	snapshotTop = base
+
+// ============================================================================
+// Init
+// ============================================================================
+
+init
+	// Written as a positive guard rather than an early return: `isLua` is folded, so on the Jass
+	// target the whole body disappears and this package registers nothing at all.
+	if isLua and USE_UNIT_SPATIAL_INDEX
+		rebuildSpatialIndexGrid(boundMin, boundMax)
+		indexActive = true
+
+		// OnUnitEnterLeave covers preplaced units as well as later creation/removal. Keeping our own
+		// independent registry makes this complete even when a map customizes UnitIndexer.shouldIndex.
+		onEnter(() -> registerUnit(getEnterLeaveUnit()))
+		onLeave(() -> unregisterUnit(getEnterLeaveUnit()))
+
+		doPeriodically(ANIMATION_PERIOD) cb ->
+			sweepStep()

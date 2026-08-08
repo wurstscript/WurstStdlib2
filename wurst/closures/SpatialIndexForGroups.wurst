@@ -1,0 +1,132 @@
+package SpatialIndexForGroups
+import ClosureForGroups
+import UnitSpatialIndex
+import ErrorHandling
+
+/*	Opt-in spatial enumeration for Lua maps. These functions intentionally have distinct names from
+	the native-backed ClosureForGroups API: indexed queries snapshot their matches, use grid iteration
+	order, and require updateSpatialIndex() after movement that can exceed
+	SPATIAL_INDEX_MAX_UNIT_SPEED times the sweep interval. On Jass, for small ranges, or while the
+	index is unhealthy, they fall back to the existing native-backed functions. */
+
+group array verifyGroups
+var verifyGroupCount = 0
+
+function getVerifyGroup() returns group
+	if verifyGroupCount > 0
+		verifyGroupCount--
+		return verifyGroups[verifyGroupCount]
+	return CreateGroup()
+
+function releaseVerifyGroup(group g)
+	g.clear()
+	verifyGroups[verifyGroupCount] = g
+	verifyGroupCount++
+
+@inline function useIndexInRange(real radius) returns boolean
+	return isLua and USE_UNIT_SPATIAL_INDEX and radius >= SPATIAL_INDEX_MIN_RADIUS
+		and spatialIndexHealthy()
+
+@inline function useIndexInRect() returns boolean
+	return isLua and USE_UNIT_SPATIAL_INDEX and spatialIndexHealthy()
+
+function assertQueryMatchesEngine(group expected, int matched, string what)
+	var notInEngine = 0
+	for i = 0 to matched - 1
+		if not expected.has(spatialIndexQueryUnit(i))
+			notInEngine++
+	if expected.size() != matched or notInEngine > 0
+		error("UnitSpatialIndex disagrees with the engine on " + what
+			+ ": engine=" + expected.size()
+			+ " index=" + matched
+			+ " indexedButNotInEngine=" + notInEngine)
+
+function beginRangeQueryChecked(vec2 pos, real radius, bool collisionSizeFiltering) returns int
+	let matched = spatialIndexBeginQuery(pos, radius, collisionSizeFiltering)
+	if SPATIAL_INDEX_VERIFY
+		let expected = getVerifyGroup()
+		if collisionSizeFiltering
+			let raw = getVerifyGroup()
+			GroupEnumUnitsInRange(raw, pos.x, pos.y, radius + MAX_COLLISION_SIZE, null)
+			for u from raw
+				if IsUnitInRangeXY(u, pos.x, pos.y, radius)
+					expected.add(u)
+			releaseVerifyGroup(raw)
+		else
+			GroupEnumUnitsInRange(expected, pos.x, pos.y, radius, null)
+		assertQueryMatchesEngine(expected, matched, "range=" + radius
+			+ " collisionFiltering=" + collisionSizeFiltering)
+		releaseVerifyGroup(expected)
+	return matched
+
+function beginRectQueryChecked(rect r) returns int
+	let matched = spatialIndexBeginRectQuery(r)
+	if SPATIAL_INDEX_VERIFY
+		let expected = getVerifyGroup()
+		GroupEnumUnitsInRect(expected, r, null)
+		assertQueryMatchesEngine(expected, matched, "rect")
+		releaseVerifyGroup(expected)
+	return matched
+
+function drainQuery(int matched, int limit, ForGroupCallback callback)
+	for i = 0 to min(matched, limit) - 1
+		callback.callback(spatialIndexQueryUnit(i))
+	spatialIndexEndQuery()
+	destroy callback
+
+function drainQueryUntil(int matched, ForGroupCallbackUntil callback)
+	for i = 0 to matched - 1
+		if not callback.callback(spatialIndexQueryUnit(i))
+			break
+	spatialIndexEndQuery()
+	destroy callback
+
+/** Visits units in a rect through the Lua spatial index when available. */
+public function forUnitsInRectIndexed(rect r, ForGroupCallback callback)
+	if useIndexInRect()
+		let matched = beginRectQueryChecked(r)
+		drainQuery(matched, matched, callback)
+	else
+		forUnitsInRect(r, callback)
+
+/** Visits at most count indexed units in a rect. */
+public function forUnitsInRectIndexedCounted(rect r, int count, ForGroupCallback callback)
+	if useIndexInRect()
+		drainQuery(beginRectQueryChecked(r), count, callback)
+	else
+		forUnitsInRectCounted(r, count, callback)
+
+/** Visits indexed units in a rect until callback returns false. */
+public function forUnitsInRectIndexedUntil(rect r, ForGroupCallbackUntil callback)
+	if useIndexInRect()
+		drainQueryUntil(beginRectQueryChecked(r), callback)
+	else
+		forUnitsInRectUntil(r, callback)
+
+/** Visits units in range through the Lua spatial index when available. */
+public function forUnitsInRangeIndexed(vec2 pos, real radius, ForGroupCallback callback)
+	forUnitsInRangeIndexed(pos, radius, false, callback)
+
+/** Visits units in range, optionally accounting for collision size. */
+public function forUnitsInRangeIndexed(vec2 pos, real radius, bool collisionSizeFiltering,
+	ForGroupCallback callback)
+	if useIndexInRange(radius)
+		let matched = beginRangeQueryChecked(pos, radius, collisionSizeFiltering)
+		drainQuery(matched, matched, callback)
+	else
+		forUnitsInRange(pos, radius, collisionSizeFiltering, callback)
+
+/** Visits at most count indexed units in range. */
+public function forUnitsInRangeIndexedCounted(vec2 pos, real radius, int count,
+	ForGroupCallback callback)
+	if useIndexInRange(radius)
+		drainQuery(beginRangeQueryChecked(pos, radius, false), count, callback)
+	else
+		forUnitsInRangeCounted(pos, radius, count, callback)
+
+/** Visits indexed units in range until callback returns false. */
+public function forUnitsInRangeIndexedUntil(vec2 pos, real radius, ForGroupCallbackUntil callback)
+	if useIndexInRange(radius)
+		drainQueryUntil(beginRangeQueryChecked(pos, radius, false), callback)
+	else
+		forUnitsInRangeUntil(pos, radius, callback)

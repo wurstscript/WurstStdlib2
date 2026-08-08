@@ -6,6 +6,8 @@ import TimerUtils
 import UnitIds
 import Execute
 import ErrorHandling
+import UnitSpatialIndex
+import SpatialIndexForGroups
 
 /*	Manual, in-game checks for behaviour the compiletime interpreter cannot
 	reach: real damage events, real timers and real unit enumeration.
@@ -457,6 +459,198 @@ function testGroupNesting()
 		probes[i].remove()
 
 // ============================================================================
+// 13 + 14. UnitSpatialIndex
+// ============================================================================
+
+/*	These are differential tests: they never assert a hand-written expected set, they assert that the
+	closure result equals what the engine enumeration returns for the same query. That is the only
+	claim that matters for membership parity, and it means the awkward
+	cases (hidden, locust, corpses, boundary distances) need no engine behaviour to be hardcoded.
+
+	With USE_UNIT_SPATIAL_INDEX off these still run and simply compare the native path to itself,
+	which is harmless but proves nothing; the header line says which mode was exercised. */
+
+constant SPATIAL_TEST_POS = vec2(-2000, 2000)
+
+function collectViaClosure(vec2 pos, real radius, bool collisionFiltering, group into)
+	forUnitsInRangeIndexed(pos, radius, collisionFiltering) u ->
+		into.add(u)
+
+function collectNative(vec2 pos, real radius, bool collisionFiltering, group into)
+	if collisionFiltering
+		let raw = CreateGroup()
+		GroupEnumUnitsInRange(raw, pos.x, pos.y, radius + MAX_COLLISION_SIZE, null)
+		for u from raw
+			if IsUnitInRangeXY(u, pos.x, pos.y, radius)
+				into.add(u)
+		raw.destr()
+	else
+		GroupEnumUnitsInRange(into, pos.x, pos.y, radius, null)
+
+function describeDifference(group actual, group expected) returns string
+	var missing = 0
+	var extra = 0
+	for i = 0 to expected.size() - 1
+		if not actual.has(expected.get(i))
+			missing++
+	for i = 0 to actual.size() - 1
+		if not expected.has(actual.get(i))
+			extra++
+	return "engine=" + expected.size() + " closure=" + actual.size()
+		+ " missed=" + missing + " spurious=" + extra
+
+function checkRangeParity(vec2 pos, real radius, bool collisionFiltering, string label)
+	let actual = CreateGroup()
+	let expected = CreateGroup()
+	collectViaClosure(pos, radius, collisionFiltering, actual)
+	collectNative(pos, radius, collisionFiltering, expected)
+	var equal = actual.size() == expected.size()
+	if equal
+		for i = 0 to actual.size() - 1
+			if not expected.has(actual.get(i))
+				equal = false
+	check(equal, label + " (" + describeDifference(actual, expected) + ")")
+	actual.destr()
+	expected.destr()
+
+function testSpatialIndexParity()
+	section("--- 13. spatial index vs engine enumeration ---")
+	if isLua and USE_UNIT_SPATIAL_INDEX
+		note("indexed path active, tracking " + spatialIndexTrackedUnits()
+			+ " units, staleness " + spatialIndexWorstStaleness()
+			+ "s, padding " + spatialIndexPadCells() + " cell(s)")
+	else
+		note("index inactive (isLua=" + isLua + ", enabled="
+			+ USE_UNIT_SPATIAL_INDEX + ") - comparing the native path to itself")
+
+	// A spread of probes straddling the query boundary, so the distance test is exercised on both
+	// sides of it and inside the uncertain annulus rather than only well inside the radius.
+	unit array probes
+	for i = 0 to 5
+		probes[i] = createUnit(players[0], UnitIds.footman,
+			SPATIAL_TEST_POS.add(i * 120., 0.), angle(0))
+
+	// Awkward population cases. No expected behaviour is hardcoded - whatever the engine does with
+	// these is what the closure must also do.
+	let hidden = createUnit(players[0], UnitIds.footman, SPATIAL_TEST_POS.add(60., 0.), angle(0))
+	hidden.hide()
+	let locust = createUnit(players[0], UnitIds.footman, SPATIAL_TEST_POS.add(180., 0.), angle(0))
+	locust.addAbility(LOCUST_ID)
+	let corpse = createUnit(players[0], UnitIds.footman, SPATIAL_TEST_POS.add(240., 0.), angle(0))
+	corpse.kill()
+
+	checkRangeParity(SPATIAL_TEST_POS, 300., false, "range query matches the engine")
+	checkRangeParity(SPATIAL_TEST_POS, 300., true, "collision-filtered query matches the engine")
+	checkRangeParity(SPATIAL_TEST_POS, 121., false, "tight radius on a probe boundary")
+	checkRangeParity(SPATIAL_TEST_POS, 2000., false, "wide radius")
+
+	// Eligibility is evaluated at query time. Toggling Locust must take effect immediately in both
+	// directions rather than waiting for a sweep or permanently dropping the unit from the index.
+	probes[1].addAbility(LOCUST_ID)
+	locust.removeAbility(LOCUST_ID)
+	checkRangeParity(SPATIAL_TEST_POS, 300., false, "locust transitions match immediately")
+	probes[1].removeAbility(LOCUST_ID)
+	locust.addAbility(LOCUST_ID)
+
+	// Rect parity, including the engine's documented +32 minimum-bound off-by-one.
+	let r = Rect(SPATIAL_TEST_POS.x - 200., SPATIAL_TEST_POS.y - 200.,
+		SPATIAL_TEST_POS.x + 200., SPATIAL_TEST_POS.y + 200.)
+	let actualRect = CreateGroup()
+	let expectedRect = CreateGroup()
+	forUnitsInRectIndexed(r) u ->
+		actualRect.add(u)
+	GroupEnumUnitsInRect(expectedRect, r, null)
+	var rectEqual = actualRect.size() == expectedRect.size()
+	if rectEqual
+		for i = 0 to actualRect.size() - 1
+			if not expectedRect.has(actualRect.get(i))
+				rectEqual = false
+	check(rectEqual, "rect query matches the engine ("
+		+ describeDifference(actualRect, expectedRect) + ")")
+	actualRect.destr()
+	expectedRect.destr()
+	r.remove()
+
+	// A teleport is not observable, so the index only learns about it from the sweep or from an
+	// explicit refresh. This pins the documented contract: after updateSpatialIndex() it agrees
+	// immediately. (Ordinary movement needs no such call - the padding covers it.)
+	probes[5].setPos(SPATIAL_TEST_POS)
+	probes[5].updateSpatialIndex()
+	checkRangeParity(SPATIAL_TEST_POS, 50., false, "teleport is visible after updateSpatialIndex")
+
+	for i = 0 to 5
+		probes[i].remove()
+	hidden.remove()
+	locust.remove()
+	corpse.remove()
+
+var reentrancyVisited = 0
+var reentrancyNested = 0
+// Globals rather than locals: Wurst closures cannot capture local arrays, and these probes have to
+// be reachable from inside the visitors that mutate them.
+unit array reentrancyProbes
+unit spawnedDuringQuery = null
+
+function testSpatialIndexReentrancy()
+	section("--- 14. spatial index reentrancy ---")
+
+	for i = 0 to 3
+		reentrancyProbes[i] = createUnit(players[0], UnitIds.footman,
+			SPATIAL_TEST_POS.add(i * 64., 0.), angle(0))
+
+	// A visitor that removes a *later* unit in the same batch. This is the case that breaks a naive
+	// readout which caches the group size and indexes into it: groups silently drop removed units,
+	// so every later index shifts down and a unit is skipped. A snapshot is immune.
+	reentrancyVisited = 0
+	forUnitsInRangeIndexed(SPATIAL_TEST_POS.add(96., 0.), 400.) u ->
+		reentrancyVisited++
+		if u == reentrancyProbes[0] and reentrancyProbes[3] != null
+			reentrancyProbes[3].remove()
+			reentrancyProbes[3] = null
+	check(reentrancyVisited >= 4, "removing a unit mid-iteration skips nobody ("
+		+ reentrancyVisited + " visited)")
+
+	for i = 0 to 3
+		if reentrancyProbes[i] != null
+			reentrancyProbes[i].remove()
+			reentrancyProbes[i] = null
+	for i = 0 to 3
+		reentrancyProbes[i] = createUnit(players[0], UnitIds.footman,
+			SPATIAL_TEST_POS.add(i * 64., 0.), angle(0))
+
+	// A nested query inside a visitor, three deep, to exercise the snapshot stack: an inner query
+	// pushes above the outer one and must not disturb it.
+	reentrancyVisited = 0
+	reentrancyNested = 0
+	forUnitsInRangeIndexed(SPATIAL_TEST_POS.add(96., 0.), 400.) outerUnit ->
+		reentrancyVisited++
+		forUnitsInRangeIndexed(outerUnit.getPos(), 300.) middleUnit ->
+			reentrancyNested++
+			forUnitsInRangeIndexed(middleUnit.getPos(), 100.) innerUnit ->
+				if innerUnit == null
+					reentrancyNested--
+	check(reentrancyVisited == 4, "outer enumeration unaffected by nesting ("
+		+ reentrancyVisited + ")")
+	check(reentrancyNested > 0, "nested enumerations ran (" + reentrancyNested + ")")
+
+	// A visitor that creates a unit inside the query radius: it must not be visited by the query
+	// that is already running, and must not corrupt the iteration.
+	reentrancyVisited = 0
+	spawnedDuringQuery = null
+	forUnitsInRangeIndexed(SPATIAL_TEST_POS.add(96., 0.), 400.) u ->
+		reentrancyVisited++
+		if spawnedDuringQuery == null
+			spawnedDuringQuery = createUnit(players[0], UnitIds.footman, SPATIAL_TEST_POS, angle(0))
+	check(reentrancyVisited == 4, "creating a unit mid-iteration does not extend it ("
+		+ reentrancyVisited + ")")
+	if spawnedDuringQuery != null
+		spawnedDuringQuery.remove()
+		spawnedDuringQuery = null
+
+	for i = 0 to 3
+		reentrancyProbes[i].remove()
+
+// ============================================================================
 // 8 + 9. TimedLoop registration
 // ============================================================================
 
@@ -528,6 +722,11 @@ public function runStdlibIngameTests()
 	runGuarded("7. nested enumeration") ->
 		testGroupNesting()
 
+	runGuarded("13. spatial index parity") ->
+		testSpatialIndexParity()
+	runGuarded("14. spatial index reentrancy") ->
+		testSpatialIndexReentrancy()
+
 	// these finish asynchronously, so the summary waits for them
 	runGuarded("8. TimedLoop stop before start") ->
 		testTimedLoopStopBeforeStart()
@@ -553,4 +752,3 @@ init
 	doAfter(1.) ->
 		runStdlibIngameTests()
 	registerStdlibIngameTestCommand()
-
