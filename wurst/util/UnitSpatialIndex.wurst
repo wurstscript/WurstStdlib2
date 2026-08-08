@@ -67,6 +67,8 @@ int array lastSweepTick
 unit array indexedUnit
 let spatialIndexByUnit = new HashMap<unit, int>
 var nextSpatialIndex = 1
+int array freeSpatialIndex
+var freeSpatialIndexCount = 0
 
 // Dense round-robin registry of every indexed unit, holding indices rather than handles.
 int array registry
@@ -82,8 +84,12 @@ var sweepCursor = 0
 var sweepTick = 0
 /** Worst staleness (in ticks) observed during the cycle in progress. */
 var cycleWorstAge = 0
-/** Worst staleness (in ticks) observed over the last completed cycle - what the padding is built on. */
+/** Worst staleness (in ticks) observed over the last completed cycle, for diagnostics only. */
 var publishedWorstAge = 1
+/** Conservative sweep-cycle bound used by queries. It grows immediately with the registry, but may
+	only shrink after a complete pass during which membership stayed unchanged. */
+var displacementBoundTicks = 1
+var cycleMembershipStable = true
 var indexActive = false
 
 // ============================================================================
@@ -121,12 +127,18 @@ var queryDepth = 0
 	The bound is tight because every tracked unit is guaranteed to be refreshed within one pass: the
 	cursor reaches everything ahead of it, and `unregisterUnit` refreshes any entry its swap-remove
 	drops behind the cursor. */
-function sweepCycleTicks() returns int
+function requiredSweepCycleTicks() returns int
 	return (registryCount / SPATIAL_INDEX_UNITS_PER_TICK.toReal()).ceil() + 1
+
+/** Records that the dense registry changed shape. Growth is reflected immediately; shrinkage remains
+	covered by the old bound until a complete stable pass proves every survivor has been refreshed. */
+function noteRegistryChange()
+	cycleMembershipStable = false
+	displacementBoundTicks = max(displacementBoundTicks, requiredSweepCycleTicks())
 
 /** Worst-case distance a unit may have travelled since its cached position was written. */
 function currentMaxDisplacement() returns real
-	return SPATIAL_INDEX_MAX_UNIT_SPEED * sweepCycleTicks() * ANIMATION_PERIOD
+	return SPATIAL_INDEX_MAX_UNIT_SPEED * displacementBoundTicks * ANIMATION_PERIOD
 
 // ============================================================================
 // Membership
@@ -162,13 +174,20 @@ function unlinkFromCell(int idx)
 function registerUnit(unit u)
 	if u == null or spatialIndexByUnit.get(u) != 0
 		return
-	let idx = nextSpatialIndex
-	nextSpatialIndex++
+	var idx = 0
+	if freeSpatialIndexCount > 0
+		freeSpatialIndexCount--
+		idx = freeSpatialIndex[freeSpatialIndexCount]
+		freeSpatialIndex[freeSpatialIndexCount] = 0
+	else
+		idx = nextSpatialIndex
+		nextSpatialIndex++
 	spatialIndexByUnit.put(u, idx)
 	indexedUnit[idx] = u
 	registry[registryCount] = idx
 	registrySlot[idx] = registryCount + 1
 	registryCount++
+	noteRegistryChange()
 	lastSweepTick[idx] = sweepTick
 	let pos = u.getPos()
 	linkIntoCell(idx, cellAt(pos.x, pos.y), pos.x, pos.y)
@@ -187,13 +206,19 @@ function unregisterIndex(int idx)
 	registrySlot[moved] = slot
 	registry[last] = 0
 	registryCount = last
+	noteRegistryChange()
 	registrySlot[idx] = 0
 	unlinkFromCell(idx)
 	indexedUnit[idx] = null
+	lastX[idx] = 0.
+	lastY[idx] = 0.
+	lastSweepTick[idx] = 0
+	freeSpatialIndex[freeSpatialIndexCount] = idx
+	freeSpatialIndexCount++
 
 	// The swap can drop an entry from ahead of the cursor to behind it, where this pass will never
 	// reach it - it would then go a further full cycle without a refresh, breaking the one-pass
-	// bound that `sweepCycleTicks` relies on. Refresh it here instead. O(1), and only on the entries
+	// bound that `requiredSweepCycleTicks` relies on. Refresh it here instead. O(1), and only on the entries
 	// actually displaced backwards.
 	if moved != 0 and slot - 1 < sweepCursor
 		let movedUnit = indexedUnit[moved]
@@ -235,6 +260,8 @@ function sweepStep()
 	if registryCount <= 0
 		cycleWorstAge = 0
 		publishedWorstAge = 1
+		displacementBoundTicks = 1
+		cycleMembershipStable = true
 		sweepCursor = 0
 		return
 
@@ -248,6 +275,12 @@ function sweepStep()
 			sweepCursor = 0
 			publishedWorstAge = max(cycleWorstAge, 1)
 			cycleWorstAge = 0
+			if cycleMembershipStable
+				displacementBoundTicks = requiredSweepCycleTicks()
+			else
+				// The next complete pass starts with the current membership. Only that pass may
+				// prove a smaller bound safe for every survivor.
+				cycleMembershipStable = true
 		let idx = registry[sweepCursor]
 		let u = indexedUnit[idx]
 		if u == null
@@ -265,7 +298,7 @@ function sweepStep()
 	Callers fall back to the engine path while this is false. */
 public function spatialIndexHealthy() returns boolean
 	return isLua and indexActive
-		and (sweepCycleTicks() * ANIMATION_PERIOD) <= SPATIAL_INDEX_MAX_STALENESS
+		and (displacementBoundTicks * ANIMATION_PERIOD) <= SPATIAL_INDEX_MAX_STALENESS
 
 // ============================================================================
 // Diagnostics
@@ -276,17 +309,22 @@ public function spatialIndexHealthy() returns boolean
 	padding stays at one cell while
 	`spatialIndexWorstStaleness() * SPATIAL_INDEX_MAX_UNIT_SPEED <= SPATIAL_INDEX_CELL_SIZE`. */
 public function spatialIndexWorstStaleness() returns real
-	return sweepCycleTicks() * ANIMATION_PERIOD
+	return displacementBoundTicks * ANIMATION_PERIOD
 
 /**	Staleness the sweep has actually observed, in seconds. Always <= spatialIndexWorstStaleness();
 	a persistent gap between the two means the bound is loose and the budget could be lowered.
-	Diagnostic only - padding must never be derived from this, see `sweepCycleTicks`. */
+	Diagnostic only - padding must never be derived from this, see `requiredSweepCycleTicks`. */
 public function spatialIndexObservedStaleness() returns real
 	return max(publishedWorstAge, cycleWorstAge) * ANIMATION_PERIOD
 
 /** How many units the sweep currently cycles over. */
 public function spatialIndexTrackedUnits() returns int
 	return registryCount
+
+/** Number of numeric cache slots ever allocated. Exposed for lifecycle diagnostics and tests; with
+	ID reuse this reaches the peak concurrent population rather than growing for the whole session. */
+public function spatialIndexAllocatedSlots() returns int
+	return nextSpatialIndex - 1
 
 /**	Current query padding in whole cells, derived from the guaranteed staleness. Grows as the sweep
 	falls behind, which widens windows rather than producing wrong results. */

@@ -584,6 +584,39 @@ function testSpatialIndexParity()
 	locust.remove()
 	corpse.remove()
 
+function testSpatialIndexLifecycle()
+	section("--- 14. spatial index lifecycle bounds ---")
+	if not isLua or not USE_UNIT_SPATIAL_INDEX
+		note("indexed path inactive - lifecycle-specific checks skipped")
+		return
+
+	// Growing by two complete sweep budgets guarantees a larger cycle regardless of where the
+	// pre-existing population sits relative to a ceil boundary.
+	let batchSize = SPATIAL_INDEX_UNITS_PER_TICK * 2
+	unit array lifecycleProbes
+	let initialBound = spatialIndexWorstStaleness()
+	for i = 0 to batchSize - 1
+		lifecycleProbes[i] = createUnit(players[0], UnitIds.footman, SPATIAL_TEST_POS, angle(0))
+	let expandedBound = spatialIndexWorstStaleness()
+	check(expandedBound > initialBound, "registry growth expands the staleness bound immediately")
+	let allocatedAtPeak = spatialIndexAllocatedSlots()
+
+	for i = 0 to batchSize - 1
+		lifecycleProbes[i].remove()
+		lifecycleProbes[i] = null
+	check(spatialIndexWorstStaleness() >= expandedBound,
+		"registry shrink retains the old bound until a stable sweep completes")
+
+	// A second same-sized wave must consume the just-freed ids rather than extending every numeric
+	// cache table with another session-long block of slots.
+	for i = 0 to batchSize - 1
+		lifecycleProbes[i] = createUnit(players[0], UnitIds.footman, SPATIAL_TEST_POS, angle(0))
+	check(spatialIndexAllocatedSlots() == allocatedAtPeak,
+		"removed-unit cache slots are reused (" + spatialIndexAllocatedSlots() + " allocated)")
+	for i = 0 to batchSize - 1
+		lifecycleProbes[i].remove()
+		lifecycleProbes[i] = null
+
 var reentrancyVisited = 0
 var reentrancyNested = 0
 // Globals rather than locals: Wurst closures cannot capture local arrays, and these probes have to
@@ -592,7 +625,7 @@ unit array reentrancyProbes
 unit spawnedDuringQuery = null
 
 function testSpatialIndexReentrancy()
-	section("--- 14. spatial index reentrancy ---")
+	section("--- 15. spatial index reentrancy ---")
 	if not isLua or not USE_UNIT_SPATIAL_INDEX
 		note("indexed path inactive - snapshot-specific checks skipped")
 		return
@@ -730,7 +763,9 @@ public function runStdlibIngameTests()
 
 	runGuarded("13. spatial index parity") ->
 		testSpatialIndexParity()
-	runGuarded("14. spatial index reentrancy") ->
+	runGuarded("14. spatial index lifecycle bounds") ->
+		testSpatialIndexLifecycle()
+	runGuarded("15. spatial index reentrancy") ->
 		testSpatialIndexReentrancy()
 
 	// these finish asynchronously, so the summary waits for them
