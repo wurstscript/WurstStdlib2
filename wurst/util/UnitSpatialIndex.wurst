@@ -24,12 +24,6 @@ import UnitSpatialIndexRemoval
 /**	Engine movement-speed cap. Configurable because gameplay constants can raise the default 522. */
 @configurable public constant SPATIAL_INDEX_MAX_UNIT_SPEED = 522.
 
-/** Queries below this radius use the engine path; 0 disables the floor. */
-@configurable public constant SPATIAL_INDEX_MIN_RADIUS = 0.
-
-/** Worst allowed staleness before callers fall back to the engine path. */
-@configurable public constant SPATIAL_INDEX_MAX_STALENESS = 1.5
-
 /** Disable when hidden units are never used to save one native per hit. */
 @configurable public constant SPATIAL_INDEX_CHECK_HIDDEN = true
 
@@ -258,12 +252,6 @@ function sweepStep()
 				cycleWorstAge = age
 			refreshUnit(idx, u)
 			sweepCursor++
-
-/**	False when the sweep has fallen so far behind that the padding would make queries pointless.
-	Callers fall back to the engine path while this is false. */
-public function spatialIndexHealthy() returns boolean
-	return isLua and indexActive
-		and (displacementBoundTicks * ANIMATION_PERIOD) <= SPATIAL_INDEX_MAX_STALENESS
 
 // Diagnostics
 
