@@ -84,10 +84,20 @@ import ErrorHandling
 constant MAX_NAME_LENGTH = 10
 constant LEN_LENGTH = 3
 constant HASH_LENGTH = 10
+constant MAX_PROPERTY_LENGTH = 999
 
 constant INT_TOKEN = "i"
 constant REAL_TOKEN = "r"
 constant STRING_TOKEN = "s"
+
+function isValidLegacyProperty(string name, string property) returns boolean
+    if name.length() > MAX_NAME_LENGTH
+        error("name " + name + " too long.")
+        return false
+    if property.length() > MAX_PROPERTY_LENGTH
+        error("property " + name + " exceeds the legacy format's 999-byte limit.")
+        return false
+    return true
 
 public abstract class Serializable
     private ChunkedString serOutput = null
@@ -97,10 +107,9 @@ public abstract class Serializable
     var hash = 0
 
     function addProperty(string name, int value)
-        if name.length() > MAX_NAME_LENGTH
-            error("name " + name + " too long.")
-
         let prop = name + "=" + value
+        if not isValidLegacyProperty(name, prop)
+            return
         var propLen = prop.length().toString()
         while propLen.length() < LEN_LENGTH
             propLen = "0" + propLen
@@ -109,10 +118,9 @@ public abstract class Serializable
         serOutput.append(INT_TOKEN + propLen + prop)
 
     function addProperty(string name, real value)
-        if name.length() > MAX_NAME_LENGTH
-            error("name " + name + " too long.")
-
         let prop = name + "=" + value
+        if not isValidLegacyProperty(name, prop)
+            return
         var propLen = prop.length().toString()
         while propLen.length() < LEN_LENGTH
             propLen = "0" + propLen
@@ -121,10 +129,9 @@ public abstract class Serializable
         serOutput.append(REAL_TOKEN + propLen + prop)
 
     function addProperty(string name, string value)
-        if name.length() > MAX_NAME_LENGTH
-            error("name " + name + " too long.")
-
         let prop = name + "=" + value
+        if not isValidLegacyProperty(name, prop)
+            return
         var propLen = prop.length().toString()
         while propLen.length() < LEN_LENGTH
             propLen = "0" + propLen

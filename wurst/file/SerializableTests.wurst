@@ -6,6 +6,12 @@ import Vectors
 
 int constructions = 0
 
+function repeated(string value, int count) returns string
+	var result = ""
+	for _i = 1 to count
+		result += value
+	return result
+
 class ChildState implements FieldSerializable
 	use SerializableFields
 
@@ -24,6 +30,24 @@ class PlayerState implements FieldSerializable
 
 	construct()
 		constructions++
+
+	ondestroy
+		destroy child
+
+class LargeChildState implements FieldSerializable
+	use SerializableFields
+
+	string first = ""
+	string second = ""
+	string third = ""
+	string fourth = ""
+	string fifth = ""
+	string sixth = ""
+
+class LargeParentState implements FieldSerializable
+	use SerializableFields
+
+	LargeChildState child = new LargeChildState()
 
 	ondestroy
 		destroy child
@@ -127,7 +151,11 @@ function integrityKeyRejectsEditedOrForeignDataWithoutMutation()
 	let edited = new ChunkedString()..append("X" + encoded.substring(1))
 	state.deserialize(edited, 12345).assertFalse()
 	state.score.assertEquals(1)
+	let editedToken = new ChunkedString()..append(encoded.substring(0, 11) + "r" + encoded.substring(12))
+	state.deserialize(editedToken, 12345).assertFalse()
+	state.score.assertEquals(1)
 
+	destroy editedToken
 	destroy edited
 	destroy state
 	destroy data
@@ -172,6 +200,48 @@ function signedIntegerCodecPreservesFullWidthValues()
 	destroy reader
 	destroy data
 	destroy writer
+
+@Test
+function varUIntContinuationAlphabetHandlesAllFiveBitGroups()
+	for length = 60 to 63
+		let expected = repeated("x", length)
+		let writer = new FieldSerializationWriter(1)
+		writer.write("value", expected)
+		let data = writer.finish()
+		let reader = new FieldSerializationReader(data)
+
+		reader.isValid().assertTrue()
+		reader.read("value", "").assertEquals(expected)
+
+		destroy reader
+		destroy data
+		destroy writer
+
+@Test
+function nestedEnvelopesRemainChunkedBeyondOneRuntimeString()
+	let original = new LargeParentState()
+	original.child.first = repeated("a", 180)
+	original.child.second = repeated("b", 180)
+	original.child.third = repeated("c", 180)
+	original.child.fourth = repeated("d", 180)
+	original.child.fifth = repeated("e", 180)
+	original.child.sixth = repeated("f", 180)
+
+	let data = original.serialize()
+	(data.length() > 1000).assertTrue()
+	(data.getChunkCount() > 1).assertTrue()
+	let loaded = new LargeParentState()
+	loaded.deserialize(data).assertTrue()
+	loaded.child.first.assertEquals(original.child.first)
+	loaded.child.second.assertEquals(original.child.second)
+	loaded.child.third.assertEquals(original.child.third)
+	loaded.child.fourth.assertEquals(original.child.fourth)
+	loaded.child.fifth.assertEquals(original.child.fifth)
+	loaded.child.sixth.assertEquals(original.child.sixth)
+
+	destroy loaded
+	destroy data
+	destroy original
 
 @Test
 function legacySerializableStillRoundTripsItsOriginalFormat()
