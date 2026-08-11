@@ -1,0 +1,76 @@
+package SerializableTests
+import Serializable
+import ChunkedString
+
+int constructions = 0
+
+class PlayerState
+    use SerializableFields
+
+    int score = 1
+    real ratio = 1.
+    string name = "default"
+    boolean active = false
+
+    construct()
+        constructions++
+
+class OldPlayerState extends Serializable
+    int score = 0
+
+    override function serializeProperties()
+        addProperty("score", score)
+
+    override function deserializeProperties()
+        score = getIntProperty("score")
+
+@Test
+function reflectedFieldsRoundTrip()
+    constructions = 0
+    let original = new PlayerState()
+    original.score = 42
+    original.ratio = 2.5
+    original.name = "Wurst"
+    original.active = true
+
+    let data = original.serialize()
+    let loaded = new PlayerState().load(data)
+
+    loaded.score.assertEquals(42)
+    loaded.ratio.assertEquals(2.5)
+    loaded.name.assertEquals("Wurst")
+    loaded.active.assertTrue()
+    constructions.assertEquals(2)
+
+    destroy original
+    destroy loaded
+    destroy data
+
+@Test
+function reflectedFieldsPreserveDefaultsForMissingData()
+    let oldState = new OldPlayerState()
+    oldState.score = 7
+    let data = oldState.serialize()
+
+    let loaded = new PlayerState()
+    loaded.deserialize(data).assertTrue()
+    loaded.score.assertEquals(7)
+    loaded.ratio.assertEquals(1.)
+    loaded.name.assertEquals("default")
+    loaded.active.assertFalse()
+
+    destroy oldState
+    destroy loaded
+    destroy data
+
+@Test
+function reflectedFieldsRejectInvalidData()
+    let state = new PlayerState()
+    state.score = 9
+    let invalid = new ChunkedString()..append("invalid")
+
+    state.deserialize(invalid).assertFalse()
+    state.score.assertEquals(9)
+
+    destroy state
+    destroy invalid

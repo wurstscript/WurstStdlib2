@@ -48,3 +48,26 @@ public constant isLua = false
  */
  public function compiletime<T:>(T expr) returns T
 	 return expr
+
+/*
+Compiler intrinsics for field-wise code generation and generic construction:
+
+```
+forFields((fieldName, value) -> writer.write(fieldName, value))
+forFields(target, (fieldName, value) -> writer.write(fieldName, value))
+mapFields((fieldName, value) -> reader.read(fieldName, value))
+mapFields(target, (fieldName, value) -> reader.read(fieldName, value))
+let value = newInstance<MyClass>()
+```
+
+`forFields` emits the callback once for every accessible non-static instance field.
+`mapFields` assigns each callback result back to the corresponding mutable field.
+The forms without a target operate on the enclosing class instance. Explicit targets are
+evaluated once. `newInstance<T>()` invokes the accessible zero-argument constructor of the
+concrete class supplied as `T`.
+
+These calls are recognized by the compiler when no applicable user-defined overload exists.
+They intentionally have no Wurst declarations here: declaring matching functions would turn
+them into ordinary calls and suppress intrinsic expansion. All three compile to direct
+construction and field access without runtime reflection or metadata.
+*/
