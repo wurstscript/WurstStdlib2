@@ -29,22 +29,32 @@ constant STRING_TOKEN = "s"
 constant BOOLEAN_TOKEN = "b"
 constant OBJECT_TOKEN = "o"
 
-/** Returns the stable, case-sensitive numeric ID used for a persisted field name. */
-public function serializationFieldId(string name) returns int
-	var result = SERIALIZATION_HASH_SEED
-	for character in name
-		result = result.bitXor(character.getHash()) * SERIALIZATION_HASH_FACTOR
-		if character != character.toLowerCase()
-			result = result.bitXor(0x5A)
-	return result
-
 function updateSerializationHash(int current, string fragment) returns int
 	var result = current
-	for character in fragment
+	var position = 0
+	while position < fragment.length()
+		var width = 1
+		var character = fragment.substring(position, position + width)
+		if character.length() > 1
+			// Some runtimes return the complete multibyte character for a one-byte slice.
+			width = character.length()
+		else if character.isMultibytePartial()
+			// Other runtimes return an invalid lead-byte marker. Widen until it is complete.
+			width = 2
+			character = fragment.substring(position, position + width)
+			while width < 4 and position + width < fragment.length() and character.isMultibytePartial()
+				width++
+				character = fragment.substring(position, position + width)
+
 		result = result.bitXor(character.getHash()) * SERIALIZATION_HASH_FACTOR
 		if character != character.toLowerCase()
 			result = result.bitXor(0x5A)
+		position += width
 	return result
+
+/** Returns the stable, case-sensitive numeric ID used for a persisted field name. */
+public function serializationFieldId(string name) returns int
+	return updateSerializationHash(SERIALIZATION_HASH_SEED, name)
 
 function encodeFixedInt(int value) returns string
 	var remaining = value

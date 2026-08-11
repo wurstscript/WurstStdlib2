@@ -296,6 +296,33 @@ function rawChunkedPayloadCanBeReadWithoutFlattening()
 	destroy decoded
 
 @Test
+function unicodeHashingIsIndependentOfChunkBoundaries()
+	let unicodePart = "Würst世界🙂"
+	var expected = ""
+	let payload = new ChunkedString(37)
+	for _i = 1 to 40
+		expected += unicodePart
+		payload.append(unicodePart)
+
+	let writer = new FieldSerializationWriter(1)
+	writer.writeRaw("Ünicode字段", "u", payload)
+	let data = writer.finish()
+	let reader = new FieldSerializationReader(data)
+	let decoded = reader.readRawChunked("Ünicode字段", "u")
+
+	reader.isValid().assertTrue()
+	decoded.length().assertEquals(expected.length())
+	decoded.getUnsafeString().assertEquals(expected)
+	for i = 0 to decoded.getChunkCount() - 1
+		(decoded.getChunk(i).length() <= decoded.getChunkSize() + 3).assertTrue()
+
+	destroy decoded
+	destroy reader
+	destroy data
+	destroy writer
+	destroy payload
+
+@Test
 function legacySerializableStillRoundTripsItsOriginalFormat()
 	let original = new OldPlayerState()
 	original.score = 11
