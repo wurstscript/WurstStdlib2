@@ -266,6 +266,36 @@ function nestedEnvelopesRemainChunkedBeyondOneRuntimeString()
 	destroy original
 
 @Test
+function rawChunkedPayloadCanBeReadWithoutFlattening()
+	let payload = new ChunkedString()
+	payload.append(repeated("a", 180))
+	payload.append(repeated("b", 180))
+	payload.append(repeated("c", 180))
+	payload.append(repeated("d", 180))
+	payload.append(repeated("e", 180))
+	payload.append(repeated("f", 180))
+	let writer = new FieldSerializationWriter(1)
+	writer.writeRaw("custom", "x", payload)
+	let data = writer.finish()
+	let reader = new FieldSerializationReader(data)
+	let decoded = reader.readRawChunked("custom", "x")
+
+	destroy reader
+	destroy data
+	destroy writer
+	destroy payload
+
+	decoded.length().assertEquals(1080)
+	(decoded.getChunkCount() > 1).assertTrue()
+	decoded.getUnsafeSubString(0, 180).assertEquals(repeated("a", 180))
+	decoded.getUnsafeSubString(180, 360).assertEquals(repeated("b", 180))
+	decoded.getUnsafeSubString(360, 540).assertEquals(repeated("c", 180))
+	decoded.getUnsafeSubString(540, 720).assertEquals(repeated("d", 180))
+	decoded.getUnsafeSubString(720, 900).assertEquals(repeated("e", 180))
+	decoded.getUnsafeSubString(900, 1080).assertEquals(repeated("f", 180))
+	destroy decoded
+
+@Test
 function legacySerializableStillRoundTripsItsOriginalFormat()
 	let original = new OldPlayerState()
 	original.score = 11

@@ -94,6 +94,12 @@ function encodeReal(real value) returns string
 			result = result.substring(0, result.length() - 1)
 	return result
 
+function copyChunkedString(ChunkedString source) returns ChunkedString
+	let result = new ChunkedString(source.getChunkSize())
+	for i = 0 to source.getChunkCount() - 1
+		result.append(source.getChunk(i))
+	return result
+
 /** A parsed migration hook. Hooks are invoked but not destroyed by `deserialize`. */
 public interface SerializationMigration
 	function migrate(FieldSerializationReader reader)
@@ -322,6 +328,16 @@ public class FieldSerializationReader
 	function readRaw(string name, string token, string oldValue) returns string
 		let fieldId = serializationFieldId(name)
 		return valid and tokenMap.has(fieldId) and tokenMap.get(fieldId) == token ? payloadMap.get(fieldId).getUnsafeString() : oldValue
+
+	/**
+	Returns an independent chunked copy of a raw payload, or `null` when the field/token is absent.
+	The caller owns and must destroy the returned value.
+	*/
+	function readRawChunked(string name, string token) returns ChunkedString
+		let fieldId = serializationFieldId(name)
+		if not valid or not tokenMap.has(fieldId) or tokenMap.get(fieldId) != token
+			return null
+		return copyChunkedString(payloadMap.get(fieldId))
 
 	function read(string name, int oldValue) returns int
 		let payload = readRaw(name, INT_TOKEN, "")
