@@ -202,6 +202,28 @@ function signedIntegerCodecPreservesFullWidthValues()
 	destroy writer
 
 @Test
+function realCodecPreservesSignificantIntegerZeroes()
+	let writer = new FieldSerializationWriter(1)
+	writer.write("ten", 10.)
+	writer.write("zero", 0.)
+	let data = writer.finish()
+	let reader = new FieldSerializationReader(data)
+
+	reader.isValid().assertTrue()
+	reader.read("ten", -1.).assertEquals(10.)
+	reader.read("zero", -1.).assertEquals(0.)
+
+	destroy reader
+	destroy data
+	destroy writer
+
+@Test
+function unfinishedWriterCanBeDestroyedSafely()
+	let writer = new FieldSerializationWriter(1)
+	writer.write("partial", "discarded")
+	destroy writer
+
+@Test
 function varUIntContinuationAlphabetHandlesAllFiveBitGroups()
 	for length = 60 to 63
 		let expected = repeated("x", length)

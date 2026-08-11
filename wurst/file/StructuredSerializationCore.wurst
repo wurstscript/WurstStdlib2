@@ -85,11 +85,13 @@ function encodeVarUInt(int value) returns string
 	return result
 
 function encodeReal(real value) returns string
-	var result = R2SW(value, 1, SERIALIZATION_REAL_DECIMALS)
-	while result.endsWith("0")
-		result = result.substring(0, result.length() - 1)
-	if result.endsWith(".")
-		result = result.substring(0, result.length() - 1)
+	let decimals = max(SERIALIZATION_REAL_DECIMALS, 0)
+	var result = R2SW(value, 1, decimals)
+	if result.indexOf(".") >= 0
+		while result.endsWith("0")
+			result = result.substring(0, result.length() - 1)
+		if result.endsWith(".")
+			result = result.substring(0, result.length() - 1)
 	return result
 
 /** A parsed migration hook. Hooks are invoked but not destroyed by `deserialize`. */
@@ -183,6 +185,10 @@ public class FieldSerializationWriter
 			output.append(encodeFixedInt(hash))
 			finished = true
 		return output
+
+	ondestroy
+		if not finished
+			destroy output
 
 /** Strict cursor which hashes exactly the bytes accepted by the parser. */
 class SerializationCursor
