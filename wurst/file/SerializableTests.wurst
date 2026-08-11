@@ -1,76 +1,188 @@
 package SerializableTests
 import Serializable
+import StructuredSerialization
 import ChunkedString
+import Vectors
 
 int constructions = 0
 
-class PlayerState
-    use SerializableFields
+class ChildState implements FieldSerializable
+	use SerializableFields
 
-    int score = 1
-    real ratio = 1.
-    string name = "default"
-    boolean active = false
+	int level = 1
+	string title = "rookie"
 
-    construct()
-        constructions++
+class PlayerState implements FieldSerializable
+	use SerializableFields
+
+	int score = 1
+	real ratio = 1.
+	string name = "default"
+	boolean active = false
+	vec3 position = vec3(0., 0., 0.)
+	ChildState child = new ChildState()
+
+	construct()
+		constructions++
+
+	ondestroy
+		destroy child
+
+class RenameScore implements SerializationMigration
+	override function migrate(FieldSerializationReader reader)
+		if reader.getSchemaVersion() < 2
+			int defaultPoints = 0
+			int oldPoints = reader.read("points", defaultPoints)
+			reader.renameField("points", "score")
+			reader.set("score", oldPoints + 1)
 
 class OldPlayerState extends Serializable
-    int score = 0
+	int score = 0
 
-    override function serializeProperties()
-        addProperty("score", score)
+	override function serializeProperties()
+		addProperty("score", score)
 
-    override function deserializeProperties()
-        score = getIntProperty("score")
-
-@Test
-function reflectedFieldsRoundTrip()
-    constructions = 0
-    let original = new PlayerState()
-    original.score = 42
-    original.ratio = 2.5
-    original.name = "Wurst"
-    original.active = true
-
-    let data = original.serialize()
-    let loaded = new PlayerState().load(data)
-
-    loaded.score.assertEquals(42)
-    loaded.ratio.assertEquals(2.5)
-    loaded.name.assertEquals("Wurst")
-    loaded.active.assertTrue()
-    constructions.assertEquals(2)
-
-    destroy original
-    destroy loaded
-    destroy data
+	override function deserializeProperties()
+		score = getIntProperty("score")
 
 @Test
-function reflectedFieldsPreserveDefaultsForMissingData()
-    let oldState = new OldPlayerState()
-    oldState.score = 7
-    let data = oldState.serialize()
+function reflectedFieldsRoundTripNestedClassesAndTuples()
+	constructions = 0
+	let original = new PlayerState()
+	original.score = 42
+	original.ratio = 2.5
+	original.name = "Würst|=save"
+	original.active = true
+	original.position = vec3(12.5, -4., 99.)
+	original.child.level = 8
+	original.child.title = "veteran"
 
-    let loaded = new PlayerState()
-    loaded.deserialize(data).assertTrue()
-    loaded.score.assertEquals(7)
-    loaded.ratio.assertEquals(1.)
-    loaded.name.assertEquals("default")
-    loaded.active.assertFalse()
+	let data = original.serialize(3)
+	let loaded = new PlayerState().load(data)
 
-    destroy oldState
-    destroy loaded
-    destroy data
+	loaded.score.assertEquals(42)
+	loaded.ratio.assertEquals(2.5)
+	loaded.name.assertEquals("Würst|=save")
+	loaded.active.assertTrue()
+	loaded.position.x.assertEquals(12.5)
+	loaded.position.y.assertEquals(-4.)
+	loaded.position.z.assertEquals(99.)
+	loaded.child.level.assertEquals(8)
+	loaded.child.title.assertEquals("veteran")
+	constructions.assertEquals(2)
+
+	destroy original
+	destroy loaded
+	destroy data
 
 @Test
-function reflectedFieldsRejectInvalidData()
-    let state = new PlayerState()
-    state.score = 9
-    let invalid = new ChunkedString()..append("invalid")
+function taggedFieldsPreserveDefaultsAndSkipUnknownData()
+	let writer = new FieldSerializationWriter(4)
+	int score = 7
+	writer.write("score", score)
+	writer.writeRaw("futureField", "x", "opaque future data")
+	let data = writer.finish()
+	let loaded = new PlayerState()
 
-    state.deserialize(invalid).assertFalse()
-    state.score.assertEquals(9)
+	loaded.deserialize(data).assertTrue()
+	loaded.score.assertEquals(7)
+	loaded.ratio.assertEquals(1.)
+	loaded.name.assertEquals("default")
+	loaded.active.assertFalse()
+	loaded.child.level.assertEquals(1)
 
-    destroy state
-    destroy invalid
+	destroy writer
+	destroy data
+	destroy loaded
+
+@Test
+function schemaMigrationCanRenameFields()
+	let writer = new FieldSerializationWriter(1)
+	int points = 73
+	writer.write("points", points)
+	let data = writer.finish()
+	let loaded = new PlayerState()
+	let migration = new RenameScore()
+
+	loaded.deserialize(data, SERIALIZATION_INTEGRITY_KEY, migration).assertTrue()
+	loaded.score.assertEquals(74)
+
+	destroy migration
+	destroy loaded
+	destroy data
+	destroy writer
+
+@Test
+function integrityKeyRejectsEditedOrForeignDataWithoutMutation()
+	let writer = new FieldSerializationWriter(1, 12345)
+	int score = 9
+	writer.write("score", score)
+	let data = writer.finish()
+	let state = new PlayerState()
+
+	state.deserialize(data, 54321).assertFalse()
+	state.score.assertEquals(1)
+
+	let encoded = data.getUnsafeString()
+	let edited = new ChunkedString()..append("X" + encoded.substring(1))
+	state.deserialize(edited, 12345).assertFalse()
+	state.score.assertEquals(1)
+
+	destroy edited
+	destroy state
+	destroy data
+	destroy writer
+
+@Test
+function parserRejectsTruncationAndDuplicateFieldIds()
+	let truncated = new ChunkedString()..append("WS20")
+	let truncatedReader = new FieldSerializationReader(truncated)
+	truncatedReader.isValid().assertFalse()
+
+	let writer = new FieldSerializationWriter(1)
+	int first = 1
+	int second = 2
+	writer.write("same", first)
+	writer.write("same", second)
+	let duplicate = writer.finish()
+	let duplicateReader = new FieldSerializationReader(duplicate)
+	duplicateReader.isValid().assertFalse()
+
+	destroy duplicateReader
+	destroy truncatedReader
+	destroy duplicate
+	destroy writer
+	destroy truncated
+
+@Test
+function signedIntegerCodecPreservesFullWidthValues()
+	let writer = new FieldSerializationWriter(1)
+	int minimum = INT_MIN
+	int maximum = INT_MAX
+	writer.write("minimum", minimum)
+	writer.write("maximum", maximum)
+	let data = writer.finish()
+	let reader = new FieldSerializationReader(data)
+	int defaultValue = 0
+
+	reader.isValid().assertTrue()
+	reader.read("minimum", defaultValue).assertEquals(INT_MIN)
+	reader.read("maximum", defaultValue).assertEquals(INT_MAX)
+
+	destroy reader
+	destroy data
+	destroy writer
+
+@Test
+function legacySerializableStillRoundTripsItsOriginalFormat()
+	let original = new OldPlayerState()
+	original.score = 11
+	let data = original.serialize()
+	let loaded = new OldPlayerState()
+	loaded.deserialize(data)
+
+	loaded.score.assertEquals(11)
+
+	destroy loaded
+	destroy data
+	destroy original

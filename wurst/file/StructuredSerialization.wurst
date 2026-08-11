@@ -1,0 +1,160 @@
+package StructuredSerialization
+import public StructuredSerializationCore
+import Vectors
+import Angle
+import Colors
+import ChunkedString
+
+function FieldSerializationReader.readTuple(string name) returns FieldSerializationReader
+	return this.readObject(name)
+
+/** Standard tuple codecs. Custom tuples can follow the same pair of writer/reader overloads. */
+public function FieldSerializationWriter.write(string name, vec2 value)
+	let child = new FieldSerializationWriter(1, this.getIntegrityKey())
+	child.write("x", value.x)
+	child.write("y", value.y)
+	this.writeObject(name, child)
+
+public function FieldSerializationReader.read(string name, vec2 oldValue) returns vec2
+	let child = this.readTuple(name)
+	let result = child.isValid() ? vec2(child.read("x", oldValue.x), child.read("y", oldValue.y)) : oldValue
+	destroy child
+	return result
+
+public function vec2.readSerializedField(FieldSerializationReader reader, string name) returns vec2
+	return reader.read(name, this)
+
+public function FieldSerializationWriter.write(string name, vec3 value)
+	let child = new FieldSerializationWriter(1, this.getIntegrityKey())
+	child.write("x", value.x)
+	child.write("y", value.y)
+	child.write("z", value.z)
+	this.writeObject(name, child)
+
+public function FieldSerializationReader.read(string name, vec3 oldValue) returns vec3
+	let child = this.readTuple(name)
+	let result = child.isValid() ? vec3(child.read("x", oldValue.x), child.read("y", oldValue.y), child.read("z", oldValue.z)) : oldValue
+	destroy child
+	return result
+
+public function vec3.readSerializedField(FieldSerializationReader reader, string name) returns vec3
+	return reader.read(name, this)
+
+public function FieldSerializationWriter.write(string name, angle value)
+	let child = new FieldSerializationWriter(1, this.getIntegrityKey())
+	child.write("radians", value.radians)
+	this.writeObject(name, child)
+
+public function FieldSerializationReader.read(string name, angle oldValue) returns angle
+	let child = this.readTuple(name)
+	let result = child.isValid() ? angle(child.read("radians", oldValue.radians)) : oldValue
+	destroy child
+	return result
+
+public function angle.readSerializedField(FieldSerializationReader reader, string name) returns angle
+	return reader.read(name, this)
+
+public function FieldSerializationWriter.write(string name, color value)
+	let child = new FieldSerializationWriter(1, this.getIntegrityKey())
+	child.write("red", value.red)
+	child.write("green", value.green)
+	child.write("blue", value.blue)
+	this.writeObject(name, child)
+
+public function FieldSerializationReader.read(string name, color oldValue) returns color
+	let child = this.readTuple(name)
+	let result = child.isValid() ? color(child.read("red", oldValue.red), child.read("green", oldValue.green), child.read("blue", oldValue.blue)) : oldValue
+	destroy child
+	return result
+
+public function color.readSerializedField(FieldSerializationReader reader, string name) returns color
+	return reader.read(name, this)
+
+public function FieldSerializationWriter.write(string name, colorA value)
+	let child = new FieldSerializationWriter(1, this.getIntegrityKey())
+	child.write("red", value.red)
+	child.write("green", value.green)
+	child.write("blue", value.blue)
+	child.write("alpha", value.alpha)
+	this.writeObject(name, child)
+
+public function FieldSerializationReader.read(string name, colorA oldValue) returns colorA
+	let child = this.readTuple(name)
+	let result = child.isValid() ? colorA(child.read("red", oldValue.red), child.read("green", oldValue.green), child.read("blue", oldValue.blue), child.read("alpha", oldValue.alpha)) : oldValue
+	destroy child
+	return result
+
+public function colorA.readSerializedField(FieldSerializationReader reader, string name) returns colorA
+	return reader.read(name, this)
+
+public function FieldSerializationWriter.write(string name, colorHSV value)
+	let child = new FieldSerializationWriter(1, this.getIntegrityKey())
+	child.write("h", value.h)
+	child.write("s", value.s)
+	child.write("v", value.v)
+	this.writeObject(name, child)
+
+public function FieldSerializationReader.read(string name, colorHSV oldValue) returns colorHSV
+	let child = this.readTuple(name)
+	let result = child.isValid() ? colorHSV(child.read("h", oldValue.h), child.read("s", oldValue.s), child.read("v", oldValue.v)) : oldValue
+	destroy child
+	return result
+
+public function colorHSV.readSerializedField(FieldSerializationReader reader, string name) returns colorHSV
+	return reader.read(name, this)
+
+/**
+Modern serialization for dedicated state/DAO classes.
+
+Add `implements FieldSerializable` and `use SerializableFields`. The compiler expands field
+iteration to direct accesses. The tagged format tolerates field reordering, added/removed fields,
+and unknown future wire types. Missing fields retain constructor defaults. Use a schema version and
+`SerializationMigration` for semantic changes or `renameField` for renamed attributes.
+*/
+public module SerializableFields
+	function writeSerializedFields(FieldSerializationWriter writer)
+		// Compatibility aliases keep this usable with compilers predating canonical #1224 names.
+		forFields((fieldName, value) -> writer.write(fieldName, value))
+
+	function readSerializedFields(FieldSerializationReader reader)
+		mapFields((fieldName, value) -> value.readSerializedField(reader, fieldName))
+
+	function readSerializedField(FieldSerializationReader reader, string name) returns thistype
+		let child = reader.readObject(name)
+		if child.isValid()
+			readSerializedFields(child)
+		destroy child
+		return this
+
+	function serialize() returns ChunkedString
+		return serialize(1, SERIALIZATION_INTEGRITY_KEY)
+
+	function serialize(int schemaVersion) returns ChunkedString
+		return serialize(schemaVersion, SERIALIZATION_INTEGRITY_KEY)
+
+	function serialize(int schemaVersion, int integrityKey) returns ChunkedString
+		let writer = new FieldSerializationWriter(schemaVersion, integrityKey)
+		writeSerializedFields(writer)
+		let result = writer.finish()
+		destroy writer
+		return result
+
+	function deserialize(ChunkedString input) returns boolean
+		return deserialize(input, SERIALIZATION_INTEGRITY_KEY, null)
+
+	function deserialize(ChunkedString input, int integrityKey) returns boolean
+		return deserialize(input, integrityKey, null)
+
+	function deserialize(ChunkedString input, int integrityKey, SerializationMigration migration) returns boolean
+		let reader = new FieldSerializationReader(input, integrityKey)
+		let result = reader.isValid()
+		if result
+			migration?.migrate(reader)
+			readSerializedFields(reader)
+		destroy reader
+		return result
+
+	/** Loads valid data into this instance and returns it for concise construction and chaining. */
+	function load(ChunkedString input) returns thistype
+		deserialize(input)
+		return this

@@ -7,17 +7,15 @@ import ErrorHandling
 	Allows you to save properties of any class instance into a string,
 	and load the same properties from that string.
 
-	Properties are saved in plain text format, but hashed to prevent naive tampering.
-	If the saved properties are meant to be private, you should pipe the output through an encoder.
-
 	=>MODERN USAGE<=
 
-	For dedicated state classes, use `SerializableFields`. It generates direct field accesses at
-	compile time, so fields do not need to be listed manually and no runtime reflection is used.
-	The class must have an accessible zero-argument constructor, and its serializable fields must
-	be mutable `int`, `real`, `string`, or `boolean` instance fields with names up to 10 characters.
+	For new code, import the separate `StructuredSerialization` package, implement
+	`FieldSerializable`, and use `SerializableFields`. It
+	generates direct field accesses at compile time, so fields do not need to be listed manually and
+	no runtime reflection is used. Primitive fields, standard tuples, and nested opted-in classes
+	are composable through type-specific writer/reader overloads.
 
-		> class MyClass
+		> class MyClass implements FieldSerializable
 		> 	use SerializableFields
 		> 	int amount = 0
 		> 	string name = ""
@@ -27,12 +25,20 @@ import ErrorHandling
 
 	`load` returns the correctly typed instance for concise construction and chaining. `deserialize`
 	can instead update an existing instance and returns whether the input passed its integrity check.
-	Constructor defaults are preserved for fields missing from older save data. Unknown fields from
-	newer save data are ignored. Keep persisted state in a small, focused class; renaming a field
-	changes its save key.
+	The modern format is compact, tagged, versioned, and protected by a keyed rolling integrity hash
+	by default. Constructor defaults are preserved for missing fields and unknown fields are ignored.
+	Field order is irrelevant. Pass a schema version to `serialize`, and use a
+	`SerializationMigration` to rename fields or transform older schemas before assignment. Override
+	`SERIALIZATION_INTEGRITY_KEY` with a private map-specific value to deter players editing saves.
+	This is tamper resistance, not cryptographic secrecy against map-script inspection.
 
-	Readonly and constant fields can be written by the compiler intrinsic but cannot be restored, so
-	they are not supported by `SerializableFields`. Other field types should be serialized manually.
+	Readonly and constant fields can be written by the compiler intrinsic but cannot be restored.
+	Nested class fields must be initialized (non-null). Unsupported application types should provide
+	`FieldSerializationWriter.write` and `readSerializedField` overloads, like the standard tuple
+	codecs do. Exact nullable construction and generic collection codecs still need compiler support.
+
+	The legacy `Serializable` base class below retains its original verbose RLE format for backwards
+	compatibility. Do not use it for new save formats.
 
 	=>LEGACY USAGE<=
 
@@ -82,156 +88,6 @@ constant HASH_LENGTH = 10
 constant INT_TOKEN = "i"
 constant REAL_TOKEN = "r"
 constant STRING_TOKEN = "s"
-constant BOOLEAN_TOKEN = "b"
-
-function int.padSerializationHash() returns string
-    var hashString = this.toString()
-    if hashString.length() > HASH_LENGTH
-        hashString = hashString.substring(0, HASH_LENGTH)
-    while hashString.length() < HASH_LENGTH
-        hashString = "0" + hashString
-    return hashString
-
-class FieldSerializationWriter
-    private let output = new ChunkedString()
-    private int hash = 0
-
-    private function write(string name, string token, string value)
-        if name.length() > MAX_NAME_LENGTH
-            error("name " + name + " too long.")
-
-        let property = name + "=" + value
-        var propertyLength = property.length().toString()
-        while propertyLength.length() < LEN_LENGTH
-            propertyLength = "0" + propertyLength
-
-        hash += property.getHash()
-        output.append(token + propertyLength + property)
-
-    function write(string name, int value)
-        write(name, INT_TOKEN, value.toString())
-
-    function write(string name, real value)
-        write(name, REAL_TOKEN, value.toString())
-
-    function write(string name, string value)
-        write(name, STRING_TOKEN, value)
-
-    function write(string name, boolean value)
-        write(name, BOOLEAN_TOKEN, value.toString())
-
-    function finish() returns ChunkedString
-        output.append(hash.padSerializationHash())
-        return output
-
-class FieldSerializationReader
-    private let intMap = new HashMap<int, int>()
-    private let realMap = new HashMap<int, real>()
-    private let stringMap = new HashMap<int, string>()
-    private let booleanMap = new HashMap<int, boolean>()
-    private int hash = 0
-    private boolean valid = false
-
-    construct(ChunkedString input)
-        if input.length() >= HASH_LENGTH
-            var pointer = 0
-            let dataLength = input.length() - HASH_LENGTH
-            var parsing = true
-            while pointer < dataLength and parsing
-                if pointer + 1 + LEN_LENGTH > dataLength
-                    parsing = false
-                else
-                    let token = input.getUnsafeSubString(pointer, pointer + 1)
-                    if token != INT_TOKEN and token != REAL_TOKEN and token != STRING_TOKEN and token != BOOLEAN_TOKEN
-                        parsing = false
-                    else
-                        pointer += 1
-                        let length = input.getUnsafeSubString(pointer, pointer + LEN_LENGTH).toInt()
-                        pointer += LEN_LENGTH
-                        if length <= 0 or pointer + length > dataLength
-                            parsing = false
-                        else
-                            parsing = parseProperty(token, input.getUnsafeSubString(pointer, pointer + length))
-                            pointer += length
-
-            if parsing
-                valid = input.getUnsafeSubString(dataLength, input.length()) == hash.padSerializationHash()
-
-    private function parseProperty(string token, string input) returns boolean
-        let indexOfEqual = input.indexOf("=")
-        if indexOfEqual <= 0
-            return false
-
-        hash += input.getHash()
-        let name = input.substring(0, indexOfEqual).getHash()
-        let value = input.substring(indexOfEqual + 1)
-        switch token
-            case INT_TOKEN
-                intMap.put(name, value.toInt())
-            case REAL_TOKEN
-                realMap.put(name, value.toReal())
-            case STRING_TOKEN
-                stringMap.put(name, value)
-            case BOOLEAN_TOKEN
-                booleanMap.put(name, value.toBool())
-        return true
-
-    function isValid() returns boolean
-        return valid
-
-    function read(string name, int oldValue) returns int
-        let key = name.getHash()
-        return intMap.has(key) ? intMap.get(key) : oldValue
-
-    function read(string name, real oldValue) returns real
-        let key = name.getHash()
-        return realMap.has(key) ? realMap.get(key) : oldValue
-
-    function read(string name, string oldValue) returns string
-        let key = name.getHash()
-        return stringMap.has(key) ? stringMap.get(key) : oldValue
-
-    function read(string name, boolean oldValue) returns boolean
-        let key = name.getHash()
-        return booleanMap.has(key) ? booleanMap.get(key) : oldValue
-
-    ondestroy
-        destroy intMap
-        destroy realMap
-        destroy stringMap
-        destroy booleanMap
-
-/**
-Automatically serializes the mutable primitive instance fields of a dedicated state class.
-
-Use this module instead of extending `Serializable` for new code. Serialization is expanded to
-direct field accesses at compile time and works on both the Jass and Lua backends.
-*/
-public module SerializableFields
-    /** Serializes all supported instance fields and returns the encoded data. */
-    function serialize() returns ChunkedString
-        let writer = new FieldSerializationWriter()
-        forFields((fieldName, value) -> writer.write(fieldName, value))
-        let result = writer.finish()
-        destroy writer
-        return result
-
-    /**
-    Populates this instance from encoded data and returns whether its integrity check succeeded.
-    Missing fields retain their current values. No fields are changed when validation fails.
-    */
-    function deserialize(ChunkedString input) returns boolean
-        let reader = new FieldSerializationReader(input)
-        let result = reader.isValid()
-        if result
-            mapFields((fieldName, value) -> reader.read(fieldName, value))
-        destroy reader
-        return result
-
-    /** Loads encoded data into this instance and returns it for concise construction and chaining. */
-    function load(ChunkedString input) returns thistype
-        deserialize(input)
-        return this
 
 public abstract class Serializable
     private ChunkedString serOutput = null

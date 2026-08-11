@@ -21,6 +21,14 @@ import NoWurst
 /** Functions annotated with @compiletimenative are natives that are only available at compiletime, but not ingame.  */
 @annotation public function compiletimenative()
 
+/**
+Marks a documented declaration whose calls are expanded by the compiler.
+
+Unlike a normal fallback declaration, this does not suppress intrinsic lowering. The declaration
+exists so intrinsic APIs remain visible to completion, navigation, and documentation tools.
+*/
+@annotation public function compilerintrinsic()
+
 /** Elements annotated with @configurable can be configured (i.e. replaced by a different implementation) in configuration packages.  */
 @annotation public function configurable()
 
