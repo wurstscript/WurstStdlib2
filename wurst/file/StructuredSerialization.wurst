@@ -8,7 +8,41 @@ import ChunkedString
 function FieldSerializationReader.readTuple(string name) returns FieldSerializationReader
 	return this.readObject(name)
 
-/** Standard tuple codecs. Custom tuples can follow the same pair of writer/reader overloads. */
+/**
+Standard tuple codecs.
+
+Field names passed to these codecs are converted by `FieldSerializationWriter` to fixed-width
+numeric IDs; names are not stored in the save string. Classes and tuples therefore use the same
+wire representation and migration rules. The compiler does not derive persistence IDs from field
+annotations; serialization metadata deliberately remains owned by this library.
+
+Custom tuples need three overloads because tuples cannot implement `FieldSerializable`. The field
+intrinsics keep the codec concise and support mixed component types through overload resolution:
+
+```
+tuple InventorySlot(int itemId, int charges)
+
+public function FieldSerializationWriter.write(string name, InventorySlot value)
+	let child = new FieldSerializationWriter(1, this.getIntegrityKey())
+	wurstForFields(value, (fieldName, fieldValue) -> child.write(fieldName, fieldValue))
+	this.writeObject(name, child)
+
+public function FieldSerializationReader.read(string name, InventorySlot oldValue) returns InventorySlot
+	let child = this.readObject(name)
+	var result = oldValue
+	if child.isValid()
+		wurstMapFields(result, (fieldName, fieldValue) -> fieldValue.readSerializedField(child, fieldName))
+	destroy child
+	return result
+
+public function InventorySlot.readSerializedField(FieldSerializationReader reader, string name) returns InventorySlot
+	return reader.read(name, this)
+```
+
+Nested custom tuples compose once each tuple type provides these overloads. Keep component names
+stable. For tuple-specific schema changes, increment the child writer's schema version and call
+`child.renameField(oldName, newName)` before `wurstMapFields` when reading older versions.
+*/
 public function FieldSerializationWriter.write(string name, vec2 value)
 	let child = new FieldSerializationWriter(1, this.getIntegrityKey())
 	child.write("x", value.x)

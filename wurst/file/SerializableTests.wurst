@@ -12,6 +12,24 @@ function repeated(string value, int count) returns string
 		result += value
 	return result
 
+tuple InventorySlot(int itemId, int charges)
+
+function FieldSerializationWriter.write(string name, InventorySlot value)
+	let child = new FieldSerializationWriter(1, this.getIntegrityKey())
+	wurstForFields(value, (fieldName, fieldValue) -> child.write(fieldName, fieldValue))
+	this.writeObject(name, child)
+
+function FieldSerializationReader.read(string name, InventorySlot oldValue) returns InventorySlot
+	let child = this.readObject(name)
+	var result = oldValue
+	if child.isValid()
+		wurstMapFields(result, (fieldName, fieldValue) -> fieldValue.readSerializedField(child, fieldName))
+	destroy child
+	return result
+
+function InventorySlot.readSerializedField(FieldSerializationReader reader, string name) returns InventorySlot
+	return reader.read(name, this)
+
 class ChildState implements FieldSerializable
 	use SerializableFields
 
@@ -51,6 +69,11 @@ class LargeParentState implements FieldSerializable
 
 	ondestroy
 		destroy child
+
+class CustomTupleState implements FieldSerializable
+	use SerializableFields
+
+	InventorySlot slot = InventorySlot(0, 0)
 
 class RenameScore implements SerializationMigration
 	override function migrate(FieldSerializationReader reader)
@@ -94,6 +117,21 @@ function reflectedFieldsRoundTripNestedClassesAndTuples()
 	loaded.child.level.assertEquals(8)
 	loaded.child.title.assertEquals("veteran")
 	constructions.assertEquals(2)
+
+	destroy original
+	destroy loaded
+	destroy data
+
+@Test
+function customTupleCodecRoundTripsThroughSerializableFields()
+	let original = new CustomTupleState()
+	original.slot = InventorySlot(1234, 7)
+
+	let data = original.serialize()
+	let loaded = new CustomTupleState().load(data)
+
+	loaded.slot.itemId.assertEquals(1234)
+	loaded.slot.charges.assertEquals(7)
 
 	destroy original
 	destroy loaded
