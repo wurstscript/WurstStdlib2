@@ -22,39 +22,47 @@ constant SERIALIZATION_DIGITS = "0123456789ABCDEFGHIJKLMNOPQRSTUVabcdefghijklmno
 constant SERIALIZATION_INT_WIDTH = 7
 constant SERIALIZATION_HASH_SEED = 0x45D9F3B
 constant SERIALIZATION_HASH_FACTOR = 0x01000193
+constant SERIALIZATION_INNER_DOMAIN = 0x36A5F217
+constant SERIALIZATION_OUTER_DOMAIN = 0x5C4B91E3
+constant SERIALIZATION_FINAL_DOMAIN = 0x27D4EB2D
 
 constant INT_TOKEN = "i"
 constant REAL_TOKEN = "r"
 constant STRING_TOKEN = "s"
 constant BOOLEAN_TOKEN = "b"
 constant OBJECT_TOKEN = "o"
-
-function updateSerializationHash(int current, string fragment) returns int
+function serializationCharacterWidth(string text, int position) returns int
+	var width = 1
+	var character = text.substring(position, position + width)
+	if character.length() > 1
+		return character.length()
+	if character.isMultibytePartial()
+		width = 2
+		character = text.substring(position, position + width)
+		while width < 4 and position + width < text.length() and character.isMultibytePartial()
+			width++
+			character = text.substring(position, position + width)
+	return width
+function hashSerializationCharacters(int current, string text) returns int
 	var result = current
 	var position = 0
-	while position < fragment.length()
-		var width = 1
-		var character = fragment.substring(position, position + width)
-		if character.length() > 1
-			// Some runtimes return the complete multibyte character for a one-byte slice.
-			width = character.length()
-		else if character.isMultibytePartial()
-			// Other runtimes return an invalid lead-byte marker. Widen until it is complete.
-			width = 2
-			character = fragment.substring(position, position + width)
-			while width < 4 and position + width < fragment.length() and character.isMultibytePartial()
-				width++
-				character = fragment.substring(position, position + width)
-
+	while position < text.length()
+		let width = serializationCharacterWidth(text, position)
+		let character = text.substring(position, position + width)
 		result = result.bitXor(character.getHash()) * SERIALIZATION_HASH_FACTOR
 		if character != character.toLowerCase()
 			result = result.bitXor(0x5A)
 		position += width
 	return result
 
+function mixSerializationKey(int value) returns int
+	var result = value
+	result = result.bitXor(result.shiftr(16)) * 0x7FEB352D
+	result = result.bitXor(result.shiftr(15)) * 0x846CA68B
+	return result.bitXor(result.shiftr(16))
 /** Returns the stable, case-sensitive numeric ID used for a persisted field name. */
 public function serializationFieldId(string name) returns int
-	return updateSerializationHash(SERIALIZATION_HASH_SEED, name)
+	return hashSerializationCharacters(SERIALIZATION_HASH_SEED, name)
 
 function encodeFixedInt(int value) returns string
 	var remaining = value
@@ -110,6 +118,45 @@ function copyChunkedString(ChunkedString source) returns ChunkedString
 		result.append(source.getChunk(i))
 	return result
 
+/** Streaming two-stage keyed hash with chunk-independent multibyte handling. */
+class SerializationHasher
+	int key
+	int innerHash
+	string pending = ""
+	boolean finished = false
+
+	construct(int key)
+		this.key = key
+		innerHash = SERIALIZATION_HASH_SEED.bitXor(mixSerializationKey(key.bitXor(SERIALIZATION_INNER_DOMAIN)))
+
+	private function appendBlock(string block)
+		let combined = pending + block
+		var position = 0
+		while combined.length() - position > 4
+			let width = serializationCharacterWidth(combined, position)
+			let character = combined.substring(position, position + width)
+			innerHash = hashSerializationCharacters(innerHash, character)
+			position += width
+		pending = combined.substring(position)
+
+	function append(string fragment)
+		var position = 0
+		while position < fragment.length()
+			let blockLength = min(128, fragment.length() - position)
+			appendBlock(fragment.substring(position, position + blockLength))
+			position += blockLength
+
+	function finish() returns int
+		if not finished
+			innerHash = hashSerializationCharacters(innerHash, pending)
+			pending = ""
+			finished = true
+
+		let outerKey = mixSerializationKey(key.bitXor(SERIALIZATION_OUTER_DOMAIN))
+		var outerHash = SERIALIZATION_HASH_SEED.bitXor(outerKey)
+		outerHash = hashSerializationCharacters(outerHash, encodeFixedInt(innerHash))
+		outerHash = outerHash.bitXor(mixSerializationKey(key.bitXor(SERIALIZATION_FINAL_DOMAIN)))
+		return mixSerializationKey(outerHash)
 /** A parsed migration hook. Hooks are invoked but not destroyed by `deserialize`. */
 public interface SerializationMigration
 	function migrate(FieldSerializationReader reader)
@@ -124,7 +171,7 @@ public interface FieldSerializable
 public class FieldSerializationWriter
 	private let output = new ChunkedString()
 	private int integrityKey
-	private int hash
+	private SerializationHasher hasher
 	private boolean finished = false
 
 	construct(int schemaVersion)
@@ -132,13 +179,13 @@ public class FieldSerializationWriter
 
 	construct(int schemaVersion, int integrityKey)
 		this.integrityKey = integrityKey
-		hash = SERIALIZATION_HASH_SEED.bitXor(integrityKey)
+		hasher = new SerializationHasher(integrityKey)
 		appendHashed(SERIALIZATION_MAGIC)
 		appendHashed(encodeVarUInt(schemaVersion))
 
 	private function appendHashed(string fragment)
 		output.append(fragment)
-		hash = updateSerializationHash(hash, fragment)
+		hasher.append(fragment)
 
 	private function appendHashed(ChunkedString fragments)
 		for i = 0 to fragments.getChunkCount() - 1
@@ -198,11 +245,12 @@ public class FieldSerializationWriter
 	/** Completes the envelope. The returned value belongs to the caller. */
 	function finish() returns ChunkedString
 		if not finished
-			output.append(encodeFixedInt(hash))
+			output.append(encodeFixedInt(hasher.finish()))
 			finished = true
 		return output
 
 	ondestroy
+		destroy hasher
 		if not finished
 			destroy output
 
@@ -211,13 +259,13 @@ class SerializationCursor
 	ChunkedString input
 	int pointer = 0
 	int bodyEnd = 0
-	int hash
+	SerializationHasher hasher
 	boolean valid = true
 
 	construct(ChunkedString input, int integrityKey)
 		this.input = input
 		bodyEnd = input.length() - SERIALIZATION_INT_WIDTH
-		hash = SERIALIZATION_HASH_SEED.bitXor(integrityKey)
+		hasher = new SerializationHasher(integrityKey)
 		if bodyEnd < SERIALIZATION_MAGIC.length()
 			valid = false
 
@@ -227,7 +275,7 @@ class SerializationCursor
 			return ""
 		let result = input.getUnsafeSubString(pointer, pointer + length)
 		pointer += length
-		hash = updateSerializationHash(hash, result)
+		hasher.append(result)
 		return result
 
 	/** Reads a range by source chunks, without materializing it as one runtime string. */
@@ -246,7 +294,7 @@ class SerializationCursor
 			if chunkEnd > start and chunkStart < rangeEnd
 				let fragment = chunk.substring(max(start - chunkStart, 0), min(rangeEnd - chunkStart, chunk.length()))
 				result.append(fragment)
-				hash = updateSerializationHash(hash, fragment)
+				hasher.append(fragment)
 			chunkStart = chunkEnd
 			if chunkStart >= rangeEnd
 				break
@@ -277,6 +325,9 @@ class SerializationCursor
 			place *= 32
 		valid = false
 		return -1
+
+	ondestroy
+		destroy hasher
 
 /** Parsed field table. Unknown fields and wire tokens are retained and safely skippable. */
 public class FieldSerializationReader
@@ -316,7 +367,7 @@ public class FieldSerializationReader
 
 		if cursor.valid and cursor.pointer == cursor.bodyEnd
 			let expected = input.getUnsafeSubString(cursor.bodyEnd, input.length())
-			valid = isFixedInt(expected) and decodeFixedInt(expected) == cursor.hash
+			valid = isFixedInt(expected) and decodeFixedInt(expected) == cursor.hasher.finish()
 		destroy cursor
 
 	function isValid() returns boolean
