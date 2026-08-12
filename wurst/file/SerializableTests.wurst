@@ -71,9 +71,15 @@ class LargeParentState implements FieldSerializable
 		destroy child
 
 class CustomTupleState implements FieldSerializable
-	use SerializableFields
+	use FieldSerializableLifecycle
 
 	InventorySlot slot = InventorySlot(0, 0)
+
+	override function writeSerializedFields(FieldSerializationWriter writer)
+		wurstForFields((fieldName, fieldValue) -> writer.write(fieldName, fieldValue))
+
+	override function readSerializedFields(FieldSerializationReader reader)
+		wurstMapFields((fieldName, fieldValue) -> fieldValue.readSerializedField(reader, fieldName))
 
 class RenameScore implements SerializationMigration
 	override function migrate(FieldSerializationReader reader)
@@ -128,6 +134,12 @@ function customTupleCodecRoundTripsThroughSerializableFields()
 	original.slot = InventorySlot(1234, 7)
 
 	let data = original.serialize()
+	let rootReader = new FieldSerializationReader(data)
+	rootReader.hasField("slot").assertTrue()
+	let tupleReader = rootReader.readObject("slot")
+	tupleReader.hasField("itemId").assertTrue()
+	int defaultItemId = 0
+	tupleReader.read("itemId", defaultItemId).assertEquals(1234)
 	let loaded = new CustomTupleState().load(data)
 
 	loaded.slot.itemId.assertEquals(1234)
@@ -135,6 +147,8 @@ function customTupleCodecRoundTripsThroughSerializableFields()
 
 	destroy original
 	destroy loaded
+	destroy tupleReader
+	destroy rootReader
 	destroy data
 
 @Test

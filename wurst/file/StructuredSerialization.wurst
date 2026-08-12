@@ -37,11 +37,24 @@ public function FieldSerializationReader.read(string name, InventorySlot oldValu
 
 public function InventorySlot.readSerializedField(FieldSerializationReader reader, string name) returns InventorySlot
 	return reader.read(name, this)
+
+class InventoryState implements FieldSerializable
+	use FieldSerializableLifecycle
+	InventorySlot slot = InventorySlot(0, 0)
+
+	override function writeSerializedFields(FieldSerializationWriter writer)
+		wurstForFields((fieldName, fieldValue) -> writer.write(fieldName, fieldValue))
+
+	override function readSerializedFields(FieldSerializationReader reader)
+		wurstMapFields((fieldName, fieldValue) -> fieldValue.readSerializedField(reader, fieldName))
 ```
 
-Nested custom tuples compose once each tuple type provides these overloads. Keep component names
-stable. For tuple-specific schema changes, increment the child writer's schema version and call
-`child.renameField(oldName, newName)` before `wurstMapFields` when reading older versions.
+`SerializableFields` can automatically use codecs declared by `StructuredSerialization`. For
+package-local codecs, use `FieldSerializableLifecycle` and keep the two intrinsic mapping methods
+in the same package as the overloads, as above. Nested custom tuples then compose once each tuple
+type provides the three overloads. Keep component names stable. For tuple-specific schema changes,
+increment the child writer's schema version and call `child.renameField(oldName, newName)` before
+`wurstMapFields` when reading older versions.
 */
 public function FieldSerializationWriter.write(string name, vec2 value)
 	let child = new FieldSerializationWriter(1, this.getIntegrityKey())
@@ -138,20 +151,16 @@ public function colorHSV.readSerializedField(FieldSerializationReader reader, st
 	return reader.read(name, this)
 
 /**
-Modern serialization for dedicated state/DAO classes.
+Shared typed lifecycle for `FieldSerializable` classes that provide their own field mapping.
 
-Add `implements FieldSerializable` and `use SerializableFields`. The compiler expands field
-iteration to direct accesses. The tagged format tolerates field reordering, added/removed fields,
-and unknown future wire types. Missing fields retain constructor defaults. Use a schema version and
-`SerializationMigration` for semantic changes or `renameField` for renamed attributes.
+Prefer `SerializableFields` when all field codecs come from `StructuredSerialization`. Use this
+module when mapping fields in the class package is necessary, notably for package-local tuple
+codecs. Implement `writeSerializedFields` and `readSerializedFields`; serialization, integrity,
+migration, nested-object loading, and typed `load` remain provided here.
 */
-public module SerializableFields
-	function writeSerializedFields(FieldSerializationWriter writer)
-		// Compatibility aliases keep this usable with compilers predating canonical #1224 names.
-		forFields((fieldName, value) -> writer.write(fieldName, value))
-
-	function readSerializedFields(FieldSerializationReader reader)
-		mapFields((fieldName, value) -> value.readSerializedField(reader, fieldName))
+public module FieldSerializableLifecycle
+	abstract function writeSerializedFields(FieldSerializationWriter writer)
+	abstract function readSerializedFields(FieldSerializationReader reader)
 
 	function readSerializedField(FieldSerializationReader reader, string name) returns thistype
 		let child = reader.readObject(name)
@@ -192,3 +201,23 @@ public module SerializableFields
 	function load(ChunkedString input) returns thistype
 		deserialize(input)
 		return this
+
+/**
+Modern automatic serialization for dedicated state/DAO classes using built-in codecs.
+
+Add `implements FieldSerializable` and `use SerializableFields`. The compiler expands field
+iteration to direct accesses. The tagged format tolerates field reordering, added/removed fields,
+and unknown future wire types. Missing fields retain constructor defaults. Use a schema version and
+`SerializationMigration` for semantic changes or `renameField` for renamed attributes. For custom
+tuple codecs declared in the consuming package, use `FieldSerializableLifecycle` as documented
+above so overload resolution occurs where those codecs are visible.
+*/
+public module SerializableFields
+	use FieldSerializableLifecycle
+
+	override function writeSerializedFields(FieldSerializationWriter writer)
+		// Compatibility aliases keep this usable with compilers predating canonical #1224 names.
+		forFields((fieldName, value) -> writer.write(fieldName, value))
+
+	override function readSerializedFields(FieldSerializationReader reader)
+		mapFields((fieldName, value) -> value.readSerializedField(reader, fieldName))

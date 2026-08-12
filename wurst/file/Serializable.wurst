@@ -34,10 +34,10 @@ import ErrorHandling
 
 	Readonly and constant fields can be written by the compiler intrinsic but cannot be restored.
 	Nested class fields must be initialized (non-null). Custom tuples and other application types
-	must provide writer, reader, and `readSerializedField` overloads; the `StructuredSerialization`
-	package documentation contains a complete custom-tuple example using `wurstForFields` and
-	`wurstMapFields`. Exact nullable construction and generic collection codecs still need compiler
-	support.
+	must provide writer, reader, and `readSerializedField` overloads. Their owning DAO should use
+	`FieldSerializableLifecycle` and declare its intrinsic field mapping beside those overloads. The
+	`StructuredSerialization` package documentation contains a complete example. Exact nullable
+	construction and generic collection codecs still need compiler support.
 
 	The legacy `Serializable` base class below retains its original verbose RLE format for backwards
 	compatibility. Do not use it for new save formats.
