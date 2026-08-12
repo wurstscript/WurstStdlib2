@@ -1,0 +1,497 @@
+package StructuredSerializationCore
+import ChunkedString
+import HashMap
+import ErrorHandling
+import Bitwise
+
+/** Current tagged serialization wire format. */
+public constant SERIALIZATION_FORMAT_VERSION = 2
+
+/**
+Default integrity key for structured saves. Override this in map configuration with a private,
+map-specific value. It is intended to deter edited player save codes, not provide cryptographic
+authentication against somebody who can inspect the map script.
+*/
+@configurable public constant SERIALIZATION_INTEGRITY_KEY = 0x6D2B79F5
+
+/** Decimal places retained for Jass `real` values. Trailing zeroes are removed on the wire. */
+@configurable public constant SERIALIZATION_REAL_DECIMALS = 6
+
+constant SERIALIZATION_MAGIC = "WS2"
+constant SERIALIZATION_DIGITS = "0123456789ABCDEFGHIJKLMNOPQRSTUVabcdefghijklmnopqrstuvwxyz-_!~*+"
+constant SERIALIZATION_INT_WIDTH = 7
+constant SERIALIZATION_HASH_SEED = 0x45D9F3B
+constant SERIALIZATION_HASH_FACTOR = 0x01000193
+constant SERIALIZATION_INNER_DOMAIN = 0x36A5F217
+constant SERIALIZATION_OUTER_DOMAIN = 0x5C4B91E3
+constant SERIALIZATION_FINAL_DOMAIN = 0x27D4EB2D
+
+constant INT_TOKEN = "i"
+constant REAL_TOKEN = "r"
+constant STRING_TOKEN = "s"
+constant BOOLEAN_TOKEN = "b"
+constant OBJECT_TOKEN = "o"
+function serializationCharacterWidth(string text, int position) returns int
+	var width = 1
+	var character = text.substring(position, position + width)
+	if character.length() > 1
+		return character.length()
+	if character.isMultibytePartial()
+		width = 2
+		character = text.substring(position, position + width)
+		while width < 4 and position + width < text.length() and character.isMultibytePartial()
+			width++
+			character = text.substring(position, position + width)
+	return width
+function hashSerializationCharacters(int current, string text) returns int
+	var result = current
+	var position = 0
+	while position < text.length()
+		let width = serializationCharacterWidth(text, position)
+		let character = text.substring(position, position + width)
+		result = result.bitXor(character.getHash()) * SERIALIZATION_HASH_FACTOR
+		if character != character.toLowerCase()
+			result = result.bitXor(0x5A)
+		position += width
+	return result
+
+function mixSerializationKey(int value) returns int
+	var result = value
+	result = result.bitXor(result.shiftr(16)) * 0x7FEB352D
+	result = result.bitXor(result.shiftr(15)) * 0x846CA68B
+	return result.bitXor(result.shiftr(16))
+/** Returns the stable, case-sensitive numeric ID used for a persisted field name. */
+public function serializationFieldId(string name) returns int
+	return hashSerializationCharacters(SERIALIZATION_HASH_SEED, name)
+
+function encodeFixedInt(int value) returns string
+	var remaining = value
+	var result = ""
+	for _i = 0 to SERIALIZATION_INT_WIDTH - 1
+		result += SERIALIZATION_DIGITS.substring(remaining.bitAnd(31), remaining.bitAnd(31) + 1)
+		remaining = remaining.shiftr(5)
+	return result
+
+function decodeFixedInt(string encoded) returns int
+	var result = 0
+	for i = 0 to SERIALIZATION_INT_WIDTH - 1
+		let digit = SERIALIZATION_DIGITS.indexOf(encoded.substring(i, i + 1))
+		result = result.bitOr(digit.shiftl(i * 5))
+	return result
+
+function isFixedInt(string encoded) returns boolean
+	if encoded.length() != SERIALIZATION_INT_WIDTH
+		return false
+	for i = 0 to SERIALIZATION_INT_WIDTH - 1
+		let digit = SERIALIZATION_DIGITS.indexOf(encoded.substring(i, i + 1))
+		if digit < 0 or digit >= 32 or (i == SERIALIZATION_INT_WIDTH - 1 and digit > 3)
+			return false
+	return true
+
+function encodeVarUInt(int value) returns string
+	if value < 0
+		error("Cannot encode a negative serialization length or version: " + value)
+		return ""
+
+	var remaining = value
+	var result = ""
+	while remaining >= 32
+		let digit = remaining mod 32 + 32
+		result += SERIALIZATION_DIGITS.substring(digit, digit + 1)
+		remaining = remaining div 32
+	result += SERIALIZATION_DIGITS.substring(remaining, remaining + 1)
+	return result
+
+function encodeReal(real value) returns string
+	let decimals = max(SERIALIZATION_REAL_DECIMALS, 0)
+	var result = R2SW(value, 1, decimals)
+	if result.indexOf(".") >= 0
+		while result.endsWith("0")
+			result = result.substring(0, result.length() - 1)
+		if result.endsWith(".")
+			result = result.substring(0, result.length() - 1)
+	return result
+
+function copyChunkedString(ChunkedString source) returns ChunkedString
+	let result = new ChunkedString(source.getChunkSize())
+	for i = 0 to source.getChunkCount() - 1
+		result.append(source.getChunk(i))
+	return result
+
+/** Streaming two-stage keyed hash with chunk-independent multibyte handling. */
+class SerializationHasher
+	int key
+	int innerHash
+	string pending = ""
+	boolean finished = false
+
+	construct(int key)
+		this.key = key
+		innerHash = SERIALIZATION_HASH_SEED.bitXor(mixSerializationKey(key.bitXor(SERIALIZATION_INNER_DOMAIN)))
+
+	private function appendBlock(string block)
+		let combined = pending + block
+		var position = 0
+		while combined.length() - position > 4
+			let width = serializationCharacterWidth(combined, position)
+			let character = combined.substring(position, position + width)
+			innerHash = hashSerializationCharacters(innerHash, character)
+			position += width
+		pending = combined.substring(position)
+
+	function append(string fragment)
+		var position = 0
+		while position < fragment.length()
+			let blockLength = min(128, fragment.length() - position)
+			appendBlock(fragment.substring(position, position + blockLength))
+			position += blockLength
+
+	function finish() returns int
+		if not finished
+			innerHash = hashSerializationCharacters(innerHash, pending)
+			pending = ""
+			finished = true
+
+		let outerKey = mixSerializationKey(key.bitXor(SERIALIZATION_OUTER_DOMAIN))
+		var outerHash = SERIALIZATION_HASH_SEED.bitXor(outerKey)
+		outerHash = hashSerializationCharacters(outerHash, encodeFixedInt(innerHash))
+		outerHash = outerHash.bitXor(mixSerializationKey(key.bitXor(SERIALIZATION_FINAL_DOMAIN)))
+		return mixSerializationKey(outerHash)
+/** A parsed migration hook. Hooks are invoked but not destroyed by `deserialize`. */
+public interface SerializationMigration
+	function migrate(FieldSerializationReader reader)
+
+/** Opt-in contract used for recursively serialized class fields. */
+public interface FieldSerializable
+	function writeSerializedFields(FieldSerializationWriter writer)
+	function readSerializedFields(FieldSerializationReader reader)
+	function readSerializedField(FieldSerializationReader reader, string name) returns thistype
+
+/** Builds one compact, versioned structured-save envelope. */
+public class FieldSerializationWriter
+	private let output = new ChunkedString()
+	private int integrityKey
+	private SerializationHasher hasher
+	private boolean finished = false
+
+	construct(int schemaVersion)
+		this(schemaVersion, SERIALIZATION_INTEGRITY_KEY)
+
+	construct(int schemaVersion, int integrityKey)
+		this.integrityKey = integrityKey
+		hasher = new SerializationHasher(integrityKey)
+		appendHashed(SERIALIZATION_MAGIC)
+		appendHashed(encodeVarUInt(schemaVersion))
+
+	private function appendHashed(string fragment)
+		output.append(fragment)
+		hasher.append(fragment)
+
+	private function appendHashed(ChunkedString fragments)
+		for i = 0 to fragments.getChunkCount() - 1
+			appendHashed(fragments.getChunk(i))
+
+	private function beginRaw(string name, string token, int payloadLength) returns boolean
+		if finished
+			error("Cannot add fields after FieldSerializationWriter.finish().")
+			return false
+		if token.length() != 1
+			error("Serialization wire tokens must be exactly one byte.")
+			return false
+
+		appendHashed(encodeFixedInt(serializationFieldId(name)))
+		appendHashed(token)
+		appendHashed(encodeVarUInt(payloadLength))
+		return true
+
+	/** Writes a future-compatible raw field. Custom token values should be one ASCII byte. */
+	function writeRaw(string name, string token, string payload)
+		if beginRaw(name, token, payload.length())
+			appendHashed(payload)
+
+	/** Writes a raw field without flattening its chunked payload. The caller retains ownership. */
+	function writeRaw(string name, string token, ChunkedString payload)
+		if beginRaw(name, token, payload.length())
+			appendHashed(payload)
+
+	function write(string name, int value)
+		writeRaw(name, INT_TOKEN, encodeFixedInt(value))
+
+	function write(string name, real value)
+		writeRaw(name, REAL_TOKEN, encodeReal(value))
+
+	function write(string name, string value)
+		writeRaw(name, STRING_TOKEN, value)
+
+	function write(string name, boolean value)
+		writeRaw(name, BOOLEAN_TOKEN, value ? "1" : "0")
+
+	function getIntegrityKey() returns int
+		return integrityKey
+
+	/** Recursively writes an opted-in non-null class instance. */
+	function write(string name, FieldSerializable value)
+		let child = new FieldSerializationWriter(1, integrityKey)
+		value.writeSerializedFields(child)
+		writeObject(name, child)
+
+	/** Writes and consumes a child writer as a nested class or tuple envelope. */
+	function writeObject(string name, FieldSerializationWriter child)
+		let childData = child.finish()
+		writeRaw(name, OBJECT_TOKEN, childData)
+		destroy childData
+		destroy child
+
+	/** Completes the envelope. The returned value belongs to the caller. */
+	function finish() returns ChunkedString
+		if not finished
+			output.append(encodeFixedInt(hasher.finish()))
+			finished = true
+		return output
+
+	ondestroy
+		destroy hasher
+		if not finished
+			destroy output
+
+/** Strict cursor which hashes exactly the bytes accepted by the parser. */
+class SerializationCursor
+	ChunkedString input
+	int pointer = 0
+	int bodyEnd = 0
+	SerializationHasher hasher
+	boolean valid = true
+
+	construct(ChunkedString input, int integrityKey)
+		this.input = input
+		bodyEnd = input.length() - SERIALIZATION_INT_WIDTH
+		hasher = new SerializationHasher(integrityKey)
+		if bodyEnd < SERIALIZATION_MAGIC.length()
+			valid = false
+
+	function read(int length) returns string
+		if not valid or length < 0 or length > bodyEnd - pointer
+			valid = false
+			return ""
+		let result = input.getUnsafeSubString(pointer, pointer + length)
+		pointer += length
+		hasher.append(result)
+		return result
+
+	/** Reads a range by source chunks, without materializing it as one runtime string. */
+	function readChunked(int length) returns ChunkedString
+		let result = new ChunkedString()
+		if not valid or length < 0 or length > bodyEnd - pointer
+			valid = false
+			return result
+
+		let start = pointer
+		let rangeEnd = pointer + length
+		var chunkStart = 0
+		for i = 0 to input.getChunkCount() - 1
+			let chunk = input.getChunk(i)
+			let chunkEnd = chunkStart + chunk.length()
+			if chunkEnd > start and chunkStart < rangeEnd
+				let fragment = chunk.substring(max(start - chunkStart, 0), min(rangeEnd - chunkStart, chunk.length()))
+				result.append(fragment)
+				hasher.append(fragment)
+			chunkStart = chunkEnd
+			if chunkStart >= rangeEnd
+				break
+		pointer = rangeEnd
+		return result
+
+	function readVarUInt() returns int
+		var result = 0
+		var place = 1
+		var digits = 0
+		while valid and digits < 7
+			let encoded = read(1)
+			let index = SERIALIZATION_DIGITS.indexOf(encoded)
+			if index < 0
+				valid = false
+				return -1
+			let digit = index mod 32
+			if digit > (INT_MAX - result) div place
+				valid = false
+				return -1
+			result += digit * place
+			digits++
+			if index < 32
+				return result
+			if place > INT_MAX div 32
+				valid = false
+				return -1
+			place *= 32
+		valid = false
+		return -1
+
+	ondestroy
+		destroy hasher
+
+/** Parsed field table. Unknown fields and wire tokens are retained and safely skippable. */
+public class FieldSerializationReader
+	private let tokenMap = new HashMap<int, string>()
+	private let payloadMap = new IterableMap<int, ChunkedString>()
+	private int schemaVersion = 0
+	private int integrityKey
+	private boolean valid = false
+
+	construct()
+
+	construct(ChunkedString input)
+		this(input, SERIALIZATION_INTEGRITY_KEY)
+
+	construct(ChunkedString input, int integrityKey)
+		this.integrityKey = integrityKey
+		let cursor = new SerializationCursor(input, integrityKey)
+		if cursor.read(SERIALIZATION_MAGIC.length()) != SERIALIZATION_MAGIC
+			cursor.valid = false
+		schemaVersion = cursor.readVarUInt()
+
+		while cursor.valid and cursor.pointer < cursor.bodyEnd
+			let encodedId = cursor.read(SERIALIZATION_INT_WIDTH)
+			if not isFixedInt(encodedId)
+				cursor.valid = false
+			else
+				let fieldId = decodeFixedInt(encodedId)
+				let token = cursor.read(1)
+				let length = cursor.readVarUInt()
+				let payload = cursor.readChunked(length)
+				if token.length() != 1 or tokenMap.has(fieldId)
+					cursor.valid = false
+					destroy payload
+				else
+					tokenMap.put(fieldId, token)
+					payloadMap.put(fieldId, payload)
+
+		if cursor.valid and cursor.pointer == cursor.bodyEnd
+			let expected = input.getUnsafeSubString(cursor.bodyEnd, input.length())
+			valid = isFixedInt(expected) and decodeFixedInt(expected) == cursor.hasher.finish()
+		destroy cursor
+
+	function isValid() returns boolean
+		return valid
+
+	function getSchemaVersion() returns int
+		return schemaVersion
+
+	function getIntegrityKey() returns int
+		return integrityKey
+
+	function hasField(string name) returns boolean
+		return valid and payloadMap.has(serializationFieldId(name))
+
+	function hasRaw(string name, string token) returns boolean
+		let fieldId = serializationFieldId(name)
+		return valid and tokenMap.has(fieldId) and tokenMap.get(fieldId) == token
+
+	function readRaw(string name, string token, string oldValue) returns string
+		let fieldId = serializationFieldId(name)
+		return valid and tokenMap.has(fieldId) and tokenMap.get(fieldId) == token ? payloadMap.get(fieldId).getUnsafeString() : oldValue
+
+	/**
+	Returns an independent chunked copy of a raw payload, or `null` when the field/token is absent.
+	The caller owns and must destroy the returned value.
+	*/
+	function readRawChunked(string name, string token) returns ChunkedString
+		let fieldId = serializationFieldId(name)
+		if not valid or not tokenMap.has(fieldId) or tokenMap.get(fieldId) != token
+			return null
+		return copyChunkedString(payloadMap.get(fieldId))
+
+	function read(string name, int oldValue) returns int
+		let payload = readRaw(name, INT_TOKEN, "")
+		return isFixedInt(payload) ? decodeFixedInt(payload) : oldValue
+
+	function read(string name, real oldValue) returns real
+		let payload = readRaw(name, REAL_TOKEN, "")
+		return payload == "" ? oldValue : payload.toReal()
+
+	function read(string name, string oldValue) returns string
+		return readRaw(name, STRING_TOKEN, oldValue)
+
+	function read(string name, boolean oldValue) returns boolean
+		let payload = readRaw(name, BOOLEAN_TOKEN, "")
+		return payload == "0" ? false : (payload == "1" ? true : oldValue)
+
+	/** Replaces or creates a decoded field during migration. */
+	function setRaw(string name, string token, string payload)
+		if not valid or token.length() != 1
+			return
+		let fieldId = serializationFieldId(name)
+		if payloadMap.has(fieldId)
+			destroy payloadMap.get(fieldId)
+		tokenMap.put(fieldId, token)
+		payloadMap.put(fieldId, new ChunkedString()..append(payload))
+
+	function set(string name, int value)
+		setRaw(name, INT_TOKEN, encodeFixedInt(value))
+
+	function set(string name, real value)
+		setRaw(name, REAL_TOKEN, encodeReal(value))
+
+	function set(string name, string value)
+		setRaw(name, STRING_TOKEN, value)
+
+	function set(string name, boolean value)
+		setRaw(name, BOOLEAN_TOKEN, value ? "1" : "0")
+
+	function removeField(string name)
+		let fieldId = serializationFieldId(name)
+		if payloadMap.has(fieldId)
+			destroy payloadMap.get(fieldId)
+		tokenMap.remove(fieldId)
+		payloadMap.remove(fieldId)
+
+	/** Mutates an existing opted-in child object when a valid nested envelope is present. */
+	function readInto(string name, FieldSerializable oldValue) returns boolean
+		let child = readObject(name)
+		let result = child.isValid()
+		if result
+			oldValue.readSerializedFields(child)
+		destroy child
+		return result
+
+	/** Returns a nested reader borrowed from this reader, or an invalid reader when absent. */
+	function readObject(string name) returns FieldSerializationReader
+		let fieldId = serializationFieldId(name)
+		if not valid or not tokenMap.has(fieldId) or tokenMap.get(fieldId) != OBJECT_TOKEN
+			return new FieldSerializationReader()
+		return new FieldSerializationReader(payloadMap.get(fieldId), integrityKey)
+
+	/**
+	Moves a persisted value from an old field name to a new one. Call this from a migration before
+	field mapping. Existing data under the new name wins, making repeated migrations idempotent.
+	*/
+	function renameField(string oldName, string newName)
+		let oldId = serializationFieldId(oldName)
+		let newId = serializationFieldId(newName)
+		if oldId == newId
+			return
+		if tokenMap.has(oldId) and not tokenMap.has(newId)
+			tokenMap.put(newId, tokenMap.get(oldId))
+			payloadMap.put(newId, payloadMap.get(oldId))
+		else if payloadMap.has(oldId)
+			destroy payloadMap.get(oldId)
+		tokenMap.remove(oldId)
+		payloadMap.remove(oldId)
+
+	ondestroy
+		for fieldId in payloadMap
+			destroy payloadMap.get(fieldId)
+		destroy tokenMap
+		destroy payloadMap
+
+/** Type-directed field readers used by the compiler-expanded mapper. */
+public function int.readSerializedField(FieldSerializationReader reader, string name) returns int
+	return reader.read(name, this)
+
+public function real.readSerializedField(FieldSerializationReader reader, string name) returns real
+	return reader.read(name, this)
+
+public function string.readSerializedField(FieldSerializationReader reader, string name) returns string
+	return reader.read(name, this)
+
+public function boolean.readSerializedField(FieldSerializationReader reader, string name) returns boolean
+	return reader.read(name, this)

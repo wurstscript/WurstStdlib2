@@ -48,3 +48,55 @@ public constant isLua = false
  */
  public function compiletime<T:>(T expr) returns T
 	 return expr
+
+/** Tooling signature used by the field-iteration compiler intrinsics.
+The compiler specializes `value` to the concrete type of each visited field. */
+public interface WurstFieldCallback
+	function apply(string fieldName, int value)
+
+/** Tooling signature used by the field-mapping compiler intrinsic.
+The compiler specializes both the parameter and result to each concrete field type. */
+public interface WurstFieldMapper
+	function apply(string fieldName, int value) returns int
+
+/**
+Emits the callback once for every accessible non-static field of the enclosing class.
+
+The callback receives the source field name and its concrete value. This is compile-time code
+generation: the generated Jass or Lua contains direct field accesses and no runtime reflection.
+Use the explicit-target form `wurstForFields(target, callback)` for classes and tuples.
+*/
+@compilerintrinsic public function wurstForFields(WurstFieldCallback _callback)
+
+/**
+Emits the callback once for every accessible non-static field of `target`.
+
+This overload supports class instances and tuple values. The target expression is evaluated
+once, and the compiler specializes the callback value to each field's concrete type.
+*/
+@compilerintrinsic public function wurstForFields<T:>(T _target, WurstFieldCallback _callback)
+
+/**
+Maps every accessible mutable non-static field of the enclosing class.
+
+Each callback result is assigned back to its field. Use the explicit-target form
+`wurstMapFields(target, callback)` for classes and tuple variables.
+*/
+@compilerintrinsic public function wurstMapFields(WurstFieldMapper _callback)
+
+/**
+Maps every accessible mutable non-static field of `target`.
+
+This overload supports class instances and tuple variables. The target expression is evaluated
+once, and each specialized callback result is assigned directly back to its field.
+*/
+@compilerintrinsic public function wurstMapFields<T:>(T _target, WurstFieldMapper _callback)
+
+/**
+Constructs the concrete class `T` through its accessible zero-argument constructor.
+
+This is an intrinsic rather than runtime reflection. Consequently `T` must be known concretely
+at the call site and normal constructor visibility and abstract-class checks still apply.
+*/
+@compilerintrinsic public function wurstNewInstance<T:>() returns T
+	return null

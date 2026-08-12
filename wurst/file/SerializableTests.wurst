@@ -1,0 +1,389 @@
+package SerializableTests
+import Serializable
+import StructuredSerialization
+import ChunkedString
+import Vectors
+
+int constructions = 0
+
+function repeated(string value, int count) returns string
+	var result = ""
+	for _i = 1 to count
+		result += value
+	return result
+
+tuple InventorySlot(int itemId, int charges)
+
+function FieldSerializationWriter.write(string name, InventorySlot value)
+	let child = new FieldSerializationWriter(1, this.getIntegrityKey())
+	wurstForFields(value, (fieldName, fieldValue) -> child.write(fieldName, fieldValue))
+	this.writeObject(name, child)
+
+function FieldSerializationReader.read(string name, InventorySlot oldValue) returns InventorySlot
+	let child = this.readObject(name)
+	var result = oldValue
+	if child.isValid()
+		wurstMapFields(result, (fieldName, fieldValue) -> fieldValue.readSerializedField(child, fieldName))
+	destroy child
+	return result
+
+function InventorySlot.readSerializedField(FieldSerializationReader reader, string name) returns InventorySlot
+	return reader.read(name, this)
+
+class ChildState implements FieldSerializable
+	use SerializableFields
+
+	int level = 1
+	string title = "rookie"
+
+class PlayerState implements FieldSerializable
+	use SerializableFields
+
+	int score = 1
+	real ratio = 1.
+	string name = "default"
+	boolean active = false
+	vec3 position = vec3(0., 0., 0.)
+	ChildState child = new ChildState()
+
+	construct()
+		constructions++
+
+	ondestroy
+		destroy child
+
+class LargeChildState implements FieldSerializable
+	use SerializableFields
+
+	string first = ""
+	string second = ""
+	string third = ""
+	string fourth = ""
+	string fifth = ""
+	string sixth = ""
+
+class LargeParentState implements FieldSerializable
+	use SerializableFields
+
+	LargeChildState child = new LargeChildState()
+
+	ondestroy
+		destroy child
+
+class CustomTupleState implements FieldSerializable
+	use FieldSerializableLifecycle
+
+	InventorySlot slot = InventorySlot(0, 0)
+
+	override function writeSerializedFields(FieldSerializationWriter writer)
+		wurstForFields((fieldName, fieldValue) -> writer.write(fieldName, fieldValue))
+
+	override function readSerializedFields(FieldSerializationReader reader)
+		wurstMapFields((fieldName, fieldValue) -> fieldValue.readSerializedField(reader, fieldName))
+
+class RenameScore implements SerializationMigration
+	override function migrate(FieldSerializationReader reader)
+		if reader.getSchemaVersion() < 2
+			int defaultPoints = 0
+			int oldPoints = reader.read("points", defaultPoints)
+			reader.renameField("points", "score")
+			reader.set("score", oldPoints + 1)
+
+class OldPlayerState extends Serializable
+	int score = 0
+
+	override function serializeProperties()
+		addProperty("score", score)
+
+	override function deserializeProperties()
+		score = getIntProperty("score")
+
+@Test
+function reflectedFieldsRoundTripNestedClassesAndTuples()
+	constructions = 0
+	let original = new PlayerState()
+	original.score = 42
+	original.ratio = 2.5
+	original.name = "Würst|=save"
+	original.active = true
+	original.position = vec3(12.5, -4., 99.)
+	original.child.level = 8
+	original.child.title = "veteran"
+
+	let data = original.serialize(3)
+	let loaded = new PlayerState().load(data)
+
+	loaded.score.assertEquals(42)
+	loaded.ratio.assertEquals(2.5)
+	loaded.name.assertEquals("Würst|=save")
+	loaded.active.assertTrue()
+	loaded.position.x.assertEquals(12.5)
+	loaded.position.y.assertEquals(-4.)
+	loaded.position.z.assertEquals(99.)
+	loaded.child.level.assertEquals(8)
+	loaded.child.title.assertEquals("veteran")
+	constructions.assertEquals(2)
+
+	destroy original
+	destroy loaded
+	destroy data
+
+@Test
+function customTupleCodecRoundTripsThroughSerializableFields()
+	let original = new CustomTupleState()
+	original.slot = InventorySlot(1234, 7)
+
+	let data = original.serialize()
+	let rootReader = new FieldSerializationReader(data)
+	rootReader.hasField("slot").assertTrue()
+	let tupleReader = rootReader.readObject("slot")
+	tupleReader.hasField("itemId").assertTrue()
+	int defaultItemId = 0
+	tupleReader.read("itemId", defaultItemId).assertEquals(1234)
+	let loaded = new CustomTupleState().load(data)
+
+	loaded.slot.itemId.assertEquals(1234)
+	loaded.slot.charges.assertEquals(7)
+
+	destroy original
+	destroy loaded
+	destroy tupleReader
+	destroy rootReader
+	destroy data
+
+@Test
+function taggedFieldsPreserveDefaultsAndSkipUnknownData()
+	let writer = new FieldSerializationWriter(4)
+	int score = 7
+	writer.write("score", score)
+	writer.writeRaw("futureField", "x", "opaque future data")
+	let data = writer.finish()
+	let loaded = new PlayerState()
+
+	loaded.deserialize(data).assertTrue()
+	loaded.score.assertEquals(7)
+	loaded.ratio.assertEquals(1.)
+	loaded.name.assertEquals("default")
+	loaded.active.assertFalse()
+	loaded.child.level.assertEquals(1)
+
+	destroy writer
+	destroy data
+	destroy loaded
+
+@Test
+function schemaMigrationCanRenameFields()
+	let writer = new FieldSerializationWriter(1)
+	int points = 73
+	writer.write("points", points)
+	let data = writer.finish()
+	let loaded = new PlayerState()
+	let migration = new RenameScore()
+
+	loaded.deserialize(data, SERIALIZATION_INTEGRITY_KEY, migration).assertTrue()
+	loaded.score.assertEquals(74)
+
+	destroy migration
+	destroy loaded
+	destroy data
+	destroy writer
+
+@Test
+function integrityKeyRejectsEditedOrForeignDataWithoutMutation()
+	let writer = new FieldSerializationWriter(1, 12345)
+	int score = 9
+	writer.write("score", score)
+	let data = writer.finish()
+	let state = new PlayerState()
+
+	state.deserialize(data, 54321).assertFalse()
+	state.score.assertEquals(1)
+
+	let encoded = data.getUnsafeString()
+	let edited = new ChunkedString()..append("X" + encoded.substring(1))
+	state.deserialize(edited, 12345).assertFalse()
+	state.score.assertEquals(1)
+	let editedToken = new ChunkedString()..append(encoded.substring(0, 11) + "r" + encoded.substring(12))
+	state.deserialize(editedToken, 12345).assertFalse()
+	state.score.assertEquals(1)
+
+	destroy editedToken
+	destroy edited
+	destroy state
+	destroy data
+	destroy writer
+
+@Test
+function parserRejectsTruncationAndDuplicateFieldIds()
+	let truncated = new ChunkedString()..append("WS20")
+	let truncatedReader = new FieldSerializationReader(truncated)
+	truncatedReader.isValid().assertFalse()
+
+	let writer = new FieldSerializationWriter(1)
+	int first = 1
+	int second = 2
+	writer.write("same", first)
+	writer.write("same", second)
+	let duplicate = writer.finish()
+	let duplicateReader = new FieldSerializationReader(duplicate)
+	duplicateReader.isValid().assertFalse()
+
+	destroy duplicateReader
+	destroy truncatedReader
+	destroy duplicate
+	destroy writer
+	destroy truncated
+
+@Test
+function signedIntegerCodecPreservesFullWidthValues()
+	let writer = new FieldSerializationWriter(1)
+	int minimum = INT_MIN
+	int maximum = INT_MAX
+	writer.write("minimum", minimum)
+	writer.write("maximum", maximum)
+	let data = writer.finish()
+	let reader = new FieldSerializationReader(data)
+	int defaultValue = 0
+
+	reader.isValid().assertTrue()
+	reader.read("minimum", defaultValue).assertEquals(INT_MIN)
+	reader.read("maximum", defaultValue).assertEquals(INT_MAX)
+
+	destroy reader
+	destroy data
+	destroy writer
+
+@Test
+function realCodecPreservesSignificantIntegerZeroes()
+	let writer = new FieldSerializationWriter(1)
+	writer.write("ten", 10.)
+	writer.write("zero", 0.)
+	let data = writer.finish()
+	let reader = new FieldSerializationReader(data)
+
+	reader.isValid().assertTrue()
+	reader.read("ten", -1.).assertEquals(10.)
+	reader.read("zero", -1.).assertEquals(0.)
+
+	destroy reader
+	destroy data
+	destroy writer
+
+@Test
+function unfinishedWriterCanBeDestroyedSafely()
+	let writer = new FieldSerializationWriter(1)
+	writer.write("partial", "discarded")
+	destroy writer
+
+@Test
+function varUIntContinuationAlphabetHandlesAllFiveBitGroups()
+	for length = 60 to 63
+		let expected = repeated("x", length)
+		let writer = new FieldSerializationWriter(1)
+		writer.write("value", expected)
+		let data = writer.finish()
+		let reader = new FieldSerializationReader(data)
+
+		reader.isValid().assertTrue()
+		reader.read("value", "").assertEquals(expected)
+
+		destroy reader
+		destroy data
+		destroy writer
+
+@Test
+function nestedEnvelopesRemainChunkedBeyondOneRuntimeString()
+	let original = new LargeParentState()
+	original.child.first = repeated("a", 180)
+	original.child.second = repeated("b", 180)
+	original.child.third = repeated("c", 180)
+	original.child.fourth = repeated("d", 180)
+	original.child.fifth = repeated("e", 180)
+	original.child.sixth = repeated("f", 180)
+
+	let data = original.serialize()
+	(data.length() > 1000).assertTrue()
+	(data.getChunkCount() > 1).assertTrue()
+	let loaded = new LargeParentState()
+	loaded.deserialize(data).assertTrue()
+	loaded.child.first.assertEquals(original.child.first)
+	loaded.child.second.assertEquals(original.child.second)
+	loaded.child.third.assertEquals(original.child.third)
+	loaded.child.fourth.assertEquals(original.child.fourth)
+	loaded.child.fifth.assertEquals(original.child.fifth)
+	loaded.child.sixth.assertEquals(original.child.sixth)
+
+	destroy loaded
+	destroy data
+	destroy original
+
+@Test
+function rawChunkedPayloadCanBeReadWithoutFlattening()
+	let payload = new ChunkedString()
+	payload.append(repeated("a", 180))
+	payload.append(repeated("b", 180))
+	payload.append(repeated("c", 180))
+	payload.append(repeated("d", 180))
+	payload.append(repeated("e", 180))
+	payload.append(repeated("f", 180))
+	let writer = new FieldSerializationWriter(1)
+	writer.writeRaw("custom", "x", payload)
+	let data = writer.finish()
+	let reader = new FieldSerializationReader(data)
+	let decoded = reader.readRawChunked("custom", "x")
+
+	destroy reader
+	destroy data
+	destroy writer
+	destroy payload
+
+	decoded.length().assertEquals(1080)
+	(decoded.getChunkCount() > 1).assertTrue()
+	decoded.getUnsafeSubString(0, 180).assertEquals(repeated("a", 180))
+	decoded.getUnsafeSubString(180, 360).assertEquals(repeated("b", 180))
+	decoded.getUnsafeSubString(360, 540).assertEquals(repeated("c", 180))
+	decoded.getUnsafeSubString(540, 720).assertEquals(repeated("d", 180))
+	decoded.getUnsafeSubString(720, 900).assertEquals(repeated("e", 180))
+	decoded.getUnsafeSubString(900, 1080).assertEquals(repeated("f", 180))
+	destroy decoded
+
+@Test
+function unicodeHashingIsIndependentOfChunkBoundaries()
+	let unicodePart = "Würst世界🙂"
+	var expected = ""
+	let payload = new ChunkedString(37)
+	for _i = 1 to 40
+		expected += unicodePart
+		payload.append(unicodePart)
+
+	let writer = new FieldSerializationWriter(1)
+	writer.writeRaw("Ünicode字段", "u", payload)
+	let data = writer.finish()
+	let reader = new FieldSerializationReader(data)
+	let decoded = reader.readRawChunked("Ünicode字段", "u")
+
+	reader.isValid().assertTrue()
+	decoded.length().assertEquals(expected.length())
+	decoded.getUnsafeString().assertEquals(expected)
+	for i = 0 to decoded.getChunkCount() - 1
+		(decoded.getChunk(i).length() <= decoded.getChunkSize() + 3).assertTrue()
+
+	destroy decoded
+	destroy reader
+	destroy data
+	destroy writer
+	destroy payload
+
+@Test
+function legacySerializableStillRoundTripsItsOriginalFormat()
+	let original = new OldPlayerState()
+	original.score = 11
+	let data = original.serialize()
+	let loaded = new OldPlayerState()
+	loaded.deserialize(data)
+
+	loaded.score.assertEquals(11)
+
+	destroy loaded
+	destroy data
+	destroy original

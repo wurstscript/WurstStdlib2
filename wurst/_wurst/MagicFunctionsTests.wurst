@@ -1,0 +1,33 @@
+package MagicFunctionsTests
+import MagicFunctions
+import Wurstunit
+
+int visitedFieldTotal = 0
+
+tuple IntrinsicTargetTuple(int left, int right)
+
+class IntrinsicTargetClass
+	int left = 2
+	int right = 5
+
+function addVisitedField(string _name, int value)
+	visitedFieldTotal += value
+
+@Test
+function explicitTargetFieldIntrinsicsSupportClassesAndTuples()
+	visitedFieldTotal = 0
+	let target = new IntrinsicTargetClass()
+	var tupleTarget = IntrinsicTargetTuple(11, 13)
+
+	wurstForFields(target, (name, value) -> addVisitedField(name, value))
+	wurstMapFields(target, (name, value) -> value + 1)
+	wurstForFields(tupleTarget, (name, value) -> addVisitedField(name, value))
+	wurstMapFields(tupleTarget, (name, value) -> value + 2)
+
+	visitedFieldTotal.assertEquals(31)
+	target.left.assertEquals(3)
+	target.right.assertEquals(6)
+	tupleTarget.left.assertEquals(13)
+	tupleTarget.right.assertEquals(15)
+
+	destroy target
