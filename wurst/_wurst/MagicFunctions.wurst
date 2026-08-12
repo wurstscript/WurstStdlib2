@@ -69,12 +69,28 @@ Use the explicit-target form `wurstForFields(target, callback)` for classes and 
 @compilerintrinsic public function wurstForFields(WurstFieldCallback _callback)
 
 /**
+Emits the callback once for every accessible non-static field of `target`.
+
+This overload supports class instances and tuple values. The target expression is evaluated
+once, and the compiler specializes the callback value to each field's concrete type.
+*/
+@compilerintrinsic public function wurstForFields<T:>(T _target, WurstFieldCallback _callback)
+
+/**
 Maps every accessible mutable non-static field of the enclosing class.
 
 Each callback result is assigned back to its field. Use the explicit-target form
 `wurstMapFields(target, callback)` for classes and tuple variables.
 */
 @compilerintrinsic public function wurstMapFields(WurstFieldMapper _callback)
+
+/**
+Maps every accessible mutable non-static field of `target`.
+
+This overload supports class instances and tuple variables. The target expression is evaluated
+once, and each specialized callback result is assigned directly back to its field.
+*/
+@compilerintrinsic public function wurstMapFields<T:>(T _target, WurstFieldMapper _callback)
 
 /**
 Constructs the concrete class `T` through its accessible zero-argument constructor.
