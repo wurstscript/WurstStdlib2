@@ -151,6 +151,7 @@ public abstract class Serializable
     function getStringProperty(string name) returns string
         return stringMap.get(name.getHash())
 
+    @deprecated("Use FieldSerializable with SerializableFields from StructuredSerialization for new save formats.")
     function serialize() returns ChunkedString
         hash = 0
         serOutput = new ChunkedString()
@@ -167,6 +168,7 @@ public abstract class Serializable
             hashStr = "0" + hashStr
         return hashStr
 
+    @deprecated("Use FieldSerializable with SerializableFields from StructuredSerialization for new save formats.")
     function deserialize(ChunkedString input)
         hash = 0
         intMap = new HashMap<int, int>()

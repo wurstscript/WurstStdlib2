@@ -18,6 +18,15 @@ authentication against somebody who can inspect the map script.
 @configurable public constant SERIALIZATION_REAL_DECIMALS = 6
 
 constant SERIALIZATION_MAGIC = "WS2"
+/**
+Wire alphabet shared by fixed integers and variable-length unsigned integers.
+
+This is deliberately not RFC Base64: values 0..31 terminate a varint and values 32..63 carry its
+continuation bit. This keeps common lengths and schema versions to one character, while string
+payloads remain raw instead of paying Base64's size expansion. The strict parser also rejects
+invalid digits before applying data; the general-purpose `Base64` decoder has different semantics.
+Changing this alphabet or its ordering would break existing structured saves.
+*/
 constant SERIALIZATION_DIGITS = "0123456789ABCDEFGHIJKLMNOPQRSTUVabcdefghijklmnopqrstuvwxyz-_!~*+"
 constant SERIALIZATION_INT_WIDTH = 7
 constant SERIALIZATION_HASH_SEED = 0x45D9F3B
