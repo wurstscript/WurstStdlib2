@@ -189,6 +189,33 @@ function schemaMigrationCanRenameFields()
 	destroy writer
 
 @Test
+function readerMutationsReplaceAndMoveFieldOwnership()
+	let writer = new FieldSerializationWriter(1)
+	int oldValue = 10
+	int existingValue = 20
+	writer.write("old", oldValue)
+	writer.write("existing", existingValue)
+	let data = writer.finish()
+	let reader = new FieldSerializationReader(data)
+	int replacementValue = 11
+	int defaultValue = 0
+
+	reader.set("old", replacementValue)
+	reader.read("old", defaultValue).assertEquals(11)
+
+	reader.renameField("old", "moved")
+	reader.hasField("old").assertFalse()
+	reader.read("moved", defaultValue).assertEquals(11)
+
+	reader.renameField("moved", "existing")
+	reader.hasField("moved").assertFalse()
+	reader.read("existing", defaultValue).assertEquals(20)
+
+	destroy reader
+	destroy data
+	destroy writer
+
+@Test
 function integrityKeyRejectsEditedOrForeignDataWithoutMutation()
 	let writer = new FieldSerializationWriter(1, 12345)
 	int score = 9

@@ -1,6 +1,6 @@
 package StructuredSerializationCore
 import ChunkedString
-import HashMap
+import IntMap
 import ErrorHandling
 import Bitwise
 
@@ -329,10 +329,20 @@ class SerializationCursor
 	ondestroy
 		destroy hasher
 
+class SerializedField
+	string token
+	ChunkedString payload
+
+	construct(string token, ChunkedString payload)
+		this.token = token
+		this.payload = payload
+
+	ondestroy
+		destroy payload
+
 /** Parsed field table. Unknown fields and wire tokens are retained and safely skippable. */
 public class FieldSerializationReader
-	private let tokenMap = new HashMap<int, string>()
-	private let payloadMap = new IterableMap<int, ChunkedString>()
+	private let fields = new IntMap<SerializedField>()
 	private int schemaVersion = 0
 	private int integrityKey
 	private boolean valid = false
@@ -358,12 +368,11 @@ public class FieldSerializationReader
 				let token = cursor.read(1)
 				let length = cursor.readVarUInt()
 				let payload = cursor.readChunked(length)
-				if token.length() != 1 or tokenMap.has(fieldId)
+				if token.length() != 1 or fields.has(fieldId)
 					cursor.valid = false
 					destroy payload
 				else
-					tokenMap.put(fieldId, token)
-					payloadMap.put(fieldId, payload)
+					fields.put(fieldId, new SerializedField(token, payload))
 
 		if cursor.valid and cursor.pointer == cursor.bodyEnd
 			let expected = input.getUnsafeSubString(cursor.bodyEnd, input.length())
@@ -380,25 +389,25 @@ public class FieldSerializationReader
 		return integrityKey
 
 	function hasField(string name) returns boolean
-		return valid and payloadMap.has(serializationFieldId(name))
+		return valid and fields.has(serializationFieldId(name))
 
 	function hasRaw(string name, string token) returns boolean
-		let fieldId = serializationFieldId(name)
-		return valid and tokenMap.has(fieldId) and tokenMap.get(fieldId) == token
+		let field = fields.get(serializationFieldId(name))
+		return valid and field != null and field.token == token
 
 	function readRaw(string name, string token, string oldValue) returns string
-		let fieldId = serializationFieldId(name)
-		return valid and tokenMap.has(fieldId) and tokenMap.get(fieldId) == token ? payloadMap.get(fieldId).getUnsafeString() : oldValue
+		let field = fields.get(serializationFieldId(name))
+		return valid and field != null and field.token == token ? field.payload.getUnsafeString() : oldValue
 
 	/**
 	Returns an independent chunked copy of a raw payload, or `null` when the field/token is absent.
 	The caller owns and must destroy the returned value.
 	*/
 	function readRawChunked(string name, string token) returns ChunkedString
-		let fieldId = serializationFieldId(name)
-		if not valid or not tokenMap.has(fieldId) or tokenMap.get(fieldId) != token
+		let field = fields.get(serializationFieldId(name))
+		if not valid or field == null or field.token != token
 			return null
-		return copyChunkedString(payloadMap.get(fieldId))
+		return copyChunkedString(field.payload)
 
 	function read(string name, int oldValue) returns int
 		let payload = readRaw(name, INT_TOKEN, "")
@@ -420,10 +429,13 @@ public class FieldSerializationReader
 		if not valid or token.length() != 1
 			return
 		let fieldId = serializationFieldId(name)
-		if payloadMap.has(fieldId)
-			destroy payloadMap.get(fieldId)
-		tokenMap.put(fieldId, token)
-		payloadMap.put(fieldId, new ChunkedString()..append(payload))
+		let field = fields.get(fieldId)
+		if field == null
+			fields.put(fieldId, new SerializedField(token, new ChunkedString()..append(payload)))
+		else
+			destroy field.payload
+			field.token = token
+			field.payload = new ChunkedString()..append(payload)
 
 	function set(string name, int value)
 		setRaw(name, INT_TOKEN, encodeFixedInt(value))
@@ -439,10 +451,10 @@ public class FieldSerializationReader
 
 	function removeField(string name)
 		let fieldId = serializationFieldId(name)
-		if payloadMap.has(fieldId)
-			destroy payloadMap.get(fieldId)
-		tokenMap.remove(fieldId)
-		payloadMap.remove(fieldId)
+		let field = fields.get(fieldId)
+		if field != null
+			destroy field
+			fields.remove(fieldId)
 
 	/** Mutates an existing opted-in child object when a valid nested envelope is present. */
 	function readInto(string name, FieldSerializable oldValue) returns boolean
@@ -455,10 +467,10 @@ public class FieldSerializationReader
 
 	/** Returns a nested reader borrowed from this reader, or an invalid reader when absent. */
 	function readObject(string name) returns FieldSerializationReader
-		let fieldId = serializationFieldId(name)
-		if not valid or not tokenMap.has(fieldId) or tokenMap.get(fieldId) != OBJECT_TOKEN
+		let field = fields.get(serializationFieldId(name))
+		if not valid or field == null or field.token != OBJECT_TOKEN
 			return new FieldSerializationReader()
-		return new FieldSerializationReader(payloadMap.get(fieldId), integrityKey)
+		return new FieldSerializationReader(field.payload, integrityKey)
 
 	/**
 	Moves a persisted value from an old field name to a new one. Call this from a migration before
@@ -469,19 +481,21 @@ public class FieldSerializationReader
 		let newId = serializationFieldId(newName)
 		if oldId == newId
 			return
-		if tokenMap.has(oldId) and not tokenMap.has(newId)
-			tokenMap.put(newId, tokenMap.get(oldId))
-			payloadMap.put(newId, payloadMap.get(oldId))
-		else if payloadMap.has(oldId)
-			destroy payloadMap.get(oldId)
-		tokenMap.remove(oldId)
-		payloadMap.remove(oldId)
+
+		let oldField = fields.get(oldId)
+		if oldField == null
+			return
+
+		fields.remove(oldId)
+		if fields.has(newId)
+			destroy oldField
+		else
+			fields.put(newId, oldField)
 
 	ondestroy
-		for fieldId in payloadMap
-			destroy payloadMap.get(fieldId)
-		destroy tokenMap
-		destroy payloadMap
+		for i = 0 to fields.size() - 1
+			destroy fields.valueAt(i)
+		destroy fields
 
 /** Type-directed field readers used by the compiler-expanded mapper. */
 public function int.readSerializedField(FieldSerializationReader reader, string name) returns int

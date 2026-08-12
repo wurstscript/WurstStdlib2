@@ -1,0 +1,70 @@
+package IntMapTests
+import IntMap
+
+class IntMapTestValue
+    int value
+
+    construct(int value)
+        this.value = value
+
+tuple IntMapTestTuple(int number, string label)
+
+@Test
+function storesSpecializedPrimitiveValues()
+    let strings = new IntMap<string>()
+    strings.put(1, "one")
+    strings.put(2, "two")
+
+    strings.get(1).assertEquals("one")
+    strings.get(2).assertEquals("two")
+    (strings.get(3) == null).assertTrue()
+    destroy strings
+
+@Test
+function insertsReplacesAndRemovesValues()
+    let map = new IntMap<IntMapTestValue>()
+    let first = new IntMapTestValue(1)
+    let replacement = new IntMapTestValue(2)
+    let moved = new IntMapTestValue(3)
+
+    map.put(10, first)
+    map.put(20, moved)
+    map.put(10, replacement)
+    map.size().assertEquals(2)
+    (map.get(10) == replacement).assertTrue()
+
+    map.remove(10).assertTrue()
+    map.remove(10).assertFalse()
+    map.size().assertEquals(1)
+    (map.get(20) == moved).assertTrue()
+    map.keyAt(0).assertEquals(20)
+    (map.valueAt(0) == moved).assertTrue()
+
+    destroy first
+    destroy replacement
+    destroy moved
+    destroy map
+
+@Test
+function clearsAndReusesStorage()
+    let map = new IntMap<boolean>()
+    map.put(1, true)
+    map.put(2, false)
+    map.clear()
+
+    map.isEmpty().assertTrue()
+    map.has(1).assertFalse()
+    map.put(3, true)
+    map.getAndRemove(3).assertTrue()
+    map.isEmpty().assertTrue()
+    destroy map
+
+@Test
+function storesSpecializedTupleValues()
+    let map = new IntMap<IntMapTestTuple>()
+    map.put(7, IntMapTestTuple(42, "answer"))
+
+    let loaded = map.get(7)
+    loaded.number.assertEquals(42)
+    loaded.label.assertEquals("answer")
+    destroy map
