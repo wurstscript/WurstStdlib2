@@ -1,0 +1,96 @@
+package IntMap
+import NoWurst
+import ArrayList
+import Table
+
+/**
+ * O(1) integer-keyed map with compiler-specialized value storage.
+ *
+ * JASS hashtables use integer child keys, so fixing the key type avoids an artificial generic
+ * hash adapter while `V:` keeps strings, reals, booleans, handles, tuples, and class references
+ * in typed arrays. Removal is unordered. The map does not own stored values.
+ */
+public class IntMap<V:>
+    private let keys = new ArrayList<int>()
+    private let values = new ArrayList<V>()
+    private let indexByKey = new Table()
+
+    /** Returns whether a value exists under the given key. */
+    function has(int key) returns boolean
+        return indexByKey.loadInt(key) != 0
+
+    /** Inserts or replaces a value. Existing key order is retained. */
+    function put(int key, V value)
+        let stored = indexByKey.loadInt(key)
+        if stored != 0
+            values.set(stored - 1, value)
+            return
+
+        keys.add(key)
+        values.add(value)
+        indexByKey.saveInt(key, keys.size())
+
+    /** Returns the stored value, or the type's null/default value when absent. */
+    function get(int key) returns V
+        let stored = indexByKey.loadInt(key)
+        if stored == 0
+            return null
+        return values.get(stored - 1)
+
+    /** Removes a key/value pair and returns whether it was present. */
+    function remove(int key) returns boolean
+        let stored = indexByKey.loadInt(key)
+        if stored == 0
+            return false
+
+        removeAt(stored - 1)
+        return true
+
+    /** Retrieves a value and removes its key/value pair. */
+    function getAndRemove(int key) returns V
+        let stored = indexByKey.loadInt(key)
+        if stored == 0
+            return null
+
+        let value = values.get(stored - 1)
+        removeAt(stored - 1)
+        return value
+
+    /** Removes every entry while retaining allocated list capacity. */
+    function clear()
+        keys.clear()
+        values.clear()
+        indexByKey.flush()
+
+    /** Returns the number of entries. */
+    function size() returns int
+        return keys.size()
+
+    /** Returns whether the map is empty. */
+    function isEmpty() returns boolean
+        return keys.isEmpty()
+
+    /** Returns a key by dense index. Removal may change this order. */
+    function keyAt(int index) returns int
+        return keys.get(index)
+
+    /** Returns a value by dense index. Removal may change this order. */
+    function valueAt(int index) returns V
+        return values.get(index)
+
+    private function removeAt(int index)
+        let removedKey = keys.get(index)
+        let lastIndex = keys.size() - 1
+
+        if index != lastIndex
+            let movedKey = keys.get(lastIndex)
+            indexByKey.saveInt(movedKey, index + 1)
+
+        keys.removeAtUnordered(index)
+        values.removeAtUnordered(index)
+        indexByKey.removeInt(removedKey)
+
+    ondestroy
+        destroy keys
+        destroy values
+        destroy indexByKey
