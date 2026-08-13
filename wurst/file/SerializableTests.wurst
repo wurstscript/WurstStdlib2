@@ -98,6 +98,20 @@ class OldPlayerState extends Serializable
 	override function deserializeProperties()
 		score = getIntProperty("score")
 
+class TransitionalPlayerState extends Serializable implements FieldSerializable
+	use SerializableFieldMapping
+
+	int score = 0
+	string title = "default"
+
+	override function serializeProperties()
+		addProperty("score", score)
+		addProperty("title", title)
+
+	override function deserializeProperties()
+		score = getIntProperty("score")
+		title = getStringProperty("title")
+
 @Test
 function reflectedFieldsRoundTripNestedClassesAndTuples()
 	constructions = 0
@@ -127,6 +141,27 @@ function reflectedFieldsRoundTripNestedClassesAndTuples()
 	destroy original
 	destroy loaded
 	destroy data
+
+@Test
+function mappingOnlyModuleCoexistsWithLegacySerializable()
+	let original = new TransitionalPlayerState()
+	original.score = 81
+	original.title = "transition"
+	let writer = new FieldSerializationWriter(1)
+	writer.write("profile", original)
+	let data = writer.finish()
+	let reader = new FieldSerializationReader(data)
+	let loaded = new TransitionalPlayerState()
+
+	reader.readInto("profile", loaded).assertTrue()
+	loaded.score.assertEquals(81)
+	loaded.title.assertEquals("transition")
+
+	destroy loaded
+	destroy reader
+	destroy data
+	destroy writer
+	destroy original
 
 @Test
 function customTupleCodecRoundTripsThroughSerializableFields()

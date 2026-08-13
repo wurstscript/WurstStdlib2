@@ -203,6 +203,28 @@ public module FieldSerializableLifecycle
 		return this
 
 /**
+Automatic field mapping without adding a second `serialize`/`deserialize` lifecycle.
+
+Use this during a compatibility window when a data class still extends legacy `Serializable`, or
+when another base class already owns lifecycle methods. The class must implement `FieldSerializable`.
+All of its accessible mutable instance fields participate; keep runtime-only state in a separate
+class because persisted-field annotation filtering is not available.
+*/
+public module SerializableFieldMapping
+	function writeSerializedFields(FieldSerializationWriter writer)
+		wurstForFields((fieldName, value) -> writer.write(fieldName, value))
+
+	function readSerializedFields(FieldSerializationReader reader)
+		wurstMapFields((fieldName, value) -> value.readSerializedField(reader, fieldName))
+
+	function readSerializedField(FieldSerializationReader reader, string name) returns thistype
+		let child = reader.readObject(name)
+		if child.isValid()
+			readSerializedFields(child)
+		destroy child
+		return this
+
+/**
 Modern automatic serialization for dedicated state/DAO classes using built-in codecs.
 
 Add `implements FieldSerializable` and `use SerializableFields`. The compiler expands field
@@ -210,7 +232,8 @@ iteration to direct accesses. The tagged format tolerates field reordering, adde
 and unknown future wire types. Missing fields retain constructor defaults. Use a schema version and
 `SerializationMigration` for semantic changes or `renameField` for renamed attributes. For custom
 tuple codecs declared in the consuming package, use `FieldSerializableLifecycle` as documented
-above so overload resolution occurs where those codecs are visible.
+above so overload resolution occurs where those codecs are visible. Classes that must also retain
+legacy `Serializable` should use `SerializableFieldMapping` to avoid conflicting lifecycle methods.
 */
 public module SerializableFields
 	use FieldSerializableLifecycle
