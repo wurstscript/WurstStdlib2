@@ -1,0 +1,175 @@
+package FastHashMap
+import NoWurst
+import Wurst
+
+/**	A hash map which keeps its keys as they are.
+
+	`HashMap` casts every key to an int and stores it in a `Table`, which works for
+	handles and for anything castable but loses the type on the way in: two keys which
+	cast to the same int collide, and a key which is not castable cannot be used at all.
+	This map takes a bound on its key type instead, so hashing and comparing are done by
+	the key's own implementation and the key is stored as itself.
+
+	The bound is `Hashable`, which asks for a hash and an equality:
+
+		implements Hashable<vec2>
+			function hash(vec2 v) returns int
+				return v.x.toInt() * 31 + v.y.toInt()
+			function equals(vec2 a, vec2 b) returns boolean
+				return a == b
+
+		let seen = new FastHashMap<vec2, unit>()
+		seen.put(caster.getPos(), caster)
+
+	Instances for `int` and `string` come with this package. Declare one beside your own
+	type to use it as a key.
+
+	Storage is one array per specialisation, carved into a section per instance, the way
+	`ArrayList` works. A section is `CAPACITY` slots and does not grow, so a map which
+	fills up refuses further keys rather than rehashing - see `isFull`. Raise
+	`FastHashMap_CAPACITY` in your build config if you need larger maps; every map of one
+	key and value type pays that size.
+
+	Collisions are handled by linear probing inside the section. A removed slot becomes a
+	tombstone rather than empty, so a probe which passed over it still finds keys put down
+	beyond it.
+*/
+
+/**	What a key type has to provide to be used in a `FastHashMap`. */
+public interface Hashable<T:>
+	/**	Any int; keys which are equal must hash alike, or a lookup will miss them. */
+	function hash(T x) returns int
+	function equals(T a, T b) returns boolean
+
+implements Hashable<int>
+	function hash(int x) returns int
+		return x
+	function equals(int a, int b) returns boolean
+		return a == b
+
+implements Hashable<string>
+	function hash(string x) returns int
+		return x.getHash()
+	function equals(string a, string b) returns boolean
+		return a == b
+
+/**	Slots per map. Fixed at compile time: every map of one key and value type is this
+	size, so raising it costs memory across all of them. */
+@configurable public constant FASTHASHMAP_CAPACITY = 32
+
+/**	The number of maps of one key and value type which can exist. Sections are handed out
+	and never reclaimed, so this is a total over the run rather than a live count. */
+@configurable public constant FASTHASHMAP_MAX_INSTANCES = 256
+
+constant SLOTS = FASTHASHMAP_CAPACITY * FASTHASHMAP_MAX_INSTANCES
+
+public class FastHashMap<K: Hashable, V:>
+	private static K array keys
+	private static V array values
+	private static boolean array used
+	/**	A removed slot cannot go back to empty: a probe which stopped there would miss keys
+		put down beyond it. It becomes a tombstone instead - passed over when searching,
+		reused when putting. */
+	private static boolean array dead
+	/**	Never written, so a read yields V's default. That is the only way to say "no value"
+		for a type parameter, and it costs an array read rather than a branch. */
+	private static V array none
+	private static int nextFree = 0
+
+	private int base
+	private int count = 0
+
+	construct()
+		if nextFree + FASTHASHMAP_CAPACITY > SLOTS
+			error("FastHashMap: out of sections. Raise FASTHASHMAP_MAX_INSTANCES.")
+			base = -1
+		else
+			base = nextFree
+			nextFree += FASTHASHMAP_CAPACITY
+
+	/**	The slot holding key, or the one it belongs in: the first tombstone passed over,
+		else the empty slot the probe stopped at. Capacity is fixed, so a full table
+		returns -1 rather than probing forever. */
+	private function slotFor(K key) returns int
+		var i = K.hash(key) mod FASTHASHMAP_CAPACITY
+		if i < 0
+			i += FASTHASHMAP_CAPACITY
+		var firstDead = -1
+		var probes = 0
+		while probes < FASTHASHMAP_CAPACITY
+			let s = base + i
+			if used[s] and K.equals(keys[s], key)
+				return s
+			if not used[s] and not dead[s]
+				if firstDead >= 0
+					return firstDead
+				return s
+			if dead[s] and firstDead < 0
+				firstDead = s
+			i = (i + 1) mod FASTHASHMAP_CAPACITY
+			probes++
+		return firstDead
+
+	/**	Stores value under key, replacing what was there. A full map keeps what it has. */
+	function put(K key, V value)
+		if base < 0
+			return
+		let s = slotFor(key)
+		if s < base
+			return
+		if not used[s]
+			used[s] = true
+			dead[s] = false
+			keys[s] = key
+			count++
+		values[s] = value
+
+	/**	The value stored under key, or V's default when there is none. */
+	function get(K key) returns V
+		if base < 0
+			return none[0]
+		let s = slotFor(key)
+		if s < base or not used[s]
+			return none[0]
+		return values[s]
+
+	/**	Whether a value is stored under key. */
+	function has(K key) returns boolean
+		if base < 0
+			return false
+		let s = slotFor(key)
+		return s >= base and used[s]
+
+	/**	Removes key, returning whether it was there. */
+	function remove(K key) returns boolean
+		if base < 0
+			return false
+		let s = slotFor(key)
+		if s < base or not used[s]
+			return false
+		used[s] = false
+		dead[s] = true
+		count--
+		return true
+
+	/**	How many keys are stored. */
+	function size() returns int
+		return count
+
+	/**	Whether the map is empty. */
+	function isEmpty() returns boolean
+		return count == 0
+
+	/**	Whether a further key would be refused. A map at capacity accepts writes to keys it
+		already holds, and refuses new ones. */
+	function isFull() returns boolean
+		return count >= FASTHASHMAP_CAPACITY
+
+	/**	Forgets every key, leaving the section reusable by this map. */
+	function clear()
+		if base < 0
+			return
+		for i = 0 to FASTHASHMAP_CAPACITY - 1
+			used[base + i] = false
+			dead[base + i] = false
+		count = 0

@@ -1,0 +1,134 @@
+package FastHashMapTests
+import FastHashMap
+
+@Test
+function testPutGet()
+	let map = new FastHashMap<int, int>()
+	map.put(1, 10)
+	map.put(2, 20)
+	map.get(1).assertEquals(10)
+	map.get(2).assertEquals(20)
+
+@Test
+function testHas()
+	let map = new FastHashMap<int, int>()
+	map.has(5).assertEquals(false)
+	map.put(5, 1)
+	map.has(5).assertEquals(true)
+
+/** A missing key reads as the value type's default rather than as an error. */
+@Test
+function testMissingKeyIsDefault()
+	let map = new FastHashMap<int, int>()
+	map.get(7).assertEquals(0)
+	let strings = new FastHashMap<int, string>()
+	strings.get(7).assertEquals(null)
+
+@Test
+function testPutReplaces()
+	let map = new FastHashMap<int, int>()
+	map.put(3, 30)
+	map.put(3, 31)
+	map.get(3).assertEquals(31)
+	map.size().assertEquals(1)
+
+/** Keys 1 and 1 + CAPACITY land in the same slot, so the probe path is taken. */
+@Test
+function testCollidingKeys()
+	let map = new FastHashMap<int, int>()
+	map.put(1, 10)
+	map.put(1 + FASTHASHMAP_CAPACITY, 90)
+	map.get(1).assertEquals(10)
+	map.get(1 + FASTHASHMAP_CAPACITY).assertEquals(90)
+	map.size().assertEquals(2)
+
+/** A removed slot has to stay passable, or a key probed past it goes missing. */
+@Test
+function testRemoveKeepsLaterKeysReachable()
+	let map = new FastHashMap<int, int>()
+	map.put(1, 10)
+	map.put(1 + FASTHASHMAP_CAPACITY, 90)
+	map.remove(1).assertEquals(true)
+	map.has(1).assertEquals(false)
+	map.get(1 + FASTHASHMAP_CAPACITY).assertEquals(90)
+	map.size().assertEquals(1)
+
+@Test
+function testRemoveMissingKey()
+	let map = new FastHashMap<int, int>()
+	map.remove(4).assertEquals(false)
+	map.size().assertEquals(0)
+
+/** A tombstone is reused rather than left as a hole. */
+@Test
+function testTombstoneIsReused()
+	let map = new FastHashMap<int, int>()
+	map.put(2, 20)
+	map.remove(2)
+	map.put(2, 21)
+	map.get(2).assertEquals(21)
+	map.size().assertEquals(1)
+
+@Test
+function testSizeAndEmpty()
+	let map = new FastHashMap<int, int>()
+	map.isEmpty().assertEquals(true)
+	map.put(1, 1)
+	map.isEmpty().assertEquals(false)
+	map.size().assertEquals(1)
+
+@Test
+function testClear()
+	let map = new FastHashMap<int, int>()
+	map.put(1, 1)
+	map.put(2, 2)
+	map.clear()
+	map.size().assertEquals(0)
+	map.has(1).assertEquals(false)
+	map.put(1, 5)
+	map.get(1).assertEquals(5)
+
+/** A full map keeps what it has and refuses new keys rather than overwriting. */
+@Test
+function testFullMapRefusesNewKeys()
+	let map = new FastHashMap<int, int>()
+	for i = 0 to FASTHASHMAP_CAPACITY - 1
+		map.put(i, i)
+	map.isFull().assertEquals(true)
+	map.size().assertEquals(FASTHASHMAP_CAPACITY)
+	map.put(FASTHASHMAP_CAPACITY + 1000, 1)
+	map.size().assertEquals(FASTHASHMAP_CAPACITY)
+	map.get(0).assertEquals(0)
+	// a key it already holds is still writable
+	map.put(0, 99)
+	map.get(0).assertEquals(99)
+
+/** Two maps of the same types hold separate sections. */
+@Test
+function testInstancesAreIndependent()
+	let a = new FastHashMap<int, int>()
+	let b = new FastHashMap<int, int>()
+	a.put(1, 10)
+	b.put(1, 20)
+	a.get(1).assertEquals(10)
+	b.get(1).assertEquals(20)
+
+/** The string instance comes with the package. */
+@Test
+function testStringKeys()
+	let map = new FastHashMap<string, int>()
+	map.put("alpha", 1)
+	map.put("beta", 2)
+	map.get("alpha").assertEquals(1)
+	map.get("beta").assertEquals(2)
+	map.has("gamma").assertEquals(false)
+
+/** Each key type takes its own instance, so one map class serves several. */
+@Test
+function testTwoSpecialisationsCoexist()
+	let ints = new FastHashMap<int, string>()
+	let strings = new FastHashMap<string, string>()
+	ints.put(1, "one")
+	strings.put("one", "uno")
+	ints.get(1).assertEquals("one")
+	strings.get("one").assertEquals("uno")
