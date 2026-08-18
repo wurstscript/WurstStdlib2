@@ -2,7 +2,6 @@ package FastHashMap
 import NoWurst
 import Wurst
 import ErrorHandling
-import StringUtils
 
 /**	What a key type has to provide to be used in a `FastHashMap`. */
 public interface Hashable<T:>
@@ -15,9 +14,11 @@ public interface Hashable<T:>
 	between them - harmless in itself, since nothing stores a hash, but it would also mean the
 	interpreter could not stand in for the game while testing distribution. */
 constant HASH_MODULUS = 1000003
-/**	Odd, coprime to the modulus, and large enough that one character's contribution reaches the
-	high bits before the next is added. */
-constant HASH_FACTOR = 31
+/**	Coprime to the modulus, so length and case spread across it rather than landing on a few
+	residues. Kept small enough that `length * HASH_LENGTH_FACTOR` cannot leave the range even for
+	an implausibly long key. */
+constant HASH_LENGTH_FACTOR = 7919
+constant HASH_CASE_FACTOR = 104729
 
 implements Hashable<int>
 	/**	Mixed rather than returned as itself. A slot is chosen by `hash mod FASTHASHMAP_CAPACITY`,
@@ -34,23 +35,36 @@ implements Hashable<int>
 		return a == b
 
 implements Hashable<string>
-	/**	Computed here rather than taken from `StringHash`, which cannot be used for this: it is case
-		insensitive, so `alpha` and `ALPHA` would share a slot, and it collapses every partial
-		multibyte slice to one constant. Both are survivable - `equals` still separates the keys -
-		but a section is `FASTHASHMAP_CAPACITY` slots wide and fills up, so a hash which collides
-		on ordinary keys makes the map refuse them.
+	/**	One pass over the string is done by `StringHash` itself, and the two things it gets wrong are
+		corrected with whole-string work rather than per-character work.
 
-		Position and length are both mixed in, so `ab` and `ba` differ and neither matches `a`.
+		The obvious hash - decode each byte and mix it - costs about two native calls and three string
+		comparisons per character, since `charAt` is a `SubString` and `StringUtils.char` is two
+		comparisons, a `StringHash` and a round trip through the code table. That is forty native calls
+		for a twenty character key against one for `StringHash`, which is not a trade a container called
+		fast should make on every lookup.
 
-		Single bytes are still decoded through `StringUtils.char`, which recovers case where
-		`StringHash` loses it, and which the library already relies on throughout. Non-latin text is
-		the remaining weakness: a lead byte does not decode, so such keys collide with each other and
-		fall back on `equals`. */
+		So `StringHash` does the bytes, and its two defects are patched at fixed cost:
+
+		- It is case insensitive, so `alpha` and `ALPHA` reach here identical. Two comparisons over the
+		  whole string separate the cases which occur in practice - all lower, all upper, mixed. Two
+		  different mixed-case spellings of one word still collide, and probing separates them.
+		- It collapses every partial multibyte slice to one constant, so non-latin keys share a raw
+		  hash. Length is mixed in, which separates those of different length; same-length non-latin
+		  keys still collide and fall back on `equals`.
+
+		The result is order sensitive, because `StringHash` is, and length sensitive. */
 	function hash(string x) returns int
-		var h = x.length() mod HASH_MODULUS
-		for i = 0 to x.length() - 1
-			h = (h * HASH_FACTOR + char(x.charAt(i)).toInt()) mod HASH_MODULUS
-		return h
+		var caseClass = 0
+		if x == x.toLowerCase()
+			caseClass = 1
+		else if x == x.toUpperCase()
+			caseClass = 2
+		// Every term is reduced before being combined, so the sum stays well inside a 32 bit int
+		// however long the key is - see HASH_MODULUS.
+		let raw = x.getHash() mod HASH_MODULUS
+		let length = x.length() mod HASH_MODULUS
+		return (raw + length * HASH_LENGTH_FACTOR + caseClass * HASH_CASE_FACTOR) mod HASH_MODULUS
 
 	function equals(string a, string b) returns boolean
 		return a == b
