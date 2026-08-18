@@ -163,12 +163,18 @@ public class FastHashMap<K: Hashable, V:>
 			probes++
 		return firstDead
 
-	/**	Stores value under key, replacing what was there. A full map keeps what it has. */
+	/**	Stores value under key, replacing what was there.
+		<p>
+		A key the map already holds is always writable. A new key needs a slot, and a section does not
+		grow, so a full map reports rather than dropping the write: silently losing a store is close to
+		impossible to find from the outside, and `isFull` is there to ask beforehand. */
 	function put(K key, V value)
 		if base < 0
 			return
 		let s = slotFor(key)
 		if s < base
+			error("FastHashMap: full, so the key was not stored. Ask isFull() first, or raise "
+				+ "FASTHASHMAP_CAPACITY.")
 			return
 		if not used[s]
 			used[s] = true
@@ -237,6 +243,39 @@ public class FastHashMap<K: Hashable, V:>
 			freeSection[freeSectionCount] = base
 			freeSectionCount++
 			base = -1
+
+	/**	The first occupied slot at or after `startSlot`, or -1 when there is none. Pass 0 to begin.
+		<p>
+		Walking slots rather than handing out an iterator or taking a closure: it allocates nothing,
+		which is what a map iterating every frame needs, and it avoids dispatching a bound through a
+		closure, which is not supported on every target. A `for in` wrapper can be built on this.
+
+			var s = map.nextEntry(0)
+			while s >= 0
+				doSomething(map.keyAt(s), map.valueAt(s))
+				s = map.nextEntry(s + 1)
+	*/
+	function nextEntry(int startSlot) returns int
+		if base < 0
+			return -1
+		for i = startSlot to FASTHASHMAP_CAPACITY - 1
+			if i >= 0 and used[base + i]
+				return i
+		return -1
+
+	/**	The key in a slot `nextEntry` returned. Reading any other slot is meaningless. */
+	function keyAt(int slot) returns K
+		if base < 0 or slot < 0 or slot >= FASTHASHMAP_CAPACITY or not used[base + slot]
+			error("FastHashMap: keyAt on a slot which holds nothing; use the value nextEntry returned.")
+			return keys[base]
+		return keys[base + slot]
+
+	/**	The value in a slot `nextEntry` returned. */
+	function valueAt(int slot) returns V
+		if base < 0 or slot < 0 or slot >= FASTHASHMAP_CAPACITY or not used[base + slot]
+			error("FastHashMap: valueAt on a slot which holds nothing; use the value nextEntry returned.")
+			return none[0]
+		return values[base + slot]
 
 	/**	Forgets every key, leaving the section reusable by this map. */
 	function clear()

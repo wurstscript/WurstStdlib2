@@ -96,12 +96,12 @@ function testFullMapRefusesNewKeys()
 		map.put(i, i)
 	map.isFull().assertEquals(true)
 	map.size().assertEquals(FASTHASHMAP_CAPACITY)
-	map.put(FASTHASHMAP_CAPACITY + 1000, 1)
-	map.size().assertEquals(FASTHASHMAP_CAPACITY)
 	map.get(0).assertEquals(0)
-	// a key it already holds is still writable
+	// A key it already holds is still writable. A new one now reports instead of being dropped,
+	// which is what isFull is for, so this does not try it.
 	map.put(0, 99)
 	map.get(0).assertEquals(99)
+	map.size().assertEquals(FASTHASHMAP_CAPACITY)
 
 /** Two maps of the same types hold separate sections. */
 @Test
@@ -242,3 +242,66 @@ function hashOf<T: Hashable>(T x) returns int
 	let reused = new FastHashMap<int, int>()
 	reused.has(1).assertEquals(false)
 	keep.get(1).assertEquals(100)
+
+/**	Every entry is reachable by walking slots, and only the entries. */
+@Test function testIterationVisitsEveryEntryOnce()
+	let map = new FastHashMap<int, int>()
+	map.put(1, 10)
+	map.put(1 + FASTHASHMAP_CAPACITY, 90)
+	map.put(5, 50)
+
+	var visited = 0
+	var keySum = 0
+	var valueSum = 0
+	var slot = map.nextEntry(0)
+	while slot >= 0
+		visited++
+		keySum += map.keyAt(slot)
+		valueSum += map.valueAt(slot)
+		slot = map.nextEntry(slot + 1)
+
+	visited.assertEquals(3)
+	keySum.assertEquals(1 + (1 + FASTHASHMAP_CAPACITY) + 5)
+	valueSum.assertEquals(150)
+
+/**	A removed key is not visited, and its tombstone does not stop the walk early. */
+@Test function testIterationSkipsRemovedEntries()
+	let map = new FastHashMap<int, int>()
+	map.put(1, 10)
+	map.put(1 + FASTHASHMAP_CAPACITY, 90)
+	map.remove(1)
+
+	var visited = 0
+	var keySum = 0
+	var slot = map.nextEntry(0)
+	while slot >= 0
+		visited++
+		keySum += map.keyAt(slot)
+		slot = map.nextEntry(slot + 1)
+
+	visited.assertEquals(1)
+	keySum.assertEquals(1 + FASTHASHMAP_CAPACITY)
+
+/**	An empty map has nothing to walk, and a cleared one goes back to that. */
+@Test function testIterationOfAnEmptyMap()
+	let map = new FastHashMap<int, int>()
+	map.nextEntry(0).assertEquals(-1)
+	map.put(3, 30)
+	(map.nextEntry(0) >= 0).assertTrue()
+	map.clear()
+	map.nextEntry(0).assertEquals(-1)
+
+/**	String keys iterate as themselves, the key being stored rather than an index for it. */
+@Test function testIterationOverStringKeys()
+	let map = new FastHashMap<string, int>()
+	map.put("alpha", 1)
+	map.put("beta", 2)
+	var joined = ""
+	var total = 0
+	var slot = map.nextEntry(0)
+	while slot >= 0
+		joined += map.keyAt(slot)
+		total += map.valueAt(slot)
+		slot = map.nextEntry(slot + 1)
+	joined.length().assertEquals("alpha".length() + "beta".length())
+	total.assertEquals(3)
