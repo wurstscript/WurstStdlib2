@@ -207,3 +207,38 @@ function hashOf<T: Hashable>(T x) returns int
 @Test function testEqualKeysHashAlike()
 	hashOf("alpha").assertEquals(hashOf("alp" + "ha"))
 	hashOf(4242).assertEquals(hashOf(4200 + 42))
+
+/**	A destroyed map hands its section back, so the instance count bounds live maps rather than
+	maps ever made. Without that, `nextFree` only grew and the map after the two hundred and fifty
+	sixth refused every key - which is what a map creating one per spell cast or per unit does. */
+@Test function testDestroyedSectionsAreReused()
+	for i = 0 to FASTHASHMAP_MAX_INSTANCES + 20
+		let map = new FastHashMap<int, int>()
+		map.put(i, i)
+		map.get(i).assertEquals(i)
+		destroy map
+
+/**	A reused section starts empty, or a new map would inherit the last one's keys. */
+@Test function testReusedSectionStartsEmpty()
+	let first = new FastHashMap<int, int>()
+	first.put(7, 70)
+	first.size().assertEquals(1)
+	destroy first
+
+	let second = new FastHashMap<int, int>()
+	second.has(7).assertEquals(false)
+	second.size().assertEquals(0)
+	second.get(7).assertEquals(0)
+	destroy second
+
+/**	Two maps alive at once keep separate sections across a destroy in between. */
+@Test function testLiveMapsKeepTheirSectionWhenAnotherIsDestroyed()
+	let keep = new FastHashMap<int, int>()
+	keep.put(1, 100)
+	let temporary = new FastHashMap<int, int>()
+	temporary.put(1, 200)
+	destroy temporary
+	keep.get(1).assertEquals(100)
+	let reused = new FastHashMap<int, int>()
+	reused.has(1).assertEquals(false)
+	keep.get(1).assertEquals(100)

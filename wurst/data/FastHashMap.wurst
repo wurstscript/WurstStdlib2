@@ -113,12 +113,21 @@ public class FastHashMap<K: Hashable, V:>
 		for a type parameter, and it costs an array read rather than a branch. */
 	private static V array none
 	private static int nextFree = 0
+	/**	Sections handed back by destroyed maps, reused before nextFree grows. Every section is the
+		same width, so this is a stack rather than the capacity-matched free list ArrayList keeps:
+		any released section fits any new map. */
+	private static int array freeSection
+	private static int freeSectionCount = 0
 
 	private int base
 	private int count = 0
 
 	construct()
-		if nextFree + FASTHASHMAP_CAPACITY > SLOTS
+		if freeSectionCount > 0
+			// A released section was emptied on the way out, so it is ready to use as it is.
+			freeSectionCount--
+			base = freeSection[freeSectionCount]
+		else if nextFree + FASTHASHMAP_CAPACITY > SLOTS
 			error("FastHashMap: out of sections. Raise FASTHASHMAP_MAX_INSTANCES.")
 			base = -1
 		else if not isLua and nextFree + FASTHASHMAP_CAPACITY > JASS_MAX_ARRAY_SIZE
@@ -214,6 +223,20 @@ public class FastHashMap<K: Hashable, V:>
 		already holds, and refuses new ones. */
 	function isFull() returns boolean
 		return count >= FASTHASHMAP_CAPACITY
+
+	// Releases the section for the next map. Without this, nextFree only ever grew and
+	// FASTHASHMAP_MAX_INSTANCES was a total over the run rather than a count of live maps - so a map
+	// built per spell cast or per unit exhausted the sections and every later one refused its keys.
+	// Emptied on the way out rather than on the way in, so the next map gets a clean section without
+	// paying for it, and so nothing keeps a reference the map no longer owns.
+	ondestroy
+		// Skipped when construction failed to get a section, there being nothing to hand back.
+		if base >= 0
+			clear()
+			// A section is only ever released once, so this cannot outrun the section count itself.
+			freeSection[freeSectionCount] = base
+			freeSectionCount++
+			base = -1
 
 	/**	Forgets every key, leaving the section reusable by this map. */
 	function clear()
