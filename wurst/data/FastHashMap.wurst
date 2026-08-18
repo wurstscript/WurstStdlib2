@@ -2,39 +2,6 @@ package FastHashMap
 import NoWurst
 import Wurst
 
-/**	A hash map which keeps its keys as they are.
-
-	`HashMap` casts every key to an int and stores it in a `Table`, which works for
-	handles and for anything castable but loses the type on the way in: two keys which
-	cast to the same int collide, and a key which is not castable cannot be used at all.
-	This map takes a bound on its key type instead, so hashing and comparing are done by
-	the key's own implementation and the key is stored as itself.
-
-	The bound is `Hashable`, which asks for a hash and an equality:
-
-		implements Hashable<vec2>
-			function hash(vec2 v) returns int
-				return v.x.toInt() * 31 + v.y.toInt()
-			function equals(vec2 a, vec2 b) returns boolean
-				return a == b
-
-		let seen = new FastHashMap<vec2, unit>()
-		seen.put(caster.getPos(), caster)
-
-	Instances for `int` and `string` come with this package. Declare one beside your own
-	type to use it as a key.
-
-	Storage is one array per specialisation, carved into a section per instance, the way
-	`ArrayList` works. A section is `CAPACITY` slots and does not grow, so a map which
-	fills up refuses further keys rather than rehashing - see `isFull`. Raise
-	`FastHashMap_CAPACITY` in your build config if you need larger maps; every map of one
-	key and value type pays that size.
-
-	Collisions are handled by linear probing inside the section. A removed slot becomes a
-	tombstone rather than empty, so a probe which passed over it still finds keys put down
-	beyond it.
-*/
-
 /**	What a key type has to provide to be used in a `FastHashMap`. */
 public interface Hashable<T:>
 	/**	Any int; keys which are equal must hash alike, or a lookup will miss them. */
@@ -63,6 +30,42 @@ implements Hashable<string>
 
 constant SLOTS = FASTHASHMAP_CAPACITY * FASTHASHMAP_MAX_INSTANCES
 
+/**	A hash map which keeps its keys as they are.
+
+	`HashMap` casts every key to an int and stores it in a `Table`, which works for
+	handles and for anything castable but loses the type on the way in: two keys which
+	cast to the same int collide, and a key which is not castable cannot be used at all.
+	This map takes a bound on its key type instead, so hashing and comparing are done by
+	the key's own implementation and the key is stored as itself.
+
+	The bound is `Hashable`, which asks for a hash and an equality:
+
+		implements Hashable<vec2>
+			function hash(vec2 v) returns int
+				return v.x.toInt() * 31 + v.y.toInt()
+			function equals(vec2 a, vec2 b) returns boolean
+				return a == b
+
+		let seen = new FastHashMap<vec2, unit>()
+		seen.put(caster.getPos(), caster)
+
+	Instances for `int` and `string` come with this package. Declare one beside your own
+	type to use it as a key.
+
+	Storage is one array per specialisation, carved into a section per instance, the way
+	`ArrayList` works. A section is `FASTHASHMAP_CAPACITY` slots and does not grow, so a map
+	which fills up refuses further keys rather than rehashing - see `isFull`. That and
+	`FASTHASHMAP_MAX_INSTANCES` are both configurable, and every map of one key and value
+	type pays the section size.
+
+	On the Jass target their product is bounded by `JASS_MAX_ARRAY_SIZE` as well, the storage
+	being one fixed-size array: a construction which would hand out slots past its end errors
+	instead. Lua grows the table, so only the section count applies there.
+
+	Collisions are handled by linear probing inside the section. A removed slot becomes a
+	tombstone rather than empty, so a probe which passed over it still finds keys put down
+	beyond it.
+*/
 public class FastHashMap<K: Hashable, V:>
 	private static K array keys
 	private static V array values
@@ -82,6 +85,12 @@ public class FastHashMap<K: Hashable, V:>
 	construct()
 		if nextFree + FASTHASHMAP_CAPACITY > SLOTS
 			error("FastHashMap: out of sections. Raise FASTHASHMAP_MAX_INSTANCES.")
+			base = -1
+		else if not isLua and nextFree + FASTHASHMAP_CAPACITY > JASS_MAX_ARRAY_SIZE
+			// One fixed-size array per specialisation on this target, so a section reaching past
+			// its end would read and write slots outside it. Lua grows the table instead.
+			error("FastHashMap: storage limit exceeded for this key and value type. "
+				+ "FASTHASHMAP_CAPACITY * FASTHASHMAP_MAX_INSTANCES must fit JASS_MAX_ARRAY_SIZE.")
 			base = -1
 		else
 			base = nextFree
@@ -149,6 +158,12 @@ public class FastHashMap<K: Hashable, V:>
 			return false
 		used[s] = false
 		dead[s] = true
+		// The slot still holds the key and value it had, which on Lua is a reference this map no
+		// longer owns. A tombstone is never read for either, so releasing them is safe; on Jass
+		// the arrays hold values and this is a no-op.
+		if isLua
+			keys[s] = null
+			values[s] = null
 		count--
 		return true
 
@@ -172,4 +187,8 @@ public class FastHashMap<K: Hashable, V:>
 		for i = 0 to FASTHASHMAP_CAPACITY - 1
 			used[base + i] = false
 			dead[base + i] = false
+			// as in remove: the slot's contents are no longer the map's to hold on to
+			if isLua
+				keys[base + i] = null
+				values[base + i] = null
 		count = 0
