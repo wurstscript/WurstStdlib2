@@ -2,6 +2,7 @@ package FastHashMap
 import NoWurst
 import Wurst
 import ErrorHandling
+import StringUtils
 
 /**	What a key type has to provide to be used in a `FastHashMap`. */
 public interface Hashable<T:>
@@ -9,15 +10,48 @@ public interface Hashable<T:>
 	function hash(T x) returns int
 	function equals(T a, T b) returns boolean
 
+/**	Keeps every intermediate below 2^31 so the arithmetic never overflows, on either target.
+	Jass wraps at 32 bits and Lua does not, so a hash which relied on overflow would differ
+	between them - harmless in itself, since nothing stores a hash, but it would also mean the
+	interpreter could not stand in for the game while testing distribution. */
+constant HASH_MODULUS = 1000003
+/**	Odd, coprime to the modulus, and large enough that one character's contribution reaches the
+	high bits before the next is added. */
+constant HASH_FACTOR = 31
+
 implements Hashable<int>
+	/**	Mixed rather than returned as itself. A slot is chosen by `hash mod FASTHASHMAP_CAPACITY`,
+		so identity sends every multiple of the capacity to slot zero - and keys strided by a power
+		of two are the common case, being ids, handles and loop counters. Split into halves so the
+		multiplications stay in range. */
 	function hash(int x) returns int
-		return x
+		let unsigned = x < 0 ? -(x + 1) : x
+		let low = unsigned mod 65536
+		let high = unsigned div 65536
+		return (low * 7919 + high * 6151 + (x < 0 ? 1 : 0)) mod HASH_MODULUS
+
 	function equals(int a, int b) returns boolean
 		return a == b
 
 implements Hashable<string>
+	/**	Computed here rather than taken from `StringHash`, which cannot be used for this: it is case
+		insensitive, so `alpha` and `ALPHA` would share a slot, and it collapses every partial
+		multibyte slice to one constant. Both are survivable - `equals` still separates the keys -
+		but a section is `FASTHASHMAP_CAPACITY` slots wide and fills up, so a hash which collides
+		on ordinary keys makes the map refuse them.
+
+		Position and length are both mixed in, so `ab` and `ba` differ and neither matches `a`.
+
+		Single bytes are still decoded through `StringUtils.char`, which recovers case where
+		`StringHash` loses it, and which the library already relies on throughout. Non-latin text is
+		the remaining weakness: a lead byte does not decode, so such keys collide with each other and
+		fall back on `equals`. */
 	function hash(string x) returns int
-		return x.getHash()
+		var h = x.length() mod HASH_MODULUS
+		for i = 0 to x.length() - 1
+			h = (h * HASH_FACTOR + char(x.charAt(i)).toInt()) mod HASH_MODULUS
+		return h
+
 	function equals(string a, string b) returns boolean
 		return a == b
 
