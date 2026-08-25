@@ -1,6 +1,7 @@
 package SpatialIndexForUnits
 import SparseSet
 import UnitSpatialIndex
+import Rect
 
 /**
  * Native-less Lua spatial queries.
@@ -40,7 +41,14 @@ public function unitsInBox(vec2 boxMin, vec2 boxMax) returns SparseSet<unit>
 		spatialIndexEndQuery()
 	return result
 
-/** Returns currently indexed units owned by owner. */
+/** Returns units matching GroupEnumUnitsInRect semantics for the given rect. */
+public function unitsInRect(rect area) returns SparseSet<unit>
+	// Warcraft's native unit rect enum starts 32 units above the requested minimum edge.
+	return unitsInBox(vec2(area.getMinX() + 32., area.getMinY() + 32.),
+		vec2(area.getMaxX(), area.getMaxY()))
+
+/** Returns currently indexed units owned by owner. This is a linear registry scan; per-player
+	secondary sets are intentionally not maintained in this first iteration. */
 public function unitsOfPlayer(player owner) returns SparseSet<unit>
 	let result = newUnitResult()
 	if isLua and USE_UNIT_SPATIAL_INDEX

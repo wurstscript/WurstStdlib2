@@ -1,0 +1,203 @@
+package DestructableSpatialIndex
+import NoWurst
+import Vectors
+import MapBounds
+import HashMap
+import TypeCasting
+
+/**
+ * Static Lua spatial index for destructables.
+ *
+ * Destructables do not have an observable movement event, so this index only needs registration
+ * and removal hooks. Preplaced destructables are discovered once during initialization. Runtime
+ * destructables created through CreateDestructable must call registerSpatialIndex() before they
+ * can be queried.
+ */
+
+/** Master switch; the package remains inert on Jass or when disabled. */
+@configurable public constant USE_DESTRUCTABLE_SPATIAL_INDEX = true
+
+@configurable public constant DESTRUCTABLE_SPATIAL_INDEX_CELL_SIZE = 256.
+
+int array cellHead
+int array nextInCell
+int array prevInCell
+int array cellOfDestructable
+real array destructableX
+real array destructableY
+destructable array indexedDestructable
+let spatialIndexByDestructable = new HashMap<destructable, int>
+var nextSpatialIndex = 1
+int array freeSpatialIndex
+var freeSpatialIndexCount = 0
+var trackedDestructables = 0
+
+real gridOriginX = 0.
+real gridOriginY = 0.
+var gridWidth = 0
+var gridHeight = 0
+var indexActive = false
+
+destructable array snapshotStack
+int array queryBase
+var snapshotTop = 0
+var queryDepth = 0
+
+@inline function cellCoordX(real x) returns int
+	return max(0, min(gridWidth - 1, ((x - gridOriginX) / DESTRUCTABLE_SPATIAL_INDEX_CELL_SIZE).floor()))
+
+@inline function cellCoordY(real y) returns int
+	return max(0, min(gridHeight - 1, ((y - gridOriginY) / DESTRUCTABLE_SPATIAL_INDEX_CELL_SIZE).floor()))
+
+@inline function cellAt(real x, real y) returns int
+	return cellCoordX(x) + cellCoordY(y) * gridWidth
+
+function linkIntoCell(int idx, int cell, real x, real y)
+	let head = cellHead[cell]
+	prevInCell[idx] = 0
+	nextInCell[idx] = head
+	if head != 0
+		prevInCell[head] = idx
+	cellHead[cell] = idx
+	cellOfDestructable[idx] = cell + 1
+	destructableX[idx] = x
+	destructableY[idx] = y
+
+function unlinkFromCell(int idx)
+	let stored = cellOfDestructable[idx]
+	if stored == 0
+		return
+	let prev = prevInCell[idx]
+	let next = nextInCell[idx]
+	if prev != 0
+		nextInCell[prev] = next
+	else
+		cellHead[stored - 1] = next
+	if next != 0
+		prevInCell[next] = prev
+	cellOfDestructable[idx] = 0
+	nextInCell[idx] = 0
+	prevInCell[idx] = 0
+
+/** Registers one destructable in the static index. */
+public function destructable.registerSpatialIndex()
+	if not isLua or not USE_DESTRUCTABLE_SPATIAL_INDEX or this == null or not indexActive
+		return
+	if spatialIndexByDestructable.get(this) != 0
+		return
+	var idx = nextSpatialIndex
+	if freeSpatialIndexCount > 0
+		freeSpatialIndexCount--
+		idx = freeSpatialIndex[freeSpatialIndexCount]
+		freeSpatialIndex[freeSpatialIndexCount] = 0
+	else
+		nextSpatialIndex++
+	spatialIndexByDestructable.put(this, idx)
+	indexedDestructable[idx] = this
+	let posX = GetDestructableX(this)
+	let posY = GetDestructableY(this)
+	linkIntoCell(idx, cellAt(posX, posY), posX, posY)
+	trackedDestructables++
+
+/** Removes one destructable from the static index before RemoveDestructable is called. */
+public function destructable.unregisterSpatialIndex()
+	let idx = spatialIndexByDestructable.get(this)
+	if idx == 0
+		return
+	spatialIndexByDestructable.remove(this)
+	unlinkFromCell(idx)
+	indexedDestructable[idx] = null
+	destructableX[idx] = 0.
+	destructableY[idx] = 0.
+	freeSpatialIndex[freeSpatialIndexCount] = idx
+	freeSpatialIndexCount++
+	trackedDestructables--
+
+function seedDestructable(destructable d)
+	d.registerSpatialIndex()
+
+/** Rebuilds the grid around the current membership. Useful after changing the configured map bounds. */
+public function rebuildDestructableSpatialIndexGrid(vec2 worldMin, vec2 worldMax)
+	for cell = 0 to gridWidth * gridHeight - 1
+		cellHead[cell] = 0
+	gridOriginX = worldMin.x
+	gridOriginY = worldMin.y
+	gridWidth = ((worldMax.x - worldMin.x) / DESTRUCTABLE_SPATIAL_INDEX_CELL_SIZE).ceil() + 1
+	gridHeight = ((worldMax.y - worldMin.y) / DESTRUCTABLE_SPATIAL_INDEX_CELL_SIZE).ceil() + 1
+	for idx = 1 to nextSpatialIndex - 1
+		cellOfDestructable[idx] = 0
+		nextInCell[idx] = 0
+		prevInCell[idx] = 0
+		let d = indexedDestructable[idx]
+		if d != null
+			linkIntoCell(idx, cellAt(destructableX[idx], destructableY[idx]),
+				destructableX[idx], destructableY[idx])
+
+@inline function pushMatch(destructable d)
+	snapshotStack[snapshotTop] = d
+	snapshotTop++
+
+/** Collects indexed destructables whose cached position is inside the axis-aligned box. */
+public function destructableSpatialIndexBeginBoxQuery(vec2 boxMin, vec2 boxMax) returns int
+	queryBase[queryDepth] = snapshotTop
+	queryDepth++
+	if not indexActive or boxMin.x > boxMax.x or boxMin.y > boxMax.y
+		return 0
+
+	let minCx = cellCoordX(boxMin.x)
+	let maxCx = cellCoordX(boxMax.x)
+	let minCy = cellCoordY(boxMin.y)
+	let maxCy = cellCoordY(boxMax.y)
+	var cy = minCy
+	while cy <= maxCy
+		let rowBase = cy * gridWidth
+		var cx = minCx
+		while cx <= maxCx
+			var idx = cellHead[rowBase + cx]
+			while idx != 0
+				let next = nextInCell[idx]
+				if destructableX[idx] >= boxMin.x and destructableX[idx] <= boxMax.x
+					and destructableY[idx] >= boxMin.y and destructableY[idx] <= boxMax.y
+					let d = indexedDestructable[idx]
+					if d != null
+						pushMatch(d)
+				idx = next
+			cx++
+		cy++
+	return snapshotTop - queryBase[queryDepth - 1]
+
+/** Collects indexed destructables in the square used by forDestructablesInRange. */
+public function destructableSpatialIndexBeginRangeQuery(vec2 center, real range) returns int
+	return destructableSpatialIndexBeginBoxQuery(
+		vec2(center.x - range, center.y - range), vec2(center.x + range, center.y + range))
+
+@inline public function destructableSpatialIndexQuery(int i) returns destructable
+	return snapshotStack[queryBase[queryDepth - 1] + i]
+
+public function destructableSpatialIndexEndQuery()
+	queryDepth--
+	let base = queryBase[queryDepth]
+	for i = base to snapshotTop - 1
+		snapshotStack[i] = null
+	snapshotTop = base
+
+public function destructableSpatialIndexHealthy() returns boolean
+	return isLua and indexActive
+
+public function destructableSpatialIndexTracked() returns int
+	return trackedDestructables
+
+public function destructableSpatialIndexCellOf(vec2 pos) returns int
+	return cellAt(pos.x, pos.y)
+
+public function destructableSpatialIndexGridWidth() returns int
+	return gridWidth
+
+public function destructableSpatialIndexGridHeight() returns int
+	return gridHeight
+
+init
+	if isLua and USE_DESTRUCTABLE_SPATIAL_INDEX
+		rebuildDestructableSpatialIndexGrid(boundMin, boundMax)
+		indexActive = true
+		EnumDestructablesInRect(boundRect, null, function seedDestructable(GetEnumDestructable()))
