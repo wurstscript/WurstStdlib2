@@ -62,15 +62,21 @@ let queryBases = new ArrayList<int>()
 
 function destroyCellLists()
 	for i = 0 to cellContents.size() - 1
-		destroy cellContents.get(i)
+		let cell = cellContents.get(i)
+		if cell != null
+			destroy cell
 	cellContents.clear()
 
 function createCellLists()
 	for i = 0 to gridWidth * gridHeight - 1
-		cellContents.add(new ArrayList<DestructableSpatialRecord>(4))
+		cellContents.add(null)
 
 function addRecordToCell(DestructableSpatialRecord record)
-	cellContents.get(record.cell).add(record)
+	let cell = cellContents.get(record.cell)
+	if cell == null
+		cell = new ArrayList<DestructableSpatialRecord>(4)
+		cellContents.set(record.cell, cell)
+	cell.add(record)
 
 /** Registers one destructable in the index. */
 public function destructable.registerSpatialIndex()
@@ -135,11 +141,12 @@ public function destructableSpatialIndexBeginBoxQuery(vec2 boxMin, vec2 boxMax) 
 		var cx = minCx
 		while cx <= maxCx
 			let cell = cellContents.get(rowBase + cx)
-			for i = 0 to cell.size() - 1
-				let record = cell.get(i)
-				if record.x >= boxMin.x and record.x <= boxMax.x
-					and record.y >= boxMin.y and record.y <= boxMax.y
-					pushMatch(record.value)
+			if cell != null
+				for i = 0 to cell.size() - 1
+					let record = cell.get(i)
+					if record.x >= boxMin.x and record.x <= boxMax.x
+						and record.y >= boxMin.y and record.y <= boxMax.y
+						pushMatch(record.value)
 			cx++
 		cy++
 	return snapshotStack.size() - queryBases.get(queryBases.size() - 1)
