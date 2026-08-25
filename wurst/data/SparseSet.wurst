@@ -154,3 +154,11 @@ public class UnitSparseSetKey implements SparseSetKey<unit>
 /** Reusable key provider for SparseSet<unit>. */
 public constant SparseSetKey<unit> UNIT_SPARSE_SET_KEY = new UnitSparseSetKey()
 
+/** Key provider for destructable sets. */
+public class DestructableSparseSetKey implements SparseSetKey<destructable>
+    override function getKey(destructable value) returns int
+        return value.getTCHandleId()
+
+/** Reusable key provider for SparseSet<destructable>. */
+public constant SparseSetKey<destructable> DESTRUCTABLE_SPARSE_SET_KEY = new DestructableSparseSetKey()
+

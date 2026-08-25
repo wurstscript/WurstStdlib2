@@ -1,0 +1,34 @@
+package SpatialIndexForDestructables
+import SparseSet
+import DestructableSpatialIndex
+import Rect
+
+/**
+ * Native-less Lua spatial queries for destructables.
+ *
+ * Each result is owned by the caller and must be destroyed. The range query intentionally matches
+ * ClosureForGroups.forDestructablesInRange: it returns the square that encloses the circle rather
+ * than applying a second distance test. Runtime-created destructables must be registered explicitly.
+ */
+
+function newDestructableResult() returns SparseSet<destructable>
+	return new SparseSet<destructable>(DESTRUCTABLE_SPARSE_SET_KEY)
+
+public function destructablesInRect(rect area) returns SparseSet<destructable>
+	let result = newDestructableResult()
+	if isLua and USE_DESTRUCTABLE_SPATIAL_INDEX
+		let matched = destructableSpatialIndexBeginBoxQuery(
+			vec2(area.getMinX(), area.getMinY()), vec2(area.getMaxX(), area.getMaxY()))
+		for i = 0 to matched - 1
+			result.add(destructableSpatialIndexQuery(i))
+		destructableSpatialIndexEndQuery()
+	return result
+
+public function destructablesInRange(vec2 center, real range) returns SparseSet<destructable>
+	let result = newDestructableResult()
+	if isLua and USE_DESTRUCTABLE_SPATIAL_INDEX
+		let matched = destructableSpatialIndexBeginRangeQuery(center, range)
+		for i = 0 to matched - 1
+			result.add(destructableSpatialIndexQuery(i))
+		destructableSpatialIndexEndQuery()
+	return result
