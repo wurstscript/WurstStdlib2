@@ -72,7 +72,7 @@ function createCellLists()
 		cellContents.add(null)
 
 function addRecordToCell(DestructableSpatialRecord record)
-	let cell = cellContents.get(record.cell)
+	var cell = cellContents.get(record.cell)
 	if cell == null
 		cell = new ArrayList<DestructableSpatialRecord>(4)
 		cellContents.set(record.cell, cell)
