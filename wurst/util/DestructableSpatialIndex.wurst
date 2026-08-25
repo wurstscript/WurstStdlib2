@@ -14,7 +14,7 @@ import TypeCasting
  * can be queried.
  */
 
-/** Master switch; the package remains inert on Jass or when disabled. */
+// Master switch; the package remains inert on Jass or when disabled.
 @configurable public constant USE_DESTRUCTABLE_SPATIAL_INDEX = true
 
 @configurable public constant DESTRUCTABLE_SPATIAL_INDEX_CELL_SIZE = 256.
@@ -200,4 +200,5 @@ init
 	if isLua and USE_DESTRUCTABLE_SPATIAL_INDEX
 		rebuildDestructableSpatialIndexGrid(boundMin, boundMax)
 		indexActive = true
-		EnumDestructablesInRect(boundRect, null, function seedDestructable(GetEnumDestructable()))
+		EnumDestructablesInRect(boundRect, null) ->
+			seedDestructable(GetEnumDestructable())
