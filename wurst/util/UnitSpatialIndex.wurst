@@ -21,6 +21,9 @@ import UnitSpatialIndexRemoval
 /** Units re-bucketed per tick; raising this shortens the cycle and query padding. */
 @configurable public constant SPATIAL_INDEX_UNITS_PER_TICK = 128
 
+/** Time between sweep steps. Raising this reduces timer and refresh work but increases query padding. */
+@configurable public constant SPATIAL_INDEX_SWEEP_PERIOD = ANIMATION_PERIOD
+
 /**	Engine movement-speed cap. Configurable because gameplay constants can raise the default 522. */
 @configurable public constant SPATIAL_INDEX_MAX_UNIT_SPEED = 522.
 
@@ -98,7 +101,7 @@ function noteRegistryChange()
 
 /** Worst-case distance a unit may have travelled since its cached position was written. */
 function currentMaxDisplacement() returns real
-	return SPATIAL_INDEX_MAX_UNIT_SPEED * displacementBoundTicks * ANIMATION_PERIOD
+	return SPATIAL_INDEX_MAX_UNIT_SPEED * displacementBoundTicks * SPATIAL_INDEX_SWEEP_PERIOD
 
 // Membership
 
@@ -261,11 +264,11 @@ public function spatialIndexHealthy() returns boolean
 
 /** Guaranteed upper staleness bound in seconds used to derive query padding. */
 public function spatialIndexWorstStaleness() returns real
-	return displacementBoundTicks * ANIMATION_PERIOD
+	return displacementBoundTicks * SPATIAL_INDEX_SWEEP_PERIOD
 
 /** Observed staleness in seconds; diagnostic only, never safe for padding. */
 public function spatialIndexObservedStaleness() returns real
-	return max(publishedWorstAge, cycleWorstAge) * ANIMATION_PERIOD
+	return max(publishedWorstAge, cycleWorstAge) * SPATIAL_INDEX_SWEEP_PERIOD
 
 /** How many units the sweep currently cycles over. */
 public function spatialIndexTrackedUnits() returns int
@@ -494,5 +497,5 @@ init
 		seedExistingUnits()
 		indexActive = true
 
-		doPeriodically(ANIMATION_PERIOD) cb ->
+		doPeriodically(SPATIAL_INDEX_SWEEP_PERIOD) cb ->
 			sweepStep()

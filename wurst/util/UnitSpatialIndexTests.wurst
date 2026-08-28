@@ -5,6 +5,9 @@ import UnitSpatialIndex
 	enumeration, hidden/locust/corpse handling and reentrancy - lives in StdlibIngameTests, because
 	the compiletime interpreter has no units to enumerate. */
 
+@Test function sweepPeriodPreservesTheAnimationPeriodDefault()
+	SPATIAL_INDEX_SWEEP_PERIOD.assertEquals(ANIMATION_PERIOD)
+
 @Test function gridCoversTheRequestedExtent()
 	rebuildSpatialIndexGrid(vec2(-2048., -2048.), vec2(2048., 2048.))
 	// 4096 world units at 256 per cell, plus one so the far edge lands inside the grid.
