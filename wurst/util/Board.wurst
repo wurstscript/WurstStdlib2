@@ -184,11 +184,13 @@ public class Board
     function removeRow(BoardRow row)
         rows.remove(row)
         board.setRowCount(rows.size())
-		var i = 0
-		rows.forEach() row ->
-			row.rowIndex = i
-			row.invalidate()
-			i++
+        let i = reference(0)
+        rows.forEach() row ->
+            row.rowIndex = i.val
+            row.invalidate()
+            i.val++
+
+        destroy i
 
     /** Unsafe access to the underlying multiboard */
     function getBoard() returns multiboard
