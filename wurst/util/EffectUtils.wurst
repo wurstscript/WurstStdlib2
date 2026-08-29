@@ -7,16 +7,14 @@ import MapBounds
 /** remove effect after "time" expires*/
 public function effect.destrAfter(real time)
 	doAfter(time) ->
-		if this != null
-			this.destr()
+		this?.destr()
 
 /** After "time", move effect to invisible part of map before removing it (which plays death animation).
 	Does not work on effects attached to units!
 */
 public function effect.destrHiddenAfter(real time)
 	doAfter(time) ->
-		if this != null
-			this.destrHidden()
+		this?.destrHidden()
 
 /** Move effect to invisible part of map before removing it (which plays death animation).
 	Does not work on effects attached to units!

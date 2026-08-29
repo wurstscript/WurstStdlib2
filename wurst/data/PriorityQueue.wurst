@@ -23,8 +23,8 @@ import ArrayList
  * remove and re-add it after changing any fields used by the comparator.
  */
 public class PriorityQueue<T:>
-    private ArrayList<T> values
-    private Comparator<T> comparator
+    private readonly ArrayList<T> values
+    private readonly Comparator<T> comparator
 
     construct(Comparator<T> comparator)
         this(comparator, 16)

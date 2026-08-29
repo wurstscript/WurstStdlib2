@@ -14,7 +14,7 @@ import ErrorHandling
 public class ByteBuffer
 	// We're using Table instead of HashMap here since HashMap has additional checks to maintain know it's size,
 	// which are unneeded here and slow the container 2x.
-	private var storage = new Table()
+	private readonly Table storage = new Table()
 	private var intCount = 0
 
 	private var buffer = 0

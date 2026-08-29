@@ -115,19 +115,19 @@ public class DamageElement
 /* DAMAGE INSTANCE */
 
 class DamageInstance
-    protected int id
-    protected unit source
-    protected unit target
+    protected readonly int id
+    protected readonly unit source
+    protected readonly unit target
     protected real amount
-    protected real originalAmount
+    protected readonly real originalAmount
     protected real unreducedAmount
-    protected real unreducedOriginalAmount
+    protected readonly real unreducedOriginalAmount
     protected bool unreduced
     protected attacktype nativeAttackType
     protected damagetype nativeDamageType
     protected weapontype nativeWeaponType
-    protected DamageType damageType
-    protected DamageElement damageElement
+    protected readonly DamageType damageType
+    protected readonly DamageElement damageElement
 
     protected static thistype current = null
     protected static thistype array stack

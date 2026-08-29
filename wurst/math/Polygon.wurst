@@ -407,8 +407,7 @@ public class Polygon
 			ShardedIntStorage.release(gridStorageStart, gridStorageSize)
 		gridStorageStart = -1
 		gridStorageSize = 0
-		if boundaryRect != null
-			boundaryRect.remove()
-			boundaryRect = null
+		boundaryRect?.remove()
+		boundaryRect = null
 		destroy vertices
 		vertices = null
