@@ -101,15 +101,12 @@ function setupUnits()
 
 function teardownUnits()
 	// null tolerant: setupUnits may itself have been the thing that crashed
-	if attacker != null
-		attacker.remove()
-		attacker = null
-	if victim != null
-		victim.remove()
-		victim = null
-	if victim2 != null
-		victim2.remove()
-		victim2 = null
+	attacker?.remove()
+	attacker = null
+	victim?.remove()
+	victim = null
+	victim2?.remove()
+	victim2 = null
 
 /**	Heals the victim, then deals `amount` as CODE damage.
 	Ordinary physical damage rather than the DAMAGE_TYPE_UNIVERSAL default of
@@ -731,9 +728,8 @@ function testSpatialIndexReentrancy()
 	destroy creationSnapshot
 	check(reentrancyVisited == 4, "creating a unit mid-iteration does not extend it ("
 		+ reentrancyVisited + ")")
-	if spawnedDuringQuery != null
-		spawnedDuringQuery.remove()
-		spawnedDuringQuery = null
+	spawnedDuringQuery?.remove()
+	spawnedDuringQuery = null
 
 	for i = 0 to 3
 		reentrancyProbes[i].remove()

@@ -92,7 +92,7 @@ public class SqlResult
 
 /** Wraps an SQLite database connection with convenience methods. */
 public class SqliteDb
-    private int conn
+    private readonly int conn
 
     /** Opens (or creates) the database at the given path. Use ":memory:" for temporary databases. */
     construct(string path)

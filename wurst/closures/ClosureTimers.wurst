@@ -54,9 +54,9 @@ public function nullTimer(CallbackSingle cb) returns CallbackSingle
 	Must be used on a timer acquired with `getTimer()`
 
 	Example use:
-	| someTimer.doPeriodically(0.5) cb ->
+	| someTimer.doPeriodically(0.5) (_) ->
 	|	 if i > 10
-	|		destroy cb
+	|		destroy it
 */
 public function timer.doPeriodically(real time, CallbackPeriodic cb) returns CallbackPeriodic
 	cb.start(this, time)
@@ -66,9 +66,9 @@ public function timer.doPeriodically(real time, CallbackPeriodic cb) returns Cal
 	The callback has to be destroyed manually.
 
 	Example use:
-	| doPeriodically(0.5) cb ->
+	| doPeriodically(0.5) (_) ->
 	|	 if i > 10
-	|		destroy cb
+	|		destroy it
 */
 public function doPeriodically(real time, CallbackPeriodic cb) returns CallbackPeriodic
 	return getTimer().doPeriodically(time, cb)
@@ -78,7 +78,7 @@ public function doPeriodically(real time, CallbackPeriodic cb) returns CallbackP
 	Must be used on a timer acquired with `getTimer()`
 
 	Example use:
-	| someTimer.doPeriodicallyCounted(0.5, 100) cb ->
+	| someTimer.doPeriodicallyCounted(0.5, 100) (_) ->
 	|	 doSomething()
 
 */
@@ -90,7 +90,7 @@ public function timer.doPeriodicallyCounted(real time, int callAmount, CallbackC
 	The callback object is destroyed after the action has been executed callAmount times.
 
 	Example use:
-	| doPeriodicallyCounted(0.5, 100) cb ->
+	| doPeriodicallyCounted(0.5, 100) (_) ->
 	|	 doSomething()
 
 */

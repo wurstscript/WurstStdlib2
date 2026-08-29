@@ -13,17 +13,17 @@ var x = 200
 		x.assertEquals(250)
 
 	var _count = 3
-	let cb = doPeriodicallyCounted(3, 3) (CallbackCounted cb) ->
-		cb.getCount().assertEquals(_count)
-		if cb.isLast()
-			cb.progress().assertEquals(1, 0.0001)
-			cb.getCount().assertEquals(1)
+	let cb = doPeriodicallyCounted(3, 3) (_) ->
+		it.getCount().assertEquals(_count)
+		if it.isLast()
+			it.progress().assertEquals(1, 0.0001)
+			it.getCount().assertEquals(1)
 		else if _count == 3
-			cb.progress().assertEquals(0.33333, 0.00001)
-			cb.getCount().assertEquals(3)
+			it.progress().assertEquals(0.33333, 0.00001)
+			it.getCount().assertEquals(3)
 		else if _count == 2
-			cb.progress().assertEquals(0.66666, 0.00001)
-			cb.getCount().assertEquals(2)
+			it.progress().assertEquals(0.66666, 0.00001)
+			it.getCount().assertEquals(2)
 		_count--
 	cb.progress().assertEquals(0, 0.00001)
 	cb.getCount().assertEquals(_count)

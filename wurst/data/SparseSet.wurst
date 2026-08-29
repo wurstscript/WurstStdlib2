@@ -22,10 +22,10 @@ public interface SparseSetKey<T:>
  * iteration order is not preserved.
  */
 public class SparseSet<T:>
-    private ArrayList<T> dense
-    private ArrayList<int> denseKeys
-    private Table sparse
-    private SparseSetKey<T> keyProvider
+    private readonly ArrayList<T> dense
+    private readonly ArrayList<int> denseKeys
+    private readonly Table sparse
+    private readonly SparseSetKey<T> keyProvider
 
     construct(SparseSetKey<T> keyProvider)
         this.keyProvider = keyProvider
