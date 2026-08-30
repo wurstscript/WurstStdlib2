@@ -43,11 +43,6 @@ You can also use try() from package Execute to handle an error happening in a ca
 @configurable public function error(string msg)
 	if compiletime
 		compileError("ERROR: " + msg)
-	else if isLua
-		// In Lua mode, store the error and return. xpcall in main() provides
-		// thread isolation; raising a Lua exception here would propagate into
-		// WC3's C callback layer and get printed to all players.
-		lastError = msg
 	else
 		if not suppressErrorMessages
 			let hash = msg.getHash()
@@ -68,7 +63,11 @@ You can also use try() from package Execute to handle an error happening in a ca
 			else
 				HT.saveInt(PRIMARY_ERROR_KEY, hash, currentTime.toInt())
 				Log.error("Message: " + msg + getStackTraceString())
-		// crash the thread:
 		lastError = msg
-		I2S(1 div 0)
+		if not isLua
+			// crash the thread. Lua has no equivalent: raising here would propagate into WC3's C
+			// callback layer and be printed to every player, so the Lua backend leaves thread
+			// isolation to the xpcall in main() and returns instead. It still reports, because an
+			// error nobody sees is worse than one that does not stop the thread.
+			I2S(1 div 0)
 
