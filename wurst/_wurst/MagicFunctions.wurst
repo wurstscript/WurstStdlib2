@@ -32,6 +32,9 @@ The called functions must not take any parameters.
 */
 public function callFunctionsWithAnnotation(string _annotation)
 
+/** Prevents -opt name minification for a top-level function whose name is used externally. */
+@annotation public function preserveName()
+
 /** this is a magic constant.
 It is always false at runtime and true during compiletime.
 */
