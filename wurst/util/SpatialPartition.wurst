@@ -20,6 +20,9 @@ package SpatialPartition
 
 	Staleness is a query parameter, not state: a caller whose entries never move passes a zero
 	displacement and gets an exact answer with no undecidable band at all.
+
+	Entry ids are supplied by the owning layer and must be **1-based**: 0 is reserved as the chain
+	sentinel.
 */
 import ErrorHandling
 
@@ -125,6 +128,21 @@ public function spatialPartitionLastQueryBlocksSkipped() returns int
 
 // Membership
 
+/*	Entry ids are 1-based because 0 is the chain sentinel: `cellHead` and `nextInCell` use it to mean
+	"nothing here". An entry linked under id 0 would write that sentinel into the head, making itself
+	invisible to every query and, worse, letting a later unlink overwrite the real head and hide every
+	other entry in the same cell. Rejecting is cheaper than encoding ids as `id + 1`, which would put an
+	extra add and subtract in the hottest loop in the package. */
+/** Whether an id may be used as an entry. Ids are 1-based; 0 is reserved as the chain sentinel. */
+public function spatialPartitionIsValidEntryId(int id) returns boolean
+	return id >= 1
+
+function requireValidEntry(int id) returns boolean
+	if not spatialPartitionIsValidEntryId(id)
+		error("SpatialPartition: entry id " + id + " is invalid; ids are 1-based (0 is the chain sentinel)")
+		return false
+	return true
+
 function linkIntoCell(int id, int groupId, int cell)
 	let slot = groupSlot(id, groupId)
 	let head = cellHead[headSlot(cell, groupId)]
@@ -160,6 +178,8 @@ function unlinkFromCell(int id, int groupId)
 /**	Records where an entry is, re-bucketing it in every group it belongs to. Call this before adding
 	the entry to any group, and again whenever it has moved. */
 public function spatialPartitionSetPos(int id, real x, real y)
+	if not requireValidEntry(id)
+		return
 	entryX[id] = x
 	entryY[id] = y
 	if registrySlot[id] == 0
@@ -176,6 +196,8 @@ public function spatialPartitionSetPos(int id, real x, real y)
 /**	Adds or removes an entry from one group. The caller owns the policy of when membership changes,
 	which keeps predicate evaluation out of the walk entirely. */
 public function spatialPartitionSetGroup(int id, int groupId, boolean member)
+	if not requireValidEntry(id)
+		return
 	if groupId < 0 or groupId >= SPATIAL_PARTITION_MAX_GROUPS
 		error("SpatialPartition: group " + groupId + " is outside SPATIAL_PARTITION_MAX_GROUPS")
 		return
@@ -187,10 +209,12 @@ public function spatialPartitionSetGroup(int id, int groupId, boolean member)
 
 /** Whether an entry is currently in a group. */
 public function spatialPartitionInGroup(int id, int groupId) returns boolean
-	return cellOfEntry[groupSlot(id, groupId)] != 0
+	return id >= 1 and cellOfEntry[groupSlot(id, groupId)] != 0
 
 /** Drops an entry from every group. Call before recycling its id, or a later entry inherits it. */
 public function spatialPartitionRemove(int id)
+	if not requireValidEntry(id)
+		return
 	for groupId = 0 to SPATIAL_PARTITION_MAX_GROUPS - 1
 		unlinkFromCell(id, groupId)
 	entryX[id] = 0.
@@ -277,6 +301,9 @@ public function spatialPartitionBeginRangeQuery(vec2 center, real radius, real m
 		return 0
 
 	let reach = radius + maxDisplacement
+	// May go negative when the displacement exceeds the radius, in which case nothing can be decided
+	// from a cached position and every hit is flagged. Zero is still decisive, though: it means only an
+	// entry exactly on the point is certainly inside, which is what a point query asks for.
 	let certainlyIn = radius - maxDisplacement
 	let certainlyInSq = certainlyIn * certainlyIn
 	let certainlyOutSq = reach * reach
@@ -320,7 +347,7 @@ public function spatialPartitionBeginRangeQuery(vec2 center, real radius, real m
 							let dy = entryY[id] - center.y
 							let distSq = dx * dx + dy * dy
 							if distSq <= certainlyOutSq
-								pushMatch(id, not (certainlyIn > 0. and distSq <= certainlyInSq))
+								pushMatch(id, not (certainlyIn >= 0. and distSq <= certainlyInSq))
 							id = next
 						cx++
 					cy++

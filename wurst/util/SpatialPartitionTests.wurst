@@ -194,3 +194,37 @@ function countIn(vec2 center, real radius, real maxDisplacement, int groupId) re
 	// The outer result must survive the inner query untouched.
 	spatialPartitionQueryId(0).assertEquals(outerId)
 	spatialPartitionEndQuery()
+
+/*	A point query is a legitimate use, and with nothing allowed to have moved its answer is exact. The
+	certain/uncertain split therefore has to treat a zero inner radius as decisive rather than as "no
+	inner radius at all", or a caller doing point lookups is sent to re-check every hit against a live
+	position it was promised it would not need. */
+@Test function zeroRadiusStillDecidesAnExactHit()
+	arena()
+	place(1, vec2(0., 0.), ALL)
+	place(2, vec2(1., 0.), ALL)
+
+	let n = spatialPartitionBeginRangeQuery(vec2(0., 0.), 0., 0., ALL)
+	n.assertEquals(1)
+	spatialPartitionQueryId(0).assertEquals(1)
+	spatialPartitionQueryUncertain(0).assertFalse()
+	spatialPartitionEndQuery()
+
+/*	Ids are 1-based because 0 is the chain sentinel. An entry accepted under id 0 would write "empty"
+	into the cell head: invisible itself, and able to hide every other entry in the same cell the next
+	time it was unlinked.
+
+	The rule is asserted rather than the symptom: every mutator rejects a bad id through `error()`,
+	which aborts, so the corruption it prevents cannot be provoked from a test. `spatialPartitionInGroup`
+	is the one reader that must stay quiet, since callers legitimately ask about ids they do not own. */
+@Test function entryIdsAreOneBasedBecauseZeroIsTheSentinel()
+	spatialPartitionIsValidEntryId(0).assertFalse()
+	spatialPartitionIsValidEntryId(-7).assertFalse()
+	spatialPartitionIsValidEntryId(1).assertTrue()
+	spatialPartitionIsValidEntryId(9999).assertTrue()
+
+	arena()
+	place(1, vec2(0., 0.), ALL)
+	place(2, vec2(50., 0.), ALL)
+	spatialPartitionInGroup(0, ALL).assertFalse()
+	countIn(vec2(0., 0.), 500., 0., ALL).assertEquals(2)
