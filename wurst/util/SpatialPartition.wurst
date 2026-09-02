@@ -134,11 +134,39 @@ public function spatialPartitionCoarseWidth() returns int
 public function spatialPartitionCellSlotCount() returns int
 	return gridWidth * gridHeight * SPATIAL_PARTITION_MAX_GROUPS
 
-/** Slots the given extent would need, so a caller can size cells and groups before committing to it. */
+/** Cells an axis span needs, or -1 when that count cannot be represented as an int at all. */
+function cellsAcross(real span) returns int
+	let cells = span / SPATIAL_PARTITION_CELL_SIZE
+	// Checked in the real domain first: `.ceil()` on something past the int range is meaningless, so
+	// the conversion itself has to be refused rather than its result inspected afterwards.
+	if cells >= INT_MAX.toReal() - 2.
+		return -1
+	return cells.ceil() + 1
+
+/**	Cell-head slots the given extent would need, so a caller can size cells and groups before committing
+	to it - or -1 when that count is not representable, which is itself a reason to refuse the extent.
+
+	Computed with divisions rather than by multiplying and inspecting the result: at a small cell size
+	the product overflows, and a wrapped negative reads as "comfortably within budget" to any comparison
+	made afterwards. */
 public function spatialPartitionRequiredCellSlots(vec2 worldMin, vec2 worldMax) returns int
-	let w = ((worldMax.x - worldMin.x) / SPATIAL_PARTITION_CELL_SIZE).ceil() + 1
-	let h = ((worldMax.y - worldMin.y) / SPATIAL_PARTITION_CELL_SIZE).ceil() + 1
-	return w * h * SPATIAL_PARTITION_MAX_GROUPS
+	if not spatialPartitionIsValidExtent(worldMin, worldMax)
+		return -1
+	let w = cellsAcross(worldMax.x - worldMin.x)
+	let h = cellsAcross(worldMax.y - worldMin.y)
+	if w < 0 or h < 0
+		return -1
+	if h > INT_MAX div SPATIAL_PARTITION_MAX_GROUPS
+		return -1
+	let perColumn = h * SPATIAL_PARTITION_MAX_GROUPS
+	if w > INT_MAX div perColumn
+		return -1
+	return w * perColumn
+
+/** Whether an extent's cell storage is both representable and within this target's array limit. */
+public function spatialPartitionExtentFits(vec2 worldMin, vec2 worldMax) returns boolean
+	let needed = spatialPartitionRequiredCellSlots(worldMin, worldMax)
+	return needed >= 0 and needed <= targetArrayLimit()
 
 /** Entries the last query walked, whether or not they matched. */
 public function spatialPartitionLastQueryVisits() returns int
@@ -326,10 +354,11 @@ public function rebuildSpatialPartition(vec2 worldMin, vec2 worldMax)
 	if not spatialPartitionIsValidExtent(worldMin, worldMax)
 		error("SpatialPartition: extent is inverted; worldMin must not exceed worldMax on either axis")
 		return
-	if spatialPartitionRequiredCellSlots(worldMin, worldMax) > targetArrayLimit()
+	if not spatialPartitionExtentFits(worldMin, worldMax)
 		error("SpatialPartition: that extent needs "
 			+ spatialPartitionRequiredCellSlots(worldMin, worldMax)
-			+ " cell slots, past this target's array limit of " + targetArrayLimit()
+			+ " cell slots (-1 meaning not even representable), past this target's array limit of "
+			+ targetArrayLimit()
 			+ "; raise SPATIAL_PARTITION_CELL_SIZE or lower SPATIAL_PARTITION_MAX_GROUPS")
 		return
 	// Old dimensions still describe the arrays being cleared, so clear before re-deriving them.

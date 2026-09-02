@@ -335,3 +335,25 @@ function countIn(vec2 center, real radius, real maxDisplacement, int groupId) re
 	spatialPartitionIsValidExtent(vec2(0., 100.), vec2(0., -100.)).assertFalse()
 	// The reported case: a span of exactly one negative cell.
 	spatialPartitionIsValidExtent(vec2(0., 0.), vec2(-SPATIAL_PARTITION_CELL_SIZE, 0.)).assertFalse()
+
+/*	The capacity guard has to survive its own arithmetic. At the default 256 cell an extent of a few
+	million units needs more slots than an int can hold, and the product wraps NEGATIVE - which reads as
+	"comfortably within budget" to the comparison that follows, so the guard waves through exactly the
+	grid it exists to refuse. Reported against a 1-unit cell size; it reproduces at the default too,
+	which is why the check divides instead of multiplying. */
+@Test function capacityCheckSurvivesItsOwnArithmetic()
+	// 16407 x 16407 x 8 overflows a signed int.
+	let huge = spatialPartitionRequiredCellSlots(vec2(-2100000., -2100000.), vec2(2100000., 2100000.))
+	huge.assertEquals(-1)
+	spatialPartitionExtentFits(vec2(-2100000., -2100000.), vec2(2100000., 2100000.)).assertFalse()
+
+	// A span past what the cell division can even convert to an int.
+	spatialPartitionRequiredCellSlots(vec2(0., 0.), vec2(1000000000000., 1.)).assertEquals(-1)
+
+	// An inverted extent has no slot count either, rather than a misleading one.
+	spatialPartitionRequiredCellSlots(vec2(100., 0.), vec2(-100., 0.)).assertEquals(-1)
+
+	// And an ordinary extent still reports a real figure and fits.
+	let ok = spatialPartitionRequiredCellSlots(vec2(-4096., -4096.), vec2(4096., 4096.))
+	ok.assertEquals(33 * 33 * SPATIAL_PARTITION_MAX_GROUPS)
+	spatialPartitionExtentFits(vec2(-4096., -4096.), vec2(4096., 4096.)).assertTrue()
