@@ -1,0 +1,344 @@
+package SpatialPartition
+/*	Backend-agnostic uniform-grid spatial partition over integer entry ids.
+
+	This is the structure, not a unit index. It knows ids, positions and group membership; it does not
+	know what an id refers to, when a position becomes stale, or what "visible" means. Those belong to
+	the consuming layer, which is what lets one structure serve moving units and static destructables
+	without either paying for the other's concerns.
+
+	Three deliberate properties, in the order they matter to the emitted Lua:
+
+	1. No allocation per query. Every buffer is a preallocated flat array and results are read out of a
+	   shared snapshot stack. Wurst arrays become Lua tables, and a flat table with index arithmetic is
+	   one array-part lookup where a nested table would be two.
+	2. No calls in the walk. Group membership is pushed in by the caller rather than pulled through a
+	   predicate, and an undecidable position is reported as a flag for the caller to resolve rather
+	   than dispatched through an interface. A call per entry is the most expensive thing this loop
+	   could do.
+	3. Empty space is skipped, not walked. A coarse occupancy level over the fine grid makes a large
+	   radius cost the blocks that actually hold members instead of every cell in its bounding box.
+
+	Staleness is a query parameter, not state: a caller whose entries never move passes a zero
+	displacement and gets an exact answer with no undecidable band at all.
+*/
+import ErrorHandling
+
+// Configuration
+
+/** Fine cell edge in world units. Smaller tightens windows but walks more cells. */
+@configurable public constant SPATIAL_PARTITION_CELL_SIZE = 256.
+
+/**	Fine cells per coarse block edge, so 8 means a block covers 8x8 cells. The coarse level exists so
+	a large query skips empty regions with one test per block instead of one per cell. */
+@configurable public constant SPATIAL_PARTITION_COARSE_FACTOR = 8
+
+/**	Concurrently declared groups. Each costs one chain pointer per entry and one head per cell, so
+	raise it only as far as a project uses. */
+@configurable public constant SPATIAL_PARTITION_MAX_GROUPS = 8
+
+// Grid state
+
+var gridOriginX = 0.
+var gridOriginY = 0.
+var gridWidth = 0
+var gridHeight = 0
+var coarseWidth = 0
+var coarseHeight = 0
+
+/*	Chains are flattened with a constant stride, since Wurst has no per-instance arrays: an entry slot
+	for a group is `id * MAX_GROUPS + groupId` and a cell head is `cell * MAX_GROUPS + groupId`. One
+	multiply and an add beats a second table indirection in Lua. */
+int array cellHead
+int array nextInCell
+int array prevInCell
+/** Cell + 1 an entry is linked under for a group; 0 means it is not a member of that group. */
+int array cellOfEntry
+/** Members of each group inside each coarse block, so an empty block is skipped without descending. */
+int array coarseCount
+real array entryX
+real array entryY
+
+/*	Dense list of live entries. The partition needs to know its own population for one reason it cannot
+	delegate: a grid rebuild changes what every cell index means, so every entry has to be re-linked,
+	and an owning layer cannot do that through an API that has already forgotten them. */
+int array registryIds
+/** Registry slot + 1 for a live entry, 0 for one the partition does not know. */
+int array registrySlot
+var registryCount = 0
+/** Scratch used only across a rebuild, to carry membership over the re-link. */
+boolean array rebuildMember
+
+// Query snapshot
+
+int array snapshotId
+boolean array snapshotUncertain
+var snapshotTop = 0
+int array queryBase
+var queryDepth = 0
+var lastQueryVisits = 0
+var lastQueryBlocksSkipped = 0
+
+// Grid math
+
+@inline function cellCoordX(real x) returns int
+	return max(0, min(gridWidth - 1, ((x - gridOriginX) / SPATIAL_PARTITION_CELL_SIZE).floor()))
+
+@inline function cellCoordY(real y) returns int
+	return max(0, min(gridHeight - 1, ((y - gridOriginY) / SPATIAL_PARTITION_CELL_SIZE).floor()))
+
+@inline function cellAt(real x, real y) returns int
+	return cellCoordX(x) + cellCoordY(y) * gridWidth
+
+@inline function groupSlot(int id, int groupId) returns int
+	return id * SPATIAL_PARTITION_MAX_GROUPS + groupId
+
+@inline function headSlot(int cell, int groupId) returns int
+	return cell * SPATIAL_PARTITION_MAX_GROUPS + groupId
+
+@inline function coarseSlot(int block, int groupId) returns int
+	return block * SPATIAL_PARTITION_MAX_GROUPS + groupId
+
+@inline function blockOfCell(int cell) returns int
+	return ((cell mod gridWidth) div SPATIAL_PARTITION_COARSE_FACTOR)
+		+ ((cell div gridWidth) div SPATIAL_PARTITION_COARSE_FACTOR) * coarseWidth
+
+/** Fine cell for a position, for tests and diagnostics. */
+public function spatialPartitionCellOf(vec2 pos) returns int
+	return cellAt(pos.x, pos.y)
+
+public function spatialPartitionGridWidth() returns int
+	return gridWidth
+
+public function spatialPartitionGridHeight() returns int
+	return gridHeight
+
+public function spatialPartitionCoarseWidth() returns int
+	return coarseWidth
+
+/** Entries the last query walked, whether or not they matched. */
+public function spatialPartitionLastQueryVisits() returns int
+	return lastQueryVisits
+
+/** Coarse blocks the last query rejected without descending into their cells. */
+public function spatialPartitionLastQueryBlocksSkipped() returns int
+	return lastQueryBlocksSkipped
+
+// Membership
+
+function linkIntoCell(int id, int groupId, int cell)
+	let slot = groupSlot(id, groupId)
+	let head = cellHead[headSlot(cell, groupId)]
+	prevInCell[slot] = 0
+	nextInCell[slot] = head
+	if head != 0
+		prevInCell[groupSlot(head, groupId)] = id
+	cellHead[headSlot(cell, groupId)] = id
+	cellOfEntry[slot] = cell + 1
+	let block = coarseSlot(blockOfCell(cell), groupId)
+	coarseCount[block] = coarseCount[block] + 1
+
+function unlinkFromCell(int id, int groupId)
+	let slot = groupSlot(id, groupId)
+	let stored = cellOfEntry[slot]
+	if stored == 0
+		return
+	let cell = stored - 1
+	let prev = prevInCell[slot]
+	let next = nextInCell[slot]
+	if prev != 0
+		nextInCell[groupSlot(prev, groupId)] = next
+	else
+		cellHead[headSlot(cell, groupId)] = next
+	if next != 0
+		prevInCell[groupSlot(next, groupId)] = prev
+	cellOfEntry[slot] = 0
+	nextInCell[slot] = 0
+	prevInCell[slot] = 0
+	let block = coarseSlot(blockOfCell(cell), groupId)
+	coarseCount[block] = coarseCount[block] - 1
+
+/**	Records where an entry is, re-bucketing it in every group it belongs to. Call this before adding
+	the entry to any group, and again whenever it has moved. */
+public function spatialPartitionSetPos(int id, real x, real y)
+	entryX[id] = x
+	entryY[id] = y
+	if registrySlot[id] == 0
+		registryIds[registryCount] = id
+		registryCount++
+		registrySlot[id] = registryCount
+	let cell = cellAt(x, y)
+	for groupId = 0 to SPATIAL_PARTITION_MAX_GROUPS - 1
+		let slot = groupSlot(id, groupId)
+		if cellOfEntry[slot] != 0 and cellOfEntry[slot] != cell + 1
+			unlinkFromCell(id, groupId)
+			linkIntoCell(id, groupId, cell)
+
+/**	Adds or removes an entry from one group. The caller owns the policy of when membership changes,
+	which keeps predicate evaluation out of the walk entirely. */
+public function spatialPartitionSetGroup(int id, int groupId, boolean member)
+	if groupId < 0 or groupId >= SPATIAL_PARTITION_MAX_GROUPS
+		error("SpatialPartition: group " + groupId + " is outside SPATIAL_PARTITION_MAX_GROUPS")
+		return
+	let isMember = cellOfEntry[groupSlot(id, groupId)] != 0
+	if member and not isMember
+		linkIntoCell(id, groupId, cellAt(entryX[id], entryY[id]))
+	else if not member and isMember
+		unlinkFromCell(id, groupId)
+
+/** Whether an entry is currently in a group. */
+public function spatialPartitionInGroup(int id, int groupId) returns boolean
+	return cellOfEntry[groupSlot(id, groupId)] != 0
+
+/** Drops an entry from every group. Call before recycling its id, or a later entry inherits it. */
+public function spatialPartitionRemove(int id)
+	for groupId = 0 to SPATIAL_PARTITION_MAX_GROUPS - 1
+		unlinkFromCell(id, groupId)
+	entryX[id] = 0.
+	entryY[id] = 0.
+	let slot = registrySlot[id]
+	if slot != 0
+		// Swap-remove keeps the list dense so a full pass never walks holes.
+		let last = registryCount - 1
+		let moved = registryIds[last]
+		registryIds[slot - 1] = moved
+		registrySlot[moved] = slot
+		registryIds[last] = 0
+		registryCount = last
+		registrySlot[id] = 0
+
+/** Live entries the partition holds. */
+public function spatialPartitionEntryCount() returns int
+	return registryCount
+
+/** Drops every entry and every group link. */
+public function spatialPartitionClear()
+	while registryCount > 0
+		spatialPartitionRemove(registryIds[registryCount - 1])
+
+/**	Re-derives the extent and re-links every entry into the new grid, keeping the groups they were in.
+
+	Every cell index means something different afterwards, so this cannot just clear the heads: an
+	entry still carrying its old link would be invisible to the new grid and would corrupt the chain it
+	is eventually unlinked from. */
+public function rebuildSpatialPartition(vec2 worldMin, vec2 worldMax)
+	// Old dimensions still describe the arrays being cleared, so clear before re-deriving them.
+	for cell = 0 to gridWidth * gridHeight - 1
+		for groupId = 0 to SPATIAL_PARTITION_MAX_GROUPS - 1
+			cellHead[headSlot(cell, groupId)] = 0
+	for block = 0 to coarseWidth * coarseHeight - 1
+		for groupId = 0 to SPATIAL_PARTITION_MAX_GROUPS - 1
+			coarseCount[coarseSlot(block, groupId)] = 0
+	for i = 0 to registryCount - 1
+		let id = registryIds[i]
+		for groupId = 0 to SPATIAL_PARTITION_MAX_GROUPS - 1
+			let slot = groupSlot(id, groupId)
+			rebuildMember[slot] = cellOfEntry[slot] != 0
+			cellOfEntry[slot] = 0
+			nextInCell[slot] = 0
+			prevInCell[slot] = 0
+
+	gridOriginX = worldMin.x
+	gridOriginY = worldMin.y
+	gridWidth = ((worldMax.x - worldMin.x) / SPATIAL_PARTITION_CELL_SIZE).ceil() + 1
+	gridHeight = ((worldMax.y - worldMin.y) / SPATIAL_PARTITION_CELL_SIZE).ceil() + 1
+	coarseWidth = (gridWidth - 1) div SPATIAL_PARTITION_COARSE_FACTOR + 1
+	coarseHeight = (gridHeight - 1) div SPATIAL_PARTITION_COARSE_FACTOR + 1
+
+	for i = 0 to registryCount - 1
+		let id = registryIds[i]
+		let cell = cellAt(entryX[id], entryY[id])
+		for groupId = 0 to SPATIAL_PARTITION_MAX_GROUPS - 1
+			if rebuildMember[groupSlot(id, groupId)]
+				linkIntoCell(id, groupId, cell)
+
+// Queries
+
+@inline function pushMatch(int id, boolean uncertain)
+	snapshotId[snapshotTop] = id
+	snapshotUncertain[snapshotTop] = uncertain
+	snapshotTop++
+
+/**	Collects the members of `groupId` within `radius` of the point, allowing for entries whose cached
+	position may be up to `maxDisplacement` out of date.
+
+	Certainly-in and certainly-out are settled from the cached position alone. Entries in the
+	`maxDisplacement`-wide band around the boundary cannot be decided from stale data, so they come
+	back flagged: check `spatialPartitionQueryUncertain(i)` and resolve those against a live position.
+	Pass a zero displacement and no result is ever flagged.
+
+	Must be paired with `spatialPartitionEndQuery()`. */
+public function spatialPartitionBeginRangeQuery(vec2 center, real radius, real maxDisplacement,
+		int groupId) returns int
+	queryBase[queryDepth] = snapshotTop
+	queryDepth++
+	lastQueryVisits = 0
+	lastQueryBlocksSkipped = 0
+	if groupId < 0 or groupId >= SPATIAL_PARTITION_MAX_GROUPS or gridWidth <= 0
+		return 0
+
+	let reach = radius + maxDisplacement
+	let certainlyIn = radius - maxDisplacement
+	let certainlyInSq = certainlyIn * certainlyIn
+	let certainlyOutSq = reach * reach
+
+	let minCx = cellCoordX(center.x - reach)
+	let maxCx = cellCoordX(center.x + reach)
+	let minCy = cellCoordY(center.y - reach)
+	let maxCy = cellCoordY(center.y + reach)
+
+	// Walk coarse blocks and descend only into those holding a member of this group. A large radius
+	// over mostly empty space is the case this exists for: thousands of empty-cell visits become tens
+	// of block tests.
+	let minBx = minCx div SPATIAL_PARTITION_COARSE_FACTOR
+	let maxBx = maxCx div SPATIAL_PARTITION_COARSE_FACTOR
+	let minBy = minCy div SPATIAL_PARTITION_COARSE_FACTOR
+	let maxBy = maxCy div SPATIAL_PARTITION_COARSE_FACTOR
+
+	var by = minBy
+	while by <= maxBy
+		var bx = minBx
+		while bx <= maxBx
+			if coarseCount[coarseSlot(bx + by * coarseWidth, groupId)] <= 0
+				lastQueryBlocksSkipped++
+			else
+				let cellMinX = max(minCx, bx * SPATIAL_PARTITION_COARSE_FACTOR)
+				let cellMaxX = min(maxCx,
+					bx * SPATIAL_PARTITION_COARSE_FACTOR + SPATIAL_PARTITION_COARSE_FACTOR - 1)
+				let cellMinY = max(minCy, by * SPATIAL_PARTITION_COARSE_FACTOR)
+				let cellMaxY = min(maxCy,
+					by * SPATIAL_PARTITION_COARSE_FACTOR + SPATIAL_PARTITION_COARSE_FACTOR - 1)
+				var cy = cellMinY
+				while cy <= cellMaxY
+					let rowBase = cy * gridWidth
+					var cx = cellMinX
+					while cx <= cellMaxX
+						var id = cellHead[headSlot(rowBase + cx, groupId)]
+						while id != 0
+							let next = nextInCell[groupSlot(id, groupId)]
+							lastQueryVisits++
+							let dx = entryX[id] - center.x
+							let dy = entryY[id] - center.y
+							let distSq = dx * dx + dy * dy
+							if distSq <= certainlyOutSq
+								pushMatch(id, not (certainlyIn > 0. and distSq <= certainlyInSq))
+							id = next
+						cx++
+					cy++
+			bx++
+		by++
+
+	return snapshotTop - queryBase[queryDepth - 1]
+
+/** Entry id `i` of the innermost active query. */
+public function spatialPartitionQueryId(int i) returns int
+	return snapshotId[queryBase[queryDepth - 1] + i]
+
+/**	Whether entry `i` could not be decided from its cached position and needs a live check against the
+	requested radius. Always false when the query passed a zero displacement. */
+public function spatialPartitionQueryUncertain(int i) returns boolean
+	return snapshotUncertain[queryBase[queryDepth - 1] + i]
+
+public function spatialPartitionEndQuery()
+	if queryDepth > 0
+		queryDepth--
+		snapshotTop = queryBase[queryDepth]
