@@ -292,3 +292,46 @@ function countIn(vec2 center, real radius, real maxDisplacement, int groupId) re
 	big.assertEquals(65 * 65 * SPATIAL_PARTITION_MAX_GROUPS)
 	assertTrue(big > JASS_MAX_ARRAY_SIZE,
 		"this extent is the one the guard exists for, needs " + big)
+
+/*	The capacity budget covers four fixed arrays, and the snapshot is the one that is easy to get wrong:
+	nested queries each keep their own results, so it scales with entries x depth, not entries.
+
+	Honest limitation: at the default MAX_GROUPS and MAX_QUERY_DEPTH of 8 the two ceilings coincide
+	(4095 x 8 = 32760), so this cannot fail as configured today. Both are @configurable, and raising
+	either is exactly when the budget stops being obvious - which is what this is here to catch. The
+	reported nine-deep scenario is refused by the depth bound rather than by this. */
+@Test function entryCeilingAccountsForNestedSnapshots()
+	let maxId = spatialPartitionMaxEntryId()
+	if not isLua
+		// Whichever of the two products binds first.
+		assertTrue(maxId * SPATIAL_PARTITION_MAX_GROUPS < JASS_MAX_ARRAY_SIZE,
+			"entry links must fit, needs " + (maxId * SPATIAL_PARTITION_MAX_GROUPS))
+		assertTrue(maxId * SPATIAL_PARTITION_MAX_QUERY_DEPTH <= JASS_MAX_ARRAY_SIZE,
+			"every query level open at once must fit, needs "
+			+ (maxId * SPATIAL_PARTITION_MAX_QUERY_DEPTH))
+
+/*	Nesting is itself part of the budget, so it is bounded rather than left to grow. */
+@Test function nestingIsBoundedAndStaysBalanced()
+	arena()
+	place(1, vec2(0., 0.), ALL)
+
+	// Open every permitted level; each still answers for itself.
+	for i = 1 to SPATIAL_PARTITION_MAX_QUERY_DEPTH
+		spatialPartitionBeginRangeQuery(vec2(0., 0.), 500., 0., ALL).assertEquals(1)
+	for i = 1 to SPATIAL_PARTITION_MAX_QUERY_DEPTH
+		spatialPartitionEndQuery()
+
+	// And the stack unwound completely rather than leaking a level.
+	spatialPartitionBeginRangeQuery(vec2(0., 0.), 500., 0., ALL).assertEquals(1)
+	spatialPartitionEndQuery()
+
+/*	An inverted extent yields a zero dimension, which needs zero cell slots and so sails through the
+	capacity guard - then divides by zero in the coarse block index. It has to be rejected on its own
+	terms, and before any state moves, or a refusal leaves the partition half-unlinked. */
+@Test function invertedExtentsAreRejected()
+	spatialPartitionIsValidExtent(vec2(-100., -100.), vec2(100., 100.)).assertTrue()
+	spatialPartitionIsValidExtent(vec2(0., 0.), vec2(0., 0.)).assertTrue()
+	spatialPartitionIsValidExtent(vec2(100., 0.), vec2(-100., 0.)).assertFalse()
+	spatialPartitionIsValidExtent(vec2(0., 100.), vec2(0., -100.)).assertFalse()
+	// The reported case: a span of exactly one negative cell.
+	spatialPartitionIsValidExtent(vec2(0., 0.), vec2(-SPATIAL_PARTITION_CELL_SIZE, 0.)).assertFalse()
