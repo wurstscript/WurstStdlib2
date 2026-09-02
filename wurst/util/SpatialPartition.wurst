@@ -1,5 +1,5 @@
 package SpatialPartition
-/*	Backend-agnostic uniform-grid spatial partition over integer entry ids.
+/*	Uniform-grid spatial partition over integer entry ids, agnostic about what those ids refer to.
 
 	This is the structure, not a unit index. It knows ids, positions and group membership; it does not
 	know what an id refers to, when a position becomes stale, or what "visible" means. Those belong to
@@ -23,6 +23,12 @@ package SpatialPartition
 
 	Entry ids are supplied by the owning layer and must be **1-based**: 0 is reserved as the chain
 	sentinel. `rebuildSpatialPartition` must give the grid an extent before any entry is added.
+
+	Like the indexes built on it, this targets **Lua**, where arrays grow dynamically. The cell chains
+	are flattened as `cell * MAX_GROUPS + groupId`, so the storage a grid needs is
+	`gridWidth * gridHeight * SPATIAL_PARTITION_MAX_GROUPS` slots - which on the Jass target is bounded
+	by `JASS_MAX_ARRAY_SIZE`, and a large extent at a small cell size exceeds it. `rebuildSpatialPartition`
+	refuses such a grid there rather than silently losing the cells past the limit.
 */
 import ErrorHandling
 
@@ -117,6 +123,17 @@ public function spatialPartitionGridHeight() returns int
 
 public function spatialPartitionCoarseWidth() returns int
 	return coarseWidth
+
+/**	Flattened cell-head slots the current grid occupies: one per cell per group. On Jass this must stay
+	within `JASS_MAX_ARRAY_SIZE`; on Lua arrays grow and it is only a memory figure. */
+public function spatialPartitionCellSlotCount() returns int
+	return gridWidth * gridHeight * SPATIAL_PARTITION_MAX_GROUPS
+
+/** Slots the given extent would need, so a caller can size cells and groups before committing to it. */
+public function spatialPartitionRequiredCellSlots(vec2 worldMin, vec2 worldMax) returns int
+	let w = ((worldMax.x - worldMin.x) / SPATIAL_PARTITION_CELL_SIZE).ceil() + 1
+	let h = ((worldMax.y - worldMin.y) / SPATIAL_PARTITION_CELL_SIZE).ceil() + 1
+	return w * h * SPATIAL_PARTITION_MAX_GROUPS
 
 /** Entries the last query walked, whether or not they matched. */
 public function spatialPartitionLastQueryVisits() returns int
@@ -270,6 +287,14 @@ public function spatialPartitionClear()
 	entry still carrying its old link would be invisible to the new grid and would corrupt the chain it
 	is eventually unlinked from. */
 public function rebuildSpatialPartition(vec2 worldMin, vec2 worldMax)
+	// The flattened cell storage has to be representable on the target before anything is cleared, or
+	// the refusal would leave the partition in a worse state than it started.
+	if not isLua and spatialPartitionRequiredCellSlots(worldMin, worldMax) > JASS_MAX_ARRAY_SIZE
+		error("SpatialPartition: that extent needs "
+			+ spatialPartitionRequiredCellSlots(worldMin, worldMax)
+			+ " cell slots, past this target's array limit of " + JASS_MAX_ARRAY_SIZE
+			+ "; raise SPATIAL_PARTITION_CELL_SIZE or lower SPATIAL_PARTITION_MAX_GROUPS")
+		return
 	// Old dimensions still describe the arrays being cleared, so clear before re-deriving them.
 	for cell = 0 to gridWidth * gridHeight - 1
 		for groupId = 0 to SPATIAL_PARTITION_MAX_GROUPS - 1

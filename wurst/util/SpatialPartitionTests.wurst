@@ -260,3 +260,22 @@ function countIn(vec2 center, real radius, real maxDisplacement, int groupId) re
 	spatialPartitionClear()
 	rebuildSpatialPartition(vec2(-1024., -1024.), vec2(1024., 1024.))
 	spatialPartitionIsReady().assertTrue()
+
+/*	The cell chains are flattened as `cell * MAX_GROUPS + groupId`, so the storage a grid needs grows
+	with area x groups. On Lua that is only a memory figure, but on Jass it is bounded by
+	JASS_MAX_ARRAY_SIZE, and the cells past the limit would simply be unrepresentable - entries in them
+	invisible to every query. The rule is asserted rather than the refusal, which goes through `error()`
+	and aborts. */
+@Test function flattenedCellStorageStaysWithinTheTargetLimit()
+	// The extent these tests use is comfortably inside the Jass limit.
+	arena()
+	spatialPartitionCellSlotCount().assertEquals(33 * 33 * SPATIAL_PARTITION_MAX_GROUPS)
+	assertTrue(spatialPartitionCellSlotCount() <= JASS_MAX_ARRAY_SIZE,
+		"the test extent should be representable on any target, needs "
+		+ spatialPartitionCellSlotCount())
+
+	// A 16384-unit world at the default 256 cell and 8 groups is not: 65 x 65 x 8 = 33800.
+	let big = spatialPartitionRequiredCellSlots(vec2(-8192., -8192.), vec2(8192., 8192.))
+	big.assertEquals(65 * 65 * SPATIAL_PARTITION_MAX_GROUPS)
+	assertTrue(big > JASS_MAX_ARRAY_SIZE,
+		"this extent is the one the guard exists for, needs " + big)
