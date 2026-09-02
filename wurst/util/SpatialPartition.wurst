@@ -25,10 +25,11 @@ package SpatialPartition
 	sentinel. `rebuildSpatialPartition` must give the grid an extent before any entry is added.
 
 	Like the indexes built on it, this targets **Lua**, where arrays grow dynamically. The cell chains
-	are flattened as `cell * MAX_GROUPS + groupId`, so the storage a grid needs is
-	`gridWidth * gridHeight * SPATIAL_PARTITION_MAX_GROUPS` slots - which on the Jass target is bounded
-	by `JASS_MAX_ARRAY_SIZE`, and a large extent at a small cell size exceeds it. `rebuildSpatialPartition`
-	refuses such a grid there rather than silently losing the cells past the limit.
+	are flattened as `cell * MAX_GROUPS + groupId` and the per-entry links as `id * MAX_GROUPS + groupId`,
+	so both a grid extent and an entry id have a ceiling on Jass, where arrays are fixed at
+	`JASS_MAX_ARRAY_SIZE`. `rebuildSpatialPartition` refuses an extent past that ceiling and
+	`spatialPartitionMaxEntryId` reports the other, rather than either silently losing what it cannot
+	address.
 */
 import ErrorHandling
 
@@ -150,9 +151,20 @@ public function spatialPartitionLastQueryBlocksSkipped() returns int
 	invisible to every query and, worse, letting a later unlink overwrite the real head and hide every
 	other entry in the same cell. Rejecting is cheaper than encoding ids as `id + 1`, which would put an
 	extra add and subtract in the hottest loop in the package. */
-/** Whether an id may be used as an entry. Ids are 1-based; 0 is reserved as the chain sentinel. */
+/*	Both flattened address spaces are bounded by the target, and by the same constant.
+
+	Cells are addressed as `cell * MAX_GROUPS + groupId` and entries as `id * MAX_GROUPS + groupId`, so
+	each has a ceiling on Jass where arrays are fixed. `rebuildSpatialPartition` enforces the first;
+	this enforces the second, and bounding entry ids covers the rest transitively - the snapshot and the
+	registry are indexed by counts that cannot exceed the live entries. On Lua arrays grow and neither
+	ceiling applies. */
+public function spatialPartitionMaxEntryId() returns int
+	return isLua ? INT_MAX : JASS_MAX_ARRAY_SIZE div SPATIAL_PARTITION_MAX_GROUPS - 1
+
+/**	Whether an id may be used as an entry. Ids are 1-based, because 0 is reserved as the chain
+	sentinel, and bounded above on Jass by what the flattened entry slots can address. */
 public function spatialPartitionIsValidEntryId(int id) returns boolean
-	return id >= 1
+	return id >= 1 and id <= spatialPartitionMaxEntryId()
 
 /** Whether a group id addresses a real group. */
 public function spatialPartitionIsValidGroupId(int groupId) returns boolean
@@ -168,7 +180,8 @@ public function spatialPartitionIsReady() returns boolean
 	reads entry 2's group 0. Silence would be a wrong answer rather than no answer. */
 function requireValidEntry(int id) returns boolean
 	if not spatialPartitionIsValidEntryId(id)
-		error("SpatialPartition: entry id " + id + " is invalid; ids are 1-based (0 is the chain sentinel)")
+		error("SpatialPartition: entry id " + id + " is invalid; ids are 1-based and at most "
+			+ spatialPartitionMaxEntryId() + " on this target")
 		return false
 	return true
 

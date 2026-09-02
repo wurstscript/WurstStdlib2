@@ -219,6 +219,19 @@ function countIn(vec2 center, real radius, real maxDisplacement, int groupId) re
 	spatialPartitionIsValidEntryId(-7).assertFalse()
 	spatialPartitionIsValidEntryId(1).assertTrue()
 
+	/*	Bounded above as well as below, and by the same constant the extent guard uses: entry links are
+		flattened as `id * MAX_GROUPS + groupId`, so on Jass id 4096 at eight groups addresses slot
+		32768 - already past the array limit. An id the target cannot address has to be refused, not
+		written somewhere it will not be found again. */
+	let maxId = spatialPartitionMaxEntryId()
+	spatialPartitionIsValidEntryId(maxId).assertTrue()
+	spatialPartitionIsValidEntryId(maxId + 1).assertFalse()
+	if not isLua
+		maxId.assertEquals(JASS_MAX_ARRAY_SIZE div SPATIAL_PARTITION_MAX_GROUPS - 1)
+		// The reported case: the first id whose slot falls outside the array.
+		spatialPartitionIsValidEntryId(4096).assertFalse()
+		(4096 * SPATIAL_PARTITION_MAX_GROUPS).assertEquals(JASS_MAX_ARRAY_SIZE)
+
 	spatialPartitionIsValidGroupId(-1).assertFalse()
 	spatialPartitionIsValidGroupId(SPATIAL_PARTITION_MAX_GROUPS).assertFalse()
 	spatialPartitionIsValidGroupId(0).assertTrue()
