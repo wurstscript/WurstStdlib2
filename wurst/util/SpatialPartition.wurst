@@ -22,7 +22,7 @@ package SpatialPartition
 	displacement and gets an exact answer with no undecidable band at all.
 
 	Entry ids are supplied by the owning layer and must be **1-based**: 0 is reserved as the chain
-	sentinel.
+	sentinel. `rebuildSpatialPartition` must give the grid an extent before any entry is added.
 */
 import ErrorHandling
 
@@ -137,9 +137,33 @@ public function spatialPartitionLastQueryBlocksSkipped() returns int
 public function spatialPartitionIsValidEntryId(int id) returns boolean
 	return id >= 1
 
+/** Whether a group id addresses a real group. */
+public function spatialPartitionIsValidGroupId(int groupId) returns boolean
+	return groupId >= 0 and groupId < SPATIAL_PARTITION_MAX_GROUPS
+
+/** Whether the grid has been given an extent yet. Nothing can be linked before it has. */
+public function spatialPartitionIsReady() returns boolean
+	return gridWidth > 0 and gridHeight > 0
+
+/*	Every public mutator validates through these, and every public reader answers quietly for input it
+	cannot honour. Both halves matter because the arrays are flattened with a constant stride: an
+	out-of-range id does not fail, it ALIASES - `spatialPartitionInGroup(1, 8)` at the default stride
+	reads entry 2's group 0. Silence would be a wrong answer rather than no answer. */
 function requireValidEntry(int id) returns boolean
 	if not spatialPartitionIsValidEntryId(id)
 		error("SpatialPartition: entry id " + id + " is invalid; ids are 1-based (0 is the chain sentinel)")
+		return false
+	return true
+
+function requireValidGroup(int groupId) returns boolean
+	if not spatialPartitionIsValidGroupId(groupId)
+		error("SpatialPartition: group " + groupId + " is outside SPATIAL_PARTITION_MAX_GROUPS")
+		return false
+	return true
+
+function requireReady() returns boolean
+	if not spatialPartitionIsReady()
+		error("SpatialPartition: rebuildSpatialPartition must set an extent before entries are added")
 		return false
 	return true
 
@@ -178,7 +202,7 @@ function unlinkFromCell(int id, int groupId)
 /**	Records where an entry is, re-bucketing it in every group it belongs to. Call this before adding
 	the entry to any group, and again whenever it has moved. */
 public function spatialPartitionSetPos(int id, real x, real y)
-	if not requireValidEntry(id)
+	if not requireValidEntry(id) or not requireReady()
 		return
 	entryX[id] = x
 	entryY[id] = y
@@ -196,10 +220,7 @@ public function spatialPartitionSetPos(int id, real x, real y)
 /**	Adds or removes an entry from one group. The caller owns the policy of when membership changes,
 	which keeps predicate evaluation out of the walk entirely. */
 public function spatialPartitionSetGroup(int id, int groupId, boolean member)
-	if not requireValidEntry(id)
-		return
-	if groupId < 0 or groupId >= SPATIAL_PARTITION_MAX_GROUPS
-		error("SpatialPartition: group " + groupId + " is outside SPATIAL_PARTITION_MAX_GROUPS")
+	if not requireValidEntry(id) or not requireValidGroup(groupId) or not requireReady()
 		return
 	let isMember = cellOfEntry[groupSlot(id, groupId)] != 0
 	if member and not isMember
@@ -209,7 +230,11 @@ public function spatialPartitionSetGroup(int id, int groupId, boolean member)
 
 /** Whether an entry is currently in a group. */
 public function spatialPartitionInGroup(int id, int groupId) returns boolean
-	return id >= 1 and cellOfEntry[groupSlot(id, groupId)] != 0
+	// Quiet rather than loud: probing an id or group you do not own is a legitimate question, and the
+	// honest answer is "no" - but it must not be answered by another entry's slot.
+	if not spatialPartitionIsValidEntryId(id) or not spatialPartitionIsValidGroupId(groupId)
+		return false
+	return cellOfEntry[groupSlot(id, groupId)] != 0
 
 /** Drops an entry from every group. Call before recycling its id, or a later entry inherits it. */
 public function spatialPartitionRemove(int id)
@@ -356,13 +381,17 @@ public function spatialPartitionBeginRangeQuery(vec2 center, real radius, real m
 
 	return snapshotTop - queryBase[queryDepth - 1]
 
-/** Entry id `i` of the innermost active query. */
+/** Entry id `i` of the innermost active query, or 0 if there is no such result. */
 public function spatialPartitionQueryId(int i) returns int
+	if queryDepth <= 0 or i < 0 or queryBase[queryDepth - 1] + i >= snapshotTop
+		return 0
 	return snapshotId[queryBase[queryDepth - 1] + i]
 
 /**	Whether entry `i` could not be decided from its cached position and needs a live check against the
 	requested radius. Always false when the query passed a zero displacement. */
 public function spatialPartitionQueryUncertain(int i) returns boolean
+	if queryDepth <= 0 or i < 0 or queryBase[queryDepth - 1] + i >= snapshotTop
+		return false
 	return snapshotUncertain[queryBase[queryDepth - 1] + i]
 
 public function spatialPartitionEndQuery()

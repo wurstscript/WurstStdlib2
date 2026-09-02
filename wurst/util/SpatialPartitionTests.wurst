@@ -210,21 +210,53 @@ function countIn(vec2 center, real radius, real maxDisplacement, int groupId) re
 	spatialPartitionQueryUncertain(0).assertFalse()
 	spatialPartitionEndQuery()
 
-/*	Ids are 1-based because 0 is the chain sentinel. An entry accepted under id 0 would write "empty"
-	into the cell head: invisible itself, and able to hide every other entry in the same cell the next
-	time it was unlinked.
-
-	The rule is asserted rather than the symptom: every mutator rejects a bad id through `error()`,
-	which aborts, so the corruption it prevents cannot be provoked from a test. `spatialPartitionInGroup`
-	is the one reader that must stay quiet, since callers legitimately ask about ids they do not own. */
-@Test function entryIdsAreOneBasedBecauseZeroIsTheSentinel()
+/*	The flattened stride is what makes these matter. An out-of-range id does not fail, it ALIASES: at
+	the default stride of 8, group 8 of entry 1 is the same slot as group 0 of entry 2, so an
+	unvalidated lookup answers confidently with someone else's membership. These assert the rules for
+	every public reader, since the mutators enforce theirs through `error()`, which aborts a test. */
+@Test function idAndGroupRulesAreStatedOnce()
 	spatialPartitionIsValidEntryId(0).assertFalse()
 	spatialPartitionIsValidEntryId(-7).assertFalse()
 	spatialPartitionIsValidEntryId(1).assertTrue()
-	spatialPartitionIsValidEntryId(9999).assertTrue()
 
+	spatialPartitionIsValidGroupId(-1).assertFalse()
+	spatialPartitionIsValidGroupId(SPATIAL_PARTITION_MAX_GROUPS).assertFalse()
+	spatialPartitionIsValidGroupId(0).assertTrue()
+	spatialPartitionIsValidGroupId(SPATIAL_PARTITION_MAX_GROUPS - 1).assertTrue()
+
+@Test function membershipLookupCannotAliasAnotherEntry()
 	arena()
 	place(1, vec2(0., 0.), ALL)
 	place(2, vec2(50., 0.), ALL)
+
+	// Entry 2 really is in group 0, and that slot is exactly where entry 1 group 8 would land.
+	spatialPartitionInGroup(2, ALL).assertTrue()
+	spatialPartitionInGroup(1, SPATIAL_PARTITION_MAX_GROUPS).assertFalse()
+	spatialPartitionInGroup(1, -1).assertFalse()
 	spatialPartitionInGroup(0, ALL).assertFalse()
-	countIn(vec2(0., 0.), 500., 0., ALL).assertEquals(2)
+
+/*	A result index outside the active query, or no active query at all, must not read whatever the
+	shared snapshot happens to hold - and `queryBase[queryDepth - 1]` with no query open indexes -1. */
+@Test function queryReadersAreBoundedToTheActiveResult()
+	arena()
+	place(1, vec2(0., 0.), ALL)
+
+	// No query open.
+	spatialPartitionQueryId(0).assertEquals(0)
+	spatialPartitionQueryUncertain(0).assertFalse()
+
+	let n = spatialPartitionBeginRangeQuery(vec2(0., 0.), 500., 0., ALL)
+	n.assertEquals(1)
+	spatialPartitionQueryId(0).assertEquals(1)
+	// Past the end of this query, and before its start.
+	spatialPartitionQueryId(1).assertEquals(0)
+	spatialPartitionQueryId(-1).assertEquals(0)
+	spatialPartitionQueryUncertain(1).assertFalse()
+	spatialPartitionEndQuery()
+
+/*	Nothing can be linked before the grid has an extent: the coarse block index divides by the grid
+	width, so a mutator reaching it on a zero-width grid fails at runtime rather than misbehaving. */
+@Test function theGridReportsWhetherItIsReady()
+	spatialPartitionClear()
+	rebuildSpatialPartition(vec2(-1024., -1024.), vec2(1024., 1024.))
+	spatialPartitionIsReady().assertTrue()
