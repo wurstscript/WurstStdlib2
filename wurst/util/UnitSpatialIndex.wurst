@@ -99,9 +99,15 @@ function noteRegistryChange()
 	cycleMembershipStable = false
 	displacementBoundTicks = max(displacementBoundTicks, requiredSweepCycleTicks())
 
-/** Worst-case distance a unit may have travelled since its cached position was written. */
+/**	Worst-case distance a unit may travel during a single sweep tick. An entry cached `age` ticks
+	ago needs `age + 1` of these, because its write and the query may sit at opposite ends of their
+	own ticks; `displacementBoundTicks` carries the same extra tick over `requiredSweepCycleTicks`. */
+function tickDisplacement() returns real
+	return SPATIAL_INDEX_MAX_UNIT_SPEED * SPATIAL_INDEX_SWEEP_PERIOD
+
+/** Worst-case distance any indexed unit may have travelled since its cached position was written. */
 function currentMaxDisplacement() returns real
-	return SPATIAL_INDEX_MAX_UNIT_SPEED * displacementBoundTicks * SPATIAL_INDEX_SWEEP_PERIOD
+	return tickDisplacement() * displacementBoundTicks
 
 // Membership
 
@@ -331,7 +337,8 @@ public function spatialIndexBeginQuery(vec2 center, real radius, boolean collisi
 	queryBase[queryDepth] = snapshotTop
 	queryDepth++
 
-	let maxDisp = currentMaxDisplacement()
+	let tickDisp = tickDisplacement()
+	let maxDisp = tickDisp * displacementBoundTicks
 	// The engine test for the collision variant reaches an extra collision radius outward, so the
 	// window has to widen by the largest collision size any unit can have.
 	let reach = radius + (collisionSizeFiltering ? MAX_COLLISION_SIZE : 0.) + maxDisp
@@ -372,24 +379,38 @@ public function spatialIndexBeginQuery(vec2 center, real radius, boolean collisi
 					if u != null and u.passesEnumerationState()
 						pushMatch(u)
 				else if cachedDistSq <= certainlyOutSq
-					// Only this annulus needs a live position read.
-					let u = indexedUnit[idx]
-					if u != null
-						let liveX = u.getX()
-						let liveY = u.getY()
-						// The live read was paid for anyway, so keep it: the next query in the same
-						// frame then decides this unit from the cache instead of reading it again.
-						// Only while the unit is still in its linked cell, though. Relinking here
-						// could move it into a cell this walk has not reached yet, and it would be
-						// visited and pushed a second time.
-						if cellOfUnit[idx] == cellAt(liveX, liveY) + 1
-							lastX[idx] = liveX
-							lastY[idx] = liveY
-							lastSweepTick[idx] = sweepTick
-						let ux = liveX - center.x
-						let uy = liveY - center.y
-						if ux * ux + uy * uy <= radiusSq and u.passesEnumerationState()
+					// The bands above pad by the worst staleness anywhere in the registry. This entry can
+					// be far fresher than that - the sweep, a move event, or an earlier query in the same
+					// frame may have written it - so re-test against the padding it actually needs. Inside
+					// the inner band it matches, outside the outer one it does not, and only what is left
+					// between them costs two natives.
+					let entryDisp = tickDisp * (sweepTick - lastSweepTick[idx] + 1)
+					let entryIn = radius - entryDisp
+					let entryOut = radius + entryDisp
+					if entryIn > 0. and cachedDistSq <= entryIn * entryIn
+						let u = indexedUnit[idx]
+						if u != null and u.passesEnumerationState()
 							pushMatch(u)
+					else if cachedDistSq <= entryOut * entryOut
+						// Only this narrowed annulus needs a live position read.
+						let u = indexedUnit[idx]
+						if u != null
+							let liveX = u.getX()
+							let liveY = u.getY()
+							// The live read was paid for anyway, so keep it and stamp the tick: a later query
+							// in this frame then sees age 0, and its annulus is one tick of movement wide
+							// rather than a whole sweep cycle, so it decides this unit from the cache.
+							// Only while the unit is still in its linked cell, though. Relinking here could
+							// move it into a cell this walk has not reached yet, and it would be visited and
+							// pushed a second time.
+							if cellOfUnit[idx] == cellAt(liveX, liveY) + 1
+								lastX[idx] = liveX
+								lastY[idx] = liveY
+								lastSweepTick[idx] = sweepTick
+							let ux = liveX - center.x
+							let uy = liveY - center.y
+							if ux * ux + uy * uy <= radiusSq and u.passesEnumerationState()
+								pushMatch(u)
 				idx = next
 			cx++
 		cy++
