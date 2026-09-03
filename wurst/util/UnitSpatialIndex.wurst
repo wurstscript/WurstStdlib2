@@ -304,6 +304,9 @@ public function rebuildSpatialIndexGrid(vec2 worldMin, vec2 worldMax)
 		let u = indexedUnit[idx]
 		if u != null
 			let pos = u.getPos()
+			// Stamp the tick wherever a live position is read, or the query would keep padding this
+			// entry by a full sweep cycle despite its cache having just been made exact.
+			lastSweepTick[idx] = sweepTick
 			linkIntoCell(idx, cellAt(pos.x, pos.y), pos.x, pos.y)
 
 /** Internal-grid cell for tests and diagnostics. */
