@@ -375,8 +375,19 @@ public function spatialIndexBeginQuery(vec2 center, real radius, boolean collisi
 					// Only this annulus needs a live position read.
 					let u = indexedUnit[idx]
 					if u != null
-						let ux = u.getX() - center.x
-						let uy = u.getY() - center.y
+						let liveX = u.getX()
+						let liveY = u.getY()
+						// The live read was paid for anyway, so keep it: the next query in the same
+						// frame then decides this unit from the cache instead of reading it again.
+						// Only while the unit is still in its linked cell, though. Relinking here
+						// could move it into a cell this walk has not reached yet, and it would be
+						// visited and pushed a second time.
+						if cellOfUnit[idx] == cellAt(liveX, liveY) + 1
+							lastX[idx] = liveX
+							lastY[idx] = liveY
+							lastSweepTick[idx] = sweepTick
+						let ux = liveX - center.x
+						let uy = liveY - center.y
 						if ux * ux + uy * uy <= radiusSq and u.passesEnumerationState()
 							pushMatch(u)
 				idx = next
