@@ -11,8 +11,9 @@ package UnitSpatialIndex
 	speed requires `unit.updateSpatialIndex()` for immediate visibility. The public native-less query
 	package returns an empty set when this index is disabled.
 
-	Cell geometry now belongs to the partition, so `SPATIAL_PARTITION_CELL_SIZE` is the knob that used
-	to be `SPATIAL_INDEX_CELL_SIZE`.
+	Cell geometry now belongs to the partition, so `SPATIAL_PARTITION_CELL_SIZE` is the knob.
+	`SPATIAL_INDEX_CELL_SIZE` stays exported and deprecated, and a stale override is reported at init
+	rather than ignored.
 
 	This package is over the ~500 line guideline on purpose. The tests at the bottom account for the
 	excess and cannot move out: the index gates itself off with `isLua`, which the compiletime
@@ -26,6 +27,7 @@ import HashMap
 import UnitIndexer
 import UnitSpatialIndexRemoval
 import SpatialPartition
+import ErrorHandling
 
 // Configuration
 
@@ -43,6 +45,14 @@ import SpatialPartition
 
 /** Disable when hidden units are never used to save one native per hit. */
 @configurable public constant SPATIAL_INDEX_CHECK_HIDDEN = true
+
+/**	Deprecated. Cell geometry belongs to the shared grid now, so `SPATIAL_PARTITION_CELL_SIZE` is the
+	setting; one grid cannot have a second cell size for units alone.
+
+	Kept exported so an existing `UnitSpatialIndex_config` still compiles, and defaulted to agree. It
+	is checked at init rather than ignored: a map that had tuned this and upgrades gets told its
+	value is no longer in effect, instead of quietly running on a different grid. */
+@configurable public constant SPATIAL_INDEX_CELL_SIZE = SPATIAL_PARTITION_CELL_SIZE
 
 /*	Every indexed unit lives in one partition group, taken from the partition rather than hardcoded: a
 	group says what a query filters by, so a map whose own consumer had picked the same number would
@@ -126,7 +136,9 @@ function currentMaxDisplacement() returns real
 // Membership
 
 function registerUnit(unit u)
-	if u == null or spatialIndexByUnit.get(u) != 0
+	// No group means no grid to join: queries would filter by an invalid group and match nothing, so
+	// registering would only build a registry that answers nothing.
+	if u == null or unitGroup < 0 or spatialIndexByUnit.get(u) != 0
 		return
 	// Private removal marker. OnUnitEnterLeave deliberately keeps its legacy rect-only population,
 	// while this registry also contains hidden and Locust units found by per-player enumeration.
@@ -452,7 +464,15 @@ init
 	// Written as a positive guard rather than an early return: `isLua` is folded, so on the Jass
 	// target the whole body disappears and this package registers nothing at all.
 	if isLua and USE_UNIT_SPATIAL_INDEX
+		if SPATIAL_INDEX_CELL_SIZE != SPATIAL_PARTITION_CELL_SIZE
+			error("UnitSpatialIndex: SPATIAL_INDEX_CELL_SIZE is deprecated and no longer in effect."
+				+ " The grid is shared, so set SPATIAL_PARTITION_CELL_SIZE to "
+				+ SPATIAL_INDEX_CELL_SIZE.toString() + " instead.")
 		ensureUnitGroup()
+	// A group is what a query filters by, so without one every query would match nothing. Staying
+	// inactive says that honestly; activating would leave spatialIndexHealthy claiming an index that
+	// answers every question with an empty set.
+	if isLua and USE_UNIT_SPATIAL_INDEX and unitGroup >= 0
 		rebuildSpatialIndexGrid(boundMin, boundMax)
 		onSpatialUnitRemove(() -> unregisterUnit(getSpatialRemovingUnit()))
 		initializeSpatialRemovalTracking()

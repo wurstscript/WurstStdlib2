@@ -244,15 +244,20 @@ boolean array entryIdReserved
 	`spatialPartitionReleaseEntryId` after removing the entry, or ids are never reused. Answers 0 when
 	the target's id space is exhausted, which a caller must treat as "cannot index this". */
 public function spatialPartitionAllocateEntryId() returns int
-	if freeEntryIdCount > 0
+	// One rule, applied wherever an id can come from: it is available only if nothing has claimed it.
+	// A queued id can be claimed after it was queued - released, then taken directly through
+	// `spatialPartitionSetPos` - so the free list is a list of candidates, not of guarantees, and
+	// popping one is not the same as it being free.
+	while freeEntryIdCount > 0
 		freeEntryIdCount--
 		let recycled = freeEntryIds[freeEntryIdCount]
 		freeEntryIds[freeEntryIdCount] = 0
-		entryIdReserved[recycled] = true
-		return recycled
-	// Step over rows a consumer took directly through `spatialPartitionSetPos` rather than through
-	// here. Addressing a row by a known id is legitimate, so the allocator works around those instead
-	// of pretending it is the only way in.
+		if not entryIdReserved[recycled]
+			entryIdReserved[recycled] = true
+			return recycled
+	// Same rule for a fresh id: step over rows a consumer took directly. Addressing a row by a known
+	// id is legitimate, so the allocator works around those instead of pretending it is the only way
+	// in.
 	while spatialPartitionIsValidEntryId(nextEntryId) and entryIdReserved[nextEntryId]
 		nextEntryId++
 	if not spatialPartitionIsValidEntryId(nextEntryId)

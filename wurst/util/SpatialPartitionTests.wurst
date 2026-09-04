@@ -405,3 +405,20 @@ function countIn(vec2 center, real radius, real maxDisplacement, int groupId) re
 	spatialPartitionGroupIsReserved(ALL).assertTrue()
 	let fresh = spatialPartitionAllocateGroup()
 	assertTrue(fresh != ALL and fresh != SUBSET)
+
+@Test function aQueuedIdClaimedBeforeReuseIsNotHandedOutAgain()
+	arena()
+	// The free list is a list of candidates, not of guarantees: an id can be claimed after it was
+	// queued. Allocate one, give it back, then have a consumer take that very row directly.
+	let recycled = spatialPartitionAllocateEntryId()
+	spatialPartitionReleaseEntryId(recycled)
+	spatialPartitionEntryIdIsReserved(recycled).assertFalse()
+	place(recycled, vec2(0., 0.), ALL)
+	spatialPartitionEntryIdIsReserved(recycled).assertTrue()
+	// It is queued and claimed at the same time, so popping it would hand a live row to a second
+	// consumer. Draining is what exposes that: the queued copy is at the front.
+	for i = 1 to 4
+		assertTrue(spatialPartitionAllocateEntryId() != recycled)
+	// The row still belongs to whoever took it.
+	spatialPartitionEntryX(recycled).assertEquals(0.)
+	countIn(vec2(0., 0.), 50., 0., ALL).assertEquals(1)
