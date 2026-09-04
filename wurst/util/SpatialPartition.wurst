@@ -562,62 +562,64 @@ public function spatialPartitionBeginRangeQuery(vec2 center, real radius, real m
 	queryDepth++
 	lastQueryVisits = 0
 	lastQueryBlocksSkipped = 0
-	if tooDeep or not spatialPartitionIsValidGroupId(groupId) or not spatialPartitionIsReady()
-		return 0
+	// A positive guard rather than an early return. An inlined return has to be threaded through
+	// the rest of the body as a flag tested before every statement, and this body is the hottest
+	// loop in the package. Nothing was pushed when the guard fails, so the count below is 0 anyway.
+	if not tooDeep and spatialPartitionIsValidGroupId(groupId) and spatialPartitionIsReady()
 
-	let reach = radius + maxDisplacement
-	// May go negative when the displacement exceeds the radius, in which case nothing can be decided
-	// from a cached position and every hit is flagged. Zero is still decisive, though: it means only an
-	// entry exactly on the point is certainly inside, which is what a point query asks for.
-	let certainlyIn = radius - maxDisplacement
-	let certainlyInSq = certainlyIn * certainlyIn
-	let certainlyOutSq = reach * reach
+		let reach = radius + maxDisplacement
+		// May go negative when the displacement exceeds the radius, in which case nothing can be decided
+		// from a cached position and every hit is flagged. Zero is still decisive, though: it means only an
+		// entry exactly on the point is certainly inside, which is what a point query asks for.
+		let certainlyIn = radius - maxDisplacement
+		let certainlyInSq = certainlyIn * certainlyIn
+		let certainlyOutSq = reach * reach
 
-	let minCx = cellCoordX(center.x - reach)
-	let maxCx = cellCoordX(center.x + reach)
-	let minCy = cellCoordY(center.y - reach)
-	let maxCy = cellCoordY(center.y + reach)
+		let minCx = cellCoordX(center.x - reach)
+		let maxCx = cellCoordX(center.x + reach)
+		let minCy = cellCoordY(center.y - reach)
+		let maxCy = cellCoordY(center.y + reach)
 
-	// Walk coarse blocks and descend only into those holding a member of this group. A large radius
-	// over mostly empty space is the case this exists for: thousands of empty-cell visits become tens
-	// of block tests.
-	let minBx = minCx div SPATIAL_PARTITION_COARSE_FACTOR
-	let maxBx = maxCx div SPATIAL_PARTITION_COARSE_FACTOR
-	let minBy = minCy div SPATIAL_PARTITION_COARSE_FACTOR
-	let maxBy = maxCy div SPATIAL_PARTITION_COARSE_FACTOR
+		// Walk coarse blocks and descend only into those holding a member of this group. A large radius
+		// over mostly empty space is the case this exists for: thousands of empty-cell visits become tens
+		// of block tests.
+		let minBx = minCx div SPATIAL_PARTITION_COARSE_FACTOR
+		let maxBx = maxCx div SPATIAL_PARTITION_COARSE_FACTOR
+		let minBy = minCy div SPATIAL_PARTITION_COARSE_FACTOR
+		let maxBy = maxCy div SPATIAL_PARTITION_COARSE_FACTOR
 
-	var by = minBy
-	while by <= maxBy
-		var bx = minBx
-		while bx <= maxBx
-			if coarseCount[coarseSlot(bx + by * coarseWidth, groupId)] <= 0
-				lastQueryBlocksSkipped++
-			else
-				let cellMinX = max(minCx, bx * SPATIAL_PARTITION_COARSE_FACTOR)
-				let cellMaxX = min(maxCx,
-					bx * SPATIAL_PARTITION_COARSE_FACTOR + SPATIAL_PARTITION_COARSE_FACTOR - 1)
-				let cellMinY = max(minCy, by * SPATIAL_PARTITION_COARSE_FACTOR)
-				let cellMaxY = min(maxCy,
-					by * SPATIAL_PARTITION_COARSE_FACTOR + SPATIAL_PARTITION_COARSE_FACTOR - 1)
-				var cy = cellMinY
-				while cy <= cellMaxY
-					let rowBase = cy * gridWidth
-					var cx = cellMinX
-					while cx <= cellMaxX
-						var id = cellHead[headSlot(rowBase + cx, groupId)]
-						while id != 0
-							let next = nextInCell[groupSlot(id, groupId)]
-							lastQueryVisits++
-							let dx = entryX[id] - center.x
-							let dy = entryY[id] - center.y
-							let distSq = dx * dx + dy * dy
-							if distSq <= certainlyOutSq
-								pushMatch(id, not (certainlyIn >= 0. and distSq <= certainlyInSq))
-							id = next
-						cx++
-					cy++
-			bx++
-		by++
+		var by = minBy
+		while by <= maxBy
+			var bx = minBx
+			while bx <= maxBx
+				if coarseCount[coarseSlot(bx + by * coarseWidth, groupId)] <= 0
+					lastQueryBlocksSkipped++
+				else
+					let cellMinX = max(minCx, bx * SPATIAL_PARTITION_COARSE_FACTOR)
+					let cellMaxX = min(maxCx,
+						bx * SPATIAL_PARTITION_COARSE_FACTOR + SPATIAL_PARTITION_COARSE_FACTOR - 1)
+					let cellMinY = max(minCy, by * SPATIAL_PARTITION_COARSE_FACTOR)
+					let cellMaxY = min(maxCy,
+						by * SPATIAL_PARTITION_COARSE_FACTOR + SPATIAL_PARTITION_COARSE_FACTOR - 1)
+					var cy = cellMinY
+					while cy <= cellMaxY
+						let rowBase = cy * gridWidth
+						var cx = cellMinX
+						while cx <= cellMaxX
+							var id = cellHead[headSlot(rowBase + cx, groupId)]
+							while id != 0
+								let next = nextInCell[groupSlot(id, groupId)]
+								lastQueryVisits++
+								let dx = entryX[id] - center.x
+								let dy = entryY[id] - center.y
+								let distSq = dx * dx + dy * dy
+								if distSq <= certainlyOutSq
+									pushMatch(id, not (certainlyIn >= 0. and distSq <= certainlyInSq))
+								id = next
+							cx++
+						cy++
+				bx++
+			by++
 
 	return snapshotTop - queryBase[queryDepth - 1]
 
@@ -639,77 +641,79 @@ public function spatialPartitionBeginBoxQuery(vec2 boxMin, vec2 boxMax, real max
 	queryDepth++
 	lastQueryVisits = 0
 	lastQueryBlocksSkipped = 0
-	if tooDeep or not spatialPartitionIsValidGroupId(groupId) or not spatialPartitionIsReady()
-		return 0
+	if not tooDeep and spatialPartitionIsValidGroupId(groupId) and spatialPartitionIsReady()
 
-	let outMinX = boxMin.x - maxDisplacement
-	let outMaxX = boxMax.x + maxDisplacement
-	let outMinY = boxMin.y - maxDisplacement
-	let outMaxY = boxMax.y + maxDisplacement
-	// The inner box collapses, or inverts, once the displacement exceeds half an edge. An inverted
-	// one is still correct as a test - no position satisfies it - so every hit is simply flagged.
-	let inMinX = boxMin.x + maxDisplacement
-	let inMaxX = boxMax.x - maxDisplacement
-	let inMinY = boxMin.y + maxDisplacement
-	let inMaxY = boxMax.y - maxDisplacement
+		let outMinX = boxMin.x - maxDisplacement
+		let outMaxX = boxMax.x + maxDisplacement
+		let outMinY = boxMin.y - maxDisplacement
+		let outMaxY = boxMax.y + maxDisplacement
+		// The inner box collapses, or inverts, once the displacement exceeds half an edge. An inverted
+		// one is still correct as a test - no position satisfies it - so every hit is simply flagged.
+		let inMinX = boxMin.x + maxDisplacement
+		let inMaxX = boxMax.x - maxDisplacement
+		let inMinY = boxMin.y + maxDisplacement
+		let inMaxY = boxMax.y - maxDisplacement
 
-	let minCx = cellCoordX(outMinX)
-	let maxCx = cellCoordX(outMaxX)
-	let minCy = cellCoordY(outMinY)
-	let maxCy = cellCoordY(outMaxY)
+		let minCx = cellCoordX(outMinX)
+		let maxCx = cellCoordX(outMaxX)
+		let minCy = cellCoordY(outMinY)
+		let maxCy = cellCoordY(outMaxY)
 
-	let minBx = minCx div SPATIAL_PARTITION_COARSE_FACTOR
-	let maxBx = maxCx div SPATIAL_PARTITION_COARSE_FACTOR
-	let minBy = minCy div SPATIAL_PARTITION_COARSE_FACTOR
-	let maxBy = maxCy div SPATIAL_PARTITION_COARSE_FACTOR
+		let minBx = minCx div SPATIAL_PARTITION_COARSE_FACTOR
+		let maxBx = maxCx div SPATIAL_PARTITION_COARSE_FACTOR
+		let minBy = minCy div SPATIAL_PARTITION_COARSE_FACTOR
+		let maxBy = maxCy div SPATIAL_PARTITION_COARSE_FACTOR
 
-	var by = minBy
-	while by <= maxBy
-		var bx = minBx
-		while bx <= maxBx
-			if coarseCount[coarseSlot(bx + by * coarseWidth, groupId)] <= 0
-				lastQueryBlocksSkipped++
-			else
-				let cellMinX = max(minCx, bx * SPATIAL_PARTITION_COARSE_FACTOR)
-				let cellMaxX = min(maxCx,
-					bx * SPATIAL_PARTITION_COARSE_FACTOR + SPATIAL_PARTITION_COARSE_FACTOR - 1)
-				let cellMinY = max(minCy, by * SPATIAL_PARTITION_COARSE_FACTOR)
-				let cellMaxY = min(maxCy,
-					by * SPATIAL_PARTITION_COARSE_FACTOR + SPATIAL_PARTITION_COARSE_FACTOR - 1)
-				var cy = cellMinY
-				while cy <= cellMaxY
-					let rowBase = cy * gridWidth
-					var cx = cellMinX
-					while cx <= cellMaxX
-						var id = cellHead[headSlot(rowBase + cx, groupId)]
-						while id != 0
-							let next = nextInCell[groupSlot(id, groupId)]
-							lastQueryVisits++
-							let px = entryX[id]
-							let py = entryY[id]
-							if px >= outMinX and px <= outMaxX and py >= outMinY and py <= outMaxY
-								pushMatch(id, not (px >= inMinX and px <= inMaxX
-									and py >= inMinY and py <= inMaxY))
-							id = next
-						cx++
-					cy++
-			bx++
-		by++
+		var by = minBy
+		while by <= maxBy
+			var bx = minBx
+			while bx <= maxBx
+				if coarseCount[coarseSlot(bx + by * coarseWidth, groupId)] <= 0
+					lastQueryBlocksSkipped++
+				else
+					let cellMinX = max(minCx, bx * SPATIAL_PARTITION_COARSE_FACTOR)
+					let cellMaxX = min(maxCx,
+						bx * SPATIAL_PARTITION_COARSE_FACTOR + SPATIAL_PARTITION_COARSE_FACTOR - 1)
+					let cellMinY = max(minCy, by * SPATIAL_PARTITION_COARSE_FACTOR)
+					let cellMaxY = min(maxCy,
+						by * SPATIAL_PARTITION_COARSE_FACTOR + SPATIAL_PARTITION_COARSE_FACTOR - 1)
+					var cy = cellMinY
+					while cy <= cellMaxY
+						let rowBase = cy * gridWidth
+						var cx = cellMinX
+						while cx <= cellMaxX
+							var id = cellHead[headSlot(rowBase + cx, groupId)]
+							while id != 0
+								let next = nextInCell[groupSlot(id, groupId)]
+								lastQueryVisits++
+								let px = entryX[id]
+								let py = entryY[id]
+								if px >= outMinX and px <= outMaxX and py >= outMinY and py <= outMaxY
+									pushMatch(id, not (px >= inMinX and px <= inMaxX
+										and py >= inMinY and py <= inMaxY))
+								id = next
+							cx++
+						cy++
+				bx++
+			by++
 
 	return snapshotTop - queryBase[queryDepth - 1]
 
 /** Entry id `i` of the innermost active query, or 0 if there is no such result. */
 public function spatialPartitionQueryId(int i) returns int
-	if queryDepth <= 0 or i < 0 or queryBase[queryDepth - 1] + i >= snapshotTop
-		return 0
-	return snapshotId[queryBase[queryDepth - 1] + i]
+	// One expression rather than a guard and a return. These two are read once per result, so they
+	// inline into the caller's result loop, and an inlined return has to be carried through the rest
+	// of that loop as a flag tested before every following statement.
+	return queryDepth <= 0 or i < 0 or queryBase[queryDepth - 1] + i >= snapshotTop
+		? 0
+		: snapshotId[queryBase[queryDepth - 1] + i]
 
 /**	Whether entry `i` could not be decided from its cached position and needs a live check against the
 	requested radius. Always false when the query passed a zero displacement. */
 public function spatialPartitionQueryUncertain(int i) returns boolean
-	if queryDepth <= 0 or i < 0 or queryBase[queryDepth - 1] + i >= snapshotTop
-		return false
-	return snapshotUncertain[queryBase[queryDepth - 1] + i]
+	return queryDepth <= 0 or i < 0 or queryBase[queryDepth - 1] + i >= snapshotTop
+		? false
+		: snapshotUncertain[queryBase[queryDepth - 1] + i]
 
 public function spatialPartitionEndQuery()
 	if queryDepth > 0

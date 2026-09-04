@@ -315,10 +315,12 @@ public function spatialIndexGridHeight() returns int
 	snapshotStack[snapshotTop] = u
 	snapshotTop++
 
+/*	One expression, for the same reason as the partition's result accessors: this is tested once per
+	match, and an inlined early return is carried through the rest of the caller's loop as a flag.
+	`and` still short-circuits, so a Locust unit costs the one native it did before. */
 @inline function unit.passesEnumerationState() returns boolean
-	if this.getAbilityLevel(LOCUST_ID) != 0
-		return false
-	return not SPATIAL_INDEX_CHECK_HIDDEN or not this.isHidden()
+	return this.getAbilityLevel(LOCUST_ID) == 0
+		and (not SPATIAL_INDEX_CHECK_HIDDEN or not this.isHidden())
 
 /**	Reads an entry's live position, caches it and stamps the tick, so a later query in the same frame
 	decides it from the cache instead of paying the two natives again.
