@@ -260,6 +260,16 @@ public function spatialIndexPadCells() returns int
 	That is why the rebuild re-links everything rather than only this layer's entries. */
 public function rebuildSpatialIndexGrid(vec2 worldMin, vec2 worldMax)
 	rebuildSpatialPartition(worldMin, worldMax)
+	// The shared rebuild re-links from cached positions, which is all it can do for entries whose
+	// staleness it knows nothing about. This layer knows: it can read its own units live. Doing so
+	// keeps what the public function did before the grid was shared - no unit left sitting in a cell
+	// it has already left - and stamps the tick, so queries treat the cache as exact afterwards.
+	// Other consumers keep their own cached entries, which the rebuild above has already re-linked.
+	for i = 0 to registryCount - 1
+		let idx = registry[i]
+		let u = indexedUnit[idx]
+		if u != null
+			refreshUnit(idx, u)
 
 /** Internal-grid cell for tests and diagnostics. */
 public function spatialIndexCellOf(vec2 pos) returns int
@@ -449,3 +459,220 @@ init
 
 		doPeriodically(SPATIAL_INDEX_SWEEP_PERIOD) cb ->
 			sweepStep()
+
+// Tests
+//
+/*	These live in the implementation package on purpose. The index gates itself off the Jass target
+	with `isLua`, which the compiletime interpreter reports as false, so its init never wires the
+	events and nothing would ever register. Relaxing that guard is not worth it: `isLua` is folded,
+	which is what makes the whole package disappear on Jass. Driving registration and the sweep from
+	in here instead gives real coverage of everything above the grid, because the interpreter does
+	model units properly - they have positions, owners and visibility.
+	Behaviour in a running map is still asserted by StdlibIngameTests. */
+
+function testArena()
+	// Release this layer's ids properly, then drop whatever another package left in the shared grid,
+	// so a test's result never depends on which test ran before it.
+	while registryCount > 0
+		unregisterIndex(registry[registryCount - 1])
+	spatialPartitionClear()
+	sweepTick = 0
+	sweepCursor = 0
+	cycleWorstAge = 0
+	publishedWorstAge = 1
+	displacementBoundTicks = 1
+	cycleMembershipStable = true
+	rebuildSpatialIndexGrid(vec2(-4096., -4096.), vec2(4096., 4096.))
+
+function addUnitAt(vec2 pos) returns unit
+	let u = createUnit(Player(0), 'hfoo', pos, 0 .fromDeg())
+	registerUnit(u)
+	return u
+
+/** Re-reads a unit's live position, as `unit.updateSpatialIndex` does on Lua. */
+function notifyMoved(unit u)
+	refreshUnit(spatialIndexByUnit.get(u), u)
+
+function rangeCount(vec2 center, real radius) returns int
+	let n = spatialIndexBeginQuery(center, radius, false)
+	spatialIndexEndQuery()
+	return n
+
+function rangeHas(vec2 center, real radius, unit target) returns boolean
+	let n = spatialIndexBeginQuery(center, radius, false)
+	var found = false
+	for i = 0 to n - 1
+		if spatialIndexQueryUnit(i) == target
+			found = true
+	spatialIndexEndQuery()
+	return found
+
+@Test function rangeQueryReturnsWhatIsInsideAndNothingElse()
+	testArena()
+	let near = addUnitAt(vec2(100., 0.))
+	let far = addUnitAt(vec2(3000., 0.))
+	rangeHas(vec2(0., 0.), 300., near).assertTrue()
+	rangeHas(vec2(0., 0.), 300., far).assertFalse()
+	rangeCount(vec2(0., 0.), 300.).assertEquals(1)
+	// A radius that reaches both finds both.
+	rangeCount(vec2(0., 0.), 3200.).assertEquals(2)
+
+@Test function radiusIsMeasuredFromTheUnitOrigin()
+	testArena()
+	let u = addUnitAt(vec2(500., 0.))
+	// Just inside and just outside, with no staleness to blur the boundary.
+	rangeHas(vec2(0., 0.), 501., u).assertTrue()
+	rangeHas(vec2(0., 0.), 499., u).assertFalse()
+
+@Test function aUnitThatMovedWithoutNotifyingIsStillFound()
+	testArena()
+	let u = addUnitAt(vec2(0., 0.))
+	// Engine-side movement the index cannot observe. Padding is what makes this safe: the unit is
+	// still returned from its stale cache entry rather than silently disappearing.
+	u.setXY(vec2(60., 0.))
+	rangeHas(vec2(0., 0.), 100., u).assertTrue()
+
+@Test function notifyingAMoveRelocatesTheUnit()
+	testArena()
+	let u = addUnitAt(vec2(0., 0.))
+	u.setXY(vec2(2000., 2000.))
+	notifyMoved(u)
+	rangeHas(vec2(0., 0.), 200., u).assertFalse()
+	rangeHas(vec2(2000., 2000.), 200., u).assertTrue()
+
+@Test function theSweepPicksUpMovementOnItsOwn()
+	testArena()
+	let u = addUnitAt(vec2(0., 0.))
+	u.setXY(vec2(2500., 0.))
+	// One tick is enough for a single unit: the cycle covers the whole registry per tick here.
+	sweepStep()
+	rangeHas(vec2(2500., 0.), 100., u).assertTrue()
+
+@Test function removedUnitsLeaveTheIndex()
+	testArena()
+	let u = addUnitAt(vec2(0., 0.))
+	spatialIndexTrackedUnits().assertEquals(1)
+	unregisterUnit(u)
+	spatialIndexTrackedUnits().assertEquals(0)
+	rangeCount(vec2(0., 0.), 500.).assertEquals(0)
+
+@Test function locustUnitsAreNotEnumeratedByRangeQueries()
+	testArena()
+	let plain = addUnitAt(vec2(0., 0.))
+	let locust = addUnitAt(vec2(10., 0.))
+	locust.addAbility(LOCUST_ID)
+	rangeHas(vec2(0., 0.), 200., plain).assertTrue()
+	// Matches what the engine range enumeration does, which is to skip them.
+	rangeHas(vec2(0., 0.), 200., locust).assertFalse()
+
+@Test function hiddenUnitsAreNotEnumeratedByRangeQueries()
+	testArena()
+	let u = addUnitAt(vec2(0., 0.))
+	u.hide()
+	rangeHas(vec2(0., 0.), 200., u).assertFalse()
+	u.show()
+	rangeHas(vec2(0., 0.), 200., u).assertTrue()
+
+@Test function playerQueryDeliberatelyIncludesHiddenAndLocustUnits()
+	testArena()
+	let hidden = addUnitAt(vec2(0., 0.))
+	hidden.hide()
+	let locust = addUnitAt(vec2(50., 0.))
+	locust.addAbility(LOCUST_ID)
+	// GroupEnumUnitsOfPlayer returns both, so this query does too.
+	let n = spatialIndexBeginPlayerQuery(Player(0))
+	spatialIndexEndQuery()
+	n.assertEquals(2)
+
+@Test function playerQueryIsScopedToTheOwner()
+	testArena()
+	addUnitAt(vec2(0., 0.))
+	let other = createUnit(Player(1), 'hfoo', vec2(100., 0.), 0 .fromDeg())
+	registerUnit(other)
+	let mine = spatialIndexBeginPlayerQuery(Player(0))
+	spatialIndexEndQuery()
+	mine.assertEquals(1)
+	let theirs = spatialIndexBeginPlayerQuery(Player(1))
+	spatialIndexEndQuery()
+	theirs.assertEquals(1)
+
+@Test function boxQueryReturnsWhatTheBoxContains()
+	testArena()
+	let inside = addUnitAt(vec2(100., 100.))
+	let outside = addUnitAt(vec2(900., 100.))
+	let n = spatialIndexBeginBoxQuery(vec2(0., 0.), vec2(500., 500.))
+	var sawInside = false
+	var sawOutside = false
+	for i = 0 to n - 1
+		let u = spatialIndexQueryUnit(i)
+		if u == inside
+			sawInside = true
+		if u == outside
+			sawOutside = true
+	spatialIndexEndQuery()
+	sawInside.assertTrue()
+	sawOutside.assertFalse()
+
+@Test function nestedQueriesKeepTheirOwnResults()
+	testArena()
+	addUnitAt(vec2(0., 0.))
+	addUnitAt(vec2(2000., 0.))
+	let outer = spatialIndexBeginQuery(vec2(0., 0.), 3000., false)
+	outer.assertEquals(2)
+	let inner = spatialIndexBeginQuery(vec2(2000., 0.), 100., false)
+	inner.assertEquals(1)
+	assertTrue(spatialIndexQueryUnit(0) != null)
+	spatialIndexEndQuery()
+	// The outer query's segment must survive the inner one closing.
+	assertTrue(spatialIndexQueryUnit(0) != null)
+	assertTrue(spatialIndexQueryUnit(1) != null)
+	spatialIndexEndQuery()
+
+@Test function collisionFilteringStillFindsUnitsWellInsideTheRadius()
+	testArena()
+	addUnitAt(vec2(0., 0.))
+	// Origin-only and body-aware must agree for a unit sitting on the query point; the collision
+	// variant may only ever be the more generous of the two.
+	let strict = spatialIndexBeginQuery(vec2(0., 0.), 100., false)
+	spatialIndexEndQuery()
+	strict.assertEquals(1)
+	let lenient = spatialIndexBeginQuery(vec2(0., 0.), 100., true)
+	spatialIndexEndQuery()
+	assertTrue(lenient >= strict)
+
+// Budget gates
+//
+/*	These assert work done, not wall time, so they mean the same thing on every machine. Both counters
+	come from the partition and describe the last query only. */
+
+@Test function aLargeRadiusOverEmptySpaceSkipsCoarseBlocks()
+	testArena()
+	addUnitAt(vec2(0., 0.))
+	// A radius this wide spans many blocks, and all but the one holding the unit are empty.
+	rangeCount(vec2(0., 0.), 3000.).assertEquals(1)
+	assertTrue(spatialPartitionLastQueryBlocksSkipped() > 0)
+	// One occupied cell means one visited entry, however much empty space the radius covers.
+	spatialPartitionLastQueryVisits().assertEquals(1)
+
+@Test function aSmallQueryDoesNotWalkTheWholePopulation()
+	testArena()
+	// A spread-out population, then a query that wants a small part of it.
+	for i = 0 to 119
+		addUnitAt(vec2(-3500. + i * 60., 1000. + (i mod 7) * 300.))
+	spatialIndexTrackedUnits().assertEquals(120)
+	assertTrue(rangeCount(vec2(-3500., 1000.), 200.) > 0)
+	// The point of the grid: cost tracks the neighbourhood, not the registry. The bound is generous,
+	// so this fails on a broadphase that stopped rejecting rather than on ordinary tuning. Blocks
+	// skipped is deliberately not asserted here - this window fits inside one coarse block, so there
+	// is nothing for it to skip. That is what the large-radius gate above is for.
+	assertTrue(spatialPartitionLastQueryVisits() < 30)
+	assertTrue(spatialPartitionLastQueryVisits() * 4 < spatialIndexTrackedUnits())
+
+@Test function aQueryCoveringEverythingVisitsEachEntryExactlyOnce()
+	testArena()
+	for i = 0 to 49
+		addUnitAt(vec2(-2000. + i * 80., 0.))
+	rangeCount(vec2(0., 0.), 8000.).assertEquals(50)
+	// A double visit would mean the walk re-entered a chain, which is how a relink during a query
+	// would show up.
+	spatialPartitionLastQueryVisits().assertEquals(50)

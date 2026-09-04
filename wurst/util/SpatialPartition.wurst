@@ -228,6 +228,11 @@ public function spatialPartitionIsValidGroupId(int groupId) returns boolean
 var nextEntryId = 1
 int array freeEntryIds
 var freeEntryIdCount = 0
+/*	Whether an id is currently handed out. The free list alone cannot answer that: pushing an id onto
+	it twice - a double release, or a release of one never allocated - puts it there twice, and the
+	next two allocations hand the same row to two consumers, which is the exact failure the allocator
+	exists to prevent. This is the single record of what is outstanding. */
+boolean array entryIdReserved
 
 /**	Reserves an entry id no other consumer will be handed. Release it with
 	`spatialPartitionReleaseEntryId` after removing the entry, or ids are never reused. Answers 0 when
@@ -237,6 +242,7 @@ public function spatialPartitionAllocateEntryId() returns int
 		freeEntryIdCount--
 		let recycled = freeEntryIds[freeEntryIdCount]
 		freeEntryIds[freeEntryIdCount] = 0
+		entryIdReserved[recycled] = true
 		return recycled
 	if not spatialPartitionIsValidEntryId(nextEntryId)
 		error("SpatialPartition: entry ids exhausted at " + spatialPartitionMaxEntryId()
@@ -244,17 +250,28 @@ public function spatialPartitionAllocateEntryId() returns int
 		return 0
 	let fresh = nextEntryId
 	nextEntryId++
+	entryIdReserved[fresh] = true
 	return fresh
+
+/** Whether an id is currently handed out to some consumer. */
+public function spatialPartitionEntryIdIsReserved(int id) returns boolean
+	return spatialPartitionIsValidEntryId(id) and entryIdReserved[id]
 
 /**	Returns an id to the pool. The entry must already be removed: recycling one that is still linked
 	would hand a live row to the next caller. */
 public function spatialPartitionReleaseEntryId(int id)
 	if not spatialPartitionIsValidEntryId(id)
 		return
+	if not entryIdReserved[id]
+		error("SpatialPartition: entry id " + id
+			+ " is not currently allocated; releasing one twice queues it twice and the next two"
+			+ " allocations would be handed the same row")
+		return
 	if registrySlot[id] != 0
 		error("SpatialPartition: entry " + id
 			+ " released while still held; call spatialPartitionRemove first")
 		return
+	entryIdReserved[id] = false
 	freeEntryIds[freeEntryIdCount] = id
 	freeEntryIdCount++
 
