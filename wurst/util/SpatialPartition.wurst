@@ -24,6 +24,15 @@ package SpatialPartition
 	Entry ids are supplied by the owning layer and must be **1-based**: 0 is reserved as the chain
 	sentinel. `rebuildSpatialPartition` must give the grid an extent before any entry is added.
 
+	What the two namespaces guarantee, and what they do not. `spatialPartitionAllocateEntryId` and
+	`spatialPartitionAllocateGroup` hand out an id or a group that no other consumer will be given,
+	including ones taken directly rather than through them, so two consumers that both ask can never
+	be handed the same row. What they do not do is police what you then address: a row is reachable
+	by its number, so writing to one you did not allocate corrupts whoever did, exactly as indexing
+	the wrong element of an array does. Enforcing that would mean an owner token on every mutator,
+	which is a cost on every position update to catch a bug that a caller can simply not write. The
+	structure is built for speed and assumes it is used correctly.
+
 	Like the indexes built on it, this targets **Lua**, where arrays grow dynamically. The cell chains
 	are flattened as `cell * MAX_GROUPS + groupId` and the per-entry links as `id * MAX_GROUPS + groupId`,
 	so a grid extent, an entry id and the nesting depth of open queries all have ceilings on Jass, where
