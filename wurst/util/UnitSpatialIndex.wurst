@@ -50,9 +50,8 @@ constant UNIT_GROUP = 0
 
 unit array indexedUnit
 let spatialIndexByUnit = new HashMap<unit, int>
-var nextSpatialIndex = 1
-int array freeSpatialIndex
-var freeSpatialIndexCount = 0
+/*	Ids come from the partition, not from a counter here. Its rows are keyed by id alone, so a
+	private counter starting at 1 would collide with the next consumer's the moment one exists. */
 
 /** Sweep tick at which each entry's cached position was last written. */
 int array lastSweepTick
@@ -117,13 +116,11 @@ function registerUnit(unit u)
 	// Private removal marker. OnUnitEnterLeave deliberately keeps its legacy rect-only population,
 	// while this registry also contains hidden and Locust units found by per-player enumeration.
 	u.trackSpatialRemoval()
-	var idx = nextSpatialIndex
-	if freeSpatialIndexCount > 0
-		freeSpatialIndexCount--
-		idx = freeSpatialIndex[freeSpatialIndexCount]
-		freeSpatialIndex[freeSpatialIndexCount] = 0
-	else
-		nextSpatialIndex++
+	let idx = spatialPartitionAllocateEntryId()
+	if idx == 0
+		// Id space exhausted; the partition has already reported it. Leaving the unit unindexed is
+		// the only honest outcome, and queries simply will not see it.
+		return
 	spatialIndexByUnit.put(u, idx)
 	indexedUnit[idx] = u
 	registry[registryCount] = idx
@@ -155,8 +152,8 @@ function unregisterIndex(int idx)
 	spatialPartitionRemove(idx)
 	indexedUnit[idx] = null
 	lastSweepTick[idx] = 0
-	freeSpatialIndex[freeSpatialIndexCount] = idx
-	freeSpatialIndexCount++
+	// Only after the removal: the partition refuses to recycle an id whose entry is still linked.
+	spatialPartitionReleaseEntryId(idx)
 
 	// Refresh an entry moved behind the cursor so the one-pass bound remains true.
 	if moved != 0 and slot - 1 < sweepCursor
@@ -246,9 +243,11 @@ public function spatialIndexObservedStaleness() returns real
 public function spatialIndexTrackedUnits() returns int
 	return registryCount
 
-/** Allocated cache slots; ID reuse keeps this at peak concurrent population. */
+/**	Allocated cache slots; ID reuse keeps this at peak concurrent population. Ids are shared across
+	partition consumers now, so this counts every entry id handed out, not only this layer's - which
+	is the right figure for the arrays here, since they are indexed by that same id. */
 public function spatialIndexAllocatedSlots() returns int
-	return nextSpatialIndex - 1
+	return spatialPartitionAllocatedEntryIds()
 
 /** Current query padding in whole cells, derived from guaranteed staleness. */
 public function spatialIndexPadCells() returns int

@@ -220,6 +220,48 @@ public function spatialPartitionIsValidEntryId(int id) returns boolean
 public function spatialPartitionIsValidGroupId(int groupId) returns boolean
 	return groupId >= 0 and groupId < SPATIAL_PARTITION_MAX_GROUPS
 
+/*	Ids are the partition's to hand out, not each consumer's. Everything stored here is keyed by id
+	alone - the position, the group links, the registry slot - so two consumers that each counted up
+	from 1 would share rows without either noticing: one overwrites the other's position, relinks its
+	groups on every move, and deletes its entry on removal. Groups separate what a query sees, not
+	what an id addresses. A shared structure has to own the namespace its keys come from. */
+var nextEntryId = 1
+int array freeEntryIds
+var freeEntryIdCount = 0
+
+/**	Reserves an entry id no other consumer will be handed. Release it with
+	`spatialPartitionReleaseEntryId` after removing the entry, or ids are never reused. Answers 0 when
+	the target's id space is exhausted, which a caller must treat as "cannot index this". */
+public function spatialPartitionAllocateEntryId() returns int
+	if freeEntryIdCount > 0
+		freeEntryIdCount--
+		let recycled = freeEntryIds[freeEntryIdCount]
+		freeEntryIds[freeEntryIdCount] = 0
+		return recycled
+	if not spatialPartitionIsValidEntryId(nextEntryId)
+		error("SpatialPartition: entry ids exhausted at " + spatialPartitionMaxEntryId()
+			+ " on this target")
+		return 0
+	let fresh = nextEntryId
+	nextEntryId++
+	return fresh
+
+/**	Returns an id to the pool. The entry must already be removed: recycling one that is still linked
+	would hand a live row to the next caller. */
+public function spatialPartitionReleaseEntryId(int id)
+	if not spatialPartitionIsValidEntryId(id)
+		return
+	if registrySlot[id] != 0
+		error("SpatialPartition: entry " + id
+			+ " released while still held; call spatialPartitionRemove first")
+		return
+	freeEntryIds[freeEntryIdCount] = id
+	freeEntryIdCount++
+
+/** Ids handed out across every consumer. Reuse keeps this at peak concurrent population. */
+public function spatialPartitionAllocatedEntryIds() returns int
+	return nextEntryId - 1
+
 /** Whether the grid has been given an extent yet. Nothing can be linked before it has. */
 public function spatialPartitionIsReady() returns boolean
 	return gridWidth > 0 and gridHeight > 0

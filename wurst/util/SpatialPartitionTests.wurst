@@ -357,3 +357,26 @@ function countIn(vec2 center, real radius, real maxDisplacement, int groupId) re
 	let ok = spatialPartitionRequiredCellSlots(vec2(-4096., -4096.), vec2(4096., 4096.))
 	ok.assertEquals(33 * 33 * SPATIAL_PARTITION_MAX_GROUPS)
 	spatialPartitionExtentFits(vec2(-4096., -4096.), vec2(4096., 4096.)).assertTrue()
+
+@Test function entryIdsComeFromOneAllocatorAndAreRecycled()
+	arena()
+	// Everything the partition stores is keyed by the id alone - position, group links, registry
+	// slot - so two consumers allocating independently must never be handed the same row. Groups
+	// separate what a query sees, not what an id addresses.
+	let first = spatialPartitionAllocateEntryId()
+	let second = spatialPartitionAllocateEntryId()
+	first.assertGreaterThan(0)
+	(first != second).assertTrue()
+
+	// The two rows stay independent even when both are placed and grouped.
+	place(first, vec2(0., 0.), ALL)
+	place(second, vec2(2000., 2000.), ALL)
+	spatialPartitionEntryX(first).assertEquals(0.)
+	spatialPartitionEntryX(second).assertEquals(2000.)
+	countIn(vec2(0., 0.), 100., 0., ALL).assertEquals(1)
+
+	// A released id comes back, so a long-running map reuses rows instead of growing forever.
+	spatialPartitionRemove(first)
+	spatialPartitionReleaseEntryId(first)
+	spatialPartitionAllocateEntryId().assertEquals(first)
+
