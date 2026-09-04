@@ -244,6 +244,11 @@ public function spatialPartitionAllocateEntryId() returns int
 		freeEntryIds[freeEntryIdCount] = 0
 		entryIdReserved[recycled] = true
 		return recycled
+	// Step over rows a consumer took directly through `spatialPartitionSetPos` rather than through
+	// here. Addressing a row by a known id is legitimate, so the allocator works around those instead
+	// of pretending it is the only way in.
+	while spatialPartitionIsValidEntryId(nextEntryId) and entryIdReserved[nextEntryId]
+		nextEntryId++
 	if not spatialPartitionIsValidEntryId(nextEntryId)
 		error("SpatialPartition: entry ids exhausted at " + spatialPartitionMaxEntryId()
 			+ " on this target")
@@ -278,6 +283,26 @@ public function spatialPartitionReleaseEntryId(int id)
 /** Ids handed out across every consumer. Reuse keeps this at peak concurrent population. */
 public function spatialPartitionAllocatedEntryIds() returns int
 	return nextEntryId - 1
+
+/*	Groups have the same problem as ids, one level up: a group is what a query filters by, so two
+	consumers that both picked group 0 would each see the other's entries come back and would have no
+	way to tell them apart. A hardcoded group works only for the one layer that gets there first. */
+boolean array groupReserved
+
+/**	Reserves a group no other consumer will be given, or -1 when none are left. Hold on to it: groups
+	are long-lived, there is no release, and asking twice consumes two. */
+public function spatialPartitionAllocateGroup() returns int
+	for groupId = 0 to SPATIAL_PARTITION_MAX_GROUPS - 1
+		if not groupReserved[groupId]
+			groupReserved[groupId] = true
+			return groupId
+	error("SpatialPartition: all " + SPATIAL_PARTITION_MAX_GROUPS
+		+ " groups are taken; raise SPATIAL_PARTITION_MAX_GROUPS")
+	return -1
+
+/** Whether a group has been claimed, by the allocator or by being used directly. */
+public function spatialPartitionGroupIsReserved(int groupId) returns boolean
+	return spatialPartitionIsValidGroupId(groupId) and groupReserved[groupId]
 
 /** Whether the grid has been given an extent yet. Nothing can be linked before it has. */
 public function spatialPartitionIsReady() returns boolean
@@ -354,6 +379,10 @@ public function spatialPartitionSetPos(int id, real x, real y)
 		registryIds[registryCount] = id
 		registryCount++
 		registrySlot[id] = registryCount
+		// Claim the row on first insertion. A consumer may address one by an id it chose itself
+		// rather than asking the allocator, and that is fine - but the allocator must then never
+		// hand the same row to somebody else, so the two ways in share one record of what is taken.
+		entryIdReserved[id] = true
 	let cell = cellAt(x, y)
 	for groupId = 0 to groupsInUse - 1
 		let slot = groupSlot(id, groupId)
@@ -368,6 +397,9 @@ public function spatialPartitionSetGroup(int id, int groupId, boolean member)
 		return
 	let isMember = cellOfEntry[groupSlot(id, groupId)] != 0
 	if member and not isMember
+		// Same claim as on insertion: using a group directly is allowed, and the allocator then has
+		// to know it is taken.
+		groupReserved[groupId] = true
 		groupsInUse = max(groupsInUse, groupId + 1)
 		linkIntoCell(id, groupId, cellAt(entryX[id], entryY[id]))
 	else if not member and isMember

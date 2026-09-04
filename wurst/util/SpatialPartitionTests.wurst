@@ -4,8 +4,10 @@ import SpatialPartition
 /*	The core is plain integer ids, so everything about it is testable directly: no units, no engine, no
 	backend. That is itself part of the point of extracting it. */
 
-constant ALL = 0
-constant SUBSET = 1
+// Allocated, not hardcoded: a group says what a query filters by, so two consumers picking the
+// same number would each see the other entries come back. This is the contract consumers follow.
+let ALL = spatialPartitionAllocateGroup()
+let SUBSET = spatialPartitionAllocateGroup()
 
 function arena()
 	// Each test starts from an empty partition; otherwise one test's entries answer another's queries.
@@ -380,3 +382,26 @@ function countIn(vec2 center, real radius, real maxDisplacement, int groupId) re
 	spatialPartitionReleaseEntryId(first)
 	spatialPartitionAllocateEntryId().assertEquals(first)
 
+
+@Test function theAllocatorNeverHandsOutARowTakenDirectly()
+	arena()
+	// Addressing a row by an id the consumer chose itself is still allowed, so the allocator has to
+	// work around those rather than assume it is the only way in. Pick one well ahead of wherever
+	// the allocator currently is, so draining past it is what actually proves the skip.
+	let taken = spatialPartitionAllocatedEntryIds() + 5
+	place(taken, vec2(0., 0.), ALL)
+	spatialPartitionEntryIdIsReserved(taken).assertTrue()
+	for i = 1 to 8
+		assertTrue(spatialPartitionAllocateEntryId() != taken)
+	// And the row still belongs to whoever took it.
+	spatialPartitionEntryX(taken).assertEquals(0.)
+	countIn(vec2(0., 0.), 50., 0., ALL).assertEquals(1)
+
+@Test function groupsAreClaimedByBeingUsedAsWellAsByBeingAllocated()
+	arena()
+	place(1, vec2(0., 0.), ALL)
+	// A group used directly is claimed too, or the allocator would hand it to a second consumer and
+	// both would see each other entries in their query results.
+	spatialPartitionGroupIsReserved(ALL).assertTrue()
+	let fresh = spatialPartitionAllocateGroup()
+	assertTrue(fresh != ALL and fresh != SUBSET)

@@ -38,10 +38,19 @@ import SpatialPartition
 /** Disable when hidden units are never used to save one native per hit. */
 @configurable public constant SPATIAL_INDEX_CHECK_HIDDEN = true
 
-/*	Every indexed unit lives in one partition group. Splitting Locust units off into a second group
-	would let queries that never want them skip those entries in the walk instead of rejecting them
-	per hit, but that is a change to what the index promises and is left for its own iteration. */
-constant UNIT_GROUP = 0
+/*	Every indexed unit lives in one partition group, taken from the partition rather than hardcoded: a
+	group says what a query filters by, so a map whose own consumer had picked the same number would
+	get units back from its queries with no way to tell them apart.
+
+	Splitting Locust units off into a second group would let queries that never want them skip those
+	entries in the walk instead of rejecting them per hit, but that changes what the index promises
+	and is left for its own iteration. */
+var unitGroup = -1
+
+/** Claims the group on first use. Init does it on Lua; the tests below do it wherever they run. */
+function ensureUnitGroup()
+	if unitGroup < 0
+		unitGroup = spatialPartitionAllocateGroup()
 
 // Entry state
 //
@@ -131,7 +140,7 @@ function registerUnit(unit u)
 	let pos = u.getPos()
 	// Position first: joining a group links the entry at whatever position the partition holds.
 	spatialPartitionSetPos(idx, pos.x, pos.y)
-	spatialPartitionSetGroup(idx, UNIT_GROUP, true)
+	spatialPartitionSetGroup(idx, unitGroup, true)
 
 function unregisterIndex(int idx)
 	let slot = registrySlot[idx]
@@ -319,7 +328,7 @@ public function spatialIndexBeginQuery(vec2 center, real radius, boolean collisi
 	// window has to widen by the largest collision size any unit can have.
 	let reach = radius + (collisionSizeFiltering ? MAX_COLLISION_SIZE : 0.)
 	let matched = spatialPartitionBeginRangeQuery(center, reach,
-		tickDisp * displacementBoundTicks, UNIT_GROUP)
+		tickDisp * displacementBoundTicks, unitGroup)
 	let radiusSq = radius * radius
 
 	for i = 0 to matched - 1
@@ -366,7 +375,7 @@ public function spatialIndexBeginBoxQuery(vec2 boxMin, vec2 boxMax) returns int
 
 	let tickDisp = tickDisplacement()
 	let matched = spatialPartitionBeginBoxQuery(boxMin, boxMax,
-		tickDisp * displacementBoundTicks, UNIT_GROUP)
+		tickDisp * displacementBoundTicks, unitGroup)
 
 	for i = 0 to matched - 1
 		let idx = spatialPartitionQueryId(i)
@@ -437,6 +446,7 @@ init
 	// Written as a positive guard rather than an early return: `isLua` is folded, so on the Jass
 	// target the whole body disappears and this package registers nothing at all.
 	if isLua and USE_UNIT_SPATIAL_INDEX
+		ensureUnitGroup()
 		rebuildSpatialIndexGrid(boundMin, boundMax)
 		onSpatialUnitRemove(() -> unregisterUnit(getSpatialRemovingUnit()))
 		initializeSpatialRemovalTracking()
@@ -471,6 +481,7 @@ init
 	Behaviour in a running map is still asserted by StdlibIngameTests. */
 
 function testArena()
+	ensureUnitGroup()
 	// Release this layer's ids properly, then drop whatever another package left in the shared grid,
 	// so a test's result never depends on which test ran before it.
 	while registryCount > 0
