@@ -79,6 +79,13 @@ int array registryIds
 /** Registry slot + 1 for a live entry, 0 for one the partition does not know. */
 int array registrySlot
 var registryCount = 0
+/*	One past the highest group any entry has ever joined. Relinking a moved entry has to consider
+	every group it belongs to, and that loop runs once per entry per position update - the hottest
+	thing a consumer with a sweep does outside a query. Bounding it by the groups a map actually
+	declared, rather than by MAX_GROUPS, keeps a single-group consumer at one iteration instead of
+	eight. It only ever grows: a group that empties may be refilled, and nothing here is worth
+	recomputing to reclaim one iteration. */
+var groupsInUse = 0
 /** Scratch used only across a rebuild, to carry membership over the re-link. */
 boolean array rebuildMember
 
@@ -289,7 +296,7 @@ public function spatialPartitionSetPos(int id, real x, real y)
 		registryCount++
 		registrySlot[id] = registryCount
 	let cell = cellAt(x, y)
-	for groupId = 0 to SPATIAL_PARTITION_MAX_GROUPS - 1
+	for groupId = 0 to groupsInUse - 1
 		let slot = groupSlot(id, groupId)
 		if cellOfEntry[slot] != 0 and cellOfEntry[slot] != cell + 1
 			unlinkFromCell(id, groupId)
@@ -302,9 +309,24 @@ public function spatialPartitionSetGroup(int id, int groupId, boolean member)
 		return
 	let isMember = cellOfEntry[groupSlot(id, groupId)] != 0
 	if member and not isMember
+		groupsInUse = max(groupsInUse, groupId + 1)
 		linkIntoCell(id, groupId, cellAt(entryX[id], entryY[id]))
 	else if not member and isMember
 		unlinkFromCell(id, groupId)
+
+/** Cached x of an entry, so a consumer can re-decide an uncertain result under its own staleness
+	model before paying for a live position. Zero for an id the partition does not hold. */
+@inline public function spatialPartitionEntryX(int id) returns real
+	return entryX[id]
+
+/** Cached y of an entry. See `spatialPartitionEntryX`. */
+@inline public function spatialPartitionEntryY(int id) returns real
+	return entryY[id]
+
+/*	The dense registry is deliberately not exposed. It holds every entry any consumer has put in the
+	grid, so it is the wrong set for a consumer that needs to iterate or size a budget over its own
+	population - a unit sweep must not be stretched by another layer's destructables. A consumer that
+	needs that keeps its own list; this one exists so a rebuild can find every entry to re-link. */
 
 /** Whether an entry is currently in a group. */
 public function spatialPartitionInGroup(int id, int groupId) returns boolean
@@ -318,7 +340,7 @@ public function spatialPartitionInGroup(int id, int groupId) returns boolean
 public function spatialPartitionRemove(int id)
 	if not requireValidEntry(id)
 		return
-	for groupId = 0 to SPATIAL_PARTITION_MAX_GROUPS - 1
+	for groupId = 0 to groupsInUse - 1
 		unlinkFromCell(id, groupId)
 	entryX[id] = 0.
 	entryY[id] = 0.
@@ -469,6 +491,83 @@ public function spatialPartitionBeginRangeQuery(vec2 center, real radius, real m
 							let distSq = dx * dx + dy * dy
 							if distSq <= certainlyOutSq
 								pushMatch(id, not (certainlyIn >= 0. and distSq <= certainlyInSq))
+							id = next
+						cx++
+					cy++
+			bx++
+		by++
+
+	return snapshotTop - queryBase[queryDepth - 1]
+
+/**	Collects the members of `groupId` inside the axis-aligned box, allowing for entries whose cached
+	position may be up to `maxDisplacement` out of date.
+
+	Same three-way split as the range query, applied per axis: a cached position more than
+	`maxDisplacement` outside the box cannot be inside it, one that far within cannot be outside, and
+	the band between is flagged for the caller to resolve. Pass a zero displacement and nothing is
+	flagged.
+
+	Must be paired with `spatialPartitionEndQuery()`. */
+public function spatialPartitionBeginBoxQuery(vec2 boxMin, vec2 boxMax, real maxDisplacement,
+		int groupId) returns int
+	let tooDeep = queryDepth >= SPATIAL_PARTITION_MAX_QUERY_DEPTH
+	if tooDeep
+		error("SpatialPartition: queries nested deeper than " + SPATIAL_PARTITION_MAX_QUERY_DEPTH)
+	queryBase[queryDepth] = snapshotTop
+	queryDepth++
+	lastQueryVisits = 0
+	lastQueryBlocksSkipped = 0
+	if tooDeep or not spatialPartitionIsValidGroupId(groupId) or not spatialPartitionIsReady()
+		return 0
+
+	let outMinX = boxMin.x - maxDisplacement
+	let outMaxX = boxMax.x + maxDisplacement
+	let outMinY = boxMin.y - maxDisplacement
+	let outMaxY = boxMax.y + maxDisplacement
+	// The inner box collapses, or inverts, once the displacement exceeds half an edge. An inverted
+	// one is still correct as a test - no position satisfies it - so every hit is simply flagged.
+	let inMinX = boxMin.x + maxDisplacement
+	let inMaxX = boxMax.x - maxDisplacement
+	let inMinY = boxMin.y + maxDisplacement
+	let inMaxY = boxMax.y - maxDisplacement
+
+	let minCx = cellCoordX(outMinX)
+	let maxCx = cellCoordX(outMaxX)
+	let minCy = cellCoordY(outMinY)
+	let maxCy = cellCoordY(outMaxY)
+
+	let minBx = minCx div SPATIAL_PARTITION_COARSE_FACTOR
+	let maxBx = maxCx div SPATIAL_PARTITION_COARSE_FACTOR
+	let minBy = minCy div SPATIAL_PARTITION_COARSE_FACTOR
+	let maxBy = maxCy div SPATIAL_PARTITION_COARSE_FACTOR
+
+	var by = minBy
+	while by <= maxBy
+		var bx = minBx
+		while bx <= maxBx
+			if coarseCount[coarseSlot(bx + by * coarseWidth, groupId)] <= 0
+				lastQueryBlocksSkipped++
+			else
+				let cellMinX = max(minCx, bx * SPATIAL_PARTITION_COARSE_FACTOR)
+				let cellMaxX = min(maxCx,
+					bx * SPATIAL_PARTITION_COARSE_FACTOR + SPATIAL_PARTITION_COARSE_FACTOR - 1)
+				let cellMinY = max(minCy, by * SPATIAL_PARTITION_COARSE_FACTOR)
+				let cellMaxY = min(maxCy,
+					by * SPATIAL_PARTITION_COARSE_FACTOR + SPATIAL_PARTITION_COARSE_FACTOR - 1)
+				var cy = cellMinY
+				while cy <= cellMaxY
+					let rowBase = cy * gridWidth
+					var cx = cellMinX
+					while cx <= cellMaxX
+						var id = cellHead[headSlot(rowBase + cx, groupId)]
+						while id != 0
+							let next = nextInCell[groupSlot(id, groupId)]
+							lastQueryVisits++
+							let px = entryX[id]
+							let py = entryY[id]
+							if px >= outMinX and px <= outMaxX and py >= outMinY and py <= outMaxY
+								pushMatch(id, not (px >= inMinX and px <= inMaxX
+									and py >= inMinY and py <= inMaxY))
 							id = next
 						cx++
 					cy++
