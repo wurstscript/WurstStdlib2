@@ -1,22 +1,38 @@
 package UnitSpatialIndex
-/*	Lua uniform grid backing `SpatialIndexForUnits`. A fixed-count sweep maintains cached positions,
-	and conservative padding covers movement between sweeps. Grid traversal order differs from native
-	order; movement beyond the configured speed requires `unit.updateSpatialIndex()` for immediate
-	visibility. The public native-less query package returns an empty set when this index is disabled. */
+/*	Unit layer over the generic `SpatialPartition` grid, backing `SpatialIndexForUnits`.
+
+	The split is deliberate. The partition knows ids, positions and group membership; it does not know
+	what an id refers to, when a position goes stale, or what "visible" means. Everything here is one
+	of those three: the unit-to-id mapping, the sweep that decides how stale a cached position may be,
+	and the Warcraft rules about Locust and hidden units.
+
+	A fixed-count sweep maintains the cached positions, and conservative padding covers movement
+	between sweeps. Grid traversal order differs from native order; movement beyond the configured
+	speed requires `unit.updateSpatialIndex()` for immediate visibility. The public native-less query
+	package returns an empty set when this index is disabled.
+
+	Cell geometry now belongs to the partition, so `SPATIAL_PARTITION_CELL_SIZE` is the knob.
+	`SPATIAL_INDEX_CELL_SIZE` stays exported and deprecated, and a stale override is reported at init
+	rather than ignored.
+
+	This package is over the ~500 line guideline on purpose. The tests at the bottom account for the
+	excess and cannot move out: the index gates itself off with `isLua`, which the compiletime
+	interpreter reports as false, so nothing registers there unless registration and the sweep are
+	driven directly, and exporting those to a test package would put four internals into the public
+	contract of a package maps depend on. Coverage and the contract both won; the line count lost. */
 import OnUnitEnterLeave
 import MapBounds
 import ClosureTimers
 import HashMap
 import UnitIndexer
 import UnitSpatialIndexRemoval
+import SpatialPartition
+import ErrorHandling
 
 // Configuration
 
 /** Master switch; override from `UnitSpatialIndex_config` to disable the native-less index. */
 @configurable public constant USE_UNIT_SPATIAL_INDEX = true
-
-/** Grid cell edge in world units; smaller cells tighten windows but increase cells walked. */
-@configurable public constant SPATIAL_INDEX_CELL_SIZE = 256.
 
 /** Units re-bucketed per tick; raising this shortens the cycle and query padding. */
 @configurable public constant SPATIAL_INDEX_UNITS_PER_TICK = 128
@@ -30,31 +46,48 @@ import UnitSpatialIndexRemoval
 /** Disable when hidden units are never used to save one native per hit. */
 @configurable public constant SPATIAL_INDEX_CHECK_HIDDEN = true
 
-// Grid state
+/**	Deprecated. Cell geometry belongs to the shared grid now, so `SPATIAL_PARTITION_CELL_SIZE` is the
+	setting; one grid cannot have a second cell size for units alone.
 
-// Synchronized entry order avoids the cross-client instability of native handle ids.
-int array cellHead
-int array nextInCell
-int array prevInCell
-int array cellOfUnit
-real array lastX
-real array lastY
-int array lastSweepTick
+	Kept exported so an existing `UnitSpatialIndex_config` still compiles, and defaulted to agree. It
+	is checked at init rather than ignored: a map that had tuned this and upgrades gets told its
+	value is no longer in effect, instead of quietly running on a different grid. */
+@configurable public constant SPATIAL_INDEX_CELL_SIZE = SPATIAL_PARTITION_CELL_SIZE
+
+/*	Every indexed unit lives in one partition group, taken from the partition rather than hardcoded: a
+	group says what a query filters by, so a map whose own consumer had picked the same number would
+	get units back from its queries with no way to tell them apart.
+
+	Splitting Locust units off into a second group would let queries that never want them skip those
+	entries in the walk instead of rejecting them per hit, but that changes what the index promises
+	and is left for its own iteration. */
+var unitGroup = -1
+
+/** Claims the group on first use. Init does it on Lua; the tests below do it wherever they run. */
+function ensureUnitGroup()
+	if unitGroup < 0
+		unitGroup = spatialPartitionAllocateGroup()
+
+// Entry state
+//
+// Ids are the partition's entry ids, so they are 1-based and recycled. The partition owns positions,
+// cell links and the dense registry; what stays here is what it has no business knowing.
+
 unit array indexedUnit
 let spatialIndexByUnit = new HashMap<unit, int>
-var nextSpatialIndex = 1
-int array freeSpatialIndex
-var freeSpatialIndexCount = 0
+/*	Ids come from the partition, not from a counter here. Its rows are keyed by id alone, so a
+	private counter starting at 1 would collide with the next consumer's the moment one exists. */
 
-// Dense round-robin registry of every indexed unit, holding indices rather than handles.
+/** Sweep tick at which each entry's cached position was last written. */
+int array lastSweepTick
+
+/*	Dense round-robin list of the units this layer sweeps. Not the partition's registry: that one
+	holds every entry any consumer has put in the grid, and both numbers derived from this - the
+	sweep budget and the staleness bound - must count only what this sweep is responsible for. A
+	second consumer's destructables would otherwise stretch the cycle that covers the units. */
 int array registry
 int array registrySlot
 var registryCount = 0
-
-real gridOriginX = 0.
-real gridOriginY = 0.
-var gridWidth = 0
-var gridHeight = 0
 
 var sweepCursor = 0
 var sweepTick = 0
@@ -76,16 +109,7 @@ var snapshotTop = 0
 int array queryBase
 var queryDepth = 0
 
-// Grid math
-
-@inline function cellCoordX(real x) returns int
-	return max(0, min(gridWidth - 1, ((x - gridOriginX) / SPATIAL_INDEX_CELL_SIZE).floor()))
-
-@inline function cellCoordY(real y) returns int
-	return max(0, min(gridHeight - 1, ((y - gridOriginY) / SPATIAL_INDEX_CELL_SIZE).floor()))
-
-@inline function cellAt(real x, real y) returns int
-	return cellCoordX(x) + cellCoordY(y) * gridWidth
+// Staleness
 
 /**	A-priori ticks needed to reach every unit. Observed age is unsafe after a large spawn because it
 	only covers entries already reached. Swap-removal refreshes entries moved behind the cursor, so
@@ -111,46 +135,19 @@ function currentMaxDisplacement() returns real
 
 // Membership
 
-function linkIntoCell(int idx, int cell, real x, real y)
-	let head = cellHead[cell]
-	prevInCell[idx] = 0
-	nextInCell[idx] = head
-	if head != 0
-		prevInCell[head] = idx
-	cellHead[cell] = idx
-	cellOfUnit[idx] = cell + 1
-	lastX[idx] = x
-	lastY[idx] = y
-
-function unlinkFromCell(int idx)
-	let stored = cellOfUnit[idx]
-	if stored == 0
-		return
-	let prev = prevInCell[idx]
-	let next = nextInCell[idx]
-	if prev != 0
-		nextInCell[prev] = next
-	else
-		cellHead[stored - 1] = next
-	if next != 0
-		prevInCell[next] = prev
-	cellOfUnit[idx] = 0
-	nextInCell[idx] = 0
-	prevInCell[idx] = 0
-
 function registerUnit(unit u)
-	if u == null or spatialIndexByUnit.get(u) != 0
+	// No group means no grid to join: queries would filter by an invalid group and match nothing, so
+	// registering would only build a registry that answers nothing.
+	if u == null or unitGroup < 0 or spatialIndexByUnit.get(u) != 0
 		return
 	// Private removal marker. OnUnitEnterLeave deliberately keeps its legacy rect-only population,
 	// while this registry also contains hidden and Locust units found by per-player enumeration.
 	u.trackSpatialRemoval()
-	var idx = nextSpatialIndex
-	if freeSpatialIndexCount > 0
-		freeSpatialIndexCount--
-		idx = freeSpatialIndex[freeSpatialIndexCount]
-		freeSpatialIndex[freeSpatialIndexCount] = 0
-	else
-		nextSpatialIndex++
+	let idx = spatialPartitionAllocateEntryId()
+	if idx == 0
+		// Id space exhausted; the partition has already reported it. Leaving the unit unindexed is
+		// the only honest outcome, and queries simply will not see it.
+		return
 	spatialIndexByUnit.put(u, idx)
 	indexedUnit[idx] = u
 	registry[registryCount] = idx
@@ -159,7 +156,9 @@ function registerUnit(unit u)
 	noteRegistryChange()
 	lastSweepTick[idx] = sweepTick
 	let pos = u.getPos()
-	linkIntoCell(idx, cellAt(pos.x, pos.y), pos.x, pos.y)
+	// Position first: joining a group links the entry at whatever position the partition holds.
+	spatialPartitionSetPos(idx, pos.x, pos.y)
+	spatialPartitionSetGroup(idx, unitGroup, true)
 
 function unregisterIndex(int idx)
 	let slot = registrySlot[idx]
@@ -177,13 +176,11 @@ function unregisterIndex(int idx)
 	registryCount = last
 	noteRegistryChange()
 	registrySlot[idx] = 0
-	unlinkFromCell(idx)
+	spatialPartitionRemove(idx)
 	indexedUnit[idx] = null
-	lastX[idx] = 0.
-	lastY[idx] = 0.
 	lastSweepTick[idx] = 0
-	freeSpatialIndex[freeSpatialIndexCount] = idx
-	freeSpatialIndexCount++
+	// Only after the removal: the partition refuses to recycle an id whose entry is still linked.
+	spatialPartitionReleaseEntryId(idx)
 
 	// Refresh an entry moved behind the cursor so the one-pass bound remains true.
 	if moved != 0 and slot - 1 < sweepCursor
@@ -209,17 +206,10 @@ public function unit.updateSpatialIndex()
 	refreshUnit(idx, this)
 
 function refreshUnit(int idx, unit u)
-	let x = u.getX()
-	let y = u.getY()
+	// Stamp the tick wherever a live position is read, or a query keeps padding this entry by a full
+	// sweep cycle despite its cache having just been made exact.
 	lastSweepTick[idx] = sweepTick
-	let cell = cellAt(x, y)
-	if cellOfUnit[idx] == cell + 1
-		// Same bucket - only the cached position needs updating.
-		lastX[idx] = x
-		lastY[idx] = y
-		return
-	unlinkFromCell(idx)
-	linkIntoCell(idx, cell, x, y)
+	spatialPartitionSetPos(idx, u.getX(), u.getY())
 
 // Sweep
 
@@ -280,45 +270,44 @@ public function spatialIndexObservedStaleness() returns real
 public function spatialIndexTrackedUnits() returns int
 	return registryCount
 
-/** Allocated cache slots; ID reuse keeps this at peak concurrent population. */
+/**	Allocated cache slots; ID reuse keeps this at peak concurrent population. Ids are shared across
+	partition consumers now, so this counts every entry id handed out, not only this layer's - which
+	is the right figure for the arrays here, since they are indexed by that same id. */
 public function spatialIndexAllocatedSlots() returns int
-	return nextSpatialIndex - 1
+	return spatialPartitionAllocatedEntryIds()
 
 /** Current query padding in whole cells, derived from guaranteed staleness. */
 public function spatialIndexPadCells() returns int
-	return (currentMaxDisplacement() / SPATIAL_INDEX_CELL_SIZE).ceil()
+	return (currentMaxDisplacement() / SPATIAL_PARTITION_CELL_SIZE).ceil()
 
-/** Rebuilds the extent and re-buckets all units. Unguarded so grid math remains testable on Jass. */
+/**	Rebuilds the extent and re-buckets all units. Unguarded so grid math remains testable on Jass.
+
+	The grid is shared, so this re-derives it for every partition consumer, not only for units: there
+	is one extent, and an entry linked under the old cell indices would be invisible to the new grid.
+	That is why the rebuild re-links everything rather than only this layer's entries. */
 public function rebuildSpatialIndexGrid(vec2 worldMin, vec2 worldMax)
-	for cell = 0 to gridWidth * gridHeight - 1
-		cellHead[cell] = 0
-	gridOriginX = worldMin.x
-	gridOriginY = worldMin.y
-	gridWidth = ((worldMax.x - worldMin.x) / SPATIAL_INDEX_CELL_SIZE).ceil() + 1
-	gridHeight = ((worldMax.y - worldMin.y) / SPATIAL_INDEX_CELL_SIZE).ceil() + 1
+	rebuildSpatialPartition(worldMin, worldMax)
+	// The shared rebuild re-links from cached positions, which is all it can do for entries whose
+	// staleness it knows nothing about. This layer knows: it can read its own units live. Doing so
+	// keeps what the public function did before the grid was shared - no unit left sitting in a cell
+	// it has already left - and stamps the tick, so queries treat the cache as exact afterwards.
+	// Other consumers keep their own cached entries, which the rebuild above has already re-linked.
 	for i = 0 to registryCount - 1
 		let idx = registry[i]
-		cellOfUnit[idx] = 0
-		nextInCell[idx] = 0
-		prevInCell[idx] = 0
 		let u = indexedUnit[idx]
 		if u != null
-			let pos = u.getPos()
-			// Stamp the tick wherever a live position is read, or the query would keep padding this
-			// entry by a full sweep cycle despite its cache having just been made exact.
-			lastSweepTick[idx] = sweepTick
-			linkIntoCell(idx, cellAt(pos.x, pos.y), pos.x, pos.y)
+			refreshUnit(idx, u)
 
 /** Internal-grid cell for tests and diagnostics. */
 public function spatialIndexCellOf(vec2 pos) returns int
-	return cellAt(pos.x, pos.y)
+	return spatialPartitionCellOf(pos)
 
 /** Grid dimensions in cells, for tests and diagnostics. */
 public function spatialIndexGridWidth() returns int
-	return gridWidth
+	return spatialPartitionGridWidth()
 
 public function spatialIndexGridHeight() returns int
-	return gridHeight
+	return spatialPartitionGridHeight()
 
 // Queries
 
@@ -326,10 +315,24 @@ public function spatialIndexGridHeight() returns int
 	snapshotStack[snapshotTop] = u
 	snapshotTop++
 
+/*	One expression, for the same reason as the partition's result accessors: this is tested once per
+	match, and an inlined early return is carried through the rest of the caller's loop as a flag.
+	`and` still short-circuits, so a Locust unit costs the one native it did before. */
 @inline function unit.passesEnumerationState() returns boolean
-	if this.getAbilityLevel(LOCUST_ID) != 0
-		return false
-	return not SPATIAL_INDEX_CHECK_HIDDEN or not this.isHidden()
+	return this.getAbilityLevel(LOCUST_ID) == 0
+		and (not SPATIAL_INDEX_CHECK_HIDDEN or not this.isHidden())
+
+/**	Reads an entry's live position, caches it and stamps the tick, so a later query in the same frame
+	decides it from the cache instead of paying the two natives again.
+
+	Safe to relink from here, unlike the position write-back this replaces: the partition has finished
+	its walk and handed back a snapshot of ids, so moving an entry to another cell can no longer cause
+	it to be visited twice in the query that is reading it. */
+function cacheLivePosition(int idx, unit u) returns vec2
+	let live = u.getPos()
+	spatialPartitionSetPos(idx, live.x, live.y)
+	lastSweepTick[idx] = sweepTick
+	return live
 
 /**	Collects every unit whose origin lies within `radius` of `center` into the query snapshot and
 	returns how many matched. Must be paired with `spatialIndexEndQuery()`.
@@ -341,83 +344,48 @@ public function spatialIndexBeginQuery(vec2 center, real radius, boolean collisi
 	queryDepth++
 
 	let tickDisp = tickDisplacement()
-	let maxDisp = tickDisp * displacementBoundTicks
 	// The engine test for the collision variant reaches an extra collision radius outward, so the
 	// window has to widen by the largest collision size any unit can have.
-	let reach = radius + (collisionSizeFiltering ? MAX_COLLISION_SIZE : 0.) + maxDisp
-	let minCx = cellCoordX(center.x - reach)
-	let maxCx = cellCoordX(center.x + reach)
-	let minCy = cellCoordY(center.y - reach)
-	let maxCy = cellCoordY(center.y + reach)
-
-	let certainlyIn = radius - maxDisp
-	let certainlyOut = radius + maxDisp
-	let certainlyInSq = certainlyIn * certainlyIn
-	let certainlyOutSq = certainlyOut * certainlyOut
+	let reach = radius + (collisionSizeFiltering ? MAX_COLLISION_SIZE : 0.)
+	let matched = spatialPartitionBeginRangeQuery(center, reach,
+		tickDisp * displacementBoundTicks, unitGroup)
 	let radiusSq = radius * radius
 
-	var cy = minCy
-	while cy <= maxCy
-		let rowBase = cy * gridWidth
-		var cx = minCx
-		while cx <= maxCx
-			var idx = cellHead[rowBase + cx]
-			while idx != 0
-				// Read the successor first: the visitor cannot run yet, but a defensive read keeps
-				// this loop correct if the chain is ever mutated during collection.
-				let next = nextInCell[idx]
-				let dx = lastX[idx] - center.x
-				let dy = lastY[idx] - center.y
+	for i = 0 to matched - 1
+		let idx = spatialPartitionQueryId(i)
+		let u = indexedUnit[idx]
+		if u != null
+			if collisionSizeFiltering
+				// Per-unit collision size makes the "definitely inside" half unusable, so every
+				// survivor of the window goes through the engine test.
+				if IsUnitInRangeXY(u, center.x, center.y, radius) and u.passesEnumerationState()
+					pushMatch(u)
+			else if not spatialPartitionQueryUncertain(i)
+				if u.passesEnumerationState()
+					pushMatch(u)
+			else
+				// The partition padded by the worst staleness anywhere in the registry. This entry can
+				// be far fresher than that - the sweep, a move event, or an earlier query in the same
+				// frame may have written it - so re-decide under the padding it actually needs. Inside
+				// the inner band it matches, outside the outer one it does not, and only what is left
+				// between them costs a live read.
+				let dx = spatialPartitionEntryX(idx) - center.x
+				let dy = spatialPartitionEntryY(idx) - center.y
 				let cachedDistSq = dx * dx + dy * dy
-				if collisionSizeFiltering
-					// Per-unit collision size makes the "definitely inside" half unusable, but the
-					// cheap outside rejection still removes most of the padded window for free.
-					if cachedDistSq <= (certainlyOut + MAX_COLLISION_SIZE) * (certainlyOut + MAX_COLLISION_SIZE)
-						let u = indexedUnit[idx]
-						if u != null and IsUnitInRangeXY(u, center.x, center.y, radius)
-							and u.passesEnumerationState()
-							pushMatch(u)
-				else if certainlyIn > 0. and cachedDistSq <= certainlyInSq
-					let u = indexedUnit[idx]
-					if u != null and u.passesEnumerationState()
+				let entryDisp = tickDisp * (sweepTick - lastSweepTick[idx] + 1)
+				let entryIn = radius - entryDisp
+				let entryOut = radius + entryDisp
+				if entryIn > 0. and cachedDistSq <= entryIn * entryIn
+					if u.passesEnumerationState()
 						pushMatch(u)
-				else if cachedDistSq <= certainlyOutSq
-					// The bands above pad by the worst staleness anywhere in the registry. This entry can
-					// be far fresher than that - the sweep, a move event, or an earlier query in the same
-					// frame may have written it - so re-test against the padding it actually needs. Inside
-					// the inner band it matches, outside the outer one it does not, and only what is left
-					// between them costs two natives.
-					let entryDisp = tickDisp * (sweepTick - lastSweepTick[idx] + 1)
-					let entryIn = radius - entryDisp
-					let entryOut = radius + entryDisp
-					if entryIn > 0. and cachedDistSq <= entryIn * entryIn
-						let u = indexedUnit[idx]
-						if u != null and u.passesEnumerationState()
-							pushMatch(u)
-					else if cachedDistSq <= entryOut * entryOut
-						// Only this narrowed annulus needs a live position read.
-						let u = indexedUnit[idx]
-						if u != null
-							let liveX = u.getX()
-							let liveY = u.getY()
-							// The live read was paid for anyway, so keep it and stamp the tick: a later query
-							// in this frame then sees age 0, and its annulus is one tick of movement wide
-							// rather than a whole sweep cycle, so it decides this unit from the cache.
-							// Only while the unit is still in its linked cell, though. Relinking here could
-							// move it into a cell this walk has not reached yet, and it would be visited and
-							// pushed a second time.
-							if cellOfUnit[idx] == cellAt(liveX, liveY) + 1
-								lastX[idx] = liveX
-								lastY[idx] = liveY
-								lastSweepTick[idx] = sweepTick
-							let ux = liveX - center.x
-							let uy = liveY - center.y
-							if ux * ux + uy * uy <= radiusSq and u.passesEnumerationState()
-								pushMatch(u)
-				idx = next
-			cx++
-		cy++
+				else if cachedDistSq <= entryOut * entryOut
+					let live = cacheLivePosition(idx, u)
+					let ux = live.x - center.x
+					let uy = live.y - center.y
+					if ux * ux + uy * uy <= radiusSq and u.passesEnumerationState()
+						pushMatch(u)
 
+	spatialPartitionEndQuery()
 	return snapshotTop - queryBase[queryDepth - 1]
 
 /** Collects units inside the box into the query snapshot. */
@@ -425,49 +393,35 @@ public function spatialIndexBeginBoxQuery(vec2 boxMin, vec2 boxMax) returns int
 	queryBase[queryDepth] = snapshotTop
 	queryDepth++
 
-	let maxDisp = currentMaxDisplacement()
-	let minX = boxMin.x
-	let minY = boxMin.y
-	let maxX = boxMax.x
-	let maxY = boxMax.y
+	let tickDisp = tickDisplacement()
+	let matched = spatialPartitionBeginBoxQuery(boxMin, boxMax,
+		tickDisp * displacementBoundTicks, unitGroup)
 
-	let minCx = cellCoordX(minX - maxDisp)
-	let maxCx = cellCoordX(maxX + maxDisp)
-	let minCy = cellCoordY(minY - maxDisp)
-	let maxCy = cellCoordY(maxY + maxDisp)
+	for i = 0 to matched - 1
+		let idx = spatialPartitionQueryId(i)
+		let u = indexedUnit[idx]
+		if u != null
+			if not spatialPartitionQueryUncertain(i)
+				if u.passesEnumerationState()
+					pushMatch(u)
+			else
+				// Same per-entry narrowing as the range query, per axis.
+				let px = spatialPartitionEntryX(idx)
+				let py = spatialPartitionEntryY(idx)
+				let entryDisp = tickDisp * (sweepTick - lastSweepTick[idx] + 1)
+				if px >= boxMin.x + entryDisp and px <= boxMax.x - entryDisp
+					and py >= boxMin.y + entryDisp and py <= boxMax.y - entryDisp
+					if u.passesEnumerationState()
+						pushMatch(u)
+				else if px >= boxMin.x - entryDisp and px <= boxMax.x + entryDisp
+					and py >= boxMin.y - entryDisp and py <= boxMax.y + entryDisp
+					let live = cacheLivePosition(idx, u)
+					if live.x >= boxMin.x and live.x <= boxMax.x
+						and live.y >= boxMin.y and live.y <= boxMax.y
+						and u.passesEnumerationState()
+						pushMatch(u)
 
-	var cy = minCy
-	while cy <= maxCy
-		let rowBase = cy * gridWidth
-		var cx = minCx
-		while cx <= maxCx
-			var idx = cellHead[rowBase + cx]
-			while idx != 0
-				let next = nextInCell[idx]
-				let px = lastX[idx]
-				let py = lastY[idx]
-				// Three-way split, exactly as in the circular query: the cached position decides
-				// unless it sits within maxDisp of a boundary, in which case read the live one.
-				let certainlyOut = px < minX - maxDisp or px > maxX + maxDisp
-					or py < minY - maxDisp or py > maxY + maxDisp
-				if not certainlyOut
-					let certainlyIn = px >= minX + maxDisp and px <= maxX - maxDisp
-						and py >= minY + maxDisp and py <= maxY - maxDisp
-					let u = indexedUnit[idx]
-					if u != null
-						if certainlyIn
-							if u.passesEnumerationState()
-								pushMatch(u)
-						else
-							let ux = u.getX()
-							let uy = u.getY()
-							if ux >= minX and ux <= maxX and uy >= minY and uy <= maxY
-								and u.passesEnumerationState()
-								pushMatch(u)
-				idx = next
-			cx++
-		cy++
-
+	spatialPartitionEndQuery()
 	return snapshotTop - queryBase[queryDepth - 1]
 
 /** Collects currently indexed units owned by owner without a native group scan.
@@ -512,7 +466,18 @@ init
 	// Written as a positive guard rather than an early return: `isLua` is folded, so on the Jass
 	// target the whole body disappears and this package registers nothing at all.
 	if isLua and USE_UNIT_SPATIAL_INDEX
+		if SPATIAL_INDEX_CELL_SIZE != SPATIAL_PARTITION_CELL_SIZE
+			error("UnitSpatialIndex: SPATIAL_INDEX_CELL_SIZE is deprecated and no longer in effect."
+				+ " The grid is shared, so set SPATIAL_PARTITION_CELL_SIZE to "
+				+ SPATIAL_INDEX_CELL_SIZE.toString() + " instead.")
+		ensureUnitGroup()
+	// Everything init depends on has to have worked. A group is what a query filters by, and the grid
+	// is what it walks; without either, every query matches nothing, and activating would leave
+	// spatialIndexHealthy claiming an index that answers every question with an empty set - which is
+	// the failure where a map silently loses its range checks instead of falling back to natives.
+	if isLua and USE_UNIT_SPATIAL_INDEX and unitGroup >= 0
 		rebuildSpatialIndexGrid(boundMin, boundMax)
+	if isLua and USE_UNIT_SPATIAL_INDEX and unitGroup >= 0 and spatialPartitionIsReady()
 		onSpatialUnitRemove(() -> unregisterUnit(getSpatialRemovingUnit()))
 		initializeSpatialRemovalTracking()
 
@@ -534,3 +499,221 @@ init
 
 		doPeriodically(SPATIAL_INDEX_SWEEP_PERIOD) cb ->
 			sweepStep()
+
+// Tests
+//
+/*	These live in the implementation package on purpose. The index gates itself off the Jass target
+	with `isLua`, which the compiletime interpreter reports as false, so its init never wires the
+	events and nothing would ever register. Relaxing that guard is not worth it: `isLua` is folded,
+	which is what makes the whole package disappear on Jass. Driving registration and the sweep from
+	in here instead gives real coverage of everything above the grid, because the interpreter does
+	model units properly - they have positions, owners and visibility.
+	Behaviour in a running map is still asserted by StdlibIngameTests. */
+
+function testArena()
+	ensureUnitGroup()
+	// Release this layer's ids properly, then drop whatever another package left in the shared grid,
+	// so a test's result never depends on which test ran before it.
+	while registryCount > 0
+		unregisterIndex(registry[registryCount - 1])
+	spatialPartitionClear()
+	sweepTick = 0
+	sweepCursor = 0
+	cycleWorstAge = 0
+	publishedWorstAge = 1
+	displacementBoundTicks = 1
+	cycleMembershipStable = true
+	rebuildSpatialIndexGrid(vec2(-4096., -4096.), vec2(4096., 4096.))
+
+function addUnitAt(vec2 pos) returns unit
+	let u = createUnit(Player(0), 'hfoo', pos, 0 .fromDeg())
+	registerUnit(u)
+	return u
+
+/** Re-reads a unit's live position, as `unit.updateSpatialIndex` does on Lua. */
+function notifyMoved(unit u)
+	refreshUnit(spatialIndexByUnit.get(u), u)
+
+function rangeCount(vec2 center, real radius) returns int
+	let n = spatialIndexBeginQuery(center, radius, false)
+	spatialIndexEndQuery()
+	return n
+
+function rangeHas(vec2 center, real radius, unit target) returns boolean
+	let n = spatialIndexBeginQuery(center, radius, false)
+	var found = false
+	for i = 0 to n - 1
+		if spatialIndexQueryUnit(i) == target
+			found = true
+	spatialIndexEndQuery()
+	return found
+
+@Test function rangeQueryReturnsWhatIsInsideAndNothingElse()
+	testArena()
+	let near = addUnitAt(vec2(100., 0.))
+	let far = addUnitAt(vec2(3000., 0.))
+	rangeHas(vec2(0., 0.), 300., near).assertTrue()
+	rangeHas(vec2(0., 0.), 300., far).assertFalse()
+	rangeCount(vec2(0., 0.), 300.).assertEquals(1)
+	// A radius that reaches both finds both.
+	rangeCount(vec2(0., 0.), 3200.).assertEquals(2)
+
+@Test function radiusIsMeasuredFromTheUnitOrigin()
+	testArena()
+	let u = addUnitAt(vec2(500., 0.))
+	// Just inside and just outside, with no staleness to blur the boundary.
+	rangeHas(vec2(0., 0.), 501., u).assertTrue()
+	rangeHas(vec2(0., 0.), 499., u).assertFalse()
+
+@Test function aUnitThatMovedWithoutNotifyingIsStillFound()
+	testArena()
+	let u = addUnitAt(vec2(0., 0.))
+	// Engine-side movement the index cannot observe. Padding is what makes this safe: the unit is
+	// still returned from its stale cache entry rather than silently disappearing.
+	u.setXY(vec2(60., 0.))
+	rangeHas(vec2(0., 0.), 100., u).assertTrue()
+
+@Test function notifyingAMoveRelocatesTheUnit()
+	testArena()
+	let u = addUnitAt(vec2(0., 0.))
+	u.setXY(vec2(2000., 2000.))
+	notifyMoved(u)
+	rangeHas(vec2(0., 0.), 200., u).assertFalse()
+	rangeHas(vec2(2000., 2000.), 200., u).assertTrue()
+
+@Test function theSweepPicksUpMovementOnItsOwn()
+	testArena()
+	let u = addUnitAt(vec2(0., 0.))
+	u.setXY(vec2(2500., 0.))
+	// One tick is enough for a single unit: the cycle covers the whole registry per tick here.
+	sweepStep()
+	rangeHas(vec2(2500., 0.), 100., u).assertTrue()
+
+@Test function removedUnitsLeaveTheIndex()
+	testArena()
+	let u = addUnitAt(vec2(0., 0.))
+	spatialIndexTrackedUnits().assertEquals(1)
+	unregisterUnit(u)
+	spatialIndexTrackedUnits().assertEquals(0)
+	rangeCount(vec2(0., 0.), 500.).assertEquals(0)
+
+@Test function locustUnitsAreNotEnumeratedByRangeQueries()
+	testArena()
+	let plain = addUnitAt(vec2(0., 0.))
+	let locust = addUnitAt(vec2(10., 0.))
+	locust.addAbility(LOCUST_ID)
+	rangeHas(vec2(0., 0.), 200., plain).assertTrue()
+	// Matches what the engine range enumeration does, which is to skip them.
+	rangeHas(vec2(0., 0.), 200., locust).assertFalse()
+
+@Test function hiddenUnitsAreNotEnumeratedByRangeQueries()
+	testArena()
+	let u = addUnitAt(vec2(0., 0.))
+	u.hide()
+	rangeHas(vec2(0., 0.), 200., u).assertFalse()
+	u.show()
+	rangeHas(vec2(0., 0.), 200., u).assertTrue()
+
+@Test function playerQueryDeliberatelyIncludesHiddenAndLocustUnits()
+	testArena()
+	let hidden = addUnitAt(vec2(0., 0.))
+	hidden.hide()
+	let locust = addUnitAt(vec2(50., 0.))
+	locust.addAbility(LOCUST_ID)
+	// GroupEnumUnitsOfPlayer returns both, so this query does too.
+	let n = spatialIndexBeginPlayerQuery(Player(0))
+	spatialIndexEndQuery()
+	n.assertEquals(2)
+
+@Test function playerQueryIsScopedToTheOwner()
+	testArena()
+	addUnitAt(vec2(0., 0.))
+	let other = createUnit(Player(1), 'hfoo', vec2(100., 0.), 0 .fromDeg())
+	registerUnit(other)
+	let mine = spatialIndexBeginPlayerQuery(Player(0))
+	spatialIndexEndQuery()
+	mine.assertEquals(1)
+	let theirs = spatialIndexBeginPlayerQuery(Player(1))
+	spatialIndexEndQuery()
+	theirs.assertEquals(1)
+
+@Test function boxQueryReturnsWhatTheBoxContains()
+	testArena()
+	let inside = addUnitAt(vec2(100., 100.))
+	let outside = addUnitAt(vec2(900., 100.))
+	let n = spatialIndexBeginBoxQuery(vec2(0., 0.), vec2(500., 500.))
+	var sawInside = false
+	var sawOutside = false
+	for i = 0 to n - 1
+		let u = spatialIndexQueryUnit(i)
+		if u == inside
+			sawInside = true
+		if u == outside
+			sawOutside = true
+	spatialIndexEndQuery()
+	sawInside.assertTrue()
+	sawOutside.assertFalse()
+
+@Test function nestedQueriesKeepTheirOwnResults()
+	testArena()
+	addUnitAt(vec2(0., 0.))
+	addUnitAt(vec2(2000., 0.))
+	let outer = spatialIndexBeginQuery(vec2(0., 0.), 3000., false)
+	outer.assertEquals(2)
+	let inner = spatialIndexBeginQuery(vec2(2000., 0.), 100., false)
+	inner.assertEquals(1)
+	assertTrue(spatialIndexQueryUnit(0) != null)
+	spatialIndexEndQuery()
+	// The outer query's segment must survive the inner one closing.
+	assertTrue(spatialIndexQueryUnit(0) != null)
+	assertTrue(spatialIndexQueryUnit(1) != null)
+	spatialIndexEndQuery()
+
+@Test function collisionFilteringStillFindsUnitsWellInsideTheRadius()
+	testArena()
+	addUnitAt(vec2(0., 0.))
+	// Origin-only and body-aware must agree for a unit sitting on the query point; the collision
+	// variant may only ever be the more generous of the two.
+	let strict = spatialIndexBeginQuery(vec2(0., 0.), 100., false)
+	spatialIndexEndQuery()
+	strict.assertEquals(1)
+	let lenient = spatialIndexBeginQuery(vec2(0., 0.), 100., true)
+	spatialIndexEndQuery()
+	assertTrue(lenient >= strict)
+
+// Budget gates
+//
+/*	These assert work done, not wall time, so they mean the same thing on every machine. Both counters
+	come from the partition and describe the last query only. */
+
+@Test function aLargeRadiusOverEmptySpaceSkipsCoarseBlocks()
+	testArena()
+	addUnitAt(vec2(0., 0.))
+	// A radius this wide spans many blocks, and all but the one holding the unit are empty.
+	rangeCount(vec2(0., 0.), 3000.).assertEquals(1)
+	assertTrue(spatialPartitionLastQueryBlocksSkipped() > 0)
+	// One occupied cell means one visited entry, however much empty space the radius covers.
+	spatialPartitionLastQueryVisits().assertEquals(1)
+
+@Test function aSmallQueryDoesNotWalkTheWholePopulation()
+	testArena()
+	// A spread-out population, then a query that wants a small part of it.
+	for i = 0 to 119
+		addUnitAt(vec2(-3500. + i * 60., 1000. + (i mod 7) * 300.))
+	spatialIndexTrackedUnits().assertEquals(120)
+	assertTrue(rangeCount(vec2(-3500., 1000.), 200.) > 0)
+	// The point of the grid: cost tracks the neighbourhood, not the registry. The bound is generous,
+	// so this fails on a broadphase that stopped rejecting rather than on ordinary tuning. Blocks
+	// skipped is deliberately not asserted here - this window fits inside one coarse block, so there
+	// is nothing for it to skip. That is what the large-radius gate above is for.
+	assertTrue(spatialPartitionLastQueryVisits() < 30)
+	assertTrue(spatialPartitionLastQueryVisits() * 4 < spatialIndexTrackedUnits())
+
+@Test function aQueryCoveringEverythingVisitsEachEntryExactlyOnce()
+	testArena()
+	for i = 0 to 49
+		addUnitAt(vec2(-2000. + i * 80., 0.))
+	rangeCount(vec2(0., 0.), 8000.).assertEquals(50)
+	// A double visit would mean the walk re-entered a chain, which is how a relink during a query
+	// would show up.
+	spatialPartitionLastQueryVisits().assertEquals(50)

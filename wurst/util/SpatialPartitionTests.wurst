@@ -4,8 +4,10 @@ import SpatialPartition
 /*	The core is plain integer ids, so everything about it is testable directly: no units, no engine, no
 	backend. That is itself part of the point of extracting it. */
 
-constant ALL = 0
-constant SUBSET = 1
+// Allocated, not hardcoded: a group says what a query filters by, so two consumers picking the
+// same number would each see the other entries come back. This is the contract consumers follow.
+let ALL = spatialPartitionAllocateGroup()
+let SUBSET = spatialPartitionAllocateGroup()
 
 function arena()
 	// Each test starts from an empty partition; otherwise one test's entries answer another's queries.
@@ -357,3 +359,66 @@ function countIn(vec2 center, real radius, real maxDisplacement, int groupId) re
 	let ok = spatialPartitionRequiredCellSlots(vec2(-4096., -4096.), vec2(4096., 4096.))
 	ok.assertEquals(33 * 33 * SPATIAL_PARTITION_MAX_GROUPS)
 	spatialPartitionExtentFits(vec2(-4096., -4096.), vec2(4096., 4096.)).assertTrue()
+
+@Test function entryIdsComeFromOneAllocatorAndAreRecycled()
+	arena()
+	// Everything the partition stores is keyed by the id alone - position, group links, registry
+	// slot - so two consumers allocating independently must never be handed the same row. Groups
+	// separate what a query sees, not what an id addresses.
+	let first = spatialPartitionAllocateEntryId()
+	let second = spatialPartitionAllocateEntryId()
+	first.assertGreaterThan(0)
+	(first != second).assertTrue()
+
+	// The two rows stay independent even when both are placed and grouped.
+	place(first, vec2(0., 0.), ALL)
+	place(second, vec2(2000., 2000.), ALL)
+	spatialPartitionEntryX(first).assertEquals(0.)
+	spatialPartitionEntryX(second).assertEquals(2000.)
+	countIn(vec2(0., 0.), 100., 0., ALL).assertEquals(1)
+
+	// A released id comes back, so a long-running map reuses rows instead of growing forever.
+	spatialPartitionRemove(first)
+	spatialPartitionReleaseEntryId(first)
+	spatialPartitionAllocateEntryId().assertEquals(first)
+
+
+@Test function theAllocatorNeverHandsOutARowTakenDirectly()
+	arena()
+	// Addressing a row by an id the consumer chose itself is still allowed, so the allocator has to
+	// work around those rather than assume it is the only way in. Pick one well ahead of wherever
+	// the allocator currently is, so draining past it is what actually proves the skip.
+	let taken = spatialPartitionAllocatedEntryIds() + 5
+	place(taken, vec2(0., 0.), ALL)
+	spatialPartitionEntryIdIsReserved(taken).assertTrue()
+	for i = 1 to 8
+		assertTrue(spatialPartitionAllocateEntryId() != taken)
+	// And the row still belongs to whoever took it.
+	spatialPartitionEntryX(taken).assertEquals(0.)
+	countIn(vec2(0., 0.), 50., 0., ALL).assertEquals(1)
+
+@Test function groupsAreClaimedByBeingUsedAsWellAsByBeingAllocated()
+	arena()
+	place(1, vec2(0., 0.), ALL)
+	// A group used directly is claimed too, or the allocator would hand it to a second consumer and
+	// both would see each other entries in their query results.
+	spatialPartitionGroupIsReserved(ALL).assertTrue()
+	let fresh = spatialPartitionAllocateGroup()
+	assertTrue(fresh != ALL and fresh != SUBSET)
+
+@Test function aQueuedIdClaimedBeforeReuseIsNotHandedOutAgain()
+	arena()
+	// The free list is a list of candidates, not of guarantees: an id can be claimed after it was
+	// queued. Allocate one, give it back, then have a consumer take that very row directly.
+	let recycled = spatialPartitionAllocateEntryId()
+	spatialPartitionReleaseEntryId(recycled)
+	spatialPartitionEntryIdIsReserved(recycled).assertFalse()
+	place(recycled, vec2(0., 0.), ALL)
+	spatialPartitionEntryIdIsReserved(recycled).assertTrue()
+	// It is queued and claimed at the same time, so popping it would hand a live row to a second
+	// consumer. Draining is what exposes that: the queued copy is at the front.
+	for i = 1 to 4
+		assertTrue(spatialPartitionAllocateEntryId() != recycled)
+	// The row still belongs to whoever took it.
+	spatialPartitionEntryX(recycled).assertEquals(0.)
+	countIn(vec2(0., 0.), 50., 0., ALL).assertEquals(1)
