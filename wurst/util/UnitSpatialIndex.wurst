@@ -253,7 +253,11 @@ public function spatialIndexAllocatedSlots() returns int
 public function spatialIndexPadCells() returns int
 	return (currentMaxDisplacement() / SPATIAL_PARTITION_CELL_SIZE).ceil()
 
-/** Rebuilds the extent and re-buckets all units. Unguarded so grid math remains testable on Jass. */
+/**	Rebuilds the extent and re-buckets all units. Unguarded so grid math remains testable on Jass.
+
+	The grid is shared, so this re-derives it for every partition consumer, not only for units: there
+	is one extent, and an entry linked under the old cell indices would be invisible to the new grid.
+	That is why the rebuild re-links everything rather than only this layer's entries. */
 public function rebuildSpatialIndexGrid(vec2 worldMin, vec2 worldMax)
 	rebuildSpatialPartition(worldMin, worldMax)
 

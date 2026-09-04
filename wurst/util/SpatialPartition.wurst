@@ -401,7 +401,10 @@ public function spatialPartitionRemove(int id)
 public function spatialPartitionEntryCount() returns int
 	return registryCount
 
-/** Drops every entry and every group link. */
+/**	Drops every entry and every group link, across every consumer - the partition has one population,
+	not one per group. A layer that wants to drop only its own entries removes them by id; there is no
+	way to ask for that here, because groups say what a query sees, not who owns a row. Ids are not
+	returned to the allocator either, so a consumer that clears must release the ones it held. */
 public function spatialPartitionClear()
 	while registryCount > 0
 		spatialPartitionRemove(registryIds[registryCount - 1])
