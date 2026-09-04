@@ -12,7 +12,13 @@ package UnitSpatialIndex
 	package returns an empty set when this index is disabled.
 
 	Cell geometry now belongs to the partition, so `SPATIAL_PARTITION_CELL_SIZE` is the knob that used
-	to be `SPATIAL_INDEX_CELL_SIZE`. */
+	to be `SPATIAL_INDEX_CELL_SIZE`.
+
+	This package is over the ~500 line guideline on purpose. The tests at the bottom account for the
+	excess and cannot move out: the index gates itself off with `isLua`, which the compiletime
+	interpreter reports as false, so nothing registers there unless registration and the sweep are
+	driven directly, and exporting those to a test package would put four internals into the public
+	contract of a package maps depend on. Coverage and the contract both won; the line count lost. */
 import OnUnitEnterLeave
 import MapBounds
 import ClosureTimers

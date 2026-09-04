@@ -30,6 +30,12 @@ package SpatialPartition
 	arrays are fixed at `JASS_MAX_ARRAY_SIZE`. Those ceilings are derived together rather than guarded
 	one array at a time - see the capacity section - so nothing is written where it cannot be found
 	again.
+
+	This package is over the ~500 line guideline on purpose. The obvious split by responsibility is
+	grid and membership from queries, but the queries read `cellHead`, `nextInCell`, `entryX` and
+	`coarseCount` directly, and Wurst has no way to share those across a package boundary without
+	exporting them. Splitting would trade the encapsulation of the arrays it owns, and the
+	flat-array access pattern the package exists for, against a line count.
 */
 import ErrorHandling
 
