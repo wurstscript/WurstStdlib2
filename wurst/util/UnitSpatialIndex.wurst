@@ -469,11 +469,13 @@ init
 				+ " The grid is shared, so set SPATIAL_PARTITION_CELL_SIZE to "
 				+ SPATIAL_INDEX_CELL_SIZE.toString() + " instead.")
 		ensureUnitGroup()
-	// A group is what a query filters by, so without one every query would match nothing. Staying
-	// inactive says that honestly; activating would leave spatialIndexHealthy claiming an index that
-	// answers every question with an empty set.
+	// Everything init depends on has to have worked. A group is what a query filters by, and the grid
+	// is what it walks; without either, every query matches nothing, and activating would leave
+	// spatialIndexHealthy claiming an index that answers every question with an empty set - which is
+	// the failure where a map silently loses its range checks instead of falling back to natives.
 	if isLua and USE_UNIT_SPATIAL_INDEX and unitGroup >= 0
 		rebuildSpatialIndexGrid(boundMin, boundMax)
+	if isLua and USE_UNIT_SPATIAL_INDEX and unitGroup >= 0 and spatialPartitionIsReady()
 		onSpatialUnitRemove(() -> unregisterUnit(getSpatialRemovingUnit()))
 		initializeSpatialRemovalTracking()
 

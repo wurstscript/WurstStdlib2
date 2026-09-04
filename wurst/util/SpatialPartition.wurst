@@ -248,6 +248,8 @@ var freeEntryIdCount = 0
 	next two allocations hand the same row to two consumers, which is the exact failure the allocator
 	exists to prevent. This is the single record of what is outstanding. */
 boolean array entryIdReserved
+/** Highest id in use, tracked wherever one becomes live so it covers directly-taken rows too. */
+var highestEntryId = 0
 
 /**	Reserves an entry id no other consumer will be handed. Release it with
 	`spatialPartitionReleaseEntryId` after removing the entry, or ids are never reused. Answers 0 when
@@ -263,6 +265,7 @@ public function spatialPartitionAllocateEntryId() returns int
 		freeEntryIds[freeEntryIdCount] = 0
 		if not entryIdReserved[recycled]
 			entryIdReserved[recycled] = true
+			highestEntryId = max(highestEntryId, recycled)
 			return recycled
 	// Same rule for a fresh id: step over rows a consumer took directly. Addressing a row by a known
 	// id is legitimate, so the allocator works around those instead of pretending it is the only way
@@ -276,6 +279,7 @@ public function spatialPartitionAllocateEntryId() returns int
 	let fresh = nextEntryId
 	nextEntryId++
 	entryIdReserved[fresh] = true
+	highestEntryId = max(highestEntryId, fresh)
 	return fresh
 
 /** Whether an id is currently handed out to some consumer. */
@@ -300,9 +304,12 @@ public function spatialPartitionReleaseEntryId(int id)
 	freeEntryIds[freeEntryIdCount] = id
 	freeEntryIdCount++
 
-/** Ids handed out across every consumer. Reuse keeps this at peak concurrent population. */
+/**	Highest id in use across every consumer, which is what the arrays keyed by an id are sized to.
+	Not the fresh-allocation cursor: a high row taken directly and later recycled is handed out again
+	from the free list without the cursor ever reaching it, so the cursor can read far below the rows
+	that are actually live. */
 public function spatialPartitionAllocatedEntryIds() returns int
-	return nextEntryId - 1
+	return highestEntryId
 
 /*	Groups have the same problem as ids, one level up: a group is what a query filters by, so two
 	consumers that both picked group 0 would each see the other's entries come back and would have no
@@ -403,6 +410,7 @@ public function spatialPartitionSetPos(int id, real x, real y)
 		// rather than asking the allocator, and that is fine - but the allocator must then never
 		// hand the same row to somebody else, so the two ways in share one record of what is taken.
 		entryIdReserved[id] = true
+		highestEntryId = max(highestEntryId, id)
 	let cell = cellAt(x, y)
 	for groupId = 0 to groupsInUse - 1
 		let slot = groupSlot(id, groupId)
