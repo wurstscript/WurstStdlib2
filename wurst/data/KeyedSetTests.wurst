@@ -1,6 +1,6 @@
-package SetTests
+package KeyedSetTests
 
-import Set
+import KeyedSet
 
 class Marker
 	int id
@@ -10,7 +10,7 @@ class Marker
 
 @Test
 function testAddAndMembership()
-	let set = new Set<int>()
+	let set = new KeyedSet<int>()
 	set.contains(4).assertFalse()
 	set.add(4).assertTrue()
 	set.add(9).assertTrue()
@@ -22,7 +22,7 @@ function testAddAndMembership()
 
 @Test
 function testAddIsIdempotent()
-	let set = new Set<int>()
+	let set = new KeyedSet<int>()
 	set.add(7).assertTrue()
 	set.add(7).assertFalse()
 	set.size().assertEquals(1)
@@ -31,7 +31,7 @@ function testAddIsIdempotent()
 
 @Test
 function testRemoval()
-	let set = new Set<int>()
+	let set = new KeyedSet<int>()
 	set.add(1)
 	set.add(2)
 	set.remove(1).assertTrue()
@@ -45,7 +45,7 @@ function testRemoval()
 
 @Test
 function testClear()
-	let set = new Set<int>()
+	let set = new KeyedSet<int>()
 	set.add(1)
 	set.add(2)
 	set.clear()
@@ -59,7 +59,7 @@ function testClear()
 /** Reference identity, which is what a group-style membership set wants. */
 @Test
 function testReferenceIdentity()
-	let set = new Set<Marker>()
+	let set = new KeyedSet<Marker>()
 	let a = new Marker(1)
 	let b = new Marker(1)
 	set.add(a).assertTrue()

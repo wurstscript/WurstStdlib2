@@ -1,0 +1,85 @@
+package KeyedSet
+import public ArrayList
+import KeyedTable
+
+/**
+A set with O(1) membership on Lua, for replacing a `group` used purely to answer "is this unit in
+here?".
+
+On Lua the elements are the keys of a native table, so `contains` is one hashed index and Lua does
+the hashing. That is why this uses new generics (`T:`): they are erased on Lua, so the element
+arrives as itself. The old `<T>` containers - `HashSet`, `HashList`, `HashMap` - erase to `int`
+instead, so every element round-trips through `castTo int` and back, and an integer index cannot be
+a native Lua key at all. Those types also reach the Jass hashtable natives, which the Jass-Lua shim
+emulates.
+
+Jass is a working fallback, not a fast one: it scans a dense list, so membership is O(n) there.
+That is deliberate - this type exists for Lua projects, and `isLua` picks the branch at compile
+time so neither backend carries the other's code.
+
+**There is no iteration.** Enumerating a Lua table needs `pairs()`, whose order follows internal
+hash layout and so differs between clients, which desyncs a lockstep game. If you need to iterate,
+keep your own `ArrayList` alongside, or use `SparseSet`, whose dense half exists for exactly that.
+*/
+public class KeyedSet<T:>
+	// Exactly one of these is live, chosen at compile time; dead-code elimination drops the other
+	// branch's code. They cannot share a slot: doing so would mean casting the list to `int`, and
+	// avoiding that cast is the whole reason this class exists.
+	/** Lua: the native table whose keys are the elements. */
+	private int keyTable = 0
+	/** Jass: the dense list that `contains` scans. */
+	private ArrayList<T> scanList = null
+	/** Tracked rather than measured - counting a Lua table would mean iterating it. */
+	private int count = 0
+
+	construct()
+		if isLua
+			keyTable = keyedTableCreate()
+		else
+			scanList = new ArrayList<T>()
+
+	/** Adds `value`. Returns whether it was newly inserted. */
+	function add(T value) returns boolean
+		if contains(value)
+			return false
+		if isLua
+			keyedTableAdd(keyTable, value)
+		else
+			scanList.add(value)
+		count += 1
+		return true
+
+	/** Whether `value` is present. */
+	function contains(T value) returns boolean
+		if isLua
+			return keyedTableContains(keyTable, value)
+		else
+			return scanList.has(value)
+
+	/** Removes `value`. Returns whether it was present. */
+	function remove(T value) returns boolean
+		if not contains(value)
+			return false
+		if isLua
+			keyedTableRemove(keyTable, value)
+		else
+			scanList.removeUnordered(value)
+		count -= 1
+		return true
+
+	function size() returns int
+		return count
+
+	function isEmpty() returns boolean
+		return count == 0
+
+	function clear()
+		if isLua
+			keyTable = keyedTableCreate()
+		else
+			scanList.clear()
+		count = 0
+
+	ondestroy
+		if not isLua
+			destroy scanList
