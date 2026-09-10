@@ -20,18 +20,22 @@ public interface SparseSetKey<T:>
  *
  * Removal swaps the last element into the removed element's slot, so dense
  * iteration order is not preserved.
+ *
+ * Membership currently uses Warcraft's hashtable-backed Table API. Wurst cannot yet express a
+ * per-instance native Lua table, so Lua callers that only need dense iteration should prefer an
+ * ArrayList. The initial-capacity constructor avoids dense-list growth when a set is required.
  */
-public class SparseSet<T:>
+public class SparseSet<T:> extends Table
     private readonly ArrayList<T> dense
-    private readonly ArrayList<int> denseKeys
-    private readonly Table sparse
     private readonly SparseSetKey<T> keyProvider
 
     construct(SparseSetKey<T> keyProvider)
         this.keyProvider = keyProvider
         dense = new ArrayList<T>()
-        denseKeys = new ArrayList<int>()
-        sparse = new Table()
+
+    construct(SparseSetKey<T> keyProvider, int initialCapacity)
+        this.keyProvider = keyProvider
+        dense = new ArrayList<T>(initialCapacity)
 
     /** Adds an element and returns whether it was newly inserted. */
     function add(T value) returns boolean
@@ -45,8 +49,7 @@ public class SparseSet<T:>
             removeAt(existingIndex)
 
         dense.add(value)
-        denseKeys.add(key)
-        sparse.saveInt(key, dense.size())
+        saveInt(key, dense.size())
         return true
 
     /** Adds every element from another set. */
@@ -60,7 +63,7 @@ public class SparseSet<T:>
 
     /** Returns whether the set contains an element under the given key. */
     function hasKey(int key) returns boolean
-        return sparse.hasInt(key)
+        return hasInt(key)
 
     /** Returns the dense index of an element, or -1 when it is absent. */
     function indexOf(T value) returns int
@@ -85,25 +88,30 @@ public class SparseSet<T:>
 
         let lastIndex = dense.size() - 1
         let removed = dense.get(index)
-        let removedKey = denseKeys.get(index)
+        let removedKey = keyProvider.getKey(removed)
 
         if index != lastIndex
             let moved = dense.get(lastIndex)
-            let movedKey = denseKeys.get(lastIndex)
+            let movedKey = keyProvider.getKey(moved)
             dense.set(index, moved)
-            denseKeys.set(index, movedKey)
-            sparse.saveInt(movedKey, index + 1)
+            saveInt(movedKey, index + 1)
 
         dense.removeAtUnordered(lastIndex)
-        denseKeys.removeAtUnordered(lastIndex)
-        sparse.removeInt(removedKey)
+        removeInt(removedKey)
         return removed
 
     /** Removes all elements while retaining the set object. */
     function clear()
         dense.clear()
-        denseKeys.clear()
-        sparse.flush()
+        flush()
+
+    /** Resets membership in O(1) collection work while retaining dense slot references.
+
+        Intended for hot scratch-set reuse. Use #clear when releasing the values for Lua GC
+        matters more than avoiding a dense traversal. */
+    function reset()
+        dense.reset()
+        flush()
 
     /** Returns the number of elements in the set. */
     function size() returns int
@@ -130,14 +138,12 @@ public class SparseSet<T:>
         return result
 
     private function indexForKey(int key) returns int
-        if not sparse.hasInt(key)
+        if not hasInt(key)
             return -1
-        return sparse.loadInt(key) - 1
+        return loadInt(key) - 1
 
     ondestroy
         destroy dense
-        destroy denseKeys
-        destroy sparse
 
 /**
  * Key provider for unit sets.

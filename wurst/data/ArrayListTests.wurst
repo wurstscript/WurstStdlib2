@@ -135,6 +135,18 @@ function testFilter()
     destroy filtered
 
 @Test
+function testResetRetainsCapacityAndReplacesLogicalContents()
+    let list = new ArrayList<int>(2)
+    list.add(1, 2)
+    list.reset()
+    list.size().assertEquals(0)
+    list.add(3, 4)
+    list.size().assertEquals(2)
+    list.get(0).assertEquals(3)
+    list.get(1).assertEquals(4)
+    destroy list
+
+@Test
 function testFoldl()
     let list = new ArrayList<int>()
     for i = 1 to 6

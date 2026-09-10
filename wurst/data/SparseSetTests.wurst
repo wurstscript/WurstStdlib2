@@ -114,3 +114,17 @@ function testSignedKeys()
     set.hasKey(-17).assertFalse()
 
     destroy set
+
+@Test
+function testResetDropsMembershipAndAllowsReuse()
+    let set = new SparseSet<int>(new IntSparseSetKey(), 2)
+    set.add(4)
+    set.add(9)
+    set.reset()
+
+    set.size().assertEquals(0)
+    set.has(4).assertFalse()
+    set.has(9).assertFalse()
+    set.add(12).assertTrue()
+    set.has(12).assertTrue()
+    destroy set

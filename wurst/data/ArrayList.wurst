@@ -115,6 +115,8 @@ public class ArrayList<T:>
     private int startIndex
     private int capacity
     private int size = 0
+    // Number of slots intentionally retained by reset(). They are released by clear()/destroy.
+    private int retainedSize = 0
 
     /** Creates a new empty list with default capacity (16) */
     construct()
@@ -272,7 +274,10 @@ public class ArrayList<T:>
 
     ondestroy
         // Clear references
-        for i = 0 to size - 1
+        var slotsToClear = size
+        if retainedSize > slotsToClear
+            slotsToClear = retainedSize
+        for i = 0 to slotsToClear - 1
             store[startIndex + i] = null
 
         // Return storage to free pool
@@ -429,8 +434,22 @@ public class ArrayList<T:>
         O(1) on Jass; O(n) on Lua, where the slots are nulled so the GC can reclaim them. */
     function clear()
         if isLua
-            for i = 0 to size - 1
+            var slotsToClear = size
+            if retainedSize > slotsToClear
+                slotsToClear = retainedSize
+            for i = 0 to slotsToClear - 1
                 store[startIndex + i] = null
+        size = 0
+        retainedSize = 0
+
+    /** Resets the logical size while retaining both capacity and old slot references (O(1)).
+
+        This is intended for hot scratch-list reuse, where subsequent writes replace the stale
+        slots and the caller accepts that values remain GC-reachable up to the list's historical
+        high-water mark. Use #clear when releasing those references matters. */
+    function reset()
+        if size > retainedSize
+            retainedSize = size
         size = 0
 
     /** Returns a shallow copy of this list */
