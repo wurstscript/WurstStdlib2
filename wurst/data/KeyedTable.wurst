@@ -1,0 +1,35 @@
+package KeyedTable
+
+/**
+Lua-native keyed membership: a table whose keys are the elements themselves.
+
+These four functions are compiler intrinsics. On Lua each one lowers to a single table
+operation - `{}`, `t[k] = true`, `t[k] ~= nil`, `t[k] = nil` - so membership costs one hashed
+index and Lua does the hashing. The key is a `T:` type parameter, which new generics erase on
+Lua rather than routing through `castTo int` the way the old `<T>` containers do, so the element
+itself is the key. That is what makes native hashing possible: an integer index would defeat it.
+
+**These are Lua-only.** Jass has no hashing, so there is no sensible fallback at this level -
+guard every call with `isLua` and provide a Jass path yourself. `Set` does exactly that, and is
+what you should normally use.
+*/
+
+constant LUA_ONLY = "KeyedTable is Lua-only. Guard calls with isLua and use Set for portable code."
+
+/** A new, empty keyed table. */
+@compilerintrinsic public function keyedTableCreate() returns int
+	error(LUA_ONLY)
+	return 0
+
+/** Adds `key`. Adding a key that is already present has no effect. */
+@compilerintrinsic public function keyedTableAdd<T:>(int keyedTable, T key)
+	error(LUA_ONLY)
+
+/** Whether `key` is present. */
+@compilerintrinsic public function keyedTableContains<T:>(int keyedTable, T key) returns boolean
+	error(LUA_ONLY)
+	return false
+
+/** Removes `key`. Removing a key that is absent has no effect. */
+@compilerintrinsic public function keyedTableRemove<T:>(int keyedTable, T key)
+	error(LUA_ONLY)
