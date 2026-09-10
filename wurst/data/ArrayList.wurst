@@ -257,11 +257,18 @@ public class ArrayList<T:>
         for i = 0 to size - 1
             store[startIndex + i] = store[oldStart + i]
 
-        // The old section now holds duplicate references and no longer belongs to any
-        // live list once freed. Clear it so the Lua GC can reclaim them (no-op on Jass).
+        // The old section now holds duplicate references plus any stale references retained by
+        // reset(). It no longer belongs to a live list once freed, so clear the full high-water
+        // range before returning it to the pool (no-op on Jass).
         if isLua
-            for i = 0 to size - 1
+            var slotsToClear = size
+            if retainedSize > slotsToClear
+                slotsToClear = retainedSize
+            for i = 0 to slotsToClear - 1
                 store[oldStart + i] = null
+
+        // The new section contains only the current logical elements.
+        retainedSize = 0
 
         // Free old section
         let tempStart = startIndex
@@ -792,4 +799,3 @@ public function ArrayList<string>.joinBy(string separator) returns string
 /** Joins elements from a string list into one string */
 public function ArrayList<string>.join() returns string
     return this.joinBy("")
-
