@@ -1,29 +1,27 @@
 package KeyedTable
 import Table
 
-/**
-Keyed membership: a table whose keys are the elements themselves.
-
-These are compiler intrinsics, and each backend gets the representation that suits it.
-
-On **Lua** every operation lowers to a single table operation - `{}`, `t[k] = true`,
-`t[k] ~= nil`, `t[k] = nil` - so membership costs one hashed index and Lua does the hashing.
-The key is a `T:` type parameter, which new generics erase on Lua rather than routing through
-`castTo int` the way the old `<T>` containers do, so the element arrives as itself and becomes
-the table key directly. An integer index would defeat native hashing entirely.
-
-On **Jass** there is no hashing, so the bodies below run instead: the element is projected to an
-integer key by `wurstKeyOf` and stored in a `Table`. That costs a hashtable native per operation,
-which is far slower than the Lua path - but it works, which is what a fallback has to do.
-
-**There is no iteration.** Enumerating a Lua table needs `pairs()`, whose order follows internal
-hash layout and so differs between clients, which desyncs a lockstep game. Anything that must be
-iterated needs a separately maintained insertion-ordered array - see `SparseSet`.
-
-**Null is not a valid key.** On Lua `nil` cannot be a table key at all, so adding one is a
-runtime error there; on Jass it would collide with the key reserved for absence. Neither backend
-is asked to invent a meaning for it, and no check is added on the membership path to look for it.
-*/
+// Keyed membership: a table whose keys are the elements themselves.
+//
+// These are compiler intrinsics, and each backend gets the representation that suits it.
+//
+// On **Lua** every operation lowers to a single table operation - `{}`, `t[k] = true`,
+// `t[k] ~= nil`, `t[k] = nil` - so membership costs one hashed index and Lua does the hashing.
+// The key is a `T:` type parameter, which new generics erase on Lua rather than routing through
+// `castTo int` the way the old `<T>` containers do, so the element arrives as itself and becomes
+// the table key directly. An integer index would defeat native hashing entirely.
+//
+// On **Jass** there is no hashing, so the bodies below run instead: the element is projected to an
+// integer key by `wurstKeyOf` and stored in a `Table`. That costs a hashtable native per operation,
+// which is far slower than the Lua path - but it works, which is what a fallback has to do.
+//
+// **There is no iteration.** Enumerating a Lua table needs `pairs()`, whose order follows internal
+// hash layout and so differs between clients, which desyncs a lockstep game. Anything that must be
+// iterated needs a separately maintained insertion-ordered array - see `SparseSet`.
+//
+// **Null is not a valid key.** On Lua `nil` cannot be a table key at all, so adding one is a
+// runtime error there; on Jass it would collide with the key reserved for absence. Neither backend
+// is asked to invent a meaning for it, and no check is added on the membership path to look for it.
 
 /** A new, empty keyed table. */
 @compilerintrinsic public function keyedTableCreate() returns int
@@ -51,10 +49,10 @@ keyed structure would burn one permanently.
 @compilerintrinsic public function keyedTableDestroy(int keyedTable)
 	destroy (keyedTable castTo Table)
 
-// ---------------------------------------------------------------------------------------------
+// ---
 // Key projection. Compiler-owned: these exist so the Jass bodies above have something to call,
 // and are not meant to be called directly.
-// ---------------------------------------------------------------------------------------------
+// ---
 
 /**
 The integer key of `value` on Jass.
