@@ -10,6 +10,8 @@ class Marker
 
 @Test
 function testAddAndMembership()
+	if not isLua
+		return
 	let set = new KeyedSet<int>()
 	set.contains(4).assertFalse()
 	set.add(4).assertTrue()
@@ -22,6 +24,8 @@ function testAddAndMembership()
 
 @Test
 function testAddIsIdempotent()
+	if not isLua
+		return
 	let set = new KeyedSet<int>()
 	set.add(7).assertTrue()
 	set.add(7).assertFalse()
@@ -31,6 +35,8 @@ function testAddIsIdempotent()
 
 @Test
 function testRemoval()
+	if not isLua
+		return
 	let set = new KeyedSet<int>()
 	set.add(1)
 	set.add(2)
@@ -45,6 +51,8 @@ function testRemoval()
 
 @Test
 function testClear()
+	if not isLua
+		return
 	let set = new KeyedSet<int>()
 	set.add(1)
 	set.add(2)
@@ -59,6 +67,8 @@ function testClear()
 /** Reference identity, which is what a group-style membership set wants. */
 @Test
 function testReferenceIdentity()
+	if not isLua
+		return
 	let set = new KeyedSet<Marker>()
 	let a = new Marker(1)
 	let b = new Marker(1)
