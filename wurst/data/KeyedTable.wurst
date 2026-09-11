@@ -22,6 +22,17 @@ import Table
 // **Null is not a valid key.** On Lua `nil` cannot be a table key at all, so adding one is a
 // runtime error there; on Jass it would collide with the key reserved for absence. Neither backend
 // is asked to invent a meaning for it, and no check is added on the membership path to look for it.
+//
+// **Remove a handle before destroying it.** Warcraft reuses handle ids. On Jass a key is that id
+// and the table stores only that the id is present, so a new handle which inherits the id of a
+// destroyed member is reported as a member. Validating that would mean storing the element next to
+// its key, and `Table` offers no way to store an arbitrary `T` - only `saveUnit`, `saveItem` and
+// the rest, one per concrete type. That is the reason `SparseSet` asks for a `SparseSetKey` and
+// keeps its elements in a dense list: it can compare the stored element and this cannot.
+//
+// The discipline is the same one a `group` needs, and the same one `SparseSet` documents: take an
+// element out before it is destroyed. What is not claimed is that the two backends agree about a
+// member which was destroyed and whose id has since been reused.
 
 /** A new, empty keyed table. */
 @compilerintrinsic public function keyedTableCreate() returns int

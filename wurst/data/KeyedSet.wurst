@@ -22,7 +22,9 @@ only walks consecutive integer keys from 1, so it sees nothing in a table keyed 
 you need to iterate, keep an `ArrayList` alongside and walk that, or use `SparseSet`, whose dense
 half exists for exactly this.
 
-**Null is not a valid element** - see `KeyedTable`.
+**Null is not a valid element**, and **an element must be removed before it is destroyed** - see
+`KeyedTable` for why the Jass fallback cannot detect a handle id which has been reused since. This
+is the same discipline a `group` needs.
 */
 public class KeyedSet<T:>
 	/** The keyed table whose keys are the elements. */
