@@ -1,14 +1,14 @@
 package SpatialIndexForDestructables
 import ArrayList
-import SparseSet
 import DestructableSpatialIndex
 import Rect
 
 /**
  * Native-less Lua spatial queries for destructables.
  *
- * Pass a reusable ArrayList<destructable> for dense iteration, or a reusable
- * SparseSet<destructable> when membership operations are needed. The target is reset before use.
+ * Pass a reusable ArrayList<destructable> and the query fills it. The target is reset before it is
+ * populated, so one scratch list serves every call. To narrow what comes back, pass a filter rather
+ * than collecting everything and testing membership afterwards.
  * Filters are caller-owned, and nested queries must use separate result collections.
  * The range query intentionally matches
  * ClosureForGroups.forDestructablesInRange: it returns the square that encloses the circle rather
@@ -30,17 +30,6 @@ function appendMatches(ArrayList<destructable> result, int matched, Destructable
 				result.add(d)
 	destructableSpatialIndexEndQuery()
 
-function appendMatches(SparseSet<destructable> result, int matched, DestructableSpatialFilter filter)
-	if filter == null
-		for i = 0 to matched - 1
-			result.add(destructableSpatialIndexQuery(i))
-	else
-		for i = 0 to matched - 1
-			let d = destructableSpatialIndexQuery(i)
-			if filter.matches(d)
-				result.add(d)
-	destructableSpatialIndexEndQuery()
-
 public function destructablesInRect(ArrayList<destructable> result, rect area,
 		DestructableSpatialFilter filter)
 	result.reset()
@@ -51,16 +40,6 @@ public function destructablesInRect(ArrayList<destructable> result, rect area,
 public function destructablesInRect(ArrayList<destructable> result, rect area)
 	destructablesInRect(result, area, null)
 
-public function destructablesInRect(SparseSet<destructable> result, rect area,
-		DestructableSpatialFilter filter)
-	result.reset()
-	if isLua and USE_DESTRUCTABLE_SPATIAL_INDEX
-		appendMatches(result, destructableSpatialIndexBeginBoxQuery(
-			vec2(area.getMinX(), area.getMinY()), vec2(area.getMaxX(), area.getMaxY())), filter)
-
-public function destructablesInRect(SparseSet<destructable> result, rect area)
-	destructablesInRect(result, area, null)
-
 public function destructablesInRange(ArrayList<destructable> result, vec2 center, real range,
 		DestructableSpatialFilter filter)
 	result.reset()
@@ -68,13 +47,4 @@ public function destructablesInRange(ArrayList<destructable> result, vec2 center
 		appendMatches(result, destructableSpatialIndexBeginRangeQuery(center, range), filter)
 
 public function destructablesInRange(ArrayList<destructable> result, vec2 center, real range)
-	destructablesInRange(result, center, range, null)
-
-public function destructablesInRange(SparseSet<destructable> result, vec2 center, real range,
-		DestructableSpatialFilter filter)
-	result.reset()
-	if isLua and USE_DESTRUCTABLE_SPATIAL_INDEX
-		appendMatches(result, destructableSpatialIndexBeginRangeQuery(center, range), filter)
-
-public function destructablesInRange(SparseSet<destructable> result, vec2 center, real range)
 	destructablesInRange(result, center, range, null)

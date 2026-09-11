@@ -1,15 +1,18 @@
 package SpatialIndexForUnits
 import ArrayList
-import SparseSet
 import UnitSpatialIndex
 import Rect
 
 /**
  * Native-less Lua spatial queries.
  *
- * Pass a reusable ArrayList<unit> for the cheapest dense result, or a reusable SparseSet<unit> when
- * membership operations are needed. The target is reset before it is populated. No Warcraft group,
- * result collection, or filter is allocated or destroyed by these overloads.
+ * Pass a reusable ArrayList<unit> and the query fills it. The target is reset before it is
+ * populated, so one scratch list serves every call on a hot path. No Warcraft group, result
+ * collection, or filter is allocated or destroyed by these overloads.
+ *
+ * A query result is something you walk, so a list is the shape it wants. To narrow what comes back,
+ * pass a UnitSpatialFilter rather than collecting everything and testing membership afterwards -
+ * the filter runs once per match, before the result is built.
  *
  * Filters are caller-owned so one instance can be reused across queries. A capturing lambda creates
  * a closure at its declaration site; keep it outside hot loops when allocation matters.
@@ -24,17 +27,6 @@ public interface UnitSpatialFilter
 	function matches(unit whichUnit) returns boolean
 
 function appendMatches(ArrayList<unit> result, int matched, UnitSpatialFilter filter)
-	if filter == null
-		for i = 0 to matched - 1
-			result.add(spatialIndexQueryUnit(i))
-	else
-		for i = 0 to matched - 1
-			let u = spatialIndexQueryUnit(i)
-			if filter.matches(u)
-				result.add(u)
-	spatialIndexEndQuery()
-
-function appendMatches(SparseSet<unit> result, int matched, UnitSpatialFilter filter)
 	if filter == null
 		for i = 0 to matched - 1
 			result.add(spatialIndexQueryUnit(i))
@@ -66,27 +58,6 @@ public function unitsInRange(ArrayList<unit> result, vec2 center, real radius,
 	if isLua and USE_UNIT_SPATIAL_INDEX
 		appendMatches(result, spatialIndexBeginQuery(center, radius, collisionFiltering), filter)
 
-/** Replaces result with units whose origins are within radius of center. */
-public function unitsInRange(SparseSet<unit> result, vec2 center, real radius)
-	unitsInRange(result, center, radius, false, null)
-
-/** Replaces result with filtered units whose origins are within radius of center. */
-public function unitsInRange(SparseSet<unit> result, vec2 center, real radius,
-		UnitSpatialFilter filter)
-	unitsInRange(result, center, radius, false, filter)
-
-/** Replaces result with units in range, optionally applying collision-size filtering. */
-public function unitsInRange(SparseSet<unit> result, vec2 center, real radius,
-		boolean collisionFiltering)
-	unitsInRange(result, center, radius, collisionFiltering, null)
-
-/** Replaces result with filtered units in range, optionally applying collision-size filtering. */
-public function unitsInRange(SparseSet<unit> result, vec2 center, real radius,
-		boolean collisionFiltering, UnitSpatialFilter filter)
-	result.reset()
-	if isLua and USE_UNIT_SPATIAL_INDEX
-		appendMatches(result, spatialIndexBeginQuery(center, radius, collisionFiltering), filter)
-
 /** Replaces result with filtered units whose origins are inside the axis-aligned box. */
 public function unitsInBox(ArrayList<unit> result, vec2 boxMin, vec2 boxMax,
 		UnitSpatialFilter filter)
@@ -97,29 +68,12 @@ public function unitsInBox(ArrayList<unit> result, vec2 boxMin, vec2 boxMax,
 public function unitsInBox(ArrayList<unit> result, vec2 boxMin, vec2 boxMax)
 	unitsInBox(result, boxMin, boxMax, null)
 
-/** Replaces result with filtered units whose origins are inside the axis-aligned box. */
-public function unitsInBox(SparseSet<unit> result, vec2 boxMin, vec2 boxMax,
-		UnitSpatialFilter filter)
-	result.reset()
-	if isLua and USE_UNIT_SPATIAL_INDEX
-		appendMatches(result, spatialIndexBeginBoxQuery(boxMin, boxMax), filter)
-
-public function unitsInBox(SparseSet<unit> result, vec2 boxMin, vec2 boxMax)
-	unitsInBox(result, boxMin, boxMax, null)
-
 public function unitsInRect(ArrayList<unit> result, rect area, UnitSpatialFilter filter)
 	// Warcraft's native unit rect enum starts 32 units above the requested minimum edge.
 	unitsInBox(result, vec2(area.getMinX() + 32., area.getMinY() + 32.),
 		vec2(area.getMaxX(), area.getMaxY()), filter)
 
 public function unitsInRect(ArrayList<unit> result, rect area)
-	unitsInRect(result, area, null)
-
-public function unitsInRect(SparseSet<unit> result, rect area, UnitSpatialFilter filter)
-	unitsInBox(result, vec2(area.getMinX() + 32., area.getMinY() + 32.),
-		vec2(area.getMaxX(), area.getMaxY()), filter)
-
-public function unitsInRect(SparseSet<unit> result, rect area)
 	unitsInRect(result, area, null)
 
 /** Replaces result with currently indexed units owned by owner. This is a linear registry scan;
@@ -130,12 +84,4 @@ public function unitsOfPlayer(ArrayList<unit> result, player owner, UnitSpatialF
 		appendMatches(result, spatialIndexBeginPlayerQuery(owner), filter)
 
 public function unitsOfPlayer(ArrayList<unit> result, player owner)
-	unitsOfPlayer(result, owner, null)
-
-public function unitsOfPlayer(SparseSet<unit> result, player owner, UnitSpatialFilter filter)
-	result.reset()
-	if isLua and USE_UNIT_SPATIAL_INDEX
-		appendMatches(result, spatialIndexBeginPlayerQuery(owner), filter)
-
-public function unitsOfPlayer(SparseSet<unit> result, player owner)
 	unitsOfPlayer(result, owner, null)
