@@ -1,0 +1,305 @@
+package FastHashMap
+import NoWurst
+import Wurst
+import ErrorHandling
+
+/**	What a key type has to provide to be used in a `FastHashMap`. */
+public interface Hashable<T:>
+	/**	Any int; keys which are equal must hash alike, or a lookup will miss them. */
+	function hash(T x) returns int
+	function equals(T a, T b) returns boolean
+
+/**	Keeps every intermediate below 2^31 so the arithmetic never overflows, on either target.
+	Jass wraps at 32 bits and Lua does not, so a hash which relied on overflow would differ
+	between them - harmless in itself, since nothing stores a hash, but it would also mean the
+	interpreter could not stand in for the game while testing distribution. */
+constant HASH_MODULUS = 1000003
+/**	Coprime to the modulus, so length and case spread across it rather than landing on a few
+	residues. Kept small enough that `length * HASH_LENGTH_FACTOR` cannot leave the range even for
+	an implausibly long key. */
+constant HASH_LENGTH_FACTOR = 7919
+constant HASH_CASE_FACTOR = 104729
+
+implements Hashable<int>
+	/**	Mixed rather than returned as itself. A slot is chosen by `hash mod FASTHASHMAP_CAPACITY`,
+		so identity sends every multiple of the capacity to slot zero - and keys strided by a power
+		of two are the common case, being ids, handles and loop counters. Split into halves so the
+		multiplications stay in range. */
+	function hash(int x) returns int
+		let unsigned = x < 0 ? -(x + 1) : x
+		let low = unsigned mod 65536
+		let high = unsigned div 65536
+		return (low * 7919 + high * 6151 + (x < 0 ? 1 : 0)) mod HASH_MODULUS
+
+	function equals(int a, int b) returns boolean
+		return a == b
+
+implements Hashable<string>
+	/**	One pass over the string is done by `StringHash` itself, and the two things it gets wrong are
+		corrected with whole-string work rather than per-character work.
+
+		The obvious hash - decode each byte and mix it - costs about two native calls and three string
+		comparisons per character, since `charAt` is a `SubString` and `StringUtils.char` is two
+		comparisons, a `StringHash` and a round trip through the code table. That is forty native calls
+		for a twenty character key against one for `StringHash`, which is not a trade a container called
+		fast should make on every lookup.
+
+		So `StringHash` does the bytes, and its two defects are patched at fixed cost:
+
+		- It is case insensitive, so `alpha` and `ALPHA` reach here identical. Two comparisons over the
+		  whole string separate the cases which occur in practice - all lower, all upper, mixed. Two
+		  different mixed-case spellings of one word still collide, and probing separates them.
+		- It collapses every partial multibyte slice to one constant, so non-latin keys share a raw
+		  hash. Length is mixed in, which separates those of different length; same-length non-latin
+		  keys still collide and fall back on `equals`.
+
+		The result is order sensitive, because `StringHash` is, and length sensitive. */
+	function hash(string x) returns int
+		var caseClass = 0
+		if x == x.toLowerCase()
+			caseClass = 1
+		else if x == x.toUpperCase()
+			caseClass = 2
+		// Every term is reduced before being combined, so the sum stays well inside a 32 bit int
+		// however long the key is - see HASH_MODULUS.
+		let raw = x.getHash() mod HASH_MODULUS
+		let length = x.length() mod HASH_MODULUS
+		return (raw + length * HASH_LENGTH_FACTOR + caseClass * HASH_CASE_FACTOR) mod HASH_MODULUS
+
+	function equals(string a, string b) returns boolean
+		return a == b
+
+/**	Slots per map. Fixed at compile time: every map of one key and value type is this
+	size, so raising it costs memory across all of them. */
+@configurable public constant FASTHASHMAP_CAPACITY = 32
+
+/**	The number of maps of one key and value type which can exist. Sections are handed out
+	and never reclaimed, so this is a total over the run rather than a live count. */
+@configurable public constant FASTHASHMAP_MAX_INSTANCES = 256
+
+constant SLOTS = FASTHASHMAP_CAPACITY * FASTHASHMAP_MAX_INSTANCES
+
+/**	A hash map which keeps its keys as they are.
+
+	`HashMap` casts every key to an int and stores it in a `Table`, which works for
+	handles and for anything castable but loses the type on the way in: two keys which
+	cast to the same int collide, and a key which is not castable cannot be used at all.
+	This map takes a bound on its key type instead, so hashing and comparing are done by
+	the key's own implementation and the key is stored as itself.
+
+	The bound is `Hashable`, which asks for a hash and an equality:
+
+		implements Hashable<vec2>
+			function hash(vec2 v) returns int
+				return v.x.toInt() * 31 + v.y.toInt()
+			function equals(vec2 a, vec2 b) returns boolean
+				return a == b
+
+		let seen = new FastHashMap<vec2, unit>()
+		seen.put(caster.getPos(), caster)
+
+	Instances for `int` and `string` come with this package. Declare one beside your own
+	type to use it as a key.
+
+	Storage is one array per specialisation, carved into a section per instance, the way
+	`ArrayList` works. A section is `FASTHASHMAP_CAPACITY` slots and does not grow, so a map
+	which fills up refuses further keys rather than rehashing - see `isFull`. That and
+	`FASTHASHMAP_MAX_INSTANCES` are both configurable, and every map of one key and value
+	type pays the section size.
+
+	On the Jass target their product is bounded by `JASS_MAX_ARRAY_SIZE` as well, the storage
+	being one fixed-size array: a construction which would hand out slots past its end errors
+	instead. Lua grows the table, so only the section count applies there.
+
+	Collisions are handled by linear probing inside the section. A removed slot becomes a
+	tombstone rather than empty, so a probe which passed over it still finds keys put down
+	beyond it.
+*/
+public class FastHashMap<K: Hashable, V:>
+	private static K array keys
+	private static V array values
+	private static boolean array used
+	/**	A removed slot cannot go back to empty: a probe which stopped there would miss keys
+		put down beyond it. It becomes a tombstone instead - passed over when searching,
+		reused when putting. */
+	private static boolean array dead
+	/**	Never written, so a read yields V's default. That is the only way to say "no value"
+		for a type parameter, and it costs an array read rather than a branch. */
+	private static V array none
+	private static int nextFree = 0
+	/**	Sections handed back by destroyed maps, reused before nextFree grows. Every section is the
+		same width, so this is a stack rather than the capacity-matched free list ArrayList keeps:
+		any released section fits any new map. */
+	private static int array freeSection
+	private static int freeSectionCount = 0
+
+	private int base
+	private int count = 0
+
+	construct()
+		if freeSectionCount > 0
+			// A released section was emptied on the way out, so it is ready to use as it is.
+			freeSectionCount--
+			base = freeSection[freeSectionCount]
+		else if nextFree + FASTHASHMAP_CAPACITY > SLOTS
+			error("FastHashMap: out of sections. Raise FASTHASHMAP_MAX_INSTANCES.")
+			base = -1
+		else if not isLua and nextFree + FASTHASHMAP_CAPACITY > JASS_MAX_ARRAY_SIZE
+			// One fixed-size array per specialisation on this target, so a section reaching past
+			// its end would read and write slots outside it. Lua grows the table instead.
+			error("FastHashMap: storage limit exceeded for this key and value type. "
+				+ "FASTHASHMAP_CAPACITY * FASTHASHMAP_MAX_INSTANCES must fit JASS_MAX_ARRAY_SIZE.")
+			base = -1
+		else
+			base = nextFree
+			nextFree += FASTHASHMAP_CAPACITY
+
+	/**	The slot holding key, or the one it belongs in: the first tombstone passed over,
+		else the empty slot the probe stopped at. Capacity is fixed, so a full table
+		returns -1 rather than probing forever. */
+	private function slotFor(K key) returns int
+		var i = K.hash(key) mod FASTHASHMAP_CAPACITY
+		if i < 0
+			i += FASTHASHMAP_CAPACITY
+		var firstDead = -1
+		var probes = 0
+		while probes < FASTHASHMAP_CAPACITY
+			let s = base + i
+			if used[s] and K.equals(keys[s], key)
+				return s
+			if not used[s] and not dead[s]
+				if firstDead >= 0
+					return firstDead
+				return s
+			if dead[s] and firstDead < 0
+				firstDead = s
+			i = (i + 1) mod FASTHASHMAP_CAPACITY
+			probes++
+		return firstDead
+
+	/**	Stores value under key, replacing what was there.
+		<p>
+		A key the map already holds is always writable. A new key needs a slot, and a section does not
+		grow, so a full map reports rather than dropping the write: silently losing a store is close to
+		impossible to find from the outside, and `isFull` is there to ask beforehand. */
+	function put(K key, V value)
+		if base < 0
+			return
+		let s = slotFor(key)
+		if s < base
+			error("FastHashMap: full, so the key was not stored. Ask isFull() first, or raise "
+				+ "FASTHASHMAP_CAPACITY.")
+			return
+		if not used[s]
+			used[s] = true
+			dead[s] = false
+			keys[s] = key
+			count++
+		values[s] = value
+
+	/**	The value stored under key, or V's default when there is none. */
+	function get(K key) returns V
+		if base < 0
+			return none[0]
+		let s = slotFor(key)
+		if s < base or not used[s]
+			return none[0]
+		return values[s]
+
+	/**	Whether a value is stored under key. */
+	function has(K key) returns boolean
+		if base < 0
+			return false
+		let s = slotFor(key)
+		return s >= base and used[s]
+
+	/**	Removes key, returning whether it was there. */
+	function remove(K key) returns boolean
+		if base < 0
+			return false
+		let s = slotFor(key)
+		if s < base or not used[s]
+			return false
+		used[s] = false
+		dead[s] = true
+		// The slot still holds the key and value it had, which on Lua is a reference this map no
+		// longer owns. A tombstone is never read for either, so releasing them is safe; on Jass
+		// the arrays hold values and this is a no-op.
+		if isLua
+			keys[s] = null
+			values[s] = null
+		count--
+		return true
+
+	/**	How many keys are stored. */
+	function size() returns int
+		return count
+
+	/**	Whether the map is empty. */
+	function isEmpty() returns boolean
+		return count == 0
+
+	/**	Whether a further key would be refused. A map at capacity accepts writes to keys it
+		already holds, and refuses new ones. */
+	function isFull() returns boolean
+		return count >= FASTHASHMAP_CAPACITY
+
+	// Releases the section for the next map. Without this, nextFree only ever grew and
+	// FASTHASHMAP_MAX_INSTANCES was a total over the run rather than a count of live maps - so a map
+	// built per spell cast or per unit exhausted the sections and every later one refused its keys.
+	// Emptied on the way out rather than on the way in, so the next map gets a clean section without
+	// paying for it, and so nothing keeps a reference the map no longer owns.
+	ondestroy
+		// Skipped when construction failed to get a section, there being nothing to hand back.
+		if base >= 0
+			clear()
+			// A section is only ever released once, so this cannot outrun the section count itself.
+			freeSection[freeSectionCount] = base
+			freeSectionCount++
+			base = -1
+
+	/**	The first occupied slot at or after `startSlot`, or -1 when there is none. Pass 0 to begin.
+		<p>
+		Walking slots rather than handing out an iterator or taking a closure: it allocates nothing,
+		which is what a map iterating every frame needs, and it avoids dispatching a bound through a
+		closure, which is not supported on every target. A `for in` wrapper can be built on this.
+
+			var s = map.nextEntry(0)
+			while s >= 0
+				doSomething(map.keyAt(s), map.valueAt(s))
+				s = map.nextEntry(s + 1)
+	*/
+	function nextEntry(int startSlot) returns int
+		if base < 0
+			return -1
+		for i = startSlot to FASTHASHMAP_CAPACITY - 1
+			if i >= 0 and used[base + i]
+				return i
+		return -1
+
+	/**	The key in a slot `nextEntry` returned. Reading any other slot is meaningless. */
+	function keyAt(int slot) returns K
+		if base < 0 or slot < 0 or slot >= FASTHASHMAP_CAPACITY or not used[base + slot]
+			error("FastHashMap: keyAt on a slot which holds nothing; use the value nextEntry returned.")
+			return keys[base]
+		return keys[base + slot]
+
+	/**	The value in a slot `nextEntry` returned. */
+	function valueAt(int slot) returns V
+		if base < 0 or slot < 0 or slot >= FASTHASHMAP_CAPACITY or not used[base + slot]
+			error("FastHashMap: valueAt on a slot which holds nothing; use the value nextEntry returned.")
+			return none[0]
+		return values[base + slot]
+
+	/**	Forgets every key, leaving the section reusable by this map. */
+	function clear()
+		if base < 0
+			return
+		for i = 0 to FASTHASHMAP_CAPACITY - 1
+			used[base + i] = false
+			dead[base + i] = false
+			// as in remove: the slot's contents are no longer the map's to hold on to
+			if isLua
+				keys[base + i] = null
+				values[base + i] = null
+		count = 0

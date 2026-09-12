@@ -1,0 +1,307 @@
+package FastHashMapTests
+import FastHashMap
+
+@Test
+function testPutGet()
+	let map = new FastHashMap<int, int>()
+	map.put(1, 10)
+	map.put(2, 20)
+	map.get(1).assertEquals(10)
+	map.get(2).assertEquals(20)
+
+@Test
+function testHas()
+	let map = new FastHashMap<int, int>()
+	map.has(5).assertEquals(false)
+	map.put(5, 1)
+	map.has(5).assertEquals(true)
+
+/** A missing key reads as the value type's default rather than as an error. */
+@Test
+function testMissingKeyIsDefault()
+	let map = new FastHashMap<int, int>()
+	map.get(7).assertEquals(0)
+	let strings = new FastHashMap<int, string>()
+	strings.get(7).assertEquals(null)
+
+@Test
+function testPutReplaces()
+	let map = new FastHashMap<int, int>()
+	map.put(3, 30)
+	map.put(3, 31)
+	map.get(3).assertEquals(31)
+	map.size().assertEquals(1)
+
+/** Keys 1 and 1 + CAPACITY land in the same slot, so the probe path is taken. */
+@Test
+function testCollidingKeys()
+	let map = new FastHashMap<int, int>()
+	map.put(1, 10)
+	map.put(1 + FASTHASHMAP_CAPACITY, 90)
+	map.get(1).assertEquals(10)
+	map.get(1 + FASTHASHMAP_CAPACITY).assertEquals(90)
+	map.size().assertEquals(2)
+
+/** A removed slot has to stay passable, or a key probed past it goes missing. */
+@Test
+function testRemoveKeepsLaterKeysReachable()
+	let map = new FastHashMap<int, int>()
+	map.put(1, 10)
+	map.put(1 + FASTHASHMAP_CAPACITY, 90)
+	map.remove(1).assertEquals(true)
+	map.has(1).assertEquals(false)
+	map.get(1 + FASTHASHMAP_CAPACITY).assertEquals(90)
+	map.size().assertEquals(1)
+
+@Test
+function testRemoveMissingKey()
+	let map = new FastHashMap<int, int>()
+	map.remove(4).assertEquals(false)
+	map.size().assertEquals(0)
+
+/** A tombstone is reused rather than left as a hole. */
+@Test
+function testTombstoneIsReused()
+	let map = new FastHashMap<int, int>()
+	map.put(2, 20)
+	map.remove(2)
+	map.put(2, 21)
+	map.get(2).assertEquals(21)
+	map.size().assertEquals(1)
+
+@Test
+function testSizeAndEmpty()
+	let map = new FastHashMap<int, int>()
+	map.isEmpty().assertEquals(true)
+	map.put(1, 1)
+	map.isEmpty().assertEquals(false)
+	map.size().assertEquals(1)
+
+@Test
+function testClear()
+	let map = new FastHashMap<int, int>()
+	map.put(1, 1)
+	map.put(2, 2)
+	map.clear()
+	map.size().assertEquals(0)
+	map.has(1).assertEquals(false)
+	map.put(1, 5)
+	map.get(1).assertEquals(5)
+
+/** A full map keeps what it has and refuses new keys rather than overwriting. */
+@Test
+function testFullMapRefusesNewKeys()
+	let map = new FastHashMap<int, int>()
+	for i = 0 to FASTHASHMAP_CAPACITY - 1
+		map.put(i, i)
+	map.isFull().assertEquals(true)
+	map.size().assertEquals(FASTHASHMAP_CAPACITY)
+	map.get(0).assertEquals(0)
+	// A key it already holds is still writable. A new one now reports instead of being dropped,
+	// which is what isFull is for, so this does not try it.
+	map.put(0, 99)
+	map.get(0).assertEquals(99)
+	map.size().assertEquals(FASTHASHMAP_CAPACITY)
+
+/** Two maps of the same types hold separate sections. */
+@Test
+function testInstancesAreIndependent()
+	let a = new FastHashMap<int, int>()
+	let b = new FastHashMap<int, int>()
+	a.put(1, 10)
+	b.put(1, 20)
+	a.get(1).assertEquals(10)
+	b.get(1).assertEquals(20)
+
+/** The string instance comes with the package. */
+@Test
+function testStringKeys()
+	let map = new FastHashMap<string, int>()
+	map.put("alpha", 1)
+	map.put("beta", 2)
+	map.get("alpha").assertEquals(1)
+	map.get("beta").assertEquals(2)
+	map.has("gamma").assertEquals(false)
+
+/** Each key type takes its own instance, so one map class serves several. */
+@Test
+function testTwoSpecialisationsCoexist()
+	let ints = new FastHashMap<int, string>()
+	let strings = new FastHashMap<string, string>()
+	ints.put(1, "one")
+	strings.put("one", "uno")
+	ints.get(1).assertEquals("one")
+	strings.get("one").assertEquals("uno")
+
+/**	Case must survive hashing. `StringHash` is case insensitive, so a hash taken from it sent
+	`alpha` and `ALPHA` to one slot and left them to be separated by probing. */
+@Test function testStringKeysAreCaseSensitive()
+	let map = new FastHashMap<string, int>()
+	map.put("alpha", 1)
+	map.put("ALPHA", 2)
+	map.get("alpha").assertEquals(1)
+	map.get("ALPHA").assertEquals(2)
+	map.size().assertEquals(2)
+
+/**	Position and length are mixed in, so an anagram and a prefix are not the same key. */
+@Test function testStringHashDistinguishesOrderAndLength()
+	let map = new FastHashMap<string, int>()
+	map.put("ab", 1)
+	map.put("ba", 2)
+	map.put("a", 3)
+	map.get("ab").assertEquals(1)
+	map.get("ba").assertEquals(2)
+	map.get("a").assertEquals(3)
+	map.size().assertEquals(3)
+
+/**	Keys strided by the capacity are the case an identity hash got wrong: every one of them
+	lands in slot zero, so a map with room for thirty two of them filled up after a handful of
+	probes. Ids, handles and loop counters all arrive strided like this. */
+@Test function testIntKeysStridedByCapacityDoNotAllCollide()
+	let map = new FastHashMap<int, int>()
+	for i = 0 to 15
+		map.put(i * FASTHASHMAP_CAPACITY, i)
+	map.size().assertEquals(16)
+	for i = 0 to 15
+		map.get(i * FASTHASHMAP_CAPACITY).assertEquals(i)
+
+/**	Negative keys hash into range and stay distinct from their positive counterparts. */
+@Test function testNegativeIntKeys()
+	let map = new FastHashMap<int, int>()
+	map.put(-1, 10)
+	map.put(1, 20)
+	map.put(-65536, 30)
+	map.get(-1).assertEquals(10)
+	map.get(1).assertEquals(20)
+	map.get(-65536).assertEquals(30)
+	map.size().assertEquals(3)
+
+/**	Reaches the bound's requirement directly, which is the only way to see a hash rather than its
+	effect: probing separates colliding keys, so a map behaves correctly however badly its keys
+	hash and every test above passes with an identity hash and with `StringHash`. */
+function hashOf<T: Hashable>(T x) returns int
+	return T.hash(x)
+
+/**	Keys strided by the capacity must not all land in one slot. An identity hash sends every one
+	of them to slot zero, which probing then spreads over the following slots - correct, and it
+	fills a section of thirty two after sixteen such keys. Ids, handles and loop counters all
+	arrive strided like this. */
+@Test function testIntHashSpreadsKeysStridedByCapacity()
+	let firstSlot = hashOf(0) mod FASTHASHMAP_CAPACITY
+	var differing = 0
+	for i = 1 to 15
+		if hashOf(i * FASTHASHMAP_CAPACITY) mod FASTHASHMAP_CAPACITY != firstSlot
+			differing++
+	differing.assertGreaterThan(10)
+
+/**	`StringHash` is case insensitive, so a hash taken from it gave these two the same value. */
+@Test function testStringHashSeparatesCase()
+	(hashOf("alpha") != hashOf("ALPHA")).assertTrue()
+
+/**	Position and length reach the hash, not just the bytes present. */
+@Test function testStringHashSeparatesOrderAndLength()
+	(hashOf("ab") != hashOf("ba")).assertTrue()
+	(hashOf("ab") != hashOf("a")).assertTrue()
+
+/**	Equal keys must hash alike, which is the half of the contract a lookup depends on. */
+@Test function testEqualKeysHashAlike()
+	hashOf("alpha").assertEquals(hashOf("alp" + "ha"))
+	hashOf(4242).assertEquals(hashOf(4200 + 42))
+
+/**	A destroyed map hands its section back, so the instance count bounds live maps rather than
+	maps ever made. Without that, `nextFree` only grew and the map after the two hundred and fifty
+	sixth refused every key - which is what a map creating one per spell cast or per unit does. */
+@Test function testDestroyedSectionsAreReused()
+	for i = 0 to FASTHASHMAP_MAX_INSTANCES + 20
+		let map = new FastHashMap<int, int>()
+		map.put(i, i)
+		map.get(i).assertEquals(i)
+		destroy map
+
+/**	A reused section starts empty, or a new map would inherit the last one's keys. */
+@Test function testReusedSectionStartsEmpty()
+	let first = new FastHashMap<int, int>()
+	first.put(7, 70)
+	first.size().assertEquals(1)
+	destroy first
+
+	let second = new FastHashMap<int, int>()
+	second.has(7).assertEquals(false)
+	second.size().assertEquals(0)
+	second.get(7).assertEquals(0)
+	destroy second
+
+/**	Two maps alive at once keep separate sections across a destroy in between. */
+@Test function testLiveMapsKeepTheirSectionWhenAnotherIsDestroyed()
+	let keep = new FastHashMap<int, int>()
+	keep.put(1, 100)
+	let temporary = new FastHashMap<int, int>()
+	temporary.put(1, 200)
+	destroy temporary
+	keep.get(1).assertEquals(100)
+	let reused = new FastHashMap<int, int>()
+	reused.has(1).assertEquals(false)
+	keep.get(1).assertEquals(100)
+
+/**	Every entry is reachable by walking slots, and only the entries. */
+@Test function testIterationVisitsEveryEntryOnce()
+	let map = new FastHashMap<int, int>()
+	map.put(1, 10)
+	map.put(1 + FASTHASHMAP_CAPACITY, 90)
+	map.put(5, 50)
+
+	var visited = 0
+	var keySum = 0
+	var valueSum = 0
+	var slot = map.nextEntry(0)
+	while slot >= 0
+		visited++
+		keySum += map.keyAt(slot)
+		valueSum += map.valueAt(slot)
+		slot = map.nextEntry(slot + 1)
+
+	visited.assertEquals(3)
+	keySum.assertEquals(1 + (1 + FASTHASHMAP_CAPACITY) + 5)
+	valueSum.assertEquals(150)
+
+/**	A removed key is not visited, and its tombstone does not stop the walk early. */
+@Test function testIterationSkipsRemovedEntries()
+	let map = new FastHashMap<int, int>()
+	map.put(1, 10)
+	map.put(1 + FASTHASHMAP_CAPACITY, 90)
+	map.remove(1)
+
+	var visited = 0
+	var keySum = 0
+	var slot = map.nextEntry(0)
+	while slot >= 0
+		visited++
+		keySum += map.keyAt(slot)
+		slot = map.nextEntry(slot + 1)
+
+	visited.assertEquals(1)
+	keySum.assertEquals(1 + FASTHASHMAP_CAPACITY)
+
+/**	An empty map has nothing to walk, and a cleared one goes back to that. */
+@Test function testIterationOfAnEmptyMap()
+	let map = new FastHashMap<int, int>()
+	map.nextEntry(0).assertEquals(-1)
+	map.put(3, 30)
+	(map.nextEntry(0) >= 0).assertTrue()
+	map.clear()
+	map.nextEntry(0).assertEquals(-1)
+
+/**	String keys iterate as themselves, the key being stored rather than an index for it. */
+@Test function testIterationOverStringKeys()
+	let map = new FastHashMap<string, int>()
+	map.put("alpha", 1)
+	map.put("beta", 2)
+	var joined = ""
+	var total = 0
+	var slot = map.nextEntry(0)
+	while slot >= 0
+		joined += map.keyAt(slot)
+		total += map.valueAt(slot)
+		slot = map.nextEntry(slot + 1)
+	joined.length().assertEquals("alpha".length() + "beta".length())
+	total.assertEquals(3)
