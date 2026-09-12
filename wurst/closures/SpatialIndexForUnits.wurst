@@ -1,5 +1,6 @@
 package SpatialIndexForUnits
 import ArrayList
+import ClosureForGroups
 import UnitSpatialIndex
 import Rect
 
@@ -96,3 +97,98 @@ public function unitsOfPlayer(ArrayList<unit> result, player owner, UnitSpatialF
 
 public function unitsOfPlayer(ArrayList<unit> result, player owner)
 	unitsOfPlayer(result, owner, null)
+
+// ============================================================================
+// Closure API
+// ============================================================================
+
+/*  Almost every caller is doing the same three things: run a query, decide which matches count,
+	and act on those. The overloads above hand back a list and leave the last two to the caller.
+	These do the whole thing - the callback sees each match, and deciding is an `if` inside it.
+
+	**This is a separate API, not a replacement for ClosureForGroups.** The index beats a Warcraft
+	group on Lua and loses to one on Jass, so which is faster depends on the backend. That choice
+	belongs to the caller, not to a silent substitution inside the function everyone already calls.
+	Behaviour is otherwise the same, including that the callback is destroyed afterwards - keep one
+	in a field and pass it repeatedly where the allocation matters.
+
+	Matches are copied out and the query snapshot closed before the callback runs, for the reason
+	the list overloads do it: a callback is caller code. It can fail, which would leave the
+	snapshot open for good, and it can yield, which would let two queries corrupt each other.
+*/
+
+/** One scratch list per nesting level, so a callback may start another query. */
+ArrayList<unit> array scratchLists
+var scratchDepth = 0
+
+function borrowScratch() returns ArrayList<unit>
+	if scratchLists[scratchDepth] == null
+		scratchLists[scratchDepth] = new ArrayList<unit>()
+	let list = scratchLists[scratchDepth]
+	scratchDepth++
+	return list
+
+function releaseScratch()
+	scratchDepth--
+
+/** Runs the callback for every unit whose origin is within radius of center. */
+public function forEachUnitInRange(vec2 center, real radius, ForGroupCallback cb)
+	forEachUnitInRange(center, radius, false, cb)
+
+/** Runs the callback for every unit in range, optionally applying collision-size filtering. */
+public function forEachUnitInRange(vec2 center, real radius, bool collisionFiltering,
+		ForGroupCallback cb)
+	let matches = borrowScratch()
+	unitsInRange(matches, center, radius, collisionFiltering)
+	for i = 0 to matches.size() - 1
+		cb.callback(matches.get(i))
+	releaseScratch()
+	destroy cb
+
+/** Runs the callback for every unit whose origin is inside the rect. */
+public function forEachUnitInRect(rect area, ForGroupCallback cb)
+	let matches = borrowScratch()
+	unitsInRect(matches, area)
+	for i = 0 to matches.size() - 1
+		cb.callback(matches.get(i))
+	releaseScratch()
+	destroy cb
+
+/** Runs the callback for every unit owned by the player. */
+public function forEachUnitOfPlayer(player owner, ForGroupCallback cb)
+	let matches = borrowScratch()
+	unitsOfPlayer(matches, owner)
+	for i = 0 to matches.size() - 1
+		cb.callback(matches.get(i))
+	releaseScratch()
+	destroy cb
+
+/** As forEachUnitInRange, stopping as soon as the callback returns false. */
+public function forEachUnitInRangeUntil(vec2 center, real radius, ForGroupCallbackUntil cb)
+	let matches = borrowScratch()
+	unitsInRange(matches, center, radius)
+	for i = 0 to matches.size() - 1
+		if not cb.callback(matches.get(i))
+			break
+	releaseScratch()
+	destroy cb
+
+/** As forEachUnitInRect, stopping as soon as the callback returns false. */
+public function forEachUnitInRectUntil(rect area, ForGroupCallbackUntil cb)
+	let matches = borrowScratch()
+	unitsInRect(matches, area)
+	for i = 0 to matches.size() - 1
+		if not cb.callback(matches.get(i))
+			break
+	releaseScratch()
+	destroy cb
+
+/** As forEachUnitOfPlayer, stopping as soon as the callback returns false. */
+public function forEachUnitOfPlayerUntil(player owner, ForGroupCallbackUntil cb)
+	let matches = borrowScratch()
+	unitsOfPlayer(matches, owner)
+	for i = 0 to matches.size() - 1
+		if not cb.callback(matches.get(i))
+			break
+	releaseScratch()
+	destroy cb
