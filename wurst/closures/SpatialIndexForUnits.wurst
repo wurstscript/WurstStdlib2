@@ -1,5 +1,6 @@
 package SpatialIndexForUnits
 import ArrayList
+import ClosureForGroups
 import UnitSpatialIndex
 import Rect
 
@@ -96,3 +97,97 @@ public function unitsOfPlayer(ArrayList<unit> result, player owner, UnitSpatialF
 
 public function unitsOfPlayer(ArrayList<unit> result, player owner)
 	unitsOfPlayer(result, owner, null)
+
+// ============================================================================
+// Closure API
+// ============================================================================
+
+/*  Almost every caller is doing the same three things: run a query, decide which matches count,
+	and act on those. The overloads above hand back a list and leave the last two to the caller.
+	These do the whole thing - the callback sees each match, and deciding is an `if` inside it.
+
+	**This is a separate API, not a replacement for ClosureForGroups.** The index beats a Warcraft
+	group on Lua and loses to one on Jass, so which is faster depends on the backend. That choice
+	belongs to the caller, not to a silent substitution inside the function everyone already calls.
+	Behaviour is otherwise the same, including ownership: **the callback is destroyed after the
+	call**, as ClosureForGroups does, because the usual call site is a lambda written in place and
+	nothing else would free it. Passing the same callback twice therefore uses a destroyed object.
+	Where the per-call closure is too much, use the list overloads above - they allocate nothing,
+	which is the reason they remain.
+
+	Matches are copied out and the query snapshot closed before the callback runs, for the reason
+	the list overloads do it: a callback is caller code. It can fail, which would leave the
+	snapshot open for good, and it can yield, which would let two queries corrupt each other.
+
+	Each call owns the list it collects into, rather than borrowing from a pool. A pool has to be
+	handed back, and a callback which fails never hands anything back - a pooled slot would then be
+	gone for the rest of the map, and the API would stop working after enough failures. Here a
+	failed callback costs one list, the same way it already costs the closure it was called with,
+	and the next query is unaffected. Destroying the list also clears the unit references it
+	collected, so a wide query does not keep them reachable afterwards.
+
+	That is one list per call on top of the closure. It is the price of the convenience: the list
+	overloads allocate nothing at all, which is why they remain.
+*/
+
+/** Runs the callback for every unit whose origin is within radius of center. */
+public function forEachUnitInRange(vec2 center, real radius, ForGroupCallback cb)
+	forEachUnitInRange(center, radius, false, cb)
+
+/** Runs the callback for every unit in range, optionally applying collision-size filtering. */
+public function forEachUnitInRange(vec2 center, real radius, bool collisionFiltering,
+		ForGroupCallback cb)
+	let matches = new ArrayList<unit>()
+	unitsInRange(matches, center, radius, collisionFiltering)
+	for i = 0 to matches.size() - 1
+		cb.callback(matches.get(i))
+	destroy matches
+	destroy cb
+
+/** Runs the callback for every unit whose origin is inside the rect. */
+public function forEachUnitInRect(rect area, ForGroupCallback cb)
+	let matches = new ArrayList<unit>()
+	unitsInRect(matches, area)
+	for i = 0 to matches.size() - 1
+		cb.callback(matches.get(i))
+	destroy matches
+	destroy cb
+
+/** Runs the callback for every unit owned by the player. */
+public function forEachUnitOfPlayer(player owner, ForGroupCallback cb)
+	let matches = new ArrayList<unit>()
+	unitsOfPlayer(matches, owner)
+	for i = 0 to matches.size() - 1
+		cb.callback(matches.get(i))
+	destroy matches
+	destroy cb
+
+/** As forEachUnitInRange, stopping as soon as the callback returns false. */
+public function forEachUnitInRangeUntil(vec2 center, real radius, ForGroupCallbackUntil cb)
+	let matches = new ArrayList<unit>()
+	unitsInRange(matches, center, radius)
+	for i = 0 to matches.size() - 1
+		if not cb.callback(matches.get(i))
+			break
+	destroy matches
+	destroy cb
+
+/** As forEachUnitInRect, stopping as soon as the callback returns false. */
+public function forEachUnitInRectUntil(rect area, ForGroupCallbackUntil cb)
+	let matches = new ArrayList<unit>()
+	unitsInRect(matches, area)
+	for i = 0 to matches.size() - 1
+		if not cb.callback(matches.get(i))
+			break
+	destroy matches
+	destroy cb
+
+/** As forEachUnitOfPlayer, stopping as soon as the callback returns false. */
+public function forEachUnitOfPlayerUntil(player owner, ForGroupCallbackUntil cb)
+	let matches = new ArrayList<unit>()
+	unitsOfPlayer(matches, owner)
+	for i = 0 to matches.size() - 1
+		if not cb.callback(matches.get(i))
+			break
+	destroy matches
+	destroy cb
