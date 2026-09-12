@@ -132,13 +132,17 @@ constant MAX_NESTED_QUERIES = 16
 ArrayList<unit> array scratchLists
 bool array scratchInUse
 
+/** A free slot, or -1 when none is left. `error` reports and returns, so the caller must check. */
 function borrowScratch() returns int
 	var slot = 0
 	while slot < MAX_NESTED_QUERIES and scratchInUse[slot]
 		slot++
 	if slot == MAX_NESTED_QUERIES
+		// Reporting is not stopping: error() returns, and carrying on here would hand every
+		// overflowing call the same list to reset and read.
 		error("SpatialIndexForUnits: more than " + MAX_NESTED_QUERIES.toString()
 			+ " queries are open at once; a callback is most likely never returning.")
+		return -1
 	if scratchLists[slot] == null
 		scratchLists[slot] = new ArrayList<unit>()
 	scratchInUse[slot] = true
@@ -155,6 +159,10 @@ public function forEachUnitInRange(vec2 center, real radius, ForGroupCallback cb
 public function forEachUnitInRange(vec2 center, real radius, bool collisionFiltering,
 		ForGroupCallback cb)
 	let slot = borrowScratch()
+	if slot < 0
+		// No list to borrow. The callback is still ours to free.
+		destroy cb
+		return
 	let matches = scratchLists[slot]
 	unitsInRange(matches, center, radius, collisionFiltering)
 	for i = 0 to matches.size() - 1
@@ -165,6 +173,10 @@ public function forEachUnitInRange(vec2 center, real radius, bool collisionFilte
 /** Runs the callback for every unit whose origin is inside the rect. */
 public function forEachUnitInRect(rect area, ForGroupCallback cb)
 	let slot = borrowScratch()
+	if slot < 0
+		// No list to borrow. The callback is still ours to free.
+		destroy cb
+		return
 	let matches = scratchLists[slot]
 	unitsInRect(matches, area)
 	for i = 0 to matches.size() - 1
@@ -175,6 +187,10 @@ public function forEachUnitInRect(rect area, ForGroupCallback cb)
 /** Runs the callback for every unit owned by the player. */
 public function forEachUnitOfPlayer(player owner, ForGroupCallback cb)
 	let slot = borrowScratch()
+	if slot < 0
+		// No list to borrow. The callback is still ours to free.
+		destroy cb
+		return
 	let matches = scratchLists[slot]
 	unitsOfPlayer(matches, owner)
 	for i = 0 to matches.size() - 1
@@ -185,6 +201,10 @@ public function forEachUnitOfPlayer(player owner, ForGroupCallback cb)
 /** As forEachUnitInRange, stopping as soon as the callback returns false. */
 public function forEachUnitInRangeUntil(vec2 center, real radius, ForGroupCallbackUntil cb)
 	let slot = borrowScratch()
+	if slot < 0
+		// No list to borrow. The callback is still ours to free.
+		destroy cb
+		return
 	let matches = scratchLists[slot]
 	unitsInRange(matches, center, radius)
 	for i = 0 to matches.size() - 1
@@ -196,6 +216,10 @@ public function forEachUnitInRangeUntil(vec2 center, real radius, ForGroupCallba
 /** As forEachUnitInRect, stopping as soon as the callback returns false. */
 public function forEachUnitInRectUntil(rect area, ForGroupCallbackUntil cb)
 	let slot = borrowScratch()
+	if slot < 0
+		// No list to borrow. The callback is still ours to free.
+		destroy cb
+		return
 	let matches = scratchLists[slot]
 	unitsInRect(matches, area)
 	for i = 0 to matches.size() - 1
@@ -207,6 +231,10 @@ public function forEachUnitInRectUntil(rect area, ForGroupCallbackUntil cb)
 /** As forEachUnitOfPlayer, stopping as soon as the callback returns false. */
 public function forEachUnitOfPlayerUntil(player owner, ForGroupCallbackUntil cb)
 	let slot = borrowScratch()
+	if slot < 0
+		// No list to borrow. The callback is still ours to free.
+		destroy cb
+		return
 	let matches = scratchLists[slot]
 	unitsOfPlayer(matches, owner)
 	for i = 0 to matches.size() - 1
