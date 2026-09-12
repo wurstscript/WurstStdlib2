@@ -3,6 +3,7 @@ package Cinematic
 import ClosureTimers
 import LinkedList
 import Time
+import Vectors
 
 /**
 A cinematic sequence. Cinematic has built-in cinematic sequences:
@@ -125,3 +126,24 @@ public class Cinematic
         SetCineFilterEndColor(0, 0, 0, 0)
         SetCineFilterDuration(duration.seconds)
         DisplayCineFilter(true)
+
+public function preloadModelCinematic(string modelPath) returns boolean
+	return BlzPreloadModelCinematicGame(modelPath)
+
+public function playModelCinematic(string modelPath, vec3 position, angle rotation)
+	BlzPlayModelCinematicGameAtPosition(modelPath, position.x, position.y, position.z, rotation.degrees())
+
+public function getModelCinematicCurrentShot() returns int
+	return BlzGetModelCinematicGameCurrentShot()
+
+public function getModelCinematicShotCount() returns int
+	return BlzGetModelCinematicGameShotCount()
+
+public function getModelCinematicRemainingTime() returns real
+	return BlzGetModelCinematicGameRemainingTime()
+
+public function setDECinematicsEnabled(boolean enabled)
+	BlzSetCinematicEnabledDE(enabled)
+
+public function setThematicMusicPausedOnFocusLost(boolean paused)
+	BlzPauseThematicMusicOnFocusLost(paused)

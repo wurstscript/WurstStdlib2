@@ -204,3 +204,66 @@ public function item.setItemDropID(integer unitId)
 public function item.blzSetItemSkin(integer skinId)
 	BlzSetItemSkin(this, skinId)
 
+public function item.setColor(playercolor whichColor)
+	SetItemColor(this, whichColor)
+
+public function item.getEquipmentType() returns equipmentType
+	return GetItemEquipmentType(this)
+
+public function item.getTag() returns itemTag
+	return GetItemTag(this)
+
+public function item.isEquipped() returns boolean
+	return IsItemEquipped(this)
+
+public function item.isInBag() returns boolean
+	return IsItemInBag(this)
+
+public function unit.equipItem(item whichItem) returns boolean
+	return UnitEquipItem(this, whichItem)
+
+public function unit.unequipItem(item whichItem)
+	UnitUnequipItem(this, whichItem)
+
+public function unit.unequipItem(loadoutslot slot) returns item
+	return UnitUnequipItemFromSlot(this, slot)
+
+public function unit.getExtendedInventorySize() returns int
+	return UnitExtendedInventorySize(this)
+
+public function unit.getItemInBagSlot(int slot) returns item
+	return UnitItemInBagSlot(this, slot)
+
+public function unit.getItemInEquipmentSlot(loadoutslot slot) returns item
+	return UnitItemInEquipmentSlot(this, slot)
+
+public function unit.hasItemBagged(item whichItem) returns boolean
+	return UnitHasItemBagged(this, whichItem)
+
+public function unit.hasItemEquipped(item whichItem) returns boolean
+	return UnitHasItemEquipped(this, whichItem)
+
+public function unit.isLoadoutSlotEmpty(loadoutslot slot) returns boolean
+	return UnitHasLoadoutSlotEmpty(this, slot)
+
+/** Correctly-spelled wrapper for the native UnitHasAnyItemEquiped. */
+public function unit.hasAnyItemEquipped() returns boolean
+	return UnitHasAnyItemEquiped(this)
+
+public function unit.hasEquipmentType(equipmentType whichType) returns boolean
+	return UnitHasItemEquipmentOfType(this, whichType)
+
+public function unit.canEquipItemOfType(equipmentType whichType) returns boolean
+	return UnitCanEquipItemOfEquipmentType(this, whichType)
+
+public function itemtype.chooseRandomItem(int level, equipmentType whichEquipmentType, itemTag whichTag) returns int
+	return ChooseRandomItemExWithFilter(this, level, whichEquipmentType, whichTag)
+
+/** Event response for an item-equipment event. */
+public function getEquippedItem() returns item
+	return GetEquippedItem()
+
+/** Event response for an item-unequipment event. */
+public function getUnequippedItem() returns item
+	return GetUnequippedItem()
+
