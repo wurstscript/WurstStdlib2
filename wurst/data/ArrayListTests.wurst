@@ -785,3 +785,30 @@ function testUnsafeAddAfterResetRefillsInPlace()
 	list.get(0).assertEquals(100)
 	list.get(7).assertEquals(107)
 	destroy list
+
+@Test
+function testTruncateKeepsPrefixAndCapacity()
+	let list = new ArrayList<int>()
+	list.reserve(32)
+	for i = 0 to 15
+		list.unsafeAdd(i)
+	list.truncate(4)
+	list.size().assertEquals(4)
+	list.get(0).assertEquals(0)
+	list.get(3).assertEquals(3)
+	// Capacity survives, so the list refills without growing again.
+	for i = 0 to 27
+		list.unsafeAdd(100 + i)
+	list.size().assertEquals(32)
+	list.get(4).assertEquals(100)
+	destroy list
+
+@Test
+function testTruncateToOwnSizeIsANoOp()
+	let list = new ArrayList<int>()
+	list.add(7)
+	list.add(8)
+	list.truncate(2)
+	list.size().assertEquals(2)
+	list.get(1).assertEquals(8)
+	destroy list

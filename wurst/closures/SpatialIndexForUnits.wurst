@@ -27,18 +27,26 @@ public interface UnitSpatialFilter
 	function matches(unit whichUnit) returns boolean
 
 function appendMatches(ArrayList<unit> result, int matched, UnitSpatialFilter filter)
-	// One capacity check for the whole batch. The query already knows its upper bound, and
-	// an append which cannot grow contains no call, so it inlines into this loop.
-	result.reserve(result.size() + matched)
-	if filter == null
-		for i = 0 to matched - 1
-			result.unsafeAdd(spatialIndexQueryUnit(i))
-	else
-		for i = 0 to matched - 1
-			let u = spatialIndexQueryUnit(i)
-			if filter.matches(u)
-				result.unsafeAdd(u)
+	// Copy the snapshot out and close it before any caller code runs. A filter is caller code: it
+	// can fail, and it can yield. Failing leaves the snapshot open for good, along with the unit
+	// handles it holds; yielding lets another query overlap this one, and the two then read and
+	// close each other's snapshot.
+	let firstNew = result.size()
+	result.reserve(firstNew + matched)
+	for i = 0 to matched - 1
+		result.unsafeAdd(spatialIndexQueryUnit(i))
 	spatialIndexEndQuery()
+
+	if filter != null
+		// Compact in place, so filtering needs no second collection. Nested queries already have
+		// to use separate result lists, which is what makes writing back into this one safe.
+		var kept = firstNew
+		for i = firstNew to result.size() - 1
+			let match = result.get(i)
+			if filter.matches(match)
+				result.set(kept, match)
+				kept++
+		result.truncate(kept)
 
 /** Replaces result with units whose origins are within radius of center. */
 public function unitsInRange(ArrayList<unit> result, vec2 center, real radius)

@@ -480,6 +480,17 @@ public class ArrayList<T:>
             retainedSize = size
         size = 0
 
+    /** Drops everything past the given size, keeping capacity (O(1)).
+
+        Like `reset`, this leaves the dropped slots holding their references until they are
+        overwritten or `clear` is called - which is what makes it O(1). */
+    function truncate(int newSize)
+        if newSize < 0 or newSize > size
+            error("ArrayList: truncate out of bounds: " + newSize.toString())
+        if size > retainedSize
+            retainedSize = size
+        size = newSize
+
     /** Returns a shallow copy of this list */
     function copy() returns ArrayList<T>
         let list = new ArrayList<T>(size)
