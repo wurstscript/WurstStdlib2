@@ -20,14 +20,17 @@ public interface DestructableSpatialFilter
 	function matches(destructable whichDestructable) returns boolean
 
 function appendMatches(ArrayList<destructable> result, int matched, DestructableSpatialFilter filter)
+	// One capacity check for the whole batch. The query already knows its upper bound, and
+	// an append which cannot grow contains no call, so it inlines into this loop.
+	result.reserve(result.size() + matched)
 	if filter == null
 		for i = 0 to matched - 1
-			result.add(destructableSpatialIndexQuery(i))
+			result.unsafeAdd(destructableSpatialIndexQuery(i))
 	else
 		for i = 0 to matched - 1
 			let d = destructableSpatialIndexQuery(i)
 			if filter.matches(d)
-				result.add(d)
+				result.unsafeAdd(d)
 	destructableSpatialIndexEndQuery()
 
 public function destructablesInRect(ArrayList<destructable> result, rect area,

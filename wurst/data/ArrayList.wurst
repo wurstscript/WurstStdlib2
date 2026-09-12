@@ -302,6 +302,24 @@ public class ArrayList<T:>
             store[startIndex + size] = elem
             size++
 
+    /** Appends without checking capacity. **Reserve first.**
+
+        `add` cannot be inlined, because its body calls `grow()` when the list is full, and an
+        appending loop therefore pays a call, a stack-trace push and a global lookup for every
+        field it touches. This one contains no call, so it inlines into the caller and reads its
+        fields from hoisted locals - measured at roughly a quarter of the cost of `add` on Lua.
+
+        The precondition is not a formality. The backing store is one array shared by every list,
+        each holding a section of it, so writing past this list's capacity does not overflow into
+        nothing - it silently overwrites whatever another list is keeping there. Call
+        `reserve(size + count)` first, and only append that many.
+
+        Intended for a caller which already knows how many elements it is about to add, such as a
+        query copying out a result whose size it was told up front. Prefer `add` everywhere else. */
+    function unsafeAdd(T elem)
+        store[startIndex + size] = elem
+        size++
+
     /** Adds all elements from another list */
     function addAll(ArrayList<T> other)
         let otherSize = other.size
@@ -315,8 +333,11 @@ public class ArrayList<T:>
             size++
 
     /** Ensures capacity for at least the given number of elements, moving the
-        section at most once instead of once per doubling. */
-    private function reserve(int needed)
+        section at most once instead of once per doubling.
+
+        Public so a caller which knows its final size can pay one capacity check for a whole batch
+        rather than one per element, which is also the precondition `unsafeAdd` needs. */
+    function reserve(int needed)
         if needed <= capacity
             return
         var newCapacity = capacity

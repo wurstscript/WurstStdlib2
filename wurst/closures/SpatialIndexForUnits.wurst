@@ -27,14 +27,17 @@ public interface UnitSpatialFilter
 	function matches(unit whichUnit) returns boolean
 
 function appendMatches(ArrayList<unit> result, int matched, UnitSpatialFilter filter)
+	// One capacity check for the whole batch. The query already knows its upper bound, and
+	// an append which cannot grow contains no call, so it inlines into this loop.
+	result.reserve(result.size() + matched)
 	if filter == null
 		for i = 0 to matched - 1
-			result.add(spatialIndexQueryUnit(i))
+			result.unsafeAdd(spatialIndexQueryUnit(i))
 	else
 		for i = 0 to matched - 1
 			let u = spatialIndexQueryUnit(i)
 			if filter.matches(u)
-				result.add(u)
+				result.unsafeAdd(u)
 	spatialIndexEndQuery()
 
 /** Replaces result with units whose origins are within radius of center. */
