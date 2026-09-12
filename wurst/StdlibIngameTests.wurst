@@ -543,6 +543,11 @@ function checkRangeParity(vec2 pos, real radius, bool collisionFiltering, string
 	actual.destr()
 	expected.destr()
 
+/** Mutated inside closures, so they cannot be locals - see the note at their use. */
+var closureVisited = 0
+var closureOuter = 0
+var closureInner = 0
+
 function testSpatialIndexParity()
 	section("--- 13. spatial index vs engine enumeration ---")
 	if isLua and USE_UNIT_SPATIAL_INDEX
@@ -582,26 +587,30 @@ function testSpatialIndexParity()
 	checkClosureParity(SPATIAL_TEST_POS, 2000., "closure API agrees on a wide radius")
 
 	// Early exit must stop, and must stop after the callback that asked to.
-	var visited = 0
+	// The counters are package level on purpose: a local captured by a closure is captured by
+	// value, so incrementing one inside the callback would leave the copy read here at zero and
+	// the check would fail whether or not the API worked.
+	closureVisited = 0
 	forEachUnitInRangeUntil(SPATIAL_TEST_POS, 2000.) u ->
-		visited++
-		return visited < 2
-	check(visited == 2, "forEachUnitInRangeUntil stops when the callback says so (" + visited + ")")
+		closureVisited++
+		return closureVisited < 2
+	check(closureVisited == 2, "forEachUnitInRangeUntil stops when the callback says so ("
+		+ closureVisited + ")")
 
-	// A callback starting another query must not disturb the one it is inside: each nesting level
-	// takes its own scratch list.
-	var outer = 0
-	var innerTotal = 0
+	// A callback starting another query must not disturb the one it is inside: each takes its own
+	// scratch list, and gives it back itself.
+	closureOuter = 0
+	closureInner = 0
 	forEachUnitInRange(SPATIAL_TEST_POS, 300.) _u ->
-		outer++
+		closureOuter++
 		forEachUnitInRange(SPATIAL_TEST_POS, 300.) _v ->
-			innerTotal++
+			closureInner++
 	let flat = CreateGroup()
 	collectViaSpatialIndex(SPATIAL_TEST_POS, 300., false, flat)
-	check(outer == flat.size(), "nested query leaves the outer iteration intact ("
-		+ outer + " vs " + flat.size() + ")")
-	check(innerTotal == outer * flat.size(), "nested query runs in full each time ("
-		+ innerTotal + ")")
+	check(closureOuter == flat.size(), "nested query leaves the outer iteration intact ("
+		+ closureOuter + " vs " + flat.size() + ")")
+	check(closureInner == closureOuter * flat.size(), "nested query runs in full each time ("
+		+ closureInner + ")")
 	flat.destr()
 	checkRangeParity(SPATIAL_TEST_POS, 300., true, "collision-filtered query matches the engine")
 	checkRangeParity(SPATIAL_TEST_POS, 121., false, "tight radius on a probe boundary")
