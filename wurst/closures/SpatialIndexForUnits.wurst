@@ -1,59 +1,98 @@
 package SpatialIndexForUnits
-import SparseSet
+import ArrayList
 import UnitSpatialIndex
 import Rect
 
 /**
  * Native-less Lua spatial queries.
  *
- * Each call returns an owned SparseSet<unit>. The result is independent of Warcraft groups and must
- * be destroyed by the caller. These APIs are intentionally Lua-oriented: on Jass or while disabled,
- * they return an empty set because no native fallback is hidden behind the generic result type.
+ * Pass a reusable ArrayList<unit> and the query fills it. The target is reset before it is
+ * populated, so one scratch list serves every call on a hot path. No Warcraft group, result
+ * collection, or filter is allocated or destroyed by these overloads.
+ *
+ * A query result is something you walk, so a list is the shape it wants. To narrow what comes back,
+ * pass a UnitSpatialFilter rather than collecting everything and testing membership afterwards -
+ * the filter runs once per match, before the result is built.
+ *
+ * Filters are caller-owned so one instance can be reused across queries. A capturing lambda creates
+ * a closure at its declaration site; keep it outside hot loops when allocation matters.
+ * Nested queries must use separate result collections because each call resets its target.
+ *
+ * These APIs are intentionally Lua-oriented: on Jass or while disabled, the target remains empty
+ * because no native fallback is hidden behind the generic result type.
  */
 
-function newUnitResult() returns SparseSet<unit>
-	return new SparseSet<unit>(UNIT_SPARSE_SET_KEY)
+// Caller-owned predicate evaluated once for each spatial match before it enters the result.
+public interface UnitSpatialFilter
+	function matches(unit whichUnit) returns boolean
 
-function addRangeMatches(SparseSet<unit> result, vec2 center, real radius, boolean collisionFiltering)
-	let matched = spatialIndexBeginQuery(center, radius, collisionFiltering)
+function appendMatches(ArrayList<unit> result, int matched, UnitSpatialFilter filter)
+	// Copy the snapshot out and close it before any caller code runs. A filter is caller code: it
+	// can fail, and it can yield. Failing leaves the snapshot open for good, along with the unit
+	// handles it holds; yielding lets another query overlap this one, and the two then read and
+	// close each other's snapshot.
+	let firstNew = result.size()
+	result.reserve(firstNew + matched)
 	for i = 0 to matched - 1
-		result.add(spatialIndexQueryUnit(i))
+		result.unsafeAdd(spatialIndexQueryUnit(i))
 	spatialIndexEndQuery()
 
-/** Returns units whose origins are within radius of center. */
-public function unitsInRange(vec2 center, real radius) returns SparseSet<unit>
-	return unitsInRange(center, radius, false)
+	if filter != null
+		// Compact in place, so filtering needs no second collection. Nested queries already have
+		// to use separate result lists, which is what makes writing back into this one safe.
+		var kept = firstNew
+		for i = firstNew to result.size() - 1
+			let match = result.get(i)
+			if filter.matches(match)
+				result.set(kept, match)
+				kept++
+		result.truncate(kept)
 
-/** Returns units in range, optionally applying collision-size filtering. */
-public function unitsInRange(vec2 center, real radius, boolean collisionFiltering) returns SparseSet<unit>
-	let result = newUnitResult()
+/** Replaces result with units whose origins are within radius of center. */
+public function unitsInRange(ArrayList<unit> result, vec2 center, real radius)
+	unitsInRange(result, center, radius, false, null)
+
+/** Replaces result with filtered units whose origins are within radius of center. */
+public function unitsInRange(ArrayList<unit> result, vec2 center, real radius,
+		UnitSpatialFilter filter)
+	unitsInRange(result, center, radius, false, filter)
+
+/** Replaces result with units in range, optionally applying collision-size filtering. */
+public function unitsInRange(ArrayList<unit> result, vec2 center, real radius,
+		boolean collisionFiltering)
+	unitsInRange(result, center, radius, collisionFiltering, null)
+
+/** Replaces result with filtered units in range, optionally applying collision-size filtering. */
+public function unitsInRange(ArrayList<unit> result, vec2 center, real radius,
+		boolean collisionFiltering, UnitSpatialFilter filter)
+	result.reset()
 	if isLua and USE_UNIT_SPATIAL_INDEX
-		addRangeMatches(result, center, radius, collisionFiltering)
-	return result
+		appendMatches(result, spatialIndexBeginQuery(center, radius, collisionFiltering), filter)
 
-/** Returns units whose origins are inside the axis-aligned box. */
-public function unitsInBox(vec2 boxMin, vec2 boxMax) returns SparseSet<unit>
-	let result = newUnitResult()
+/** Replaces result with filtered units whose origins are inside the axis-aligned box. */
+public function unitsInBox(ArrayList<unit> result, vec2 boxMin, vec2 boxMax,
+		UnitSpatialFilter filter)
+	result.reset()
 	if isLua and USE_UNIT_SPATIAL_INDEX
-		let matched = spatialIndexBeginBoxQuery(boxMin, boxMax)
-		for i = 0 to matched - 1
-			result.add(spatialIndexQueryUnit(i))
-		spatialIndexEndQuery()
-	return result
+		appendMatches(result, spatialIndexBeginBoxQuery(boxMin, boxMax), filter)
 
-/** Returns units matching GroupEnumUnitsInRect semantics for the given rect. */
-public function unitsInRect(rect area) returns SparseSet<unit>
+public function unitsInBox(ArrayList<unit> result, vec2 boxMin, vec2 boxMax)
+	unitsInBox(result, boxMin, boxMax, null)
+
+public function unitsInRect(ArrayList<unit> result, rect area, UnitSpatialFilter filter)
 	// Warcraft's native unit rect enum starts 32 units above the requested minimum edge.
-	return unitsInBox(vec2(area.getMinX() + 32., area.getMinY() + 32.),
-		vec2(area.getMaxX(), area.getMaxY()))
+	unitsInBox(result, vec2(area.getMinX() + 32., area.getMinY() + 32.),
+		vec2(area.getMaxX(), area.getMaxY()), filter)
 
-/** Returns currently indexed units owned by owner. This is a linear registry scan; per-player
-	secondary sets are intentionally not maintained in this first iteration. */
-public function unitsOfPlayer(player owner) returns SparseSet<unit>
-	let result = newUnitResult()
+public function unitsInRect(ArrayList<unit> result, rect area)
+	unitsInRect(result, area, null)
+
+/** Replaces result with currently indexed units owned by owner. This is a linear registry scan;
+	per-player secondary sets are intentionally not maintained. */
+public function unitsOfPlayer(ArrayList<unit> result, player owner, UnitSpatialFilter filter)
+	result.reset()
 	if isLua and USE_UNIT_SPATIAL_INDEX
-		let matched = spatialIndexBeginPlayerQuery(owner)
-		for i = 0 to matched - 1
-			result.add(spatialIndexQueryUnit(i))
-		spatialIndexEndQuery()
-	return result
+		appendMatches(result, spatialIndexBeginPlayerQuery(owner), filter)
+
+public function unitsOfPlayer(ArrayList<unit> result, player owner)
+	unitsOfPlayer(result, owner, null)

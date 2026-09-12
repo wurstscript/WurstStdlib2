@@ -115,6 +115,8 @@ public class ArrayList<T:>
     private int startIndex
     private int capacity
     private int size = 0
+    // Number of slots intentionally retained by reset(). They are released by clear()/destroy.
+    private int retainedSize = 0
 
     /** Creates a new empty list with default capacity (16) */
     construct()
@@ -255,11 +257,18 @@ public class ArrayList<T:>
         for i = 0 to size - 1
             store[startIndex + i] = store[oldStart + i]
 
-        // The old section now holds duplicate references and no longer belongs to any
-        // live list once freed. Clear it so the Lua GC can reclaim them (no-op on Jass).
+        // The old section now holds duplicate references plus any stale references retained by
+        // reset(). It no longer belongs to a live list once freed, so clear the full high-water
+        // range before returning it to the pool (no-op on Jass).
         if isLua
-            for i = 0 to size - 1
+            var slotsToClear = size
+            if retainedSize > slotsToClear
+                slotsToClear = retainedSize
+            for i = 0 to slotsToClear - 1
                 store[oldStart + i] = null
+
+        // The new section contains only the current logical elements.
+        retainedSize = 0
 
         // Free old section
         let tempStart = startIndex
@@ -272,7 +281,10 @@ public class ArrayList<T:>
 
     ondestroy
         // Clear references
-        for i = 0 to size - 1
+        var slotsToClear = size
+        if retainedSize > slotsToClear
+            slotsToClear = retainedSize
+        for i = 0 to slotsToClear - 1
             store[startIndex + i] = null
 
         // Return storage to free pool
@@ -290,6 +302,24 @@ public class ArrayList<T:>
             store[startIndex + size] = elem
             size++
 
+    /** Appends without checking capacity. **Reserve first.**
+
+        `add` cannot be inlined, because its body calls `grow()` when the list is full, and an
+        appending loop therefore pays a call, a stack-trace push and a global lookup for every
+        field it touches. This one contains no call, so it inlines into the caller and reads its
+        fields from hoisted locals - measured at roughly a quarter of the cost of `add` on Lua.
+
+        The precondition is not a formality. The backing store is one array shared by every list,
+        each holding a section of it, so writing past this list's capacity does not overflow into
+        nothing - it silently overwrites whatever another list is keeping there. Call
+        `reserve(size + count)` first, and only append that many.
+
+        Intended for a caller which already knows how many elements it is about to add, such as a
+        query copying out a result whose size it was told up front. Prefer `add` everywhere else. */
+    function unsafeAdd(T elem)
+        store[startIndex + size] = elem
+        size++
+
     /** Adds all elements from another list */
     function addAll(ArrayList<T> other)
         let otherSize = other.size
@@ -303,8 +333,11 @@ public class ArrayList<T:>
             size++
 
     /** Ensures capacity for at least the given number of elements, moving the
-        section at most once instead of once per doubling. */
-    private function reserve(int needed)
+        section at most once instead of once per doubling.
+
+        Public so a caller which knows its final size can pay one capacity check for a whole batch
+        rather than one per element, which is also the precondition `unsafeAdd` needs. */
+    function reserve(int needed)
         if needed <= capacity
             return
         var newCapacity = capacity
@@ -429,9 +462,34 @@ public class ArrayList<T:>
         O(1) on Jass; O(n) on Lua, where the slots are nulled so the GC can reclaim them. */
     function clear()
         if isLua
-            for i = 0 to size - 1
+            var slotsToClear = size
+            if retainedSize > slotsToClear
+                slotsToClear = retainedSize
+            for i = 0 to slotsToClear - 1
                 store[startIndex + i] = null
         size = 0
+        retainedSize = 0
+
+    /** Resets the logical size while retaining both capacity and old slot references (O(1)).
+
+        This is intended for hot scratch-list reuse, where subsequent writes replace the stale
+        slots and the caller accepts that values remain GC-reachable up to the list's historical
+        high-water mark. Use #clear when releasing those references matters. */
+    function reset()
+        if size > retainedSize
+            retainedSize = size
+        size = 0
+
+    /** Drops everything past the given size, keeping capacity (O(1)).
+
+        Like `reset`, this leaves the dropped slots holding their references until they are
+        overwritten or `clear` is called - which is what makes it O(1). */
+    function truncate(int newSize)
+        if newSize < 0 or newSize > size
+            error("ArrayList: truncate out of bounds: " + newSize.toString())
+        if size > retainedSize
+            retainedSize = size
+        size = newSize
 
     /** Returns a shallow copy of this list */
     function copy() returns ArrayList<T>
@@ -773,4 +831,3 @@ public function ArrayList<string>.joinBy(string separator) returns string
 /** Joins elements from a string list into one string */
 public function ArrayList<string>.join() returns string
     return this.joinBy("")
-
