@@ -1079,3 +1079,39 @@ public function unit.clearOrders(boolean onlyQueued)
 public function unit.forceStopOrder(boolean clearQueue)
 	BlzUnitForceStopOrder(this, clearQueue)
 
+public function unit.setAbilityCooldownPercent(int abilityId, real percent)
+	BlzSetUnitAbilityCooldownPercent(this, abilityId, percent)
+
+public function unit.adjustAbilityCooldownPercent(int abilityId, real percent)
+	BlzAdjustUnitAbilityCooldownPercent(this, abilityId, percent)
+
+public function unit.getAbilityCooldownPercent(int abilityId) returns real
+	return BlzGetUnitAbilityCooldownPercent(this, abilityId)
+
+public function unit.setAbilityCooldownRemaining(int abilityId, real duration)
+	BlzSetUnitAbilityCooldownRemaining(this, abilityId, duration)
+
+public function unit.adjustAbilityCooldownRemaining(int abilityId, real duration)
+	BlzAdjustUnitAbilityCooldownRemaining(this, abilityId, duration)
+
+public function unit.getAnimationDuration(string animation) returns real
+	return BlzGetUnitAnimationDuration(this, animation)
+
+public function unit.getAnimationDuration(int animationIndex) returns real
+	return BlzGetUnitAnimationDurationByIndex(this, animationIndex)
+
+public function unit.resetAttack(int weaponIndex)
+	BlzResetUnitAttack(this, weaponIndex)
+
+public function unit.setAurasEnabled(boolean enabled, boolean affectsUI)
+	BlzUnitEnableAuras(this, enabled, affectsUI)
+
+public function unit.setHeroGlowAllowed(boolean allowed)
+	if allowed
+		AllowHeroGlowOnUnit(this)
+	else
+		DisallowHeroGlowOnUnit(this)
+
+public function unit.isHeroGlowAllowed() returns boolean
+	return HeroGlowIsAllowedOnUnit(this)
+

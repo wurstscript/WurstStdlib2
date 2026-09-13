@@ -3,10 +3,82 @@ import NoWurst
 import Vectors
 
 public function createDestructable(int id, vec3 pos, angle direction, real scale, int variation) returns destructable
-	return createDestructable(id, pos.toVec2(), direction, scale, variation)
+	return CreateDestructableZ(id, pos.x, pos.y, pos.z, direction.degrees(), scale, variation)
 
 public function createDestructable(int id, vec2 pos, angle direction, real scale, int variation) returns destructable
 	return CreateDestructable(id, pos.x, pos.y, direction.degrees(), scale, variation)
+
+public function createDestructable(int id, vec2 pos, angle direction, real scale, int variation, playercolor whichColor) returns destructable
+	return BlzCreateDestructableWithColor(id, pos.x, pos.y, direction.degrees(), scale, variation, whichColor)
+
+public function createDestructable(int id, vec3 pos, angle direction, real scale, int variation, playercolor whichColor) returns destructable
+	return BlzCreateDestructableZWithColor(id, pos.x, pos.y, pos.z, direction.degrees(), scale, variation, whichColor)
+
+public function createDestructable(int id, vec2 pos, angle direction, real scale, int variation, int skinId, playercolor whichColor) returns destructable
+	return BlzCreateDestructableWithSkinColor(id, pos.x, pos.y, direction.degrees(), scale, variation, skinId, whichColor)
+
+public function createDestructable(int id, vec3 pos, angle direction, real scale, int variation, int skinId, playercolor whichColor) returns destructable
+	return BlzCreateDestructableZWithSkinColor(id, pos.x, pos.y, pos.z, direction.degrees(), scale, variation, skinId, whichColor)
+
+public function createDestructable(int id, vec2 pos, angle direction, angle roll, angle pitch, real scale, int variation) returns destructable
+	return BlzCreateDestructablePitchRoll(id, pos.x, pos.y, direction.degrees(), roll.degrees(), pitch.degrees(), scale, variation)
+
+public function createDestructable(int id, vec3 pos, angle direction, angle roll, angle pitch, real scale, int variation) returns destructable
+	return BlzCreateDestructableZPitchRoll(id, pos.x, pos.y, pos.z, direction.degrees(), roll.degrees(), pitch.degrees(), scale, variation)
+
+public function createDestructable(int id, vec2 pos, angle direction, angle roll, angle pitch, real scale, int variation, playercolor whichColor) returns destructable
+	return BlzCreateDestructablePitchRollWithColor(id, pos.x, pos.y, direction.degrees(), roll.degrees(), pitch.degrees(), scale, variation, whichColor)
+
+public function createDestructable(int id, vec3 pos, angle direction, angle roll, angle pitch, real scale, int variation, playercolor whichColor) returns destructable
+	return BlzCreateDestructableZPitchRollWithColor(id, pos.x, pos.y, pos.z, direction.degrees(), roll.degrees(), pitch.degrees(), scale, variation, whichColor)
+
+public function createDestructable(int id, vec2 pos, angle direction, angle roll, angle pitch, real scale, int variation, int skinId) returns destructable
+	return BlzCreateDestructableWithSkinPitchRoll(id, pos.x, pos.y, direction.degrees(), roll.degrees(), pitch.degrees(), scale, variation, skinId)
+
+public function createDestructable(int id, vec3 pos, angle direction, angle roll, angle pitch, real scale, int variation, int skinId) returns destructable
+	return BlzCreateDestructableZWithSkinPitchRoll(id, pos.x, pos.y, pos.z, direction.degrees(), roll.degrees(), pitch.degrees(), scale, variation, skinId)
+
+public function createDestructable(int id, vec2 pos, angle direction, angle roll, angle pitch, real scale, int variation, int skinId, playercolor whichColor) returns destructable
+	return BlzCreateDestructableWithSkinPitchRollColor(id, pos.x, pos.y, direction.degrees(), roll.degrees(), pitch.degrees(), scale, variation, skinId, whichColor)
+
+public function createDestructable(int id, vec3 pos, angle direction, angle roll, angle pitch, real scale, int variation, int skinId, playercolor whichColor) returns destructable
+	return BlzCreateDestructableZWithSkinPitchRollColor(id, pos.x, pos.y, pos.z, direction.degrees(), roll.degrees(), pitch.degrees(), scale, variation, skinId, whichColor)
+
+public function createDeadDestructable(int id, vec2 pos, angle direction, real scale, int variation, playercolor whichColor) returns destructable
+	return BlzCreateDeadDestructableWithColor(id, pos.x, pos.y, direction.degrees(), scale, variation, whichColor)
+
+public function createDeadDestructable(int id, vec3 pos, angle direction, real scale, int variation, playercolor whichColor) returns destructable
+	return BlzCreateDeadDestructableZWithColor(id, pos.x, pos.y, pos.z, direction.degrees(), scale, variation, whichColor)
+
+public function createDeadDestructable(int id, vec2 pos, angle direction, real scale, int variation, int skinId, playercolor whichColor) returns destructable
+	return BlzCreateDeadDestructableWithSkinColor(id, pos.x, pos.y, direction.degrees(), scale, variation, skinId, whichColor)
+
+public function createDeadDestructable(int id, vec3 pos, angle direction, real scale, int variation, int skinId, playercolor whichColor) returns destructable
+	return BlzCreateDeadDestructableZWithSkinColor(id, pos.x, pos.y, pos.z, direction.degrees(), scale, variation, skinId, whichColor)
+
+public function createDeadDestructable(int id, vec2 pos, angle direction, angle roll, angle pitch, real scale, int variation) returns destructable
+	return BlzCreateDeadDestructablePitchRoll(id, pos.x, pos.y, direction.degrees(), roll.degrees(), pitch.degrees(), scale, variation)
+
+public function createDeadDestructable(int id, vec3 pos, angle direction, angle roll, angle pitch, real scale, int variation) returns destructable
+	return BlzCreateDeadDestructableZPitchRoll(id, pos.x, pos.y, pos.z, direction.degrees(), roll.degrees(), pitch.degrees(), scale, variation)
+
+public function createDeadDestructable(int id, vec2 pos, angle direction, angle roll, angle pitch, real scale, int variation, playercolor whichColor) returns destructable
+	return BlzCreateDeadDestructablePitchRollWithColor(id, pos.x, pos.y, direction.degrees(), roll.degrees(), pitch.degrees(), scale, variation, whichColor)
+
+public function createDeadDestructable(int id, vec3 pos, angle direction, angle roll, angle pitch, real scale, int variation, playercolor whichColor) returns destructable
+	return BlzCreateDeadDestructableZPitchRollWithColor(id, pos.x, pos.y, pos.z, direction.degrees(), roll.degrees(), pitch.degrees(), scale, variation, whichColor)
+
+public function createDeadDestructable(int id, vec2 pos, angle direction, angle roll, angle pitch, real scale, int variation, int skinId) returns destructable
+	return BlzCreateDeadDestructableWithSkinPitchRoll(id, pos.x, pos.y, direction.degrees(), roll.degrees(), pitch.degrees(), scale, variation, skinId)
+
+public function createDeadDestructable(int id, vec3 pos, angle direction, angle roll, angle pitch, real scale, int variation, int skinId) returns destructable
+	return BlzCreateDeadDestructableZWithSkinPitchRoll(id, pos.x, pos.y, pos.z, direction.degrees(), roll.degrees(), pitch.degrees(), scale, variation, skinId)
+
+public function createDeadDestructable(int id, vec2 pos, angle direction, angle roll, angle pitch, real scale, int variation, int skinId, playercolor whichColor) returns destructable
+	return BlzCreateDeadDestructableWithSkinPitchRollColor(id, pos.x, pos.y, direction.degrees(), roll.degrees(), pitch.degrees(), scale, variation, skinId, whichColor)
+
+public function createDeadDestructable(int id, vec3 pos, angle direction, angle roll, angle pitch, real scale, int variation, int skinId, playercolor whichColor) returns destructable
+	return BlzCreateDeadDestructableZWithSkinPitchRollColor(id, pos.x, pos.y, pos.z, direction.degrees(), roll.degrees(), pitch.degrees(), scale, variation, skinId, whichColor)
 
 public function destructable.getPos() returns vec2
 	return vec2(this.getX(), this.getY())
@@ -148,4 +220,11 @@ public function elevator.setHeight(int height)
 	this.elevatable.setAnimation(animationInstant)
 	if newHeight != oldHeight
 		this.elevatable.queueAnimation(animationQueue)
+
+public function destructable.setColor(playercolor whichColor)
+	SetDestructableColor(this, whichColor)
+
+public function destructable.setVertexColor(int red, int green, int blue, int alpha)
+	SetDestructableVertexColor(this, red, green, blue, alpha)
+
 

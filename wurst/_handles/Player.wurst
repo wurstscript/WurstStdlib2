@@ -227,4 +227,7 @@ public function player.hasVisibility(unit target) returns bool
 public function player.hasVisibility(vec2 pos) returns bool
 	return IsVisibleToPlayer(pos.x, pos.y, this)
 
+public function player.setRaceSkin(racepreference raceSkin)
+	SetPlayerRaceSkin(this, raceSkin)
+
 
