@@ -66,9 +66,18 @@ public interface StdlibIngameTestsDone
 
 var checksRun = 0
 var checksFailed = 0
-StdlibIngameTestsDone pendingDone = null
-/** Counts runs, so a summary timer only reports the run which started it. */
-var currentRun = 0
+
+/*	Runs never overlap. The suite shares its counters, its report and the
+	fixed positions of its test units, and some checks land on a timer, so a
+	second run started inside the first would mix both runs' results and units.
+	A request made while a run is in flight is queued and starts as soon as
+	that run has summarised. */
+var runInFlight = false
+var rerunQueued = false
+/** Told the totals of the run in flight. */
+let runCallbacks = new ArrayList<StdlibIngameTestsDone>()
+/** Told the totals of the queued run. */
+let queuedCallbacks = new ArrayList<StdlibIngameTestsDone>()
 
 /** Every reported line, so the run can also be read back from disk (see writeReport). */
 let reportLines = new ArrayList<string>()
@@ -892,20 +901,26 @@ function testUnitIndexerStorage()
 
 /**	Runs every in-game check and reports the totals to done once the summary
 	is out. Call from a timer callback rather than straight from init, because
-	it creates units. The callback is destroyed after it ran. A run started
-	while another is still summarising supersedes it: the earlier callback is
-	destroyed without being told, and only the new run reports. */
+	it creates units. The callback is destroyed after it ran. If a run is
+	already in flight, a new one starts after it and done gets the new run's
+	totals. */
 public function runStdlibIngameTests(StdlibIngameTestsDone done)
-	if pendingDone != null
-		destroy pendingDone
-	pendingDone = done
+	if runInFlight
+		queuedCallbacks.add(done)
+	else
+		runCallbacks.add(done)
 	runStdlibIngameTests()
 
 /**	Runs every in-game check. Call from a timer callback rather than straight
-	from init, because it creates units. */
+	from init, because it creates units. If a run is already in flight, this
+	queues one more run to start after it. */
 public function runStdlibIngameTests()
-	currentRun++
-	let run = currentRun
+	if runInFlight
+		if not rerunQueued
+			rerunQueued = true
+			print("|cffffcc00INFO|r  stdlib in-game tests already running; will run again after it")
+		return
+	runInFlight = true
 	checksRun = 0
 	checksFailed = 0
 	reportLines.clear()
@@ -953,19 +968,41 @@ public function runStdlibIngameTests()
 		testTimedLoopDoubleStart()
 
 	doAfter(1.5) ->
-		if run != currentRun
-			// Superseded by a later run, which reports its own totals.
-			return
 		report("|cff8888ff=== " + (checksRun - checksFailed) + "/" + checksRun
 			+ " checks passed ===|r")
 		if checksFailed > 0
 			report("|cffff4444" + checksFailed + " check(s) FAILED|r")
 		writeReport()
-		if pendingDone != null
-			let done = pendingDone
-			pendingDone = null
-			done.onDone(checksRun, checksFailed)
-			destroy done
+		finishRun()
+
+/**	Ends the run in flight: tells its callbacks, then starts the queued run,
+	if any. Callbacks run while the report still holds this run, so they can
+	read it through stdlibIngameReport. The queue is taken before they run, so
+	a callback asking for another run joins the next run instead of this one. */
+function finishRun()
+	let finished = new ArrayList<StdlibIngameTestsDone>()
+	for i = 0 to runCallbacks.size() - 1
+		finished.add(runCallbacks.get(i))
+	runCallbacks.clear()
+	let queued = rerunQueued
+	rerunQueued = false
+	let waiting = new ArrayList<StdlibIngameTestsDone>()
+	for i = 0 to queuedCallbacks.size() - 1
+		waiting.add(queuedCallbacks.get(i))
+	queuedCallbacks.clear()
+	runInFlight = false
+	for i = 0 to finished.size() - 1
+		let done = finished.get(i)
+		done.onDone(checksRun, checksFailed)
+		destroy done
+	destroy finished
+	// A callback may already have started the next run; the waiting callbacks
+	// requested theirs after this run began, so that run answers them too.
+	for i = 0 to waiting.size() - 1
+		runCallbacks.add(waiting.get(i))
+	destroy waiting
+	if queued and not runInFlight
+		runStdlibIngameTests()
 
 /** Registers "-stdlibtest" as a chat command that runs the suite. */
 public function registerStdlibIngameTestCommand()
