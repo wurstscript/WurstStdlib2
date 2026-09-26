@@ -976,32 +976,25 @@ public function runStdlibIngameTests()
 		finishRun()
 
 /**	Ends the run in flight: tells its callbacks, then starts the queued run,
-	if any. Callbacks run while the report still holds this run, so they can
-	read it through stdlibIngameReport. The queue is taken before they run, so
-	a callback asking for another run joins the next run instead of this one. */
+	if any. The run stays in flight until every callback has returned, so each
+	of them sees this run's totals and report (stdlibIngameReport), and a
+	callback asking for another run only queues it. */
 function finishRun()
-	let finished = new ArrayList<StdlibIngameTestsDone>()
 	for i = 0 to runCallbacks.size() - 1
-		finished.add(runCallbacks.get(i))
-	runCallbacks.clear()
-	let queued = rerunQueued
-	rerunQueued = false
-	let waiting = new ArrayList<StdlibIngameTestsDone>()
-	for i = 0 to queuedCallbacks.size() - 1
-		waiting.add(queuedCallbacks.get(i))
-	queuedCallbacks.clear()
-	runInFlight = false
-	for i = 0 to finished.size() - 1
-		let done = finished.get(i)
-		done.onDone(checksRun, checksFailed)
+		let done = runCallbacks.get(i)
+		// Guarded like a check: a crashing callback must not leave the run in
+		// flight, or every later request would queue behind it forever.
+		if not try(() -> done.onDone(checksRun, checksFailed))
+			print("|cffff4444CRASH|r stdlib in-game tests callback -> "
+				+ (lastError == "" ? "thread crashed" : lastError))
 		destroy done
-	destroy finished
-	// A callback may already have started the next run; the waiting callbacks
-	// requested theirs after this run began, so that run answers them too.
-	for i = 0 to waiting.size() - 1
-		runCallbacks.add(waiting.get(i))
-	destroy waiting
-	if queued and not runInFlight
+	runCallbacks.clear()
+	runInFlight = false
+	if rerunQueued
+		rerunQueued = false
+		for i = 0 to queuedCallbacks.size() - 1
+			runCallbacks.add(queuedCallbacks.get(i))
+		queuedCallbacks.clear()
 		runStdlibIngameTests()
 
 /** Registers "-stdlibtest" as a chat command that runs the suite. */
