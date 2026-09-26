@@ -55,22 +55,67 @@ import OnUnitEnterLeave
 // Reporting
 // ============================================================================
 
+/**	Whether importing this package starts the suite one second into the game.
+	A harness which runs the suite itself, through runStdlibIngameTests with a
+	completion callback, turns this off in a config package. */
+@configurable public constant STDLIB_INGAME_TESTS_AUTORUN = true
+
+/** Told once, when the summary is out. */
+public interface StdlibIngameTestsDone
+	function onDone(int checksRun, int checksFailed)
+
 var checksRun = 0
 var checksFailed = 0
+
+/*	Runs never overlap. The suite shares its counters, its report and the
+	fixed positions of its test units, and some checks land on a timer, so a
+	second run started inside the first would mix both runs' results and units.
+	A request made while a run is in flight is queued and starts as soon as
+	that run has summarised. */
+var runInFlight = false
+var rerunQueued = false
+/** Told the totals of the run in flight. */
+let runCallbacks = new ArrayList<StdlibIngameTestsDone>()
+/** Told the totals of the queued run. */
+let queuedCallbacks = new ArrayList<StdlibIngameTestsDone>()
+
+/** Every reported line, so the run can also be read back from disk (see writeReport). */
+let reportLines = new ArrayList<string>()
+
+/**	The lines of the last run, colour codes included: PASS/FAIL/INFO/CRASH
+	prefixed check lines, section headers and the summary. Owned by this
+	package; do not destroy. */
+public function stdlibIngameReport() returns ArrayList<string>
+	return reportLines
+
+function report(string line)
+	print(line)
+	reportLines.add(line)
+
+/**	Writes the report to CustomMapData/WurstStdlibIngameTests.txt on each
+	client, one Preload line per reported line, so an automated run can read
+	the outcome without a screen. Every client writes the same lines, so this
+	is not a sync hazard; the file is never read back by the map. */
+function writeReport()
+	PreloadGenClear()
+	PreloadGenStart()
+	for i = 0 to reportLines.size() - 1
+		Preload(reportLines.get(i))
+	PreloadGenEnd("WurstStdlibIngameTests.txt")
 
 function check(bool passed, string label)
 	checksRun++
 	if passed
-		print("|cff44ff44PASS|r  " + label)
+		report("|cff44ff44PASS|r  " + label)
 	else
 		checksFailed++
-		print("|cffff4444FAIL|r  " + label)
+		report("|cffff4444FAIL|r  " + label)
 
 function note(string label)
-	print("|cffffcc00INFO|r  " + label)
+	report("|cffffcc00INFO|r  " + label)
 
 function section(string label)
-	print("|cff8888ff" + label + "|r")
+	report("|cff8888ff" + label + "|r")
 
 /**	Runs one test in an isolated thread. Without this a single crashing check
 	kills the whole run, and everything after it silently never happens. */
@@ -78,7 +123,7 @@ function runGuarded(string label, ForForceCallback cb)
 	if not try(cb)
 		checksRun++
 		checksFailed++
-		print("|cffff4444CRASH|r " + label + " -> " + (lastError == "" ? "thread crashed" : lastError))
+		report("|cffff4444CRASH|r " + label + " -> " + (lastError == "" ? "thread crashed" : lastError))
 
 // ============================================================================
 // Test units
@@ -825,15 +870,61 @@ function testTimedLoopDoubleStart()
 		tripled.stopTimedLoopAndDestroy()
 
 // ============================================================================
+// 16. UnitIndexer storage
+// ============================================================================
+
+/**	The index store is target-specific: user data on Jass, a keyed map on Lua.
+	Whichever backs it, indices must be live, distinct, resolvable and
+	cleared on deindex. */
+function testUnitIndexerStorage()
+	section("16. unit indexer storage")
+	let a = createUnit(players[0], UnitIds.footman, SPATIAL_TEST_POS.add(200., 200.), angle(0))
+	let b = createUnit(players[0], UnitIds.footman, SPATIAL_TEST_POS.add(250., 200.), angle(0))
+	let ia = a.getIndex()
+	let ib = b.getIndex()
+	check(ia > 0 and ib > 0, "created units are indexed (" + ia + ", " + ib + ")")
+	check(ia != ib, "two units get distinct indices")
+	check((ia castTo UnitIndex).getUnit() == a, "an index resolves back to its unit")
+	check(a.toUnitIndex() castTo int == ia, "toUnitIndex is stable for an indexed unit")
+	a.deindex()
+	check(a.getIndex() == 0, "a deindexed unit reads index 0")
+	check(b.getIndex() == ib, "deindexing one unit leaves another intact")
+	let ia2 = a.toUnitIndex() castTo int
+	check(ia2 > 0 and a.getIndex() == ia2, "reindexing assigns a live index")
+	check((ia2 castTo UnitIndex).getUnit() == a, "the new index resolves back to the unit")
+	a.remove()
+	b.remove()
+
+// ============================================================================
 // Runner
 // ============================================================================
 
+/**	Runs every in-game check and reports the totals to done once the summary
+	is out. Call from a timer callback rather than straight from init, because
+	it creates units. The callback is destroyed after it ran. If a run is
+	already in flight, a new one starts after it and done gets the new run's
+	totals. */
+public function runStdlibIngameTests(StdlibIngameTestsDone done)
+	if runInFlight
+		queuedCallbacks.add(done)
+	else
+		runCallbacks.add(done)
+	runStdlibIngameTests()
+
 /**	Runs every in-game check. Call from a timer callback rather than straight
-	from init, because it creates units. */
+	from init, because it creates units. If a run is already in flight, this
+	queues one more run to start after it. */
 public function runStdlibIngameTests()
+	if runInFlight
+		if not rerunQueued
+			rerunQueued = true
+			print("|cffffcc00INFO|r  stdlib in-game tests already running; will run again after it")
+		return
+	runInFlight = true
 	checksRun = 0
 	checksFailed = 0
-	print("|cff8888ff=== Wurst stdlib in-game tests ===|r")
+	reportLines.clear()
+	report("|cff8888ff=== Wurst stdlib in-game tests ===|r")
 
 	runGuarded("setup") ->
 		setupUnits()
@@ -867,6 +958,8 @@ public function runStdlibIngameTests()
 		testSpatialIndexLifecycle()
 	runGuarded("15. spatial index reentrancy") ->
 		testSpatialIndexReentrancy()
+	runGuarded("16. unit indexer storage") ->
+		testUnitIndexerStorage()
 
 	// these finish asynchronously, so the summary waits for them
 	runGuarded("8. TimedLoop stop before start") ->
@@ -875,10 +968,34 @@ public function runStdlibIngameTests()
 		testTimedLoopDoubleStart()
 
 	doAfter(1.5) ->
-		print("|cff8888ff=== " + (checksRun - checksFailed) + "/" + checksRun
+		report("|cff8888ff=== " + (checksRun - checksFailed) + "/" + checksRun
 			+ " checks passed ===|r")
 		if checksFailed > 0
-			print("|cffff4444" + checksFailed + " check(s) FAILED|r")
+			report("|cffff4444" + checksFailed + " check(s) FAILED|r")
+		writeReport()
+		finishRun()
+
+/**	Ends the run in flight: tells its callbacks, then starts the queued run,
+	if any. The run stays in flight until every callback has returned, so each
+	of them sees this run's totals and report (stdlibIngameReport), and a
+	callback asking for another run only queues it. */
+function finishRun()
+	for i = 0 to runCallbacks.size() - 1
+		let done = runCallbacks.get(i)
+		// Guarded like a check: a crashing callback must not leave the run in
+		// flight, or every later request would queue behind it forever.
+		if not try(() -> done.onDone(checksRun, checksFailed))
+			print("|cffff4444CRASH|r stdlib in-game tests callback -> "
+				+ (lastError == "" ? "thread crashed" : lastError))
+		destroy done
+	runCallbacks.clear()
+	runInFlight = false
+	if rerunQueued
+		rerunQueued = false
+		for i = 0 to queuedCallbacks.size() - 1
+			runCallbacks.add(queuedCallbacks.get(i))
+		queuedCallbacks.clear()
+		runStdlibIngameTests()
 
 /** Registers "-stdlibtest" as a chat command that runs the suite. */
 public function registerStdlibIngameTestCommand()
@@ -895,6 +1012,7 @@ init
 	creatingSpatialInitProbe = false
 	// Importing the package is enough to run the suite. The delay lets the map
 	// and the stdlib's own init blocks finish before units are created.
-	doAfter(1.) ->
-		runStdlibIngameTests()
+	if STDLIB_INGAME_TESTS_AUTORUN
+		doAfter(1.) ->
+			runStdlibIngameTests()
 	registerStdlibIngameTestCommand()
