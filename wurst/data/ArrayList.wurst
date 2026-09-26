@@ -368,19 +368,12 @@ public class ArrayList<T:>
         Note: for tuple element types use get()/set() instead - the [] operator on
         tuple-typed lists currently hits a compiler limitation. */
     function op_index(int index) returns T
-        // The body of get(), not a call to it: the inliner takes one level, so a delegating
-        // operator would leave a call to get() at every [] read.
-        if index < 0 or index >= size
-            indexOutOfBounds(index)
-        return store[startIndex + index]
+        return get(index)
 
     /** Writes the element at the given index via the [] operator (O(1)).
         See op_index for the tuple element-type caveat. */
     function op_indexAssign(int index, T value)
-        // The body of set(), for the reason given on op_index.
-        if index < 0 or index >= size
-            indexOutOfBounds(index)
-        store[startIndex + index] = value
+        set(index, value)
 
     /** Returns the index of the specified element or -1 if it doesn't exist (O(n)) */
     function indexOf(T elem) returns int
