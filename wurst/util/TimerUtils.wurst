@@ -3,6 +3,7 @@ import NoWurst
 import ErrorHandling
 import Basics
 import HashMap
+import KeyedMap
 import Trigger
 import public Timer
 
@@ -11,14 +12,24 @@ import public Timer
 timer array freeTimers
 int freeTimersCount = 0
 constant timerData = new Table()
+// On Lua the data lives in a KeyedMap keyed by the timer itself: one table
+// index, instead of a Table access through the timer's handle id. Every
+// closure timer attaches its callback here when it starts and reads it back
+// when it expires. The Jass path above is unchanged.
+constant luaTimerData = keyedMapCreate()
 constant HELD = 0x28829022
 
 /** Attach Data to this timer */
 public function timer.setData(int data)
-	timerData.saveInt(this.getTCHandleId(), data)
+	if isLua
+		keyedMapPut(luaTimerData, this, data)
+	else
+		timerData.saveInt(this.getTCHandleId(), data)
 
 /** Retrieve the data attached to this timer */
 public function timer.getData() returns int
+	if isLua
+		return keyedMapGetInt(luaTimerData, this)
 	return timerData.loadInt(this.getTCHandleId())
 
 /** Get a new timer. Use this instead of "CreateTimer".
