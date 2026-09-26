@@ -1,0 +1,41 @@
+package KeyedMapTests
+import KeyedMap
+
+@Test
+function distinctUnitsGetDistinctEntries()
+	let map = keyedMapCreate()
+	let a = CreateUnit(Player(0), 'hfoo', 0., 0., 0.)
+	let b = CreateUnit(Player(0), 'hfoo', 0., 0., 0.)
+	keyedMapHas(map, a).assertEquals(false)
+	keyedMapGetInt(map, a).assertEquals(0)
+	keyedMapPut(map, a, 1)
+	keyedMapPut(map, b, 2)
+	keyedMapHas(map, a).assertEquals(true)
+	keyedMapGetInt(map, a).assertEquals(1)
+	keyedMapGetInt(map, b).assertEquals(2)
+	keyedMapDestroy(map)
+
+@Test
+function overwriteAndRemove()
+	let map = keyedMapCreate()
+	let a = CreateUnit(Player(0), 'hfoo', 0., 0., 0.)
+	let b = CreateUnit(Player(0), 'hfoo', 0., 0., 0.)
+	keyedMapPut(map, a, 1)
+	keyedMapPut(map, b, 2)
+	keyedMapPut(map, a, 3)
+	keyedMapGetInt(map, a).assertEquals(3)
+	keyedMapRemove(map, a)
+	keyedMapHas(map, a).assertEquals(false)
+	keyedMapGetInt(map, a).assertEquals(0)
+	keyedMapGetInt(map, b).assertEquals(2)
+	keyedMapDestroy(map)
+
+@Test
+function nullKeyReadsAsAbsent()
+	let map = keyedMapCreate()
+	unit none = null
+	keyedMapHas(map, none).assertEquals(false)
+	keyedMapGetInt(map, none).assertEquals(0)
+	keyedMapRemove(map, none)
+	keyedMapHas(map, none).assertEquals(false)
+	keyedMapDestroy(map)

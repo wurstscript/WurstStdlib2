@@ -1,0 +1,44 @@
+package KeyedMap
+import Table
+
+/*	KeyedMap
+
+	A unit-to-integer map which the Lua backend lowers to one native Lua table
+	per map, keyed by the unit itself: every operation is a single table
+	index, with no handle-id round trip and no entry retained for a unit after
+	it is removed.
+
+	The bodies below are the Jass implementation, a Table keyed by the handle
+	id, and they are also what any compiler without the lowering compiles on
+	both targets. They are correct in source, so nothing degrades silently:
+	such a build only pays the hashtable path.
+
+	The functions are recognised by the compiler through their annotation and
+	their exact signatures, so they must keep these shapes. There is
+	deliberately no iteration: enumerating a Lua table follows its internal
+	hash layout, which differs between clients and would desync a game.
+*/
+
+/** Creates an empty map. Free it with keyedMapDestroy when it is no longer needed. */
+@compilerintrinsic public function keyedMapCreate() returns int
+	return (new Table()) castTo int
+
+/** Stores value under key. A null key stores nothing. */
+@compilerintrinsic public function keyedMapPut(int map, unit key, int value)
+	(map castTo Table).saveInt(GetHandleId(key), value)
+
+/** The value stored under key, or 0 when there is none. */
+@compilerintrinsic public function keyedMapGetInt(int map, unit key) returns int
+	return (map castTo Table).loadInt(GetHandleId(key))
+
+/** Whether a value is stored under key. */
+@compilerintrinsic public function keyedMapHas(int map, unit key) returns boolean
+	return (map castTo Table).hasInt(GetHandleId(key))
+
+/** Removes the value stored under key, if any. */
+@compilerintrinsic public function keyedMapRemove(int map, unit key)
+	(map castTo Table).removeInt(GetHandleId(key))
+
+/** Frees the map. On Lua this is a no-op: the table is collected once nothing references it. */
+@compilerintrinsic public function keyedMapDestroy(int map)
+	destroy (map castTo Table)
