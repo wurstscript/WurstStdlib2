@@ -310,10 +310,10 @@ public class ArrayList<T:>
 
     /** Appends without checking capacity. **Reserve first.**
 
-        `add` cannot be inlined, because its body calls `grow()` when the list is full, and an
-        appending loop therefore pays a call, a stack-trace push and a global lookup for every
-        field it touches. This one contains no call, so it inlines into the caller and reads its
-        fields from hoisted locals - measured at roughly a quarter of the cost of `add` on Lua.
+        It saves only the capacity check. With inlining on, `add` inlines as well, keeping just
+        the `grow()` call on its rare full path: in the 3.0.0 client an appending loop costs about
+        78 ns per element with `add` and 70 ns with this (wc3-e2e-harness `bench-collections`,
+        without stack traces).
 
         The precondition is not a formality. The backing store is one array shared by every list,
         each holding a section of it, so writing past this list's capacity does not overflow into
