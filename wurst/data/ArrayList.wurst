@@ -8,6 +8,12 @@ constant int MAX_FREE_SECTIONS = 256
 /** Partitions shorter than this are finished off with insertion sort */
 constant int INSERTION_SORT_CUTOFF = 12
 
+/** The cold path of every index check, kept out of line. With the message built inside it, a
+    checked accessor such as get() grew past the inliner's size limit, so every read on Lua was a
+    real call; out of line, the accessor inlines to a comparison and an array read. */
+@noinline function indexOutOfBounds(int index)
+    error("ArrayList: Index out of bounds: " + index)
+
 /**
  * High-performance array-based list using static shared storage per type.
  * In most cases, a LinkedList is a better choice due to its flexibility.
@@ -348,26 +354,33 @@ public class ArrayList<T:>
     /** Returns the element at the specified index (O(1)) */
     function get(int index) returns T
         if index < 0 or index >= size
-            error("ArrayList: Index out of bounds: " + index)
+            indexOutOfBounds(index)
 
         return store[startIndex + index]
 
     /** Sets the element at the specified index (O(1)) */
     function set(int index, T elem)
         if index < 0 or index >= size
-            error("ArrayList: Index out of bounds: " + index)
+            indexOutOfBounds(index)
         store[startIndex + index] = elem
 
     /** Reads the element at the given index via the [] operator (O(1)).
         Note: for tuple element types use get()/set() instead - the [] operator on
         tuple-typed lists currently hits a compiler limitation. */
     function op_index(int index) returns T
-        return get(index)
+        // The body of get(), not a call to it: the inliner takes one level, so a delegating
+        // operator would leave a call to get() at every [] read.
+        if index < 0 or index >= size
+            indexOutOfBounds(index)
+        return store[startIndex + index]
 
     /** Writes the element at the given index via the [] operator (O(1)).
         See op_index for the tuple element-type caveat. */
     function op_indexAssign(int index, T value)
-        set(index, value)
+        // The body of set(), for the reason given on op_index.
+        if index < 0 or index >= size
+            indexOutOfBounds(index)
+        store[startIndex + index] = value
 
     /** Returns the index of the specified element or -1 if it doesn't exist (O(n)) */
     function indexOf(T elem) returns int
@@ -384,7 +397,7 @@ public class ArrayList<T:>
         remaining elements left to preserve order (O(n)) */
     function removeAtOrdered(int index) returns T
         if index < 0 or index >= size
-            error("ArrayList: Index out of bounds: " + index)
+            indexOutOfBounds(index)
 
         let elem = store[startIndex + index]
 
@@ -406,7 +419,7 @@ public class ArrayList<T:>
     /** Removes the element at the given index by swapping with last element (O(1) - DOES NOT PRESERVE ORDER!) */
     function removeAtUnordered(int index) returns T
         if index < 0 or index >= size
-            error("ArrayList: Index out of bounds: " + index)
+            indexOutOfBounds(index)
 
         let elem = store[startIndex + index]
 
@@ -568,7 +581,7 @@ public class ArrayList<T:>
     /** Adds the given element at the given index - WARNING: O(n) operation! */
     function addAt(T elem, int index)
         if index < 0 or index > size
-            error("ArrayList: Index out of bounds: " + index)
+            indexOutOfBounds(index)
 
         if size >= capacity
             grow()
