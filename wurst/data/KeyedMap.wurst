@@ -43,6 +43,28 @@ import Table
 		return
 	(map castTo Table).removeInt(GetHandleId(key))
 
+// The same operations keyed by a timer, for TimerUtils' per-timer data.
+
+/** Stores value under key. A null key stores nothing. */
+@compilerintrinsic public function keyedMapPut(int map, timer key, int value)
+	if key == null
+		return
+	(map castTo Table).saveInt(GetHandleId(key), value)
+
+/** The value stored under key, or 0 when there is none. */
+@compilerintrinsic public function keyedMapGetInt(int map, timer key) returns int
+	return (map castTo Table).loadInt(GetHandleId(key))
+
+/** Whether a value is stored under key. */
+@compilerintrinsic public function keyedMapHas(int map, timer key) returns boolean
+	return (map castTo Table).hasInt(GetHandleId(key))
+
+/** Removes the value stored under key, if any. */
+@compilerintrinsic public function keyedMapRemove(int map, timer key)
+	if key == null
+		return
+	(map castTo Table).removeInt(GetHandleId(key))
+
 /** Frees the map. On Lua this is a no-op: the table is collected once nothing references it. */
 @compilerintrinsic public function keyedMapDestroy(int map)
 	destroy (map castTo Table)
