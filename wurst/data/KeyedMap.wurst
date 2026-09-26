@@ -25,6 +25,8 @@ import Table
 
 /** Stores value under key. A null key stores nothing. */
 @compilerintrinsic public function keyedMapPut(int map, unit key, int value)
+	if key == null
+		return
 	(map castTo Table).saveInt(GetHandleId(key), value)
 
 /** The value stored under key, or 0 when there is none. */
@@ -37,6 +39,8 @@ import Table
 
 /** Removes the value stored under key, if any. */
 @compilerintrinsic public function keyedMapRemove(int map, unit key)
+	if key == null
+		return
 	(map castTo Table).removeInt(GetHandleId(key))
 
 /** Frees the map. On Lua this is a no-op: the table is collected once nothing references it. */
