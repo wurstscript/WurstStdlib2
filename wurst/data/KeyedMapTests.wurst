@@ -56,3 +56,12 @@ function timerKeysGetTheirOwnEntries()
 	keyedMapPut(map, none, 1)
 	keyedMapHas(map, none).assertEquals(false)
 	keyedMapDestroy(map)
+
+@Test
+function bareNullKeyStillCompilesAndReadsAbsent()
+	let map = keyedMapCreate()
+	keyedMapPut(map, null, 1)
+	keyedMapHas(map, null).assertEquals(false)
+	keyedMapGetInt(map, null).assertEquals(0)
+	keyedMapRemove(map, null)
+	keyedMapDestroy(map)

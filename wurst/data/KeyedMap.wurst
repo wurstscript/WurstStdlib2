@@ -3,8 +3,8 @@ import Table
 
 /*	KeyedMap
 
-	A unit-to-integer map which the Lua backend lowers to one native Lua table
-	per map, keyed by the unit itself: every operation is a single table
+	A handle-to-integer map which the Lua backend lowers to one native Lua table
+	per map, keyed by the handle itself: every operation is a single table
 	index, with no handle-id round trip and no entry retained for a unit after
 	it is removed.
 
@@ -24,43 +24,21 @@ import Table
 	return (new Table()) castTo int
 
 /** Stores value under key. A null key stores nothing. */
-@compilerintrinsic public function keyedMapPut(int map, unit key, int value)
+@compilerintrinsic public function keyedMapPut(int map, handle key, int value)
 	if key == null
 		return
 	(map castTo Table).saveInt(GetHandleId(key), value)
 
 /** The value stored under key, or 0 when there is none. */
-@compilerintrinsic public function keyedMapGetInt(int map, unit key) returns int
+@compilerintrinsic public function keyedMapGetInt(int map, handle key) returns int
 	return (map castTo Table).loadInt(GetHandleId(key))
 
 /** Whether a value is stored under key. */
-@compilerintrinsic public function keyedMapHas(int map, unit key) returns boolean
+@compilerintrinsic public function keyedMapHas(int map, handle key) returns boolean
 	return (map castTo Table).hasInt(GetHandleId(key))
 
 /** Removes the value stored under key, if any. */
-@compilerintrinsic public function keyedMapRemove(int map, unit key)
-	if key == null
-		return
-	(map castTo Table).removeInt(GetHandleId(key))
-
-// The same operations keyed by a timer, for TimerUtils' per-timer data.
-
-/** Stores value under key. A null key stores nothing. */
-@compilerintrinsic public function keyedMapPut(int map, timer key, int value)
-	if key == null
-		return
-	(map castTo Table).saveInt(GetHandleId(key), value)
-
-/** The value stored under key, or 0 when there is none. */
-@compilerintrinsic public function keyedMapGetInt(int map, timer key) returns int
-	return (map castTo Table).loadInt(GetHandleId(key))
-
-/** Whether a value is stored under key. */
-@compilerintrinsic public function keyedMapHas(int map, timer key) returns boolean
-	return (map castTo Table).hasInt(GetHandleId(key))
-
-/** Removes the value stored under key, if any. */
-@compilerintrinsic public function keyedMapRemove(int map, timer key)
+@compilerintrinsic public function keyedMapRemove(int map, handle key)
 	if key == null
 		return
 	(map castTo Table).removeInt(GetHandleId(key))
