@@ -73,7 +73,7 @@ function bareNullKeyStillCompilesAndReadsAbsent()
 	keyedMapDestroy(map)
 
 @Test
-	function fastKeyedMapStoresSpecializedIntegers()
+function fastKeyedMapStoresSpecializedIntegers()
 	let map = new FastKeyedMap<unit, int>()
 	let u = CreateUnit(Player(0), 'hfoo', 0., 0., 0.)
 	map.has(u).assertEquals(false)
@@ -85,7 +85,7 @@ function bareNullKeyStillCompilesAndReadsAbsent()
 	destroy map
 
 @Test
-	function fastKeyedMapStoresClassReferences()
+function fastKeyedMapStoresClassReferences()
 	let map = new FastKeyedMap<unit, KeyedMapTestData>()
 	let u = CreateUnit(Player(0), 'hfoo', 0., 0., 0.)
 	let data = new KeyedMapTestData(17)
