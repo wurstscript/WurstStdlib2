@@ -71,9 +71,11 @@ import ErrorHandling
  * This deliberately narrow API avoids key hashing and handle-id conversions on Lua. It is not a
  * general-purpose replacement for HashMap: only handle keys are accepted, keys are not iterable,
  * and there is no size counter. Use remove() for absence; reference values must be non-null because
- * Lua represents nil as a missing table entry. This requires the compiler's keyed-map intrinsic
- * lowering. The intrinsic source bodies fail loudly if a compiler understands the generic
- * declarations but lacks that lowering; they never silently discard writes or return defaults.
+ * Lua represents nil as a missing table entry. Keep class-reference values alive while stored, and
+ * remove or replace them before destroy: Jass stores their integer object IDs, which can be reused,
+ * while Lua keeps the original reference. This requires the compiler's keyed-map intrinsic lowering.
+ * The intrinsic source bodies fail loudly if a compiler understands the generic declarations but
+ * lacks that lowering; they never silently discard writes or return defaults.
  */
 public class FastKeyedMap<K: handle, V:>
 	private int map
