@@ -1,5 +1,6 @@
 package KeyedMap
 import Table
+import ErrorHandling
 
 /*	KeyedMap
 
@@ -41,10 +42,11 @@ import Table
 @compilerintrinsic public function keyedMapPutNative<K: handle, V:>(int map, K key, V value)
 	if key == null
 		return
-	skip
+	error("keyedMapPutNative requires compiler keyed-map intrinsic support")
 
 /** Typed get paired with keyedMapPutNative. */
 @compilerintrinsic public function keyedMapGetNative<K: handle, V:>(int map, K key) returns V
+	error("keyedMapGetNative requires compiler keyed-map intrinsic support")
 	return null
 
 /** Whether a value is stored under key. */
@@ -70,7 +72,8 @@ import Table
  * general-purpose replacement for HashMap: only handle keys are accepted, keys are not iterable,
  * and there is no size counter. Use remove() for absence; reference values must be non-null because
  * Lua represents nil as a missing table entry. This requires the compiler's keyed-map intrinsic
- * lowering; the typed intrinsic bodies are placeholders until that lowering runs.
+ * lowering. The intrinsic source bodies fail loudly if a compiler understands the generic
+ * declarations but lacks that lowering; they never silently discard writes or return defaults.
  */
 public class FastKeyedMap<K: handle, V:>
 	private int map
