@@ -33,6 +33,20 @@ import Table
 @compilerintrinsic public function keyedMapGetInt(int map, handle key) returns int
 	return (map castTo Table).loadInt(GetHandleId(key))
 
+/**
+ * Typed value intrinsic used by FastKeyedMap. Keep the name distinct from keyedMapPut: the legacy
+ * fixed signature must remain unambiguous for existing callers. Lua lowers this to one raw table
+ * store; Jass specializes int and class values to the existing integer fallback.
+ */
+@compilerintrinsic public function keyedMapPutNative<K: handle, V:>(int map, K key, V value)
+	if key == null
+		return
+	skip
+
+/** Typed get paired with keyedMapPutNative. */
+@compilerintrinsic public function keyedMapGetNative<K: handle, V:>(int map, K key) returns V
+	return null
+
 /** Whether a value is stored under key. */
 @compilerintrinsic public function keyedMapHas(int map, handle key) returns boolean
 	return (map castTo Table).hasInt(GetHandleId(key))
@@ -46,3 +60,39 @@ import Table
 /** Frees the map. On Lua this is a no-op: the table is collected once nothing references it. */
 @compilerintrinsic public function keyedMapDestroy(int map)
 	destroy (map castTo Table)
+
+/**
+ * High-performance map for handle keys and native int or class-reference values.
+ * Jass uses Warcraft's hashtable; Lua uses a native table keyed by the handle itself and stores V
+ * directly, without boxing.
+ *
+ * This deliberately narrow API avoids key hashing and handle-id conversions on Lua. It is not a
+ * general-purpose replacement for HashMap: only handle keys are accepted, keys are not iterable,
+ * and there is no size counter. Use remove() for absence; reference values must be non-null because
+ * Lua represents nil as a missing table entry. This requires the compiler's keyed-map intrinsic
+ * lowering; the typed intrinsic bodies are placeholders until that lowering runs.
+ */
+public class FastKeyedMap<K: handle, V:>
+	private int map
+
+	construct()
+		map = keyedMapCreate()
+
+	/** Stores a value. Null keys are ignored; reference values should not be null. */
+	function put(K key, V value)
+		keyedMapPutNative<K, V>(map, key, value)
+
+	/** Returns the value or the Wurst default for V when the key is absent. */
+	function get(K key) returns V
+		return keyedMapGetNative<K, V>(map, key)
+
+	/** Returns whether the key has a stored value. */
+	function has(K key) returns boolean
+		return keyedMapHas(map, key)
+
+	/** Removes a key and its value. */
+	function remove(K key)
+		keyedMapRemove(map, key)
+
+	ondestroy
+		keyedMapDestroy(map)
