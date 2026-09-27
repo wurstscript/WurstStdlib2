@@ -59,7 +59,7 @@ import ErrorHandling
 		return
 	(map castTo Table).removeInt(GetHandleId(key))
 
-/** Frees the map. On Lua this is a no-op: the table is collected once nothing references it. */
+/** Frees the map. Lua lowering clears its backing table in place, even if an alias still references it. */
 @compilerintrinsic public function keyedMapDestroy(int map)
 	destroy (map castTo Table)
 
