@@ -463,13 +463,6 @@ public class AbilityDefinitionTaunt extends AbilityDefinition
 	function setNumberofPulses(int level, int value)
 		def.setLvlDataInt("Tau4", level, 4, value)
 
-	function setPreferHostiles1(int level, int value)
-		def.setLvlDataInt("Tau2", level, 2, value)
-
-	function presetPreferHostiles1(IntLevelClosure lc)
-		def.setLevelsDataInt("Tau2", lvls, 2, lc)
-		addTooltipProperty("Prefer Hostiles", lc)
-
 
 public class AbilityDefinitionPoisonArrows extends AbilityDefinition
 	private bitset stackingTypesSet = bitset(0)
@@ -1092,13 +1085,6 @@ public class AbilityDefinitionTauntCreep extends AbilityDefinition
 
 	function setNumberofPulses(int level, int value)
 		def.setLvlDataInt("Tau4", level, 4, value)
-
-	function setPreferHostiles1(int level, int value)
-		def.setLvlDataInt("Tau2", level, 2, value)
-
-	function presetPreferHostiles1(IntLevelClosure lc)
-		def.setLevelsDataInt("Tau2", lvls, 2, lc)
-		addTooltipProperty("Prefer Hostiles", lc)
 
 
 public class AbilityDefinitionRejuvinationFurbolg extends AbilityDefinition
@@ -5037,7 +5023,7 @@ public class AbilityDefinitionHeal extends AbilityDefinition
 
 	function presetHitPointsGained(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Hea1", lvls, 1, lc)
-		addTooltipProperty("Hit Points Gained ", lc)
+		addTooltipProperty("Hit Points Gained", lc)
 
 
 public class AbilityDefinitionIntelligenceBonusPlus3 extends AbilityDefinition
@@ -5353,7 +5339,7 @@ public class AbilityDefinitionHealCreepNormal extends AbilityDefinition
 
 	function presetHitPointsGained(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Hea1", lvls, 1, lc)
-		addTooltipProperty("Hit Points Gained ", lc)
+		addTooltipProperty("Hit Points Gained", lc)
 
 
 public class AbilityDefinitionHealCreepHigh extends AbilityDefinition
@@ -5365,7 +5351,7 @@ public class AbilityDefinitionHealCreepHigh extends AbilityDefinition
 
 	function presetHitPointsGained(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Hea1", lvls, 1, lc)
-		addTooltipProperty("Hit Points Gained ", lc)
+		addTooltipProperty("Hit Points Gained", lc)
 
 
 public class AbilityDefinitionAuraSlow extends AbilityDefinition
@@ -15351,7 +15337,7 @@ public class AbilityDefinitionHealCreepNormalAnhe extends AbilityDefinition
 
 	function presetHitPointsGained(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Hea1", lvls, 1, lc)
-		addTooltipProperty("Hit Points Gained ", lc)
+		addTooltipProperty("Hit Points Gained", lc)
 
 
 public class AbilityDefinitionAttackSpeedIncrease extends AbilityDefinition
@@ -15667,7 +15653,7 @@ public class AbilityDefinitionFingerofDeath extends AbilityDefinition
 
 	function presetGraphicDelay(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Nfd1", lvls, 1, lc)
-		addTooltipProperty("Graphic Delay ", lc)
+		addTooltipProperty("Graphic Delay", lc)
 
 	function setDamage(int level, real value)
 		def.setLvlDataUnreal("Nfd3", level, 3, value)
@@ -18188,7 +18174,7 @@ public class AbilityDefinitionFingerOfPain21Button extends AbilityDefinition
 
 	function presetGraphicDelay(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Nfd1", lvls, 1, lc)
-		addTooltipProperty("Graphic Delay ", lc)
+		addTooltipProperty("Graphic Delay", lc)
 
 	function presetDamage(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Nfd3", lvls, 3, lc)
@@ -18504,7 +18490,7 @@ public class AbilityDefinitionFingerOfPain extends AbilityDefinition
 
 	function presetGraphicDelay(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Nfd1", lvls, 1, lc)
-		addTooltipProperty("Graphic Delay ", lc)
+		addTooltipProperty("Graphic Delay", lc)
 
 	function presetDamage(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Nfd3", lvls, 3, lc)
@@ -18654,7 +18640,7 @@ public class AbilityDefinitionFingerOfDeath1 extends AbilityDefinition
 
 	function presetGraphicDelay(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Nfd1", lvls, 1, lc)
-		addTooltipProperty("Graphic Delay ", lc)
+		addTooltipProperty("Graphic Delay", lc)
 
 	function presetDamage(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Nfd3", lvls, 3, lc)
@@ -20305,7 +20291,7 @@ public class AbilityDefinitionFingerOfDeathItem extends AbilityDefinition
 
 	function presetGraphicDelay(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Nfd1", lvls, 1, lc)
-		addTooltipProperty("Graphic Delay ", lc)
+		addTooltipProperty("Graphic Delay", lc)
 
 	function presetDamage(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Nfd3", lvls, 3, lc)
@@ -24029,7 +24015,7 @@ public class AbilityDefinitionItemFingerOfDeath8 extends AbilityDefinition
 
 	function presetGraphicDelay(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Nfd1", lvls, 1, lc)
-		addTooltipProperty("Graphic Delay ", lc)
+		addTooltipProperty("Graphic Delay", lc)
 
 	function presetDamage(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Nfd3", lvls, 3, lc)
@@ -24055,7 +24041,7 @@ public class AbilityDefinitionItemFingerOfDeath12 extends AbilityDefinition
 
 	function presetGraphicDelay(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Nfd1", lvls, 1, lc)
-		addTooltipProperty("Graphic Delay ", lc)
+		addTooltipProperty("Graphic Delay", lc)
 
 	function presetDamage(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Nfd3", lvls, 3, lc)
@@ -24081,7 +24067,7 @@ public class AbilityDefinitionItemFingerOfDeath15 extends AbilityDefinition
 
 	function presetGraphicDelay(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Nfd1", lvls, 1, lc)
-		addTooltipProperty("Graphic Delay ", lc)
+		addTooltipProperty("Graphic Delay", lc)
 
 	function presetDamage(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Nfd3", lvls, 3, lc)
@@ -24658,7 +24644,7 @@ public class AbilityDefinitionHighTemplarSConquerorHeal extends AbilityDefinitio
 
 	function presetHitPointsGained(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Hea1", lvls, 1, lc)
-		addTooltipProperty("Hit Points Gained ", lc)
+		addTooltipProperty("Hit Points Gained", lc)
 
 
 public class AbilityDefinitionHighTemplarSVisageIF extends AbilityDefinition
@@ -26185,7 +26171,7 @@ public class AbilityDefinitionHeadsplitterTalent1 extends AbilityDefinition
 
 	function presetBonusDamageDebuffDurationHero(RealLevelClosure lc)
 		def.setLevelsDataUnreal("hhr5", lvls, 5, lc)
-		addTooltipProperty("Bonus Damage Debuff Duration - Hero ", lc)
+		addTooltipProperty("Bonus Damage Debuff Duration - Hero", lc)
 
 	function presetDamageBonus(RealLevelClosure lc)
 		def.setLevelsDataUnreal("hhr1", lvls, 1, lc)
@@ -26239,7 +26225,7 @@ public class AbilityDefinitionHeadsplitterTalent2 extends AbilityDefinition
 
 	function presetBonusDamageDebuffDurationHero(RealLevelClosure lc)
 		def.setLevelsDataUnreal("hhr5", lvls, 5, lc)
-		addTooltipProperty("Bonus Damage Debuff Duration - Hero ", lc)
+		addTooltipProperty("Bonus Damage Debuff Duration - Hero", lc)
 
 	function presetDamageBonus(RealLevelClosure lc)
 		def.setLevelsDataUnreal("hhr1", lvls, 1, lc)
@@ -26293,7 +26279,7 @@ public class AbilityDefinitionHeadsplitterTalent3 extends AbilityDefinition
 
 	function presetBonusDamageDebuffDurationHero(RealLevelClosure lc)
 		def.setLevelsDataUnreal("hhr5", lvls, 5, lc)
-		addTooltipProperty("Bonus Damage Debuff Duration - Hero ", lc)
+		addTooltipProperty("Bonus Damage Debuff Duration - Hero", lc)
 
 	function presetDamageBonus(RealLevelClosure lc)
 		def.setLevelsDataUnreal("hhr1", lvls, 1, lc)
@@ -26380,7 +26366,7 @@ public class AbilityDefinitionHeadsplitter extends AbilityDefinition
 
 	function presetBonusDamageDebuffDurationHero(RealLevelClosure lc)
 		def.setLevelsDataUnreal("hhr5", lvls, 5, lc)
-		addTooltipProperty("Bonus Damage Debuff Duration - Hero ", lc)
+		addTooltipProperty("Bonus Damage Debuff Duration - Hero", lc)
 
 	function presetDamageBonus(RealLevelClosure lc)
 		def.setLevelsDataUnreal("hhr1", lvls, 1, lc)
@@ -34034,7 +34020,7 @@ public class AbilityDefinitionItemArmorSCHeal extends AbilityDefinition
 
 	function presetHitPointsGained(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Hea1", lvls, 1, lc)
-		addTooltipProperty("Hit Points Gained ", lc)
+		addTooltipProperty("Hit Points Gained", lc)
 
 
 public class AbilityDefinitionItemArmorSCAttack extends AbilityDefinition
@@ -35005,7 +34991,7 @@ public class AbilityDefinitionBladeOfFrozenHungerHeal extends AbilityDefinition
 
 	function presetHitPointsGained(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Hea1", lvls, 1, lc)
-		addTooltipProperty("Hit Points Gained ", lc)
+		addTooltipProperty("Hit Points Gained", lc)
 
 
 public class AbilityDefinitionItemBindingsOfHelyaCW extends AbilityDefinition
@@ -35952,7 +35938,7 @@ public class AbilityDefinitionItemBladeCHDamage extends AbilityDefinition
 
 	function presetGraphicDelay(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Nfd1", lvls, 1, lc)
-		addTooltipProperty("Graphic Delay ", lc)
+		addTooltipProperty("Graphic Delay", lc)
 
 	function presetDamage(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Nfd3", lvls, 3, lc)
@@ -35968,7 +35954,7 @@ public class AbilityDefinitionItemBladeCHHeal extends AbilityDefinition
 
 	function presetHitPointsGained(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Hea1", lvls, 1, lc)
-		addTooltipProperty("Hit Points Gained ", lc)
+		addTooltipProperty("Hit Points Gained", lc)
 
 
 public class AbilityDefinitionItemBladeCHAttack1 extends AbilityDefinition
@@ -37374,7 +37360,7 @@ public class AbilityDefinitionItemGoldenNecklaceHeal extends AbilityDefinition
 
 	function presetHitPointsGained(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Hea1", lvls, 1, lc)
-		addTooltipProperty("Hit Points Gained ", lc)
+		addTooltipProperty("Hit Points Gained", lc)
 
 
 public class AbilityDefinitionItemGoldenNecklaceSpellcast extends AbilityDefinition
@@ -37448,7 +37434,7 @@ public class AbilityDefinitionItemGlovesOfThePhoenixDamage extends AbilityDefini
 
 	function presetGraphicDelay(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Nfd1", lvls, 1, lc)
-		addTooltipProperty("Graphic Delay ", lc)
+		addTooltipProperty("Graphic Delay", lc)
 
 	function presetDamage(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Nfd3", lvls, 3, lc)
@@ -38050,7 +38036,7 @@ public class AbilityDefinitionItemHammerOfTheSilverHandHeal extends AbilityDefin
 
 	function presetHitPointsGained(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Hea1", lvls, 1, lc)
-		addTooltipProperty("Hit Points Gained ", lc)
+		addTooltipProperty("Hit Points Gained", lc)
 
 
 public class AbilityDefinitionItemHandfulOfThrowingKnives extends AbilityDefinition
@@ -40047,7 +40033,7 @@ public class AbilityDefinitionItemSanctifiedChestplateHeal extends AbilityDefini
 
 	function presetHitPointsGained(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Hea1", lvls, 1, lc)
-		addTooltipProperty("Hit Points Gained ", lc)
+		addTooltipProperty("Hit Points Gained", lc)
 
 
 public class AbilityDefinitionItemSanctifiedChestplateSpellcast extends AbilityDefinition
@@ -40170,7 +40156,7 @@ public class AbilityDefinitionItemShieldOfTheScarletCrusadeHeal extends AbilityD
 
 	function presetHitPointsGained(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Hea1", lvls, 1, lc)
-		addTooltipProperty("Hit Points Gained ", lc)
+		addTooltipProperty("Hit Points Gained", lc)
 
 
 public class AbilityDefinitionItemSanctifiedChestplateImmo extends AbilityDefinition
@@ -40272,7 +40258,7 @@ public class AbilityDefinitionClericHeal extends AbilityDefinition
 
 	function presetHitPointsGained(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Hea1", lvls, 1, lc)
-		addTooltipProperty("Hit Points Gained ", lc)
+		addTooltipProperty("Hit Points Gained", lc)
 
 
 public class AbilityDefinitionInquisitorFlamestrike extends AbilityDefinition
@@ -44872,3 +44858,36 @@ public class AbilityDefinitionGarekManaEfficiencyTalent extends AbilityDefinitio
 	function presetManaEfficiency(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Ime1", lvls, 1, lc)
 		addTooltipProperty("Mana Efficiency", lc)
+
+// Backward-compatible names for current abilities whose rawcodes remain in Reforged v3.
+public class AbilityDefinitionArmorBonus extends AbilityDefinitionDefenseBonusPlus1
+	construct(int newAbilityId)
+		super(newAbilityId)
+
+public class AbilityDefinitionBeserk extends AbilityDefinitionReplenishLifeMana
+	construct(int newAbilityId)
+		super(newAbilityId)
+
+public class AbilityDefinitionAlliedBuilding extends AbilityDefinitionShopSharing
+	construct(int newAbilityId)
+		super(newAbilityId)
+
+public class AbilityDefinitionItemChainLightning extends AbilityDefinitionChainLightningcreep
+	construct(int newAbilityId)
+		super(newAbilityId)
+
+public class AbilityDefinitionSlow1 extends AbilityDefinitionSlowCreep
+	construct(int newAbilityId)
+		super(newAbilityId)
+
+public class AbilityDefinitionCyclone1 extends AbilityDefinitionCyclone
+	construct(int newAbilityId)
+		super(newAbilityId)
+
+public class AbilityDefinitionColdArrows extends AbilityDefinitionRangerColdArrows
+	construct(int newAbilityId)
+		super(newAbilityId)
+
+public class AbilityDefinitionHealingWard1 extends AbilityDefinitionHealingWard
+	construct(int newAbilityId)
+		super(newAbilityId)
