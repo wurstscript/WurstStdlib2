@@ -243,13 +243,15 @@ public function spatialPartitionIsValidGroupId(int groupId) returns boolean
 /*	The id space is split in two. Ids below the base are for a consumer that brings its own ids, which
 	is UnitSpatialIndex, whose ids are UnitIndexer indices; the allocator hands out ids from the base
 	up, so the two can never meet. A second consumer takes its ids from the allocator. On Lua the base
-	is about 134 million. */
+	is about 134 million; on Jass, where the unit index is off, it is 1. */
 var nextEntryId = spatialPartitionAllocatorBase()
 
 /**	The lowest id the allocator hands out. A consumer that addresses rows by ids of its own keeps
-	them below this, and they never collide with allocated ones. */
+	them below this, and they never collide with allocated ones. The lower half is reserved only where
+	UnitSpatialIndex can run, on Lua and in the interpreter that runs its tests; on Jass the index is
+	off, so the allocator keeps the whole id space. */
 public function spatialPartitionAllocatorBase() returns int
-	return spatialPartitionMaxEntryId() div 2 + 1
+	return isLua or compiletime ? spatialPartitionMaxEntryId() div 2 + 1 : 1
 int array freeEntryIds
 var freeEntryIdCount = 0
 /*	Whether an id is currently handed out. The free list alone cannot answer that: pushing an id onto
