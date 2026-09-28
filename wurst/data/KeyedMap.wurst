@@ -9,10 +9,17 @@ import ErrorHandling
 	index, with no handle-id round trip and no entry retained for a unit after
 	it is removed.
 
-	The bodies below are the Jass implementation, a Table keyed by the handle
-	id, and they are also what any compiler without the lowering compiles on
-	both targets. They are correct in source, so nothing degrades silently:
-	such a build only pays the hashtable path.
+	The bodies of the fixed-signature functions (keyedMapPut, keyedMapGetInt and
+	the rest) are the Jass implementation, a Table keyed by the handle id, and
+	they are also what any compiler without the lowering compiles on both
+	targets. They are correct in source, so nothing degrades silently: such a
+	build only pays the hashtable path.
+
+	The generic keyedMapPutNative and keyedMapGetNative, and FastKeyedMap on top
+	of them, are different: a Table cannot store a generic value without the
+	castTo int path they exist to avoid. Their bodies only raise an error, and
+	they need a compiler with the keyed-map lowering, which gives them their
+	bodies on both targets and runs them at compile time and in tests.
 
 	The functions are recognised by the compiler through their annotation and
 	their exact signatures, so they must keep these shapes. There is
