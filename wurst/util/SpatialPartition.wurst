@@ -86,6 +86,11 @@ int array cellOfEntry
 int array coarseCount
 real array entryX
 real array entryY
+/*	Clamped cell column + 1 and row an entry was last bucketed at; a column of 0 means it is not
+	bucketed in the current grid. A position update that stays inside that cell, which is nearly every
+	update a sweep makes, skips the cell lookup and the relink loop. */
+int array bucketColumn
+int array bucketRow
 
 /*	Dense list of live entries. The partition needs to know its own population for one reason it cannot
 	delegate: a grid rebuild changes what every cell index means, so every entry has to be re-linked,
@@ -116,11 +121,25 @@ var lastQueryBlocksSkipped = 0
 
 // Grid math
 
+/** A position in cell units, before flooring: the one value both the cell lookup and the stay-in-cell
+	test in spatialPartitionSetPos decide by. */
+@inline function gridU(real x) returns real
+	return (x - gridOriginX) / SPATIAL_PARTITION_CELL_SIZE
+
+@inline function gridV(real y) returns real
+	return (y - gridOriginY) / SPATIAL_PARTITION_CELL_SIZE
+
+@inline function cellColumn(real u) returns int
+	return max(0, min(gridWidth - 1, u.floor()))
+
+@inline function cellRow(real v) returns int
+	return max(0, min(gridHeight - 1, v.floor()))
+
 @inline function cellCoordX(real x) returns int
-	return max(0, min(gridWidth - 1, ((x - gridOriginX) / SPATIAL_PARTITION_CELL_SIZE).floor()))
+	return cellColumn(gridU(x))
 
 @inline function cellCoordY(real y) returns int
-	return max(0, min(gridHeight - 1, ((y - gridOriginY) / SPATIAL_PARTITION_CELL_SIZE).floor()))
+	return cellRow(gridV(y))
 
 @inline function cellAt(real x, real y) returns int
 	return cellCoordX(x) + cellCoordY(y) * gridWidth
@@ -220,11 +239,15 @@ public function spatialPartitionLastQueryBlocksSkipped() returns int
 function targetArrayLimit() returns int
 	return isLua ? INT_MAX : JASS_MAX_ARRAY_SIZE
 
+/*	Computed once: every position update checks an id against it, and the expression does not fold
+	on Lua, where the configurable constants stay globals. */
+let maxEntryId = min(targetArrayLimit() div SPATIAL_PARTITION_MAX_GROUPS - 1,
+	targetArrayLimit() div SPATIAL_PARTITION_MAX_QUERY_DEPTH)
+
 /**	Largest usable entry id on this target. Whichever of the two ceilings binds first: the flattened
 	per-entry links, or the snapshot with every query level open at once. Effectively unbounded on Lua. */
 public function spatialPartitionMaxEntryId() returns int
-	return min(targetArrayLimit() div SPATIAL_PARTITION_MAX_GROUPS - 1,
-		targetArrayLimit() div SPATIAL_PARTITION_MAX_QUERY_DEPTH)
+	return maxEntryId
 
 /**	Whether an id may be used as an entry. Ids are 1-based, because 0 is reserved as the chain
 	sentinel, and bounded above on Jass by what the flattened entry slots can address. */
@@ -343,25 +366,38 @@ public function spatialPartitionIsValidExtent(vec2 worldMin, vec2 worldMax) retu
 /*	Every public mutator validates through these, and every public reader answers quietly for input it
 	cannot honour. Both halves matter because the arrays are flattened with a constant stride: an
 	out-of-range id does not fail, it ALIASES - `spatialPartitionInGroup(1, 8)` at the default stride
-	reads entry 2's group 0. Silence would be a wrong answer rather than no answer. */
+	reads entry 2's group 0. Silence would be a wrong answer rather than no answer.
+
+	Each check has one exit and reports through a @noinline function, so it inlines into the setters
+	the unit sweep calls every tick, like ArrayList's index check. With the message built inside, or a
+	second return, which makes the inliner guard the rest with a flag, a check stays a real call. */
 function requireValidEntry(int id) returns boolean
-	if not spatialPartitionIsValidEntryId(id)
-		error("SpatialPartition: entry id " + id + " is invalid; ids are 1-based and at most "
-			+ spatialPartitionMaxEntryId() + " on this target")
-		return false
-	return true
+	let valid = spatialPartitionIsValidEntryId(id)
+	if not valid
+		reportInvalidEntry(id)
+	return valid
+
+@noinline function reportInvalidEntry(int id)
+	error("SpatialPartition: entry id " + id + " is invalid; ids are 1-based and at most "
+		+ spatialPartitionMaxEntryId() + " on this target")
 
 function requireValidGroup(int groupId) returns boolean
-	if not spatialPartitionIsValidGroupId(groupId)
-		error("SpatialPartition: group " + groupId + " is outside SPATIAL_PARTITION_MAX_GROUPS")
-		return false
-	return true
+	let valid = spatialPartitionIsValidGroupId(groupId)
+	if not valid
+		reportInvalidGroup(groupId)
+	return valid
+
+@noinline function reportInvalidGroup(int groupId)
+	error("SpatialPartition: group " + groupId + " is outside SPATIAL_PARTITION_MAX_GROUPS")
 
 function requireReady() returns boolean
-	if not spatialPartitionIsReady()
-		error("SpatialPartition: rebuildSpatialPartition must set an extent before entries are added")
-		return false
-	return true
+	let ready = spatialPartitionIsReady()
+	if not ready
+		reportNotReady()
+	return ready
+
+@noinline function reportNotReady()
+	error("SpatialPartition: rebuildSpatialPartition must set an extent before entries are added")
 
 function linkIntoCell(int id, int groupId, int cell)
 	let slot = groupSlot(id, groupId)
@@ -411,7 +447,20 @@ public function spatialPartitionSetPos(int id, real x, real y)
 		// hand the same row to somebody else, so the two ways in share one record of what is taken.
 		entryIdReserved[id] = true
 		highestEntryId = max(highestEntryId, id)
-	let cell = cellAt(x, y)
+	let u = gridU(x)
+	let v = gridV(y)
+	let bucketed = bucketColumn[id]
+	// Still inside the cell it is linked under. u and v are the values the lookup below floors, so this
+	// is exactly its test, cell borders included; a position clamped onto an edge cell never passes.
+	if bucketed != 0 and u >= bucketed - 1 and u < bucketed
+		let bucketedRow = bucketRow[id]
+		if v >= bucketedRow and v < bucketedRow + 1
+			return
+	let column = cellColumn(u)
+	let row = cellRow(v)
+	bucketColumn[id] = column + 1
+	bucketRow[id] = row
+	let cell = column + row * gridWidth
 	for groupId = 0 to groupsInUse - 1
 		let slot = groupSlot(id, groupId)
 		if cellOfEntry[slot] != 0 and cellOfEntry[slot] != cell + 1
@@ -463,6 +512,7 @@ public function spatialPartitionRemove(int id)
 		unlinkFromCell(id, groupId)
 	entryX[id] = 0.
 	entryY[id] = 0.
+	bucketColumn[id] = 0
 	let slot = registrySlot[id]
 	if slot != 0
 		// Swap-remove keeps the list dense so a full pass never walks holes.
@@ -530,17 +580,14 @@ public function rebuildSpatialPartition(vec2 worldMin, vec2 worldMax)
 
 	for i = 0 to registryCount - 1
 		let id = registryIds[i]
+		// The cell it was bucketed at means something else now; the next update looks it up again.
+		bucketColumn[id] = 0
 		let cell = cellAt(entryX[id], entryY[id])
 		for groupId = 0 to SPATIAL_PARTITION_MAX_GROUPS - 1
 			if rebuildMember[groupSlot(id, groupId)]
 				linkIntoCell(id, groupId, cell)
 
 // Queries
-
-@inline function pushMatch(int id, boolean uncertain)
-	snapshotId[snapshotTop] = id
-	snapshotUncertain[snapshotTop] = uncertain
-	snapshotTop++
 
 /**	Collects the members of `groupId` within `radius` of the point, allowing for entries whose cached
 	position may be up to `maxDisplacement` out of date.
@@ -588,6 +635,11 @@ public function spatialPartitionBeginRangeQuery(vec2 center, real radius, real m
 		let minBy = minCy div SPATIAL_PARTITION_COARSE_FACTOR
 		let maxBy = maxCy div SPATIAL_PARTITION_COARSE_FACTOR
 
+		// The visit count and the snapshot top stay in locals during the walk and are stored once after
+		// it: in Lua both are globals, looked up by name on every visit and every match otherwise.
+		// Nothing in the walk calls out, so nothing can read them in between.
+		var visits = 0
+		var top = snapshotTop
 		var by = minBy
 		while by <= maxBy
 			var bx = minBx
@@ -609,17 +661,21 @@ public function spatialPartitionBeginRangeQuery(vec2 center, real radius, real m
 							var id = cellHead[headSlot(rowBase + cx, groupId)]
 							while id != 0
 								let next = nextInCell[groupSlot(id, groupId)]
-								lastQueryVisits++
+								visits++
 								let dx = entryX[id] - center.x
 								let dy = entryY[id] - center.y
 								let distSq = dx * dx + dy * dy
 								if distSq <= certainlyOutSq
-									pushMatch(id, not (certainlyIn >= 0. and distSq <= certainlyInSq))
+									snapshotId[top] = id
+									snapshotUncertain[top] = not (certainlyIn >= 0. and distSq <= certainlyInSq)
+									top++
 								id = next
 							cx++
 						cy++
 				bx++
 			by++
+		lastQueryVisits = visits
+		snapshotTop = top
 
 	return snapshotTop - queryBase[queryDepth - 1]
 
@@ -664,6 +720,11 @@ public function spatialPartitionBeginBoxQuery(vec2 boxMin, vec2 boxMax, real max
 		let minBy = minCy div SPATIAL_PARTITION_COARSE_FACTOR
 		let maxBy = maxCy div SPATIAL_PARTITION_COARSE_FACTOR
 
+		// The visit count and the snapshot top stay in locals during the walk and are stored once after
+		// it: in Lua both are globals, looked up by name on every visit and every match otherwise.
+		// Nothing in the walk calls out, so nothing can read them in between.
+		var visits = 0
+		var top = snapshotTop
 		var by = minBy
 		while by <= maxBy
 			var bx = minBx
@@ -685,17 +746,21 @@ public function spatialPartitionBeginBoxQuery(vec2 boxMin, vec2 boxMax, real max
 							var id = cellHead[headSlot(rowBase + cx, groupId)]
 							while id != 0
 								let next = nextInCell[groupSlot(id, groupId)]
-								lastQueryVisits++
+								visits++
 								let px = entryX[id]
 								let py = entryY[id]
 								if px >= outMinX and px <= outMaxX and py >= outMinY and py <= outMaxY
-									pushMatch(id, not (px >= inMinX and px <= inMaxX
-										and py >= inMinY and py <= inMaxY))
+									snapshotId[top] = id
+									snapshotUncertain[top] = not (px >= inMinX and px <= inMaxX
+										and py >= inMinY and py <= inMaxY)
+									top++
 								id = next
 							cx++
 						cy++
 				bx++
 			by++
+		lastQueryVisits = visits
+		snapshotTop = top
 
 	return snapshotTop - queryBase[queryDepth - 1]
 

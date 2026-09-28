@@ -63,6 +63,37 @@ function countIn(vec2 center, real radius, real maxDisplacement, int groupId) re
 	countIn(vec2(3000., 0.), 300., 0., ALL).assertEquals(1)
 	countIn(vec2(3000., 0.), 300., 0., SUBSET).assertEquals(1)
 
+/*	A move that stays inside the cell skips the relink, so the test that decides it must agree with the
+	cell lookup exactly at a border. With the arena's origin at -4096, x = 0 and x = 256 are borders.
+	Each query reaches its entry but covers only the cells on one side of the border, so it finds the
+	entry only if the move linked it into the cell the lookup names. */
+@Test function aMoveAcrossACellBorderRebucketsTheEntry()
+	arena()
+	place(1, vec2(255.9, 0.), ALL)
+	spatialPartitionSetPos(1, 256., 0.)
+	// Covers x from 256 on.
+	countIn(vec2(400., 0.), 144., 0., ALL).assertEquals(1)
+	spatialPartitionSetPos(1, 255.9, 0.)
+	// Covers x up to 255.95.
+	countIn(vec2(100., 0.), 155.95, 0., ALL).assertEquals(1)
+	// The same on the negative side of a border, where flooring is not truncation.
+	place(2, vec2(-0.5, 1000.), ALL)
+	spatialPartitionSetPos(2, 0., 1000.)
+	// Covers x from 0 on.
+	countIn(vec2(144., 1000.), 144., 0., ALL).assertEquals(1)
+
+/*	A rebuild changes what every cell index means, so the cell an entry was last bucketed at must not
+	survive it. Shifting the origin by one cell along x, and only x, makes x = 100 column 15 and x = 300
+	column 16 in the new grid, while the old grid had put x = 100 in column 16 and the row stays the
+	same: a stale column would accept the move to 300 as staying inside the cell and leave the entry in
+	column 15, which the query does not cover. */
+@Test function aRebuildForgetsWhereEntriesWereBucketed()
+	arena()
+	place(1, vec2(100., 0.), ALL)
+	rebuildSpatialPartition(vec2(-3840., -4096.), vec2(4352., 4096.))
+	spatialPartitionSetPos(1, 300., 0.)
+	countIn(vec2(400., 0.), 100., 0., ALL).assertEquals(1)
+
 /*	Ids get recycled by the owning layer, so a link left behind on removal would make the next entry to
 	take that id a member of a group nothing ever put it in. */
 @Test function removingAnEntryClearsEveryGroup()
