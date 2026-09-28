@@ -23,7 +23,7 @@ package UnitSpatialIndex
 import OnUnitEnterLeave
 import MapBounds
 import ClosureTimers
-import HashMap
+import KeyedMap
 import UnitIndexer
 import UnitSpatialIndexRemoval
 import SpatialPartition
@@ -74,7 +74,9 @@ function ensureUnitGroup()
 // cell links and the dense registry; what stays here is what it has no business knowing.
 
 unit array indexedUnit
-let spatialIndexByUnit = new HashMap<unit, int>
+/*	Read on every enter and leave report and every `updateSpatialIndex` call. On Lua it is one table keyed
+	by the unit; unregisterIndex removes an entry when the unit's removal is reported. */
+let spatialIndexByUnit = new FastKeyedMap<unit, int>()
 /*	Ids come from the partition, not from a counter here. Its rows are keyed by id alone, so a
 	private counter starting at 1 would collide with the next consumer's the moment one exists. */
 
