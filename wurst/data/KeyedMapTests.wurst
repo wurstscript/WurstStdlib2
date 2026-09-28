@@ -1,6 +1,12 @@
 package KeyedMapTests
 import KeyedMap
 
+class KeyedMapTestData
+	int value
+
+	construct(int value)
+		this.value = value
+
 @Test
 function distinctUnitsGetDistinctEntries()
 	let map = keyedMapCreate()
@@ -65,3 +71,28 @@ function bareNullKeyStillCompilesAndReadsAbsent()
 	keyedMapGetInt(map, null).assertEquals(0)
 	keyedMapRemove(map, null)
 	keyedMapDestroy(map)
+
+@Test
+function fastKeyedMapStoresSpecializedIntegers()
+	let map = new FastKeyedMap<unit, int>()
+	let u = CreateUnit(Player(0), 'hfoo', 0., 0., 0.)
+	map.has(u).assertEquals(false)
+	map.put(u, 42)
+	map.has(u).assertEquals(true)
+	map.get(u).assertEquals(42)
+	map.remove(u)
+	map.has(u).assertEquals(false)
+	destroy map
+
+@Test
+function fastKeyedMapStoresClassReferences()
+	let map = new FastKeyedMap<unit, KeyedMapTestData>()
+	let u = CreateUnit(Player(0), 'hfoo', 0., 0., 0.)
+	let data = new KeyedMapTestData(17)
+	map.put(u, data)
+	map.has(u).assertEquals(true)
+	map.get(u).value.assertEquals(17)
+	map.remove(u)
+	map.has(u).assertEquals(false)
+	destroy map
+	destroy data
