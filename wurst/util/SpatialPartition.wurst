@@ -263,7 +263,18 @@ public function spatialPartitionIsValidGroupId(int groupId) returns boolean
 	from 1 would share rows without either noticing: one overwrites the other's position, relinks its
 	groups on every move, and deletes its entry on removal. Groups separate what a query sees, not
 	what an id addresses. A shared structure has to own the namespace its keys come from. */
-var nextEntryId = 1
+/*	The id space is split in two. Ids below the base are for a consumer that brings its own ids, which
+	is UnitSpatialIndex, whose ids are UnitIndexer indices; the allocator hands out ids from the base
+	up, so the two can never meet. A second consumer takes its ids from the allocator. On Lua the base
+	is about 134 million; on Jass, where the unit index is off, it is 1. */
+var nextEntryId = spatialPartitionAllocatorBase()
+
+/**	The lowest id the allocator hands out. A consumer that addresses rows by ids of its own keeps
+	them below this, and they never collide with allocated ones. The lower half is reserved only where
+	UnitSpatialIndex can run, on Lua and in the interpreter that runs its tests; on Jass the index is
+	off, so the allocator keeps the whole id space. */
+public function spatialPartitionAllocatorBase() returns int
+	return isLua or compiletime ? spatialPartitionMaxEntryId() div 2 + 1 : 1
 int array freeEntryIds
 var freeEntryIdCount = 0
 /*	Whether an id is currently handed out. The free list alone cannot answer that: pushing an id onto
@@ -324,6 +335,10 @@ public function spatialPartitionReleaseEntryId(int id)
 			+ " released while still held; call spatialPartitionRemove first")
 		return
 	entryIdReserved[id] = false
+	// An id below the base belongs to a consumer that brings its own ids; handing it out would give that
+	// row to a second consumer.
+	if id < spatialPartitionAllocatorBase()
+		return
 	freeEntryIds[freeEntryIdCount] = id
 	freeEntryIdCount++
 
