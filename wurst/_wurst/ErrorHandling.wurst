@@ -99,6 +99,9 @@ You can also use try() from package Execute to handle an error happening in a ca
 				notifiedListener = i
 				ForForce(errorListenerForce, function notifyCurrentErrorListener)
 			notifyingErrorListeners = false
+			// A listener that raised an error of its own overwrote it; try() and execute() report
+			// this one.
+			lastError = msg
 		if not isLua
 			// crash the thread. Lua has no equivalent: raising here would propagate into WC3's C
 			// callback layer and be printed to every player, so the Lua backend leaves thread

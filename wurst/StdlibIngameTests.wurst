@@ -916,6 +916,7 @@ function testErrorListeners()
 		+ (errorsHeard - before).toString() + ")")
 	check(lastErrorHeard == ERROR_PROBE, "the listener gets the message")
 	check(errorHeardSuppressed, "a listener can tell an error try() caught")
+	check(lastError == ERROR_PROBE, "lastError keeps the error, not the failing listener's (" + lastError + ")")
 
 // ============================================================================
 // 16. UnitIndexer storage
