@@ -8,6 +8,7 @@ import public MagicFunctions
 import GameTimer
 import Hashtable
 import Annotations
+import Player
 
 @configurable public var MUTE_ERROR_DURATION = 60
 
@@ -27,6 +28,51 @@ public var lastError = ""
 **/
 public var suppressErrorMessages = false
 
+/** Told about every error() after it is reported, so a test runner or a map can record errors
+	that do not stop the game: on Lua, error() returns instead of ending the thread. That includes
+	errors inside try(), which run with suppressErrorMessages set; a listener that only wants
+	uncaught errors reads it. */
+public interface ErrorListener
+	function onError(string msg)
+
+ErrorListener array errorListeners
+var errorListenerCount = 0
+var notifyingErrorListeners = false
+var notifiedListener = 0
+var notifiedMessage = ""
+/*	Each listener runs in a thread of its own, the way try() runs its callback: a listener that
+	crashes then ends only that thread, and the error that called it still completes. */
+let errorListenerForce = CreateForce()
+
+function notifyCurrentErrorListener()
+	errorListeners[notifiedListener].onError(notifiedMessage)
+
+/** Adds a listener that every later error() calls with its message. An error raised inside a
+	listener is reported as usual, but no listener hears it, so a failing listener cannot recurse.
+
+	A map that configures its own error() has to call notifyErrorListeners(msg) from it, or
+	listeners are never told. */
+public function addErrorListener(ErrorListener listener)
+	if errorListenerCount == 0
+		ForceAddPlayer(errorListenerForce, localPlayer)
+	errorListeners[errorListenerCount] = listener
+	errorListenerCount++
+
+/** Tells every error listener about msg and leaves msg in lastError. The default error() calls it;
+	a configured error() calls it too, before it ends the thread. */
+public function notifyErrorListeners(string msg)
+	lastError = msg
+	if errorListenerCount > 0 and not notifyingErrorListeners
+		notifyingErrorListeners = true
+		notifiedMessage = msg
+		for i = 0 to errorListenerCount - 1
+			notifiedListener = i
+			ForForce(errorListenerForce, function notifyCurrentErrorListener)
+		notifyingErrorListeners = false
+		// A listener that raised an error of its own overwrote it; try() and execute() report
+		// this one.
+		lastError = msg
+
 /** error handing function.
 This function is used by libraries and for internal Wurst errors like
 accessing a null-pointer. Overwrite this function to customize error handling.
@@ -39,6 +85,8 @@ Errors are only displayed once every MUTE_ERROR_DURATION seconds.
 To achieve this, the hash of the string is saved in a hashtable together with a timestamp.
 
 You can also use try() from package Execute to handle an error happening in a callback.
+
+A configured replacement should call notifyErrorListeners(msg), so error listeners still hear it.
 */
 @configurable public function error(string msg)
 	if compiletime
@@ -63,7 +111,7 @@ You can also use try() from package Execute to handle an error happening in a ca
 			else
 				HT.saveInt(PRIMARY_ERROR_KEY, hash, currentTime.toInt())
 				Log.error("Message: " + msg + getStackTraceString())
-		lastError = msg
+		notifyErrorListeners(msg)
 		if not isLua
 			// crash the thread. Lua has no equivalent: raising here would propagate into WC3's C
 			// callback layer and be printed to every player, so the Lua backend leaves thread
