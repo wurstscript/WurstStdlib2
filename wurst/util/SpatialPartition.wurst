@@ -309,6 +309,10 @@ public function spatialPartitionReleaseEntryId(int id)
 			+ " released while still held; call spatialPartitionRemove first")
 		return
 	entryIdReserved[id] = false
+	// An id below the base belongs to a consumer that brings its own ids; handing it out would give that
+	// row to a second consumer.
+	if id < spatialPartitionAllocatorBase()
+		return
 	freeEntryIds[freeEntryIdCount] = id
 	freeEntryIdCount++
 

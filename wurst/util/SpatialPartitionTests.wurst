@@ -389,6 +389,16 @@ function countIn(vec2 center, real radius, real maxDisplacement, int groupId) re
 	assertTrue(spatialPartitionAllocateEntryId() >= spatialPartitionAllocatorBase())
 	assertTrue(spatialPartitionAllocatorBase() > 1)
 
+/** A row below the base that its consumer took directly and released is never handed out. */
+@Test function aReleasedIdBelowTheBaseIsNotHandedOut()
+	arena()
+	place(3, vec2(0., 0.), ALL)
+	spatialPartitionRemove(3)
+	spatialPartitionReleaseEntryId(3)
+	spatialPartitionEntryIdIsReserved(3).assertFalse()
+	for i = 1 to 4
+		assertTrue(spatialPartitionAllocateEntryId() != 3)
+
 @Test function theAllocatorNeverHandsOutARowTakenDirectly()
 	arena()
 	// Addressing a row by an id the consumer chose itself is still allowed, so the allocator has to
