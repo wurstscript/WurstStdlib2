@@ -206,6 +206,8 @@ public function string.isLower() returns boolean
 
 /** Returns the given string with whitespace (" ", \n, \t, \r) removed from both ends */
 public function string.trim() returns string
+	if this == null
+		return null
 	var i = 0
 	var j = this.length()
 	while i != j and this.charAt(i).isWhitespace()
@@ -217,6 +219,8 @@ public function string.trim() returns string
 
 /** Returns the given string with whitespace (" ", \n, \t, \r) removed from the left end */
 public function string.ltrim() returns string
+	if this == null
+		return null
 	var i = 0
 	let length = this.length()
 	while i < length and this.charAt(i).isWhitespace()
@@ -225,6 +229,8 @@ public function string.ltrim() returns string
 
 /** Returns the given string with whitespace (" ", \n, \t, \r) removed from the right end */
 public function string.rtrim() returns string
+	if this == null
+		return null
 	var j = this.length()
 	while j != 0 and this.charAt(j - 1).isWhitespace()
 		j--
