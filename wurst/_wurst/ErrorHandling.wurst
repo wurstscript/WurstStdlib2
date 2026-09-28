@@ -8,6 +8,7 @@ import public MagicFunctions
 import GameTimer
 import Hashtable
 import Annotations
+import Player
 
 @configurable public var MUTE_ERROR_DURATION = 60
 
@@ -26,6 +27,33 @@ public var lastError = ""
 	an error with try().
 **/
 public var suppressErrorMessages = false
+
+/** Told about every error() after it is reported, so a test runner or a map can record errors
+	that do not stop the game: on Lua, error() returns instead of ending the thread. That includes
+	errors inside try(), which run with suppressErrorMessages set; a listener that only wants
+	uncaught errors reads it. */
+public interface ErrorListener
+	function onError(string msg)
+
+ErrorListener array errorListeners
+var errorListenerCount = 0
+var notifyingErrorListeners = false
+var notifiedListener = 0
+var notifiedMessage = ""
+/*	Each listener runs in a thread of its own, the way try() runs its callback: a listener that
+	crashes then ends only that thread, and the error that called it still completes. */
+let errorListenerForce = CreateForce()
+
+function notifyCurrentErrorListener()
+	errorListeners[notifiedListener].onError(notifiedMessage)
+
+/** Adds a listener that every later error() calls with its message. An error raised inside a
+	listener is reported as usual, but no listener hears it, so a failing listener cannot recurse. */
+public function addErrorListener(ErrorListener listener)
+	if errorListenerCount == 0
+		ForceAddPlayer(errorListenerForce, localPlayer)
+	errorListeners[errorListenerCount] = listener
+	errorListenerCount++
 
 /** error handing function.
 This function is used by libraries and for internal Wurst errors like
@@ -64,6 +92,13 @@ You can also use try() from package Execute to handle an error happening in a ca
 				HT.saveInt(PRIMARY_ERROR_KEY, hash, currentTime.toInt())
 				Log.error("Message: " + msg + getStackTraceString())
 		lastError = msg
+		if errorListenerCount > 0 and not notifyingErrorListeners
+			notifyingErrorListeners = true
+			notifiedMessage = msg
+			for i = 0 to errorListenerCount - 1
+				notifiedListener = i
+				ForForce(errorListenerForce, function notifyCurrentErrorListener)
+			notifyingErrorListeners = false
 		if not isLua
 			// crash the thread. Lua has no equivalent: raising here would propagate into WC3's C
 			// callback layer and be printed to every player, so the Lua backend leaves thread

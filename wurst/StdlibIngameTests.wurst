@@ -884,6 +884,40 @@ function testTimedLoopDoubleStart()
 		tripled.stopTimedLoopAndDestroy()
 
 // ============================================================================
+// 17. Error listeners
+// ============================================================================
+
+constant ERROR_PROBE = "stdlib in-game error listener probe"
+var errorsHeard = 0
+var lastErrorHeard = ""
+var errorHeardSuppressed = false
+var errorListenersInstalled = false
+
+/*	On Lua, error() returns instead of ending the thread, so an error in a callback leaves nothing
+	behind unless something listens. grill test cannot check this: at compile time error() is a
+	compile error. */
+function testErrorListeners()
+	section("--- 17. error listeners ---")
+	if not errorListenersInstalled
+		errorListenersInstalled = true
+		// Fails on the probe on purpose: its own error must not recurse into the listeners, and the
+		// listener after it must still run.
+		addErrorListener() msg ->
+			if msg == ERROR_PROBE
+				error("a listener failed on " + msg)
+		addErrorListener() msg ->
+			errorsHeard++
+			lastErrorHeard = msg
+			errorHeardSuppressed = suppressErrorMessages
+	let before = errorsHeard
+	// try() also ends the thread on Jass, where error() crashes it.
+	try(() -> error(ERROR_PROBE))
+	check(errorsHeard - before == 1, "an error reaches the listeners once, past a failing listener ("
+		+ (errorsHeard - before).toString() + ")")
+	check(lastErrorHeard == ERROR_PROBE, "the listener gets the message")
+	check(errorHeardSuppressed, "a listener can tell an error try() caught")
+
+// ============================================================================
 // 16. UnitIndexer storage
 // ============================================================================
 
@@ -974,6 +1008,8 @@ public function runStdlibIngameTests()
 		testSpatialIndexReentrancy()
 	runGuarded("16. unit indexer storage") ->
 		testUnitIndexerStorage()
+	runGuarded("17. error listeners") ->
+		testErrorListeners()
 
 	// these finish asynchronously, so the summary waits for them
 	runGuarded("8. TimedLoop stop before start") ->
