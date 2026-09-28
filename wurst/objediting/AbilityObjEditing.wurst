@@ -31607,9 +31607,6 @@ public class AbilityDefinitionAnyaPoisonArrows extends AbilityDefinition
 	function setAttackSpeedFactor(int level, real value)
 		def.setLvlDataUnreal("Poi3", level, 3, value)
 
-	function setStackingType(int level, string value)
-		def.setLvlDataString("Poi4", level, 4, value)
-
 	function presetMovementSpeedFactor(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Poi2", lvls, 2, lc)
 		addTooltipProperty("Movement Speed Factor", lc)
@@ -31621,10 +31618,6 @@ public class AbilityDefinitionAnyaPoisonArrows extends AbilityDefinition
 	function presetAttackSpeedFactor(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Poi3", lvls, 3, lc)
 		addTooltipProperty("Attack Speed Factor", lc)
-
-	function presetStackingType(StringLevelClosure lc)
-		def.setLevelsDataString("Poi4", lvls, 4, lc)
-		addTooltipProperty("Stacking Type", lc)
 
 	function setStackingType(int level, int value)
 		def.setLvlDataInt("Poi4", level, 4, value)
@@ -36221,9 +36214,6 @@ public class AbilityDefinitionItemDeathbringerSBootsParasite extends AbilityDefi
 	function setSummonedUnitDuration(int level, real value)
 		def.setLvlDataUnreal("Npa6", level, 0, value)
 
-	function setStackingType(int level, string value)
-		def.setLvlDataString("Poi4", level, 4, value)
-
 	function setMovementSpeedFactor(int level, real value)
 		def.setLvlDataUnreal("Poi2", level, 2, value)
 
@@ -36243,10 +36233,6 @@ public class AbilityDefinitionItemDeathbringerSBootsParasite extends AbilityDefi
 	function presetSummonedUnitDuration(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Npa6", lvls, 0, lc)
 		addTooltipProperty("Summoned Unit Duration", lc)
-
-	function presetStackingType(StringLevelClosure lc)
-		def.setLevelsDataString("Poi4", lvls, 4, lc)
-		addTooltipProperty("Stacking Type", lc)
 
 	function presetMovementSpeedFactor(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Poi2", lvls, 2, lc)
@@ -36388,9 +36374,6 @@ public class AbilityDefinitionEndlessFlaskRejuvenation extends AbilityDefinition
 	function setManaPointsGained(int level, real value)
 		def.setLvlDataUnreal("Rej2", level, 2, value)
 
-	function setAllowWhenFull(int level, string value)
-		def.setLvlDataString("Rej3", level, 3, value)
-
 	function setHitPointsGained(int level, real value)
 		def.setLvlDataUnreal("Rej1", level, 1, value)
 
@@ -36401,10 +36384,6 @@ public class AbilityDefinitionEndlessFlaskRejuvenation extends AbilityDefinition
 	function presetManaPointsGained(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Rej2", lvls, 2, lc)
 		addTooltipProperty("Mana Points Gained", lc)
-
-	function presetAllowWhenFull(StringLevelClosure lc)
-		def.setLevelsDataString("Rej3", lvls, 3, lc)
-		addTooltipProperty("Allow When Full", lc)
 
 	function presetHitPointsGained(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Rej1", lvls, 1, lc)
@@ -37489,9 +37468,6 @@ public class AbilityDefinitionItemGravelightDoT extends AbilityDefinition
 	function setAttackSpeedFactor(int level, real value)
 		def.setLvlDataUnreal("Poi3", level, 3, value)
 
-	function setStackingType(int level, string value)
-		def.setLvlDataString("Poi4", level, 4, value)
-
 	function presetMovementSpeedFactor(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Poi2", lvls, 2, lc)
 		addTooltipProperty("Movement Speed Factor", lc)
@@ -37503,10 +37479,6 @@ public class AbilityDefinitionItemGravelightDoT extends AbilityDefinition
 	function presetAttackSpeedFactor(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Poi3", lvls, 3, lc)
 		addTooltipProperty("Attack Speed Factor", lc)
-
-	function presetStackingType(StringLevelClosure lc)
-		def.setLevelsDataString("Poi4", lvls, 4, lc)
-		addTooltipProperty("Stacking Type", lc)
 
 	function setStackingType(int level, int value)
 		def.setLvlDataInt("Poi4", level, 4, value)
@@ -38776,9 +38748,6 @@ public class AbilityDefinitionItemNevermeltingIce extends AbilityDefinition
 	function setExtraDamage(int level, real value)
 		def.setLvlDataUnreal("Hca1", level, 1, value)
 
-	function setStackFlags(int level, string value)
-		def.setLvlDataString("Hca4", level, 4, value)
-
 	function presetMovementSpeedFactor(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Hca2", lvls, 2, lc)
 		addTooltipProperty("Movement Speed Factor", lc)
@@ -38790,10 +38759,6 @@ public class AbilityDefinitionItemNevermeltingIce extends AbilityDefinition
 	function presetExtraDamage(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Hca1", lvls, 1, lc)
 		addTooltipProperty("Extra Damage", lc)
-
-	function presetStackFlags(StringLevelClosure lc)
-		def.setLevelsDataString("Hca4", lvls, 4, lc)
-		addTooltipProperty("Stack Flags", lc)
 
 	function setStackFlags(int level, int value)
 		def.setLvlDataInt("Hca4", level, 4, value)
@@ -39178,9 +39143,6 @@ public class AbilityDefinitionPlaguebearerShortsword extends AbilityDefinition
 	function setAttackSpeedFactor(int level, real value)
 		def.setLvlDataUnreal("Spo3", level, 3, value)
 
-	function setStackingType(int level, string value)
-		def.setLvlDataString("Spo4", level, 4, value)
-
 	function setDamagePerSecond(int level, real value)
 		def.setLvlDataUnreal("Spo1", level, 1, value)
 
@@ -39191,10 +39153,6 @@ public class AbilityDefinitionPlaguebearerShortsword extends AbilityDefinition
 	function presetAttackSpeedFactor(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Spo3", lvls, 3, lc)
 		addTooltipProperty("Attack Speed Factor", lc)
-
-	function presetStackingType(StringLevelClosure lc)
-		def.setLevelsDataString("Spo4", lvls, 4, lc)
-		addTooltipProperty("Stacking Type", lc)
 
 	function presetDamagePerSecond(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Spo1", lvls, 1, lc)
@@ -39370,9 +39328,6 @@ public class AbilityDefinitionPintOfAle extends AbilityDefinition
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.pintOfAle)
 
-	function setAttacksPrevented(int level, string value)
-		def.setLvlDataString("Nsi1", level, 1, value)
-
 	function setChanceToMiss(int level, real value)
 		def.setLvlDataUnreal("Nsi2", level, 2, value)
 
@@ -39381,10 +39336,6 @@ public class AbilityDefinitionPintOfAle extends AbilityDefinition
 
 	function setMovementSpeedModifier(int level, real value)
 		def.setLvlDataUnreal("Nsi3", level, 3, value)
-
-	function presetAttacksPrevented(StringLevelClosure lc)
-		def.setLevelsDataString("Nsi1", lvls, 1, lc)
-		addTooltipProperty("Attacks Prevented", lc)
 
 	function presetChanceToMiss(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Nsi2", lvls, 2, lc)
@@ -39534,9 +39485,6 @@ public class AbilityDefinitionItemPlaguewroughtPoison extends AbilityDefinition
 	function setAttackSpeedFactor(int level, real value)
 		def.setLvlDataUnreal("Spo3", level, 3, value)
 
-	function setStackingType(int level, string value)
-		def.setLvlDataString("Spo4", level, 4, value)
-
 	function setDamagePerSecond(int level, real value)
 		def.setLvlDataUnreal("Spo1", level, 1, value)
 
@@ -39547,10 +39495,6 @@ public class AbilityDefinitionItemPlaguewroughtPoison extends AbilityDefinition
 	function presetAttackSpeedFactor(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Spo3", lvls, 3, lc)
 		addTooltipProperty("Attack Speed Factor", lc)
-
-	function presetStackingType(StringLevelClosure lc)
-		def.setLevelsDataString("Spo4", lvls, 4, lc)
-		addTooltipProperty("Stacking Type", lc)
 
 	function presetDamagePerSecond(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Spo1", lvls, 1, lc)
@@ -41386,9 +41330,6 @@ public class AbilityDefinitionThornguardRapierRejuvenation extends AbilityDefini
 	function setManaPointsGained(int level, real value)
 		def.setLvlDataUnreal("Rej2", level, 2, value)
 
-	function setAllowWhenFull(int level, string value)
-		def.setLvlDataString("Rej3", level, 3, value)
-
 	function setHitPointsGained(int level, real value)
 		def.setLvlDataUnreal("Rej1", level, 1, value)
 
@@ -41399,10 +41340,6 @@ public class AbilityDefinitionThornguardRapierRejuvenation extends AbilityDefini
 	function presetManaPointsGained(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Rej2", lvls, 2, lc)
 		addTooltipProperty("Mana Points Gained", lc)
-
-	function presetAllowWhenFull(StringLevelClosure lc)
-		def.setLevelsDataString("Rej3", lvls, 3, lc)
-		addTooltipProperty("Allow When Full", lc)
 
 	function presetHitPointsGained(RealLevelClosure lc)
 		def.setLevelsDataUnreal("Rej1", lvls, 1, lc)
