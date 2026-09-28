@@ -589,11 +589,6 @@ public function rebuildSpatialPartition(vec2 worldMin, vec2 worldMax)
 
 // Queries
 
-@inline function pushMatch(int id, boolean uncertain)
-	snapshotId[snapshotTop] = id
-	snapshotUncertain[snapshotTop] = uncertain
-	snapshotTop++
-
 /**	Collects the members of `groupId` within `radius` of the point, allowing for entries whose cached
 	position may be up to `maxDisplacement` out of date.
 
@@ -640,6 +635,11 @@ public function spatialPartitionBeginRangeQuery(vec2 center, real radius, real m
 		let minBy = minCy div SPATIAL_PARTITION_COARSE_FACTOR
 		let maxBy = maxCy div SPATIAL_PARTITION_COARSE_FACTOR
 
+		// The visit count and the snapshot top stay in locals during the walk and are stored once after
+		// it: in Lua both are globals, looked up by name on every visit and every match otherwise.
+		// Nothing in the walk calls out, so nothing can read them in between.
+		var visits = 0
+		var top = snapshotTop
 		var by = minBy
 		while by <= maxBy
 			var bx = minBx
@@ -661,17 +661,21 @@ public function spatialPartitionBeginRangeQuery(vec2 center, real radius, real m
 							var id = cellHead[headSlot(rowBase + cx, groupId)]
 							while id != 0
 								let next = nextInCell[groupSlot(id, groupId)]
-								lastQueryVisits++
+								visits++
 								let dx = entryX[id] - center.x
 								let dy = entryY[id] - center.y
 								let distSq = dx * dx + dy * dy
 								if distSq <= certainlyOutSq
-									pushMatch(id, not (certainlyIn >= 0. and distSq <= certainlyInSq))
+									snapshotId[top] = id
+									snapshotUncertain[top] = not (certainlyIn >= 0. and distSq <= certainlyInSq)
+									top++
 								id = next
 							cx++
 						cy++
 				bx++
 			by++
+		lastQueryVisits = visits
+		snapshotTop = top
 
 	return snapshotTop - queryBase[queryDepth - 1]
 
@@ -716,6 +720,11 @@ public function spatialPartitionBeginBoxQuery(vec2 boxMin, vec2 boxMax, real max
 		let minBy = minCy div SPATIAL_PARTITION_COARSE_FACTOR
 		let maxBy = maxCy div SPATIAL_PARTITION_COARSE_FACTOR
 
+		// The visit count and the snapshot top stay in locals during the walk and are stored once after
+		// it: in Lua both are globals, looked up by name on every visit and every match otherwise.
+		// Nothing in the walk calls out, so nothing can read them in between.
+		var visits = 0
+		var top = snapshotTop
 		var by = minBy
 		while by <= maxBy
 			var bx = minBx
@@ -737,17 +746,21 @@ public function spatialPartitionBeginBoxQuery(vec2 boxMin, vec2 boxMax, real max
 							var id = cellHead[headSlot(rowBase + cx, groupId)]
 							while id != 0
 								let next = nextInCell[groupSlot(id, groupId)]
-								lastQueryVisits++
+								visits++
 								let px = entryX[id]
 								let py = entryY[id]
 								if px >= outMinX and px <= outMaxX and py >= outMinY and py <= outMaxY
-									pushMatch(id, not (px >= inMinX and px <= inMaxX
-										and py >= inMinY and py <= inMaxY))
+									snapshotId[top] = id
+									snapshotUncertain[top] = not (px >= inMinX and px <= inMaxX
+										and py >= inMinY and py <= inMaxY)
+									top++
 								id = next
 							cx++
 						cy++
 				bx++
 			by++
+		lastQueryVisits = visits
+		snapshotTop = top
 
 	return snapshotTop - queryBase[queryDepth - 1]
 
