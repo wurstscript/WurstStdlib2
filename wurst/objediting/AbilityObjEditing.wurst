@@ -457,9 +457,6 @@ public class AbilityDefinitionTaunt extends AbilityDefinition
 		def.setLevelsDataInt("Tau4", lvls, 4, lc)
 		addTooltipProperty("Number of Pulses", lc)
 
-	function presetPreferHostiles1(IntLevelClosure lc)
-		def.setLevelsDataInt("Tau2", lvls, 2, lc)
-		addTooltipProperty("Prefer Hostiles", lc)
 
 public class AbilityDefinitionPoisonArrows extends AbilityDefinition
 	private bitset stackingTypesSet = bitset(0)
@@ -1057,9 +1054,6 @@ public class AbilityDefinitionTauntCreep extends AbilityDefinition
 		def.setLevelsDataInt("Tau4", lvls, 4, lc)
 		addTooltipProperty("Number of Pulses", lc)
 
-	function presetPreferHostiles1(IntLevelClosure lc)
-		def.setLevelsDataInt("Tau2", lvls, 2, lc)
-		addTooltipProperty("Prefer Hostiles", lc)
 
 public class AbilityDefinitionRejuvinationFurbolg extends AbilityDefinition
 	construct(int newAbilityId)
@@ -19761,8 +19755,8 @@ public class AbilityDefinitionColdArrows extends AbilityDefinition
 		def.setLevelsDataUnreal("Hca1", lvls, 1, lc)
 		addTooltipProperty("Extra Damage", lc)
 
-	function presetStackFlags(StringLevelClosure lc)
-		def.setLevelsDataString("Hca4", lvls, 4, lc)
+	function presetStackFlags(IntLevelClosure lc)
+		def.setLevelsDataInt("Hca4", lvls, 4, lc)
 		addTooltipProperty("Stack Flags", lc)
 
 public class AbilityDefinitionFingerOfDeathItem extends AbilityDefinition
