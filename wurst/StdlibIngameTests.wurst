@@ -186,13 +186,9 @@ function testZeroedDamaging()
 	dealDamage(50.)
 
 	check(unreducedFired, "unreduced listener fired")
-	if reducedFired
-		note("DAMAGED *DOES* fire after a zeroed DAMAGING.")
-		note("  The early close in DamageEvent.onUnreducedDamage is wrong for")
-		note("  this game version and must be replaced. Report this result.")
-	else
-		note("DAMAGED does NOT fire after a zeroed DAMAGING - assumption holds.")
-		note("  The early close in DamageEvent.onUnreducedDamage is correct.")
+	// DamageEvent keeps a zeroed instance on its stack until the DAMAGED that follows reclaims it, so
+	// this is the engine behaviour the package depends on, not only a report of it.
+	check(reducedFired, "DAMAGED fires after a zeroed DAMAGING")
 
 	destroy ul
 	destroy rl
@@ -410,8 +406,9 @@ function testNestedZeroedDamage()
 	check(outerAmount > 1., "the outer hit kept its own amount (" + outerAmount.toString(1) + ")")
 	check(not DamageEvent.isFiring(), "no damage instance left on the stack")
 
-	note("DAMAGED fired " + reducedCalls + " time(s); zeroed nested hit "
-		+ (innerReducedFired ? "DID" : "did NOT") + " reach reduced listeners")
+	// The package header promises this: a zeroed hit still runs the reduced listeners, at zero.
+	check(innerReducedFired and reducedCalls == 2, "the zeroed nested hit reached the reduced listeners too ("
+		+ reducedCalls + " reduced calls)")
 
 	destroy ul
 	destroy rl
@@ -618,6 +615,10 @@ function testSpatialIndexParity()
 	locust.addAbility(LOCUST_ID)
 	let corpse = createUnit(players[0], UnitIds.footman, SPATIAL_TEST_POS.add(240., 0.), angle(0))
 	corpse.kill()
+	// The engine enumerates a corpse even when it still has Locust.
+	let locustCorpse = createUnit(players[0], UnitIds.footman, SPATIAL_TEST_POS.add(270., 0.), angle(0))
+	locustCorpse.addAbility(LOCUST_ID)
+	locustCorpse.kill()
 
 	// The synchronous bootstrap relies on the engine's player enum, specifically because it includes
 	// states omitted by range/rect enums. Pin that engine distinction explicitly.
@@ -719,6 +720,10 @@ function testSpatialIndexParity()
 	hidden.remove()
 	locust.remove()
 	corpse.remove()
+	locustCorpse.remove()
+
+/** A global because the second wave is spawned from a timer, and closures cannot capture local arrays. */
+unit array lifecycleProbes
 
 function testSpatialIndexLifecycle()
 	section("--- 14. spatial index lifecycle bounds ---")
@@ -729,7 +734,6 @@ function testSpatialIndexLifecycle()
 	// Growing by two complete sweep budgets guarantees a larger cycle regardless of where the
 	// pre-existing population sits relative to a ceil boundary.
 	let batchSize = SPATIAL_INDEX_UNITS_PER_TICK * 2
-	unit array lifecycleProbes
 	let initialBound = spatialIndexWorstStaleness()
 	for i = 0 to batchSize - 1
 		lifecycleProbes[i] = createUnit(players[0], UnitIds.footman, SPATIAL_TEST_POS, angle(0))
@@ -740,18 +744,28 @@ function testSpatialIndexLifecycle()
 	for i = 0 to batchSize - 1
 		lifecycleProbes[i].remove()
 		lifecycleProbes[i] = null
-	check(spatialIndexWorstStaleness() >= expandedBound,
-		"registry shrink retains the old bound until a stable sweep completes")
 
-	// A second same-sized wave must consume the just-freed ids rather than extending every numeric
-	// cache table with another session-long block of slots.
-	for i = 0 to batchSize - 1
-		lifecycleProbes[i] = createUnit(players[0], UnitIds.footman, SPATIAL_TEST_POS, angle(0))
-	check(spatialIndexAllocatedSlots() == allocatedAtPeak,
-		"removed-unit cache slots are reused (" + spatialIndexAllocatedSlots() + " allocated)")
-	for i = 0 to batchSize - 1
-		lifecycleProbes[i].remove()
-		lifecycleProbes[i] = null
+	// Warcraft reports a removal after the thread that removed the unit, and before a zero-second
+	// timer fires (measured on the 3.0.0 client), so the index frees the ids only from then on. Two
+	// sweep ticks have to pass before the bound can shrink, and a zero-second timer fires well before.
+	doAfter(0.) ->
+		runGuarded("14. spatial index lifecycle bounds, after the removals") ->
+			check(spatialIndexWorstStaleness() >= expandedBound,
+				"registry shrink retains the old bound until a stable sweep completes")
+
+			// A second same-sized wave must consume the just-freed ids rather than extending every
+			// numeric cache table with another session-long block of slots. Measured against the count
+			// right before it: the sections after this one spawn units while the first wave's ids are
+			// still waiting for their removal, and those take fresh ids.
+			let slotsBeforeWave = spatialIndexAllocatedSlots()
+			for i = 0 to batchSize - 1
+				lifecycleProbes[i] = createUnit(players[0], UnitIds.footman, SPATIAL_TEST_POS, angle(0))
+			check(spatialIndexAllocatedSlots() == slotsBeforeWave and slotsBeforeWave >= allocatedAtPeak,
+				"removed-unit cache slots are reused (" + slotsBeforeWave + " allocated before the wave, "
+				+ spatialIndexAllocatedSlots() + " after)")
+			for i = 0 to batchSize - 1
+				lifecycleProbes[i].remove()
+				lifecycleProbes[i] = null
 
 var reentrancyVisited = 0
 var reentrancyNested = 0

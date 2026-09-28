@@ -43,7 +43,7 @@ import ErrorHandling
 /**	Engine movement-speed cap. Configurable because gameplay constants can raise the default 522. */
 @configurable public constant SPATIAL_INDEX_MAX_UNIT_SPEED = 522.
 
-/** Disable when hidden units are never used to save one native per hit. */
+/** Disable when hidden units are never used; saves one native per corpse the query finds. */
 @configurable public constant SPATIAL_INDEX_CHECK_HIDDEN = true
 
 /**	Deprecated. Cell geometry belongs to the shared grid now, so `SPATIAL_PARTITION_CELL_SIZE` is the
@@ -315,12 +315,26 @@ public function spatialIndexGridHeight() returns int
 	snapshotStack[snapshotTop] = u
 	snapshotTop++
 
-/*	One expression, for the same reason as the partition's result accessors: this is tested once per
-	match, and an inlined early return is carried through the rest of the caller's loop as a flag.
-	`and` still short-circuits, so a Locust unit costs the one native it did before. */
+/*	Whether range and rect enumeration would return this unit. Measured on the 3.0.0 client:
+
+	- Locust sticks. A unit that had Locust stays out of enumeration after the ability is removed,
+	  until it is hidden and shown again, so its Locust level alone reads it back in too early.
+	- The engine's selectable flag follows exactly that, and is false for hidden units and for a unit
+	  in the instant it is removed, before the removal event arrives.
+	- Corpses are unselectable but still enumerated, Locust or not. A unit counts as dead at 0.405
+	  life or less (`isAlive`), not at zero.
+	- Units loaded into a transport read hidden, and are not enumerated.
+
+	So a selectable unit is in, at one native, and only unselectable ones pay for the corpse test. The
+	flag does not follow vision, nor the local selection switches (`EnableSelect`,
+	`BlzEnableSelections`): an enemy unit out of sight reads selectable, so the result is the same for
+	every player.
+
+	One expression, for the same reason as the partition's result accessors: this is tested once per
+	match, and an inlined early return is carried through the rest of the caller's loop as a flag. */
 @inline function unit.passesEnumerationState() returns boolean
-	return this.getAbilityLevel(LOCUST_ID) == 0
-		and (not SPATIAL_INDEX_CHECK_HIDDEN or not this.isHidden())
+	return BlzIsUnitSelectable(this)
+		or (not this.isAlive() and (not SPATIAL_INDEX_CHECK_HIDDEN or not this.isHidden()))
 
 /**	Reads an entry's live position, caches it and stamps the tick, so a later query in the same frame
 	decides it from the cache instead of paying the two natives again.
@@ -613,6 +627,28 @@ function rangeHas(vec2 center, real radius, unit target) returns boolean
 	rangeHas(vec2(0., 0.), 200., u).assertFalse()
 	u.show()
 	rangeHas(vec2(0., 0.), 200., u).assertTrue()
+
+@Test function aUnitThatHadLocustStaysOutOfRangeQueriesUntilShownAgain()
+	testArena()
+	let u = addUnitAt(vec2(0., 0.))
+	u.addAbility(LOCUST_ID)
+	u.removeAbility(LOCUST_ID)
+	// The engine keeps it out of range enumeration although its Locust level reads zero again.
+	rangeHas(vec2(0., 0.), 200., u).assertFalse()
+	u.hide()
+	u.show()
+	rangeHas(vec2(0., 0.), 200., u).assertTrue()
+
+@Test function corpsesAreStillEnumeratedByRangeQueries()
+	testArena()
+	let u = addUnitAt(vec2(0., 0.))
+	u.kill()
+	let locustCorpse = addUnitAt(vec2(20., 0.))
+	locustCorpse.addAbility(LOCUST_ID)
+	locustCorpse.kill()
+	// Unselectable, and still returned by the engine's range enumeration, even with Locust.
+	rangeHas(vec2(0., 0.), 200., u).assertTrue()
+	rangeHas(vec2(0., 0.), 200., locustCorpse).assertTrue()
 
 @Test function playerQueryDeliberatelyIncludesHiddenAndLocustUnits()
 	testArena()
