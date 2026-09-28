@@ -210,4 +210,7 @@ public class UnitIndex
 // Auto instanciation/destruction
 init
 	onEnter(() -> shouldIndex(getEnterLeaveUnit()) ? getEnterLeaveUnit().toUnitIndex() : 0)
-	onLeave(() -> shouldIndex(getEnterLeaveUnit()) ? getEnterLeaveUnit().deindex() : 0)
+	// A unit that leaves loses its index even when shouldIndex would not index it now: it may have been
+	// indexed through toUnitIndex(), or the predicate may have changed since it entered, and an index
+	// that outlives its unit leaks, along with everything keyed by it.
+	onLeave(() -> getEnterLeaveUnit().deindex())
