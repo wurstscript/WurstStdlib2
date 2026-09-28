@@ -206,28 +206,35 @@ public function string.isLower() returns boolean
 
 /** Returns the given string with whitespace (" ", \n, \t, \r) removed from both ends */
 public function string.trim() returns string
+	if this == null
+		return null
 	var i = 0
 	var j = this.length()
 	while i != j and this.charAt(i).isWhitespace()
 		i++
 	while i != j and this.charAt(j - 1).isWhitespace()
 		j--
-	return this.substring(i, j)
+	// The game gives null for any substring of "", so an empty result is returned as "" directly.
+	return i == j ? "" : this.substring(i, j)
 
 /** Returns the given string with whitespace (" ", \n, \t, \r) removed from the left end */
 public function string.ltrim() returns string
+	if this == null
+		return null
 	var i = 0
 	let length = this.length()
 	while i < length and this.charAt(i).isWhitespace()
 		i++
-	return this.substring(i, length)
+	return i == length ? "" : this.substring(i, length)
 
 /** Returns the given string with whitespace (" ", \n, \t, \r) removed from the right end */
 public function string.rtrim() returns string
+	if this == null
+		return null
 	var j = this.length()
 	while j != 0 and this.charAt(j - 1).isWhitespace()
 		j--
-	return this.substring(0, j)
+	return j == 0 ? "" : this.substring(0, j)
 
 /** Removes a string from the beginning of another string */
 public function string.ltrim(string val) returns string

@@ -73,6 +73,11 @@ package StringTests
 	"    ".ltrim().assertEquals("")
 	"    ".rtrim().assertEquals("")
 
+	string absent = null
+	assertTrue(absent.trim() == null)
+	assertTrue(absent.ltrim() == null)
+	assertTrue(absent.rtrim() == null)
+
 @Test function testIndexOf()
 	"test".indexOf("t").assertEquals(0)
 	"test".indexOf("es").assertEquals(1)
