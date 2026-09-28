@@ -135,16 +135,32 @@ public function forUnitsInRectCounted(rect r, int count, ForGroupCallback c)
 public function forUnitsInRange(vec2 pos, real radius, ForGroupCallback c)
 	forUnitsInRange(pos, radius, false, c)
 
+/*	Units the collision-filtered range enumeration found, one segment per nesting level. The callback
+	may start another enumeration, and every helper here that needs a real group uses ENUM_GROUP, so
+	the outer call copies its units out before it runs any callback. */
+unit array rangeSnapshot
+var rangeSnapshotTop = 0
+
 /** Executes the given closure for every unit in range of the given position
 	With collisionSizeFiltering true it will take the units' collision into account. */
 public function forUnitsInRange(vec2 pos, real radius, bool collisionSizeFiltering, ForGroupCallback c)
 	if collisionSizeFiltering
-		pushCallback(c)
+		let base = rangeSnapshotTop
 		GroupEnumUnitsInRange(ENUM_GROUP, pos.x, pos.y, radius + MAX_COLLISION_SIZE, null)
-		for u from ENUM_GROUP
+		let count = ENUM_GROUP.size()
+		for i = 0 to count - 1
+			rangeSnapshot[base + i] = ENUM_GROUP.get(i)
+		ENUM_GROUP.clear()
+		rangeSnapshotTop = base + count
+		for i = base to base + count - 1
+			let u = rangeSnapshot[i]
 			if IsUnitInRangeXY(u, pos.x, pos.y, radius)
 				c.callback(u)
-		popCallback(true)
+		// Null the slots: a unit reference left in a Lua table keeps the handle alive.
+		for i = base to base + count - 1
+			rangeSnapshot[i] = null
+		rangeSnapshotTop = base
+		destroy c
 	else
 		pushCallback(c)
 		GroupEnumUnitsInRange(DUMMY_GROUP, pos.x, pos.y, radius, filter)
