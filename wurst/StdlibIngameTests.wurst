@@ -667,15 +667,17 @@ function testSpatialIndexParity()
 	check(not spatialResultScratch.has(foreign), "query filter excludes a spatial match in one pass")
 	foreign.remove()
 
-	// Manual UnitIndexer deindexing does not remove a live unit from native enumeration, so the
-	// independent spatial registry must retain it until OnUnitEnterLeave observes a real leave.
+	// The index holds what UnitIndexer holds: a unit deindexed by hand leaves it, although the engine
+	// still enumerates it, and indexing it again brings it back.
 	probes[0].deindex()
-	checkRangeParity(SPATIAL_TEST_POS, 300., false, "live manually deindexed unit remains enumerable")
+	unitsInRange(spatialResultScratch, SPATIAL_TEST_POS, 300.)
+	check(not spatialResultScratch.has(probes[0]), "a manually deindexed unit leaves the index")
 	probes[0].toUnitIndex()
+	checkRangeParity(SPATIAL_TEST_POS, 300., false, "indexing it again brings it back")
 
-	// This unit was created directly in this package's init, after UnitSpatialIndex initialized but
-	// before the zero-timer synthetic seed. Synchronous enter tracking must have bucketed it already.
-	checkRangeParity(spatialInitProbe.getPos(), 32., false, "init-time spawn is indexed immediately")
+	// This unit was created directly in this package's init, before OnUnitEnterLeave dispatches the
+	// units init created. The dispatch has run by now, so the index holds it.
+	checkRangeParity(spatialInitProbe.getPos(), 32., false, "init-time spawn is indexed")
 	check(spatialInitProbeEnterEvents == 1, "init-time spawn emits one enter event ("
 		+ spatialInitProbeEnterEvents + ")")
 
@@ -753,14 +755,16 @@ function testSpatialIndexLifecycle()
 			check(spatialIndexWorstStaleness() >= expandedBound,
 				"registry shrink retains the old bound until a stable sweep completes")
 
-			// A second same-sized wave must consume the just-freed ids rather than extending every
-			// numeric cache table with another session-long block of slots. Measured against the count
-			// right before it: the sections after this one spawn units while the first wave's ids are
-			// still waiting for their removal, and those take fresh ids.
+			// A second same-sized wave must reuse the just-freed ids rather than extending every numeric
+			// cache table with another session-long block of slots. The ids are UnitIndexer indices, which
+			// other objects share, so a few fresh ones are fine; a whole wave of them is not. Measured
+			// against the count right before it: the sections after this one spawn units while the first
+			// wave's ids are still waiting for their removal, and those take fresh ids.
 			let slotsBeforeWave = spatialIndexAllocatedSlots()
 			for i = 0 to batchSize - 1
 				lifecycleProbes[i] = createUnit(players[0], UnitIds.footman, SPATIAL_TEST_POS, angle(0))
-			check(spatialIndexAllocatedSlots() == slotsBeforeWave and slotsBeforeWave >= allocatedAtPeak,
+			check(spatialIndexAllocatedSlots() - slotsBeforeWave < batchSize div 2
+				and slotsBeforeWave >= allocatedAtPeak,
 				"removed-unit cache slots are reused (" + slotsBeforeWave + " allocated before the wave, "
 				+ spatialIndexAllocatedSlots() + " after)")
 			for i = 0 to batchSize - 1
