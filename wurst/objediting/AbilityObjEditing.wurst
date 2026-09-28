@@ -11647,6 +11647,14 @@ public class AbilityDefinitionBrewmasterDrunkenBrawler extends AbilityDefinition
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.brewmasterDrunkenBrawler)
 
+	function setDamageMultiplier(int level, real value)
+		def.setLvlDataUnreal("Ocr2", level, 2, value)
+
+	function presetDamageMultiplier(RealLevelClosure lc)
+		def.setLevelsDataUnreal("Ocr2", lvls, 2, lc)
+		addTooltipProperty("Damage Multiplier", lc)
+
+
 	function setChancetoCriticalStrike(int level, real value)
 		def.setLvlDataUnreal("Ocr1", level, 1, value)
 
@@ -18351,6 +18359,10 @@ public class AbilityDefinitionChenDrunkenHaze extends AbilityDefinition
 public class AbilityDefinitionChenDrunkenBrawler extends AbilityDefinition
 	construct(int newAbilityId)
 		super(newAbilityId, AbilityIds.chenDrunkenBrawler)
+
+	function setDamageMultiplier(int level, real value)
+		def.setLvlDataUnreal("Ocr2", level, 2, value)
+
 
 	function setChancetoEvade(int level, real value)
 		def.setLvlDataUnreal("Ocr4", level, 4, value)
