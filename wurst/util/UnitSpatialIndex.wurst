@@ -11,6 +11,12 @@ package UnitSpatialIndex
 	default that is every unit on the map, as OnUnitEnterLeave reports them. A unit excluded through
 	`shouldIndex`, or deindexed by hand, is not in it. Units created during init join when
 	OnUnitEnterLeave dispatches them, after the last init block, or earlier through `toUnitIndex()`.
+	A map that configures `unit.getIndex()` with an indexer of its own has to keep firing
+	`onUnitIndex` and `onUnitDeindex`, which is all this index listens to.
+
+	The partition rows below `spatialPartitionAllocatorBase()` are this index's while it is active.
+	Another partition consumer takes its ids from the allocator, which hands out ids from the base up;
+	a row below it that another consumer took directly is refused, and reported, rather than shared.
 
 	A fixed-count sweep maintains the cached positions, and conservative padding covers movement
 	between sweeps. Grid traversal order differs from native order; movement beyond the configured
@@ -81,6 +87,8 @@ function ensureUnitGroup()
 unit array indexedUnit
 /** The highest row a unit has taken, which is what sizes the arrays here. */
 var highestUnitRow = 0
+/** Rows a unit has taken. They stay claimed after the unit leaves, for the next unit given the index. */
+boolean array unitRow
 
 /** Sweep tick at which each entry's cached position was last written. */
 int array lastSweepTick
@@ -151,6 +159,11 @@ function registerUnit(unit u)
 		// The partition hands out the ids from here up, so this row may belong to another consumer.
 		error("UnitSpatialIndex: unit index " + idx.toString() + " reaches the ids SpatialPartition allocates")
 		return
+	if spatialPartitionEntryIdIsReserved(idx) and not unitRow[idx]
+		// Taken directly by another consumer. Sharing it would move and remove that consumer's entry.
+		error("UnitSpatialIndex: entry id " + idx.toString() + " is held by another SpatialPartition consumer")
+		return
+	unitRow[idx] = true
 	indexedUnit[idx] = u
 	highestUnitRow = max(highestUnitRow, idx)
 	registry[registryCount] = idx
@@ -524,6 +537,11 @@ function testArena()
 	while registryCount > 0
 		unregisterIndex(registry[registryCount - 1])
 	spatialPartitionClear()
+	// Rows below the base that another package's tests took directly would refuse the next unit given
+	// that index, so they are released too.
+	for id = 1 to min(spatialPartitionAllocatorBase() - 1, spatialPartitionAllocatedEntryIds())
+		if spatialPartitionEntryIdIsReserved(id) and not unitRow[id]
+			spatialPartitionReleaseEntryId(id)
 	sweepTick = 0
 	sweepCursor = 0
 	cycleWorstAge = 0
