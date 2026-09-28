@@ -383,6 +383,12 @@ function countIn(vec2 center, real radius, real maxDisplacement, int groupId) re
 	spatialPartitionAllocateEntryId().assertEquals(first)
 
 
+/** A consumer that brings its own ids, such as the unit index, keeps them below the base. */
+@Test function allocatedIdsStartAtTheBase()
+	arena()
+	assertTrue(spatialPartitionAllocateEntryId() >= spatialPartitionAllocatorBase())
+	assertTrue(spatialPartitionAllocatorBase() > 1)
+
 @Test function theAllocatorNeverHandsOutARowTakenDirectly()
 	arena()
 	// Addressing a row by an id the consumer chose itself is still allowed, so the allocator has to

@@ -79,6 +79,8 @@ function ensureUnitGroup()
 // ids UnitIndexer never hands out.
 
 unit array indexedUnit
+/** The highest row a unit has taken, which is what sizes the arrays here. */
+var highestUnitRow = 0
 
 /** Sweep tick at which each entry's cached position was last written. */
 int array lastSweepTick
@@ -145,7 +147,12 @@ function registerUnit(unit u)
 	let idx = u.getIndex()
 	if idx == 0 or registrySlot[idx] != 0
 		return
+	if idx >= spatialPartitionAllocatorBase()
+		// The partition hands out the ids from here up, so this row may belong to another consumer.
+		error("UnitSpatialIndex: unit index " + idx.toString() + " reaches the ids SpatialPartition allocates")
+		return
 	indexedUnit[idx] = u
+	highestUnitRow = max(highestUnitRow, idx)
 	registry[registryCount] = idx
 	registrySlot[idx] = registryCount + 1
 	registryCount++
@@ -266,11 +273,11 @@ public function spatialIndexObservedStaleness() returns real
 public function spatialIndexTrackedUnits() returns int
 	return registryCount
 
-/**	Highest entry id in use, which is what sizes the arrays here, since they are indexed by it. The ids
-	are UnitIndexer indices, so their reuse is UnitIndexer's: this stays near the peak concurrent
+/**	Highest row a unit has taken, which is what sizes the arrays here, since they are indexed by it. The
+	rows are UnitIndexer indices, so their reuse is UnitIndexer's: this stays near the peak concurrent
 	population. */
 public function spatialIndexAllocatedSlots() returns int
-	return spatialPartitionAllocatedEntryIds()
+	return highestUnitRow
 
 /** Current query padding in whole cells, derived from guaranteed staleness. */
 public function spatialIndexPadCells() returns int
@@ -463,6 +470,17 @@ public function spatialIndexEndQuery()
 
 // Init
 
+/**	Registers the units UnitIndexer indexed before the listeners below were installed, for example
+	through toUnitIndex() in a package whose init ran earlier. Their one onUnitIndex event has passed,
+	and OnUnitEnterLeave's later dispatch finds them indexed and sends none. registerUnit skips any
+	unit without an index, so this adds nothing UnitIndexer does not hold. */
+function registerIndexedUnits()
+	let existing = CreateGroup()
+	existing.enumUnitsAll(null)
+	for u in existing
+		registerUnit(u)
+	existing.destr()
+
 init
 	// Written as a positive guard rather than an early return: `isLua` is folded, so on the Jass
 	// target the whole body disappears and this package registers nothing at all.
@@ -483,6 +501,7 @@ init
 		// preplaced and init-created units after the last init block, so these listeners see them all.
 		onUnitIndex(() -> registerUnit(getIndexingUnit()))
 		onUnitDeindex(() -> unregisterUnit(getIndexingUnit()))
+		registerIndexedUnits()
 		indexActive = true
 
 		doPeriodically(SPATIAL_INDEX_SWEEP_PERIOD) cb ->
