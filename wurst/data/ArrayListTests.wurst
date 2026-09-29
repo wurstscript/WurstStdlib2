@@ -135,6 +135,18 @@ function testFilter()
     destroy filtered
 
 @Test
+function testResetRetainsCapacityAndReplacesLogicalContents()
+    let list = new ArrayList<int>(2)
+    list.add(1, 2)
+    list.reset()
+    list.size().assertEquals(0)
+    list.add(3, 4)
+    list.size().assertEquals(2)
+    list.get(0).assertEquals(3)
+    list.get(1).assertEquals(4)
+    destroy list
+
+@Test
 function testFoldl()
     let list = new ArrayList<int>()
     for i = 1 to 6
@@ -726,3 +738,77 @@ function testDetectRepeatedSlotsBug()
 
     destroy seen
     destroy l
+
+@Test
+function testReserveKeepsContentsAndGrowsCapacity()
+	let list = new ArrayList<int>()
+	list.add(1)
+	list.add(2)
+	list.reserve(64)
+	// Reserving must not disturb what is already there, only where it can fit.
+	list.size().assertEquals(2)
+	list.get(0).assertEquals(1)
+	list.get(1).assertEquals(2)
+	// And it must be enough to append that many without growing again.
+	for i = 0 to 61
+		list.unsafeAdd(i)
+	list.size().assertEquals(64)
+	list.get(63).assertEquals(61)
+	destroy list
+
+@Test
+function testUnsafeAddAppendsLikeAdd()
+	let reserved = new ArrayList<int>()
+	let plain = new ArrayList<int>()
+	reserved.reserve(16)
+	for i = 0 to 15
+		reserved.unsafeAdd(i)
+		plain.add(i)
+	reserved.size().assertEquals(plain.size())
+	for i = 0 to 15
+		reserved.get(i).assertEquals(plain.get(i))
+	destroy reserved
+	destroy plain
+
+@Test
+function testUnsafeAddAfterResetRefillsInPlace()
+	let list = new ArrayList<int>()
+	list.reserve(8)
+	for i = 0 to 7
+		list.unsafeAdd(i)
+	// reset keeps the capacity, which is what makes a scratch list reusable without reserving again
+	list.reset()
+	list.size().assertEquals(0)
+	for i = 0 to 7
+		list.unsafeAdd(100 + i)
+	list.size().assertEquals(8)
+	list.get(0).assertEquals(100)
+	list.get(7).assertEquals(107)
+	destroy list
+
+@Test
+function testTruncateKeepsPrefixAndCapacity()
+	let list = new ArrayList<int>()
+	list.reserve(32)
+	for i = 0 to 15
+		list.unsafeAdd(i)
+	list.truncate(4)
+	list.size().assertEquals(4)
+	list.get(0).assertEquals(0)
+	list.get(3).assertEquals(3)
+	// Capacity survives, so the list refills without growing again.
+	for i = 0 to 27
+		list.unsafeAdd(100 + i)
+	list.size().assertEquals(32)
+	list.get(4).assertEquals(100)
+	destroy list
+
+@Test
+function testTruncateToOwnSizeIsANoOp()
+	let list = new ArrayList<int>()
+	list.add(7)
+	list.add(8)
+	list.truncate(2)
+	list.size().assertEquals(2)
+	list.get(1).assertEquals(8)
+	destroy list

@@ -1,0 +1,42 @@
+package Doodad
+import NoWurst
+import Vectors
+
+/** A placed map doodad addressed by its zero-based map index. */
+public tuple doodad(int index)
+
+public function getDoodadCount() returns int
+	return BlzGetNumDoodads()
+
+public function getDoodad(int index) returns doodad
+	return doodad(index)
+
+public function doodad.getTypeId() returns int
+	return BlzGetDoodadId(this.index)
+
+public function doodad.getVariation() returns int
+	return BlzGetDoodadVariation(this.index)
+
+public function doodad.getPos() returns vec3
+	return vec3(BlzGetDoodadX(this.index), BlzGetDoodadY(this.index), BlzGetDoodadZ(this.index))
+
+public function doodad.getScale() returns vec3
+	return vec3(BlzGetDoodadScaleX(this.index), BlzGetDoodadScaleY(this.index), BlzGetDoodadScaleZ(this.index))
+
+public function doodad.getYaw() returns angle
+	return BlzGetDoodadYaw(this.index).fromRad()
+
+public function doodad.getPitch() returns angle
+	return BlzGetDoodadPitch(this.index).fromRad()
+
+public function doodad.getRoll() returns angle
+	return BlzGetDoodadRoll(this.index).fromRad()
+
+public function doodad.isUsingModelAxes() returns boolean
+	return BlzGetDoodadIsUsingModelAxes(this.index)
+
+public function doodad.setAnimation(string animation, boolean randomize)
+	BlzSetSingleDoodadAnimation(this.index, animation, randomize)
+
+public function doodad.setColor(playercolor whichColor)
+	BlzSetSingleDoodadColor(this.index, whichColor)

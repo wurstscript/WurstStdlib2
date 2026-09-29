@@ -111,13 +111,26 @@ public function group.get(int index) returns unit
 	return BlzGroupUnitAt(this, index)
 
 /* Group iterator */
+
+/*	The snapshot groups of finished iterators. `for u in g` copies g so the loop
+	is not disturbed if g changes, and creating and destroying that copy were two
+	natives and a handle on every loop. Emptied copies are reused instead; the
+	pool holds at most as many groups as iterators were ever live at once. */
+group array iteratorGroupPool
+int iteratorGroupPoolCount = 0
+
 class GroupIterator
 	private group g
 	private int i = 0
 	private int n = 0
 
 	construct(group source)
-		g = CreateGroup()
+		if iteratorGroupPoolCount > 0
+			iteratorGroupPoolCount--
+			g = iteratorGroupPool[iteratorGroupPoolCount]
+			iteratorGroupPool[iteratorGroupPoolCount] = null
+		else
+			g = CreateGroup()
 		g.add(source)
 		n = g.size()
 
@@ -134,7 +147,9 @@ class GroupIterator
 
 	ondestroy
 		g.clear()
-		g.destr()
+		iteratorGroupPool[iteratorGroupPoolCount] = g
+		iteratorGroupPoolCount++
+		g = null
 
 /** Creates a new iterator for this group. */
 public function group.iterator() returns GroupIterator

@@ -14,7 +14,7 @@ import Annotations
 import Orders
 
 /* 	Provides event API for units entering and leaving the map.
-	The event will also fire for preplaced units on the map.
+	The event will also fire for preplaced units on the map, hidden and Locust ones included.
 
 	NOTE: Any move applied to a unit as response to an enter event
 		will fire the enter event again. */
@@ -75,8 +75,8 @@ init
 				eventTrigger.execute()
 				popUnit()
 
-		// Process preplaced units
-		preplacedUnits.enumUnitsInRect(boundRect)
+		// Process preplaced units. Per-player enumeration, unlike a rect, includes hidden and Locust units.
+		preplacedUnits.enumUnitsAll(null)
 		let count = preplacedUnits.size()
 		for i = 0 to count - 1
 			prepareUnit(preplacedUnits.get(i))

@@ -148,3 +148,46 @@ function testGroupForGroups()
 	g2.has(u3).assertTrue()
 	g2.has(u2).assertFalse()
 	g2.has(u).assertFalse()
+
+function groupOf(int count) returns group
+	let g = CreateGroup()
+	for i = 1 to count
+		g.add(createUnit(Player(0), 'hfoo', vec2(0, 0), 0 .fromDeg()))
+	return g
+
+@Test
+function testForInReusesNoStaleUnits()
+	// The second loop's snapshot group is the first loop's, reused: it must hold only its own units.
+	let big = groupOf(5)
+	let small = groupOf(2)
+	var seen = 0
+	for u in big
+		if u != null
+			seen++
+	seen.assertEquals(5)
+	seen = 0
+	for u in small
+		if u != null
+			seen++
+	seen.assertEquals(2)
+
+@Test
+function testForInNestsOverTheSameGroup()
+	let g = groupOf(3)
+	var pairs = 0
+	for a in g
+		for b in g
+			if a != null and b != null
+				pairs++
+	pairs.assertEquals(9)
+
+@Test
+function testForInIsASnapshot()
+	let g = groupOf(3)
+	var seen = 0
+	for u in g
+		g.clear()
+		if u != null
+			seen++
+	seen.assertEquals(3)
+	g.isEmpty().assertTrue()

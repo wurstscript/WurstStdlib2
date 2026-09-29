@@ -8,7 +8,7 @@ import Execute
 import ErrorHandling
 import UnitSpatialIndex
 import SpatialIndexForUnits
-import SparseSet
+import ArrayList
 import UnitIndexer
 import OnUnitEnterLeave
 
@@ -55,22 +55,67 @@ import OnUnitEnterLeave
 // Reporting
 // ============================================================================
 
+/**	Whether importing this package starts the suite one second into the game.
+	A harness which runs the suite itself, through runStdlibIngameTests with a
+	completion callback, turns this off in a config package. */
+@configurable public constant STDLIB_INGAME_TESTS_AUTORUN = true
+
+/** Told once, when the summary is out. */
+public interface StdlibIngameTestsDone
+	function onDone(int checksRun, int checksFailed)
+
 var checksRun = 0
 var checksFailed = 0
+
+/*	Runs never overlap. The suite shares its counters, its report and the
+	fixed positions of its test units, and some checks land on a timer, so a
+	second run started inside the first would mix both runs' results and units.
+	A request made while a run is in flight is queued and starts as soon as
+	that run has summarised. */
+var runInFlight = false
+var rerunQueued = false
+/** Told the totals of the run in flight. */
+let runCallbacks = new ArrayList<StdlibIngameTestsDone>()
+/** Told the totals of the queued run. */
+let queuedCallbacks = new ArrayList<StdlibIngameTestsDone>()
+
+/** Every reported line, so the run can also be read back from disk (see writeReport). */
+let reportLines = new ArrayList<string>()
+
+/**	The lines of the last run, colour codes included: PASS/FAIL/INFO/CRASH
+	prefixed check lines, section headers and the summary. Owned by this
+	package; do not destroy. */
+public function stdlibIngameReport() returns ArrayList<string>
+	return reportLines
+
+function report(string line)
+	print(line)
+	reportLines.add(line)
+
+/**	Writes the report to CustomMapData/WurstStdlibIngameTests.txt on each
+	client, one Preload line per reported line, so an automated run can read
+	the outcome without a screen. Every client writes the same lines, so this
+	is not a sync hazard; the file is never read back by the map. */
+function writeReport()
+	PreloadGenClear()
+	PreloadGenStart()
+	for i = 0 to reportLines.size() - 1
+		Preload(reportLines.get(i))
+	PreloadGenEnd("WurstStdlibIngameTests.txt")
 
 function check(bool passed, string label)
 	checksRun++
 	if passed
-		print("|cff44ff44PASS|r  " + label)
+		report("|cff44ff44PASS|r  " + label)
 	else
 		checksFailed++
-		print("|cffff4444FAIL|r  " + label)
+		report("|cffff4444FAIL|r  " + label)
 
 function note(string label)
-	print("|cffffcc00INFO|r  " + label)
+	report("|cffffcc00INFO|r  " + label)
 
 function section(string label)
-	print("|cff8888ff" + label + "|r")
+	report("|cff8888ff" + label + "|r")
 
 /**	Runs one test in an isolated thread. Without this a single crashing check
 	kills the whole run, and everything after it silently never happens. */
@@ -78,7 +123,7 @@ function runGuarded(string label, ForForceCallback cb)
 	if not try(cb)
 		checksRun++
 		checksFailed++
-		print("|cffff4444CRASH|r " + label + " -> " + (lastError == "" ? "thread crashed" : lastError))
+		report("|cffff4444CRASH|r " + label + " -> " + (lastError == "" ? "thread crashed" : lastError))
 
 // ============================================================================
 // Test units
@@ -141,13 +186,9 @@ function testZeroedDamaging()
 	dealDamage(50.)
 
 	check(unreducedFired, "unreduced listener fired")
-	if reducedFired
-		note("DAMAGED *DOES* fire after a zeroed DAMAGING.")
-		note("  The early close in DamageEvent.onUnreducedDamage is wrong for")
-		note("  this game version and must be replaced. Report this result.")
-	else
-		note("DAMAGED does NOT fire after a zeroed DAMAGING - assumption holds.")
-		note("  The early close in DamageEvent.onUnreducedDamage is correct.")
+	// DamageEvent keeps a zeroed instance on its stack until the DAMAGED that follows reclaims it, so
+	// this is the engine behaviour the package depends on, not only a report of it.
+	check(reducedFired, "DAMAGED fires after a zeroed DAMAGING")
 
 	destroy ul
 	destroy rl
@@ -365,8 +406,9 @@ function testNestedZeroedDamage()
 	check(outerAmount > 1., "the outer hit kept its own amount (" + outerAmount.toString(1) + ")")
 	check(not DamageEvent.isFiring(), "no damage instance left on the stack")
 
-	note("DAMAGED fired " + reducedCalls + " time(s); zeroed nested hit "
-		+ (innerReducedFired ? "DID" : "did NOT") + " reach reduced listeners")
+	// The package header promises this: a zeroed hit still runs the reduced listeners, at zero.
+	check(innerReducedFired and reducedCalls == 2, "the zeroed nested hit reached the reduced listeners too ("
+		+ reducedCalls + " reduced calls)")
 
 	destroy ul
 	destroy rl
@@ -467,22 +509,26 @@ function testGroupNesting()
 	cases (hidden, locust, corpses, boundary distances) need no engine behaviour to be hardcoded.
 
 	These checks are Lua-index checks only. On Jass or with the index disabled, the native-less API
-	returns an empty SparseSet by contract, so there is no meaningful parity assertion to run. */
+	leaves the provided result empty by contract, so there is no meaningful parity assertion to run. */
 
 constant SPATIAL_TEST_POS = vec2(-2000, 2000)
 unit spatialInitProbe = null
 var creatingSpatialInitProbe = false
 var spatialInitProbeEnterEvents = 0
+let spatialResultScratch = new ArrayList<unit>(64)
+let spatialOuterScratch = new ArrayList<unit>(64)
+let spatialMiddleScratch = new ArrayList<unit>(64)
+let spatialInnerScratch = new ArrayList<unit>(64)
+constant UnitSpatialFilter spatialPlayerZeroFilter = u -> u.getOwner() == players[0]
 
 function countSpatialInitProbeEnter()
 	if creatingSpatialInitProbe or getEnterLeaveUnit() == spatialInitProbe
 		spatialInitProbeEnterEvents++
 
-function collectViaSparseSet(vec2 pos, real radius, bool collisionFiltering, group into)
-	let matches = unitsInRange(pos, radius, collisionFiltering)
-	for i = 0 to matches.size() - 1
-		into.add(matches.get(i))
-	destroy matches
+function collectViaSpatialIndex(vec2 pos, real radius, bool collisionFiltering, group into)
+	unitsInRange(spatialResultScratch, pos, radius, collisionFiltering)
+	for i = 0 to spatialResultScratch.size() - 1
+		into.add(spatialResultScratch.get(i))
 
 function collectNative(vec2 pos, real radius, bool collisionFiltering, group into)
 	if collisionFiltering
@@ -507,10 +553,28 @@ function describeDifference(group actual, group expected) returns string
 	return "engine=" + expected.size() + " closure=" + actual.size()
 		+ " missed=" + missing + " spurious=" + extra
 
+/** The closure API must see exactly what the list API sees, which parity above ties to the engine. */
+function checkClosureParity(vec2 pos, real radius, string label)
+	let viaClosure = CreateGroup()
+	let viaList = CreateGroup()
+	forEachUnitInRange(pos, radius) u ->
+		viaClosure.add(u)
+	unitsInRange(spatialResultScratch, pos, radius)
+	for i = 0 to spatialResultScratch.size() - 1
+		viaList.add(spatialResultScratch.get(i))
+	var equal = viaClosure.size() == viaList.size()
+	if equal
+		for i = 0 to viaClosure.size() - 1
+			if not viaList.has(viaClosure.get(i))
+				equal = false
+	check(equal, label + " (" + describeDifference(viaClosure, viaList) + ")")
+	viaClosure.destr()
+	viaList.destr()
+
 function checkRangeParity(vec2 pos, real radius, bool collisionFiltering, string label)
 	let actual = CreateGroup()
 	let expected = CreateGroup()
-	collectViaSparseSet(pos, radius, collisionFiltering, actual)
+	collectViaSpatialIndex(pos, radius, collisionFiltering, actual)
 	collectNative(pos, radius, collisionFiltering, expected)
 	var equal = actual.size() == expected.size()
 	if equal
@@ -520,6 +584,11 @@ function checkRangeParity(vec2 pos, real radius, bool collisionFiltering, string
 	check(equal, label + " (" + describeDifference(actual, expected) + ")")
 	actual.destr()
 	expected.destr()
+
+/** Mutated inside closures, so they cannot be locals - see the note at their use. */
+var closureVisited = 0
+var closureOuter = 0
+var closureInner = 0
 
 function testSpatialIndexParity()
 	section("--- 13. spatial index vs engine enumeration ---")
@@ -546,6 +615,10 @@ function testSpatialIndexParity()
 	locust.addAbility(LOCUST_ID)
 	let corpse = createUnit(players[0], UnitIds.footman, SPATIAL_TEST_POS.add(240., 0.), angle(0))
 	corpse.kill()
+	// The engine enumerates a corpse even when it still has Locust.
+	let locustCorpse = createUnit(players[0], UnitIds.footman, SPATIAL_TEST_POS.add(270., 0.), angle(0))
+	locustCorpse.addAbility(LOCUST_ID)
+	locustCorpse.kill()
 
 	// The synchronous bootstrap relies on the engine's player enum, specifically because it includes
 	// states omitted by range/rect enums. Pin that engine distinction explicitly.
@@ -556,19 +629,55 @@ function testSpatialIndexParity()
 	playerUnits.destr()
 
 	checkRangeParity(SPATIAL_TEST_POS, 300., false, "range query matches the engine")
+	checkClosureParity(SPATIAL_TEST_POS, 300., "closure API sees the same units as the list API")
+	checkClosureParity(SPATIAL_TEST_POS, 2000., "closure API agrees on a wide radius")
+
+	// Early exit must stop, and must stop after the callback that asked to.
+	// The counters are package level on purpose: a local captured by a closure is captured by
+	// value, so incrementing one inside the callback would leave the copy read here at zero and
+	// the check would fail whether or not the API worked.
+	closureVisited = 0
+	forEachUnitInRangeUntil(SPATIAL_TEST_POS, 2000.) u ->
+		closureVisited++
+		return closureVisited < 2
+	check(closureVisited == 2, "forEachUnitInRangeUntil stops when the callback says so ("
+		+ closureVisited + ")")
+
+	// A callback starting another query must not disturb the one it is inside: each takes its own
+	// scratch list, and gives it back itself.
+	closureOuter = 0
+	closureInner = 0
+	forEachUnitInRange(SPATIAL_TEST_POS, 300.) _u ->
+		closureOuter++
+		forEachUnitInRange(SPATIAL_TEST_POS, 300.) _v ->
+			closureInner++
+	let flat = CreateGroup()
+	collectViaSpatialIndex(SPATIAL_TEST_POS, 300., false, flat)
+	check(closureOuter == flat.size(), "nested query leaves the outer iteration intact ("
+		+ closureOuter + " vs " + flat.size() + ")")
+	check(closureInner == closureOuter * flat.size(), "nested query runs in full each time ("
+		+ closureInner + ")")
+	flat.destr()
 	checkRangeParity(SPATIAL_TEST_POS, 300., true, "collision-filtered query matches the engine")
 	checkRangeParity(SPATIAL_TEST_POS, 121., false, "tight radius on a probe boundary")
 	checkRangeParity(SPATIAL_TEST_POS, 2000., false, "wide radius")
 
-	// Manual UnitIndexer deindexing does not remove a live unit from native enumeration, so the
-	// independent spatial registry must retain it until OnUnitEnterLeave observes a real leave.
-	probes[0].deindex()
-	checkRangeParity(SPATIAL_TEST_POS, 300., false, "live manually deindexed unit remains enumerable")
-	probes[0].toUnitIndex()
+	let foreign = createUnit(players[1], UnitIds.footman, SPATIAL_TEST_POS, angle(0))
+	unitsInRange(spatialResultScratch, SPATIAL_TEST_POS, 300., false, spatialPlayerZeroFilter)
+	check(not spatialResultScratch.has(foreign), "query filter excludes a spatial match in one pass")
+	foreign.remove()
 
-	// This unit was created directly in this package's init, after UnitSpatialIndex initialized but
-	// before the zero-timer synthetic seed. Synchronous enter tracking must have bucketed it already.
-	checkRangeParity(spatialInitProbe.getPos(), 32., false, "init-time spawn is indexed immediately")
+	// The index holds what UnitIndexer holds: a unit deindexed by hand leaves it, although the engine
+	// still enumerates it, and indexing it again brings it back.
+	probes[0].deindex()
+	unitsInRange(spatialResultScratch, SPATIAL_TEST_POS, 300.)
+	check(not spatialResultScratch.has(probes[0]), "a manually deindexed unit leaves the index")
+	probes[0].toUnitIndex()
+	checkRangeParity(SPATIAL_TEST_POS, 300., false, "indexing it again brings it back")
+
+	// This unit was created directly in this package's init, before OnUnitEnterLeave dispatches the
+	// units init created. The dispatch has run by now, so the index holds it.
+	checkRangeParity(spatialInitProbe.getPos(), 32., false, "init-time spawn is indexed")
 	check(spatialInitProbeEnterEvents == 1, "init-time spawn emits one enter event ("
 		+ spatialInitProbeEnterEvents + ")")
 
@@ -585,11 +694,10 @@ function testSpatialIndexParity()
 		SPATIAL_TEST_POS.x + 200., SPATIAL_TEST_POS.y + 200.)
 	let actualRect = CreateGroup()
 	let expectedRect = CreateGroup()
-	let rectMatches = unitsInBox(vec2(r.getMinX() + 32., r.getMinY() + 32.),
+	unitsInBox(spatialResultScratch, vec2(r.getMinX() + 32., r.getMinY() + 32.),
 		vec2(r.getMaxX(), r.getMaxY()))
-	for i = 0 to rectMatches.size() - 1
-		actualRect.add(rectMatches.get(i))
-	destroy rectMatches
+	for i = 0 to spatialResultScratch.size() - 1
+		actualRect.add(spatialResultScratch.get(i))
 	GroupEnumUnitsInRect(expectedRect, r, null)
 	var rectEqual = actualRect.size() == expectedRect.size()
 	if rectEqual
@@ -614,6 +722,10 @@ function testSpatialIndexParity()
 	hidden.remove()
 	locust.remove()
 	corpse.remove()
+	locustCorpse.remove()
+
+/** A global because the second wave is spawned from a timer, and closures cannot capture local arrays. */
+unit array lifecycleProbes
 
 function testSpatialIndexLifecycle()
 	section("--- 14. spatial index lifecycle bounds ---")
@@ -624,7 +736,6 @@ function testSpatialIndexLifecycle()
 	// Growing by two complete sweep budgets guarantees a larger cycle regardless of where the
 	// pre-existing population sits relative to a ceil boundary.
 	let batchSize = SPATIAL_INDEX_UNITS_PER_TICK * 2
-	unit array lifecycleProbes
 	let initialBound = spatialIndexWorstStaleness()
 	for i = 0 to batchSize - 1
 		lifecycleProbes[i] = createUnit(players[0], UnitIds.footman, SPATIAL_TEST_POS, angle(0))
@@ -635,18 +746,30 @@ function testSpatialIndexLifecycle()
 	for i = 0 to batchSize - 1
 		lifecycleProbes[i].remove()
 		lifecycleProbes[i] = null
-	check(spatialIndexWorstStaleness() >= expandedBound,
-		"registry shrink retains the old bound until a stable sweep completes")
 
-	// A second same-sized wave must consume the just-freed ids rather than extending every numeric
-	// cache table with another session-long block of slots.
-	for i = 0 to batchSize - 1
-		lifecycleProbes[i] = createUnit(players[0], UnitIds.footman, SPATIAL_TEST_POS, angle(0))
-	check(spatialIndexAllocatedSlots() == allocatedAtPeak,
-		"removed-unit cache slots are reused (" + spatialIndexAllocatedSlots() + " allocated)")
-	for i = 0 to batchSize - 1
-		lifecycleProbes[i].remove()
-		lifecycleProbes[i] = null
+	// Warcraft reports a removal after the thread that removed the unit, and before a zero-second
+	// timer fires (measured on the 3.0.0 client), so the index frees the ids only from then on. Two
+	// sweep ticks have to pass before the bound can shrink, and a zero-second timer fires well before.
+	doAfter(0.) ->
+		runGuarded("14. spatial index lifecycle bounds, after the removals") ->
+			check(spatialIndexWorstStaleness() >= expandedBound,
+				"registry shrink retains the old bound until a stable sweep completes")
+
+			// A second same-sized wave must reuse the just-freed ids rather than extending every numeric
+			// cache table with another session-long block of slots. The ids are UnitIndexer indices, which
+			// other objects share, so a few fresh ones are fine; a whole wave of them is not. Measured
+			// against the count right before it: the sections after this one spawn units while the first
+			// wave's ids are still waiting for their removal, and those take fresh ids.
+			let slotsBeforeWave = spatialIndexAllocatedSlots()
+			for i = 0 to batchSize - 1
+				lifecycleProbes[i] = createUnit(players[0], UnitIds.footman, SPATIAL_TEST_POS, angle(0))
+			check(spatialIndexAllocatedSlots() - slotsBeforeWave < batchSize div 2
+				and slotsBeforeWave >= allocatedAtPeak,
+				"removed-unit cache slots are reused (" + slotsBeforeWave + " allocated before the wave, "
+				+ spatialIndexAllocatedSlots() + " after)")
+			for i = 0 to batchSize - 1
+				lifecycleProbes[i].remove()
+				lifecycleProbes[i] = null
 
 var reentrancyVisited = 0
 var reentrancyNested = 0
@@ -669,9 +792,9 @@ function testSpatialIndexReentrancy()
 	// readout which caches the group size and indexes into it: groups silently drop removed units,
 	// so every later index shifts down and a unit is skipped. A snapshot is immune.
 	reentrancyVisited = 0
-	let removalSnapshot = unitsInRange(SPATIAL_TEST_POS.add(96., 0.), 400.)
-	for i = 0 to removalSnapshot.size() - 1
-		let u = removalSnapshot.get(i)
+	unitsInRange(spatialOuterScratch, SPATIAL_TEST_POS.add(96., 0.), 400.)
+	for i = 0 to spatialOuterScratch.size() - 1
+		let u = spatialOuterScratch.get(i)
 		reentrancyVisited++
 		if reentrancyVisited == 1
 			for j = 0 to 3
@@ -681,7 +804,6 @@ function testSpatialIndexReentrancy()
 					break
 	check(reentrancyVisited >= 4, "removing a unit mid-iteration skips nobody ("
 		+ reentrancyVisited + " visited)")
-	destroy removalSnapshot
 
 	for i = 0 to 3
 		if reentrancyProbes[i] != null
@@ -695,22 +817,19 @@ function testSpatialIndexReentrancy()
 	// pushes above the outer one and must not disturb it.
 	reentrancyVisited = 0
 	reentrancyNested = 0
-	let outerSnapshot = unitsInRange(SPATIAL_TEST_POS.add(96., 0.), 400.)
-	for outerIndex = 0 to outerSnapshot.size() - 1
-		let outerUnit = outerSnapshot.get(outerIndex)
+	unitsInRange(spatialOuterScratch, SPATIAL_TEST_POS.add(96., 0.), 400.)
+	for outerIndex = 0 to spatialOuterScratch.size() - 1
+		let outerUnit = spatialOuterScratch.get(outerIndex)
 		reentrancyVisited++
-		let middleSnapshot = unitsInRange(outerUnit.getPos(), 300.)
-		for middleIndex = 0 to middleSnapshot.size() - 1
-			let middleUnit = middleSnapshot.get(middleIndex)
+		unitsInRange(spatialMiddleScratch, outerUnit.getPos(), 300.)
+		for middleIndex = 0 to spatialMiddleScratch.size() - 1
+			let middleUnit = spatialMiddleScratch.get(middleIndex)
 			reentrancyNested++
-			let innerSnapshot = unitsInRange(middleUnit.getPos(), 100.)
-			for innerIndex = 0 to innerSnapshot.size() - 1
-				let innerUnit = innerSnapshot.get(innerIndex)
+			unitsInRange(spatialInnerScratch, middleUnit.getPos(), 100.)
+			for innerIndex = 0 to spatialInnerScratch.size() - 1
+				let innerUnit = spatialInnerScratch.get(innerIndex)
 				if innerUnit == null
 					reentrancyNested--
-			destroy innerSnapshot
-		destroy middleSnapshot
-	destroy outerSnapshot
 	check(reentrancyVisited == 4, "outer enumeration unaffected by nesting ("
 		+ reentrancyVisited + ")")
 	check(reentrancyNested > 0, "nested enumerations ran (" + reentrancyNested + ")")
@@ -719,13 +838,12 @@ function testSpatialIndexReentrancy()
 	// that is already running, and must not corrupt the iteration.
 	reentrancyVisited = 0
 	spawnedDuringQuery = null
-	let creationSnapshot = unitsInRange(SPATIAL_TEST_POS.add(96., 0.), 400.)
-	for i = 0 to creationSnapshot.size() - 1
-		let _u = creationSnapshot.get(i)
+	unitsInRange(spatialOuterScratch, SPATIAL_TEST_POS.add(96., 0.), 400.)
+	for i = 0 to spatialOuterScratch.size() - 1
+		let _u = spatialOuterScratch.get(i)
 		reentrancyVisited++
 		if spawnedDuringQuery == null
 			spawnedDuringQuery = createUnit(players[0], UnitIds.footman, SPATIAL_TEST_POS, angle(0))
-	destroy creationSnapshot
 	check(reentrancyVisited == 4, "creating a unit mid-iteration does not extend it ("
 		+ reentrancyVisited + ")")
 	spawnedDuringQuery?.remove()
@@ -770,15 +888,96 @@ function testTimedLoopDoubleStart()
 		tripled.stopTimedLoopAndDestroy()
 
 // ============================================================================
+// 17. Error listeners
+// ============================================================================
+
+constant ERROR_PROBE = "stdlib in-game error listener probe"
+var errorsHeard = 0
+var lastErrorHeard = ""
+var errorHeardSuppressed = false
+var errorListenersInstalled = false
+
+/*	On Lua, error() returns instead of ending the thread, so an error in a callback leaves nothing
+	behind unless something listens. grill test cannot check this: at compile time error() is a
+	compile error. */
+function testErrorListeners()
+	section("--- 17. error listeners ---")
+	if not errorListenersInstalled
+		errorListenersInstalled = true
+		// Fails on the probe on purpose: its own error must not recurse into the listeners, and the
+		// listener after it must still run.
+		addErrorListener() msg ->
+			if msg == ERROR_PROBE
+				error("a listener failed on " + msg)
+		addErrorListener() msg ->
+			errorsHeard++
+			lastErrorHeard = msg
+			errorHeardSuppressed = suppressErrorMessages
+	let before = errorsHeard
+	// try() also ends the thread on Jass, where error() crashes it.
+	try(() -> error(ERROR_PROBE))
+	check(errorsHeard - before == 1, "an error reaches the listeners once, past a failing listener ("
+		+ (errorsHeard - before).toString() + ")")
+	check(lastErrorHeard == ERROR_PROBE, "the listener gets the message")
+	check(errorHeardSuppressed, "a listener can tell an error try() caught")
+	check(lastError == ERROR_PROBE, "lastError keeps the error, not the failing listener's (" + lastError + ")")
+
+// ============================================================================
+// 16. UnitIndexer storage
+// ============================================================================
+
+/**	The index store is target-specific: user data on Jass, a keyed map on Lua.
+	Whichever backs it, indices must be live, distinct, resolvable and
+	cleared on deindex. */
+function testUnitIndexerStorage()
+	section("16. unit indexer storage")
+	let a = createUnit(players[0], UnitIds.footman, SPATIAL_TEST_POS.add(200., 200.), angle(0))
+	let b = createUnit(players[0], UnitIds.footman, SPATIAL_TEST_POS.add(250., 200.), angle(0))
+	let ia = a.getIndex()
+	let ib = b.getIndex()
+	check(ia > 0 and ib > 0, "created units are indexed (" + ia + ", " + ib + ")")
+	check(ia != ib, "two units get distinct indices")
+	check((ia castTo UnitIndex).getUnit() == a, "an index resolves back to its unit")
+	check(a.toUnitIndex() castTo int == ia, "toUnitIndex is stable for an indexed unit")
+	a.deindex()
+	check(a.getIndex() == 0, "a deindexed unit reads index 0")
+	check(b.getIndex() == ib, "deindexing one unit leaves another intact")
+	let ia2 = a.toUnitIndex() castTo int
+	check(ia2 > 0 and a.getIndex() == ia2, "reindexing assigns a live index")
+	check((ia2 castTo UnitIndex).getUnit() == a, "the new index resolves back to the unit")
+	a.remove()
+	b.remove()
+
+// ============================================================================
 // Runner
 // ============================================================================
 
+/**	Runs every in-game check and reports the totals to done once the summary
+	is out. Call from a timer callback rather than straight from init, because
+	it creates units. The callback is destroyed after it ran. If a run is
+	already in flight, a new one starts after it and done gets the new run's
+	totals. */
+public function runStdlibIngameTests(StdlibIngameTestsDone done)
+	if runInFlight
+		queuedCallbacks.add(done)
+	else
+		runCallbacks.add(done)
+	runStdlibIngameTests()
+
 /**	Runs every in-game check. Call from a timer callback rather than straight
-	from init, because it creates units. */
+	from init, because it creates units. If a run is already in flight, this
+	queues one more run to start after it. */
 public function runStdlibIngameTests()
+	if runInFlight
+		if not rerunQueued
+			rerunQueued = true
+			print("|cffffcc00INFO|r  stdlib in-game tests already running; will run again after it")
+		return
+	runInFlight = true
 	checksRun = 0
 	checksFailed = 0
-	print("|cff8888ff=== Wurst stdlib in-game tests ===|r")
+	reportLines.clear()
+	report("|cff8888ff=== Wurst stdlib in-game tests ===|r")
 
 	runGuarded("setup") ->
 		setupUnits()
@@ -812,6 +1011,10 @@ public function runStdlibIngameTests()
 		testSpatialIndexLifecycle()
 	runGuarded("15. spatial index reentrancy") ->
 		testSpatialIndexReentrancy()
+	runGuarded("16. unit indexer storage") ->
+		testUnitIndexerStorage()
+	runGuarded("17. error listeners") ->
+		testErrorListeners()
 
 	// these finish asynchronously, so the summary waits for them
 	runGuarded("8. TimedLoop stop before start") ->
@@ -820,10 +1023,34 @@ public function runStdlibIngameTests()
 		testTimedLoopDoubleStart()
 
 	doAfter(1.5) ->
-		print("|cff8888ff=== " + (checksRun - checksFailed) + "/" + checksRun
+		report("|cff8888ff=== " + (checksRun - checksFailed) + "/" + checksRun
 			+ " checks passed ===|r")
 		if checksFailed > 0
-			print("|cffff4444" + checksFailed + " check(s) FAILED|r")
+			report("|cffff4444" + checksFailed + " check(s) FAILED|r")
+		writeReport()
+		finishRun()
+
+/**	Ends the run in flight: tells its callbacks, then starts the queued run,
+	if any. The run stays in flight until every callback has returned, so each
+	of them sees this run's totals and report (stdlibIngameReport), and a
+	callback asking for another run only queues it. */
+function finishRun()
+	for i = 0 to runCallbacks.size() - 1
+		let done = runCallbacks.get(i)
+		// Guarded like a check: a crashing callback must not leave the run in
+		// flight, or every later request would queue behind it forever.
+		if not try(() -> done.onDone(checksRun, checksFailed))
+			print("|cffff4444CRASH|r stdlib in-game tests callback -> "
+				+ (lastError == "" ? "thread crashed" : lastError))
+		destroy done
+	runCallbacks.clear()
+	runInFlight = false
+	if rerunQueued
+		rerunQueued = false
+		for i = 0 to queuedCallbacks.size() - 1
+			runCallbacks.add(queuedCallbacks.get(i))
+		queuedCallbacks.clear()
+		runStdlibIngameTests()
 
 /** Registers "-stdlibtest" as a chat command that runs the suite. */
 public function registerStdlibIngameTestCommand()
@@ -840,6 +1067,7 @@ init
 	creatingSpatialInitProbe = false
 	// Importing the package is enough to run the suite. The delay lets the map
 	// and the stdlib's own init blocks finish before units are created.
-	doAfter(1.) ->
-		runStdlibIngameTests()
+	if STDLIB_INGAME_TESTS_AUTORUN
+		doAfter(1.) ->
+			runStdlibIngameTests()
 	registerStdlibIngameTestCommand()

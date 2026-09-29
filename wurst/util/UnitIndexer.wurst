@@ -1,6 +1,6 @@
 package UnitIndexer
 import OnUnitEnterLeave
-import HashMap
+import KeyedMap
 
 /*  UnitIndexer
 
@@ -15,7 +15,7 @@ import HashMap
 	too. Always make sure you only have one system using SetUnitUserData.
 	The maximum number of indexed units at any time is 32760, so if you have more
 	units than that at any time, the system will not be able to index them.
-	On the Lua target the index is kept in a HashMap instead (see
+	On the Lua target the index is kept in a KeyedMap instead (see
 	getStoredIndex/setStoredIndex below), so this conflict and the 32760 cap
 	both only apply to the Jass target.
 
@@ -121,21 +121,22 @@ function popUnit()
 	tempUnitsCount--
 
 // On the Jass target the native per-unit user-data slot is the fastest option
-// available and is kept as-is. On Lua, use a HashMap so index lookups avoid
-// the user-data natives. Both paths default an unindexed unit to 0.
-let luaUnitIndices = new HashMap<unit, int>
+// available and is kept as-is. On Lua, use a KeyedMap: the compiler lowers it
+// to one native table keyed by the unit itself, so a lookup is a single index
+// with no handle-id round trip. Both paths default an unindexed unit to 0.
+let luaUnitIndices = keyedMapCreate()
 
 function unit.getStoredIndex() returns int
 	if isLua
-		return luaUnitIndices.get(this)
+		return keyedMapGetInt(luaUnitIndices, this)
 	return this.getUserData()
 
 function unit.setStoredIndex(int value)
 	if isLua
 		if value == 0
-			luaUnitIndices.remove(this)
+			keyedMapRemove(luaUnitIndices, this)
 		else
-			luaUnitIndices.put(this, value)
+			keyedMapPut(luaUnitIndices, this, value)
 	else
 		this.setUserData(value)
 
@@ -144,7 +145,8 @@ function unit.setStoredIndex(int value)
 
 /**  Returns the int index of this unit.
 	Can be configured by the user to supply a custom unit indexer which won't break
-	other stdlib components. */
+	other stdlib components, as long as it keeps firing onUnitIndex and onUnitDeindex:
+	UnitSpatialIndex, for one, registers units only through them. */
 @configurable public function unit.getIndex() returns int
 	return this.getStoredIndex()
 
@@ -209,4 +211,7 @@ public class UnitIndex
 // Auto instanciation/destruction
 init
 	onEnter(() -> shouldIndex(getEnterLeaveUnit()) ? getEnterLeaveUnit().toUnitIndex() : 0)
-	onLeave(() -> shouldIndex(getEnterLeaveUnit()) ? getEnterLeaveUnit().deindex() : 0)
+	// A unit that leaves loses its index even when shouldIndex would not index it now: it may have been
+	// indexed through toUnitIndex(), or the predicate may have changed since it entered, and an index
+	// that outlives its unit leaks, along with everything keyed by it.
+	onLeave(() -> getEnterLeaveUnit().deindex())

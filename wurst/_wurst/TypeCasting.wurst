@@ -243,3 +243,15 @@ public function booleanToIndex(boolean u) returns int
 public function booleanFromIndex(int index) returns boolean
 	return index == 1
 
+public function int.toFogStyle() returns fogstyle
+	return ConvertFogStyle(this)
+
+public function int.toEquipmentType() returns equipmentType
+	return ConvertEquipmentType(this)
+
+public function int.toItemTag() returns itemTag
+	return ConvertItemTag(this)
+
+public function int.toLoadoutSlot() returns loadoutslot
+	return ConvertLoadoutSlot(this)
+

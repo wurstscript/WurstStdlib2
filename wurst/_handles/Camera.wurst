@@ -188,3 +188,27 @@ public function unit.setCameraOrientController(vec2 offset)
 
 public function unit.setCameraOrientControllerForPlayer(vec2 offset, player whichPlayer)
 	SetCameraOrientControllerForPlayerBJ(whichPlayer, this, offset.x, offset.y)
+
+public function setCameraType(int cameraType)
+	BlzCameraSetCameraType(cameraType)
+
+public function getCameraType() returns int
+	return BlzCameraGetCameraType()
+
+public function camerasetup.setCameraType(int cameraType)
+	BlzCameraSetupSetCameraType(this, cameraType)
+
+public function camerasetup.getCameraType() returns int
+	return BlzCameraSetupGetCameraType(this)
+
+public function camerafield.setControlledByInput(boolean controlled)
+	SetCameraFieldControlledByInput(this, controlled)
+
+public function camerafield.isControlledByInput() returns boolean
+	return GetCameraFieldControlledByInput(this)
+
+public function rect.addCameraBlocker()
+	AddCameraBlocker(this)
+
+public function rect.setCameraBlockerEnabled(boolean enabled)
+	EnableCameraBlocker(this, enabled)
