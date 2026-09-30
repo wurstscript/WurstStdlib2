@@ -22,6 +22,8 @@ import Trigger
 	- The code runs in the order it was added, once per run.
 	- It runs like a trigger condition, in the current thread. It must not wait.
 	- A callback that fails does not stop the ones after it.
+	- A callback must not return false. Lua ignores what a callback returns, and a trigger may stop
+	  evaluating at a false one, so the list promises nothing about it.
 	- Code added while the list runs may or may not run in that run.
 */
 
