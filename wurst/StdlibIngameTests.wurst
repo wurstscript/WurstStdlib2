@@ -1449,6 +1449,58 @@ function testTimedLoopStartedByLoop()
 		startedLoop.stopTimedLoopAndDestroy()
 
 // ============================================================================
+// 26. A spell effect listener registered while the ability's listeners run
+// ============================================================================
+
+/*	The listeners of an ability are called in a list, and one which a listener registers for the same ability is
+	called from the next cast on, not in the one it was registered in. */
+
+constant SPELL_LATE_ABIL = 'W9E6'
+constant SPELL_LATE_ORDER = compiletime(defineBridgeSpell(SPELL_LATE_ABIL))
+
+int array spellLateCount
+var spellLateRegistered = false
+var spellLateAdded = false
+
+function spellLateFirst()
+	spellLateCount[0] = spellLateCount[0] + 1
+
+function spellLateThird()
+	spellLateCount[2] = spellLateCount[2] + 1
+
+function spellLateSecond()
+	spellLateCount[1] = spellLateCount[1] + 1
+	if not spellLateAdded
+		spellLateAdded = true
+		registerSpellEffectEvent(SPELL_LATE_ABIL, function spellLateThird)
+
+function testSpellEffectRegisteredWhileRunning()
+	section("--- 26. a spell effect listener registered while the ability's listeners run ---")
+	for i = 0 to 2
+		spellLateCount[i] = 0
+	// Nothing can be taken back, so this is done once however often the suite runs.
+	if not spellLateRegistered
+		spellLateRegistered = true
+		registerSpellEffectEvent(SPELL_LATE_ABIL, function spellLateFirst)
+		registerSpellEffectEvent(SPELL_LATE_ABIL, function spellLateSecond)
+	let spellLateCaster = createUnit(players[0], UnitIds.footman, vec2(-3600., -2500.), angle(0))
+	let spellLateCaster2 = createUnit(players[0], UnitIds.footman, vec2(-3700., -2500.), angle(0))
+	spellLateCaster.addAbility(SPELL_LATE_ABIL)
+	spellLateCaster2.addAbility(SPELL_LATE_ABIL)
+	doAfter(0.1) ->
+		spellLateCaster.issueImmediateOrder(SPELL_LATE_ORDER)
+	doAfter(0.9) ->
+		check(spellLateCount[0] == 1 and spellLateCount[1] == 1 and spellLateCount[2] == 0,
+			"the listener registered by a listener did not get that cast (" + spellLateCount[0] + ", "
+			+ spellLateCount[1] + ", " + spellLateCount[2] + ")")
+		spellLateCaster2.issueImmediateOrder(SPELL_LATE_ORDER)
+	doAfter(1.7) ->
+		check(spellLateCount[0] == 2 and spellLateCount[1] == 2 and spellLateCount[2] == 1,
+			"but the next one (" + spellLateCount[0] + ", " + spellLateCount[1] + ", " + spellLateCount[2] + ")")
+		spellLateCaster.remove()
+		spellLateCaster2.remove()
+
+// ============================================================================
 // Runner
 // ============================================================================
 
@@ -1529,6 +1581,8 @@ public function runStdlibIngameTests()
 		testListenerRegisteredWhileDelivering()
 	runGuarded("25. a TimedLoop class started by another one") ->
 		testTimedLoopStartedByLoop()
+	runGuarded("26. a spell effect listener registered while running") ->
+		testSpellEffectRegisteredWhileRunning()
 
 	// these finish asynchronously, so the summary waits for them
 	runGuarded("8. TimedLoop stop before start") ->
