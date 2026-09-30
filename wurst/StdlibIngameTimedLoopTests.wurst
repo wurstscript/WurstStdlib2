@@ -1,0 +1,139 @@
+package StdlibIngameTimedLoopTests
+import ClosureTimers
+import StdlibIngameChecks
+import TimerUtils
+
+/*	In-game checks of TimedLoop classes which leave, come back and start each other while their timer runs. They
+	are run by StdlibIngameTests, which reports them. */
+
+/* Reporting, which the runner provides */
+
+IngameChecks reporter = null
+
+public function setTimedLoopChecksReporter(IngameChecks whichReporter)
+	reporter = whichReporter
+
+function check(bool passed, string label)
+	reporter.check(passed, label)
+
+function section(string label)
+	reporter.section(label)
+
+function note(string label)
+	reporter.note(label)
+
+// ============================================================================
+// 19. TimedLoop classes which leave while others run
+// ============================================================================
+
+/*	All TimedLoop classes of one period are called from one timer, in the order they became active. A class
+	which runs out of instances leaves that list in the middle of a tick. The classes after it must still
+	run in that tick, and a class which comes back goes to the end. */
+
+var loopSeq = 0
+
+class LoopFirst
+	use TimedLoop
+	var ticks = 0
+	var seen = 0
+
+	override function onTimedLoop()
+		ticks++
+		loopSeq++
+		seen = loopSeq
+
+class LoopMiddle
+	use TimedLoop
+	var ticks = 0
+	var seen = 0
+
+	override function onTimedLoop()
+		ticks++
+		loopSeq++
+		seen = loopSeq
+		if ticks == 5
+			stopTimedLoop()
+
+class LoopLast
+	use TimedLoop
+	var ticks = 0
+	var seen = 0
+
+	override function onTimedLoop()
+		ticks++
+		loopSeq++
+		seen = loopSeq
+
+public function testTimedLoopClasses()
+	section("--- 19. TimedLoop classes which leave while others run ---")
+	loopSeq = 0
+	let first = new LoopFirst()
+	let middle = new LoopMiddle()
+	let last = new LoopLast()
+	first.startTimedLoop()
+	middle.startTimedLoop()
+	last.startTimedLoop()
+
+	doAfter(0.12) ->
+		check(first.ticks > 0 and first.ticks == middle.ticks and first.ticks == last.ticks,
+			"every class runs once per tick (" + first.ticks + ", " + middle.ticks + ", " + last.ticks + ")")
+		check(first.seen < middle.seen and middle.seen < last.seen, "classes run in the order they became active")
+	doAfter(0.6) ->
+		check(middle.ticks == 5, "the class which stopped itself ran no more (" + middle.ticks + " ticks)")
+		check(first.ticks > 10 and first.ticks == last.ticks,
+			"the class after the one which left never missed a tick (" + first.ticks + " vs " + last.ticks + ")")
+		middle.ticks = 0
+		middle.startTimedLoop()
+	// Three ticks after it came back, before it stops itself again at its fifth.
+	doAfter(0.7) ->
+		check(middle.ticks > 0, "the class which came back runs again (" + middle.ticks + " ticks)")
+		check(first.seen < last.seen and last.seen < middle.seen, "and it runs last, as the newest to become active")
+		first.stopTimedLoopAndDestroy()
+		middle.stopTimedLoopAndDestroy()
+		last.stopTimedLoopAndDestroy()
+
+// ============================================================================
+// 25. A TimedLoop class started by another one
+// ============================================================================
+
+/*	A class which the loop of another class starts is not called in the tick it was started in: it is called from
+	the next one, as a condition added to a trigger during its evaluation is not reached by it. */
+
+var startedLoopTick = 0
+var startedLoopStartTick = 0
+var startedLoopFirstTick = 0
+
+class StartedLoop
+	use TimedLoop
+
+	override function onTimedLoop()
+		if startedLoopFirstTick == 0
+			startedLoopFirstTick = startedLoopTick
+
+class StartingLoop
+	use TimedLoop
+	var started = false
+	StartedLoop other = null
+
+	override function onTimedLoop()
+		startedLoopTick++
+		if not started
+			started = true
+			startedLoopStartTick = startedLoopTick
+			other.startTimedLoop()
+
+public function testTimedLoopStartedByLoop()
+	section("--- 25. a TimedLoop class started by another one ---")
+	startedLoopTick = 0
+	startedLoopStartTick = 0
+	startedLoopFirstTick = 0
+	let startedLoop = new StartedLoop()
+	let startingLoop = new StartingLoop()
+	startingLoop.other = startedLoop
+	startingLoop.startTimedLoop()
+	doAfter(0.4) ->
+		check(startedLoopFirstTick == startedLoopStartTick + 1,
+			"it is called from the next tick (started in tick " + startedLoopStartTick + ", first called in tick "
+			+ startedLoopFirstTick + ")")
+		startingLoop.stopTimedLoopAndDestroy()
+		startedLoop.stopTimedLoopAndDestroy()
