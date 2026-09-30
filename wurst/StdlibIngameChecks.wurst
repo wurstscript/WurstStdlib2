@@ -1,0 +1,9 @@
+package StdlibIngameChecks
+
+/*	How the in-game checks of the standard library report. The runner in StdlibIngameTests implements it and hands
+	it to the packages which hold checks of their own, so they can be kept small and focused. */
+
+public interface IngameChecks
+	function check(bool passed, string label)
+	function section(string label)
+	function note(string label)
