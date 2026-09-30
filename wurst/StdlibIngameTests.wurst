@@ -11,6 +11,10 @@ import SpatialIndexForUnits
 import ArrayList
 import UnitIndexer
 import OnUnitEnterLeave
+import ChannelAbilityPreset
+import ClosureEvents
+import HashMap
+import RegisterEvents
 
 /*	Manual, in-game checks for behaviour the compiletime interpreter cannot
 	reach: real damage events, real timers and real unit enumeration.
@@ -30,7 +34,7 @@ import OnUnitEnterLeave
 	timer callback - not straight from init, since it creates units.
 
 	Results print as PASS / FAIL / INFO lines, followed by a summary. The whole
-	run takes about three seconds because the TimedLoop checks wait for ticks.
+	run takes about four seconds because the TimedLoop and event checks wait for ticks and casts.
 
 	Each check runs inside try(), so one crashing check reports CRASH and the
 	rest still run.
@@ -949,6 +953,257 @@ function testUnitIndexerStorage()
 	b.remove()
 
 // ============================================================================
+// 18. Spell listeners of every kind on the one spell effect trigger
+// ============================================================================
+
+/*	The spell effect trigger has a listener from registerPlayerUnitEvent, from registerSpellEffectEvent and from
+	EventListener.onCast, and the library adds its own. On Lua they sit behind one bridge in the trigger, so
+	this checks what the bridge must keep: every listener runs once per cast, in the order it was added, for the
+	ability it was added for, and one which was destroyed stops running. Two instant spells are cast for real. */
+
+constant BRIDGE_ABIL_A = 'W9E1'
+constant BRIDGE_ABIL_B = 'W9E2'
+
+function defineBridgeSpell(int id) returns string
+	let spell = new ChannelAbilityPreset(id, 1, true)
+	spell.makeUnitSpell(0, 0.)
+	spell.presetTargetTypes(Targettype.NONE)
+	return spell.getOrderString()
+
+constant BRIDGE_ORDER_A = compiletime(defineBridgeSpell(BRIDGE_ABIL_A))
+constant BRIDGE_ORDER_B = compiletime(defineBridgeSpell(BRIDGE_ABIL_B))
+
+constant BRIDGE_COND1 = 0
+constant BRIDGE_COND2 = 1
+constant BRIDGE_SPELL1 = 2
+constant BRIDGE_SPELL2 = 3
+constant BRIDGE_SPELL_B = 4
+constant BRIDGE_CLOSURE = 5
+constant BRIDGE_UNIT_CLOSURE = 6
+
+int array bridgeCount
+int array bridgeSeq
+var bridgeSeqCounter = 0
+var bridgeRegistered = false
+var bridgeResponsesRight = true
+unit bridgeCaster = null
+
+function bridgeHit(int id)
+	bridgeCount[id] = bridgeCount[id] + 1
+	bridgeSeqCounter++
+	bridgeSeq[id] = bridgeSeqCounter
+
+function bridgeCond1()
+	bridgeHit(BRIDGE_COND1)
+	let abilityId = GetSpellAbilityId()
+	if GetTriggerUnit() == null or (abilityId != BRIDGE_ABIL_A and abilityId != BRIDGE_ABIL_B)
+		bridgeResponsesRight = false
+
+function bridgeCond2()
+	bridgeHit(BRIDGE_COND2)
+
+function bridgeSpell1()
+	bridgeHit(BRIDGE_SPELL1)
+
+function bridgeSpell2()
+	bridgeHit(BRIDGE_SPELL2)
+
+function bridgeSpellB()
+	bridgeHit(BRIDGE_SPELL_B)
+
+function bridgeExpect(string label, int cond, int spell1, int spellB, int closure, int unitClosure)
+	check(bridgeCount[BRIDGE_COND1] == cond and bridgeCount[BRIDGE_COND2] == cond,
+		label + ": conditions ran " + cond + " times (" + bridgeCount[BRIDGE_COND1] + ", "
+		+ bridgeCount[BRIDGE_COND2] + ")")
+	check(bridgeCount[BRIDGE_SPELL1] == spell1 and bridgeCount[BRIDGE_SPELL2] == spell1,
+		label + ": ability A listeners ran " + spell1 + " times (" + bridgeCount[BRIDGE_SPELL1] + ", "
+		+ bridgeCount[BRIDGE_SPELL2] + ")")
+	check(bridgeCount[BRIDGE_SPELL_B] == spellB,
+		label + ": the ability B listener ran " + spellB + " times (" + bridgeCount[BRIDGE_SPELL_B] + ")")
+	check(bridgeCount[BRIDGE_CLOSURE] == closure and bridgeCount[BRIDGE_UNIT_CLOSURE] == unitClosure,
+		label + ": cast listeners ran " + closure + " and " + unitClosure + " times ("
+		+ bridgeCount[BRIDGE_CLOSURE] + ", " + bridgeCount[BRIDGE_UNIT_CLOSURE] + ")")
+
+/** Takes the map as the HashMap it always was, so this stops compiling if it ever is not one. */
+function castMapEntries(HashMap<int, OnCastListener> map) returns int
+	return map.size()
+
+function giveBridgeAbilities(unit u)
+	u.addAbility(BRIDGE_ABIL_A)
+	u.addAbility(BRIDGE_ABIL_B)
+
+function testEventBridge()
+	section("--- 18. spell listeners behind one bridge ---")
+	for i = 0 to 6
+		bridgeCount[i] = 0
+		bridgeSeq[i] = 0
+	bridgeSeqCounter = 0
+	bridgeResponsesRight = true
+	// One caster per cast: a unit which has just cast is still in its animation and drops the next order.
+	bridgeCaster = createUnit(players[0], UnitIds.footman, vec2(-2500., -2500.), angle(0))
+	let casterB = createUnit(players[0], UnitIds.footman, vec2(-2600., -2500.), angle(0))
+	let casterA2 = createUnit(players[0], UnitIds.footman, vec2(-2700., -2500.), angle(0))
+	giveBridgeAbilities(bridgeCaster)
+	giveBridgeAbilities(casterB)
+	giveBridgeAbilities(casterA2)
+	// A listener can not be taken back, so the plain ones are added once however often the suite runs.
+	if not bridgeRegistered
+		bridgeRegistered = true
+		registerPlayerUnitEvent(EVENT_PLAYER_UNIT_SPELL_EFFECT, function bridgeCond1)
+		registerPlayerUnitEvent(EVENT_PLAYER_UNIT_SPELL_EFFECT, function bridgeCond2)
+		registerSpellEffectEvent(BRIDGE_ABIL_A, function bridgeSpell1)
+		registerSpellEffectEvent(BRIDGE_ABIL_A, function bridgeSpell2)
+		registerSpellEffectEvent(BRIDGE_ABIL_B, function bridgeSpellB)
+	let castMapSize = castMapEntries(EventListener.castMap)
+	let closure = EventListener.onCast(BRIDGE_ABIL_A, caster -> bridgeHit(BRIDGE_CLOSURE))
+	check(castMapEntries(EventListener.castMap) == castMapSize + 1 and EventListener.castMap.has(BRIDGE_ABIL_A),
+		"castMap is a HashMap which holds the listener of the ability (" + castMapEntries(EventListener.castMap) + ")")
+	let unitClosure = EventListener.onCast(bridgeCaster, BRIDGE_ABIL_A, caster -> bridgeHit(BRIDGE_UNIT_CLOSURE))
+
+	// A cast takes effect a fraction of a second after its order, so the three casts go out together.
+	doAfter(0.1) ->
+		bridgeCaster.issueImmediateOrder(BRIDGE_ORDER_A)
+		casterB.issueImmediateOrder(BRIDGE_ORDER_B)
+		casterA2.issueImmediateOrder(BRIDGE_ORDER_A)
+	doAfter(0.9) ->
+		bridgeExpect("three casts", 3, 2, 1, 2, 1)
+		check(bridgeSeq[BRIDGE_COND1] < bridgeSeq[BRIDGE_COND2], "conditions run in the order they were added")
+		check(bridgeSeq[BRIDGE_SPELL1] < bridgeSeq[BRIDGE_SPELL2], "ability listeners run in the order they were added")
+		check(bridgeResponsesRight, "a listener sees the caster and the ability of the event")
+		destroy closure
+		destroy unitClosure
+		bridgeCaster.issueImmediateOrder(BRIDGE_ORDER_A)
+	doAfter(1.7) ->
+		bridgeExpect("another cast after the cast listeners were destroyed", 4, 3, 1, 2, 1)
+		check(castMapEntries(EventListener.castMap) == castMapSize and not EventListener.castMap.has(BRIDGE_ABIL_A),
+			"castMap gave the listener up again (" + castMapEntries(EventListener.castMap) + ")")
+		bridgeCaster.remove()
+		bridgeCaster = null
+		casterB.remove()
+		casterA2.remove()
+
+// ============================================================================
+// 19. TimedLoop classes which leave while others run
+// ============================================================================
+
+/*	All TimedLoop classes of one period are called from one timer, in the order they became active. A class
+	which runs out of instances leaves that list in the middle of a tick. The classes after it must still
+	run in that tick, and a class which comes back goes to the end. */
+
+var loopSeq = 0
+
+class LoopFirst
+	use TimedLoop
+	var ticks = 0
+	var seen = 0
+
+	override function onTimedLoop()
+		ticks++
+		loopSeq++
+		seen = loopSeq
+
+class LoopMiddle
+	use TimedLoop
+	var ticks = 0
+	var seen = 0
+
+	override function onTimedLoop()
+		ticks++
+		loopSeq++
+		seen = loopSeq
+		if ticks == 5
+			stopTimedLoop()
+
+class LoopLast
+	use TimedLoop
+	var ticks = 0
+	var seen = 0
+
+	override function onTimedLoop()
+		ticks++
+		loopSeq++
+		seen = loopSeq
+
+function testTimedLoopClasses()
+	section("--- 19. TimedLoop classes which leave while others run ---")
+	loopSeq = 0
+	let first = new LoopFirst()
+	let middle = new LoopMiddle()
+	let last = new LoopLast()
+	first.startTimedLoop()
+	middle.startTimedLoop()
+	last.startTimedLoop()
+
+	doAfter(0.12) ->
+		check(first.ticks > 0 and first.ticks == middle.ticks and first.ticks == last.ticks,
+			"every class runs once per tick (" + first.ticks + ", " + middle.ticks + ", " + last.ticks + ")")
+		check(first.seen < middle.seen and middle.seen < last.seen, "classes run in the order they became active")
+	doAfter(0.6) ->
+		check(middle.ticks == 5, "the class which stopped itself ran no more (" + middle.ticks + " ticks)")
+		check(first.ticks > 10 and first.ticks == last.ticks,
+			"the class after the one which left never missed a tick (" + first.ticks + " vs " + last.ticks + ")")
+		middle.ticks = 0
+		middle.startTimedLoop()
+	// Three ticks after it came back, before it stops itself again at its fifth.
+	doAfter(0.7) ->
+		check(middle.ticks > 0, "the class which came back runs again (" + middle.ticks + " ticks)")
+		check(first.seen < last.seen and last.seen < middle.seen, "and it runs last, as the newest to become active")
+		first.stopTimedLoopAndDestroy()
+		middle.stopTimedLoopAndDestroy()
+		last.stopTimedLoopAndDestroy()
+
+// ============================================================================
+// 20. A condition gates the action registered with it
+// ============================================================================
+
+/*	A registration with an action keeps its condition as a condition of the event's trigger, so the action runs
+	if the condition holds and only then, whatever else listens to the event. Point and target orders are used,
+	as the library has no listeners of its own on them. */
+
+int array gateHits
+var gateRegistered = false
+
+function gateListener() returns boolean
+	gateHits[0] = gateHits[0] + 1
+	return true
+
+function gateConditionTrue() returns boolean
+	return true
+
+function gateConditionFalse() returns boolean
+	return false
+
+function gateActionAllowed()
+	gateHits[1] = gateHits[1] + 1
+
+function gateActionDenied()
+	gateHits[2] = gateHits[2] + 1
+
+function testConditionGatesAction()
+	section("--- 20. a condition gates the action registered with it ---")
+	for i = 0 to 2
+		gateHits[i] = 0
+	// A listener comes first on the point order, so the action is registered on a trigger which has one.
+	if not gateRegistered
+		gateRegistered = true
+		registerPlayerUnitEvent(EVENT_PLAYER_UNIT_ISSUED_POINT_ORDER, function gateListener)
+		registerPlayerUnitEvent(EVENT_PLAYER_UNIT_ISSUED_POINT_ORDER, null, function gateConditionTrue,
+			function gateActionAllowed)
+		registerPlayerUnitEvent(EVENT_PLAYER_UNIT_ISSUED_TARGET_ORDER, null, function gateConditionFalse,
+			function gateActionDenied)
+	let gateUnit = createUnit(players[0], UnitIds.footman, vec2(-2500., -2900.), angle(0))
+	let gateTarget = createUnit(players[0], UnitIds.footman, vec2(-2400., -2900.), angle(0))
+	doAfter(0.1) ->
+		gateUnit.issuePointOrder("move", vec2(-2500., -2800.))
+		gateUnit.issueTargetOrder("smart", gateTarget)
+	doAfter(0.6) ->
+		check(gateHits[0] == 1, "the listener of the point order ran once (" + gateHits[0] + ")")
+		check(gateHits[1] == 1, "the action ran, as its condition held (" + gateHits[1] + ")")
+		check(gateHits[2] == 0, "the action did not run, as its condition did not hold (" + gateHits[2] + ")")
+		gateUnit.remove()
+		gateTarget.remove()
+
+// ============================================================================
 // Runner
 // ============================================================================
 
@@ -1015,6 +1270,12 @@ public function runStdlibIngameTests()
 		testUnitIndexerStorage()
 	runGuarded("17. error listeners") ->
 		testErrorListeners()
+	runGuarded("18. spell listeners behind one bridge") ->
+		testEventBridge()
+	runGuarded("19. TimedLoop classes") ->
+		testTimedLoopClasses()
+	runGuarded("20. a condition gates its action") ->
+		testConditionGatesAction()
 
 	// these finish asynchronously, so the summary waits for them
 	runGuarded("8. TimedLoop stop before start") ->
@@ -1022,7 +1283,7 @@ public function runStdlibIngameTests()
 	runGuarded("9. TimedLoop double start") ->
 		testTimedLoopDoubleStart()
 
-	doAfter(1.5) ->
+	doAfter(2.5) ->
 		report("|cff8888ff=== " + (checksRun - checksFailed) + "/" + checksRun
 			+ " checks passed ===|r")
 		if checksFailed > 0

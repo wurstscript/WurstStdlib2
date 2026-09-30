@@ -4,6 +4,8 @@ import public RegisterEvents
 import ClosureTimers
 import UnitIndexer
 import HashMap
+import KeyedMap
+import Table
 import ErrorHandling
 
 /** Use this chat event if you want to access the entered message */
@@ -105,8 +107,47 @@ public abstract class OnUnitCast extends OnCastListener
 
 	abstract function fireEx(unit caster, unit target)
 
+/*	A KeyedMap with an int key and a class-typed value, which the compiler lowers to one native table on Lua.
+	It recognises the three functions below by their annotation and their exact shape, so they must keep it;
+	the bodies are what runs on Jass. */
+@compilerintrinsic function keyedMapPut(int map, int key, OnCastListener value)
+	(map castTo Table).saveInt(key, value castTo int)
+
+@compilerintrinsic function keyedMapGet(int map, int key) returns OnCastListener
+	return (map castTo Table).loadInt(key) castTo OnCastListener
+
+@compilerintrinsic function keyedMapRemove(int map, int key)
+	(map castTo Table).removeInt(key)
+
+/** Ability id -> the first cast listener registered for it, as a chain through next and prev.
+	This is what EventListener.castMap always was, a HashMap. A cast reads the listener from a native table on
+	Lua instead, which put and remove keep in step with the HashMap, so everything else a HashMap does still works. */
+public class CastListenerMap extends HashMap<int, OnCastListener>
+	private int fast = keyedMapCreate()
+
+	override function get(int abilId) returns OnCastListener
+		return keyedMapGet(fast, abilId)
+
+	override function put(int abilId, OnCastListener listener)
+		super.put(abilId, listener)
+		keyedMapPut(fast, abilId, listener)
+
+	override function remove(int abilId)
+		super.remove(abilId)
+		keyedMapRemove(fast, abilId)
+
+	override function flush()
+		super.flush()
+		keyedMapDestroy(fast)
+		fast = keyedMapCreate()
+
+	ondestroy
+		keyedMapDestroy(fast)
+
 public abstract class EventListener
-	static constant castMap = new HashMap<int, OnCastListener>
+	static constant castMap = new CastListenerMap()
+	/** Whether a cast listener was ever added. Never reset, so it can not fall out of step with the chains. */
+	static var hasCastListeners = false
 	static OnCastListener array castMapCasters
 	static EventListener array generalListenersFirsts
 	static EventListener array unitListenersFirsts
@@ -164,6 +205,7 @@ public abstract class EventListener
 		return addSpellInternal(null, abilId, listener) castTo OnPointCast
 
 	static private function addSpellInternal(unit u, int abilId, OnCastListener listener) returns OnCastListener
+		hasCastListeners = true
 		listener.abilId = abilId
 		if u != null
 			listener.eventUnit = u
@@ -204,6 +246,9 @@ public abstract class EventListener
 				globalListener = nextListener
 
 	static function onSpellEffect()
+		// Registered for every project which imports this package, used by few: most casts end here.
+		if not hasCastListeners
+			return
 		let trigUnit = GetTriggerUnit()
 		let abilId = GetSpellAbilityId()
 		let caster = GetSpellAbilityUnit()

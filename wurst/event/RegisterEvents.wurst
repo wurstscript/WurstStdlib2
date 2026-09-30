@@ -1,13 +1,80 @@
 package RegisterEvents
 import NoWurst
 import _Handles
+import ArrayList
 import CodeList
 import KeyedMap
+import MagicFunctions
 import Table
 
 /*****PlayerUnitEvent*****/
 
 trigger array t
+
+/*	Every listener used to be a condition of the event's trigger. On Lua each condition is a call from the
+	engine into the script, about 3 us apiece, so an event with ten listeners paid it ten times. On Lua the
+	trigger has a single condition instead, runListeners, which runs the event's CodeList by direct calls at
+	about 0.2 us per listener. Jass keeps a condition per listener, as a list is a trigger there and one behind
+	a bridge would only add an evaluation.
+
+	The listeners keep their order, the thread they run in, their event responses and GetTriggeringTrigger.
+	What a condition returns decides whether the actions of its trigger run, and a list can not pass that on. So
+	a trigger goes back to what it always was, a condition per listener in the order they were added, as soon as
+	something is attached to it whose running depends on its conditions: a registration with an action, or a call
+	of getPlayerUnitEventTrigger. It is sealed then, and stays that way. */
+class EventBridge
+	/** The listeners behind the trigger's one condition; null while there are none, and once sealed. */
+	CodeList list = null
+	/** The same listeners as conditions, to put back on the trigger when it is sealed. */
+	ArrayList<filterfunc> conditions = null
+	triggercondition bridgeCondition = null
+	/** Whether new listeners are conditions of their own. */
+	bool sealed = false
+
+constant bridges = new FastKeyedMap<trigger, EventBridge>()
+
+/** The one condition of a bridged trigger. */
+function runListeners() returns boolean
+	let bridge = bridges.get(GetTriggeringTrigger())
+	if bridge != null and bridge.list != null
+		bridge.list.run()
+	return true
+
+function trigger.getBridge() returns EventBridge
+	var bridge = bridges.get(this)
+	if bridge == null
+		bridge = new EventBridge()
+		bridges.put(this, bridge)
+	return bridge
+
+/** Adds the condition of a registration which brings no action. Behind the trigger's one condition where it can be. */
+function trigger.addListener(code listener)
+	if isLua
+		let bridge = this.getBridge()
+		if not bridge.sealed
+			if bridge.list == null
+				bridge.list = new CodeList()
+				bridge.conditions = new ArrayList<filterfunc>()
+				bridge.bridgeCondition = this.addCondition(Filter(function runListeners))
+			bridge.list.add(listener)
+			bridge.conditions.add(Filter(listener))
+			return
+	this.addCondition(Filter(listener))
+
+/** Puts the trigger back to a condition per listener, and keeps it so; see above. */
+function trigger.seal()
+	if isLua
+		let bridge = this.getBridge()
+		if not bridge.sealed
+			bridge.sealed = true
+			if bridge.list != null
+				this.removeCondition(bridge.bridgeCondition)
+				for i = 0 to bridge.conditions.size() - 1
+					this.addCondition(bridge.conditions.get(i))
+				destroy bridge.conditions
+				bridge.list = null
+				bridge.conditions = null
+				bridge.bridgeCondition = null
 
 public function registerPlayerUnitEvent(playerunitevent p, code c)
 	registerPlayerUnitEvent(p, null, c, null)
@@ -21,20 +88,27 @@ public function registerPlayerUnitEvent(playerunitevent p, code filter, code con
 		t[hid] = CreateTrigger()
 		for k = bj_MAX_PLAYER_SLOTS - 1 downto 0
 			t[hid].registerPlayerUnitEvent(players[k], p, filter != null ? Filter(filter) : null)
-	if condition != null
-		t[hid].addCondition(Filter(condition))
 	if action != null
+		t[hid].seal()
+		if condition != null
+			t[hid].addCondition(Filter(condition))
 		t[hid].addAction(action)
+	else if condition != null
+		t[hid].addListener(condition)
 
 public function registerPlayerUnitEventForPlayer(playerunitevent p, code c, player pl)
 	let i = bj_MAX_PLAYER_SLOTS * p.getHandleId() + pl.getId()
 	if t[i] == null
 		t[i] = CreateTrigger()
 		t[i].registerPlayerUnitEvent(pl, p, null)
-	t[i].addCondition(Filter(c))
+	t[i].addListener(c)
 
 public function getPlayerUnitEventTrigger(playerunitevent p) returns trigger
-	return t[GetHandleId(p)]
+	let eventTrigger = t[GetHandleId(p)]
+	// The caller may attach anything to it.
+	if eventTrigger != null
+		eventTrigger.seal()
+	return eventTrigger
 
 /*****PlayerEvent*****/
 
@@ -47,14 +121,17 @@ public function registerPlayerEvent(playerevent p, code condition, code action)
 		t[hid] = CreateTrigger()
 		for k = bj_MAX_PLAYER_SLOTS - 1 downto 0
 			t[hid].registerPlayerEvent(players[k], p)
-	if condition != null
-		t[hid].addCondition(Filter(condition))
 	if action != null
+		t[hid].seal()
+		if condition != null
+			t[hid].addCondition(Filter(condition))
 		t[hid].addAction(action)
+	else if condition != null
+		t[hid].addListener(condition)
 
 /*****SpellEffectEvent*****/
 
-// One CodeList per ability id. On Lua the lists sit in a native table, so a cast is one table index and
+// One list per ability id. On Lua the lists sit in a native table, so a cast is one table index and
 // a call per listener; it used to be a HashMap lookup and a trigger evaluation, which is the engine's
 // round trip for every listener.
 //
