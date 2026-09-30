@@ -156,6 +156,14 @@ public abstract class EventListener
 	static EventListener array generalListenersFirsts
 	static EventListener array unitListenersFirsts
 	static var useMouseEvents = false
+	/** Whether a listener of one unit was ever added. Until then a delivery needs not look at the unit. */
+	static var hasUnitListeners = false
+	/** The ids of the two damage events, whose deliveries are told the id and so need not ask the engine. */
+	static int damagedId = 0
+	static int damagingId = 0
+	/** The handle ids of the same two events, to ask whether their triggers have been handed out. */
+	static int damagedHandleId = 0
+	static int damagingHandleId = 0
 
 	var eventId = 0
 	var uid = -1
@@ -179,6 +187,7 @@ public abstract class EventListener
 			Log.warn("Attempting to register event listener for a unit that is not indexed by UnitIndexer. " +
 				"If this happens during initialization, consider registering the EventListener in a callback to nullTimer() instead.")
 			return listener
+		hasUnitListeners = true
 		listener.eventId = eventId.toIntId()
 		listener.uid = uid
 		if unitListenersFirsts[uid] != null
@@ -228,19 +237,41 @@ public abstract class EventListener
 		return listener
 
 	static function generalEventCallback()
-		let trigUnit = GetTriggerUnit()
-		let id = GetTriggerEventId().toIntId()
+		dispatch(GetTriggerEventId().toIntId())
+
+	/** The damage events are the busiest, so they are delivered with the id they were registered with. That holds
+		while nobody else can have registered an event on their trigger: once getPlayerUnitEventTrigger has handed it
+		out, the engine is asked which event fired, as it is for every other event. One way to put an event on the
+		trigger is not seen: a listener which takes it with GetTriggeringTrigger and registers an event on it, the same
+		limit as stated at getPlayerUnitEventTrigger. Asking the engine on every delivery would cover it and give back
+		the gain, which is about 1.5 us per hit. */
+	static function damagedCallback()
+		if isPlayerUnitEventTriggerTaken(damagedHandleId)
+			generalEventCallback()
+		else
+			dispatch(damagedId)
+
+	static function damagingCallback()
+		if isPlayerUnitEventTriggerTaken(damagingHandleId)
+			generalEventCallback()
+		else
+			dispatch(damagingId)
+
+	/** Delivers the event of the given id to the listeners of the triggering unit and then to the global ones. */
+	static private function dispatch(int id)
 		// Unit Listeners
-		if trigUnit != null
-			let index = trigUnit.getIndex()
-			if index > 0
-				var listener = unitListenersFirsts[index]
-				if listener != null and fireEvents(trigUnit)
-					while listener != null
-						let nextListener = listener.next
-						if listener.eventId == id
-							listener.onEvent()
-						listener = nextListener
+		if hasUnitListeners
+			let trigUnit = GetTriggerUnit()
+			if trigUnit != null
+				let index = trigUnit.getIndex()
+				if index > 0
+					var listener = unitListenersFirsts[index]
+					if listener != null and fireEvents(trigUnit)
+						while listener != null
+							let nextListener = listener.next
+							if listener.eventId == id
+								listener.onEvent()
+							listener = nextListener
 		// Global Listeners
 		var globalListener = generalListenersFirsts[id]
 		if globalListener != null
@@ -308,10 +339,18 @@ function registerEventId(eventid evnt) returns int
 	eventidToIndex[eventId] = eventTypeCounter
 	if evnt == EVENT_UNIT_DAMAGED
 		eventidToIndex[EVENT_PLAYER_UNIT_DAMAGED.getHandleId()] = eventTypeCounter
-		registerPlayerUnitEvent(EVENT_PLAYER_UNIT_DAMAGED, function EventListener.generalEventCallback)
+		EventListener.damagedId = eventTypeCounter
+		EventListener.damagedHandleId = EVENT_PLAYER_UNIT_DAMAGED.getHandleId()
+		registerPlayerUnitEvent(EVENT_PLAYER_UNIT_DAMAGED, function EventListener.damagedCallback)
 	else if evnt == EVENT_PLAYER_UNIT_DAMAGED
 		eventidToIndex[EVENT_UNIT_DAMAGED.getHandleId()] = eventTypeCounter
-		registerPlayerUnitEvent(EVENT_PLAYER_UNIT_DAMAGED, function EventListener.generalEventCallback)
+		EventListener.damagedId = eventTypeCounter
+		EventListener.damagedHandleId = EVENT_PLAYER_UNIT_DAMAGED.getHandleId()
+		registerPlayerUnitEvent(EVENT_PLAYER_UNIT_DAMAGED, function EventListener.damagedCallback)
+	else if evnt == EVENT_PLAYER_UNIT_DAMAGING
+		EventListener.damagingId = eventTypeCounter
+		EventListener.damagingHandleId = EVENT_PLAYER_UNIT_DAMAGING.getHandleId()
+		registerPlayerUnitEvent(EVENT_PLAYER_UNIT_DAMAGING, function EventListener.damagingCallback)
 	else if evnt.isPlayerunitEvent()
 		registerPlayerUnitEvent(ConvertPlayerUnitEvent(eventId), function EventListener.generalEventCallback)
 	else if evnt != EVENT_PLAYER_LEAVE and evnt != EVENT_PLAYER_CHAT_FILTER and not evnt.isKeyboardEvent() and not evnt.isMouseEvent()

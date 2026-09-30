@@ -12,6 +12,7 @@ import ArrayList
 import UnitIndexer
 import OnUnitEnterLeave
 import StdlibIngameChecks
+import StdlibIngameDamageTests
 import StdlibIngameEventTests
 import StdlibIngameTimedLoopTests
 
@@ -1004,6 +1005,7 @@ public function runStdlibIngameTests()
 		return
 	runInFlight = true
 	setEventChecksReporter(ingameReporter)
+	setDamageChecksReporter(ingameReporter)
 	setTimedLoopChecksReporter(ingameReporter)
 	checksRun = 0
 	checksFailed = 0
@@ -1058,6 +1060,10 @@ public function runStdlibIngameTests()
 		testTakingTheTriggerWhileDelivering()
 	runGuarded("23. a listener registered while delivering") ->
 		testListenerRegisteredWhileDelivering()
+	runGuarded("24. EventListener on the damage events") ->
+		testEventListenerDamage()
+	runGuarded("24b. another event on the exported damage trigger") ->
+		testForeignEventOnTheDamageTrigger()
 	runGuarded("25. a TimedLoop class started by another one") ->
 		testTimedLoopStartedByLoop()
 	runGuarded("26. a spell effect listener registered while running") ->
