@@ -1,6 +1,5 @@
 package CodeList
 import Trigger
-import ErrorHandling
 
 /*	CodeList
 
@@ -15,7 +14,8 @@ import ErrorHandling
 
 	This needs a compiler with that lowering. The Jass bodies below are what runs on Jass, and on Lua a build
 	whose compiler does not know the lowering would silently pay the trigger round trip on every event, so
-	there the bodies fail at the first list created instead.
+	an older compiler stops the build: the compiler answers codeListLowered() with true, the source body says
+	false, and the compile-time check below fails with compileError.
 
 	The functions are recognised by the compiler through their annotation and their exact signatures, so they
 	must keep these shapes. They stay private to this package: a list is used through the class.
@@ -32,25 +32,26 @@ import ErrorHandling
 trigger array listTriggers
 var listCount = 0
 
-function requireLowering()
-	if isLua
-		error("CodeList needs a compiler that lowers the codeList intrinsics to Lua; update the compiler.")
+/** True in a compiler that lowers the intrinsics below; the compiler replaces every call with true. */
+@compilerintrinsic function codeListLowered() returns boolean
+	return false
+
+@compiletime function requireCodeListLowering()
+	if not codeListLowered()
+		compileError("CodeList needs a compiler that lowers the codeList intrinsics; update the compiler.")
 
 /** Creates an empty list. It lives as long as the map does. */
 @compilerintrinsic function codeListCreate() returns int
-	requireLowering()
 	listTriggers[listCount] = CreateTrigger()
 	listCount++
 	return listCount - 1
 
 /** Adds code to the end of the list. */
 @compilerintrinsic function codeListAdd(int list, code c)
-	requireLowering()
 	listTriggers[list].addCondition(Condition(c))
 
 /** Runs every code value of the list, in the order added. */
 @compilerintrinsic function codeListRun(int list)
-	requireLowering()
 	listTriggers[list].evaluate()
 
 public class CodeList
