@@ -1501,6 +1501,64 @@ function testSpellEffectRegisteredWhileRunning()
 		spellLateCaster2.remove()
 
 // ============================================================================
+// 24. EventListener on the damage events
+// ============================================================================
+
+/*	Global and per-unit listeners of the damage events, on real hits. A listener of one unit hears the hits on that
+	unit only and before the global ones, the two events have listeners of their own, and a per-unit listener added
+	after global ones have been heard is heard from then on. Damage is dealt in the calling thread, so no timers. */
+
+int array damageHeard
+int array damageHeardSeq
+var damageHeardCounter = 0
+
+function damageHeardHit(int id)
+	damageHeard[id] = damageHeard[id] + 1
+	damageHeardCounter++
+	damageHeardSeq[id] = damageHeardCounter
+
+function dealHit(unit source, unit target)
+	UnitDamageTarget(source, target, 1., false, false, ATTACK_TYPE_CHAOS, DAMAGE_TYPE_UNIVERSAL, WEAPON_TYPE_WHOKNOWS)
+
+function testEventListenerDamage()
+	section("--- 24. EventListener on the damage events ---")
+	for i = 0 to 3
+		damageHeard[i] = 0
+		damageHeardSeq[i] = 0
+	damageHeardCounter = 0
+	let hitter = createUnit(players[0], UnitIds.footman, vec2(-3300., -2500.), angle(0))
+	let hitA = createUnit(players[1], UnitIds.footman, vec2(-3400., -2500.), angle(0))
+	let hitB = createUnit(players[1], UnitIds.footman, vec2(-3500., -2500.), angle(0))
+	hitA..setMaxHP(1000000)..setHP(1000000.)
+	hitB..setMaxHP(1000000)..setHP(1000000.)
+	let damaged = EventListener.add(EVENT_PLAYER_UNIT_DAMAGED, () -> damageHeardHit(0))
+	let damaging = EventListener.add(EVENT_PLAYER_UNIT_DAMAGING, () -> damageHeardHit(1))
+
+	dealHit(hitter, hitB)
+	check(damageHeard[0] == 1 and damageHeard[1] == 1,
+		"each event has its own global listener (" + damageHeard[0] + ", " + damageHeard[1] + ")")
+
+	let ofA = EventListener.add(hitA, EVENT_UNIT_DAMAGED, () -> damageHeardHit(2))
+	dealHit(hitter, hitA)
+	check(damageHeard[0] == 2 and damageHeard[1] == 2 and damageHeard[2] == 1,
+		"a listener of one unit added later hears its hit (" + damageHeard[0] + ", " + damageHeard[1] + ", "
+		+ damageHeard[2] + ")")
+	check(damageHeardSeq[2] < damageHeardSeq[0], "and before the global listener of the same event")
+	dealHit(hitter, hitB)
+	check(damageHeard[0] == 3 and damageHeard[1] == 3 and damageHeard[2] == 1,
+		"but not the hit on another unit (" + damageHeard[0] + ", " + damageHeard[1] + ", " + damageHeard[2] + ")")
+
+	destroy ofA
+	destroy damaged
+	destroy damaging
+	dealHit(hitter, hitA)
+	check(damageHeard[0] == 3 and damageHeard[1] == 3 and damageHeard[2] == 1,
+		"and none after they are destroyed (" + damageHeard[0] + ", " + damageHeard[1] + ", " + damageHeard[2] + ")")
+	hitter.remove()
+	hitA.remove()
+	hitB.remove()
+
+// ============================================================================
 // Runner
 // ============================================================================
 
@@ -1579,6 +1637,8 @@ public function runStdlibIngameTests()
 		testTakingTheTriggerWhileDelivering()
 	runGuarded("23. a listener registered while delivering") ->
 		testListenerRegisteredWhileDelivering()
+	runGuarded("24. EventListener on the damage events") ->
+		testEventListenerDamage()
 	runGuarded("25. a TimedLoop class started by another one") ->
 		testTimedLoopStartedByLoop()
 	runGuarded("26. a spell effect listener registered while running") ->
