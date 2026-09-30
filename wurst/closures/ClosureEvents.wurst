@@ -136,13 +136,17 @@ public class CastListenerMap extends HashMap<int, OnCastListener>
 		super.remove(abilId)
 		keyedMapRemove(fast, abilId)
 
+	/** Set when the map is being destroyed: the HashMap destructor flushes it, and that is when the native table goes. */
+	private bool destroying = false
+
 	override function flush()
 		super.flush()
 		keyedMapDestroy(fast)
-		fast = keyedMapCreate()
+		if not destroying
+			fast = keyedMapCreate()
 
 	ondestroy
-		keyedMapDestroy(fast)
+		destroying = true
 
 public abstract class EventListener
 	static constant castMap = new CastListenerMap()

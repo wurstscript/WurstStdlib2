@@ -88,6 +88,8 @@ class TimedLoopTimer
 	constant loops = new ArrayList<CodeList>()
 	/** Lua: the index of the loop which is running, so releasing one during a tick does not skip the next. */
 	int running = -1
+	/** Lua: how many of the loops the tick under way calls. The ones added meanwhile come after it. */
+	int boundary = 0
 	int conditionsCount = 0
 
 	real period
@@ -122,13 +124,16 @@ class TimedLoopTimer
 		if instance.conditionsCount == 0
 			instance.loopTimer.pause()
 
-	/** Calls the active loops. One added meanwhile is reached in this tick. */
+	/** Calls the active loops. One added meanwhile waits for the next tick, as a condition added to a trigger during
+		its evaluation does. */
 	function runLoops()
+		boundary = loops.size()
 		running = 0
-		while running < loops.size()
+		while running < boundary
 			loops.get(running).run()
 			running++
 		running = -1
+		boundary = 0
 
 	function release(TimedLoopEntry entry)
 		if isLua
@@ -136,6 +141,8 @@ class TimedLoopTimer
 			if index < 0
 				return
 			loops.removeAtOrdered(index)
+			if index < boundary
+				boundary--
 			if index <= running
 				// The loop which is running or one before it left, so the next has moved down to the index
 				// which is running now.

@@ -1,6 +1,30 @@
 package ClosureEventsTests
+import ClosureEvents
 
 @Test function testEvents()
 	createUnit(players[0], 'hfoo' , ZERO2, 0 .fromDeg())
 	// EventListener.onCast(hero, 'Abld') (caster) ->
 	// 	print("OnCast")
+
+function ignoreCast()
+	skip
+
+@Test function castListenerMapIsAHashMapAndSurvivesFlushAndDestroy()
+	let map = new CastListenerMap()
+	OnCastListener first = caster -> ignoreCast()
+	OnCastListener second = caster -> ignoreCast()
+	map.put(5, first)
+	map.put(6, second)
+	map.size().assertEquals(2)
+	(map.get(5) == first).assertTrue()
+	map.has(6).assertTrue()
+	map.remove(6)
+	map.has(6).assertFalse()
+	map.size().assertEquals(1)
+	map.flush()
+	map.size().assertEquals(0)
+	(map.get(5) == null).assertTrue()
+	map.put(7, first)
+	(map.get(7) == first).assertTrue()
+	// The destructor flushes the map, which destroyed the native table a second time.
+	destroy map

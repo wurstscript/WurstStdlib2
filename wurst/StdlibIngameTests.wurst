@@ -1403,6 +1403,52 @@ function testListenerRegisteredWhileDelivering()
 		lateCaster2.remove()
 
 // ============================================================================
+// 25. A TimedLoop class started by another one
+// ============================================================================
+
+/*	A class which the loop of another class starts is not called in the tick it was started in: it is called from
+	the next one, as a condition added to a trigger during its evaluation is not reached by it. */
+
+var startedLoopTick = 0
+var startedLoopStartTick = 0
+var startedLoopFirstTick = 0
+
+class StartedLoop
+	use TimedLoop
+
+	override function onTimedLoop()
+		if startedLoopFirstTick == 0
+			startedLoopFirstTick = startedLoopTick
+
+class StartingLoop
+	use TimedLoop
+	var started = false
+	StartedLoop other = null
+
+	override function onTimedLoop()
+		startedLoopTick++
+		if not started
+			started = true
+			startedLoopStartTick = startedLoopTick
+			other.startTimedLoop()
+
+function testTimedLoopStartedByLoop()
+	section("--- 25. a TimedLoop class started by another one ---")
+	startedLoopTick = 0
+	startedLoopStartTick = 0
+	startedLoopFirstTick = 0
+	let startedLoop = new StartedLoop()
+	let startingLoop = new StartingLoop()
+	startingLoop.other = startedLoop
+	startingLoop.startTimedLoop()
+	doAfter(0.4) ->
+		check(startedLoopFirstTick == startedLoopStartTick + 1,
+			"it is called from the next tick (started in tick " + startedLoopStartTick + ", first called in tick "
+			+ startedLoopFirstTick + ")")
+		startingLoop.stopTimedLoopAndDestroy()
+		startedLoop.stopTimedLoopAndDestroy()
+
+// ============================================================================
 // Runner
 // ============================================================================
 
@@ -1481,6 +1527,8 @@ public function runStdlibIngameTests()
 		testTakingTheTriggerWhileDelivering()
 	runGuarded("23. a listener registered while delivering") ->
 		testListenerRegisteredWhileDelivering()
+	runGuarded("25. a TimedLoop class started by another one") ->
+		testTimedLoopStartedByLoop()
 
 	// these finish asynchronously, so the summary waits for them
 	runGuarded("8. TimedLoop stop before start") ->
