@@ -25,7 +25,11 @@ trigger array t
 	What a condition returns decides whether the actions of its trigger run, and a list can not pass that on. So
 	a trigger goes back to what it always was, a condition per listener in the order they were added, as soon as
 	something is attached to it whose running depends on its conditions: a registration with an action, or a call
-	of getPlayerUnitEventTrigger. It is sealed then, and stays that way. */
+	of getPlayerUnitEventTrigger. It is sealed then, and stays that way.
+
+	Only what goes through this package can be seen. The trigger handle which GetTriggeringTrigger gives a
+	listener is the same trigger, but taking it is a native call, so it does not seal. A condition added to a
+	trigger that way, while listeners are registered around it, does not keep its place among them. */
 class EventBridge
 	/** The listeners in the order they were added; null while there are none, and once sealed. */
 	ArrayList<CodeList> lists = null
