@@ -151,11 +151,20 @@ public function registerPlayerUnitEventForPlayer(playerunitevent p, code c, play
 		t[i].registerPlayerUnitEvent(pl, p, null)
 	t[i].addListener(c)
 
+/** Whether the trigger of an event was handed out by getPlayerUnitEventTrigger, by the handle id of the event. */
+bool array eventTriggerTaken
+
+/** Whether getPlayerUnitEventTrigger has handed out the trigger of the event with this handle id. The caller may have
+	registered more events on it since, so what runs from it can not assume which event fired. */
+public function isPlayerUnitEventTriggerTaken(int eventHandleId) returns bool
+	return eventTriggerTaken[eventHandleId]
+
 public function getPlayerUnitEventTrigger(playerunitevent p) returns trigger
 	let eventTrigger = t[GetHandleId(p)]
 	// The caller may attach anything to it.
 	if eventTrigger != null
 		eventTrigger.seal()
+		eventTriggerTaken[GetHandleId(p)] = true
 	return eventTrigger
 
 /*****PlayerEvent*****/

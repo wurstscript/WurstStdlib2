@@ -1062,6 +1062,8 @@ public function runStdlibIngameTests()
 		testListenerRegisteredWhileDelivering()
 	runGuarded("24. EventListener on the damage events") ->
 		testEventListenerDamage()
+	runGuarded("24b. another event on the exported damage trigger") ->
+		testForeignEventOnTheDamageTrigger()
 	runGuarded("25. a TimedLoop class started by another one") ->
 		testTimedLoopStartedByLoop()
 	runGuarded("26. a spell effect listener registered while running") ->

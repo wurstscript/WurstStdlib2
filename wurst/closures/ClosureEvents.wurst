@@ -161,6 +161,9 @@ public abstract class EventListener
 	/** The ids of the two damage events, whose deliveries are told the id and so need not ask the engine. */
 	static int damagedId = 0
 	static int damagingId = 0
+	/** The handle ids of the same two events, to ask whether their triggers have been handed out. */
+	static int damagedHandleId = 0
+	static int damagingHandleId = 0
 
 	var eventId = 0
 	var uid = -1
@@ -236,12 +239,20 @@ public abstract class EventListener
 	static function generalEventCallback()
 		dispatch(GetTriggerEventId().toIntId())
 
-	/** The damage events are the busiest, so they are delivered with the id they were registered with. */
+	/** The damage events are the busiest, so they are delivered with the id they were registered with. That holds
+		while nobody else can have registered an event on their trigger: once getPlayerUnitEventTrigger has handed it
+		out, the engine is asked which event fired, as it is for every other event. */
 	static function damagedCallback()
-		dispatch(damagedId)
+		if isPlayerUnitEventTriggerTaken(damagedHandleId)
+			generalEventCallback()
+		else
+			dispatch(damagedId)
 
 	static function damagingCallback()
-		dispatch(damagingId)
+		if isPlayerUnitEventTriggerTaken(damagingHandleId)
+			generalEventCallback()
+		else
+			dispatch(damagingId)
 
 	/** Delivers the event of the given id to the listeners of the triggering unit and then to the global ones. */
 	static private function dispatch(int id)
@@ -326,13 +337,16 @@ function registerEventId(eventid evnt) returns int
 	if evnt == EVENT_UNIT_DAMAGED
 		eventidToIndex[EVENT_PLAYER_UNIT_DAMAGED.getHandleId()] = eventTypeCounter
 		EventListener.damagedId = eventTypeCounter
+		EventListener.damagedHandleId = EVENT_PLAYER_UNIT_DAMAGED.getHandleId()
 		registerPlayerUnitEvent(EVENT_PLAYER_UNIT_DAMAGED, function EventListener.damagedCallback)
 	else if evnt == EVENT_PLAYER_UNIT_DAMAGED
 		eventidToIndex[EVENT_UNIT_DAMAGED.getHandleId()] = eventTypeCounter
 		EventListener.damagedId = eventTypeCounter
+		EventListener.damagedHandleId = EVENT_PLAYER_UNIT_DAMAGED.getHandleId()
 		registerPlayerUnitEvent(EVENT_PLAYER_UNIT_DAMAGED, function EventListener.damagedCallback)
 	else if evnt == EVENT_PLAYER_UNIT_DAMAGING
 		EventListener.damagingId = eventTypeCounter
+		EventListener.damagingHandleId = EVENT_PLAYER_UNIT_DAMAGING.getHandleId()
 		registerPlayerUnitEvent(EVENT_PLAYER_UNIT_DAMAGING, function EventListener.damagingCallback)
 	else if evnt.isPlayerunitEvent()
 		registerPlayerUnitEvent(ConvertPlayerUnitEvent(eventId), function EventListener.generalEventCallback)

@@ -1,5 +1,6 @@
 package StdlibIngameDamageTests
 import ClosureEvents
+import RegisterEvents
 import StdlibIngameChecks
 import UnitIds
 
@@ -76,3 +77,36 @@ public function testEventListenerDamage()
 	hitter.remove()
 	hitA.remove()
 	hitB.remove()
+
+// ============================================================================
+// 24b. Another event on the exported damage trigger
+// ============================================================================
+
+/*	getPlayerUnitEventTrigger hands out the trigger the damage listeners are delivered from, and a caller may
+	register more events on it. Its condition then runs for those events too, and must deliver each one to its own
+	listeners: a unit dying must not be heard by a listener of the damage event. */
+
+var foreignEventRegistered = false
+
+public function testForeignEventOnTheDamageTrigger()
+	section("--- 24b. another event on the exported damage trigger ---")
+	for i = 0 to 3
+		damageHeard[i] = 0
+	let heard = EventListener.add(EVENT_PLAYER_UNIT_DAMAGED, () -> damageHeardHit(0))
+	let hitter = createUnit(players[0], UnitIds.footman, vec2(-3800., -2500.), angle(0))
+	let victim = createUnit(players[1], UnitIds.footman, vec2(-3900., -2500.), angle(0))
+	let dying = createUnit(players[1], UnitIds.footman, vec2(-4000., -2500.), angle(0))
+	victim..setMaxHP(1000000)..setHP(1000000.)
+	// The trigger is taken once however often the suite runs: an event can not be taken off it again.
+	if not foreignEventRegistered
+		foreignEventRegistered = true
+		TriggerRegisterAnyUnitEventBJ(getPlayerUnitEventTrigger(EVENT_PLAYER_UNIT_DAMAGED), EVENT_PLAYER_UNIT_DEATH)
+	else
+		getPlayerUnitEventTrigger(EVENT_PLAYER_UNIT_DAMAGED)
+	dying.kill()
+	check(damageHeard[0] == 0, "a unit dying is not heard by a listener of the damage event (" + damageHeard[0] + ")")
+	dealHit(hitter, victim)
+	check(damageHeard[0] == 1, "and a hit still is (" + damageHeard[0] + ")")
+	destroy heard
+	hitter.remove()
+	victim.remove()
