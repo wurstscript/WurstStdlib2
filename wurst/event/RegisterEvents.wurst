@@ -1,7 +1,9 @@
 package RegisterEvents
 import NoWurst
 import _Handles
-import HashMap
+import CodeList
+import KeyedMap
+import Table
 
 /*****PlayerUnitEvent*****/
 
@@ -52,12 +54,32 @@ public function registerPlayerEvent(playerevent p, code condition, code action)
 
 /*****SpellEffectEvent*****/
 
-constant onCastMap = new HashMap<int, trigger>()
+// One CodeList per ability id. On Lua the lists sit in a native table, so a cast is one table index and
+// a call per listener; it used to be a HashMap lookup and a trigger evaluation, which is the engine's
+// round trip for every listener.
+//
+// The two functions below are the KeyedMap operations for the one value type this package stores. The
+// compiler recognises them by their annotation and their exact shape, so they must keep it; the bodies
+// are what runs on Jass.
+@compilerintrinsic function keyedMapPut(int map, int key, CodeList value)
+	(map castTo Table).saveInt(key, value castTo int)
+
+@compilerintrinsic function keyedMapGet(int map, int key) returns CodeList
+	return (map castTo Table).loadInt(key) castTo CodeList
+
+constant spellEffectLists = keyedMapCreate()
 
 init
-	registerPlayerUnitEvent(EVENT_PLAYER_UNIT_SPELL_EFFECT, () -> (onCastMap.get(GetSpellAbilityId())).evaluate())
+	registerPlayerUnitEvent(EVENT_PLAYER_UNIT_SPELL_EFFECT, function runSpellEffectListeners)
+
+function runSpellEffectListeners()
+	let list = keyedMapGet(spellEffectLists, GetSpellAbilityId())
+	if list != null
+		list.run()
 
 public function registerSpellEffectEvent(int abil, code onCast)
-	if not onCastMap.has(abil)
-		onCastMap.put(abil, CreateTrigger())
-	onCastMap.get(abil).addCondition(Filter(onCast))
+	var list = keyedMapGet(spellEffectLists, abil)
+	if list == null
+		list = new CodeList()
+		keyedMapPut(spellEffectLists, abil, list)
+	list.add(onCast)
