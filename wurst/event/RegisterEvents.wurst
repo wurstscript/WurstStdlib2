@@ -61,7 +61,9 @@ function trigger.addListener(code listener)
 			return
 	this.addCondition(Filter(listener))
 
-/** Puts the trigger back to a condition per listener, and keeps it so; see above. */
+/** Puts the trigger back to a condition per listener, and keeps it so; see above. This may happen while the event
+	is delivered through the bridge, by a listener. The engine does not reach conditions added during the evaluation
+	of a trigger it fires, so no listener runs twice; the in-game tests check that. */
 function trigger.seal()
 	if isLua
 		let bridge = this.getBridge()

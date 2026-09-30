@@ -1266,6 +1266,66 @@ function testExportedTriggerOrder()
 		orderCaster.remove()
 
 // ============================================================================
+// 22. Taking the exported trigger while its event is delivered
+// ============================================================================
+
+/*	getPlayerUnitEventTrigger takes the listeners of an event off their one condition and puts them back as
+	conditions of their own, and a listener may call it while the event is being delivered. That must not run a
+	listener twice, which it would if the engine reached conditions added during the evaluation of a trigger it
+	fires. It does not, on the client this was checked on, and this pins it. The second cast shows that the
+	conditions put back work. */
+
+constant TAKE_ABIL = 'W9E4'
+constant TAKE_ORDER = compiletime(defineBridgeSpell(TAKE_ABIL))
+
+int array takeCount
+var takeTaken = false
+var takeRegistered = false
+
+function takeFirst()
+	if GetSpellAbilityId() == TAKE_ABIL
+		takeCount[0] = takeCount[0] + 1
+
+function takeMiddle()
+	if GetSpellAbilityId() == TAKE_ABIL
+		takeCount[1] = takeCount[1] + 1
+		if not takeTaken
+			takeTaken = true
+			getPlayerUnitEventTrigger(EVENT_PLAYER_UNIT_SPELL_CAST)
+
+function takeLast()
+	if GetSpellAbilityId() == TAKE_ABIL
+		takeCount[2] = takeCount[2] + 1
+
+function testTakingTheTriggerWhileDelivering()
+	section("--- 22. taking the exported trigger while its event is delivered ---")
+	for i = 0 to 2
+		takeCount[i] = 0
+	// Nothing can be taken back from a trigger, so this is done once however often the suite runs.
+	if not takeRegistered
+		takeRegistered = true
+		registerPlayerUnitEvent(EVENT_PLAYER_UNIT_SPELL_CAST, function takeFirst)
+		registerPlayerUnitEvent(EVENT_PLAYER_UNIT_SPELL_CAST, function takeMiddle)
+		registerPlayerUnitEvent(EVENT_PLAYER_UNIT_SPELL_CAST, function takeLast)
+	let takeCaster = createUnit(players[0], UnitIds.footman, vec2(-2900., -2500.), angle(0))
+	let takeCaster2 = createUnit(players[0], UnitIds.footman, vec2(-3000., -2500.), angle(0))
+	takeCaster.addAbility(TAKE_ABIL)
+	takeCaster2.addAbility(TAKE_ABIL)
+	doAfter(0.1) ->
+		takeCaster.issueImmediateOrder(TAKE_ORDER)
+	doAfter(0.9) ->
+		check(takeCount[0] == 1 and takeCount[1] == 1 and takeCount[2] == 1,
+			"each listener ran once for the cast which took the trigger (" + takeCount[0] + ", " + takeCount[1]
+			+ ", " + takeCount[2] + ")")
+		takeCaster2.issueImmediateOrder(TAKE_ORDER)
+	doAfter(1.7) ->
+		check(takeCount[0] == 2 and takeCount[1] == 2 and takeCount[2] == 2,
+			"and once more for the next cast, as conditions of their own (" + takeCount[0] + ", " + takeCount[1]
+			+ ", " + takeCount[2] + ")")
+		takeCaster.remove()
+		takeCaster2.remove()
+
+// ============================================================================
 // Runner
 // ============================================================================
 
@@ -1340,6 +1400,8 @@ public function runStdlibIngameTests()
 		testConditionGatesAction()
 	runGuarded("21. the exported trigger keeps the order") ->
 		testExportedTriggerOrder()
+	runGuarded("22. taking the trigger while delivering") ->
+		testTakingTheTriggerWhileDelivering()
 
 	// these finish asynchronously, so the summary waits for them
 	runGuarded("8. TimedLoop stop before start") ->
