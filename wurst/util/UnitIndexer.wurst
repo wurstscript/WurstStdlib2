@@ -1,6 +1,7 @@
 package UnitIndexer
 import OnUnitEnterLeave
 import KeyedMap
+import CodeList
 
 /*  UnitIndexer
 
@@ -106,8 +107,9 @@ import KeyedMap
 		of the same unit is possible.
 */
 
-trigger onIndexTrigger = CreateTrigger()
-trigger onDeindexTrigger = CreateTrigger()
+// Listeners run as a CodeList: a call each on Lua, a trigger condition each on Jass.
+let onIndexList = new CodeList()
+let onDeindexList = new CodeList()
 
 /* Unit stack for nested usage */
 unit array tempUnits
@@ -170,12 +172,12 @@ public function getIndexingUnit() returns unit
 /**  Adds a function to be called before a unit is deindexed.
 	Use the getIndexingUnit() function to refer to the deindexing unit. */
 public function onUnitDeindex(code func)
-	onDeindexTrigger.addCondition(Condition(func))
+	onDeindexList.add(func)
 
 /**  Adds a function to be called after a unit is indexed.
 	Use the getIndexingUnit() function to refer to the indexed unit. */
 public function onUnitIndex(code func)
-	onIndexTrigger.addCondition(Condition(func))
+	onIndexList.add(func)
 
 /**  Deindexes a unit.
 	Returns whether the unit was originally indexed. */
@@ -199,12 +201,12 @@ public class UnitIndex
 		this._unit = whichUnit
 		this._unit.setStoredIndex(this castTo int)
 		pushUnit(whichUnit)
-		onIndexTrigger.evaluate()
+		onIndexList.run()
 		popUnit()
 
 	ondestroy
 		pushUnit(this._unit)
-		onDeindexTrigger.evaluate()
+		onDeindexList.run()
 		popUnit()
 		this._unit.setStoredIndex(0)
 
