@@ -1326,6 +1326,83 @@ function testTakingTheTriggerWhileDelivering()
 		takeCaster2.remove()
 
 // ============================================================================
+// 23. A listener registered while its event is delivered
+// ============================================================================
+
+/*	A condition added to a trigger while the engine fires it is not reached by that firing, and a listener
+	registered by a listener is not either: it gets the events from the next one on. That holds for the first
+	listener of an event and for the listeners after it, which are kept in a list. Two casts show it on two
+	events: the first cast, in which the listeners register, and the second, which the new ones must get. */
+
+constant LATE_ABIL = 'W9E5'
+constant LATE_ORDER = compiletime(defineBridgeSpell(LATE_ABIL))
+
+int array lateCount
+var lateRegistered = false
+var lateAdded = false
+
+function lateOwnCast() returns boolean
+	return GetSpellAbilityId() == LATE_ABIL
+
+/** Two listeners of the finish event; the second registers a third one while it runs. */
+function lateFinishFirst()
+	if lateOwnCast()
+		lateCount[0] = lateCount[0] + 1
+
+function lateFinishThird()
+	if lateOwnCast()
+		lateCount[2] = lateCount[2] + 1
+
+function lateFinishSecond()
+	if lateOwnCast()
+		lateCount[1] = lateCount[1] + 1
+		if not lateAdded
+			lateAdded = true
+			registerPlayerUnitEvent(EVENT_PLAYER_UNIT_SPELL_FINISH, function lateFinishThird)
+
+/** The only listener of the endcast event, which registers another one while it runs. */
+function lateEndcastAlone()
+	if lateOwnCast()
+		lateCount[3] = lateCount[3] + 1
+		if lateCount[3] == 1
+			registerPlayerUnitEvent(EVENT_PLAYER_UNIT_SPELL_ENDCAST, function lateEndcastAdded)
+
+function lateEndcastAdded()
+	if lateOwnCast()
+		lateCount[4] = lateCount[4] + 1
+
+function testListenerRegisteredWhileDelivering()
+	section("--- 23. a listener registered while its event is delivered ---")
+	for i = 0 to 4
+		lateCount[i] = 0
+	// Nothing can be taken back from a trigger, so this is done once however often the suite runs.
+	if not lateRegistered
+		lateRegistered = true
+		registerPlayerUnitEvent(EVENT_PLAYER_UNIT_SPELL_FINISH, function lateFinishFirst)
+		registerPlayerUnitEvent(EVENT_PLAYER_UNIT_SPELL_FINISH, function lateFinishSecond)
+		registerPlayerUnitEvent(EVENT_PLAYER_UNIT_SPELL_ENDCAST, function lateEndcastAlone)
+	let lateCaster = createUnit(players[0], UnitIds.footman, vec2(-3100., -2500.), angle(0))
+	let lateCaster2 = createUnit(players[0], UnitIds.footman, vec2(-3200., -2500.), angle(0))
+	lateCaster.addAbility(LATE_ABIL)
+	lateCaster2.addAbility(LATE_ABIL)
+	doAfter(0.1) ->
+		lateCaster.issueImmediateOrder(LATE_ORDER)
+	doAfter(0.9) ->
+		check(lateCount[0] == 1 and lateCount[1] == 1 and lateCount[2] == 0,
+			"the listener registered among several did not get the event it was registered in ("
+			+ lateCount[0] + ", " + lateCount[1] + ", " + lateCount[2] + ")")
+		check(lateCount[3] == 1 and lateCount[4] == 0,
+			"nor did the one registered by the only listener (" + lateCount[3] + ", " + lateCount[4] + ")")
+		lateCaster2.issueImmediateOrder(LATE_ORDER)
+	doAfter(1.7) ->
+		check(lateCount[0] == 2 and lateCount[1] == 2 and lateCount[2] == 1,
+			"but the next event (" + lateCount[0] + ", " + lateCount[1] + ", " + lateCount[2] + ")")
+		check(lateCount[3] == 2 and lateCount[4] == 1,
+			"for both events (" + lateCount[3] + ", " + lateCount[4] + ")")
+		lateCaster.remove()
+		lateCaster2.remove()
+
+// ============================================================================
 // Runner
 // ============================================================================
 
@@ -1402,6 +1479,8 @@ public function runStdlibIngameTests()
 		testExportedTriggerOrder()
 	runGuarded("22. taking the trigger while delivering") ->
 		testTakingTheTriggerWhileDelivering()
+	runGuarded("23. a listener registered while delivering") ->
+		testListenerRegisteredWhileDelivering()
 
 	// these finish asynchronously, so the summary waits for them
 	runGuarded("8. TimedLoop stop before start") ->

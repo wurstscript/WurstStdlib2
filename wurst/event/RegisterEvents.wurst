@@ -12,22 +12,31 @@ import Table
 trigger array t
 
 /*	Every listener used to be a condition of the event's trigger. On Lua each condition is a call from the
-	engine into the script, about 3 us apiece, so an event with ten listeners paid it ten times. On Lua the
-	trigger has a single condition instead, runListeners, which runs the event's CodeList by direct calls at
-	about 0.2 us per listener. Jass keeps a condition per listener, as a list is a trigger there and one behind
-	a bridge would only add an evaluation.
+	engine into the script, about 3 us apiece, so an event with ten listeners paid it ten times. From its second
+	listener on, the trigger of an event has a single condition instead, runListeners, which runs the listeners
+	by direct calls at about 0.2 us each. The first stays a condition of its own, since a bridge in front of a
+	single listener only adds a lookup. Jass keeps a condition per listener, as a list is a trigger there and one
+	behind a bridge would only add an evaluation.
 
-	The listeners keep their order, the thread they run in, their event responses and GetTriggeringTrigger.
+	The listeners keep their order, the thread they run in, their event responses and GetTriggeringTrigger. One
+	registered while the event is delivered does not get that event, as a condition added while the engine fires
+	a trigger is not reached by it: it goes into a list the delivery under way does not run.
+
 	What a condition returns decides whether the actions of its trigger run, and a list can not pass that on. So
 	a trigger goes back to what it always was, a condition per listener in the order they were added, as soon as
 	something is attached to it whose running depends on its conditions: a registration with an action, or a call
 	of getPlayerUnitEventTrigger. It is sealed then, and stays that way. */
 class EventBridge
-	/** The listeners behind the trigger's one condition; null while there are none, and once sealed. */
-	CodeList list = null
+	/** The listeners in the order they were added; null while there are none, and once sealed. */
+	ArrayList<CodeList> lists = null
 	/** The same listeners as conditions, to put back on the trigger when it is sealed. */
 	ArrayList<filterfunc> conditions = null
-	triggercondition bridgeCondition = null
+	/** What the trigger runs for the listeners: the condition of the only one, or runListeners. */
+	triggercondition engineCondition = null
+	bool bridged = false
+	/** How many deliveries through runListeners are under way, and how many lists the largest of them runs. */
+	int delivering = 0
+	int frozen = 0
 	/** Whether new listeners are conditions of their own. */
 	bool sealed = false
 
@@ -36,8 +45,17 @@ constant bridges = new FastKeyedMap<trigger, EventBridge>()
 /** The one condition of a bridged trigger. */
 function runListeners() returns boolean
 	let bridge = bridges.get(GetTriggeringTrigger())
-	if bridge != null and bridge.list != null
-		bridge.list.run()
+	if bridge != null and bridge.lists != null
+		let lists = bridge.lists
+		let count = lists.size()
+		if count > bridge.frozen
+			bridge.frozen = count
+		bridge.delivering++
+		for i = 0 to count - 1
+			lists.get(i).run()
+		bridge.delivering--
+		if bridge.delivering == 0
+			bridge.frozen = 0
 	return true
 
 function trigger.getBridge() returns EventBridge
@@ -52,12 +70,21 @@ function trigger.addListener(code listener)
 	if isLua
 		let bridge = this.getBridge()
 		if not bridge.sealed
-			if bridge.list == null
-				bridge.list = new CodeList()
+			let condition = Filter(listener)
+			if bridge.lists == null
+				bridge.lists = new ArrayList<CodeList>()
 				bridge.conditions = new ArrayList<filterfunc>()
-				bridge.bridgeCondition = this.addCondition(Filter(function runListeners))
-			bridge.list.add(listener)
-			bridge.conditions.add(Filter(listener))
+				bridge.lists.add(new CodeList())
+				bridge.engineCondition = this.addCondition(condition)
+			else if not bridge.bridged
+				this.removeCondition(bridge.engineCondition)
+				bridge.engineCondition = this.addCondition(Filter(function runListeners))
+				bridge.bridged = true
+			// A list which a delivery is running takes no more: the new listener gets one of its own.
+			if bridge.lists.size() <= bridge.frozen
+				bridge.lists.add(new CodeList())
+			bridge.lists.get(bridge.lists.size() - 1).add(listener)
+			bridge.conditions.add(condition)
 			return
 	this.addCondition(Filter(listener))
 
@@ -69,14 +96,16 @@ function trigger.seal()
 		let bridge = this.getBridge()
 		if not bridge.sealed
 			bridge.sealed = true
-			if bridge.list != null
-				this.removeCondition(bridge.bridgeCondition)
-				for i = 0 to bridge.conditions.size() - 1
-					this.addCondition(bridge.conditions.get(i))
+			if bridge.lists != null
+				// With a single listener there is nothing to put back: its condition is the trigger's own.
+				if bridge.bridged
+					this.removeCondition(bridge.engineCondition)
+					for i = 0 to bridge.conditions.size() - 1
+						this.addCondition(bridge.conditions.get(i))
 				destroy bridge.conditions
-				bridge.list = null
+				bridge.lists = null
 				bridge.conditions = null
-				bridge.bridgeCondition = null
+				bridge.engineCondition = null
 
 public function registerPlayerUnitEvent(playerunitevent p, code c)
 	registerPlayerUnitEvent(p, null, c, null)
