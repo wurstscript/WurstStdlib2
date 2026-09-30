@@ -1,51 +1,58 @@
 package CodeList
 import Trigger
+import ErrorHandling
 
 /*	CodeList
 
-	An ordered list of `code` values that is run in one go, in the thread that runs it.
+	An ordered list of `code` values that is run in one go, in the thread that runs it. It behaves like the
+	conditions of a trigger, without the engine round trip on Lua.
 
-	Jass cannot keep a `code` value in an array or a class field, so a library that wants to call a
-	set of registered callbacks has had to keep a trigger and evaluate it. That costs the engine's
-	round trip on every dispatch: measured on the 3.0.0 client, about 4 us per listener, where a
-	closure list costs about 0.12 us. The Lua backend lowers the three functions below to one table
-	per list, an append, and a loop of calls, so a listener costs a call.
+	Jass cannot keep a `code` value in an array or a class field, so a library that wants to call a set of
+	registered callbacks keeps a trigger and evaluates it. On Jass that is what a CodeList is. On Lua it costs
+	the engine's round trip on every dispatch, measured on the 3.0.0 client at about 3.3 us per listener where
+	a call costs about 0.13 us, so the Lua backend lowers the three functions below to one table per list, an
+	append, and a loop of calls.
 
-	The bodies of the functions are the Jass implementation, a trigger per list, and they are also
-	what any compiler without the lowering compiles on both targets. They are correct in source, so
-	nothing degrades silently: such a build only pays the trigger.
+	This needs a compiler with that lowering. The Jass bodies below are what runs on Jass, and on Lua a build
+	whose compiler does not know the lowering would silently pay the trigger round trip on every event, so
+	there the bodies fail at the first list created instead.
 
-	The functions are recognised by the compiler through their annotation and their exact
-	signatures, so they must keep these shapes.
+	The functions are recognised by the compiler through their annotation and their exact signatures, so they
+	must keep these shapes. They stay private to this package: a list is used through the class.
 
-	What a list promises, on both targets:
+	What a list promises, on both targets, and what is measured in the game against a trigger:
 	- The code runs in the order it was added, once per run.
 	- It runs like a trigger condition, in the current thread. It must not wait.
+	- The result of a callback is ignored: the game runs every condition after one that returned false.
+	- Code added while the list runs is reached in the same run.
 	- A callback that fails does not stop the ones after it.
-	- A callback must not return false. Lua ignores what a callback returns, and a trigger may stop
-	  evaluating at a false one, so the list promises nothing about it.
-	- Code added while the list runs may or may not run in that run.
 */
 
-// Jass fallback state: the trigger behind each list. Lua does not touch it.
+// Jass state: the trigger behind each list. Lua does not touch it.
 trigger array listTriggers
 var listCount = 0
 
+function requireLowering()
+	if isLua
+		error("CodeList needs a compiler that lowers the codeList intrinsics to Lua; update the compiler.")
+
 /** Creates an empty list. It lives as long as the map does. */
-@compilerintrinsic public function codeListCreate() returns int
+@compilerintrinsic function codeListCreate() returns int
+	requireLowering()
 	listTriggers[listCount] = CreateTrigger()
 	listCount++
 	return listCount - 1
 
 /** Adds code to the end of the list. */
-@compilerintrinsic public function codeListAdd(int list, code c)
+@compilerintrinsic function codeListAdd(int list, code c)
+	requireLowering()
 	listTriggers[list].addCondition(Condition(c))
 
 /** Runs every code value of the list, in the order added. */
-@compilerintrinsic public function codeListRun(int list)
+@compilerintrinsic function codeListRun(int list)
+	requireLowering()
 	listTriggers[list].evaluate()
 
-/** The intrinsics above, as a class. */
 public class CodeList
 	private int list
 
