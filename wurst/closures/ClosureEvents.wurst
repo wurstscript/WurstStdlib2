@@ -241,7 +241,10 @@ public abstract class EventListener
 
 	/** The damage events are the busiest, so they are delivered with the id they were registered with. That holds
 		while nobody else can have registered an event on their trigger: once getPlayerUnitEventTrigger has handed it
-		out, the engine is asked which event fired, as it is for every other event. */
+		out, the engine is asked which event fired, as it is for every other event. One way to put an event on the
+		trigger is not seen: a listener which takes it with GetTriggeringTrigger and registers an event on it, the same
+		limit as stated at getPlayerUnitEventTrigger. Asking the engine on every delivery would cover it and give back
+		the gain, which is about 1.5 us per hit. */
 	static function damagedCallback()
 		if isPlayerUnitEventTriggerTaken(damagedHandleId)
 			generalEventCallback()
