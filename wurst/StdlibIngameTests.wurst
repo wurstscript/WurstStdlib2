@@ -993,14 +993,20 @@ function bridgeHit(int id)
 	bridgeSeqCounter++
 	bridgeSeq[id] = bridgeSeqCounter
 
-function bridgeCond1()
-	bridgeHit(BRIDGE_COND1)
+/** Whether this is a cast of one of the two spells of this section; other sections cast spells of their own. */
+function bridgeOwnCast() returns boolean
 	let abilityId = GetSpellAbilityId()
-	if GetTriggerUnit() == null or (abilityId != BRIDGE_ABIL_A and abilityId != BRIDGE_ABIL_B)
-		bridgeResponsesRight = false
+	return abilityId == BRIDGE_ABIL_A or abilityId == BRIDGE_ABIL_B
+
+function bridgeCond1()
+	if bridgeOwnCast()
+		bridgeHit(BRIDGE_COND1)
+		if GetTriggerUnit() == null
+			bridgeResponsesRight = false
 
 function bridgeCond2()
-	bridgeHit(BRIDGE_COND2)
+	if bridgeOwnCast()
+		bridgeHit(BRIDGE_COND2)
 
 function bridgeSpell1()
 	bridgeHit(BRIDGE_SPELL1)
@@ -1204,6 +1210,62 @@ function testConditionGatesAction()
 		gateTarget.remove()
 
 // ============================================================================
+// 21. A condition added to the exported trigger keeps its place
+// ============================================================================
+
+/*	getPlayerUnitEventTrigger hands out the trigger the listeners of an event sit on, and what is added to it
+	directly runs among them in the order of adding. Listener A, a condition B added to the trigger and listener C
+	must run as A, B, C however the listeners are kept. The spell channel event is used, as the library has no
+	listeners of its own on it, and a spell of its own so that no other cast is counted. */
+
+constant ORDER_ABIL = 'W9E3'
+constant ORDER_SPELL_ORDER = compiletime(defineBridgeSpell(ORDER_ABIL))
+
+int array orderCount
+int array orderSeq
+var orderSeqCounter = 0
+var orderRegistered = false
+
+function orderHit(int id)
+	if GetSpellAbilityId() == ORDER_ABIL
+		orderCount[id] = orderCount[id] + 1
+		orderSeqCounter++
+		orderSeq[id] = orderSeqCounter
+
+function orderListenerA()
+	orderHit(0)
+
+function orderConditionB() returns boolean
+	orderHit(1)
+	return true
+
+function orderListenerC()
+	orderHit(2)
+
+function testExportedTriggerOrder()
+	section("--- 21. a condition added to the exported trigger keeps its place ---")
+	for i = 0 to 2
+		orderCount[i] = 0
+		orderSeq[i] = 0
+	orderSeqCounter = 0
+	// Nothing can be taken back from a trigger, so this is done once however often the suite runs.
+	if not orderRegistered
+		orderRegistered = true
+		registerPlayerUnitEvent(EVENT_PLAYER_UNIT_SPELL_CHANNEL, function orderListenerA)
+		getPlayerUnitEventTrigger(EVENT_PLAYER_UNIT_SPELL_CHANNEL).addCondition(Filter(function orderConditionB))
+		registerPlayerUnitEvent(EVENT_PLAYER_UNIT_SPELL_CHANNEL, function orderListenerC)
+	let orderCaster = createUnit(players[0], UnitIds.footman, vec2(-2800., -2500.), angle(0))
+	orderCaster.addAbility(ORDER_ABIL)
+	doAfter(0.1) ->
+		orderCaster.issueImmediateOrder(ORDER_SPELL_ORDER)
+	doAfter(0.9) ->
+		check(orderCount[0] == 1 and orderCount[1] == 1 and orderCount[2] == 1,
+			"each of the three ran once (" + orderCount[0] + ", " + orderCount[1] + ", " + orderCount[2] + ")")
+		check(orderSeq[0] < orderSeq[1] and orderSeq[1] < orderSeq[2],
+			"they ran in the order they were added (" + orderSeq[0] + ", " + orderSeq[1] + ", " + orderSeq[2] + ")")
+		orderCaster.remove()
+
+// ============================================================================
 // Runner
 // ============================================================================
 
@@ -1276,6 +1338,8 @@ public function runStdlibIngameTests()
 		testTimedLoopClasses()
 	runGuarded("20. a condition gates its action") ->
 		testConditionGatesAction()
+	runGuarded("21. the exported trigger keeps the order") ->
+		testExportedTriggerOrder()
 
 	// these finish asynchronously, so the summary waits for them
 	runGuarded("8. TimedLoop stop before start") ->
