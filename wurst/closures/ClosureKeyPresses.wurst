@@ -1,5 +1,7 @@
 package ClosureKeyPresses
 import HashMap
+import KeyedMap
+import Table
 
 /*  
     This package is a comfort wrapper around wc3 key presses events introduced in 1.31,
@@ -27,7 +29,20 @@ import HashMap
 /* CONSTANTS */
 
 constant KEY_TRIGGER = CreateTrigger()..addAction(function onEvent)
-constant KEY_MAP = new HashMap<int, KeyPressListener>
+
+// Key handle id -> the first listener of that key. A KeyedMap with an int key and a class-typed value,
+// which the compiler lowers to a native table on Lua. It recognises these three functions by their
+// annotation and their exact shape, so they must keep it; the bodies are what runs on Jass.
+@compilerintrinsic function keyedMapPut(int map, int key, KeyPressListener value)
+    (map castTo Table).saveInt(key, value castTo int)
+
+@compilerintrinsic function keyedMapGet(int map, int key) returns KeyPressListener
+    return (map castTo Table).loadInt(key) castTo KeyPressListener
+
+@compilerintrinsic function keyedMapRemove(int map, int key)
+    (map castTo Table).removeInt(key)
+
+constant KEY_MAP = keyedMapCreate()
 
 // Tracks which (player, key, metaKey, onKeyDown) combos are already registered on KEY_TRIGGER, so a
 // second listener for the same combo does NOT register the event twice on one trigger (which fires the
@@ -83,18 +98,18 @@ function registerListener(KeyPressListener listener, oskeytype key, OSKEY_META m
     listener.metaKey = metaKey.toInt()
     listener.onKeyDown = onKeyDown
     let id = key.getHandleId()
-    let first = KEY_MAP.get(id)
+    let first = keyedMapGet(KEY_MAP, id)
     if first != null 
         first.prev = listener 
         listener.next = first 
-    KEY_MAP.put(id, listener)
+    keyedMapPut(KEY_MAP, id, listener)
     return listener 
 
 
 /* ON EVENT */
 
 function onEvent() 
-    var listener = KEY_MAP.get(BlzGetTriggerPlayerKey().getHandleId())
+    var listener = keyedMapGet(KEY_MAP, BlzGetTriggerPlayerKey().getHandleId())
     let metaKey = BlzGetTriggerPlayerMetaKey()
     let onKeyDown = BlzGetTriggerPlayerIsKeyDown()
     while listener != null 
@@ -116,12 +131,12 @@ abstract class KeyPressListener
 
     ondestroy
         let id = key.getHandleId() 
-        let first = KEY_MAP.get(id)
+        let first = keyedMapGet(KEY_MAP, id)
         if first == this 
             if next == null 
-                KEY_MAP.remove(id)
+                keyedMapRemove(KEY_MAP, id)
             else 
-                KEY_MAP.put(id, next)
+                keyedMapPut(KEY_MAP, id, next)
         else if prev != null
             prev.next = next
         if next != null

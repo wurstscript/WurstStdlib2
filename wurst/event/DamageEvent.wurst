@@ -115,19 +115,19 @@ public class DamageElement
 /* DAMAGE INSTANCE */
 
 class DamageInstance
-    protected int id
-    protected unit source
-    protected unit target
+    protected readonly int id
+    protected readonly unit source
+    protected readonly unit target
     protected real amount
-    protected real originalAmount
+    protected readonly real originalAmount
     protected real unreducedAmount
-    protected real unreducedOriginalAmount
+    protected readonly real unreducedOriginalAmount
     protected bool unreduced
     protected attacktype nativeAttackType
     protected damagetype nativeDamageType
     protected weapontype nativeWeaponType
-    protected DamageType damageType
-    protected DamageElement damageElement
+    protected readonly DamageType damageType
+    protected readonly DamageElement damageElement
 
     protected static thistype current = null
     protected static thistype array stack
@@ -206,11 +206,27 @@ public class DamageEvent
                 iterNext[d] = removed.next
 
 
+    /** Writes the instance back to the event, skipping each field no listener changed: setting
+        a field to the value the event already holds does nothing, and every write is a native
+        call on every damage. The arguments are what the event held before the listeners ran. */
+    protected static function writeBack(DamageInstance dmg, attacktype attackType, damagetype damageType,
+        weapontype weaponType, real amount)
+        if dmg.nativeAttackType != attackType
+            BlzSetEventAttackType(dmg.nativeAttackType)
+        if dmg.nativeDamageType != damageType
+            BlzSetEventDamageType(dmg.nativeDamageType)
+        if dmg.nativeWeaponType != weaponType
+            BlzSetEventWeaponType(dmg.nativeWeaponType)
+        if dmg.amount != amount
+            BlzSetEventDamage(dmg.amount)
+
     /* ON DAMAGE */
     protected static function onUnreducedDamage()
         let amount = GetEventDamage()
 
         let attackType = BlzGetEventAttackType()
+        let nativeDamageType = BlzGetEventDamageType()
+        let weaponType = BlzGetEventWeaponType()
         if nextDamageType == DamageType.UNKNOWN// Damage type hasn't been defined -> detect it
             if DETECT_NATIVE_ABILITIES and attackType == ATTACK_TYPE_NORMAL
                 nextDamageType = SPELL
@@ -218,7 +234,7 @@ public class DamageEvent
                 nextDamageType = ATTACK
                 nextDamageElement = DAMAGE_ELEMENT_ATTACK
 
-        let dmg = new DamageInstance(nextDamageId, GetEventDamageSource(), GetTriggerUnit(), amount, attackType, BlzGetEventDamageType(), BlzGetEventWeaponType(), nextDamageType, nextDamageElement)
+        let dmg = new DamageInstance(nextDamageId, GetEventDamageSource(), GetTriggerUnit(), amount, attackType, nativeDamageType, weaponType, nextDamageType, nextDamageElement)
 
         nextDamageId = 0
         nextDamageType = UNKNOWN
@@ -243,10 +259,7 @@ public class DamageEvent
         iterDepth--
         iterNext[depth] = null
 
-        BlzSetEventAttackType(dmg.nativeAttackType)
-        BlzSetEventDamageType(dmg.nativeDamageType)
-        BlzSetEventWeaponType(dmg.nativeWeaponType)
-        BlzSetEventDamage(dmg.amount)
+        writeBack(dmg, attackType, nativeDamageType, weaponType, amount)
 
         /*  Do NOT close the instance out here when the damage ended at <= 0.
 
@@ -274,7 +287,12 @@ public class DamageEvent
             return
 
         if not abort
-            dmg.setReducedAmount(GetEventDamage())
+            // The event holds what the unreduced pass wrote back, which is this instance's state.
+            let attackType = dmg.nativeAttackType
+            let nativeDamageType = dmg.nativeDamageType
+            let weaponType = dmg.nativeWeaponType
+            let reducedAmount = GetEventDamage()
+            dmg.setReducedAmount(reducedAmount)
             let depth = iterDepth
             iterDepth++
             for i = 0 to maxPriority
@@ -292,10 +310,7 @@ public class DamageEvent
             iterDepth--
             iterNext[depth] = null
 
-            BlzSetEventAttackType(dmg.nativeAttackType)
-            BlzSetEventDamageType(dmg.nativeDamageType)
-            BlzSetEventWeaponType(dmg.nativeWeaponType)
-            BlzSetEventDamage(dmg.amount)
+            writeBack(dmg, attackType, nativeDamageType, weaponType, reducedAmount)
 
         destroy dmg
         abort = false

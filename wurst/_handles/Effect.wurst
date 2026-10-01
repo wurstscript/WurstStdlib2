@@ -213,3 +213,14 @@ public function effect.setScale(vec3 scaleVector)
 public function effect.resetScale()
 	BlzResetSpecialEffectMatrix(this)
 
+/** Immediately selects an animation by model sequence name. */
+public function effect.setAnimation(string animation)
+	BlzSetSpecialEffectAnimation(this, animation)
+
+/** Adds an animation by model sequence name to the effect's queue. */
+public function effect.queueAnimation(string animation)
+	BlzQueueSpecialEffectAnimation(this, animation)
+
+public function effect.setAnimationBlendTime(real blendTime)
+	BlzSetSpecialEffectAnimationBlendTime(this, blendTime)
+

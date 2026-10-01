@@ -41,8 +41,7 @@ public class DialogBox
 	private static function runClickedButton()
 		let btn = GetClickedButton()
 		let cb = buttonClosures.get(btn)
-		if cb != null
-			cb.run()
+		cb?.run()
 
 	function addButton(string buttonText)
 		this.addButton(buttonText, 0 , null)

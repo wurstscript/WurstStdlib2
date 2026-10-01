@@ -1,11 +1,128 @@
 package RegisterEvents
 import NoWurst
 import _Handles
-import HashMap
+import ArrayList
+import CodeList
+import KeyedMap
+import MagicFunctions
+import Table
 
 /*****PlayerUnitEvent*****/
 
 trigger array t
+
+/** Listeners in the order they were added, which run one after the other. A listener added while they run does not
+	run in that run but from the next, as a condition added to a trigger during its evaluation does not: it goes into
+	a list of its own, and every run calls the lists which were there when it began. */
+class ListenerLists
+	ArrayList<CodeList> lists = new ArrayList<CodeList>()
+	/** How many runs are under way, and how many lists the largest of them calls. */
+	int running = 0
+	int frozen = 0
+
+	construct()
+		lists.add(new CodeList())
+
+	function add(code listener)
+		// A list which a run is calling takes no more: the new listener gets one of its own.
+		if lists.size() <= frozen
+			lists.add(new CodeList())
+		lists.get(lists.size() - 1).add(listener)
+
+	function run()
+		let count = lists.size()
+		if count > frozen
+			frozen = count
+		running++
+		for i = 0 to count - 1
+			lists.get(i).run()
+		running--
+		if running == 0
+			frozen = 0
+
+/*	Every listener used to be a condition of the event's trigger. On Lua each condition is a call from the
+	engine into the script, about 3 us apiece, so an event with ten listeners paid it ten times. From its second
+	listener on, the trigger of an event has a single condition instead, runListeners, which runs the listeners
+	by direct calls at about 0.2 us each. The first stays a condition of its own, since a bridge in front of a
+	single listener only adds a lookup. Jass keeps a condition per listener, as a list is a trigger there and one
+	behind a bridge would only add an evaluation.
+
+	The listeners keep their order, the thread they run in, their event responses and GetTriggeringTrigger. One
+	registered while the event is delivered does not get that event, as a condition added while the engine fires
+	a trigger is not reached by it: it goes into a list the delivery under way does not run.
+
+	What a condition returns decides whether the actions of its trigger run, and a list can not pass that on. So
+	a trigger goes back to what it always was, a condition per listener in the order they were added, as soon as
+	something is attached to it whose running depends on its conditions: a registration with an action, or a call
+	of getPlayerUnitEventTrigger. It is sealed then, and stays that way.
+
+	Only what goes through this package can be seen. The trigger handle which GetTriggeringTrigger gives a
+	listener is the same trigger, but taking it is a native call, so it does not seal. A condition added to a
+	trigger that way, while listeners are registered around it, does not keep its place among them. */
+class EventBridge
+	/** The listeners in the order they were added; null while there are none, and once sealed. */
+	ListenerLists listeners = null
+	/** The same listeners as conditions, to put back on the trigger when it is sealed. */
+	ArrayList<filterfunc> conditions = null
+	/** What the trigger runs for the listeners: the condition of the only one, or runListeners. */
+	triggercondition engineCondition = null
+	bool bridged = false
+	/** Whether new listeners are conditions of their own. */
+	bool sealed = false
+
+constant bridges = new FastKeyedMap<trigger, EventBridge>()
+
+/** The one condition of a bridged trigger. */
+function runListeners() returns boolean
+	let bridge = bridges.get(GetTriggeringTrigger())
+	if bridge != null and bridge.listeners != null
+		bridge.listeners.run()
+	return true
+
+function trigger.getBridge() returns EventBridge
+	var bridge = bridges.get(this)
+	if bridge == null
+		bridge = new EventBridge()
+		bridges.put(this, bridge)
+	return bridge
+
+/** Adds the condition of a registration which brings no action. Behind the trigger's one condition where it can be. */
+function trigger.addListener(code listener)
+	if isLua
+		let bridge = this.getBridge()
+		if not bridge.sealed
+			let condition = Filter(listener)
+			if bridge.listeners == null
+				bridge.listeners = new ListenerLists()
+				bridge.conditions = new ArrayList<filterfunc>()
+				bridge.engineCondition = this.addCondition(condition)
+			else if not bridge.bridged
+				this.removeCondition(bridge.engineCondition)
+				bridge.engineCondition = this.addCondition(Filter(function runListeners))
+				bridge.bridged = true
+			bridge.listeners.add(listener)
+			bridge.conditions.add(condition)
+			return
+	this.addCondition(Filter(listener))
+
+/** Puts the trigger back to a condition per listener, and keeps it so; see above. This may happen while the event
+	is delivered through the bridge, by a listener. The engine does not reach conditions added during the evaluation
+	of a trigger it fires, so no listener runs twice; the in-game tests check that. */
+function trigger.seal()
+	if isLua
+		let bridge = this.getBridge()
+		if not bridge.sealed
+			bridge.sealed = true
+			if bridge.listeners != null
+				// With a single listener there is nothing to put back: its condition is the trigger's own.
+				if bridge.bridged
+					this.removeCondition(bridge.engineCondition)
+					for i = 0 to bridge.conditions.size() - 1
+						this.addCondition(bridge.conditions.get(i))
+				destroy bridge.conditions
+				bridge.listeners = null
+				bridge.conditions = null
+				bridge.engineCondition = null
 
 public function registerPlayerUnitEvent(playerunitevent p, code c)
 	registerPlayerUnitEvent(p, null, c, null)
@@ -19,20 +136,36 @@ public function registerPlayerUnitEvent(playerunitevent p, code filter, code con
 		t[hid] = CreateTrigger()
 		for k = bj_MAX_PLAYER_SLOTS - 1 downto 0
 			t[hid].registerPlayerUnitEvent(players[k], p, filter != null ? Filter(filter) : null)
-	if condition != null
-		t[hid].addCondition(Filter(condition))
 	if action != null
+		t[hid].seal()
+		if condition != null
+			t[hid].addCondition(Filter(condition))
 		t[hid].addAction(action)
+	else if condition != null
+		t[hid].addListener(condition)
 
 public function registerPlayerUnitEventForPlayer(playerunitevent p, code c, player pl)
 	let i = bj_MAX_PLAYER_SLOTS * p.getHandleId() + pl.getId()
 	if t[i] == null
 		t[i] = CreateTrigger()
 		t[i].registerPlayerUnitEvent(pl, p, null)
-	t[i].addCondition(Filter(c))
+	t[i].addListener(c)
+
+/** Whether the trigger of an event was handed out by getPlayerUnitEventTrigger, by the handle id of the event. */
+bool array eventTriggerTaken
+
+/** Whether getPlayerUnitEventTrigger has handed out the trigger of the event with this handle id. The caller may have
+	registered more events on it since, so what runs from it can not assume which event fired. */
+public function isPlayerUnitEventTriggerTaken(int eventHandleId) returns bool
+	return eventTriggerTaken[eventHandleId]
 
 public function getPlayerUnitEventTrigger(playerunitevent p) returns trigger
-	return t[GetHandleId(p)]
+	let eventTrigger = t[GetHandleId(p)]
+	// The caller may attach anything to it.
+	if eventTrigger != null
+		eventTrigger.seal()
+		eventTriggerTaken[GetHandleId(p)] = true
+	return eventTrigger
 
 /*****PlayerEvent*****/
 
@@ -45,19 +178,42 @@ public function registerPlayerEvent(playerevent p, code condition, code action)
 		t[hid] = CreateTrigger()
 		for k = bj_MAX_PLAYER_SLOTS - 1 downto 0
 			t[hid].registerPlayerEvent(players[k], p)
-	if condition != null
-		t[hid].addCondition(Filter(condition))
 	if action != null
+		t[hid].seal()
+		if condition != null
+			t[hid].addCondition(Filter(condition))
 		t[hid].addAction(action)
+	else if condition != null
+		t[hid].addListener(condition)
 
 /*****SpellEffectEvent*****/
 
-constant onCastMap = new HashMap<int, trigger>()
+// One list per ability id. On Lua the lists sit in a native table, so a cast is one table index and
+// a call per listener; it used to be a HashMap lookup and a trigger evaluation, which is the engine's
+// round trip for every listener.
+//
+// The two functions below are the KeyedMap operations for the one value type this package stores. The
+// compiler recognises them by their annotation and their exact shape, so they must keep it; the bodies
+// are what runs on Jass.
+@compilerintrinsic function keyedMapPut(int map, int key, ListenerLists value)
+	(map castTo Table).saveInt(key, value castTo int)
+
+@compilerintrinsic function keyedMapGet(int map, int key) returns ListenerLists
+	return (map castTo Table).loadInt(key) castTo ListenerLists
+
+constant spellEffectLists = keyedMapCreate()
 
 init
-	registerPlayerUnitEvent(EVENT_PLAYER_UNIT_SPELL_EFFECT, () -> (onCastMap.get(GetSpellAbilityId())).evaluate())
+	registerPlayerUnitEvent(EVENT_PLAYER_UNIT_SPELL_EFFECT, function runSpellEffectListeners)
+
+function runSpellEffectListeners()
+	let list = keyedMapGet(spellEffectLists, GetSpellAbilityId())
+	if list != null
+		list.run()
 
 public function registerSpellEffectEvent(int abil, code onCast)
-	if not onCastMap.has(abil)
-		onCastMap.put(abil, CreateTrigger())
-	onCastMap.get(abil).addCondition(Filter(onCast))
+	var list = keyedMapGet(spellEffectLists, abil)
+	if list == null
+		list = new ListenerLists()
+		keyedMapPut(spellEffectLists, abil, list)
+	list.add(onCast)

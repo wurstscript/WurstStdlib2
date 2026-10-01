@@ -2,7 +2,10 @@ package TimerUtils
 import NoWurst
 import ErrorHandling
 import Basics
+import ArrayList
+import CodeList
 import HashMap
+import KeyedMap
 import Trigger
 import public Timer
 
@@ -11,14 +14,24 @@ import public Timer
 timer array freeTimers
 int freeTimersCount = 0
 constant timerData = new Table()
+// On Lua the data lives in a KeyedMap keyed by the timer itself: one table
+// index, instead of a Table access through the timer's handle id. Every
+// closure timer attaches its callback here when it starts and reads it back
+// when it expires. The Jass path above is unchanged.
+constant luaTimerData = keyedMapCreate()
 constant HELD = 0x28829022
 
 /** Attach Data to this timer */
 public function timer.setData(int data)
-	timerData.saveInt(this.getTCHandleId(), data)
+	if isLua
+		keyedMapPut(luaTimerData, this, data)
+	else
+		timerData.saveInt(this.getTCHandleId(), data)
 
 /** Retrieve the data attached to this timer */
 public function timer.getData() returns int
+	if isLua
+		return keyedMapGetInt(luaTimerData, this)
 	return timerData.loadInt(this.getTCHandleId())
 
 /** Get a new timer. Use this instead of "CreateTimer".
@@ -48,10 +61,35 @@ public function timer.release()
 
 /* TimedLoop for classes */
 
+/*	One TimedLoop class, as the timer of its period sees it. Jass keeps the loop as a condition of the timer's
+	trigger. On Lua that condition would be a call from the engine into the script per class and tick, so the
+	loop is a CodeList instead and the timer calls it directly. */
+class TimedLoopEntry
+	/** The Lua form: a list of the one loop function. */
+	CodeList list = null
+	/** The Jass form: the condition, and the registration of it while the entry is active. */
+	conditionfunc filter = null
+	triggercondition condition = null
+
+	construct(code onTick)
+		if isLua
+			list = new CodeList()
+			list.add(onTick)
+		else
+			filter = Condition(onTick)
+
+/** Runs the loops of one period from a single timer, in the order they became active. */
 class TimedLoopTimer
 
 	constant loopTimer = getTimer()..setData(this castTo int)
+	/** Jass: the loops are the conditions of this trigger. */
 	constant loopTrigger = CreateTrigger()
+	/** Lua: the lists of the active loops. */
+	constant loops = new ArrayList<CodeList>()
+	/** Lua: the index of the loop which is running, so releasing one during a tick does not skip the next. */
+	int running = -1
+	/** Lua: how many of the loops the tick under way calls. The ones added meanwhile come after it. */
+	int boundary = 0
 	int conditionsCount = 0
 
 	real period
@@ -68,21 +106,50 @@ class TimedLoopTimer
 			timerMap.put(period, instance)
 		return instance
 
-	function add(conditionfunc condition) returns triggercondition
-		let triggerCondition = loopTrigger.addCondition(condition)
+	function add(TimedLoopEntry entry)
+		if isLua
+			loops.add(entry.list)
+		else
+			entry.condition = loopTrigger.addCondition(entry.filter)
 		conditionsCount++
 		if conditionsCount == 1
 			loopTimer.startPeriodic(period, function triggerEval)
-		return triggerCondition
 
 	static function triggerEval()
 		let instance = GetExpiredTimer().getData() castTo thistype
-		instance.loopTrigger.evaluate()
+		if isLua
+			instance.runLoops()
+		else
+			instance.loopTrigger.evaluate()
 		if instance.conditionsCount == 0
 			instance.loopTimer.pause()
 
-	function release(triggercondition condition)
-		loopTrigger.removeCondition(condition)
+	/** Calls the active loops. One added meanwhile waits for the next tick, as a condition added to a trigger during
+		its evaluation does. */
+	function runLoops()
+		boundary = loops.size()
+		running = 0
+		while running < boundary
+			loops.get(running).run()
+			running++
+		running = -1
+		boundary = 0
+
+	function release(TimedLoopEntry entry)
+		if isLua
+			let index = loops.indexOf(entry.list)
+			if index < 0
+				return
+			loops.removeAtOrdered(index)
+			if index < boundary
+				boundary--
+			if index <= running
+				// The loop which is running or one before it left, so the next has moved down to the index
+				// which is running now.
+				running--
+		else
+			loopTrigger.removeCondition(entry.condition)
+			entry.condition = null
 		conditionsCount--
 
 
@@ -98,7 +165,9 @@ public module TimedLoop
 	static private int instanceCount = 0
 
 	static private TimedLoopTimer timedLoopTimer
-	static private triggercondition condition
+	static private TimedLoopEntry timedLoopEntry = null
+	/** True from the first instance starting until the tick which finds none left. */
+	static private bool timedLoopActive = false
 
 	protected TimedLoopState timedLoopState = PAUSED
 	/** True exactly while this instance has a slot in `instances`. Tracked
@@ -134,8 +203,8 @@ public module TimedLoop
 			i--
 
 		if instanceCount == 0
-			timedLoopTimer.release(condition)
-			condition = null
+			timedLoopTimer.release(timedLoopEntry)
+			timedLoopActive = false
 		return false
 
 	/** Stops the periodic update of this object. */
@@ -160,9 +229,12 @@ public module TimedLoop
 		instances[instanceCount] = this
 		instanceCount++
 		if instanceCount == 1
-			if condition == null
+			if not timedLoopActive
 				timedLoopTimer = TimedLoopTimer.get(getPeriod())
-				condition = timedLoopTimer.add(Condition(function onExpire))
+				if timedLoopEntry == null
+					timedLoopEntry = new TimedLoopEntry(function onExpire)
+				timedLoopTimer.add(timedLoopEntry)
+				timedLoopActive = true
 
 	ondestroy
 		if timedLoopState != PAUSED

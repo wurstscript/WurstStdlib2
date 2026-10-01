@@ -68,9 +68,8 @@ public class Fx
 
 	/** Set the owner of this Fx Object */
 	function setOwner(player p, boolean changeColor)
-		if fx != null
-			fx.destr()
-			fx = null
+		fx?.destr()
+		fx = null
 		setFx(sfxPath)
 		dummy.setOwner(p, changeColor)
 
@@ -169,8 +168,7 @@ public class Fx
 	/** Set the path to the sfx model that should be displayed.
 	If there is already a model displayed, it will be replaced with the new one.*/
 	function setFx(string newpath)
-		if fx != null
-			fx.destr()
+		fx?.destr()
 		if newpath == ""
 			fx = null
 		else
@@ -178,8 +176,7 @@ public class Fx
 		sfxPath = newpath
 
 	ondestroy
-		if fx != null
-			fx.destr()
+		fx?.destr()
 
 		DummyRecycler.recycle(dummy, 1.)
 

@@ -1,0 +1,100 @@
+package TerrainEnvironment
+import NoWurst
+import Colors
+import Vectors
+
+/** Complete terrain-fog configuration used by the v3 renderer. */
+public tuple terrainFogSettings(int style, real zStart, real zEnd, real density,
+	real heightStart, real heightEnd, real linearStart, real linearEnd, color tint)
+
+public function setTerrainFog(terrainFogSettings settings)
+	SetTerrainFogExV(settings.style, settings.zStart, settings.zEnd, settings.density,
+		settings.heightStart, settings.heightEnd, settings.linearStart, settings.linearEnd,
+		settings.tint.red / 255., settings.tint.green / 255., settings.tint.blue / 255.)
+
+public function setTerrainFogStyle(fogstyle style)
+	BlzSetTerrainFogStyle(style)
+
+public function setTerrainFogZRange(real start, real stop)
+	BlzSetTerrainFogZStart(start)
+	BlzSetTerrainFogZEnd(stop)
+
+public function setTerrainFogHeightRange(real start, real stop)
+	BlzSetTerrainFogHeightStart(start)
+	BlzSetTerrainFogHeightEnd(stop)
+
+public function setTerrainFogLinearRange(real start, real stop)
+	BlzSetTerrainFogLinearStart(start)
+	BlzSetTerrainFogLinearEnd(stop)
+
+public function setTerrainFogDensity(real density)
+	BlzSetTerrainFogDensity(density)
+
+public function setTerrainFogMaxLinearDensity(real density)
+	BlzSetTerrainFogMaxLinearDensity(density)
+
+public function setTerrainFogColor(color tint)
+	BlzSetTerrainFogColor(tint.red / 255., tint.green / 255., tint.blue / 255.)
+
+public function setTerrainFogDrawOverSky(boolean drawOverSky)
+	BlzSetTerrainFogDrawOverSky(drawOverSky)
+
+/** HD-water renderer parameters. Integer fields use the native engine ranges. */
+public tuple hdWaterSettings(color tint, boolean overrideColor, int vertexDisplacement,
+	int minOpacity, int maxOpacity, int reflectivity, int emissivity, int edgeSoftness,
+	int waveStrength, int environmentMapStrength)
+
+public function setHDWater(hdWaterSettings settings)
+	SetHDWaterParamsEx(settings.tint.red, settings.tint.green, settings.tint.blue,
+		settings.overrideColor, settings.vertexDisplacement, settings.minOpacity,
+		settings.maxOpacity, settings.reflectivity, settings.emissivity,
+		settings.edgeSoftness, settings.waveStrength, settings.environmentMapStrength)
+
+public function setHDWater(color tint, boolean useColor, int vertexDisplacement,
+	int minOpacity, int maxOpacity, int reflectivity, int emissivity, int edgeSoftness,
+	int waveStrength)
+	SetHDWaterParams(tint.red, tint.green, tint.blue, useColor, vertexDisplacement,
+		minOpacity, maxOpacity, reflectivity, emissivity, edgeSoftness, waveStrength)
+
+public function setHDWaterColor(color tint)
+	BlzSetHDWaterColor(tint.red, tint.green, tint.blue)
+
+public function setHDWaterColorOverride(boolean enabled)
+	BlzSetHDWaterColorOverride(enabled)
+
+public function setHDWaterVertexDisplacement(int value)
+	BlzSetHDWaterVertexDisplacement(value)
+
+public function setHDWaterOpacity(int min, int max)
+	BlzSetHDWaterMinOpacity(min)
+	BlzSetHDWaterMaxOpacity(max)
+
+public function setHDWaterReflectivity(int value)
+	BlzSetHDWaterReflectivity(value)
+
+public function setHDWaterEmissivity(int value)
+	BlzSetHDWaterEmissivity(value)
+
+public function setHDWaterEdgeSoftness(int value)
+	BlzSetHDWaterEdgeSoftness(value)
+
+public function setHDWaterWaveStrength(int value)
+	BlzSetHDWaterWaveStrength(value)
+
+public function setHDWaterEnvironmentMapStrength(int value)
+	BlzSetHDWaterEnvMapStrength(value)
+
+public function vec2.isTerrainPathable(pathingtype whichType) returns boolean
+	return BlzIsTerrainPathableEx(this.x, this.y, whichType)
+
+public function vec2.setDoodadColor(real radius, int doodadId, boolean nearestOnly, playercolor whichColor)
+	SetDoodadColor(this.x, this.y, radius, doodadId, nearestOnly, whichColor)
+
+public function rect.setDoodadColor(int doodadId, playercolor whichColor)
+	SetDoodadColorRect(this, doodadId, whichColor)
+
+public function setMinShadowCastingPointLightCount(int count)
+	BlzSetMinShadowCastingPointLightCount(count)
+
+public function getMinShadowCastingPointLightCount() returns int
+	return BlzGetMinShadowCastingPointLightCount()

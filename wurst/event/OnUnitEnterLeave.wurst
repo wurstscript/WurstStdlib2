@@ -12,14 +12,19 @@ import MapBounds
 import ClosureTimers
 import Annotations
 import Orders
+import CodeList
 
 /* 	Provides event API for units entering and leaving the map.
-	The event will also fire for preplaced units on the map.
+	The event will also fire for preplaced units on the map, hidden and Locust ones included.
 
 	NOTE: Any move applied to a unit as response to an enter event
 		will fire the enter event again. */
 
-let eventTrigger = CreateTrigger()
+// Enter listeners run as a CodeList, in the thread that enters the unit: a call each on Lua, a trigger
+// condition each on Jass. Leave listeners are trigger actions, which run in a thread of their own where
+// they may wait, so they stay on a trigger.
+let enterList = new CodeList()
+let leaveTrigger = CreateTrigger()
 let preplacedUnits = CreateGroup()
 
 /* Unit stack for nested usage */
@@ -43,11 +48,11 @@ public function getEnterLeaveUnit() returns unit
 
 /** Adds a callback that is run when a unit enters the map */
 public function onEnter(code c)
-	eventTrigger.addCondition(Filter(c))
+	enterList.add(c)
 
 /** Adds a callback that is run when a unit leaves the map */
 public function onLeave(code c)
-	eventTrigger.addAction(c)
+	leaveTrigger.addAction(c)
 
 /* === Internals === */
 constant ABILITY_ID = compiletime(ABIL_ID_GEN.next())
@@ -55,7 +60,7 @@ constant ABILITY_ID = compiletime(ABIL_ID_GEN.next())
 function prepareUnit(unit u)
 	u..addAbility(ABILITY_ID)..makeAbilityPermanent(ABILITY_ID, true)
 	pushUnit(u)
-	eventTrigger.evaluate()
+	enterList.run()
 	popUnit()
 
 init
@@ -72,11 +77,11 @@ init
 			let leavingUnit = GetTriggerUnit()
 			if leavingUnit.getAbilityLevel(ABILITY_ID) == 0 and GetIssuedOrderId() == Orders.undefend
 				pushUnit(leavingUnit)
-				eventTrigger.execute()
+				leaveTrigger.execute()
 				popUnit()
 
-		// Process preplaced units
-		preplacedUnits.enumUnitsInRect(boundRect)
+		// Process preplaced units. Per-player enumeration, unlike a rect, includes hidden and Locust units.
+		preplacedUnits.enumUnitsAll(null)
 		let count = preplacedUnits.size()
 		for i = 0 to count - 1
 			prepareUnit(preplacedUnits.get(i))

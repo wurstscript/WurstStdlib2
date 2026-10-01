@@ -30,8 +30,8 @@ import Table
 @configurable public constant DEFAULT_CHUNK_SIZE = 200
 
 public class ChunkedString
-	private Table table = new Table()
-	private var chunkSize = DEFAULT_CHUNK_SIZE
+	private readonly Table table = new Table()
+	private readonly var chunkSize = DEFAULT_CHUNK_SIZE
 	protected var chunkCount = 0
 	private var readIndex = -1
 	protected var buffer = ""

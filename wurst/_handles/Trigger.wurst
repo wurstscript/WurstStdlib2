@@ -1,5 +1,6 @@
 package Trigger
 import NoWurst
+import Vectors
 
 /**
 	Metakey is an integer based native parameter which is used as a bitfield.
@@ -176,4 +177,26 @@ public function trigger.registerUpgradeCommandEvent(integer whichUpgrade) return
 
 public function trigger.blzTriggerRegisterPlayerSyncEvent(player whichPlayer, string prefix, boolean fromServer) returns event
 	return BlzTriggerRegisterPlayerSyncEvent(this, whichPlayer, prefix, fromServer)
+
+public function trigger.isRunning() returns boolean
+	return BlzTriggerIsRunning(this)
+
+public function trigger.interrupt()
+	BlzTriggerInterrupt(this)
+
+/** Returns local input state. Never use it to drive synchronized game state. */
+public function oskeytype.isPressed() returns boolean
+	return BlzIsKeyPressed(this)
+
+/** Returns local input state. Never use it to drive synchronized game state. */
+public function OSKEY_META.isPressed() returns boolean
+	return BlzIsMetaKeyPressed(this.toInt())
+
+/** Returns local input state. Never use it to drive synchronized game state. */
+public function mousebuttontype.isPressed() returns boolean
+	return BlzIsMouseButtonPressed(this)
+
+/** Returns the local mouse position in window pixels. */
+public function getMouseScreenPosition() returns vec2
+	return vec2(I2R(BlzGetMouseScreenPosX()), I2R(BlzGetMouseScreenPosY()))
 
