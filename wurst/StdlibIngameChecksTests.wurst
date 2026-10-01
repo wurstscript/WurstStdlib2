@@ -1,0 +1,26 @@
+package StdlibIngameChecksTests
+import StdlibIngameChecks
+
+/*	IngameChecks is public, because the packages which hold checks take a reporter through
+	setEventChecksReporter and its siblings. A reporter written before skipped() existed has only check, section
+	and note; it has to keep compiling, and has to hear about a skip as the note it used to get. */
+
+class ReporterFromBefore implements IngameChecks
+	string last = ""
+	int count = 0
+
+	override function check(bool passed, string label)
+
+	override function section(string label)
+
+	override function note(string label)
+		last = label
+		count++
+
+@Test function aReporterWrittenBeforeSkippedStillCompilesAndHearsOfIt()
+	let reporter = new ReporterFromBefore()
+	IngameChecks checks = reporter
+	checks.skipped(4, "it can not be repeated")
+	reporter.count.assertEquals(1)
+	reporter.last.assertEquals("skipped 4 checks: it can not be repeated")
+	destroy reporter
