@@ -1,4 +1,5 @@
 package FastHashMapTests
+import ErrorHandling
 import FastHashMap
 
 @Test
@@ -305,3 +306,51 @@ function hashOf<T: Hashable>(T x) returns int
 		slot = map.nextEntry(slot + 1)
 	joined.length().assertEquals("alpha".length() + "beta".length())
 	total.assertEquals(3)
+
+// ---- a configuration which can not hold a map is refused ----
+
+@Test
+function testSectionOfNoSlotsIsRefused()
+	sectionProblem(0, 0, 0, true).assertEquals("FastHashMap: FASTHASHMAP_CAPACITY must be positive.")
+	sectionProblem(0, -4, 1024, true).assertEquals("FastHashMap: FASTHASHMAP_CAPACITY must be positive.")
+
+@Test
+function testSectionPastTheConfiguredCountIsRefused()
+	sectionProblem(0, 32, 64, true).assertEquals("")
+	sectionProblem(32, 32, 64, true).assertEquals("")
+	sectionProblem(64, 32, 64, true).assertEquals("FastHashMap: out of sections. Raise FASTHASHMAP_MAX_INSTANCES.")
+
+@Test
+function testJassStorageIsBoundedByTheArrayLimitAndLuaIsNot()
+	let past = JASS_MAX_ARRAY_SIZE - 16
+	let slots = JASS_MAX_ARRAY_SIZE * 2
+	(sectionProblem(past, 32, slots, false) != "").assertTrue()
+	sectionProblem(past, 32, slots, true).assertEquals("")
+
+// ---- Lua only: what an error leaves behind ----
+
+/** Lua-runtime verification, for the in-game suite: `error` returns on Lua, so a refused `keyAt` goes on to answer
+	something. It has to be a key this map never stored, not whichever one sits in the section. Returns what went
+	wrong, or "" (and always "" off Lua, where the thread ends). */
+public function verifyFastHashMapLuaGuardsIngame() returns string
+	if not isLua
+		return ""
+	let map = new FastHashMap<int, int>()
+	map.put(7, 70)
+	let used = map.nextEntry(0)
+	let empty = (used + 1) mod FASTHASHMAP_CAPACITY
+	var problem = ""
+	lastError = ""
+	if map.keyAt(empty) == 7
+		problem = "keyAt of an empty slot answered a key the map holds"
+	else if lastError == ""
+		problem = "keyAt of an empty slot did not report"
+	lastError = ""
+	if problem == "" and map.keyAt(-1) == 7
+		problem = "keyAt of an out of range slot answered a key the map holds"
+	destroy map
+	return problem
+
+@Test
+function testLuaGuardsAreChecked()
+	verifyFastHashMapLuaGuardsIngame().assertEquals("")

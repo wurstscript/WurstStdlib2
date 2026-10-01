@@ -70,14 +70,30 @@ implements Hashable<string>
 		return a == b
 
 /**	Slots per map. Fixed at compile time: every map of one key and value type is this
-	size, so raising it costs memory across all of them. */
+	size, so raising it costs memory across all of them. It has to be positive: a slot is
+	chosen by `hash mod` this, and a map built with none reports it instead. */
 @configurable public constant FASTHASHMAP_CAPACITY = 32
 
-/**	The number of maps of one key and value type which can exist. Sections are handed out
-	and never reclaimed, so this is a total over the run rather than a live count. */
+/**	The number of maps of one key and value type which can exist at once. A destroyed map hands
+	its section back for the next one, so this counts live maps rather than maps over the run. */
 @configurable public constant FASTHASHMAP_MAX_INSTANCES = 256
 
 constant SLOTS = FASTHASHMAP_CAPACITY * FASTHASHMAP_MAX_INSTANCES
+
+/**	Why a section of `capacity` slots can not be handed out at `nextFree`, or "" when it can. `slots` is how many
+	the configuration allows, and `lua` whether the storage grows: on Jass it is one fixed-size array, so a section
+	reaching past its end would read and write slots outside it. A capacity of zero or less is refused because
+	every lookup takes `hash mod capacity`, which for zero ends the thread. Public for the tests, which can not change the
+	configuration. */
+public function sectionProblem(int nextFree, int capacity, int slots, boolean lua) returns string
+	if capacity <= 0
+		return "FastHashMap: FASTHASHMAP_CAPACITY must be positive."
+	if nextFree + capacity > slots
+		return "FastHashMap: out of sections. Raise FASTHASHMAP_MAX_INSTANCES."
+	if not lua and nextFree + capacity > JASS_MAX_ARRAY_SIZE
+		return "FastHashMap: storage limit exceeded for this key and value type. "
+			+ "FASTHASHMAP_CAPACITY * FASTHASHMAP_MAX_INSTANCES must fit JASS_MAX_ARRAY_SIZE."
+	return ""
 
 /**	A hash map which keeps its keys as they are.
 
@@ -126,6 +142,9 @@ public class FastHashMap<K: Hashable, V:>
 	/**	Never written, so a read yields V's default. That is the only way to say "no value"
 		for a type parameter, and it costs an array read rather than a branch. */
 	private static V array none
+	/**	The same for a key: what `keyAt` answers after refusing a slot. On Lua `error` returns, so the
+		answer has to be something this map never stored. */
+	private static K array noKey
 	private static int nextFree = 0
 	/**	Sections handed back by destroyed maps, reused before nextFree grows. Every section is the
 		same width, so this is a stack rather than the capacity-matched free list ArrayList keeps:
@@ -141,18 +160,14 @@ public class FastHashMap<K: Hashable, V:>
 			// A released section was emptied on the way out, so it is ready to use as it is.
 			freeSectionCount--
 			base = freeSection[freeSectionCount]
-		else if nextFree + FASTHASHMAP_CAPACITY > SLOTS
-			error("FastHashMap: out of sections. Raise FASTHASHMAP_MAX_INSTANCES.")
-			base = -1
-		else if not isLua and nextFree + FASTHASHMAP_CAPACITY > JASS_MAX_ARRAY_SIZE
-			// One fixed-size array per specialisation on this target, so a section reaching past
-			// its end would read and write slots outside it. Lua grows the table instead.
-			error("FastHashMap: storage limit exceeded for this key and value type. "
-				+ "FASTHASHMAP_CAPACITY * FASTHASHMAP_MAX_INSTANCES must fit JASS_MAX_ARRAY_SIZE.")
-			base = -1
 		else
-			base = nextFree
-			nextFree += FASTHASHMAP_CAPACITY
+			let problem = sectionProblem(nextFree, FASTHASHMAP_CAPACITY, SLOTS, isLua)
+			if problem != ""
+				error(problem)
+				base = -1
+			else
+				base = nextFree
+				nextFree += FASTHASHMAP_CAPACITY
 
 	/**	The slot holding key, or the one it belongs in: the first tombstone passed over,
 		else the empty slot the probe stopped at. Capacity is fixed, so a full table
@@ -281,7 +296,7 @@ public class FastHashMap<K: Hashable, V:>
 	function keyAt(int slot) returns K
 		if base < 0 or slot < 0 or slot >= FASTHASHMAP_CAPACITY or not used[base + slot]
 			error("FastHashMap: keyAt on a slot which holds nothing; use the value nextEntry returned.")
-			return keys[base]
+			return noKey[0]
 		return keys[base + slot]
 
 	/**	The value in a slot `nextEntry` returned. */
