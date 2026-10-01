@@ -70,6 +70,8 @@ public interface StdlibIngameTestsDone
 
 var checksRun = 0
 var checksFailed = 0
+/** Checks a section left out of this run, as it says it does (see countSkipped). */
+var checksSkipped = 0
 
 /*	Runs never overlap. The suite shares its counters, its report and the
 	fixed positions of its test units, and some checks land on a timer, so a
@@ -117,6 +119,12 @@ function check(bool passed, string label)
 
 function note(string label)
 	report("|cffffcc00INFO|r  " + label)
+
+/**	A section which can not run `checks` of its checks again in this game says so here instead of leaving them out
+	unseen. The summary counts them, so checks run plus checks skipped is what the first run ran. */
+function countSkipped(int checks, string why)
+	checksSkipped += checks
+	report("|cffffcc00INFO|r  skipped " + checks + " checks: " + why)
 
 function section(string label)
 	report("|cff8888ff" + label + "|r")
@@ -967,6 +975,9 @@ class IngameReporter implements IngameChecks
 	override function note(string label)
 		reportNote(label)
 
+	override function skipped(int checks, string why)
+		reportSkipped(checks, why)
+
 function reportCheck(bool passed, string label)
 	check(passed, label)
 
@@ -975,6 +986,9 @@ function reportSection(string label)
 
 function reportNote(string label)
 	note(label)
+
+function reportSkipped(int checks, string why)
+	countSkipped(checks, why)
 
 let ingameReporter = new IngameReporter()
 
@@ -1009,6 +1023,7 @@ public function runStdlibIngameTests()
 	setTimedLoopChecksReporter(ingameReporter)
 	checksRun = 0
 	checksFailed = 0
+	checksSkipped = 0
 	reportLines.clear()
 	report("|cff8888ff=== Wurst stdlib in-game tests ===|r")
 
@@ -1077,7 +1092,7 @@ public function runStdlibIngameTests()
 
 	doAfter(2.5) ->
 		report("|cff8888ff=== " + (checksRun - checksFailed) + "/" + checksRun
-			+ " checks passed ===|r")
+			+ " checks passed" + (checksSkipped > 0 ? ", " + checksSkipped + " skipped" : "") + " ===|r")
 		if checksFailed > 0
 			report("|cffff4444" + checksFailed + " check(s) FAILED|r")
 		writeReport()

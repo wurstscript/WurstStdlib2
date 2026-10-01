@@ -7,3 +7,6 @@ public interface IngameChecks
 	function check(bool passed, string label)
 	function section(string label)
 	function note(string label)
+	/** A section which does not run its `checks` checks in this run, and why. The totals of a run say how many
+		were skipped, so a rerun which runs fewer checks than the first can be told from one which lost some. */
+	function skipped(int checks, string why)
