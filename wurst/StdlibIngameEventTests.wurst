@@ -26,6 +26,9 @@ function section(string label)
 function note(string label)
 	reporter.note(label)
 
+function skipped(int checks, string why)
+	reporter.skipped(checks, why)
+
 // ============================================================================
 // 18. Spell listeners of every kind on the one spell effect trigger
 // ============================================================================
@@ -378,7 +381,7 @@ function lateEndcastAdded()
 public function testListenerRegisteredWhileDelivering()
 	section("--- 23. a listener registered while its event is delivered ---")
 	if lateAdded
-		note("skipped: a listener it registered in an earlier run is still registered, so it can not see one registered for the first time")
+		skipped(4, "a listener it registered in an earlier run is still registered, so it can not see one registered for the first time")
 		return
 	for i = 0 to 4
 		lateCount[i] = 0
@@ -438,7 +441,7 @@ function spellLateSecond()
 public function testSpellEffectRegisteredWhileRunning()
 	section("--- 26. a spell effect listener registered while the ability's listeners run ---")
 	if spellLateAdded
-		note("skipped: a listener it registered in an earlier run is still registered, so it can not see one registered for the first time")
+		skipped(2, "a listener it registered in an earlier run is still registered, so it can not see one registered for the first time")
 		return
 	for i = 0 to 2
 		spellLateCount[i] = 0
