@@ -1,7 +1,8 @@
 package ClosureFrames
 import NoWurst
 import Trigger
-import HashMap
+import KeyedMap
+import Table
 import Unit
 import Framehandle
 
@@ -21,7 +22,20 @@ import Framehandle
 /* CONSTANTS */
 
 constant FRAMEHANDLE_TRIGGER = CreateTrigger()..addAction(function onEvent)
-constant FRAME_MAP = new HashMap<int, FrameHandleListener>
+
+// Frame handle id -> the first listener of that frame. A KeyedMap with an int key and a class-typed value,
+// which the compiler lowers to a native table on Lua. It recognises these three functions by their
+// annotation and their exact shape, so they must keep it; the bodies are what runs on Jass.
+@compilerintrinsic function keyedMapPut(int map, int key, FrameHandleListener value)
+    (map castTo Table).saveInt(key, value castTo int)
+
+@compilerintrinsic function keyedMapGet(int map, int key) returns FrameHandleListener
+    return (map castTo Table).loadInt(key) castTo FrameHandleListener
+
+@compilerintrinsic function keyedMapRemove(int map, int key)
+    (map castTo Table).removeInt(key)
+
+constant FRAME_MAP = keyedMapCreate()
 
 
 /* CLOSURES */
@@ -83,7 +97,7 @@ function addListenerForFrame(FrameHandleListener listener, framehandle frame, fr
     listener.frame = frame
     listener.eventType = eventType
     let id = frame.getHandleId()
-    let first = FRAME_MAP.get(id)
+    let first = keyedMapGet(FRAME_MAP, id)
     // Register (frame, eventType) on the shared trigger only ONCE. onEvent() already fans a single
     // trigger fire out to every listener in the list, so re-registering on each added listener makes
     // the trigger fire once PER registration: a frame with two CONTROL_CLICK listeners then runs its
@@ -100,14 +114,14 @@ function addListenerForFrame(FrameHandleListener listener, framehandle frame, fr
     if first != null
         first.prev = listener
         listener.next = first
-    FRAME_MAP.put(id, listener)
+    keyedMapPut(FRAME_MAP, id, listener)
     return listener
 
 
 /* ON EVENT */
 
 function onEvent()
-    var listener = FRAME_MAP.get(BlzGetTriggerFrame().getHandleId())
+    var listener = keyedMapGet(FRAME_MAP, BlzGetTriggerFrame().getHandleId())
     let eventType = BlzGetTriggerFrameEvent()
     while listener != null
         let nextListener = listener.next
@@ -128,12 +142,12 @@ public abstract class FrameHandleListener
 
     ondestroy
         let id = frame.getHandleId()
-        let first = FRAME_MAP.get(id)
+        let first = keyedMapGet(FRAME_MAP, id)
         if first == this
             if next == null
-                FRAME_MAP.remove(id)
+                keyedMapRemove(FRAME_MAP, id)
             else
-                FRAME_MAP.put(id, next)
+                keyedMapPut(FRAME_MAP, id, next)
         else if prev != null
             prev.next = next
         if next != null
