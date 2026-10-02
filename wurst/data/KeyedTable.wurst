@@ -1,0 +1,89 @@
+package KeyedTable
+import Table
+
+// Keyed membership: a table whose keys are the elements themselves.
+//
+// These are compiler intrinsics, and each backend gets the representation that suits it.
+//
+// On **Lua** every operation lowers to a single table operation - `{}`, `t[k] = true`,
+// `t[k] ~= nil`, `t[k] = nil` - so membership costs one hashed index and Lua does the hashing.
+// The key is a `T:` type parameter, which new generics erase on Lua rather than routing through
+// `castTo int` the way the old `<T>` containers do, so the element arrives as itself and becomes
+// the table key directly. An integer index would defeat native hashing entirely.
+//
+// On **Jass** there is no hashing, so the bodies below run instead: the element is projected to an
+// integer key by `wurstKeyOf` and stored in a `Table`. That costs a hashtable native per operation,
+// which is far slower than the Lua path - but it works, which is what a fallback has to do.
+//
+// **There is no iteration.** Enumerating a Lua table needs `pairs()`, whose order follows internal
+// hash layout and so differs between clients, which desyncs a lockstep game. Anything that must be
+// iterated needs a separately maintained insertion-ordered array - see `SparseSet`.
+//
+// **Null is not a valid key.** On Lua `nil` cannot be a table key at all, so adding one is a
+// runtime error there; on Jass it would collide with the key reserved for absence. Neither backend
+// is asked to invent a meaning for it, and no check is added on the membership path to look for it.
+//
+// **Remove a handle before destroying it.** Warcraft reuses handle ids. On Jass a key is that id
+// and the table stores only that the id is present, so a new handle which inherits the id of a
+// destroyed member is reported as a member. Validating that would mean storing the element next to
+// its key, and `Table` offers no way to store an arbitrary `T` - only `saveUnit`, `saveItem` and
+// the rest, one per concrete type. That is the reason `SparseSet` asks for a `SparseSetKey` and
+// keeps its elements in a dense list: it can compare the stored element and this cannot.
+//
+// The discipline is the same one a `group` needs, and the same one `SparseSet` documents: take an
+// element out before it is destroyed. What is not claimed is that the two backends agree about a
+// member which was destroyed and whose id has since been reused.
+
+/** A new, empty keyed table. */
+@compilerintrinsic public function keyedTableCreate() returns int
+	return (new Table()) castTo int
+
+/** Adds `key`. Adding a key that is already present has no effect. */
+@compilerintrinsic public function keyedTableAdd<T:>(int keyedTable, T key)
+	(keyedTable castTo Table).saveBoolean(wurstKeyOf(key), true)
+
+/** Whether `key` is present. */
+@compilerintrinsic public function keyedTableContains<T:>(int keyedTable, T key) returns boolean
+	return (keyedTable castTo Table).loadBoolean(wurstKeyOf(key))
+
+/** Removes `key`. Removing a key that is absent has no effect. */
+@compilerintrinsic public function keyedTableRemove<T:>(int keyedTable, T key)
+	(keyedTable castTo Table).removeBoolean(wurstKeyOf(key))
+
+/**
+Frees the keyed table.
+
+On Lua this is a no-op: the table is garbage once the last reference is dropped. On Jass it
+releases the `Table` instance, which comes from a finite pool - without this, every discarded
+keyed structure would burn one permanently.
+*/
+@compilerintrinsic public function keyedTableDestroy(int keyedTable)
+	destroy (keyedTable castTo Table)
+
+// ---
+// Key projection. Compiler-owned: these exist so the Jass bodies above have something to call,
+// and are not meant to be called directly.
+// ---
+
+/**
+The integer key of `value` on Jass.
+
+A `T:` type parameter cannot be projected to an integer in Wurst - that is why `SparseSet` has to
+ask its caller for a `SparseSetKey`. The compiler fills this in after generic elimination, when
+each specialisation's element type is concrete, choosing one of the projections below. Element
+types with no stable integer key - real, boolean, string, code, tuples - are rejected there with
+a compile error rather than keyed on something lossy.
+
+On Lua this is never reached: the operations above are replaced wholesale and the element is its
+own key, so there is no projection to make.
+*/
+@compilerintrinsic public function wurstKeyOf<T:>(T value) returns int
+	return 0
+
+/** The projection chosen for ints and for class instances, which are integers by that point. */
+@compilerintrinsic public function keyOfInt(int value) returns int
+	return value
+
+/** The projection chosen for handles, whose id is their key. */
+@compilerintrinsic public function keyOfHandle(handle value) returns int
+	return GetHandleId(value)
