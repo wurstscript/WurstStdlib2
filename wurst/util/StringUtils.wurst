@@ -114,7 +114,7 @@ public function string.split(string splitBy) returns LinkedList<string>
 public function string.splitToArray(string delimiter) returns ArrayList<string>
 	let result = new ArrayList<string>()
 	let offset = delimiter.length()
-	if offset == 0
+	if this == null or offset == 0
 		result.add(this)
 		return result
 	var start = 0
