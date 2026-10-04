@@ -1,6 +1,7 @@
 package StringUtils
 import NoWurst
 import LinkedList
+import ArrayList
 import Texttag
 import Interpolation
 import TypeCasting
@@ -107,6 +108,23 @@ public function string.split(string splitBy) returns LinkedList<string>
 		list.add(first)
 		str = second
 	return list
+
+/** Splits into specialized contiguous storage, preserving empty and trailing fields.
+	An empty delimiter returns the original string as one field. The caller owns the list. */
+public function string.splitToArray(string delimiter) returns ArrayList<string>
+	let result = new ArrayList<string>()
+	let offset = delimiter.length()
+	if offset == 0
+		result.add(this)
+		return result
+	var start = 0
+	var position = this.indexOf(delimiter, start)
+	while position >= 0
+		result.add(start == position ? "" : this.substring(start, position))
+		start = position + offset
+		position = this.indexOf(delimiter, start)
+	result.add(start == this.length() ? "" : this.substring(start, this.length()))
+	return result
 
 /** Replaces consecutive repeats of the same string with a single instance
 	Turns "strstr" into "str" */
