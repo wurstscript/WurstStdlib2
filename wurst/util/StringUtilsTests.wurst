@@ -23,6 +23,31 @@ import ObjectIds
 	(list.size() == 1).assertTrue()
 	destroy list
 
+@Test function splitToArrayPreservesEmptyFieldsAndMultiCharacterDelimiters()
+	let fields = "::alpha::::beta::".splitToArray("::")
+	fields.size().assertEquals(5)
+	fields.get(0).assertEquals("")
+	fields.get(1).assertEquals("alpha")
+	fields.get(2).assertEquals("")
+	fields.get(3).assertEquals("beta")
+	fields.get(4).assertEquals("")
+	destroy fields
+	let empty = "".splitToArray(",")
+	empty.size().assertEquals(1)
+	empty.get(0).assertEquals("")
+	destroy empty
+	let unchanged = "alpha".splitToArray("")
+	unchanged.size().assertEquals(1)
+	unchanged.get(0).assertEquals("alpha")
+	destroy unchanged
+
+@Test function splitToArrayPreservesNullInput()
+	string input = null
+	let fields = input.splitToArray(",")
+	fields.size().assertEquals(1)
+	(fields.get(0) == null).assertTrue()
+	destroy fields
+
 @Test function testJoin()
 	let list = new LinkedList<string>()
 		..add("this", "is", "a", "string")
