@@ -1,9 +1,3 @@
-/** Allocate sequential custom rawcodes for compile-time object generation.
-    Use the generator matching the object kind: `UNIT_ID_GEN`, `HERO_ID_GEN`, `ABIL_ID_GEN`,
-    `BUFF_ID_GEN`, `ITEM_ID_GEN`, or `UPGD_ID_GEN`.
-    Generators do not inspect existing map objects for collisions; keep their ranges separate
-    from IDs used by your map and other libraries.
-*/
 package ObjectIdGenerator
 import NoWurst
 import Annotations
@@ -18,6 +12,7 @@ public constant ITEM_ID_GEN = new IdGenerator('IM00')
 public constant UPGD_ID_GEN = new IdGenerator('RM00')
 
 /** Generates sequential four-character object IDs from a starting rawcode.
+    Does not check existing map IDs for collisions; keep generator ranges separate from other objects.
     The starting ID is a seed: `next()` advances before returning an ID.
     > let ids = new IdGenerator('x000')
     > let firstId = ids.next()

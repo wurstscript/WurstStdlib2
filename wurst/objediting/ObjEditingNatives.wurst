@@ -1,6 +1,3 @@
-/** Low-level compile-time object-data editing. Prefer typed definitions for ordinary map code.
-    Level closures receive levels starting at 1.
-*/
 package ObjEditingNatives
 import NoWurst
 import Boolean
@@ -19,6 +16,9 @@ public interface BooleanLevelClosure
 	function run(int lvl) returns boolean
 
 
+/** Low-level compile-time object-data editing. Prefer typed definitions for ordinary map code.
+    Level closures receive levels starting at 1.
+*/
 public tuple ObjectDefinition(string key)
 
 /** Copies `deriveFrom` into the custom object `newId` during compile-time object generation.

@@ -1,4 +1,3 @@
-/** Create ability object data at compile time. Levels start at 1; generated field presets set all levels and add tooltip properties. */
 package AbilityObjEditing
 import NoWurst
 import Integer
@@ -53,6 +52,7 @@ public function AbilityDefinition.setDummyAbility() returns AbilityDefinition
 	..setCheckDependencies(false)
 	return this
 
+/** Create ability object data at compile time. Levels start at 1; generated field presets set all levels and add tooltip properties. */
 public class AbilityDefinition
 	protected ObjectDefinition def
 	protected int lvls = 1
