@@ -1,3 +1,6 @@
+/** Low-level compile-time object-data editing. Prefer typed definitions for ordinary map code.
+    Level closures receive levels starting at 1.
+*/
 package ObjEditingNatives
 import NoWurst
 import Boolean
@@ -18,9 +21,12 @@ public interface BooleanLevelClosure
 
 public tuple ObjectDefinition(string key)
 
-// creates a new unit objectdefinition
-// for example to create a new unit with id "h000" which is based on a footman ("hfoo")
-// let u = createObjectDefinition("w3u", "h000", "hfoo")
+/** Copies `deriveFrom` into the custom object `newId` during compile-time object generation.
+    `fileType` selects the object kind: `w3u` unit, `w3a` ability, `w3t` item, `w3h` buff,
+    `w3b` destructable, `w3d` doodad, or `w3q` upgrade.
+    Choose a custom ID that does not collide with another object:
+    > let unitDef = createObjectDefinition("w3u", 'h000', 'hfoo')
+*/
 @compiletimenative public function createObjectDefinition(string fileType, int newId, int deriveFrom) returns ObjectDefinition
 	return ObjectDefinition("") // dummy implementation
 

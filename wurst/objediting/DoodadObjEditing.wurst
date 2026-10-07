@@ -1,3 +1,4 @@
+/** Create and configure doodad object data at compile time. */
 package DoodadObjEditing
 import ObjEditingNatives
 import NoWurst
@@ -19,6 +20,11 @@ public class W3DDefinition
 		this.baseId = baseId
 		def = createObjectDefinition("w3d", newId, baseId)
 
+/** Creates a doodad by copying `origID` into the custom object `newID`.
+    Choose a non-colliding custom ID; `'D000'` is an example, not a reserved ID.
+    `baseDoodadId` must identify an existing doodad. Inside compile-time object generation:
+    > new DoodadDefinition('D000', baseDoodadId)
+*/
 public class DoodadDefinition extends W3DDefinition
 	construct(int newID, int origID)
 		super(newID, origID)
