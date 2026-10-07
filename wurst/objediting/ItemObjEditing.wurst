@@ -3,6 +3,7 @@ import ObjEditingNatives
 import UnitObjEditing
 import NoWurst
 
+/** Create and configure item object data at compile time. */
 public class W3TDefinition
 	ObjectDefinition def
 
@@ -15,6 +16,7 @@ public class W3TDefinition
 	function getBaseId() returns int
 		return baseId
 
+	/** Copies `baseId` into the custom item `newId`. Use a new ID that does not collide with another item. */
 	construct(int newId, int baseId)
 		this.newId = newId
 		this.baseId = baseId
@@ -47,6 +49,11 @@ public class W3TDefinition
 	function setButtonPositionX(int data)
 		def.setInt("ubpx", data)
 
+/** Creates an item based on an existing item ID. Import `ObjectIdGenerator` and `ItemIds` for this example:
+    > @compiletime function createMyItem()
+    >     new ItemDefinition(ITEM_ID_GEN.next(), ItemIds.clawsofAttack15)
+    >         ..setName("My Claws")
+*/
 public class ItemDefinition extends W3TDefinition
 
 	construct(int newId, int origId)

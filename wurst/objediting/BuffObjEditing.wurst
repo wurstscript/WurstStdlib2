@@ -42,6 +42,12 @@ public function createDummyBuffObject(string name, string tooltip, string iconpa
 
 	return buffTuple(abilId, buffId)
 
+/** Creates buff object data based on an existing buff ID. Import `BuffIds` and `ObjectIdGenerator` for this example:
+    > @compiletime function createMyBuff()
+    >     new BuffDefinition(BUFF_ID_GEN.next(), BuffIds.slow)
+    >         ..setName(1, "My Slow")
+    Buff object data defines presentation; use an ability to apply the buff to a unit.
+*/
 public class BuffDefinition
 	ObjectDefinition def
 
@@ -54,6 +60,7 @@ public class BuffDefinition
 	function getBaseId() returns int
 		return baseId
 
+	/** Copies `baseId` into the custom buff `newId`. Use a new ID that does not collide with another buff. */
 	construct(int newId, int baseId)
 		this.newId = newId
 		this.baseId = baseId

@@ -19,6 +19,12 @@ public class W3BDefinition
 		this.baseId = baseId
 		def = createObjectDefinition("w3b", newId, baseId)
 
+/** Creates a destructable by copying `origID` into the custom object `newID`.
+    Choose a non-colliding custom ID; `'B000'` is an example, not a reserved ID.
+    > @compiletime function createMyDestructable()
+    >     new DestructableDefinition('B000', 'LTlt')
+    >         ..setName("My Tree")
+*/
 public class DestructableDefinition extends W3BDefinition
 	construct(int newID,int origID)
 		super(newID,origID)

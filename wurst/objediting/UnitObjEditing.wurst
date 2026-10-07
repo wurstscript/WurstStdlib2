@@ -6,6 +6,7 @@ import ObjectIds
 import public TargetsAllowed
 import public ObjEditingCommons
 
+/** Create and configure unit, hero, and building object data at compile time. */
 public class W3UDefinition
 	ObjectDefinition def
 
@@ -18,6 +19,7 @@ public class W3UDefinition
 	function getBaseId() returns int
 		return baseId
 
+	/** Copies `baseId` into the custom object `newId`. Use a new ID that does not collide with another object. */
 	construct(int newId, int baseId)
 		this.newId = newId
 		this.baseId = baseId
@@ -626,6 +628,7 @@ public class UnitOrHeroDefinition extends UnitOrBuildingOrHeroDefinition
 		def.setInt("ufor", data)
 
 
+/** Creates a hero based on an existing hero ID. Configure it during compile-time object generation. */
 public class HeroDefinition extends UnitOrHeroDefinition
 
 	construct(int newId, int origId)
@@ -702,6 +705,11 @@ public class HeroDefinition extends UnitOrHeroDefinition
 				def.setString("urq8", data)
 			default
 
+/** Creates a unit based on an existing unit ID. Import `ObjectIdGenerator` and `UnitIds` for this example:
+    > @compiletime function createMyUnit()
+    >     new UnitDefinition(UNIT_ID_GEN.next(), UnitIds.footman)
+    >         ..setName("My Footman")
+*/
 public class UnitDefinition extends UnitOrHeroDefinition
 
 	construct(int newId, int origId)
@@ -716,6 +724,7 @@ public class UnitDefinition extends UnitOrHeroDefinition
 	function setCasterUpgradeArt(string data)
 		def.setString("ucua", data)
 
+/** Creates a building based on an existing building ID. Configure it during compile-time object generation. */
 public class BuildingDefinition extends UnitOrBuildingOrHeroDefinition
 
 	construct(int newId, int origId)

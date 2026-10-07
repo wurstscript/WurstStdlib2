@@ -11,12 +11,20 @@ public constant BUFF_ID_GEN = new IdGenerator('BM00')
 public constant ITEM_ID_GEN = new IdGenerator('IM00')
 public constant UPGD_ID_GEN = new IdGenerator('RM00')
 
+/** Generates sequential four-character object IDs from a starting rawcode.
+    Does not check existing map IDs for collisions; keep generator ranges separate from other objects.
+    The starting ID is a seed: `next()` advances before returning an ID.
+    > let ids = new IdGenerator('x000')
+    > let firstId = ids.next()
+    Use one shared generator for a range, rather than repeatedly constructing generators with the same seed.
+*/
 public class IdGenerator
 	private int i1
 	private int i2
 	private int i3
 	private int i4
 
+	/** Sets the initial rawcode. Choose a range that does not overlap existing object IDs. */
 	construct(int start)
 		i1 = start mod 256
 		i2 = (start mod 65536) div 256
