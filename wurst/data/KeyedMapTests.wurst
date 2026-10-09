@@ -1,6 +1,32 @@
 package KeyedMapTests
 import KeyedMap
 
+@Test
+function fastStringKeysAreCollisionSafe()
+	let map = new FastKeyedMap<string, int>()
+	let other = new FastKeyedMap<string, int>()
+	// StringHash folds ASCII case, but string equality does not.
+	StringHash("alpha").assertEquals(StringHash("ALPHA"))
+	map.put("alpha", 42)
+	map.put("ALPHA", 7)
+	map.put("", 0)
+	map.put("alpha", 43)
+	map.get("alpha").assertEquals(43)
+	map.get("ALPHA").assertEquals(7)
+	map.has("").assertEquals(true)
+	other.has("alpha").assertEquals(false)
+	map.remove("alpha")
+	map.remove("missing")
+	map.has("alpha").assertEquals(false)
+	map.get("ALPHA").assertEquals(7)
+	map.remove("ALPHA")
+	map.has("ALPHA").assertEquals(false)
+	destroy map
+	let reused = new FastKeyedMap<string, int>()
+	reused.has("").assertEquals(false)
+	destroy reused
+	destroy other
+
 class KeyedMapTestData
 	int value
 

@@ -44,15 +44,13 @@ import ErrorHandling
 /**
  * Typed value intrinsic used by FastKeyedMap. Keep the name distinct from keyedMapPut: the legacy
  * fixed signature must remain unambiguous for existing callers. Lua lowers this to one raw table
- * store; Jass specializes int and class values to the existing integer fallback.
+ * store; Jass specializes int and class values to the handle or string integer fallback.
  */
-@compilerintrinsic public function keyedMapPutNative<K: handle, V:>(int map, K key, V value)
-	if key == null
-		return
+@compilerintrinsic public function keyedMapPutNative<K:, V:>(int map, K key, V value)
 	error("keyedMapPutNative requires compiler keyed-map intrinsic support")
 
 /** Typed get paired with keyedMapPutNative. */
-@compilerintrinsic public function keyedMapGetNative<K: handle, V:>(int map, K key) returns V
+@compilerintrinsic public function keyedMapGetNative<K:, V:>(int map, K key) returns V
 	error("keyedMapGetNative requires compiler keyed-map intrinsic support")
 	return null
 
@@ -68,26 +66,117 @@ import ErrorHandling
 
 /** Frees the map. Lua lowering clears its backing table in place, even if an alias still references it. */
 @compilerintrinsic public function keyedMapDestroy(int map)
+	var entry = stringHeads[map]
+	stringHeads[map] = null
+	while entry != null
+		let next = entry.nextAll
+		destroy entry
+		entry = next
 	destroy (map castTo Table)
 
+// Jass owns collision entries. Lua lowers the operations to direct table accesses, so these
+// nodes and their ownership list are unreachable there. Bucket links handle StringHash collisions;
+// the separate ownership list lets destroy release every entry without enumerating a hashtable.
+class StringMapEntry
+	string key
+	int value
+	StringMapEntry nextBucket
+	StringMapEntry nextAll
+	StringMapEntry previousAll
+
+	ondestroy
+		key = ""
+		nextBucket = null
+		nextAll = null
+		previousAll = null
+
+StringMapEntry array stringHeads
+
+function findStringEntry(int map, string key) returns StringMapEntry
+	var entry = (map castTo Table).loadInt(StringHash(key)) castTo StringMapEntry
+	while entry != null
+		if entry.key == key
+			return entry
+		entry = entry.nextBucket
+	return null
+
+@compilerintrinsic public function keyedMapPutString(int map, string key, int value)
+	let old = findStringEntry(map, key)
+	if old != null
+		old.value = value
+		return
+	let table = map castTo Table
+	let hash = StringHash(key)
+	let entry = new StringMapEntry()
+	entry.key = key
+	entry.value = value
+	entry.nextBucket = table.loadInt(hash) castTo StringMapEntry
+	entry.nextAll = stringHeads[map]
+	entry.previousAll = null
+	if entry.nextAll != null
+		entry.nextAll.previousAll = entry
+	stringHeads[map] = entry
+	table.saveInt(hash, entry castTo int)
+
+@compilerintrinsic public function keyedMapGetStringInt(int map, string key) returns int
+	let entry = findStringEntry(map, key)
+	if entry == null
+		return 0
+	return entry.value
+
+@compilerintrinsic public function keyedMapHasString(int map, string key) returns boolean
+	return findStringEntry(map, key) != null
+
+@compilerintrinsic public function keyedMapRemoveString(int map, string key)
+	let table = map castTo Table
+	let hash = StringHash(key)
+	var entry = table.loadInt(hash) castTo StringMapEntry
+	StringMapEntry previous = null
+	while entry != null
+		if entry.key == key
+			if previous == null
+				if entry.nextBucket == null
+					table.removeInt(hash)
+				else
+					table.saveInt(hash, entry.nextBucket castTo int)
+			else
+				previous.nextBucket = entry.nextBucket
+			if entry.previousAll == null
+				stringHeads[map] = entry.nextAll
+			else
+				entry.previousAll.nextAll = entry.nextAll
+			if entry.nextAll != null
+				entry.nextAll.previousAll = entry.previousAll
+			destroy entry
+			return
+		previous = entry
+		entry = entry.nextBucket
+
+@compilerintrinsic public function keyedMapHasNative<K:>(int map, K key) returns boolean
+	error("keyedMapHasNative requires compiler keyed-map intrinsic support")
+	return false
+
+@compilerintrinsic public function keyedMapRemoveNative<K:>(int map, K key)
+	error("keyedMapRemoveNative requires compiler keyed-map intrinsic support")
+
 /**
- * High-performance map for handle keys and native int or class-reference values.
- * Jass uses Warcraft's hashtable; Lua uses a native table keyed by the handle itself and stores V
+ * High-performance map for handle or string keys and native int or class-reference values.
+ * Jass uses Warcraft's hashtable with full-string collision checks; Lua uses a native table and stores V
  * directly, without boxing.
  *
  * This deliberately narrow API avoids key hashing and handle-id conversions on Lua. It is not a
- * general-purpose replacement for HashMap: only handle keys are accepted, keys are not iterable,
+ * general-purpose replacement for HashMap: only handle and string keys are supported, keys are not iterable,
  * and there is no size counter. Use remove() for absence; reference values must be non-null because
  * Lua represents nil as a missing table entry. Keep class-reference values alive while stored, and
  * remove or replace them before destroy: Jass stores their integer object IDs, which can be reused,
- * while Lua keeps the original reference. The same holds for keys: remove a key's entry before you
+ * on both targets. The same holds for handle keys: remove a key's entry before you
  * destroy that handle. Jass stores the entry under the handle id, which Warcraft hands to a later
  * handle, so the new handle would read the old value; Lua would keep the destroyed handle referenced.
  * This requires the compiler's keyed-map intrinsic lowering.
  * The intrinsic source bodies fail loudly if a compiler understands the generic declarations but
  * lacks that lowering; they never silently discard writes or return defaults.
  */
-public class FastKeyedMap<K: handle, V:>
+public class FastKeyedMap<K:, V:>
 	private int map
 
 	construct()
@@ -103,11 +192,11 @@ public class FastKeyedMap<K: handle, V:>
 
 	/** Returns whether the key has a stored value. */
 	function has(K key) returns boolean
-		return keyedMapHas(map, key)
+		return keyedMapHasNative<K>(map, key)
 
 	/** Removes a key and its value. */
 	function remove(K key)
-		keyedMapRemove(map, key)
+		keyedMapRemoveNative<K>(map, key)
 
 	ondestroy
 		keyedMapDestroy(map)
