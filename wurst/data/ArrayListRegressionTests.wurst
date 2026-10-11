@@ -1,0 +1,75 @@
+package ArrayListRegressionTests
+import ArrayList
+
+class CountingComparator implements Comparator<int>
+	int comparisons = 0
+
+	override function compare(int left, int right) returns int
+		comparisons++
+		return left < right ? -1 : (left > right ? 1 : 0)
+
+@Test public function duplicateSortDoesNotRescanEqualPartition()
+	let list = new ArrayList<int>(256)
+	let comparator = new CountingComparator()
+	for _i = 1 to 256
+		list.add(7)
+	list.sortWith(comparator)
+	list.size().assertEquals(256)
+	for i = 0 to 255
+		list.get(i).assertEquals(7)
+	// A generous linear bound detects the previous quadratic equal-key path.
+	comparator.comparisons.assertLessThan(256 * 4)
+	println("256 equal elements: " + comparator.comparisons + " comparisons")
+	destroy comparator
+	destroy list
+
+@Test public function duplicateHeavySortPreservesEveryElement()
+	let list = new ArrayList<int>(256)
+	for i = 0 to 255
+		list.add((i * 17) mod 8)
+	list.sort()
+	for i = 0 to 255
+		list.get(i).assertEquals(i div 32)
+	destroy list
+
+tuple GapMarker(int value)
+tuple SplitMarker(int value)
+
+@Test public function fragmentedReleaseDoesNotLoseCapacity()
+	let lists = new ArrayList<ArrayList<GapMarker>>(600)
+	for i = 0 to 599
+		let list = new ArrayList<GapMarker>(16)
+		list.add(GapMarker(i))
+		lists.add(list)
+	// More than 256 nonadjacent gaps used to overflow the free-section pool.
+	for i = 0 to 598 step 2
+		destroy lists.get(i)
+	for i = 1 to 599 step 2
+		lists.get(i).get(0).value.assertEquals(i)
+		destroy lists.get(i)
+	destroy lists
+	// All capacity must be reusable, including the former gaps and tail.
+	let full = new ArrayList<GapMarker>(JASS_MAX_ARRAY_SIZE)
+	full.add(GapMarker(42))
+	full.get(0).value.assertEquals(42)
+	destroy full
+
+@Test public function smallerReuseLeavesRemainderAvailable()
+	let large = new ArrayList<SplitMarker>(JASS_MAX_ARRAY_SIZE - 16)
+	let neighbour = new ArrayList<SplitMarker>(16)
+	neighbour.add(SplitMarker(99))
+	destroy large
+	let small = new ArrayList<SplitMarker>(16)
+	small.add(SplitMarker(7))
+	let remainder = new ArrayList<SplitMarker>(JASS_MAX_ARRAY_SIZE - 32)
+	remainder.add(SplitMarker(11))
+	small.get(0).value.assertEquals(7)
+	neighbour.get(0).value.assertEquals(99)
+	remainder.get(0).value.assertEquals(11)
+	destroy small
+	destroy neighbour
+	destroy remainder
+	let full = new ArrayList<SplitMarker>(JASS_MAX_ARRAY_SIZE)
+	full.add(SplitMarker(12))
+	full.get(0).value.assertEquals(12)
+	destroy full

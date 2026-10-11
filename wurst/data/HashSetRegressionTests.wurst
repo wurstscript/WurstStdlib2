@@ -1,0 +1,54 @@
+package HashSetRegressionTests
+import HashSet
+
+@Test public function replacementKeepsRemovalIndex()
+	let set = new HashSet<int>()
+	set.add(1, 2, 3)
+	set.set(1, 4)
+	set.remove(4).assertTrue()
+	set.has(4).assertFalse()
+	set.has(1).assertTrue()
+	set.has(3).assertTrue()
+	set.size().assertEquals(2)
+	destroy set
+
+@Test public function replacementPreservesUniqueness()
+	let set = new HashSet<int>()
+	set.add(1, 2)
+	// Replacing with an already-present element leaves the set unchanged.
+	set.set(0, 2)
+	set.count(2).assertEquals(1)
+	set.get(0).assertEquals(1)
+	set.set(1, 2)
+	set.size().assertEquals(2)
+	set.set(2, 3)
+	set.remove(3).assertTrue()
+	set.size().assertEquals(2)
+	destroy set
+
+@Test public function removeIfKeepsRemovalIndex()
+	let set = new HashSet<int>()
+	set.add(0, 1, 2, 3, 4)
+	set.removeIf(value -> value mod 2 != 0)
+	set.get(0).assertEquals(0)
+	set.get(1).assertEquals(2)
+	set.get(2).assertEquals(4)
+	set.remove(2).assertTrue()
+	set.has(2).assertFalse()
+	set.has(4).assertTrue()
+	set.remove(0).assertTrue()
+	set.remove(4).assertTrue()
+	set.isEmpty().assertTrue()
+	set.add(0, 1)
+	set.removeIf(_value -> true)
+	set.add(1)
+	set.remove(1).assertTrue()
+	destroy set
+
+@Test public function removingTailKeepsZeroKeyIndex()
+	let set = new HashSet<int>()
+	set.add(0, 1)
+	set.remove(1).assertTrue()
+	set.remove(0).assertTrue()
+	set.isEmpty().assertTrue()
+	destroy set
