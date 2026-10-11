@@ -172,7 +172,7 @@ public class LinkedList<T>
 	/** get the static back iterator for this list */
 	function staticBackItr() returns LLBackIterator<T>
 		if staticBackItr == null
-			staticBackItr = new LLBackIterator<T>(this)
+			staticBackItr = new LLBackIterator<T>(this, false)
 		staticBackItr.reset()
 		return staticBackItr
 

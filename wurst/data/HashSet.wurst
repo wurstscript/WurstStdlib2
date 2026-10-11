@@ -1,5 +1,6 @@
 package HashSet
 import public HashList
+import ErrorHandling
 
 /** Generic set implementation */
 public class HashSet<T> extends HashList<T>
@@ -12,6 +13,21 @@ public class HashSet<T> extends HashList<T>
 				position.saveInt(this castTo int, elem castTo int, size())
 				super.add(elem)
 
+	/** Replaces an element or appends at size(). An already-present value is a no-op.
+		Sparse indexes are rejected: repeated null padding would violate set uniqueness. */
+	override function set(int index, T elem)
+		if index < 0 or index > size()
+			error("HashSet: Index out of bounds: " + index)
+			return
+		if has(elem)
+			return
+		if index == size()
+			add(elem)
+		else
+			position.removeInt(this castTo int, get(index) castTo int)
+			super.set(index, elem)
+			position.saveInt(this castTo int, elem castTo int, index)
+
 	/** Removes an element from this set if present */
 	override function remove(T elem) returns boolean
 		var result = false
@@ -23,9 +39,16 @@ public class HashSet<T> extends HashList<T>
 	/** Remove the element at the given index */
 	override function removeAt(int index) returns T
 		position.removeInt(this castTo int, get(index) castTo int)
-		for i = index + 1 to size()
-			position.saveInt(this castTo int, get(i) castTo int, position.loadInt(this castTo int, get(i) castTo int) - 1)
+		for i = index + 1 to size() - 1
+			position.saveInt(this castTo int, get(i) castTo int, i - 1)
 		return super.removeAt(index)
+
+	/** Removes matching elements in linear time and rebuilds the compacted indexes. */
+	override function removeIf(RemovePredicate<T> predicate)
+		super.removeIf(predicate)
+		position.flushChild(this castTo int)
+		for i = 0 to size() - 1
+			position.saveInt(this castTo int, get(i) castTo int, i)
 
 	override function clear()
 		super.clear()

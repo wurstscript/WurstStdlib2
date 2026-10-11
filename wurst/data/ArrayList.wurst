@@ -4,7 +4,6 @@ import ErrorHandling
 import Annotations
 
 constant int INITIAL_CAPACITY = 16
-constant int MAX_FREE_SECTIONS = 256
 /** Partitions shorter than this are finished off with insertion sort */
 constant int INSERTION_SORT_CUTOFF = 12
 
@@ -91,16 +90,14 @@ constant int INSERTION_SORT_CUTOFF = 12
  * ==================
  * ArrayList uses section allocation in a shared static array per type.
  * Destroyed lists return sections to a free pool for reuse.
- * Reuse is first-fit and claims the whole freed section (sections are never split).
- * Adjacent free sections are merged (compacted) when the store approaches its cap or
- * when the free pool is full, so interior gaps may persist until then.
- * The free pool itself is bounded (MAX_FREE_SECTIONS): if it is full and compaction
- * cannot shrink it, a freed section's space is dropped (it leaks until the type's
- * store is reset). Element references are always cleared, so this is a space leak, not
- * a dangling-reference leak. Presize and reuse lists to avoid reaching this state.
+ * Reuse is first-fit and splits larger free sections, retaining their unused remainder.
+ * Free sections stay sorted by address and adjacent sections merge on release.
+ * Free space at the end of the store is reclaimed immediately. The metadata uses
+ * native arrays, with no separate 256-section limit and no dropped free ranges.
+ * Allocation and release take O(f) time for f nonadjacent free sections.
  *
  * Fragmentation occurs when lists grow - the old section becomes a gap.
- * This is why presizing matters: growth = copy to new location = wasted space.
+ * Presizing avoids those copies; nonadjacent gaps remain reusable for smaller lists.
  *
  * Hard limit (wc3 / Jass native target): the shared store is a fixed-size array, so it is
  * bounded by JASS_MAX_ARRAY_SIZE total slots per type across all live instances; exceeding
@@ -147,17 +144,8 @@ public class ArrayList<T:>
             return
 
         // No suitable free section, allocate new
-        if nextFreeIndex + cap > JASS_MAX_ARRAY_SIZE
-            // Past the native array bound - compact to merge adjacent freed sections, then
-            // retry the reuse search since compaction may have produced a section that fits.
-            compactFreeList()
-            if tryReuseFreeSection(cap)
-                return
-
-            // The Jass target is a fixed-size array and must error here. On Lua the store
-            // is a dynamically growing table, so the bound doesn't apply and we let it grow.
-            if not isLua and nextFreeIndex + cap > JASS_MAX_ARRAY_SIZE
-                error("ArrayList: Storage limit exceeded for type")
+        if not isLua and cap > JASS_MAX_ARRAY_SIZE - nextFreeIndex
+            error("ArrayList: Storage limit exceeded for type")
 
         startIndex = nextFreeIndex
         capacity = cap
@@ -168,83 +156,51 @@ public class ArrayList<T:>
         for i = 0 to freeSectionCount - 1
             if freeSectionCapacity[i] >= cap
                 startIndex = freeSectionStart[i]
-                capacity = freeSectionCapacity[i]
-
-                // Remove this section by swapping the tail entry into its slot.
-                // The pool is only ordered transiently inside compactFreeList,
-                // so no shifting is required here.
-                freeSectionCount--
-                if i != freeSectionCount
-                    freeSectionStart[i] = freeSectionStart[freeSectionCount]
-                    freeSectionCapacity[i] = freeSectionCapacity[freeSectionCount]
+                capacity = cap
+                if freeSectionCapacity[i] == cap
+                    removeFreeSection(i)
+                else
+                    freeSectionStart[i] += cap
+                    freeSectionCapacity[i] -= cap
                 return true
         return false
 
-    /** Compacts the free list by merging adjacent sections */
-    private static function compactFreeList()
-        if freeSectionCount <= 1
-            return
-
-        // Sort free sections by start index using insertion sort
-        for i = 1 to freeSectionCount - 1
-            let keyStart = freeSectionStart[i]
-            let keyCap = freeSectionCapacity[i]
-            var j = i - 1
-
-            while j >= 0 and freeSectionStart[j] > keyStart
-                freeSectionStart[j + 1] = freeSectionStart[j]
-                freeSectionCapacity[j + 1] = freeSectionCapacity[j]
-                j--
-
-            freeSectionStart[j + 1] = keyStart
-            freeSectionCapacity[j + 1] = keyCap
-
-        // Merge adjacent sections
-        var writeIdx = 0
-        for readIdx = 0 to freeSectionCount - 1
-            if writeIdx > 0 and freeSectionStart[writeIdx - 1] + freeSectionCapacity[writeIdx - 1] == freeSectionStart[readIdx]
-                // Merge with previous
-                freeSectionCapacity[writeIdx - 1] += freeSectionCapacity[readIdx]
-            else
-                // Keep as separate section
-                if writeIdx != readIdx
-                    freeSectionStart[writeIdx] = freeSectionStart[readIdx]
-                    freeSectionCapacity[writeIdx] = freeSectionCapacity[readIdx]
-                writeIdx++
-
-        freeSectionCount = writeIdx
-
-        // Update nextFreeIndex if last section extends to it
-        if freeSectionCount > 0
-            let lastIdx = freeSectionCount - 1
-            if freeSectionStart[lastIdx] + freeSectionCapacity[lastIdx] == nextFreeIndex
-                nextFreeIndex = freeSectionStart[lastIdx]
-                freeSectionCount--
+    /** Removes metadata while retaining address order. */
+    private static function removeFreeSection(int index)
+        freeSectionCount--
+        for i = index to freeSectionCount - 1
+            freeSectionStart[i] = freeSectionStart[i + 1]
+            freeSectionCapacity[i] = freeSectionCapacity[i + 1]
 
     /** Frees this list's storage section for reuse */
     private function freeStorage()
         if capacity <= 0
             return
 
-        // Add to free list if there's space
-        if freeSectionCount < MAX_FREE_SECTIONS
-            freeSectionStart[freeSectionCount] = startIndex
-            freeSectionCapacity[freeSectionCount] = capacity
+        var index = 0
+        while index < freeSectionCount and freeSectionStart[index] < startIndex
+            index++
+
+        // Merge into the preceding range, or insert a new range in address order.
+        if index > 0 and freeSectionStart[index - 1] + freeSectionCapacity[index - 1] == startIndex
+            index--
+            freeSectionCapacity[index] += capacity
+        else
+            for i = freeSectionCount downto index + 1
+                freeSectionStart[i] = freeSectionStart[i - 1]
+                freeSectionCapacity[i] = freeSectionCapacity[i - 1]
+            freeSectionStart[index] = startIndex
+            freeSectionCapacity[index] = capacity
             freeSectionCount++
 
-            // If this was at the end, we can reclaim it immediately
-            if startIndex + capacity == nextFreeIndex
-                nextFreeIndex = startIndex
-                freeSectionCount--
-        else
-            // Free list full, try to compact
-            compactFreeList()
+        // A released range can bridge both of its neighbours.
+        if index + 1 < freeSectionCount and freeSectionStart[index] + freeSectionCapacity[index] == freeSectionStart[index + 1]
+            freeSectionCapacity[index] += freeSectionCapacity[index + 1]
+            removeFreeSection(index + 1)
 
-            // Try again after compaction
-            if freeSectionCount < MAX_FREE_SECTIONS
-                freeSectionStart[freeSectionCount] = startIndex
-                freeSectionCapacity[freeSectionCount] = capacity
-                freeSectionCount++
+        if freeSectionStart[index] + freeSectionCapacity[index] == nextFreeIndex
+            nextFreeIndex = freeSectionStart[index]
+            removeFreeSection(index)
 
     /** Grows the capacity (doubles it) - EXPENSIVE OPERATION! */
     private function grow()
@@ -491,7 +447,7 @@ public class ArrayList<T:>
         overwritten or `clear` is called - which is what makes it O(1). */
     function truncate(int newSize)
         if newSize < 0 or newSize > size
-            error("ArrayList: truncate out of bounds: " + newSize.toString())
+            error("ArrayList: truncate out of bounds: " + newSize)
         if size > retainedSize
             retainedSize = size
         size = newSize
@@ -709,12 +665,12 @@ public class ArrayList<T:>
             let pivot = medianOfThree(comparator, low, low + (high - low) div 2, high)
             let p = partition(comparator, low, high, pivot)
 
-            if p - low < high - p
-                quicksort(comparator, low, p - 1)
-                low = p + 1
+            if p.lower - low < high - p.upper
+                quicksort(comparator, low, p.lower - 1)
+                low = p.upper + 1
             else
-                quicksort(comparator, p + 1, high)
-                high = p - 1
+                quicksort(comparator, p.upper + 1, high)
+                high = p.lower - 1
 
     /** Insertion sort for small partitions, where it beats quicksort's overhead */
     private function insertionSort(Comparator<T> comparator, int low, int high)
@@ -747,30 +703,30 @@ public class ArrayList<T:>
             else
                 return b
 
-    /** Optimized partition with median pivot */
-    private function partition(Comparator<T> comparator, int low, int high, int pivotIndex) returns int
+    /** Partitions into less-than, equal-to and greater-than regions. */
+    private function partition(Comparator<T> comparator, int low, int high, int pivotIndex) returns SortPartition
         let pivotValue = store[startIndex + pivotIndex]
+        var lower = low
+        var upper = high
+        var current = low
+        while current <= upper
+            let comparison = comparator.compare(store[startIndex + current], pivotValue)
+            if comparison < 0
+                let temp = store[startIndex + lower]
+                store[startIndex + lower] = store[startIndex + current]
+                store[startIndex + current] = temp
+                lower++
+                current++
+            else if comparison > 0
+                let temp = store[startIndex + upper]
+                store[startIndex + upper] = store[startIndex + current]
+                store[startIndex + current] = temp
+                upper--
+            else
+                current++
+        return SortPartition(lower, upper)
 
-        // Move pivot to end
-        let temp = store[startIndex + pivotIndex]
-        store[startIndex + pivotIndex] = store[startIndex + high]
-        store[startIndex + high] = temp
-
-        var storeIndex = low
-
-        for i = low to high - 1
-            if comparator.compare(store[startIndex + i], pivotValue) < 0
-                let t = store[startIndex + storeIndex]
-                store[startIndex + storeIndex] = store[startIndex + i]
-                store[startIndex + i] = t
-                storeIndex++
-
-        // Move pivot to final position
-        let t2 = store[startIndex + storeIndex]
-        store[startIndex + storeIndex] = store[startIndex + high]
-        store[startIndex + high] = t2
-
-        return storeIndex
+tuple SortPartition(int lower, int upper)
 
 // ============================================================================
 // UTILITY FUNCTIONS

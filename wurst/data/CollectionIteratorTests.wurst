@@ -1,0 +1,45 @@
+package CollectionIteratorTests
+import LinkedList
+import HashList
+
+@Test public function cachedBackIteratorSurvivesClose()
+	let list = new LinkedList<int>()
+	list.add(1, 2)
+	for _round = 1 to 3
+		let iterator = list.staticBackItr()
+		iterator.next().assertEquals(2)
+		iterator.next().assertEquals(1)
+		iterator.hasNext().assertFalse()
+		iterator.close()
+	list.clear()
+	list.add(3)
+	let reused = list.staticBackItr()
+	reused.next().assertEquals(3)
+	reused.close()
+	destroy list
+
+@Test public function cachedHashIteratorSurvivesClose()
+	let list = new HashList<int>()
+	list.add(1, 2)
+	for _round = 1 to 3
+		let iterator = list.staticItr()
+		iterator.next().assertEquals(1)
+		iterator.next().assertEquals(2)
+		iterator.hasNext().assertFalse()
+		iterator.close()
+	list.clear()
+	list.add(3)
+	let reused = list.staticItr()
+	reused.next().assertEquals(3)
+	reused.close()
+	destroy list
+
+@Test public function ordinaryIteratorsStillCloseIndependently()
+	let list = new HashList<int>()
+	list.add(7)
+	for _round = 1 to 3
+		let iterator = list.iterator()
+		iterator.next().assertEquals(7)
+		iterator.close()
+	list.staticItr().next().assertEquals(7)
+	destroy list

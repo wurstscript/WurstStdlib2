@@ -132,7 +132,7 @@ public class HashList<T>
 	/** get the static iterator for this list */
 	function staticItr() returns HLIterator<T>
 		if staticItr == null
-			staticItr = new HLIterator<T>(this)
+			staticItr = new HLIterator<T>(this, false)
 		staticItr.reset()
 		return staticItr
 
@@ -160,6 +160,8 @@ public class HashList<T>
 		return size > 0 ? get(GetRandomInt(0, size - 1)) : null
 
 	ondestroy
+		if staticItr != null
+			destroy staticItr
 		clear()
 
 public interface RemovePredicate<T>
@@ -171,9 +173,14 @@ public interface HLItrClosure<T>
 public class HLIterator<Q>
 	protected int i = 0
 	protected HashList<Q> list
+	protected bool destroyOnClose = true
 
 	construct(HashList<Q> list)
 		this.list = list
+
+	construct(HashList<Q> list, bool destroyOnClose)
+		this.list = list
+		this.destroyOnClose = destroyOnClose
 
 	function hasNext() returns boolean
 		return i < list.size()
@@ -190,4 +197,5 @@ public class HLIterator<Q>
 		i = 0
 
 	function close()
-		destroy this
+		if destroyOnClose
+			destroy this
