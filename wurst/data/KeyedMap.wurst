@@ -9,6 +9,9 @@ import ErrorHandling
 	index, with no handle-id round trip and no entry retained for a unit after
 	it is removed.
 
+	Use each low-level map with one key representation only: mixing handle and
+	string operations can alias a handle id with a string bucket hash on Jass.
+
 	The bodies of the fixed-signature functions (keyedMapPut, keyedMapGetInt and
 	the rest) are the Jass implementation, a Table keyed by the handle id, and
 	they are also what any compiler without the lowering compiles on both
@@ -92,8 +95,8 @@ class StringMapEntry
 
 StringMapEntry array stringHeads
 
-function findStringEntry(int map, string key) returns StringMapEntry
-	var entry = (map castTo Table).loadInt(StringHash(key)) castTo StringMapEntry
+function findStringEntry(StringMapEntry head, string key) returns StringMapEntry
+	var entry = head
 	while entry != null
 		if entry.key == key
 			return entry
@@ -101,16 +104,19 @@ function findStringEntry(int map, string key) returns StringMapEntry
 	return null
 
 @compilerintrinsic public function keyedMapPutString(int map, string key, int value)
-	let old = findStringEntry(map, key)
-	if old != null
-		old.value = value
+	if key == null
 		return
 	let table = map castTo Table
 	let hash = StringHash(key)
+	let head = table.loadInt(hash) castTo StringMapEntry
+	let old = findStringEntry(head, key)
+	if old != null
+		old.value = value
+		return
 	let entry = new StringMapEntry()
 	entry.key = key
 	entry.value = value
-	entry.nextBucket = table.loadInt(hash) castTo StringMapEntry
+	entry.nextBucket = head
 	entry.nextAll = stringHeads[map]
 	entry.previousAll = null
 	if entry.nextAll != null
@@ -119,15 +125,23 @@ function findStringEntry(int map, string key) returns StringMapEntry
 	table.saveInt(hash, entry castTo int)
 
 @compilerintrinsic public function keyedMapGetStringInt(int map, string key) returns int
-	let entry = findStringEntry(map, key)
+	if key == null
+		return 0
+	let head = (map castTo Table).loadInt(StringHash(key)) castTo StringMapEntry
+	let entry = findStringEntry(head, key)
 	if entry == null
 		return 0
 	return entry.value
 
 @compilerintrinsic public function keyedMapHasString(int map, string key) returns boolean
-	return findStringEntry(map, key) != null
+	if key == null
+		return false
+	let head = (map castTo Table).loadInt(StringHash(key)) castTo StringMapEntry
+	return findStringEntry(head, key) != null
 
 @compilerintrinsic public function keyedMapRemoveString(int map, string key)
+	if key == null
+		return
 	let table = map castTo Table
 	let hash = StringHash(key)
 	var entry = table.loadInt(hash) castTo StringMapEntry
@@ -173,6 +187,9 @@ function findStringEntry(int map, string key) returns StringMapEntry
  * destroy that handle. Jass stores the entry under the handle id, which Warcraft hands to a later
  * handle, so the new handle would read the old value; Lua would keep the destroyed handle referenced.
  * This requires the compiler's keyed-map intrinsic lowering.
+ * Jass string operations hash the key and scan its collision bucket; destroy is O(n).
+ * Each stored string key uses one entry from the shared StringMapEntry allocator, subject to
+ * the target's class-instance limit. Lua allocates no entries and uses native table lookup.
  * The intrinsic source bodies fail loudly if a compiler understands the generic declarations but
  * lacks that lowering; they never silently discard writes or return defaults.
  */
