@@ -8,6 +8,12 @@ package MathsTests
 	min(three,4,0,-2,-1).assertEquals(-2)
 	min(3.,4.,-20.,-3.).assertEquals(-20.)
 
+@Test function realMaxIsTheLargestReal()
+	// finite: infinity would equal half of itself
+	(REAL_MAX * 0.5 < REAL_MAX).assertTrue()
+	(REAL_MAX > 3000000000. * 100000000000000000000. * 1000000000.).assertTrue()
+	(REAL_MIN == -REAL_MAX).assertTrue()
+
 @Test function testHypot()
 	testHypotHelp(5, 6)
 	testHypotHelp(5000000., 6)

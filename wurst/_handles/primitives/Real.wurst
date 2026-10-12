@@ -1,8 +1,11 @@
 package Real
 import NoWurst
 
-public constant REAL_MAX = 340282366920938000000000000000000000000.
-public constant REAL_MIN = -340282366920938000000000000000000000000.
+/** The largest real, exactly: (2 - 2^-23) * 2^127. The value it replaced, 2^128, is past it, which the compiler
+	reads as infinity and the game's Lua as something else again (measured on the 3.0.0 client). */
+public constant REAL_MAX = 340282346638528859811704183484516925440.
+/** The smallest real, the negative of REAL_MAX. */
+public constant REAL_MIN = -340282346638528859811704183484516925440.
 
 /**	Returns the absolute value of the given real.
 	This means, negative values will be return positive. */
