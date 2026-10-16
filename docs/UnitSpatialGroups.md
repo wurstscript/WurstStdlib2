@@ -42,6 +42,15 @@ Pair every `beginQuery` with `spatialIndexEndQuery`, including empty queries. Th
 releases handles on close and has no fixed result cap. Do not yield or run arbitrary callbacks while
 a raw snapshot is open; copy it into a caller-owned list and close it first for those uses.
 
+For a read-only pre-screen, use `defenders.anyInRange(center, radius, filter)`, where `filter` is a
+caller-owned `UnitSpatialPredicate`. It returns at the first accepted member, without a snapshot or
+per-call allocation. It applies the same origin-radius, membership and movement-bound rules as
+`beginQuery(center, radius)`. The borrowed filter must not yield, query or mutate the index. Existing
+snapshots remain intact. Uncertain positions are read live without relinking the chains being walked.
+Existence checks use coarse pruning and primary chains (or the dense registry for wide windows),
+so accepting the first member never requires rebuilding an entire crowded cell's subcell cache.
+Negative checks still examine every possible candidate; choose snapshot queries for full results.
+
 Collision queries use squared distance against `radius + cachedCollisionSize`. Only collision queries
 read that size, at most once per unit per sweep tick. An explicit `updateSpatialIndex()` invalidates
 it immediately, including mutations within the same tick. Position sweeps do not read collision size.
