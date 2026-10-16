@@ -173,10 +173,12 @@ public class UnitSpatialGroup
 		subsets.add(this)
 		for i = 0 to registryCount - 1
 			let idx = registry[i]
-			refreshMembership(idx, indexedUnit[idx])
+			refreshMembership(indexedUnit[idx])
 
-	function refreshMembership(int idx, unit u)
-		if groupId >= 0
+	/** Re-evaluates membership without registering a unit; safe from a deindex listener. */
+	function refreshMembership(unit u)
+		let idx = u.getIndex()
+		if groupId >= 0 and idx > 0 and indexedUnit[idx] == u
 			spatialPartitionSetGroup(idx, groupId, predicate.matches(u))
 
 	/** Opens a snapshot; close with spatialIndexEndQuery(), including when it returns zero. */
@@ -191,9 +193,9 @@ public class UnitSpatialGroup
 		if groupId >= 0
 			spatialPartitionReleaseGroup(groupId)
 
-function refreshSubsets(int idx, unit u)
+function refreshSubsets(unit u)
 	for i = 0 to subsets.size() - 1
-		subsets.get(i).refreshMembership(idx, u)
+		subsets.get(i).refreshMembership(u)
 
 // Membership
 
@@ -227,7 +229,7 @@ function registerUnit(unit u)
 	spatialPartitionSetGroup(idx, unitGroup, true)
 	// The interpreter has no BlzGetUnitCollisionSize; collision tests inject the cached value.
 	indexedCollision[idx] = compiletime ? 0. : u.getCollisionSize()
-	refreshSubsets(idx, u)
+	refreshSubsets(u)
 
 function unregisterIndex(int idx)
 	let slot = registrySlot[idx]
@@ -280,7 +282,7 @@ function refreshUnit(int idx, unit u)
 	lastSweepTick[idx] = sweepTick
 	spatialPartitionSetPos(idx, u.getX(), u.getY())
 	indexedCollision[idx] = compiletime ? 0. : u.getCollisionSize()
-	refreshSubsets(idx, u)
+	refreshSubsets(u)
 
 // Sweep
 
@@ -834,6 +836,9 @@ function subsetHas(UnitSpatialGroup subset, vec2 center, real radius, unit targe
 	member.kill()
 	subsetHas(subset, ZERO2, 300., member).assertFalse()
 	unregisterUnit(member)
+	// A consuming deindex listener may refresh its predicate after this layer removed the unit.
+	subset.refreshMembership(member)
+	spatialIndexTrackedUnits().assertEquals(200)
 	let n = subset.beginQuery(ZERO2, 300.)
 	spatialIndexEndQuery()
 	n.assertEquals(0)
@@ -878,3 +883,19 @@ function subsetHas(UnitSpatialGroup subset, vec2 center, real radius, unit targe
 	assertTrue(spatialIndexQueryUnit(0) == body)
 	spatialIndexEndQuery()
 	rangeCount(ZERO2, 100.).assertEquals(0)
+
+@Test function destroyedSubsetsReleaseMembershipAndTheirGroup()
+	testArena()
+	let member = addUnitAt(vec2(100., 0.))
+	UnitSpatialPredicate accepts = u -> u.isAlive()
+	UnitSpatialPredicate rejects = _u -> false
+	// More lifetimes than available groups proves that destruction recycles the group too.
+	for i = 1 to SPATIAL_PARTITION_MAX_GROUPS * 2
+		let subset = new UnitSpatialGroup(accepts)
+		subsetHas(subset, ZERO2, 300., member).assertTrue()
+		destroy subset
+		let empty = new UnitSpatialGroup(rejects)
+		subsetHas(empty, ZERO2, 300., member).assertFalse()
+		destroy empty
+	destroy accepts
+	destroy rejects
