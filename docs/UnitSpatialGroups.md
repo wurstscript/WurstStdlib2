@@ -24,16 +24,15 @@ collision-size changes; position updates do not poll event-owned membership.
 The caller owns the predicate; destroy the group before destroying its predicate. Destroying a group
 removes its membership and releases its partition group for reuse.
 
-For event-owned membership, use `new UnitSpatialGroup(DEFENDERS)` (or pass `false`) and call
+For event-owned membership, use `new UnitSpatialGroup(DEFENDERS)` and call
 `defenders.refreshMembership(u)` when an input changes. These groups do not run predicates during
 position refreshes or the periodic sweep. Construction populates existing indexed units; later
 registrations need an explicit membership refresh. The query still checks the predicate, so stale
 members are rejected immediately. The caller must notify newly eligible units. Membership refresh
 does not register units and is safe during deindex. This mode suits a map that already owns spawn,
-death and membership-state hooks. Automatic membership polling is an explicit opt-in:
-`new UnitSpatialGroup(DEFENDERS, true)`. It preserves automatic registration and per-refresh predicate
-tracking for callers that need it; its predicates' work is paid on every refresh. An automatic group
-also honors `updateSpatialIndex()` as an immediate membership notification.
+death and membership-state hooks. A map that needs periodic membership polling owns that schedule
+and calls `refreshMembership` from it. The position sweep contains no predicate list, callback loop
+or membership-policy work. `updateSpatialIndex()` updates spatial data, not caller-owned membership.
 
 Explicit subsets apply their predicate as their visibility policy. Ordinary `SpatialIndexForUnits`
 queries continue to follow Warcraft's range/rect enumeration rules (including corpses, excluding

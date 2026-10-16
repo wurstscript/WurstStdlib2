@@ -37,7 +37,6 @@ import ClosureTimers
 import UnitIndexer
 import SpatialPartition
 import ErrorHandling
-import ArrayList
 
 // Configuration
 
@@ -152,13 +151,10 @@ function currentMaxDisplacement() returns real
 public interface UnitSpatialPredicate
 	function matches(unit u) returns boolean
 
-constant subsets = new ArrayList<UnitSpatialGroup>()
-
 /** A maintained subset of indexed units, with independent partition chains.
- * Membership is event-owned by default: call refreshMembership after registration and changes to
- * predicate inputs. Pass automaticMembership=true to poll during registration and position refreshes.
+ * Membership is event-owned: call refreshMembership after registration and changes to predicate inputs.
  * A query also rechecks the predicate, so a stale member can never be returned; newly eligible units
- * require a membership notification (or an automatic refresh) to join.
+ * require a membership notification to join. Position sweeps never evaluate caller predicates.
  * Explicit subsets use their predicate as the visibility policy, including hidden/Locust units
  * when the predicate allows them. The ordinary queries retain Warcraft enumeration semantics.
  * The caller owns the predicate and must keep it alive until the subset is destroyed.
@@ -166,22 +162,10 @@ constant subsets = new ArrayList<UnitSpatialGroup>()
 public class UnitSpatialGroup
 	private int groupId
 	private UnitSpatialPredicate predicate
-	private boolean automaticMembership
-
 	construct(UnitSpatialPredicate predicate)
-		this(predicate, false)
-
-	/** Set automaticMembership false when the caller owns every membership-changing event.
-	 * Call refreshMembership after those events. Queries still reject stale predicate matches.
-	 * Position maintenance and its guaranteed movement bound are unchanged.
-	 */
-	construct(UnitSpatialPredicate predicate, boolean automaticMembership)
 		ensureUnitGroup()
 		this.predicate = predicate
-		this.automaticMembership = automaticMembership
 		groupId = spatialPartitionAllocateGroup()
-		if automaticMembership
-			subsets.add(this)
 		for i = 0 to registryCount - 1
 			let idx = registry[i]
 			refreshMembership(indexedUnit[idx])
@@ -200,14 +184,8 @@ public class UnitSpatialGroup
 		return beginRangeQuery(center, radius, collisionFiltering, groupId, predicate)
 
 	ondestroy
-		if automaticMembership
-			subsets.removeUnordered(this)
 		if groupId >= 0
 			spatialPartitionReleaseGroup(groupId)
-
-@noinline function refreshSubsets(unit u)
-	for i = 0 to subsets.size() - 1
-		subsets.get(i).refreshMembership(u)
 
 // Membership
 
@@ -242,8 +220,6 @@ function registerUnit(unit u)
 	// Collision filtering pays for its own lazy cache; position-only consumers read no collision native.
 	indexedCollision[idx] = 0.
 	collisionTick[idx] = -1
-	if not subsets.isEmpty()
-		refreshSubsets(u)
 
 function unregisterIndex(int idx)
 	let slot = registrySlot[idx]
@@ -297,9 +273,6 @@ function refreshUnit(int idx, unit u)
 	// sweep cycle despite its cache having just been made exact.
 	lastSweepTick[idx] = sweepTick
 	spatialPartitionSetPos(idx, u.getX(), u.getY())
-	// Keep the optional polling loop out of the default refresh's emitted locals and array bindings.
-	if not subsets.isEmpty()
-		refreshSubsets(u)
 
 // Sweep
 
@@ -881,16 +854,20 @@ class CountingSpatialPredicate implements UnitSpatialPredicate
 	destroy subset
 	destroy rule
 
-@Test function automaticMembershipStillObservesChangesDuringTheSweep()
+@Test function ownerChangesBecomeVisibleWhenMembershipIsNotified()
 	testArena()
 	UnitSpatialPredicate rule = u -> u.getOwner() == Player(0)
-	let subset = new UnitSpatialGroup(rule, true)
+	let subset = new UnitSpatialGroup(rule)
 	let member = addUnitFor(Player(1), vec2(100., 0.))
 	subsetHas(subset, ZERO2, 300., member).assertFalse()
 	member.setOwner(Player(0), false)
 	sweepStep()
+	subsetHas(subset, ZERO2, 300., member).assertFalse()
+	subset.refreshMembership(member)
 	subsetHas(subset, ZERO2, 300., member).assertTrue()
 	member.setOwner(Player(1), false)
+	subsetHas(subset, ZERO2, 300., member).assertFalse()
+	subset.refreshMembership(member)
 	sweepStep()
 	subsetHas(subset, ZERO2, 300., member).assertFalse()
 	destroy subset
@@ -906,8 +883,9 @@ class CountingSpatialPredicate implements UnitSpatialPredicate
 @Test function maintainedSubsetsSkipOtherOwnersAndRefreshChanges()
 	testArena()
 	UnitSpatialPredicate rule = u -> u.getOwner() == Player(0) and u.isAlive()
-	let subset = new UnitSpatialGroup(rule, true)
+	let subset = new UnitSpatialGroup(rule)
 	let member = addUnitAt(vec2(100., 0.))
+	subset.refreshMembership(member)
 	for i = 1 to 200
 		addUnitFor(Player(1), vec2(100., 0.))
 	subsetHas(subset, ZERO2, 300., member).assertTrue()
@@ -915,9 +893,9 @@ class CountingSpatialPredicate implements UnitSpatialPredicate
 	member.setOwner(Player(1), false)
 	// Even before maintenance removes a stale member, the rule rejects it.
 	subsetHas(subset, ZERO2, 300., member).assertFalse()
-	refreshUnit(member.getIndex(), member)
+	subset.refreshMembership(member)
 	member.setOwner(Player(0), false)
-	refreshUnit(member.getIndex(), member)
+	subset.refreshMembership(member)
 	subsetHas(subset, ZERO2, 300., member).assertTrue()
 	member.kill()
 	subsetHas(subset, ZERO2, 300., member).assertFalse()
@@ -935,7 +913,7 @@ class CountingSpatialPredicate implements UnitSpatialPredicate
 	testArena()
 	UnitSpatialPredicate rule = u -> u.getOwner() == Player(0)
 	let member = addUnitAt(vec2(100., 0.))
-	let subset = new UnitSpatialGroup(rule, true)
+	let subset = new UnitSpatialGroup(rule)
 	for i = 1 to 600
 		addUnitFor(Player(1), vec2(2000., 0.))
 	let oldBound = displacementBoundTicks
@@ -977,10 +955,10 @@ class CountingSpatialPredicate implements UnitSpatialPredicate
 	UnitSpatialPredicate rejects = _u -> false
 	// More lifetimes than available groups proves that destruction recycles the group too.
 	for i = 1 to SPATIAL_PARTITION_MAX_GROUPS * 2
-		let subset = new UnitSpatialGroup(accepts, true)
+		let subset = new UnitSpatialGroup(accepts)
 		subsetHas(subset, ZERO2, 300., member).assertTrue()
 		destroy subset
-		let empty = new UnitSpatialGroup(rejects, true)
+		let empty = new UnitSpatialGroup(rejects)
 		subsetHas(empty, ZERO2, 300., member).assertFalse()
 		destroy empty
 	destroy accepts
