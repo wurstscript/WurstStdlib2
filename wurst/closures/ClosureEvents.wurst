@@ -3,6 +3,7 @@ import public EventHelper
 import public RegisterEvents
 import ClosureTimers
 import UnitIndexer
+import ArrayList
 import HashMap
 import KeyedMap
 import Table
@@ -40,6 +41,10 @@ public constant EVENT_PLAYER_CHAT_FILTER = ConvertPlayerEvent(96)
 	>	 <actions for a point cast spell. 'target' is the vec2 target point>
 
 
+	A listener of a single unit may be added in an init block, for a unit the map has created there: the library indexes
+	such units once every init block has run, and the listener starts to listen then, on the next timer tick. What
+	happens to the unit before that is not seen.
+
 	**IMPORTANT**:
 		Make sure to always use the "EVENT_PLAYER_UNIT_*" variants of the eventids.
 		Other supported events:
@@ -54,10 +59,15 @@ public abstract class OnCastListener
 	OnCastListener prev = null
 	int abilId
 	unit eventUnit = null
+	/** Whether the listener waits for its unit to get an index (see EventListener.awaitingIndex). */
+	bool awaitsIndex = false
 
 	abstract function fire(unit caster)
 
 	ondestroy
+		if awaitsIndex
+			// Not in any list of casters yet; the lookup below finds nothing and changes nothing.
+			EventListener.stopAwaitingCast(this)
 		if eventUnit != null
 			let index = eventUnit.getIndex()
 			let listener = EventListener.castMapCasters[index]
@@ -164,9 +174,20 @@ public abstract class EventListener
 	/** The handle ids of the same two events, to ask whether their triggers have been handed out. */
 	static int damagedHandleId = 0
 	static int damagingHandleId = 0
+	/** The listeners of a single unit which were added before the unit had an index, in the order they were added.
+		The library indexes the units a map has at init, and those it creates in its init blocks, after the last init
+		block has run, so a listener added there can not be filed under its unit yet. It is filed on the next timer
+		tick, which comes after the indexing, instead of being dropped. */
+	private static constant awaitingIndex = new ArrayList<EventListener>()
+	private static constant castAwaitingIndex = new ArrayList<OnCastListener>()
+	private static var awaitingScheduled = false
 
 	var eventId = 0
 	var uid = -1
+	/** Whether the listener waits for its unit to get an index, and the unit and event it waits with. */
+	bool awaitsIndex = false
+	unit awaitedUnit = null
+	eventid awaitedEvent = null
 	EventListener next = null
 	EventListener prev = null
 
@@ -182,10 +203,22 @@ public abstract class EventListener
 		return listener
 
 	static function add(unit u, eventid eventId, EventListener listener) returns EventListener
+		return addForUnit(u, eventId, listener, true)
+
+	/** mayWait: a unit without an index may be one that is only about to get it (see awaitingIndex), and the listener
+		then waits a tick. When it is called again after that, a unit without an index is one that has none. */
+	static private function addForUnit(unit u, eventid eventId, EventListener listener, bool mayWait) returns EventListener
 		let uid = u.getIndex()
 		if uid <= 0
-			Log.warn("Attempting to register event listener for a unit that is not indexed by UnitIndexer. " +
-				"If this happens during initialization, consider registering the EventListener in a callback to nullTimer() instead.")
+			// No unit has no index to wait for.
+			if mayWait and u != null
+				listener.awaitsIndex = true
+				listener.awaitedUnit = u
+				listener.awaitedEvent = eventId
+				awaitingIndex.add(listener)
+				scheduleAwaiting()
+			else
+				Log.warn("Attempting to register event listener for a unit that is not indexed by UnitIndexer.")
 			return listener
 		hasUnitListeners = true
 		listener.eventId = eventId.toIntId()
@@ -218,11 +251,20 @@ public abstract class EventListener
 		return addSpellInternal(null, abilId, listener) castTo OnPointCast
 
 	static private function addSpellInternal(unit u, int abilId, OnCastListener listener) returns OnCastListener
+		return addSpellForUnit(u, abilId, listener, true)
+
+	/** mayWait: see addForUnit. A unit which still has no index after the wait keeps the slot 0 it always got. */
+	static private function addSpellForUnit(unit u, int abilId, OnCastListener listener, bool mayWait) returns OnCastListener
 		hasCastListeners = true
 		listener.abilId = abilId
 		if u != null
 			listener.eventUnit = u
 			let index = u.getIndex()
+			if index <= 0 and mayWait
+				listener.awaitsIndex = true
+				castAwaitingIndex.add(listener)
+				scheduleAwaiting()
+				return listener
 			if castMapCasters[index] != null
 				castMapCasters[index].prev = listener
 				listener.next = castMapCasters[index]
@@ -235,6 +277,54 @@ public abstract class EventListener
 
 			castMap.put(abilId, listener)
 		return listener
+
+	static private function scheduleAwaiting()
+		if not awaitingScheduled
+			awaitingScheduled = true
+			nullTimer() ->
+				fileAwaiting()
+
+	/** Files the listeners which waited for their unit's index, in the order they were added. Nothing runs while it
+		does, so the lists can not change under it. */
+	static private function fileAwaiting()
+		awaitingScheduled = false
+		for i = 0 to awaitingIndex.size() - 1
+			let listener = awaitingIndex.get(i)
+			let u = listener.awaitedUnit
+			let eventId = listener.awaitedEvent
+			listener.awaitsIndex = false
+			listener.awaitedUnit = null
+			listener.awaitedEvent = null
+			addForUnit(u, eventId, listener, false)
+		awaitingIndex.clear()
+		for i = 0 to castAwaitingIndex.size() - 1
+			let listener = castAwaitingIndex.get(i)
+			listener.awaitsIndex = false
+			addSpellForUnit(listener.eventUnit, listener.abilId, listener, false)
+		castAwaitingIndex.clear()
+
+	/** The listeners still waiting for this unit's index go with the rest of its listeners (see unregisterEventsForUnit):
+		they would otherwise be filed after the cleanup. Backwards, since destroying one takes it out of its list. */
+	static function destroyAwaiting(unit u)
+		for i = awaitingIndex.size() - 1 downto 0
+			let listener = awaitingIndex.get(i)
+			if listener.awaitedUnit == u
+				destroy listener
+		for i = castAwaitingIndex.size() - 1 downto 0
+			let listener = castAwaitingIndex.get(i)
+			if listener.eventUnit == u
+				destroy listener
+
+	/** A listener that is destroyed while it waits must not be filed afterwards. */
+	static function stopAwaiting(EventListener listener)
+		let i = awaitingIndex.indexOf(listener)
+		if i >= 0
+			awaitingIndex.removeAtOrdered(i)
+
+	static function stopAwaitingCast(OnCastListener listener)
+		let i = castAwaitingIndex.indexOf(listener)
+		if i >= 0
+			castAwaitingIndex.removeAtOrdered(i)
 
 	static function generalEventCallback()
 		dispatch(GetTriggerEventId().toIntId())
@@ -303,6 +393,12 @@ public abstract class EventListener
 			listener = nextListener
 
 	ondestroy
+		if awaitsIndex
+			// Not in any list yet; the lookup below finds nothing and changes nothing.
+			stopAwaiting(this)
+			awaitsIndex = false
+			awaitedUnit = null
+			awaitedEvent = null
 		if uid < 0
 			let listener = generalListenersFirsts[this.eventId]
 			if listener == this
@@ -365,6 +461,7 @@ function registerEventId(eventid evnt) returns int
 
 public function unregisterEventsForUnit(unit u)
 	if fireEvents(u)
+		EventListener.destroyAwaiting(u)
 		let index = u.getIndex()
 		unregisterEvents(index)
 		if EventListener.castMapCasters[index] != null
