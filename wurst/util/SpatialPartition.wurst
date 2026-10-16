@@ -96,6 +96,8 @@ int array subNext
 /** Shared cell revision covers positions and every group's membership mutations. */
 int array cellRevision
 int array subRevision
+int array cellSubCaches
+var subCacheCount = 0
 // Dense membership per group makes a window wider than its population a linear member scan.
 int array groupMembers
 int array groupMemberSlot
@@ -475,6 +477,9 @@ function subCellAt(int cell, real x, real y) returns int
 			member = nextInCell[groupSlot(member, groupId)]
 		lastQueryRebuildVisits += rebuilt
 		subRevision[slot] = cellRevision[cell]
+		if not cellSplit[slot]
+			cellSubCaches[cell]++
+			subCacheCount++
 		cellSplit[slot] = true
 	return true
 
@@ -491,7 +496,8 @@ function linkIntoCell(int id, int groupId, int cell)
 	coarseCount[block] = coarseCount[block] + 1
 	let cellSlot = headSlot(cell, groupId)
 	cellCount[cellSlot]++
-	cellRevision[cell]++
+	if cellSubCaches[cell] > 0
+		cellRevision[cell]++
 
 function unlinkFromCell(int id, int groupId)
 	let slot = groupSlot(id, groupId)
@@ -514,8 +520,12 @@ function unlinkFromCell(int id, int groupId)
 	coarseCount[block] = coarseCount[block] - 1
 	let cellSlot = headSlot(cell, groupId)
 	cellCount[cellSlot]--
-	cellRevision[cell]++
+	if cellSubCaches[cell] > 0
+		cellRevision[cell]++
 	if cellCount[cellSlot] == 0
+		if cellSplit[cellSlot]
+			cellSubCaches[cell]--
+			subCacheCount--
 		cellSplit[cellSlot] = false
 
 /**	Records where an entry is, re-bucketing it in every group it belongs to. Call this before adding
@@ -525,12 +535,11 @@ public function spatialPartitionSetPos(int id, real x, real y)
 		return
 	// Exact equality covers every subcell and group: none can need relinking without a move.
 	// An unregistered row still needs insertion, even when its default coordinates are (0, 0).
-	let registered = registrySlot[id]
-	if registered != 0 and entryX[id] == x and entryY[id] == y
+	if entryX[id] == x and entryY[id] == y and registrySlot[id] != 0
 		return
 	entryX[id] = x
 	entryY[id] = y
-	if registered == 0
+	if registrySlot[id] == 0
 		registryIds[registryCount] = id
 		registryCount++
 		registrySlot[id] = registryCount
@@ -547,7 +556,10 @@ public function spatialPartitionSetPos(int id, real x, real y)
 	if bucketed != 0 and u >= bucketed - 1 and u < bucketed
 		let bucketedRow = bucketRow[id]
 		if v >= bucketedRow and v < bucketedRow + 1
-			cellRevision[bucketed - 1 + bucketedRow * gridWidth]++
+			if subCacheCount > 0
+				let cachedCell = bucketed - 1 + bucketedRow * gridWidth
+				if cellSubCaches[cachedCell] > 0
+					cellRevision[cachedCell]++
 			return
 	let column = cellColumn(u)
 	let row = cellRow(v)
