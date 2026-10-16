@@ -118,6 +118,18 @@ function countIn(vec2 center, real radius, real maxDisplacement, int groupId) re
 	countIn(vec2(8., 8.), 1., 0., SUBSET).assertEquals(0)
 	countIn(vec2(220., 220.), 1., 0., ALL).assertEquals(1)
 
+@Test function firstMoveAfterARebuildInvalidatesNewSubcellCaches()
+	arena()
+	for i = 1 to 256
+		place(i, vec2(8. + (i mod 16) * 15., 8. + (i div 16 mod 16) * 15.), ALL)
+	rebuildSpatialPartition(vec2(-4096., -4096.), vec2(4096., 4096.))
+	// Rebuild forgets the fast-path bucket. A query can build a cache before the next move.
+	countIn(vec2(8., 8.), 1., 0., ALL).assertEquals(1)
+	spatialPartitionSetPos(256, 220., 220.)
+	countIn(vec2(220., 220.), 1., 0., ALL).assertEquals(1)
+	spatialPartitionLastQueryRebuildVisits().assertEquals(256)
+	countIn(vec2(8., 8.), 1., 0., ALL).assertEquals(0)
+
 @Test function movingAnEntryRebucketsItInEveryGroup()
 	arena()
 	place(1, vec2(0., 0.), ALL)

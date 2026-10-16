@@ -533,13 +533,6 @@ function unlinkFromCell(int id, int groupId)
 public function spatialPartitionSetPos(int id, real x, real y)
 	if not requireValidEntry(id) or not requireReady()
 		return
-	// Probe equality only when a live query cache benefits. The ordinary grid already skips
-	// same-cell relinking; extra coordinate reads would slow its moving-entry path.
-	let usesSubCells = subCacheCount > 0
-	if usesSubCells and entryX[id] == x and entryY[id] == y and registrySlot[id] != 0
-		return
-	entryX[id] = x
-	entryY[id] = y
 	if registrySlot[id] == 0
 		registryIds[registryCount] = id
 		registryCount++
@@ -557,11 +550,16 @@ public function spatialPartitionSetPos(int id, real x, real y)
 	if bucketed != 0 and u >= bucketed - 1 and u < bucketed
 		let bucketedRow = bucketRow[id]
 		if v >= bucketedRow and v < bucketedRow + 1
-			if usesSubCells
+			// Only a live query cache needs the old coordinates or an invalidation.
+			if subCacheCount > 0 and (entryX[id] != x or entryY[id] != y)
 				let cachedCell = bucketed - 1 + bucketedRow * gridWidth
 				if cellSubCaches[cachedCell] > 0
 					cellRevision[cachedCell]++
+			entryX[id] = x
+			entryY[id] = y
 			return
+	entryX[id] = x
+	entryY[id] = y
 	let column = cellColumn(u)
 	let row = cellRow(v)
 	bucketColumn[id] = column + 1
@@ -572,6 +570,9 @@ public function spatialPartitionSetPos(int id, real x, real y)
 		if cellOfEntry[slot] != 0 and cellOfEntry[slot] != cell + 1
 			unlinkFromCell(id, groupId)
 			linkIntoCell(id, groupId, cell)
+	// A rebuild clears bucketColumn. Its first move may take this path without changing cell links.
+	if subCacheCount > 0 and cellSubCaches[cell] > 0
+		cellRevision[cell]++
 
 /**	Adds or removes an entry from one group. The caller owns the policy of when membership changes,
 	which keeps predicate evaluation out of the walk entirely. */
