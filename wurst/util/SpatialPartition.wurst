@@ -533,9 +533,10 @@ function unlinkFromCell(int id, int groupId)
 public function spatialPartitionSetPos(int id, real x, real y)
 	if not requireValidEntry(id) or not requireReady()
 		return
-	// Exact equality covers every subcell and group: none can need relinking without a move.
-	// An unregistered row still needs insertion, even when its default coordinates are (0, 0).
-	if entryX[id] == x and entryY[id] == y and registrySlot[id] != 0
+	// Probe equality only when a live query cache benefits. The ordinary grid already skips
+	// same-cell relinking; extra coordinate reads would slow its moving-entry path.
+	let usesSubCells = subCacheCount > 0
+	if usesSubCells and entryX[id] == x and entryY[id] == y and registrySlot[id] != 0
 		return
 	entryX[id] = x
 	entryY[id] = y
@@ -556,7 +557,7 @@ public function spatialPartitionSetPos(int id, real x, real y)
 	if bucketed != 0 and u >= bucketed - 1 and u < bucketed
 		let bucketedRow = bucketRow[id]
 		if v >= bucketedRow and v < bucketedRow + 1
-			if subCacheCount > 0
+			if usesSubCells
 				let cachedCell = bucketed - 1 + bucketedRow * gridWidth
 				if cellSubCaches[cachedCell] > 0
 					cellRevision[cachedCell]++
