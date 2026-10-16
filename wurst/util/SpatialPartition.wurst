@@ -700,6 +700,64 @@ public function rebuildSpatialPartition(vec2 worldMin, vec2 worldMax)
 
 // Queries
 
+/** A read-only existence test. Must not yield, query, or mutate the partition. */
+public interface SpatialPartitionPredicate
+	function matches(int id, boolean uncertain) returns boolean
+
+/** Stops at the first accepted range candidate without collecting a snapshot.
+ * The same displacement band as range snapshots determines candidates and uncertainty.
+ * Walks primary chains: an existence check must not rebuild a whole crowded-cell cache before
+ * it can accept its first member. No query stack is opened or changed.
+ */
+public function spatialPartitionAnyInRange(vec2 center, real radius, real maxDisplacement,
+		int groupId, SpatialPartitionPredicate predicate) returns boolean
+	lastQueryVisits = 0
+	lastQueryBlocksSkipped = 0
+	lastQueryDense = false
+	lastQueryRebuildVisits = 0
+	if not spatialPartitionIsValidGroupId(groupId) or not spatialPartitionIsReady()
+		return false
+	let reach = radius + maxDisplacement
+	let certainlyIn = radius - maxDisplacement
+	let certainlyInSq = certainlyIn * certainlyIn
+	let certainlyOutSq = reach * reach
+	let minCx = cellCoordX(center.x - reach)
+	let maxCx = cellCoordX(center.x + reach)
+	let minCy = cellCoordY(center.y - reach)
+	let maxCy = cellCoordY(center.y + reach)
+	lastQueryDense = (maxCx - minCx + 1) * (maxCy - minCy + 1) >= groupMemberCount[groupId]
+	if lastQueryDense
+		for member = 0 to groupMemberCount[groupId] - 1
+			let id = groupMembers[headSlot(member, groupId)]
+			lastQueryVisits++
+			let dx = entryX[id] - center.x
+			let dy = entryY[id] - center.y
+			let distSq = dx * dx + dy * dy
+			if distSq <= certainlyOutSq and predicate.matches(id,
+					not (certainlyIn >= 0. and distSq <= certainlyInSq))
+				return true
+	else
+		for by = minCy div SPATIAL_PARTITION_COARSE_FACTOR to maxCy div SPATIAL_PARTITION_COARSE_FACTOR
+			for bx = minCx div SPATIAL_PARTITION_COARSE_FACTOR to maxCx div SPATIAL_PARTITION_COARSE_FACTOR
+				if coarseCount[coarseSlot(bx + by * coarseWidth, groupId)] <= 0
+					lastQueryBlocksSkipped++
+					continue
+				for cy = max(minCy, by * SPATIAL_PARTITION_COARSE_FACTOR) to min(maxCy,
+						by * SPATIAL_PARTITION_COARSE_FACTOR + SPATIAL_PARTITION_COARSE_FACTOR - 1)
+					for cx = max(minCx, bx * SPATIAL_PARTITION_COARSE_FACTOR) to min(maxCx,
+							bx * SPATIAL_PARTITION_COARSE_FACTOR + SPATIAL_PARTITION_COARSE_FACTOR - 1)
+						var id = cellHead[headSlot(cy * gridWidth + cx, groupId)]
+						while id != 0
+							lastQueryVisits++
+							let dx = entryX[id] - center.x
+							let dy = entryY[id] - center.y
+							let distSq = dx * dx + dy * dy
+							if distSq <= certainlyOutSq and predicate.matches(id,
+									not (certainlyIn >= 0. and distSq <= certainlyInSq))
+								return true
+							id = nextInCell[groupSlot(id, groupId)]
+	return false
+
 /**	Collects the members of `groupId` within `radius` of the point, allowing for entries whose cached
 	position may be up to `maxDisplacement` out of date.
 

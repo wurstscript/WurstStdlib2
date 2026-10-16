@@ -151,6 +151,35 @@ function currentMaxDisplacement() returns real
 public interface UnitSpatialPredicate
 	function matches(unit u) returns boolean
 
+/** Owned by one group; existence callbacks cannot reenter or mutate the index. */
+class UnitSpatialExistenceFilter implements SpatialPartitionPredicate
+	UnitSpatialPredicate membership
+	UnitSpatialPredicate filter = null
+	vec2 center = ZERO2
+	real radius = 0.
+	real tickDisp = 0.
+
+	construct(UnitSpatialPredicate membership)
+		this.membership = membership
+
+	override function matches(int idx, boolean uncertain) returns boolean
+		let u = indexedUnit[idx]
+		if u == null
+			return false
+		var inside = not uncertain
+		if not inside
+			let dx = spatialPartitionEntryX(idx) - center.x
+			let dy = spatialPartitionEntryY(idx) - center.y
+			let cachedDistSq = dx * dx + dy * dy
+			let entryDisp = tickDisp * (sweepTick - lastSweepTick[idx] + 1)
+			let entryIn = radius - entryDisp
+			let entryOut = radius + entryDisp
+			inside = entryIn >= 0. and cachedDistSq <= entryIn * entryIn
+			if not inside and cachedDistSq <= entryOut * entryOut
+				// Do not relink while the partition is walking its chains.
+				inside = u.getPos().distanceToSq(center) <= radius * radius
+		return inside and membership.matches(u) and filter.matches(u)
+
 /** A maintained subset of indexed units, with independent partition chains.
  * Membership is event-owned: call refreshMembership after registration and changes to predicate inputs.
  * A query also rechecks the predicate, so a stale member can never be returned; newly eligible units
@@ -162,9 +191,11 @@ public interface UnitSpatialPredicate
 public class UnitSpatialGroup
 	private int groupId
 	private UnitSpatialPredicate predicate
+	private UnitSpatialExistenceFilter existenceFilter
 	construct(UnitSpatialPredicate predicate)
 		ensureUnitGroup()
 		this.predicate = predicate
+		existenceFilter = new UnitSpatialExistenceFilter(predicate)
 		groupId = spatialPartitionAllocateGroup()
 		for i = 0 to registryCount - 1
 			let idx = registry[i]
@@ -183,9 +214,24 @@ public class UnitSpatialGroup
 	function beginQuery(vec2 center, real radius, boolean collisionFiltering) returns int
 		return beginRangeQuery(center, radius, collisionFiltering, groupId, predicate)
 
+	/** Exact origin-radius existence query; stops traversal at the first accepted member.
+	 * The filter must not yield, query, or mutate the index. It is borrowed for this call only.
+	 * No snapshot is opened, so an existing snapshot remains intact. No per-call allocation.
+	 */
+	function anyInRange(vec2 center, real radius, UnitSpatialPredicate filter) returns boolean
+		existenceFilter.center = center
+		existenceFilter.radius = radius
+		existenceFilter.tickDisp = tickDisplacement()
+		existenceFilter.filter = filter
+		let found = spatialPartitionAnyInRange(center, radius,
+			existenceFilter.tickDisp * displacementBoundTicks, groupId, existenceFilter)
+		existenceFilter.filter = null
+		return found
+
 	ondestroy
 		if groupId >= 0
 			spatialPartitionReleaseGroup(groupId)
+		destroy existenceFilter
 
 // Membership
 
@@ -827,6 +873,74 @@ class CountingSpatialPredicate implements UnitSpatialPredicate
 	override function matches(unit _u) returns boolean
 		calls++
 		return accepts
+
+@Test function existenceQueriesStopThePartitionBeforeCollectingTheCrowd()
+	testArena()
+	let rule = new CountingSpatialPredicate()
+	let subset = new UnitSpatialGroup(rule)
+	for i = 1 to 200
+		let member = addUnitAt(vec2(100., 0.))
+		subset.refreshMembership(member)
+	rule.calls = 0
+	subset.anyInRange(ZERO2, 300., rule).assertTrue()
+	spatialPartitionLastQueryVisits().assertEquals(1)
+	spatialPartitionLastQueryRebuildVisits().assertEquals(0)
+	// One membership check and one caller filter, not the whole group.
+	rule.calls.assertEquals(2)
+	// A negative filter exhausts the candidates, as it must, without changing membership.
+	UnitSpatialPredicate rejects = _u -> false
+	subset.anyInRange(ZERO2, 300., rejects).assertFalse()
+	spatialPartitionLastQueryVisits().assertEquals(200)
+	destroy rejects
+	destroy subset
+	destroy rule
+
+@Test function existenceQueriesPreserveRadiusMembershipAndOpenSnapshots()
+	testArena()
+	UnitSpatialPredicate rule = u -> u.getOwner() == Player(0) and u.isAlive()
+	let subset = new UnitSpatialGroup(rule)
+	let member = addUnitAt(vec2(100., 0.))
+	subset.refreshMembership(member)
+	let outsider = addUnitFor(Player(1), vec2(10., 0.))
+	UnitSpatialPredicate onlyMember = u -> u == member
+	UnitSpatialPredicate onlyOutsider = u -> u == outsider
+	let outer = subset.beginQuery(ZERO2, 300.)
+	subset.anyInRange(ZERO2, 99., onlyMember).assertFalse()
+	subset.anyInRange(ZERO2, 100., onlyMember).assertTrue()
+	subset.anyInRange(ZERO2, 300., onlyOutsider).assertFalse()
+	outer.assertEquals(1)
+	assertTrue(spatialIndexQueryUnit(0) == member)
+	spatialIndexEndQuery()
+	member.setOwner(Player(1), false)
+	subset.anyInRange(ZERO2, 300., onlyMember).assertFalse()
+	member.setOwner(Player(0), false)
+	member.kill()
+	subset.anyInRange(ZERO2, 300., onlyMember).assertFalse()
+	unregisterUnit(member)
+	subset.anyInRange(ZERO2, 300., onlyMember).assertFalse()
+	destroy onlyMember
+	destroy onlyOutsider
+	destroy subset
+	destroy rule
+
+@Test function existenceQueriesResolveLiveMovementWithoutRelinkingChains()
+	testArena()
+	UnitSpatialPredicate rule = u -> u.getOwner() == Player(0)
+	let member = addUnitAt(vec2(100., 0.))
+	let subset = new UnitSpatialGroup(rule)
+	for i = 1 to 600
+		addUnitFor(Player(1), vec2(2000., 0.))
+	sweepTick += 4
+	member.setXY(vec2(50., 0.))
+	while registryCount > 1
+		unregisterIndex(registry[registryCount - 1])
+	subset.anyInRange(ZERO2, 60., rule).assertTrue()
+	// Reading live while walking must not move its entry into a chain already traversed.
+	spatialPartitionEntryX(member.getIndex()).assertEquals(100.)
+	subset.anyInRange(ZERO2, 49., rule).assertFalse()
+	subsetHas(subset, ZERO2, 60., member).assertTrue()
+	destroy subset
+	destroy rule
 
 @Test function defaultMembershipDoesNotPollDuringMovementRefresh()
 	testArena()

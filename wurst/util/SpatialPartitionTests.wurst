@@ -23,6 +23,55 @@ function countIn(vec2 center, real radius, real maxDisplacement, int groupId) re
 	spatialPartitionEndQuery()
 	return n
 
+class ExistenceProbe implements SpatialPartitionPredicate
+	int calls = 0
+	boolean accept = true
+	boolean uncertain = false
+	override function matches(int _id, boolean uncertain) returns boolean
+		calls++
+		this.uncertain = uncertain
+		return accept
+
+@Test function existenceStopsBothDenseAndCellWalksWithoutBuildingSubcells()
+	arena()
+	let probe = new ExistenceProbe()
+	for i = 1 to 200
+		place(i, vec2(8., 8.), ALL)
+	spatialPartitionAnyInRange(vec2(8., 8.), 1., 0., ALL, probe).assertTrue()
+	spatialPartitionLastQueryUsedDenseScan().assertFalse()
+	spatialPartitionLastQueryVisits().assertEquals(1)
+	spatialPartitionLastQueryRebuildVisits().assertEquals(0)
+	probe.calls.assertEquals(1)
+	probe.uncertain.assertFalse()
+	spatialPartitionAnyInRange(ZERO2, 8000., 0., ALL, probe).assertTrue()
+	spatialPartitionLastQueryUsedDenseScan().assertTrue()
+	spatialPartitionLastQueryVisits().assertEquals(1)
+	destroy probe
+
+@Test function existenceCandidatesAndUncertaintyAgreeWithRangeSnapshots()
+	arena()
+	let probe = new ExistenceProbe()
+	probe.accept = false
+	for i = 1 to 200
+		place(i, vec2(i * 5. - 500., 0.), ALL)
+	for radius = 0 to 10
+		for drift = 0 to 3
+			let r = radius * 50.
+			let d = drift * 40.
+			let expected = countIn(ZERO2, r, d, ALL)
+			probe.calls = 0
+			spatialPartitionAnyInRange(ZERO2, r, d, ALL, probe).assertFalse()
+			probe.calls.assertEquals(expected)
+	// Boundary candidates retain the uncertainty flag for a live caller to decide.
+	arena()
+	place(1, vec2(100., 0.), ALL)
+	probe.accept = true
+	spatialPartitionAnyInRange(ZERO2, 90., 20., ALL, probe).assertTrue()
+	probe.uncertain.assertTrue()
+	spatialPartitionAnyInRange(ZERO2, 90., 0., ALL, probe).assertFalse()
+	spatialPartitionAnyInRange(ZERO2, 100., 0., SUBSET, probe).assertFalse()
+	destroy probe
+
 @Test function gridAndCoarseLevelCoverTheExtent()
 	arena()
 	// 8192 world units at 256 per cell, plus one so the far edge lands inside the grid.
