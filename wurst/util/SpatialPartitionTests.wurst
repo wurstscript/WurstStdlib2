@@ -52,6 +52,41 @@ function countIn(vec2 center, real radius, real maxDisplacement, int groupId) re
 	spatialPartitionInGroup(1, SUBSET).assertFalse()
 	spatialPartitionInGroup(2, SUBSET).assertTrue()
 
+@Test function crowdedCellsSubdivideAndTrackMovesWithinTheCell()
+	arena()
+	// All in one ordinary cell, spread across its sixteen subcells.
+	for i = 1 to 256
+		place(i, vec2(8. + (i mod 16) * 15., 8. + (i div 16 mod 16) * 15.), ALL)
+	let count = countIn(vec2(16., 16.), 12., 0., ALL)
+	assertTrue(count > 0)
+	assertTrue(spatialPartitionLastQueryVisits() < 64)
+	// Relocation inside the same normal cell must update the subdivided chain too.
+	spatialPartitionSetPos(256, 220., 220.)
+	countIn(vec2(8., 8.), 1., 0., ALL).assertEquals(0)
+	spatialPartitionSetPos(256, 8., 8.)
+	countIn(vec2(8., 8.), 1., 0., ALL).assertEquals(1)
+	// Rebuild, removal and reuse must not retain the previous subcell links.
+	rebuildSpatialPartition(vec2(-2048., -2048.), vec2(2048., 2048.))
+	countIn(vec2(8., 8.), 1., 0., ALL).assertEquals(1)
+	spatialPartitionRemove(256)
+	countIn(vec2(8., 8.), 1., 0., ALL).assertEquals(0)
+	place(256, vec2(220., 220.), ALL)
+	countIn(vec2(8., 8.), 1., 0., ALL).assertEquals(0)
+
+@Test function denseAndGridRoutesAgreeAtTheBoundary()
+	arena()
+	for i = 1 to 100
+		place(i, vec2(-500. + i * 10., 0.), ALL)
+	let grid = countIn(ZERO2, 100., 0., ALL)
+	spatialPartitionLastQueryUsedDenseScan().assertFalse()
+	// Remove the outsiders so the same window now costs more cells than group members.
+	for i = 1 to 100
+		if spatialPartitionEntryX(i).abs() > 100.
+			spatialPartitionRemove(i)
+	// A wider window still finds exactly those members and uses their dense registry.
+	countIn(ZERO2, 3000., 0., ALL).assertEquals(grid)
+	spatialPartitionLastQueryUsedDenseScan().assertTrue()
+
 @Test function movingAnEntryRebucketsItInEveryGroup()
 	arena()
 	place(1, vec2(0., 0.), ALL)
@@ -170,7 +205,7 @@ function countIn(vec2 center, real radius, real maxDisplacement, int groupId) re
 	// Two entries walked, not the ~1000 cells the bounding box covers.
 	visits.assertEquals(2)
 	// 5x5 blocks span the window; all but the two occupied corners are rejected outright.
-	skipped.assertEquals(23)
+	spatialPartitionLastQueryUsedDenseScan().assertTrue()
 
 /*	Magnitudes for the group split, on the shape groups exist for: a crowd nobody wants and a handful
 	of members inside it. */

@@ -37,6 +37,7 @@ import ClosureTimers
 import UnitIndexer
 import SpatialPartition
 import ErrorHandling
+import ArrayList
 
 // Configuration
 
@@ -85,6 +86,7 @@ function ensureUnitGroup()
 // ids UnitIndexer never hands out.
 
 unit array indexedUnit
+real array indexedCollision
 /** The highest row a unit has taken, which is what sizes the arrays here. */
 var highestUnitRow = 0
 /** Rows a unit has taken. They stay claimed after the unit leaves, for the next unit given the index. */
@@ -145,6 +147,54 @@ function tickDisplacement() returns real
 function currentMaxDisplacement() returns real
 	return tickDisplacement() * displacementBoundTicks
 
+/** Caller-owned membership rule. It must not yield, query, or mutate the index. */
+public interface UnitSpatialPredicate
+	function matches(unit u) returns boolean
+
+constant subsets = new ArrayList<UnitSpatialGroup>()
+
+/** A maintained subset of indexed units, with independent partition chains.
+ * Membership is evaluated at registration and during the shared sweep. Call updateSpatialIndex()
+ * immediately after changing predicate inputs (owner, death, or caller-owned state) when queries
+ * must observe the change before the next sweep. A query also rechecks the predicate, so a stale
+ * member can never be returned; newly eligible units require that update to join.
+ * Explicit subsets use their predicate as the visibility policy, including hidden/Locust units
+ * when the predicate allows them. The ordinary queries retain Warcraft enumeration semantics.
+ * The caller owns the predicate and must keep it alive until the subset is destroyed.
+ */
+public class UnitSpatialGroup
+	private int groupId
+	private UnitSpatialPredicate predicate
+
+	construct(UnitSpatialPredicate predicate)
+		ensureUnitGroup()
+		this.predicate = predicate
+		groupId = spatialPartitionAllocateGroup()
+		subsets.add(this)
+		for i = 0 to registryCount - 1
+			let idx = registry[i]
+			refreshMembership(idx, indexedUnit[idx])
+
+	function refreshMembership(int idx, unit u)
+		if groupId >= 0
+			spatialPartitionSetGroup(idx, groupId, predicate.matches(u))
+
+	/** Opens a snapshot; close with spatialIndexEndQuery(), including when it returns zero. */
+	function beginQuery(vec2 center, real radius) returns int
+		return beginRangeQuery(center, radius, false, groupId, predicate)
+
+	function beginQuery(vec2 center, real radius, boolean collisionFiltering) returns int
+		return beginRangeQuery(center, radius, collisionFiltering, groupId, predicate)
+
+	ondestroy
+		subsets.remove(this)
+		if groupId >= 0
+			spatialPartitionReleaseGroup(groupId)
+
+function refreshSubsets(int idx, unit u)
+	for i = 0 to subsets.size() - 1
+		subsets.get(i).refreshMembership(idx, u)
+
 // Membership
 
 function registerUnit(unit u)
@@ -175,6 +225,9 @@ function registerUnit(unit u)
 	// Position first: joining a group links the entry at whatever position the partition holds.
 	spatialPartitionSetPos(idx, pos.x, pos.y)
 	spatialPartitionSetGroup(idx, unitGroup, true)
+	// The interpreter has no BlzGetUnitCollisionSize; collision tests inject the cached value.
+	indexedCollision[idx] = compiletime ? 0. : u.getCollisionSize()
+	refreshSubsets(idx, u)
 
 function unregisterIndex(int idx)
 	let slot = registrySlot[idx]
@@ -226,6 +279,8 @@ function refreshUnit(int idx, unit u)
 	// sweep cycle despite its cache having just been made exact.
 	lastSweepTick[idx] = sweepTick
 	spatialPartitionSetPos(idx, u.getX(), u.getY())
+	indexedCollision[idx] = compiletime ? 0. : u.getCollisionSize()
+	refreshSubsets(idx, u)
 
 // Sweep
 
@@ -364,57 +419,37 @@ function cacheLivePosition(int idx, unit u) returns vec2
 	lastSweepTick[idx] = sweepTick
 	return live
 
-/**	Collects every unit whose origin lies within `radius` of `center` into the query snapshot and
-	returns how many matched. Must be paired with `spatialIndexEndQuery()`.
-
-	With `collisionSizeFiltering` the test becomes `IsUnitInRangeXY`, matching
-	`ClosureForGroups.forUnitsInRange(pos, radius, true, cb)`. */
+/** Origin-distance query, or collision-radius distance when collisionSizeFiltering is true.
+ * Collision is cached at registration/refresh; call updateSpatialIndex after changing it.
+ * Must be paired with spatialIndexEndQuery(). */
 public function spatialIndexBeginQuery(vec2 center, real radius, boolean collisionSizeFiltering) returns int
+	return beginRangeQuery(center, radius, collisionSizeFiltering, unitGroup, null)
+
+function beginRangeQuery(vec2 center, real radius, boolean collisionSizeFiltering,
+		int groupId, UnitSpatialPredicate predicate) returns int
 	queryBase[queryDepth] = snapshotTop
 	queryDepth++
-
 	let tickDisp = tickDisplacement()
-	// The engine test for the collision variant reaches an extra collision radius outward, so the
-	// window has to widen by the largest collision size any unit can have.
 	let reach = radius + (collisionSizeFiltering ? MAX_COLLISION_SIZE : 0.)
 	let matched = spatialPartitionBeginRangeQuery(center, reach,
-		tickDisp * displacementBoundTicks, unitGroup)
-	let radiusSq = radius * radius
-
+		tickDisp * displacementBoundTicks, groupId)
 	for i = 0 to matched - 1
 		let idx = spatialPartitionQueryId(i)
 		let u = indexedUnit[idx]
 		if u != null
-			if collisionSizeFiltering
-				// Per-unit collision size makes the "definitely inside" half unusable, so every
-				// survivor of the window goes through the engine test.
-				if IsUnitInRangeXY(u, center.x, center.y, radius) and u.passesEnumerationState()
-					pushMatch(u)
-			else if not spatialPartitionQueryUncertain(i)
-				if u.passesEnumerationState()
-					pushMatch(u)
-			else
-				// The partition padded by the worst staleness anywhere in the registry. This entry can
-				// be far fresher than that - the sweep, a move event, or an earlier query in the same
-				// frame may have written it - so re-decide under the padding it actually needs. Inside
-				// the inner band it matches, outside the outer one it does not, and only what is left
-				// between them costs a live read.
-				let dx = spatialPartitionEntryX(idx) - center.x
-				let dy = spatialPartitionEntryY(idx) - center.y
-				let cachedDistSq = dx * dx + dy * dy
-				let entryDisp = tickDisp * (sweepTick - lastSweepTick[idx] + 1)
-				let entryIn = radius - entryDisp
-				let entryOut = radius + entryDisp
-				if entryIn > 0. and cachedDistSq <= entryIn * entryIn
-					if u.passesEnumerationState()
-						pushMatch(u)
-				else if cachedDistSq <= entryOut * entryOut
-					let live = cacheLivePosition(idx, u)
-					let ux = live.x - center.x
-					let uy = live.y - center.y
-					if ux * ux + uy * uy <= radiusSq and u.passesEnumerationState()
-						pushMatch(u)
-
+			let memberRadius = radius + (collisionSizeFiltering ? indexedCollision[idx] : 0.)
+			let dx = spatialPartitionEntryX(idx) - center.x
+			let dy = spatialPartitionEntryY(idx) - center.y
+			let cachedDistSq = dx * dx + dy * dy
+			let entryDisp = tickDisp * (sweepTick - lastSweepTick[idx] + 1)
+			let entryIn = memberRadius - entryDisp
+			let entryOut = memberRadius + entryDisp
+			var inside = entryIn >= 0. and cachedDistSq <= entryIn * entryIn
+			if not inside and cachedDistSq <= entryOut * entryOut
+				inside = cacheLivePosition(idx, u).distanceToSq(center) <= memberRadius * memberRadius
+			if inside and ((predicate == null and u.passesEnumerationState())
+					or (predicate != null and predicate.matches(u)))
+				pushMatch(u)
 	spatialPartitionEndQuery()
 	return snapshotTop - queryBase[queryDepth - 1]
 
@@ -744,7 +779,7 @@ function rangeHas(vec2 center, real radius, unit target) returns boolean
 	addUnitAt(vec2(0., 0.))
 	// A radius this wide spans many blocks, and all but the one holding the unit are empty.
 	rangeCount(vec2(0., 0.), 3000.).assertEquals(1)
-	assertTrue(spatialPartitionLastQueryBlocksSkipped() > 0)
+	spatialPartitionLastQueryUsedDenseScan().assertTrue()
 	// One occupied cell means one visited entry, however much empty space the radius covers.
 	spatialPartitionLastQueryVisits().assertEquals(1)
 
@@ -770,3 +805,76 @@ function rangeHas(vec2 center, real radius, unit target) returns boolean
 	// A double visit would mean the walk re-entered a chain, which is how a relink during a query
 	// would show up.
 	spatialPartitionLastQueryVisits().assertEquals(50)
+
+function subsetHas(UnitSpatialGroup subset, vec2 center, real radius, unit target) returns boolean
+	let n = subset.beginQuery(center, radius)
+	var found = false
+	for i = 0 to n - 1
+		if spatialIndexQueryUnit(i) == target
+			found = true
+	spatialIndexEndQuery()
+	return found
+
+@Test function maintainedSubsetsSkipOtherOwnersAndRefreshChanges()
+	testArena()
+	UnitSpatialPredicate rule = u -> u.getOwner() == Player(0) and u.isAlive()
+	let subset = new UnitSpatialGroup(rule)
+	let member = addUnitAt(vec2(100., 0.))
+	for i = 1 to 200
+		addUnitFor(Player(1), vec2(100., 0.))
+	subsetHas(subset, ZERO2, 300., member).assertTrue()
+	spatialPartitionLastQueryVisits().assertEquals(1)
+	member.setOwner(Player(1), false)
+	// Even before maintenance removes a stale member, the rule rejects it.
+	subsetHas(subset, ZERO2, 300., member).assertFalse()
+	refreshUnit(member.getIndex(), member)
+	member.setOwner(Player(0), false)
+	refreshUnit(member.getIndex(), member)
+	subsetHas(subset, ZERO2, 300., member).assertTrue()
+	member.kill()
+	subsetHas(subset, ZERO2, 300., member).assertFalse()
+	unregisterUnit(member)
+	let n = subset.beginQuery(ZERO2, 300.)
+	spatialIndexEndQuery()
+	n.assertEquals(0)
+	destroy subset
+	destroy rule
+
+@Test function subsetMovementUsesTheSharedBoundAcrossAWipe()
+	testArena()
+	UnitSpatialPredicate rule = u -> u.getOwner() == Player(0)
+	let member = addUnitAt(vec2(100., 0.))
+	let subset = new UnitSpatialGroup(rule)
+	for i = 1 to 600
+		addUnitFor(Player(1), vec2(2000., 0.))
+	let oldBound = displacementBoundTicks
+	assertTrue(oldBound > 2, "grown bound=" + oldBound)
+	// A survivor's cached position is outside the small query; the live position is inside it.
+	sweepTick += 4
+	member.setXY(vec2(50., 0.))
+	while registryCount > 1
+		unregisterIndex(registry[registryCount - 1])
+	displacementBoundTicks.assertEquals(oldBound)
+	assertTrue(subsetHas(subset, ZERO2, 60., member), "wipe survivor must be found at " + member.getPos().toString() + " bound=" + oldBound)
+	// Closing a nested query leaves its parent's snapshot intact.
+	let outer = subset.beginQuery(ZERO2, 200.)
+	let inner = subset.beginQuery(vec2(3000., 0.), 1.)
+	inner.assertEquals(0)
+	spatialIndexEndQuery()
+	outer.assertEquals(1)
+	assertTrue(spatialIndexQueryUnit(0) == member, "nested snapshot must retain survivor")
+	spatialIndexEndQuery()
+	destroy subset
+	destroy rule
+
+@Test function collisionQueriesUseEachUnitsCachedRadius()
+	testArena()
+	let body = addUnitAt(vec2(125., 0.))
+	let point = addUnitAt(vec2(125., 0.))
+	indexedCollision[body.getIndex()] = 32.
+	indexedCollision[point.getIndex()] = 0.
+	let n = spatialIndexBeginQuery(ZERO2, 100., true)
+	n.assertEquals(1)
+	assertTrue(spatialIndexQueryUnit(0) == body)
+	spatialIndexEndQuery()
+	rangeCount(ZERO2, 100.).assertEquals(0)
