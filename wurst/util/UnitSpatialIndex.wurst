@@ -439,16 +439,20 @@ function beginRangeQuery(vec2 center, real radius, boolean collisionSizeFilterin
 		let idx = spatialPartitionQueryId(i)
 		let u = indexedUnit[idx]
 		if u != null
-			let memberRadius = radius + (collisionSizeFiltering ? indexedCollision[idx] : 0.)
-			let dx = spatialPartitionEntryX(idx) - center.x
-			let dy = spatialPartitionEntryY(idx) - center.y
-			let cachedDistSq = dx * dx + dy * dy
-			let entryDisp = tickDisp * (sweepTick - lastSweepTick[idx] + 1)
-			let entryIn = memberRadius - entryDisp
-			let entryOut = memberRadius + entryDisp
-			var inside = entryIn >= 0. and cachedDistSq <= entryIn * entryIn
-			if not inside and cachedDistSq <= entryOut * entryOut
-				inside = cacheLivePosition(idx, u).distanceToSq(center) <= memberRadius * memberRadius
+			// The partition already proved this for origin-only queries; only uncertainty or a
+			// per-unit collision radius needs the narrower test below.
+			var inside = not collisionSizeFiltering and not spatialPartitionQueryUncertain(i)
+			if not inside
+				let memberRadius = radius + (collisionSizeFiltering ? indexedCollision[idx] : 0.)
+				let dx = spatialPartitionEntryX(idx) - center.x
+				let dy = spatialPartitionEntryY(idx) - center.y
+				let cachedDistSq = dx * dx + dy * dy
+				let entryDisp = tickDisp * (sweepTick - lastSweepTick[idx] + 1)
+				let entryIn = memberRadius - entryDisp
+				let entryOut = memberRadius + entryDisp
+				inside = entryIn >= 0. and cachedDistSq <= entryIn * entryIn
+				if not inside and cachedDistSq <= entryOut * entryOut
+					inside = cacheLivePosition(idx, u).distanceToSq(center) <= memberRadius * memberRadius
 			if inside and ((predicate == null and u.passesEnumerationState())
 					or (predicate != null and predicate.matches(u)))
 				pushMatch(u)
