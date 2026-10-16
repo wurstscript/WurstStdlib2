@@ -65,7 +65,7 @@ import ErrorHandling
 	snapshot, so this multiplies snapshot storage and is part of the capacity budget below. */
 @configurable public constant SPATIAL_PARTITION_MAX_QUERY_DEPTH = 8
 
-/** Split crowded cells into 4x4 subcells; kept until the cell empties to avoid churn. */
+/** Cache 4x4 subcells for tight queries in crowded cells; built lazily on demand. */
 @configurable public constant SPATIAL_PARTITION_SPLIT_THRESHOLD = 64
 constant SUBDIVISIONS = 4
 constant SUBCELLS = SUBDIVISIONS * SUBDIVISIONS
@@ -93,10 +93,9 @@ int array cellCount
 boolean array cellSplit
 int array subHead
 int array subNext
-int array subPrev
-int array subOfEntry
-/** Number of this entry's memberships that actually use subcells. */
-int array subMembershipCount
+/** Shared cell revision covers positions and every group's membership mutations. */
+int array cellRevision
+int array subRevision
 // Dense membership per group makes a window wider than its population a linear member scan.
 int array groupMembers
 int array groupMemberSlot
@@ -136,6 +135,11 @@ var queryDepth = 0
 var lastQueryVisits = 0
 var lastQueryBlocksSkipped = 0
 var lastQueryDense = false
+var lastQueryRebuildVisits = 0
+
+/** Entries read to rebuild stale subcell caches during the last query, separately from traversal. */
+public function spatialPartitionLastQueryRebuildVisits() returns int
+	return lastQueryRebuildVisits
 
 /** Whether the last query chose a dense member scan instead of the grid. */
 public function spatialPartitionLastQueryUsedDenseScan() returns boolean
@@ -231,7 +235,7 @@ public function spatialPartitionExtentFits(vec2 worldMin, vec2 worldMax) returns
 	let needed = spatialPartitionRequiredCellSlots(worldMin, worldMax)
 	return needed >= 0 and needed <= targetArrayLimit()
 
-/** Entries the last query walked, whether or not they matched. */
+/** Entries the last result traversal walked; cache rebuild reads are reported separately. */
 public function spatialPartitionLastQueryVisits() returns int
 	return lastQueryVisits
 
@@ -451,49 +455,28 @@ function subCellAt(int cell, real x, real y) returns int
 	let sy = max(0, min(SUBDIVISIONS - 1, ((gridV(y) - cy) * SUBDIVISIONS).floor()))
 	return cell * SUBCELLS + sx + sy * SUBDIVISIONS
 
-function linkSubCell(int id, int groupId, int cell)
-	let slot = groupSlot(id, groupId)
-	let sub = subCellAt(cell, entryX[id], entryY[id])
-	let head = subHead[headSlot(sub, groupId)]
-	subOfEntry[slot] = sub + 1
-	subMembershipCount[id]++
-	subPrev[slot] = 0
-	subNext[slot] = head
-	if head != 0
-		subPrev[groupSlot(head, groupId)] = id
-	subHead[headSlot(sub, groupId)] = id
-
-function unlinkSubCell(int id, int groupId)
-	let slot = groupSlot(id, groupId)
-	let stored = subOfEntry[slot]
-	if stored != 0
-		subMembershipCount[id]--
-		let prev = subPrev[slot]
-		let next = subNext[slot]
-		if prev == 0
-			subHead[headSlot(stored - 1, groupId)] = next
-		else
-			subNext[groupSlot(prev, groupId)] = next
-		if next != 0
-			subPrev[groupSlot(next, groupId)] = prev
-		subOfEntry[slot] = 0
-		subNext[slot] = 0
-		subPrev[slot] = 0
-
-function updateSubCells(int id)
-	if subMembershipCount[id] == 0
-		return
-	var sub = -1
-	for groupId = 0 to groupsInUse - 1
-		let slot = groupSlot(id, groupId)
-		let stored = cellOfEntry[slot]
-		if stored != 0 and cellSplit[headSlot(stored - 1, groupId)]
-			// All memberships share one cell geometry, so this coordinate is identical for each.
-			if sub < 0
-				sub = subCellAt(stored - 1, entryX[id], entryY[id])
-			if subOfEntry[slot] != sub + 1
-				unlinkSubCell(id, groupId)
-				linkSubCell(id, groupId, stored - 1)
+/** Subcells are a query cache, never a second per-unit position-maintenance path. */
+@noinline function prepareSubCells(int cell, int groupId, boolean partial) returns boolean
+	let slot = headSlot(cell, groupId)
+	if not (isLua or compiletime) or not partial
+		or (not cellSplit[slot] and cellCount[slot] < SPATIAL_PARTITION_SPLIT_THRESHOLD)
+		return false
+	if not cellSplit[slot] or subRevision[slot] != cellRevision[cell]
+		for sub = 0 to SUBCELLS - 1
+			subHead[headSlot(cell * SUBCELLS + sub, groupId)] = 0
+		var member = cellHead[slot]
+		var rebuilt = 0
+		while member != 0
+			let sub = subCellAt(cell, entryX[member], entryY[member])
+			let head = headSlot(sub, groupId)
+			subNext[groupSlot(member, groupId)] = subHead[head]
+			subHead[head] = member
+			rebuilt++
+			member = nextInCell[groupSlot(member, groupId)]
+		lastQueryRebuildVisits += rebuilt
+		subRevision[slot] = cellRevision[cell]
+		cellSplit[slot] = true
+	return true
 
 function linkIntoCell(int id, int groupId, int cell)
 	let slot = groupSlot(id, groupId)
@@ -508,14 +491,7 @@ function linkIntoCell(int id, int groupId, int cell)
 	coarseCount[block] = coarseCount[block] + 1
 	let cellSlot = headSlot(cell, groupId)
 	cellCount[cellSlot]++
-	if (isLua or compiletime) and cellSplit[cellSlot]
-		linkSubCell(id, groupId, cell)
-	else if (isLua or compiletime) and cellCount[cellSlot] >= SPATIAL_PARTITION_SPLIT_THRESHOLD
-		cellSplit[cellSlot] = true
-		var member = cellHead[cellSlot]
-		while member != 0
-			linkSubCell(member, groupId, cell)
-			member = nextInCell[groupSlot(member, groupId)]
+	cellRevision[cell]++
 
 function unlinkFromCell(int id, int groupId)
 	let slot = groupSlot(id, groupId)
@@ -523,7 +499,6 @@ function unlinkFromCell(int id, int groupId)
 	if stored == 0
 		return
 	let cell = stored - 1
-	unlinkSubCell(id, groupId)
 	let prev = prevInCell[slot]
 	let next = nextInCell[slot]
 	if prev != 0
@@ -539,6 +514,7 @@ function unlinkFromCell(int id, int groupId)
 	coarseCount[block] = coarseCount[block] - 1
 	let cellSlot = headSlot(cell, groupId)
 	cellCount[cellSlot]--
+	cellRevision[cell]++
 	if cellCount[cellSlot] == 0
 		cellSplit[cellSlot] = false
 
@@ -549,11 +525,12 @@ public function spatialPartitionSetPos(int id, real x, real y)
 		return
 	// Exact equality covers every subcell and group: none can need relinking without a move.
 	// An unregistered row still needs insertion, even when its default coordinates are (0, 0).
-	if registrySlot[id] != 0 and entryX[id] == x and entryY[id] == y
+	let registered = registrySlot[id]
+	if registered != 0 and entryX[id] == x and entryY[id] == y
 		return
 	entryX[id] = x
 	entryY[id] = y
-	if registrySlot[id] == 0
+	if registered == 0
 		registryIds[registryCount] = id
 		registryCount++
 		registrySlot[id] = registryCount
@@ -570,7 +547,7 @@ public function spatialPartitionSetPos(int id, real x, real y)
 	if bucketed != 0 and u >= bucketed - 1 and u < bucketed
 		let bucketedRow = bucketRow[id]
 		if v >= bucketedRow and v < bucketedRow + 1
-			updateSubCells(id)
+			cellRevision[bucketed - 1 + bucketedRow * gridWidth]++
 			return
 	let column = cellColumn(u)
 	let row = cellRow(v)
@@ -582,7 +559,6 @@ public function spatialPartitionSetPos(int id, real x, real y)
 		if cellOfEntry[slot] != 0 and cellOfEntry[slot] != cell + 1
 			unlinkFromCell(id, groupId)
 			linkIntoCell(id, groupId, cell)
-	updateSubCells(id)
 
 /**	Adds or removes an entry from one group. The caller owns the policy of when membership changes,
 	which keeps predicate evaluation out of the walk entirely. */
@@ -731,6 +707,7 @@ public function spatialPartitionBeginRangeQuery(vec2 center, real radius, real m
 	lastQueryVisits = 0
 	lastQueryBlocksSkipped = 0
 	lastQueryDense = false
+	lastQueryRebuildVisits = 0
 	// A positive guard rather than an early return. An inlined return has to be threaded through
 	// the rest of the body as a flag tested before every statement, and this body is the hottest
 	// loop in the package. Nothing was pushed when the guard fails, so the count below is 0 anyway.
@@ -794,7 +771,11 @@ public function spatialPartitionBeginRangeQuery(vec2 center, real radius, real m
 							var cx = cellMinX
 							while cx <= cellMaxX
 								let cell = rowBase + cx
-								let split = cellSplit[headSlot(cell, groupId)]
+								let slot = headSlot(cell, groupId)
+								let split = (cellSplit[slot] or cellCount[slot] >= SPATIAL_PARTITION_SPLIT_THRESHOLD)
+									and prepareSubCells(cell, groupId,
+									gridU(center.x - reach) > cx or gridU(center.x + reach) < cx + 1
+									or gridV(center.y - reach) > cy or gridV(center.y + reach) < cy + 1)
 								let minSx = split ? max(0, min(SUBDIVISIONS - 1, ((gridU(center.x - reach) - cx) * SUBDIVISIONS).floor())) : 0
 								let maxSx = split ? max(0, min(SUBDIVISIONS - 1, ((gridU(center.x + reach) - cx) * SUBDIVISIONS).floor())) : 0
 								let minSy = split ? max(0, min(SUBDIVISIONS - 1, ((gridV(center.y - reach) - cy) * SUBDIVISIONS).floor())) : 0
@@ -844,6 +825,7 @@ public function spatialPartitionBeginBoxQuery(vec2 boxMin, vec2 boxMax, real max
 	lastQueryVisits = 0
 	lastQueryBlocksSkipped = 0
 	lastQueryDense = false
+	lastQueryRebuildVisits = 0
 	if not tooDeep and spatialPartitionIsValidGroupId(groupId) and spatialPartitionIsReady()
 
 		let outMinX = boxMin.x - maxDisplacement
@@ -903,7 +885,11 @@ public function spatialPartitionBeginBoxQuery(vec2 boxMin, vec2 boxMax, real max
 							var cx = cellMinX
 							while cx <= cellMaxX
 								let cell = rowBase + cx
-								let split = cellSplit[headSlot(cell, groupId)]
+								let slot = headSlot(cell, groupId)
+								let split = (cellSplit[slot] or cellCount[slot] >= SPATIAL_PARTITION_SPLIT_THRESHOLD)
+									and prepareSubCells(cell, groupId,
+									gridU(outMinX) > cx or gridU(outMaxX) < cx + 1
+									or gridV(outMinY) > cy or gridV(outMaxY) < cy + 1)
 								let minSx = split ? max(0, min(SUBDIVISIONS - 1, ((gridU(outMinX) - cx) * SUBDIVISIONS).floor())) : 0
 								let maxSx = split ? max(0, min(SUBDIVISIONS - 1, ((gridU(outMaxX) - cx) * SUBDIVISIONS).floor())) : 0
 								let minSy = split ? max(0, min(SUBDIVISIONS - 1, ((gridV(outMinY) - cy) * SUBDIVISIONS).floor())) : 0
