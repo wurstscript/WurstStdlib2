@@ -95,6 +95,8 @@ int array subHead
 int array subNext
 int array subPrev
 int array subOfEntry
+/** Number of this entry's memberships that actually use subcells. */
+int array subMembershipCount
 // Dense membership per group makes a window wider than its population a linear member scan.
 int array groupMembers
 int array groupMemberSlot
@@ -454,6 +456,7 @@ function linkSubCell(int id, int groupId, int cell)
 	let sub = subCellAt(cell, entryX[id], entryY[id])
 	let head = subHead[headSlot(sub, groupId)]
 	subOfEntry[slot] = sub + 1
+	subMembershipCount[id]++
 	subPrev[slot] = 0
 	subNext[slot] = head
 	if head != 0
@@ -464,6 +467,7 @@ function unlinkSubCell(int id, int groupId)
 	let slot = groupSlot(id, groupId)
 	let stored = subOfEntry[slot]
 	if stored != 0
+		subMembershipCount[id]--
 		let prev = subPrev[slot]
 		let next = subNext[slot]
 		if prev == 0
@@ -477,11 +481,16 @@ function unlinkSubCell(int id, int groupId)
 		subPrev[slot] = 0
 
 function updateSubCells(int id)
+	if subMembershipCount[id] == 0
+		return
+	var sub = -1
 	for groupId = 0 to groupsInUse - 1
 		let slot = groupSlot(id, groupId)
 		let stored = cellOfEntry[slot]
 		if stored != 0 and cellSplit[headSlot(stored - 1, groupId)]
-			let sub = subCellAt(stored - 1, entryX[id], entryY[id])
+			// All memberships share one cell geometry, so this coordinate is identical for each.
+			if sub < 0
+				sub = subCellAt(stored - 1, entryX[id], entryY[id])
 			if subOfEntry[slot] != sub + 1
 				unlinkSubCell(id, groupId)
 				linkSubCell(id, groupId, stored - 1)
@@ -537,6 +546,10 @@ function unlinkFromCell(int id, int groupId)
 	the entry to any group, and again whenever it has moved. */
 public function spatialPartitionSetPos(int id, real x, real y)
 	if not requireValidEntry(id) or not requireReady()
+		return
+	// Exact equality covers every subcell and group: none can need relinking without a move.
+	// An unregistered row still needs insertion, even when its default coordinates are (0, 0).
+	if registrySlot[id] != 0 and entryX[id] == x and entryY[id] == y
 		return
 	entryX[id] = x
 	entryY[id] = y

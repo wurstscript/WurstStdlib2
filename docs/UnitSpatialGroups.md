@@ -20,6 +20,15 @@ make new membership visible immediately. Call it after teleports and collision-s
 The caller owns the predicate; destroy the group before destroying its predicate. Destroying a group
 removes its membership and releases its partition group for reuse.
 
+For event-owned membership, use `new UnitSpatialGroup(DEFENDERS, false)` and call
+`defenders.refreshMembership(u)` when an input changes. These groups do not run predicates during
+position refreshes or the periodic sweep. Construction populates existing indexed units; later
+registrations need an explicit membership refresh. The query still checks the predicate, so stale
+members are rejected immediately. The caller must notify newly eligible units. Membership refresh
+does not register units and is safe during deindex. This mode suits a map that already owns spawn,
+death and membership-state hooks. The one-argument constructor retains automatic membership polling
+for callers that need it; its predicates' work is paid on every refresh.
+
 Explicit subsets apply their predicate as their visibility policy. Ordinary `SpatialIndexForUnits`
 queries continue to follow Warcraft's range/rect enumeration rules (including corpses, excluding
 hidden and live Locust units). A subset can include hidden/Locust units if its predicate allows them.
@@ -28,8 +37,10 @@ Pair every `beginQuery` with `spatialIndexEndQuery`, including empty queries. Th
 releases handles on close and has no fixed result cap. Do not yield or run arbitrary callbacks while
 a raw snapshot is open; copy it into a caller-owned list and close it first for those uses.
 
-Collision queries use squared distance against `radius + cachedCollisionSize`. Registration and
-refresh update that size. `MAX_COLLISION_SIZE` must cover the map's unit sizes, as with the native
+Collision queries use squared distance against `radius + cachedCollisionSize`. Only collision queries
+read that size, at most once per unit per sweep tick. An explicit `updateSpatialIndex()` invalidates
+it immediately, including mutations within the same tick. Position sweeps do not read collision size.
+`MAX_COLLISION_SIZE` must cover the map's unit sizes, as with the native
 closure's broadphase. The interpreter cannot read collision size; tests inject known cached radii,
 and live engine parity needs an in-game test.
 

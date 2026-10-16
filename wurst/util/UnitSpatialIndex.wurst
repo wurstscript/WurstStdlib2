@@ -87,6 +87,7 @@ function ensureUnitGroup()
 
 unit array indexedUnit
 real array indexedCollision
+int array collisionTick
 /** The highest row a unit has taken, which is what sizes the arrays here. */
 var highestUnitRow = 0
 /** Rows a unit has taken. They stay claimed after the unit leaves, for the next unit given the index. */
@@ -165,12 +166,22 @@ constant subsets = new ArrayList<UnitSpatialGroup>()
 public class UnitSpatialGroup
 	private int groupId
 	private UnitSpatialPredicate predicate
+	private boolean automaticMembership
 
 	construct(UnitSpatialPredicate predicate)
+		this(predicate, true)
+
+	/** Set automaticMembership false when the caller owns every membership-changing event.
+	 * Call refreshMembership after those events. Queries still reject stale predicate matches.
+	 * Position maintenance and its guaranteed movement bound are unchanged.
+	 */
+	construct(UnitSpatialPredicate predicate, boolean automaticMembership)
 		ensureUnitGroup()
 		this.predicate = predicate
+		this.automaticMembership = automaticMembership
 		groupId = spatialPartitionAllocateGroup()
-		subsets.add(this)
+		if automaticMembership
+			subsets.add(this)
 		for i = 0 to registryCount - 1
 			let idx = registry[i]
 			refreshMembership(indexedUnit[idx])
@@ -189,11 +200,12 @@ public class UnitSpatialGroup
 		return beginRangeQuery(center, radius, collisionFiltering, groupId, predicate)
 
 	ondestroy
-		subsets.remove(this)
+		if automaticMembership
+			subsets.removeUnordered(this)
 		if groupId >= 0
 			spatialPartitionReleaseGroup(groupId)
 
-function refreshSubsets(unit u)
+@inline function refreshSubsets(unit u)
 	for i = 0 to subsets.size() - 1
 		subsets.get(i).refreshMembership(u)
 
@@ -227,8 +239,9 @@ function registerUnit(unit u)
 	// Position first: joining a group links the entry at whatever position the partition holds.
 	spatialPartitionSetPos(idx, pos.x, pos.y)
 	spatialPartitionSetGroup(idx, unitGroup, true)
-	// The interpreter has no BlzGetUnitCollisionSize; collision tests inject the cached value.
-	indexedCollision[idx] = compiletime ? 0. : u.getCollisionSize()
+	// Collision filtering pays for its own lazy cache; position-only consumers read no collision native.
+	indexedCollision[idx] = 0.
+	collisionTick[idx] = -1
 	refreshSubsets(u)
 
 function unregisterIndex(int idx)
@@ -271,6 +284,8 @@ public function unit.updateSpatialIndex()
 	let idx = this.getIndex()
 	if idx == 0
 		return
+	// An explicit update also invalidates a collision mutation within this sweep tick.
+	collisionTick[idx] = -1
 	if registrySlot[idx] == 0
 		registerUnit(this)
 		return
@@ -281,7 +296,6 @@ function refreshUnit(int idx, unit u)
 	// sweep cycle despite its cache having just been made exact.
 	lastSweepTick[idx] = sweepTick
 	spatialPartitionSetPos(idx, u.getX(), u.getY())
-	indexedCollision[idx] = compiletime ? 0. : u.getCollisionSize()
 	refreshSubsets(u)
 
 // Sweep
@@ -421,8 +435,17 @@ function cacheLivePosition(int idx, unit u) returns vec2
 	lastSweepTick[idx] = sweepTick
 	return live
 
+/** Collision queries share one read per unit per sweep tick, invalidated by explicit updates.
+ * The interpreter cannot read collision size; its tests inject known radii instead.
+ */
+function collisionRadius(int idx, unit u) returns real
+	if not compiletime and collisionTick[idx] != sweepTick
+		indexedCollision[idx] = u.getCollisionSize()
+		collisionTick[idx] = sweepTick
+	return indexedCollision[idx]
+
 /** Origin-distance query, or collision-radius distance when collisionSizeFiltering is true.
- * Collision is cached at registration/refresh; call updateSpatialIndex after changing it.
+ * Collision is cached lazily for the tick; call updateSpatialIndex after changing it within a tick.
  * Must be paired with spatialIndexEndQuery(). */
 public function spatialIndexBeginQuery(vec2 center, real radius, boolean collisionSizeFiltering) returns int
 	return beginRangeQuery(center, radius, collisionSizeFiltering, unitGroup, null)
@@ -443,7 +466,7 @@ function beginRangeQuery(vec2 center, real radius, boolean collisionSizeFilterin
 			// per-unit collision radius needs the narrower test below.
 			var inside = not collisionSizeFiltering and not spatialPartitionQueryUncertain(i)
 			if not inside
-				let memberRadius = radius + (collisionSizeFiltering ? indexedCollision[idx] : 0.)
+				let memberRadius = radius + (collisionSizeFiltering ? collisionRadius(idx, u) : 0.)
 				let dx = spatialPartitionEntryX(idx) - center.x
 				let dy = spatialPartitionEntryY(idx) - center.y
 				let cachedDistSq = dx * dx + dy * dy
@@ -820,6 +843,62 @@ function subsetHas(UnitSpatialGroup subset, vec2 center, real radius, unit targe
 			found = true
 	spatialIndexEndQuery()
 	return found
+
+class CountingSpatialPredicate implements UnitSpatialPredicate
+	var calls = 0
+	var accepts = true
+
+	override function matches(unit _u) returns boolean
+		calls++
+		return accepts
+
+@Test function eventOwnedMembershipDoesNotPollDuringMovementRefresh()
+	testArena()
+	let rule = new CountingSpatialPredicate()
+	let subset = new UnitSpatialGroup(rule, false)
+	let member = addUnitAt(vec2(100., 0.))
+	subset.refreshMembership(member)
+	rule.calls = 0
+	for i = 1 to 10
+		refreshUnit(member.getIndex(), member)
+	sweepStep()
+	rule.calls.assertEquals(0)
+	// Query-time rejection remains immediate even without a membership notification.
+	rule.accepts = false
+	subsetHas(subset, ZERO2, 300., member).assertFalse()
+	subset.refreshMembership(member)
+	rule.accepts = true
+	sweepStep()
+	subsetHas(subset, ZERO2, 300., member).assertFalse()
+	subset.refreshMembership(member)
+	subsetHas(subset, ZERO2, 300., member).assertTrue()
+	unregisterUnit(member)
+	subset.refreshMembership(member)
+	spatialIndexTrackedUnits().assertEquals(0)
+	destroy subset
+	destroy rule
+
+@Test function automaticMembershipStillObservesChangesDuringTheSweep()
+	testArena()
+	UnitSpatialPredicate rule = u -> u.getOwner() == Player(0)
+	let subset = new UnitSpatialGroup(rule)
+	let member = addUnitFor(Player(1), vec2(100., 0.))
+	subsetHas(subset, ZERO2, 300., member).assertFalse()
+	member.setOwner(Player(0), false)
+	sweepStep()
+	subsetHas(subset, ZERO2, 300., member).assertTrue()
+	member.setOwner(Player(1), false)
+	sweepStep()
+	subsetHas(subset, ZERO2, 300., member).assertFalse()
+	destroy subset
+	destroy rule
+
+@Test function positionRefreshDoesNotReadOrOverwriteCollisionCache()
+	testArena()
+	let member = addUnitAt(vec2(100., 0.))
+	indexedCollision[member.getIndex()] = 32.
+	refreshUnit(member.getIndex(), member)
+	indexedCollision[member.getIndex()].assertEquals(32.)
 
 @Test function maintainedSubsetsSkipOtherOwnersAndRefreshChanges()
 	testArena()
