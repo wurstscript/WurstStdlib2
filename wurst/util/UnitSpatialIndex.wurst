@@ -205,7 +205,7 @@ public class UnitSpatialGroup
 		if groupId >= 0
 			spatialPartitionReleaseGroup(groupId)
 
-@inline function refreshSubsets(unit u)
+@noinline function refreshSubsets(unit u)
 	for i = 0 to subsets.size() - 1
 		subsets.get(i).refreshMembership(u)
 
@@ -242,7 +242,8 @@ function registerUnit(unit u)
 	// Collision filtering pays for its own lazy cache; position-only consumers read no collision native.
 	indexedCollision[idx] = 0.
 	collisionTick[idx] = -1
-	refreshSubsets(u)
+	if not subsets.isEmpty()
+		refreshSubsets(u)
 
 function unregisterIndex(int idx)
 	let slot = registrySlot[idx]
@@ -296,7 +297,9 @@ function refreshUnit(int idx, unit u)
 	// sweep cycle despite its cache having just been made exact.
 	lastSweepTick[idx] = sweepTick
 	spatialPartitionSetPos(idx, u.getX(), u.getY())
-	refreshSubsets(u)
+	// Keep the optional polling loop out of the default refresh's emitted locals and array bindings.
+	if not subsets.isEmpty()
+		refreshSubsets(u)
 
 // Sweep
 
