@@ -58,8 +58,6 @@ public function string.isCharBoundary(int pos) returns boolean
 	return not LoadBoolean(CONT_BYTE_MAP, 0, slice.getHash())
 
 constant charset = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-constant numberset = "0123456789"
-constant numbersetlength = numberset.length()
 constant charsetlength = charset.length()
 
 /**	Every printable ascii character, in code point order from space (32) to

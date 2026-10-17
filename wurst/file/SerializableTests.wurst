@@ -2,7 +2,6 @@ package SerializableTests
 import Serializable
 import StructuredSerialization
 import ChunkedString
-import Vectors
 
 int constructions = 0
 
@@ -84,8 +83,8 @@ class CustomTupleState implements FieldSerializable
 class RenameScore implements SerializationMigration
 	override function migrate(FieldSerializationReader reader)
 		if reader.getSchemaVersion() < 2
-			int defaultPoints = 0
-			int oldPoints = reader.read("points", defaultPoints)
+			let defaultPoints = 0
+			let oldPoints = reader.read("points", defaultPoints)
 			reader.renameField("points", "score")
 			reader.set("score", oldPoints + 1)
 
@@ -173,7 +172,7 @@ function customTupleCodecRoundTripsThroughSerializableFields()
 	rootReader.hasField("slot").assertTrue()
 	let tupleReader = rootReader.readObject("slot")
 	tupleReader.hasField("itemId").assertTrue()
-	int defaultItemId = 0
+	let defaultItemId = 0
 	tupleReader.read("itemId", defaultItemId).assertEquals(1234)
 	let loaded = new CustomTupleState().load(data)
 
@@ -189,7 +188,7 @@ function customTupleCodecRoundTripsThroughSerializableFields()
 @Test
 function taggedFieldsPreserveDefaultsAndSkipUnknownData()
 	let writer = new FieldSerializationWriter(4)
-	int score = 7
+	let score = 7
 	writer.write("score", score)
 	writer.writeRaw("futureField", "x", "opaque future data")
 	let data = writer.finish()
@@ -209,7 +208,7 @@ function taggedFieldsPreserveDefaultsAndSkipUnknownData()
 @Test
 function schemaMigrationCanRenameFields()
 	let writer = new FieldSerializationWriter(1)
-	int points = 73
+	let points = 73
 	writer.write("points", points)
 	let data = writer.finish()
 	let loaded = new PlayerState()
@@ -226,14 +225,14 @@ function schemaMigrationCanRenameFields()
 @Test
 function readerMutationsReplaceAndMoveFieldOwnership()
 	let writer = new FieldSerializationWriter(1)
-	int oldValue = 10
-	int existingValue = 20
+	let oldValue = 10
+	let existingValue = 20
 	writer.write("old", oldValue)
 	writer.write("existing", existingValue)
 	let data = writer.finish()
 	let reader = new FieldSerializationReader(data)
-	int replacementValue = 11
-	int defaultValue = 0
+	let replacementValue = 11
+	let defaultValue = 0
 
 	reader.set("old", replacementValue)
 	reader.read("old", defaultValue).assertEquals(11)
@@ -253,7 +252,7 @@ function readerMutationsReplaceAndMoveFieldOwnership()
 @Test
 function integrityKeyRejectsEditedOrForeignDataWithoutMutation()
 	let writer = new FieldSerializationWriter(1, 12345)
-	int score = 9
+	let score = 9
 	writer.write("score", score)
 	let data = writer.finish()
 	let state = new PlayerState()
@@ -282,8 +281,8 @@ function parserRejectsTruncationAndDuplicateFieldIds()
 	truncatedReader.isValid().assertFalse()
 
 	let writer = new FieldSerializationWriter(1)
-	int first = 1
-	int second = 2
+	let first = 1
+	let second = 2
 	writer.write("same", first)
 	writer.write("same", second)
 	let duplicate = writer.finish()
@@ -299,13 +298,13 @@ function parserRejectsTruncationAndDuplicateFieldIds()
 @Test
 function signedIntegerCodecPreservesFullWidthValues()
 	let writer = new FieldSerializationWriter(1)
-	int minimum = INT_MIN
-	int maximum = INT_MAX
+	let minimum = INT_MIN
+	let maximum = INT_MAX
 	writer.write("minimum", minimum)
 	writer.write("maximum", maximum)
 	let data = writer.finish()
 	let reader = new FieldSerializationReader(data)
-	int defaultValue = 0
+	let defaultValue = 0
 
 	reader.isValid().assertTrue()
 	reader.read("minimum", defaultValue).assertEquals(INT_MIN)

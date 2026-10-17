@@ -313,7 +313,7 @@ function _createTestDb() returns SqliteDb
     SQL.exec("INSERT INTO _sgtest5 VALUES ('before')")
     SQL.count("SELECT count(*) FROM _sgtest5").assertEquals(1)
     SQL.close()
-    // After close on :memory:, previous data is gone — verify a fresh connection works
+    // After close on :memory:, previous data is gone, so verify a fresh connection works
     SQL.exec("CREATE TABLE _sgtest5 (v TEXT)")
     SQL.count("SELECT count(*) FROM _sgtest5").assertEquals(0)
     SQL.exec("DROP TABLE _sgtest5")
@@ -374,7 +374,7 @@ function _createTestDb() returns SqliteDb
     // a = 'x' (value), b = '' (empty string, NOT null), c = NULL (omitted)
     db.exec("INSERT INTO t (a, b) VALUES ('x', '')")
     let row = db.selectFirst("SELECT a, b, c FROM t")
-    // col() cannot tell '' apart from NULL — both come back as ""
+    // col() cannot tell '' apart from NULL: both come back as ""
     row.col(0).assertEquals("x")
     row.col(1).assertEquals("")
     row.col(2).assertEquals("")
@@ -407,7 +407,7 @@ function _createTestDb() returns SqliteDb
     destroy db
 
 // ============================================================================
-// Native surface coverage — proves every @extern native behaves as documented.
+// Native surface coverage: proves every @extern native behaves as documented.
 // These use the raw handle (db.getHandle()) so each native is exercised directly.
 // ============================================================================
 
@@ -502,7 +502,7 @@ function _createTestDb() returns SqliteDb
     sqlite_step(stmt).assertEquals(true)
     sqlite_column_is_null(stmt, 0).assertEquals(false)
     sqlite_column_string(stmt, 0).assertEquals("bound")
-    // clear the binding, rewind, step again — the parameter is now NULL
+    // clear the binding, rewind, step again: the parameter is now NULL
     sqlite_clear_bindings(stmt)
     sqlite_reset(stmt)
     sqlite_step(stmt).assertEquals(true)

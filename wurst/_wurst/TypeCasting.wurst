@@ -11,8 +11,6 @@ constant typecastdata = new Table()
 @compiletime function initTypecastData()
 	typecastdata.saveString(0, "")
 
-constant castTable = InitHashtable()
-
 @noinline
 public function handle.getTCHandleId() returns int
 	return GetHandleId(this)
