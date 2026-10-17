@@ -19,7 +19,7 @@ class ReporterFromBefore implements IngameChecks
 
 @Test function aReporterWrittenBeforeSkippedStillCompilesAndHearsOfIt()
 	let reporter = new ReporterFromBefore()
-	IngameChecks checks = reporter
+	let checks = reporter
 	checks.skipped(4, "it can not be repeated")
 	reporter.count.assertEquals(1)
 	reporter.last.assertEquals("skipped 4 checks: it can not be repeated")

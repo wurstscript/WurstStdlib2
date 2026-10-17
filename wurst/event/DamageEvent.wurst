@@ -571,10 +571,6 @@ public abstract class DamageListener
         return e.getName() + " Damage"
     return "Damage"
 
-/** Returns the damage designation of the damage instance being currently fired */
-function getEventDamageDesignation() returns string
-    return getDamageDesignation(DamageEvent.getType(), DamageEvent.getElement())
-
 
 /* INIT */
 

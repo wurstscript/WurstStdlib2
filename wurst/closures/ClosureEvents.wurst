@@ -5,7 +5,6 @@ import ClosureTimers
 import UnitIndexer
 import HashMap
 import KeyedMap
-import Table
 import ErrorHandling
 
 /** Use this chat event if you want to access the entered message */
@@ -120,8 +119,8 @@ public abstract class OnUnitCast extends OnCastListener
 	(map castTo Table).removeInt(key)
 
 /** Ability id -> the first cast listener registered for it, as a chain through next and prev.
-	This is what EventListener.castMap always was, a HashMap. A cast reads the listener from a native table on
-	Lua instead, which put and remove keep in step with the HashMap, so everything else a HashMap does still works. */
+	A HashMap, so everything else a HashMap does still works; a cast reads the listener from a native table on
+	Lua instead, which put and remove keep in step with the HashMap. */
 public class CastListenerMap extends HashMap<int, OnCastListener>
 	private int fast = keyedMapCreate()
 

@@ -23,7 +23,7 @@ package UnitSpatialIndex
 	speed requires `unit.updateSpatialIndex()` for immediate visibility. The public native-less query
 	package returns an empty set when this index is disabled.
 
-	Cell geometry now belongs to the partition, so `SPATIAL_PARTITION_CELL_SIZE` is the knob.
+	Cell geometry belongs to the partition, so `SPATIAL_PARTITION_CELL_SIZE` is the knob.
 	`SPATIAL_INDEX_CELL_SIZE` stays exported and deprecated, and a stale override is reported at init
 	rather than ignored.
 
@@ -55,7 +55,7 @@ import ErrorHandling
 /** Disable when hidden units are never used; saves one native per corpse the query finds. */
 @configurable public constant SPATIAL_INDEX_CHECK_HIDDEN = true
 
-/**	Deprecated. Cell geometry belongs to the shared grid now, so `SPATIAL_PARTITION_CELL_SIZE` is the
+/**	Deprecated. Cell geometry belongs to the shared grid, so `SPATIAL_PARTITION_CELL_SIZE` is the
 	setting; one grid cannot have a second cell size for units alone.
 
 	Kept exported so an existing `UnitSpatialIndex_config` still compiles, and defaulted to agree. It
@@ -180,14 +180,14 @@ class UnitSpatialExistenceFilter implements SpatialPartitionPredicate
 				inside = u.getPos().distanceToSq(center) <= radius * radius
 		return inside and membership.matches(u) and filter.matches(u)
 
-/** A maintained subset of indexed units, with independent partition chains.
- * Membership is event-owned: call refreshMembership after registration and changes to predicate inputs.
- * A query also rechecks the predicate, so a stale member can never be returned; newly eligible units
- * require a membership notification to join. Position sweeps never evaluate caller predicates.
- * Explicit subsets use their predicate as the visibility policy, including hidden/Locust units
- * when the predicate allows them. The ordinary queries retain Warcraft enumeration semantics.
- * The caller owns the predicate and must keep it alive until the subset is destroyed.
- */
+/**	A maintained subset of indexed units, with independent partition chains.
+
+	Membership is event-owned: call refreshMembership after registration and changes to predicate inputs.
+	A query also rechecks the predicate, so a stale member can never be returned; newly eligible units
+	require a membership notification to join. Position sweeps never evaluate caller predicates.
+	Explicit subsets use their predicate as the visibility policy, including hidden/Locust units
+	when the predicate allows them. The ordinary queries retain Warcraft enumeration semantics.
+	The caller owns the predicate and must keep it alive until the subset is destroyed. */
 public class UnitSpatialGroup
 	private int groupId
 	private UnitSpatialPredicate predicate
@@ -214,10 +214,9 @@ public class UnitSpatialGroup
 	function beginQuery(vec2 center, real radius, boolean collisionFiltering) returns int
 		return beginRangeQuery(center, radius, collisionFiltering, groupId, predicate)
 
-	/** Exact origin-radius existence query; stops traversal at the first accepted member.
-	 * The filter must not yield, query, or mutate the index. It is borrowed for this call only.
-	 * No snapshot is opened, so an existing snapshot remains intact. No per-call allocation.
-	 */
+	/**	Exact origin-radius existence query; stops traversal at the first accepted member.
+		The filter must not yield, query, or mutate the index. It is borrowed for this call only.
+		No snapshot is opened, so an existing snapshot remains intact. No per-call allocation. */
 	function anyInRange(vec2 center, real radius, UnitSpatialPredicate filter) returns boolean
 		existenceFilter.center = center
 		existenceFilter.radius = radius
@@ -245,11 +244,11 @@ function registerUnit(unit u)
 		return
 	if idx >= spatialPartitionAllocatorBase()
 		// The partition hands out the ids from here up, so this row may belong to another consumer.
-		error("UnitSpatialIndex: unit index " + idx.toString() + " reaches the ids SpatialPartition allocates")
+		error("UnitSpatialIndex: unit index " + idx + " reaches the ids SpatialPartition allocates")
 		return
 	if spatialPartitionEntryIdIsReserved(idx) and not unitRow[idx]
 		// Taken directly by another consumer. Sharing it would move and remove that consumer's entry.
-		error("UnitSpatialIndex: entry id " + idx.toString() + " is held by another SpatialPartition consumer")
+		error("UnitSpatialIndex: entry id " + idx + " is held by another SpatialPartition consumer")
 		return
 	unitRow[idx] = true
 	indexedUnit[idx] = u
@@ -457,18 +456,17 @@ function cacheLivePosition(int idx, unit u) returns vec2
 	lastSweepTick[idx] = sweepTick
 	return live
 
-/** Collision queries share one read per unit per sweep tick, invalidated by explicit updates.
- * The interpreter cannot read collision size; its tests inject known radii instead.
- */
+/**	Collision queries share one read per unit per sweep tick, invalidated by explicit updates.
+	The interpreter cannot read collision size; its tests inject known radii instead. */
 function collisionRadius(int idx, unit u) returns real
 	if not compiletime and collisionTick[idx] != sweepTick
 		indexedCollision[idx] = u.getCollisionSize()
 		collisionTick[idx] = sweepTick
 	return indexedCollision[idx]
 
-/** Origin-distance query, or collision-radius distance when collisionSizeFiltering is true.
- * Collision is cached lazily for the tick; call updateSpatialIndex after changing it within a tick.
- * Must be paired with spatialIndexEndQuery(). */
+/**	Origin-distance query, or collision-radius distance when collisionSizeFiltering is true.
+	Collision is cached lazily for the tick; call updateSpatialIndex after changing it within a tick.
+	Must be paired with spatialIndexEndQuery(). */
 public function spatialIndexBeginQuery(vec2 center, real radius, boolean collisionSizeFiltering) returns int
 	return beginRangeQuery(center, radius, collisionSizeFiltering, unitGroup, null)
 
@@ -587,7 +585,7 @@ init
 		if SPATIAL_INDEX_CELL_SIZE != SPATIAL_PARTITION_CELL_SIZE
 			error("UnitSpatialIndex: SPATIAL_INDEX_CELL_SIZE is deprecated and no longer in effect."
 				+ " The grid is shared, so set SPATIAL_PARTITION_CELL_SIZE to "
-				+ SPATIAL_INDEX_CELL_SIZE.toString() + " instead.")
+				+ SPATIAL_INDEX_CELL_SIZE + " instead.")
 		ensureUnitGroup()
 	// Everything init depends on has to have worked. A group is what a query filters by, and the grid
 	// is what it walks; without either, every query matches nothing, and activating would leave
@@ -657,14 +655,17 @@ function rangeCount(vec2 center, real radius) returns int
 	spatialIndexEndQuery()
 	return n
 
-function rangeHas(vec2 center, real radius, unit target) returns boolean
-	let n = spatialIndexBeginQuery(center, radius, false)
+/** Whether the open query with `n` matches holds the target, and closes it. */
+function snapshotHas(int n, unit target) returns boolean
 	var found = false
 	for i = 0 to n - 1
 		if spatialIndexQueryUnit(i) == target
 			found = true
 	spatialIndexEndQuery()
 	return found
+
+function rangeHas(vec2 center, real radius, unit target) returns boolean
+	return snapshotHas(spatialIndexBeginQuery(center, radius, false), target)
 
 @Test function rangeQueryReturnsWhatIsInsideAndNothingElse()
 	testArena()
@@ -858,13 +859,7 @@ function rangeHas(vec2 center, real radius, unit target) returns boolean
 	spatialPartitionLastQueryVisits().assertEquals(50)
 
 function subsetHas(UnitSpatialGroup subset, vec2 center, real radius, unit target) returns boolean
-	let n = subset.beginQuery(center, radius)
-	var found = false
-	for i = 0 to n - 1
-		if spatialIndexQueryUnit(i) == target
-			found = true
-	spatialIndexEndQuery()
-	return found
+	return snapshotHas(subset.beginQuery(center, radius), target)
 
 class CountingSpatialPredicate implements UnitSpatialPredicate
 	var calls = 0
@@ -1038,7 +1033,7 @@ class CountingSpatialPredicate implements UnitSpatialPredicate
 	while registryCount > 1
 		unregisterIndex(registry[registryCount - 1])
 	displacementBoundTicks.assertEquals(oldBound)
-	assertTrue(subsetHas(subset, ZERO2, 60., member), "wipe survivor must be found at " + member.getPos().toString() + " bound=" + oldBound)
+	assertTrue(subsetHas(subset, ZERO2, 60., member), "wipe survivor must be found at " + member.getPos() + " bound=" + oldBound)
 	// Closing a nested query leaves its parent's snapshot intact.
 	let outer = subset.beginQuery(ZERO2, 200.)
 	let inner = subset.beginQuery(vec2(3000., 0.), 1.)

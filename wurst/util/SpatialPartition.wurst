@@ -262,7 +262,7 @@ public function spatialPartitionLastQueryBlocksSkipped() returns int
 	  snapshot   `entries * MAX_QUERY_DEPTH`             - every OPEN query's results are live at once
 	  query base `MAX_QUERY_DEPTH`                       - bounds nesting itself
 
-	The snapshot is the one that is easy to get wrong, and I did: it is not bounded by the live entries,
+	The snapshot is the one that is easy to get wrong: it is not bounded by the live entries,
 	because nested queries each keep their own results. Depth multiplies it. */
 function targetArrayLimit() returns int
 	return isLua ? INT_MAX : JASS_MAX_ARRAY_SIZE
@@ -290,12 +290,12 @@ public function spatialPartitionIsValidGroupId(int groupId) returns boolean
 	alone - the position, the group links, the registry slot - so two consumers that each counted up
 	from 1 would share rows without either noticing: one overwrites the other's position, relinks its
 	groups on every move, and deletes its entry on removal. Groups separate what a query sees, not
-	what an id addresses. A shared structure has to own the namespace its keys come from. */
-/*	The id space is split in two. Ids below the base are for a consumer that brings its own ids, which
+	what an id addresses. A shared structure has to own the namespace its keys come from.
+
+	The id space is split in two. Ids below the base are for a consumer that brings its own ids, which
 	is UnitSpatialIndex, whose ids are UnitIndexer indices; the allocator hands out ids from the base
 	up, so the two can never meet. A second consumer takes its ids from the allocator. On Lua the base
 	is about 134 million; on Jass, where the unit index is off, it is 1. */
-var nextEntryId = spatialPartitionAllocatorBase()
 
 /**	The lowest id the allocator hands out. A consumer that addresses rows by ids of its own keeps
 	them below this, and they never collide with allocated ones. The lower half is reserved only where
@@ -303,6 +303,8 @@ var nextEntryId = spatialPartitionAllocatorBase()
 	off, so the allocator keeps the whole id space. */
 public function spatialPartitionAllocatorBase() returns int
 	return isLua or compiletime ? spatialPartitionMaxEntryId() div 2 + 1 : 1
+
+var nextEntryId = spatialPartitionAllocatorBase()
 int array freeEntryIds
 var freeEntryIdCount = 0
 /*	Whether an id is currently handed out. The free list alone cannot answer that: pushing an id onto
@@ -450,11 +452,15 @@ function requireReady() returns boolean
 @noinline function reportNotReady()
 	error("SpatialPartition: rebuildSpatialPartition must set an extent before entries are added")
 
+/** Subcell index along one axis of a grid coordinate inside the cell at `cellCoord`, clamped. */
+@inline function subIndex(real gridCoord, int cellCoord) returns int
+	return max(0, min(SUBDIVISIONS - 1, ((gridCoord - cellCoord) * SUBDIVISIONS).floor()))
+
 function subCellAt(int cell, real x, real y) returns int
 	let cx = cell mod gridWidth
 	let cy = cell div gridWidth
-	let sx = max(0, min(SUBDIVISIONS - 1, ((gridU(x) - cx) * SUBDIVISIONS).floor()))
-	let sy = max(0, min(SUBDIVISIONS - 1, ((gridV(y) - cy) * SUBDIVISIONS).floor()))
+	let sx = subIndex(gridU(x), cx)
+	let sy = subIndex(gridV(y), cy)
 	return cell * SUBCELLS + sx + sy * SUBDIVISIONS
 
 /** Subcells are a query cache, never a second per-unit position-maintenance path. */
@@ -704,11 +710,10 @@ public function rebuildSpatialPartition(vec2 worldMin, vec2 worldMax)
 public interface SpatialPartitionPredicate
 	function matches(int id, boolean uncertain) returns boolean
 
-/** Stops at the first accepted range candidate without collecting a snapshot.
- * The same displacement band as range snapshots determines candidates and uncertainty.
- * Walks primary chains: an existence check must not rebuild a whole crowded-cell cache before
- * it can accept its first member. No query stack is opened or changed.
- */
+/**	Stops at the first accepted range candidate without collecting a snapshot.
+	The same displacement band as range snapshots determines candidates and uncertainty.
+	Walks primary chains: an existence check must not rebuild a whole crowded-cell cache before
+	it can accept its first member. No query stack is opened or changed. */
 public function spatialPartitionAnyInRange(vec2 center, real radius, real maxDisplacement,
 		int groupId, SpatialPartitionPredicate predicate) returns boolean
 	lastQueryVisits = 0
@@ -848,10 +853,10 @@ public function spatialPartitionBeginRangeQuery(vec2 center, real radius, real m
 									and prepareSubCells(cell, groupId,
 									gridU(center.x - reach) > cx or gridU(center.x + reach) < cx + 1
 									or gridV(center.y - reach) > cy or gridV(center.y + reach) < cy + 1)
-								let minSx = split ? max(0, min(SUBDIVISIONS - 1, ((gridU(center.x - reach) - cx) * SUBDIVISIONS).floor())) : 0
-								let maxSx = split ? max(0, min(SUBDIVISIONS - 1, ((gridU(center.x + reach) - cx) * SUBDIVISIONS).floor())) : 0
-								let minSy = split ? max(0, min(SUBDIVISIONS - 1, ((gridV(center.y - reach) - cy) * SUBDIVISIONS).floor())) : 0
-								let maxSy = split ? max(0, min(SUBDIVISIONS - 1, ((gridV(center.y + reach) - cy) * SUBDIVISIONS).floor())) : 0
+								let minSx = split ? subIndex(gridU(center.x - reach), cx) : 0
+								let maxSx = split ? subIndex(gridU(center.x + reach), cx) : 0
+								let minSy = split ? subIndex(gridV(center.y - reach), cy) : 0
+								let maxSy = split ? subIndex(gridV(center.y + reach), cy) : 0
 								var sy = minSy
 								while sy <= maxSy
 									var sx = minSx
@@ -962,10 +967,10 @@ public function spatialPartitionBeginBoxQuery(vec2 boxMin, vec2 boxMax, real max
 									and prepareSubCells(cell, groupId,
 									gridU(outMinX) > cx or gridU(outMaxX) < cx + 1
 									or gridV(outMinY) > cy or gridV(outMaxY) < cy + 1)
-								let minSx = split ? max(0, min(SUBDIVISIONS - 1, ((gridU(outMinX) - cx) * SUBDIVISIONS).floor())) : 0
-								let maxSx = split ? max(0, min(SUBDIVISIONS - 1, ((gridU(outMaxX) - cx) * SUBDIVISIONS).floor())) : 0
-								let minSy = split ? max(0, min(SUBDIVISIONS - 1, ((gridV(outMinY) - cy) * SUBDIVISIONS).floor())) : 0
-								let maxSy = split ? max(0, min(SUBDIVISIONS - 1, ((gridV(outMaxY) - cy) * SUBDIVISIONS).floor())) : 0
+								let minSx = split ? subIndex(gridU(outMinX), cx) : 0
+								let maxSx = split ? subIndex(gridU(outMaxX), cx) : 0
+								let minSy = split ? subIndex(gridV(outMinY), cy) : 0
+								let maxSy = split ? subIndex(gridV(outMaxY), cy) : 0
 								var sy = minSy
 								while sy <= maxSy
 									var sx = minSx

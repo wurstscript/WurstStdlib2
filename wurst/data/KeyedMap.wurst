@@ -49,11 +49,11 @@ import ErrorHandling
  * fixed signature must remain unambiguous for existing callers. Lua lowers this to one raw table
  * store; Jass specializes int and class values to the handle or string integer fallback.
  */
-@compilerintrinsic public function keyedMapPutNative<K:, V:>(int map, K key, V value)
+@compilerintrinsic public function keyedMapPutNative<K:, V:>(int _map, K _key, V _value)
 	error("keyedMapPutNative requires compiler keyed-map intrinsic support")
 
 /** Typed get paired with keyedMapPutNative. */
-@compilerintrinsic public function keyedMapGetNative<K:, V:>(int map, K key) returns V
+@compilerintrinsic public function keyedMapGetNative<K:, V:>(int _map, K _key) returns V
 	error("keyedMapGetNative requires compiler keyed-map intrinsic support")
 	return null
 
@@ -166,11 +166,11 @@ function findStringEntry(StringMapEntry head, string key) returns StringMapEntry
 		previous = entry
 		entry = entry.nextBucket
 
-@compilerintrinsic public function keyedMapHasNative<K:>(int map, K key) returns boolean
+@compilerintrinsic public function keyedMapHasNative<K:>(int _map, K _key) returns boolean
 	error("keyedMapHasNative requires compiler keyed-map intrinsic support")
 	return false
 
-@compilerintrinsic public function keyedMapRemoveNative<K:>(int map, K key)
+@compilerintrinsic public function keyedMapRemoveNative<K:>(int _map, K _key)
 	error("keyedMapRemoveNative requires compiler keyed-map intrinsic support")
 
 /**

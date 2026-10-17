@@ -278,7 +278,7 @@ public function ray3d.castToTriangle(vec3 p1, vec3 p2, vec3 p3) returns result3d
 		let length = SquareRoot(lengthSq)
 		let dir = vec3(this.direction.x / length, this.direction.y / length, this.direction.z /length)
 		/* Working with barycentric coords
-		aka Möller–Trumbore algorithm. */
+		aka Möller-Trumbore algorithm. */
 		let v1 = p2 - p1
 		let v2 = p3 - p1
 		let pv = dir.cross(v2)

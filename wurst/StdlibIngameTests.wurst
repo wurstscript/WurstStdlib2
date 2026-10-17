@@ -929,7 +929,7 @@ function testErrorListeners()
 	// try() also ends the thread on Jass, where error() crashes it.
 	try(() -> error(ERROR_PROBE))
 	check(errorsHeard - before == 1, "an error reaches the listeners once, past a failing listener ("
-		+ (errorsHeard - before).toString() + ")")
+		+ (errorsHeard - before) + ")")
 	check(lastErrorHeard == ERROR_PROBE, "the listener gets the message")
 	check(errorHeardSuppressed, "a listener can tell an error try() caught")
 	check(lastError == ERROR_PROBE, "lastError keeps the error, not the failing listener's (" + lastError + ")")

@@ -1,9 +1,10 @@
 package UnitSpatialIndexTests
 import UnitSpatialIndex
 
-/*	Grid arithmetic only. Everything that needs real units - population parity against the engine
-	enumeration, hidden/locust/corpse handling and reentrancy - lives in StdlibIngameTests, because
-	the compiletime interpreter has no units to enumerate. */
+/*	Grid arithmetic and the empty-index defaults, through the public API only. The unit-level
+	behaviour (registration, sweeps, hidden/locust/corpse handling, subsets) is tested inside
+	UnitSpatialIndex itself, where the internals are reachable; parity against the engine's own
+	enumeration is asserted in StdlibIngameTests. */
 
 @Test function sweepPeriodPreservesTheAnimationPeriodDefault()
 	SPATIAL_INDEX_SWEEP_PERIOD.assertEquals(ANIMATION_PERIOD)

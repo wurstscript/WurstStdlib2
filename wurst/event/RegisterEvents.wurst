@@ -1,5 +1,6 @@
 package RegisterEvents
 import NoWurst
+import Annotations
 import _Handles
 import ArrayList
 import CodeList
@@ -40,8 +41,8 @@ class ListenerLists
 		if running == 0
 			frozen = 0
 
-/*	Every listener used to be a condition of the event's trigger. On Lua each condition is a call from the
-	engine into the script, about 3 us apiece, so an event with ten listeners paid it ten times. From its second
+/*	A listener is a condition of the event's trigger. On Lua each condition is a call from the engine
+	into the script, about 3 us apiece, so an event with ten listeners would pay it ten times. From its second
 	listener on, the trigger of an event has a single condition instead, runListeners, which runs the listeners
 	by direct calls at about 0.2 us each. The first stays a condition of its own, since a bridge in front of a
 	single listener only adds a lookup. Jass keeps a condition per listener, as a list is a trigger there and one
@@ -189,8 +190,8 @@ public function registerPlayerEvent(playerevent p, code condition, code action)
 /*****SpellEffectEvent*****/
 
 // One list per ability id. On Lua the lists sit in a native table, so a cast is one table index and
-// a call per listener; it used to be a HashMap lookup and a trigger evaluation, which is the engine's
-// round trip for every listener.
+// a call per listener, where a HashMap lookup and a trigger evaluation would pay the engine's round
+// trip for every listener.
 //
 // The two functions below are the KeyedMap operations for the one value type this package stores. The
 // compiler recognises them by their annotation and their exact shape, so they must keep it; the bodies
