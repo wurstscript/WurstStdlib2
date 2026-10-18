@@ -134,7 +134,7 @@ function dispatchKey(player triggerPlayer, int keyId, int metaKey, bool onKeyDow
 
 /* KEY PRESSES LISTENER */
 
-abstract class KeyPressListener
+public abstract class KeyPressListener
     oskeytype key 
     int metaKey
     bool onKeyDown
@@ -163,71 +163,10 @@ abstract class KeyPressListener
         next = null
         prev = null
 
+    /** Links a listener to a key without registering the key event, for tests. */
+    protected static function linkForTest(thistype listener, oskeytype key, player whichPlayer)
+        registerListener(listener, key, OSKEY_META.NONE, true, whichPlayer)
 
-/* TESTS */
-
-class TestKeyListener extends KeyPressListener
-    static int array order
-    static int runs = 0
-    static TestKeyListener array made
-    int which
-    int destroyWhich
-
-    construct(int which, int destroyWhich)
-        this.which = which
-        this.destroyWhich = destroyWhich
-
-    override function onEvent()
-        order[runs] = which
-        runs++
-        if destroyWhich >= 0
-            destroy made[destroyWhich]
-
-function newTestKeyListener(int which, int destroyWhich, oskeytype key, player whichPlayer)
-    let l = new TestKeyListener(which, destroyWhich)
-    TestKeyListener.made[which] = l
-    registerListener(l, key, OSKEY_META.NONE, true, whichPlayer)
-
-@Test function aListenerOfOnePlayerIgnoresTheKeysOfAnother()
-    TestKeyListener.runs = 0
-    newTestKeyListener(0, -1, OSKEY_Q, players[0])
-    newTestKeyListener(1, -1, OSKEY_Q, players[1])
-    dispatchKey(players[0], OSKEY_Q.getHandleId(), 0, true)
-    TestKeyListener.runs.assertEquals(1)
-    TestKeyListener.order[0].assertEquals(0)
-    dispatchKey(players[1], OSKEY_Q.getHandleId(), 0, true)
-    TestKeyListener.runs.assertEquals(2)
-    TestKeyListener.order[1].assertEquals(1)
-    destroy TestKeyListener.made[0]
-    destroy TestKeyListener.made[1]
-
-@Test function aListenerWithoutAPlayerHearsEveryPlayer()
-    TestKeyListener.runs = 0
-    newTestKeyListener(0, -1, OSKEY_W, null)
-    dispatchKey(players[0], OSKEY_W.getHandleId(), 0, true)
-    dispatchKey(players[5], OSKEY_W.getHandleId(), 0, true)
-    TestKeyListener.runs.assertEquals(2)
-    destroy TestKeyListener.made[0]
-
-@Test function keyDispatchSurvivesAListenerDestroyingItsNextSibling()
-    TestKeyListener.runs = 0
-    // registered 0, 1, 2: the list is 2 -> 1 -> 0, and 2 destroys 1 before its turn
-    newTestKeyListener(0, -1, OSKEY_E, null)
-    newTestKeyListener(1, -1, OSKEY_E, null)
-    newTestKeyListener(2, 1, OSKEY_E, null)
-    dispatchKey(players[0], OSKEY_E.getHandleId(), 0, true)
-    TestKeyListener.runs.assertEquals(2)
-    TestKeyListener.order[0].assertEquals(2)
-    TestKeyListener.order[1].assertEquals(0)
-    destroy TestKeyListener.made[2]
-    destroy TestKeyListener.made[0]
-
-@Test function keyDispatchSurvivesAListenerDestroyingItself()
-    TestKeyListener.runs = 0
-    newTestKeyListener(0, -1, OSKEY_R, null)
-    newTestKeyListener(1, -1, OSKEY_R, null)
-    newTestKeyListener(2, 2, OSKEY_R, null)
-    dispatchKey(players[0], OSKEY_R.getHandleId(), 0, true)
-    TestKeyListener.runs.assertEquals(3)
-    destroy TestKeyListener.made[1]
-    destroy TestKeyListener.made[0]
+    /** Runs the listeners of a key as a key-down without meta keys by the player does. For tests. */
+    protected static function pressForTest(player triggerPlayer, oskeytype key)
+        dispatchKey(triggerPlayer, key.getHandleId(), 0, true)

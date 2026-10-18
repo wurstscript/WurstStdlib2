@@ -1,6 +1,5 @@
 package String
 import NoWurst
-import Integer
 import Annotations
 import Maths
 
@@ -385,7 +384,9 @@ public function string.format(vararg string replacements) returns string
 			var j = i + 1
 			var index = 0
 			while j < len and "0123456789".indexOf(this.charAt(j)) != -1
-				index = index * 10 + "0123456789".indexOf(this.charAt(j))
+				// once past count the index can only grow, so stop before it can overflow and wrap below count
+				if index <= count
+					index = index * 10 + "0123456789".indexOf(this.charAt(j))
 				j++
 			let digits = j - i - 1
 			let canonical = digits == 1 or (digits > 1 and this.charAt(i + 1) != "0")

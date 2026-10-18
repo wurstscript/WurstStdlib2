@@ -23,6 +23,19 @@ class DamageProbe extends DamageEvent
 	static function highestPriority() returns int
 		return maxPriority
 
+	/** Opens a code damage instance from and to a new footman, which becomes the current one. */
+	static function open(real amount)
+		openInstanceForTest(createUnit(players[0], 'hfoo', ZERO2, angle(0)), amount)
+
+	static function close()
+		closeInstanceForTest()
+
+	static function reduce(real amount)
+		reduceInstanceForTest(amount)
+
+	static function isAborted() returns bool
+		return isAbortedForTest()
+
 class Counter
 	static int heard = 0
 
@@ -62,3 +75,32 @@ function heardOne()
 	DamageProbe.reducedLength(0, 10).assertEquals(1)
 	destroy low
 	DamageProbe.reducedLength(0, 10).assertEquals(0)
+
+@Test function aHitOfZeroDamageReportsNoReduction()
+	DamageProbe.open(0.)
+	DamageProbe.reduce(0.)
+	DamageEvent.getNativeDamageReductionPercent().assertEquals(0., 0.0001)
+	DamageProbe.close()
+
+@Test function theReductionIsReportedFromTheUnreducedAmount()
+	DamageProbe.open(100.)
+	DamageEvent.getNativeDamageReductionPercent().assertEquals(0., 0.0001)
+	DamageProbe.reduce(75.)
+	DamageEvent.getNativeDamageReductionPercent().assertEquals(0.25, 0.0001)
+	DamageProbe.close()
+
+@Test function abortingOutsideOfAListenerDoesNothing()
+	DamageEvent.abortCurrent()
+	DamageProbe.open(10.)
+	DamageProbe.isAborted().assertFalse()
+	DamageProbe.close()
+
+@Test function anInstanceAbortIsNotUndoneByTheInstanceDealtInsideIt()
+	DamageProbe.open(10.)
+	DamageEvent.abortCurrent()
+	// A listener of the outer instance deals damage from code: the inner instance is a hit of its own.
+	DamageProbe.open(5.)
+	DamageProbe.isAborted().assertFalse()
+	DamageProbe.close()
+	DamageProbe.isAborted().assertTrue()
+	DamageProbe.close()

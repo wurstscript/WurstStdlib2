@@ -218,6 +218,9 @@ package StringTests
 	"{0}{0}".format("{0}").assertEquals("{0}{0}")
 	"a{2}b{0}".format("x").assertEquals("a{2}bx")
 	"{}{x}{".format("x").assertEquals("{}{x}{")
+	// an index too large for an int is unmatched, not wrapped around to a negative one
+	"a{2147483648}b".format("x").assertEquals("a{2147483648}b")
+	"a{99999999999999999999}b{0}".format("x").assertEquals("a{99999999999999999999}bx")
 
 @Test function testTrimEmptyValueIsNoOp()
 	"abc".ltrim("").assertEquals("abc")

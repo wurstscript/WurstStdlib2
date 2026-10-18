@@ -478,6 +478,22 @@ public class DamageEvent
             return 0.
         return 1. - DamageInstance.current.originalAmount / DamageInstance.current.unreducedOriginalAmount
 
+    /** Opens a damage instance of code damage, as a DAMAGING event does: it becomes the current one. For tests. */
+    protected static function openInstanceForTest(unit u, real amount)
+        new DamageInstance(0, u, u, amount, ATTACK_TYPE_NORMAL, DAMAGE_TYPE_NORMAL, WEAPON_TYPE_WHOKNOWS, DamageType.CODE, null)
+
+    /** Closes the current damage instance, as its DAMAGED event does. For tests. */
+    protected static function closeInstanceForTest()
+        destroy DamageInstance.current
+
+    /** Moves the current damage instance to its reduced phase. For tests. */
+    protected static function reduceInstanceForTest(real amount)
+        DamageInstance.current.setReducedAmount(amount)
+
+    /** Whether the current damage instance was aborted. For tests. */
+    protected static function isAbortedForTest() returns bool
+        return DamageInstance.current.aborted
+
     /** Returns the attacktype of the damage instance being currently fired */
     static function getAttackType() returns attacktype
         return DamageInstance.current.nativeAttackType
@@ -599,39 +615,3 @@ public abstract class DamageListener
 init
     EventListener.add(EVENT_PLAYER_UNIT_DAMAGING, () -> DamageEvent.onUnreducedDamage())
     EventListener.add(EVENT_PLAYER_UNIT_DAMAGED,  () -> DamageEvent.onDamage())
-
-
-/* TESTS */
-
-function newTestInstance(real amount) returns DamageInstance
-    let u = createUnit(players[0], 'hfoo', ZERO2, angle(0))
-    return new DamageInstance(0, u, u, amount, ATTACK_TYPE_NORMAL, DAMAGE_TYPE_NORMAL, WEAPON_TYPE_WHOKNOWS, DamageType.CODE, null)
-
-@Test function aHitOfZeroDamageReportsNoReduction()
-    let dmg = newTestInstance(0.)
-    dmg.setReducedAmount(0.)
-    DamageEvent.getNativeDamageReductionPercent().assertEquals(0., 0.0001)
-    destroy dmg
-
-@Test function theReductionIsReportedFromTheUnreducedAmount()
-    let dmg = newTestInstance(100.)
-    DamageEvent.getNativeDamageReductionPercent().assertEquals(0., 0.0001)
-    dmg.setReducedAmount(75.)
-    DamageEvent.getNativeDamageReductionPercent().assertEquals(0.25, 0.0001)
-    destroy dmg
-
-@Test function abortingOutsideOfAListenerDoesNothing()
-    DamageEvent.abortCurrent()
-    let dmg = newTestInstance(10.)
-    dmg.aborted.assertFalse()
-    destroy dmg
-
-@Test function anInstanceAbortIsNotUndoneByTheInstanceDealtInsideIt()
-    let outer = newTestInstance(10.)
-    DamageEvent.abortCurrent()
-    // A listener of the outer instance deals damage from code: the inner instance is a hit of its own.
-    let inner = newTestInstance(5.)
-    inner.aborted.assertFalse()
-    destroy inner
-    outer.aborted.assertTrue()
-    destroy outer
