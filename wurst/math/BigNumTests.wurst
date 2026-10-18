@@ -1,0 +1,63 @@
+package BigNumTests
+import NoWurst
+import Wurstunit
+import BigNum
+
+function powerOfTwo(int exponent) returns BigNum
+	let number = new BigNum(10000)
+	number.addSmall(1)
+	for _i = 1 to exponent
+		number.mulSmall(2)
+	number.clean()
+	return number
+
+@Test function testPowerOfTwoDump()
+	// 2^40 = 1 0995 1162 7776 in base 10000, most significant leaf first
+	let number = powerOfTwo(40)
+	number.dump().assertEquals("1 995 1162 7776 ")
+	number.isZero().assertFalse()
+	number.lastDigit().assertEquals(1)
+	destroy number
+
+@Test function testAddSmallCarries()
+	let number = new BigNum(10000)
+	number.addSmall(9999)
+	number.addSmall(2)
+	number.clean()
+	number.dump().assertEquals("1 1 ")
+	destroy number
+
+@Test function testDivSmallRoundTrip()
+	let number = powerOfTwo(40)
+	for _i = 1 to 40
+		number.divSmall(2).assertEquals(0)
+	number.clean()
+	number.dump().assertEquals("1 ")
+	number.divSmall(2).assertEquals(1)
+	number.isZero().assertTrue()
+	destroy number
+
+@Test function testDivSmallRemainder()
+	let number = powerOfTwo(40)
+	// 1099511627776 mod 1000 = 776
+	number.divSmall(1000).assertEquals(776)
+	destroy number
+
+@Test function testEmptyBigNumIsZero()
+	let number = new BigNum(10)
+	number.isZero().assertTrue()
+	destroy number
+
+@Test function testLog()
+	log(8., 2.).assertEquals(3, 0.01)
+	log(1000., 10.).assertEquals(3, 0.01)
+	log(0.125, 2.).assertEquals(-3, 0.01)
+	log(1., 2.).assertEquals(0, 0.01)
+
+@Test function testLogInvalidInputsReturnZero()
+	log(8., 1.).assertEquals(0, 0.001)
+	log(8., 0.5).assertEquals(0, 0.001)
+	log(8., 0.).assertEquals(0, 0.001)
+	log(8., -2.).assertEquals(0, 0.001)
+	log(0., 2.).assertEquals(0, 0.001)
+	log(-8., 2.).assertEquals(0, 0.001)

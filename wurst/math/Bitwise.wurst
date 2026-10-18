@@ -54,8 +54,9 @@ public function byte4.toInt() returns int
 	return this.b1 + this.b2 * 0x100 + this.b3 * 0x10000 + this.b4 * 0x1000000
 
 /**
-	Turns this signed integer into an unsigned one if it is negative,
-	removing the first (sign) bit
+	Clears the sign bit, which is a 31-bit mask: the result is always in [0, INT_MAX],
+	so it is not the unsigned 32-bit reading of the integer.
+	Examples: -1 -> INT_MAX, INT_MIN -> 0, positive integers are unchanged.
 **/
 public function int.toUnsigned() returns int
 	int result
@@ -65,14 +66,17 @@ public function int.toUnsigned() returns int
 		result = this
 	return result
 
+/** The least significant byte, from 0 to 255. Matches bytes().b1, also for negative integers. */
 public function int.byte1() returns int
-	return this mod 0x100
+	return this.toUnsigned() mod 0x100
 
+/** The second byte, from 0 to 255. Matches bytes().b2, also for negative integers. */
 public function int.byte2() returns int
-	return (this - (this div 0x10000) * 0x10000) div 0x100
+	return this.toUnsigned() div 0x100 mod 0x100
 
+/** The third byte, from 0 to 255. Matches bytes().b3, also for negative integers. */
 public function int.byte3() returns int
-	return (this - (this div 0x1000000) * 0x1000000) div 0x10000
+	return this.toUnsigned() div 0x10000 mod 0x100
 
 public function int.byte4(int isNegative) returns int
 	return isNegative * 128 + this div 0x1000000

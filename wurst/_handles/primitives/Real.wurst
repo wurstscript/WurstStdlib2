@@ -83,7 +83,8 @@ public function real.sin() returns real
 public function real.tan() returns real
 	return Tan(this)
 
-/** The arctangent function with two arguments.
+/** The arctangent function with two arguments, returning the angle of the point (x, y).
+	The receiver is x and the argument is y, so x.atan2(y) == Atan2(y, x).
 	The second argument is needed to determine the appropriate
 	quadrant of the computed angle. */
 public function real.atan2(real y) returns real

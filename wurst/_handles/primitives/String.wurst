@@ -181,6 +181,8 @@ public function string.endsWith(string s) returns boolean
 
 /**	Returns if the given string starts with the specified string.	*/
 public function string.startsWith(string s) returns boolean
+	if s == ""
+		return true
 	let len = this.length()
 	if s.length() > len
 		return false
@@ -194,11 +196,11 @@ public function string.toLowerCase() returns string
 public function string.toUpperCase() returns string
 	return StringCase(this, true)
 
-/** True when string contains only uppercase letters */
+/** True when the string equals its uppercase form. Strings without letters ("", digits, punctuation) are therefore also true. */
 public function string.isUpper() returns boolean
 	return this == StringCase(this, true)
 
-/** True when string contains only lowercase letters */
+/** True when the string equals its lowercase form. Strings without letters ("", digits, punctuation) are therefore also true. */
 public function string.isLower() returns boolean
 	return this == StringCase(this, false)
 
@@ -236,14 +238,14 @@ public function string.rtrim() returns string
 
 /** Removes a string from the beginning of another string */
 public function string.ltrim(string val) returns string
-	if this.startsWith(val)
+	if val.length() > 0 and this.startsWith(val)
 		return this.substring(val.length(), this.length()).ltrim(val)
 	else
 		return this
 
 /** Removes a string from the end of another string */
 public function string.rtrim(string val) returns string
-	if this.endsWith(val)
+	if val.length() > 0 and this.endsWith(val)
 		return this.substring(0, this.length() - val.length()).rtrim(val)
 	else
 		return this
@@ -284,8 +286,10 @@ public function string.lastIndexOf(string s) returns int
 			return i
 	return -1
 
-/** Returns the occurences of a certain string within a string */
+/** Returns the occurences of a certain string within a string. An empty string never occurs, the result is 0. */
 public function string.countOccurences(string findStr) returns int
+	if findStr.length() == 0
+		return 0
 	int lastIndex = 0
 	int count = 0
 	while lastIndex != -1
@@ -365,13 +369,39 @@ public function string.getHash() returns int
 	return StringHash(this)
 
 /** Formats the given string replacing {x} delimiters with the passed replacements.
+	Replacements are inserted in a single pass, so text inside a replacement is never substituted again.
+	Delimiters without a matching replacement are left as they are.
 	Example: "You got {0} gold".format(goldAmount) **/
 public function string.format(vararg string replacements) returns string
-	var result = this
+	let len = this.length()
+	var count = 0
+	for _replacement in replacements
+		count++
+	var result = ""
+	var copied = 0
 	var i = 0
-	for replacement in replacements
-		result = result.replace("{" + i + "}", replacement)
+	while i < len
+		if this.charAt(i) == "{"
+			var j = i + 1
+			var index = 0
+			while j < len and "0123456789".indexOf(this.charAt(j)) != -1
+				index = index * 10 + "0123456789".indexOf(this.charAt(j))
+				j++
+			let digits = j - i - 1
+			let canonical = digits == 1 or (digits > 1 and this.charAt(i + 1) != "0")
+			if canonical and j < len and this.charAt(j) == "}" and index < count
+				if i > copied
+					result += this.substring(copied, i)
+				var position = 0
+				for replacement in replacements
+					if position == index
+						result += replacement
+					position++
+				copied = j + 1
+				i = j
 		i++
+	if len > copied
+		result += this.substring(copied, len)
 	return result
 
 /** Iterates the string one character at a time. With ENABLE_MULTIBYTE_SUPPORT

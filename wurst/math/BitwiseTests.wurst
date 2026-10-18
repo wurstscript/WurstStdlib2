@@ -99,3 +99,64 @@ function tests32()
 	"1001 0001 0100 0010".fromBitString().xor32("1000 0100 0010 0110".fromBitString()).assertEquals("0001 0101 0110 0100".fromBitString())
 	"1000 0000 0000 0000 1001 0001 0100 0010".fromBitString().xor32("1000 0000 0000 0000 1000 0100 0010 0110".fromBitString()).assertEquals("0000 0000 0000 0000 0001 0101 0110 0100".fromBitString())
 	"1000 0000 0000 0000 1001 0001 0100 0010".fromBitString().xor32("0000 0000 0000 0000 1000 0100 0010 0110".fromBitString()).assertEquals("1000 0000 0000 0000 0001 0101 0110 0100".fromBitString())
+
+function checkByteAccessors(int x)
+	let bytes = x.bytes()
+	x.byte1().assertEquals(bytes.b1)
+	x.byte2().assertEquals(bytes.b2)
+	x.byte3().assertEquals(bytes.b3)
+
+@Test
+function byteAccessorsMatchBytes()
+	checkByteAccessors(0)
+	checkByteAccessors(1)
+	checkByteAccessors(255)
+	checkByteAccessors(256)
+	checkByteAccessors(INT_MAX)
+	checkByteAccessors(-1)
+	checkByteAccessors(INT_MIN)
+	checkByteAccessors(-256)
+	let minusOne = -1
+	minusOne.byte2().assertEquals(255)
+	minusOne.byte3().assertEquals(255)
+
+@Test
+function bytesRoundTrip()
+	let values = [0, 1, 255, 256, 65536, INT_MAX, -1, INT_MIN, -256, -12345]
+	for i = 0 to 9
+		values[i].bytes().toInt().assertEquals(values[i])
+
+@Test
+function eightBitOperators()
+	let a = 0xF0
+	a.and8(0x3C).assertEquals(0x30)
+	a.or8(0x3C).assertEquals(0xFC)
+	a.xor8(0x3C).assertEquals(0xCC)
+	a.not8().assertEquals(0x0F)
+	0 .not8().assertEquals(0xFF)
+
+@Test
+function not32Tests()
+	let zero = 0
+	let minusOne = -1
+	zero.not32().assertEquals(-1)
+	minusOne.not32().assertEquals(0)
+	INT_MAX.not32().assertEquals(INT_MIN)
+	0x0F.not32().assertEquals(-16)
+
+@Test
+function shiftNegativeTests()
+	let minusOne = -1
+	let minusSixteen = -16
+	minusOne.shiftr(4).assertEquals(0x0FFFFFFF)
+	minusSixteen.shiftr(4).assertEquals(0x0FFFFFFF)
+	INT_MIN.shiftr(4).assertEquals(0x08000000)
+	minusOne.shiftl(4).assertEquals(-16)
+	minusOne.shiftl(31).assertEquals(INT_MIN)
+
+@Test
+function toUnsignedClearsSignBit()
+	let minusOne = -1
+	minusOne.toUnsigned().assertEquals(INT_MAX)
+	INT_MIN.toUnsigned().assertEquals(0)
+	5 .toUnsigned().assertEquals(5)

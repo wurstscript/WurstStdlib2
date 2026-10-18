@@ -65,3 +65,12 @@ function vectorTests()
 	triangle.contains(test3.toVec3().toVec2()).assertTrue()
 	destroy triangle
 
+
+@Test function testZeroVectorNormAndSetLength()
+	ZERO2.norm().assertEquals(ZERO2)
+	ZERO3.norm().assertEquals(ZERO3)
+	ZERO2.setLength(5.).assertEquals(ZERO2)
+	vec2(3, 4).norm().length().assertEquals(1., 0.002)
+	vec2(3, 4).setLength(10.).length().assertEquals(10., 0.01)
+	vec3(0, 3, 4).setLength(10.).length().assertEquals(10., 0.01)
+	vec3(0, 3, 4).norm().length().assertEquals(1., 0.002)

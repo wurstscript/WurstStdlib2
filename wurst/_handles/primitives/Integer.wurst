@@ -81,12 +81,15 @@ public function int.isOdd() returns boolean
 public function int.isEven() returns boolean
 	return not this.isOdd()
 
-/** Moves this towards target by at most maxStep (never overshoots) */
+/** Moves this towards target by at most maxStep (never overshoots). Safe near INT_MIN and INT_MAX. */
 public function int.approach(int target, int maxStep) returns int
 	if this < target
-		return (this + maxStep) <= target ? this + maxStep : target
+		// The distance wraps negative when it exceeds INT_MAX, which is always more than maxStep
+		let distance = target - this
+		return distance > 0 and distance <= maxStep ? target : this + maxStep
 	if this > target
-		return (this - maxStep) >= target ? this - maxStep : target
+		let distance = this - target
+		return distance > 0 and distance <= maxStep ? target : this - maxStep
 	return this
 
 /** Wraps this into [0, length-1] for cyclic indexing (length <= 0 -> 0) */
