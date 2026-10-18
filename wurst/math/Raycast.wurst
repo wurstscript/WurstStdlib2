@@ -61,7 +61,7 @@ public tuple doubleresult2d(result2d first, result2d second)
 
 /** 3D intersection result
 intersects - 'true' if the intersection point exists
-point - the intersection point or ZERO2
+point - the intersection point or ZERO3
 distance - distance between the ray's origin and the intersection point
 backface - `true` if the surface at the intersection point is faced away from the ray's origin  */
 public tuple result3d(bool intersects, vec3 point, real distance, bool backface)
@@ -164,9 +164,11 @@ public function ray2d.castToCircle(vec2 center, real radius) returns doubleresul
 		let dd = center.distanceToSq(tangent)
 		let rr = radius.squared()
 		if dd.isBetween(rr - EPSILON, rr + EPSILON)
-			result.first.intersects = true
-			result.first.point = tangent
-			result.first.distance = dot
+			// The tangent point only counts when it lies in front of the ray
+			if dot >= 0
+				result.first.intersects = true
+				result.first.point = tangent
+				result.first.distance = dot
 		else if dd < rr
 			let t = SquareRoot(rr - dd)
 			let first = dot - t
@@ -247,9 +249,11 @@ public function ray3d.castToSphere(vec3 center, real radius) returns doubleresul
 		let dd = center.distanceToSq(tangent)
 		let rr = radius.squared()
 		if dd.isBetween(rr - EPSILON, rr + EPSILON)
-			result.first.intersects = true
-			result.first.point = tangent
-			result.first.distance = dot
+			// The tangent point only counts when it lies in front of the ray
+			if dot >= 0
+				result.first.intersects = true
+				result.first.point = tangent
+				result.first.distance = dot
 		else if dd < rr
 			let t = SquareRoot(rr - dd)
 			let first = dot - t

@@ -151,3 +151,29 @@ import Quaternion
 	let actual =  axis.toQuat(angl).exp(power)
 	let expected = axis.toQuat(angl * power)
 	point.rotate(actual).assertEquals(point.rotate(expected))
+
+@Test function testLerpOrthogonalKeepsStart()
+	// A 180 degree difference gives dot == 0, which must not collapse the result onto the target.
+	let half = quat(1, 0, 0, 0)
+	IDENTITYQ.lerp(half, 0.).assertEquals(IDENTITYQ)
+	IDENTITYQ.lerp(half, 1.).assertEquals(half)
+
+@Test function testNlerpSlerpOrthogonal()
+	let half = quat(1, 0, 0, 0)
+	let expected = vec3(1, 0, 0).toQuat(90 .asAngleDegrees())
+	IDENTITYQ.nlerp(half, 0.5).assertEquals(expected)
+	IDENTITYQ.slerp(half, 0.5).assertEquals(expected)
+
+@Test function testNlerpOppositeQuaternionsDoNotCollapse()
+	// q == -p is the same rotation, so interpolating must not return the zero quaternion.
+	let negated = quat(0, 0, 0, -1)
+	IDENTITYQ.slerp(negated, 0.5).length().assertEquals(1., 0.002)
+	quat(0.0005, 0, 0, 0).norm().length().assertEquals(1., 0.002)
+
+@Test function testEulerToQuatRoundTrip()
+	let q = eulerToQuat(0.3, -0.2, 0.5)
+	q.length().assertEquals(1., 0.002)
+	let e = q.toEuler()
+	e.x.assertEquals(0.5, 0.002)
+	e.y.assertEquals(-0.2, 0.002)
+	e.z.assertEquals(0.3, 0.002)

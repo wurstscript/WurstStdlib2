@@ -16,3 +16,13 @@ package AngleTests
 	let three = 3
 	three.fromRad().radians().assertEquals(3., 0.0001)
 
+
+@Test function testAngleOperators()
+	(90 .fromDeg() - 30 .fromDeg()).degrees().assertEquals(60., 0.001)
+	(90 .fromDeg() * 2.).degrees().assertEquals(180., 0.001)
+	(2. * 90 .fromDeg()).degrees().assertEquals(180., 0.001)
+	(90 .fromDeg() / 3.).degrees().assertEquals(30., 0.001)
+	(180 .asAngleDegrees()).radians().assertEquals(3.14159, 0.0001)
+	(0 .fromDeg()).cos().assertEquals(1., 0.001)
+	(45 .fromDeg()).tan().assertEquals(1., 0.001)
+	(1.5).asAngleRadians().radians().assertEquals(1.5, 0.0001)

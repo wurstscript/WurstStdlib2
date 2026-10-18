@@ -254,3 +254,84 @@ import Matrices
 	let m33 = mat3(1, 0, 1, 0, 1, 0, 0, 0, 1)
 	let inverse = m33.inverse().matrix
 	inverse.assertEquals(mat3(1, 0, -1, 0, 1, 0, 0, 0, 1))
+
+/* =========== INVERSES AND DETERMINANTS =========== */
+
+function mat4.assertIdentity()
+	let identity = IDENTITY44
+	let delta = 0.002
+	let actual = [this.m00, this.m01, this.m02, this.m03, this.m10, this.m11, this.m12, this.m13,
+		this.m20, this.m21, this.m22, this.m23, this.m30, this.m31, this.m32, this.m33]
+	let expected = [identity.m00, identity.m01, identity.m02, identity.m03, identity.m10, identity.m11, identity.m12, identity.m13,
+		identity.m20, identity.m21, identity.m22, identity.m23, identity.m30, identity.m31, identity.m32, identity.m33]
+	for i = 0 to 15
+		actual[i].assertEquals(expected[i], delta)
+
+@Test function testInverseSmallScaling22()
+	let scaling = vec2(0.05, 0.05).toScaling()
+	let inverse = scaling.inverse()
+	inverse.success.assertTrue()
+	(scaling * inverse.matrix).assertEquals(IDENTITY22)
+
+@Test function testInverseSmallScaling33()
+	let scaling = vec3(0.05, 0.05, 0.05).toScaling()
+	let inverse = scaling.inverse()
+	inverse.success.assertTrue()
+	(scaling * inverse.matrix).assertEquals(IDENTITY33)
+	inverse.matrix.assertEquals(vec3(20, 20, 20).toScaling())
+
+@Test function testInverseSmallScaling44()
+	var scaling = IDENTITY44
+	scaling.m00 = 0.05
+	scaling.m11 = 0.05
+	scaling.m22 = 0.05
+	let inverse = scaling.inverse()
+	inverse.success.assertTrue()
+	tmp_mat = scaling
+	mult(inverse.matrix).assertIdentity()
+
+@Test function testInverseSingular()
+	mat2(1, 2, 2, 4).inverse().success.assertFalse()
+	ZERO22.inverse().success.assertFalse()
+	mat3(1, 2, 3, 4, 5, 6, 7, 8, 9).inverse().success.assertFalse()
+	ZERO33.inverse().success.assertFalse()
+	ZERO44.inverse().success.assertFalse()
+	var singular = IDENTITY44
+	singular.m33 = 0
+	singular.inverse().success.assertFalse()
+
+@Test function testDeterminant44()
+	IDENTITY44.determinant().assertEquals(1, 0.002)
+	var diagonal = IDENTITY44
+	diagonal.m11 = 2
+	diagonal.m22 = 3
+	diagonal.m33 = 4
+	diagonal.determinant().assertEquals(24, 0.002)
+
+@Test function testInverse44()
+	var diagonal = IDENTITY44
+	diagonal.m11 = 2
+	diagonal.m22 = 3
+	diagonal.m33 = 4
+	let inverse = diagonal.inverse()
+	inverse.success.assertTrue()
+	inverse.matrix.m11.assertEquals(0.5, 0.002)
+	inverse.matrix.m33.assertEquals(0.25, 0.002)
+	tmp_mat = diagonal
+	mult(inverse.matrix).assertIdentity()
+
+@Test function testInverseTranslation44()
+	let translation = setToTranslation(3, -4, 5)
+	let inverse = translation.inverse()
+	inverse.success.assertTrue()
+	inverse.matrix.m03.assertEquals(-3, 0.002)
+	inverse.matrix.m13.assertEquals(4, 0.002)
+	inverse.matrix.m23.assertEquals(-5, 0.002)
+	tmp_mat = translation
+	mult(inverse.matrix).assertIdentity()
+
+@Test function testInverseTranslation33()
+	let translation = vec2(5, 10).toTranslation()
+	let inverse = translation.inverse()
+	inverse.success.assertTrue()
+	(translation * inverse.matrix).assertEquals(IDENTITY33)

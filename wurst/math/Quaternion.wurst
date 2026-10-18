@@ -67,10 +67,10 @@ public function quat.conj() returns quat
 public function quat.length() returns real
 	return SquareRoot(this.x.squared() + this.y.squared() + this.z.squared() + this.w.squared())
 
-/** Returns zero quaternion if lenght is zero. */
+/** Returns zero quaternion if length is zero. */
 public function quat.norm() returns quat
 	let length = this.length()
-	return length > EPSILON ? quat(this.x / length, this.y / length, this.z / length, this.w / length) : ZEROQ
+	return length > 0 ? quat(this.x / length, this.y / length, this.z / length, this.w / length) : ZEROQ
 
 /** Quaternion to power of alpha. */
 public function quat.exp(real alpha) returns quat
@@ -121,12 +121,7 @@ public function quat.getZ() returns vec3
 /** Linear interpolation.
 q - targeted quaternion. p - progress from 0 to 1. */
 public function quat.lerp(quat q, real p) returns quat
-	quat result
-	if this.dot(q).abs() < EPSILON
-		result = q
-	else
-		result = this * (1 - p) + q * p
-	return result
+	return this * (1 - p) + q * p
 
 /** Linear interpolation.
 Always chooses the SHORTEST way between rotations.
@@ -163,13 +158,12 @@ Slerp is the least efficient approach in performance so try to avoid using it, u
 public function quat.slerp(quat q, real p) returns quat
 	quat result
 	let dot = this.dot(q)
-	if dot.abs() < EPSILON
-		result = q
-	else if 1 - dot.abs() < EPSILON
-		// Rotations are nearly identical: theta is close to zero, which makes
-		// the acos/sin below numerically unstable (division by ~0) for no
-		// visible benefit, so fall back to the cheaper nlerp instead.
-		result = this.nlerp(q, p)
+	if 1 - dot.abs() < EPSILON
+		// Rotations are nearly identical (or opposite representations of the
+		// same rotation): sin(theta) is close to zero, which makes the acos/sin
+		// below numerically unstable (division by ~0). Fall back to nlerp,
+		// flipping q when dot < 0 so the result cannot cancel out to zero.
+		result = dot > 0 ? this.nlerp(q, p) : this.nlerp(quat(-q.x, -q.y, -q.z, -q.w), p)
 	else
 		let theta = dot.acos()
 		result = ((1 - p) * theta).sin() / theta.sin() * this + (p * theta).sin() / theta.sin() * q
