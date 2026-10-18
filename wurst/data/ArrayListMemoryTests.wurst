@@ -167,3 +167,47 @@ function testFragmentedMergeReuseNearCap()
     destroy x
     destroy r
     destroy d
+
+// Dedicated element type, see FragElem: this test reserves most of the store.
+class GrowElem
+
+@Test
+function testLoneLargeListGrowsInPlace()
+    // The list is the last section of the store and already holds more than a third of it, so
+    // doubling it must extend it in place. Moving it would need the old and the new section at
+    // the same time, which cannot fit.
+    let marker = new GrowElem()
+    let initial = JASS_MAX_ARRAY_SIZE div 3 + 1000
+    let list = new ArrayList<GrowElem>(initial)
+    for i = 0 to initial - 1
+        list.add(marker)
+    let last = new GrowElem()
+    list.add(last)
+    list.size().assertEquals(initial + 1)
+    (list.get(0) == marker).assertTrue()
+    (list.get(initial - 1) == marker).assertTrue()
+    (list.get(initial) == last).assertTrue()
+    list.reserve(JASS_MAX_ARRAY_SIZE div 3 * 2 + 1)
+    list.size().assertEquals(initial + 1)
+    (list.get(initial) == last).assertTrue()
+    destroy list
+
+@Test
+function testGrowingNonTailListLeavesNeighbourIntact()
+    let marker = new GrowElem()
+    let other = new GrowElem()
+    let a = new ArrayList<GrowElem>(4)
+    let b = new ArrayList<GrowElem>(4)
+    a.add(marker)
+    b.add(other)
+    for i = 1 to 40
+        a.add(marker)
+    a.size().assertEquals(41)
+    (a.get(40) == marker).assertTrue()
+    b.size().assertEquals(1)
+    (b.get(0) == other).assertTrue()
+    b.add(marker)
+    (b.get(1) == marker).assertTrue()
+    (a.get(0) == marker).assertTrue()
+    destroy a
+    destroy b

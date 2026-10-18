@@ -812,3 +812,86 @@ function testTruncateToOwnSizeIsANoOp()
     list.size().assertEquals(2)
     list.get(1).assertEquals(8)
     destroy list
+
+@Test
+function testForEachVisitsInOrder()
+    let list = asArrayList(3, 1, 2)
+    let seen = new ArrayList<int>()
+    list.forEach(i -> seen.add(i)).size().assertEquals(3)
+    seen.get(0).assertEquals(3)
+    seen.get(1).assertEquals(1)
+    seen.get(2).assertEquals(2)
+    destroy seen
+    destroy list
+
+@Test
+function testShuffleKeepsMultiset()
+    let list = new ArrayList<int>()
+    var sum = 0
+    for i = 1 to 50
+        list.add(i)
+        sum += i
+    list.shuffle()
+    list.size().assertEquals(50)
+    var after = 0
+    for i = 0 to 49
+        after += list.get(i)
+    after.assertEquals(sum)
+    list.sort()
+    for i = 0 to 49
+        list.get(i).assertEquals(i + 1)
+    destroy list
+
+@Test
+function testSortWithCustomComparator()
+    let list = asArrayList(1, 5, 3, 4, 2)
+    Comparator<int> descending = (a, b) -> b - a
+    list.sortWith(descending)
+    list.get(0).assertEquals(5)
+    list.get(2).assertEquals(3)
+    list.get(4).assertEquals(1)
+    destroy descending
+    destroy list
+
+@Test
+function testStringSort()
+    let list = asArrayList("pear", "apple", "fig")
+    list.sort()
+    list.get(0).assertEquals("apple")
+    list.get(1).assertEquals("fig")
+    list.get(2).assertEquals("pear")
+    destroy list
+
+@Test
+function testRemoveAtOrderedEdges()
+    let list = asArrayList(1, 2, 3)
+    list.removeAtOrdered(0).assertEquals(1)
+    list.removeAtOrdered(list.size() - 1).assertEquals(3)
+    list.size().assertEquals(1)
+    list.get(0).assertEquals(2)
+    list.removeAtOrdered(0).assertEquals(2)
+    list.isEmpty().assertTrue()
+    destroy list
+
+@Test
+function testRemoveAtUnorderedEdges()
+    let list = asArrayList(1, 2, 3)
+    list.removeAtUnordered(2).assertEquals(3)
+    list.removeAtUnordered(0).assertEquals(1)
+    list.size().assertEquals(1)
+    list.get(0).assertEquals(2)
+    list.removeAtUnordered(0).assertEquals(2)
+    list.isEmpty().assertTrue()
+    destroy list
+
+@Test
+function testEmptyPopPeekDequeue()
+    let list = new ArrayList<int>()
+    list.pop().assertEquals(0)
+    list.peek().assertEquals(0)
+    list.dequeue().assertEquals(0)
+    list.size().assertEquals(0)
+    list.add(4)
+    list.pop().assertEquals(4)
+    list.isEmpty().assertTrue()
+    destroy list
