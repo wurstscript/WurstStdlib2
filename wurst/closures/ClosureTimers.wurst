@@ -29,6 +29,8 @@ public function doAfter(real timeToWait, CallbackSingle cb) returns CallbackSing
 /** Execute an action after a certain time.
 	The timer is accompanied by a visible timerdialog with the title text provided.
 	The callback object is automatically destroyed.
+	Destroying the returned callback before the time is up cancels it: the dialog goes away and
+	`cb` is destroyed without having been called.
 
 	Example use:
 	| doAfterWithDialogue(10.0, "Respawn in") ->
@@ -38,8 +40,22 @@ public function doAfter(real timeToWait, CallbackSingle cb) returns CallbackSing
 public function doAfterWithDialogue(real timeToWait, string titleText, Callback cb) returns CallbackSingle
 	let tim = getTimer()
 	let dia = tim.createTimerDialog()..setTitle(titleText)..display(true)
-	return tim.doAfter(timeToWait) ->
+	return tim.doAfter(timeToWait, new DialogueCallback(cb, dia))
+
+/** The callback of doAfterWithDialogue. It owns the closure and the dialog, so both go whenever it does: when
+	the time is up, and when it is destroyed before. */
+class DialogueCallback extends CallbackSingle
+	private Callback cb
+	private timerdialog dia
+
+	construct(Callback cb, timerdialog dia)
+		this.cb = cb
+		this.dia = dia
+
+	override function call()
 		cb.call()
+
+	ondestroy
 		destroy cb
 		dia.destr()
 
@@ -102,7 +118,7 @@ public function doPeriodicallyCounted(real time, int callAmount, CallbackCounted
 	Must be used on a timer acquired with `getTimer()`
 
 	Example use:
-	| someTimer.doPeriodicallyCounted(0.5, 10.) ->
+	| someTimer.doPeriodicallyTimed(0.5, 10.) (_) ->
 	|	 doSomething()
 
 */
@@ -113,7 +129,7 @@ public function timer.doPeriodicallyTimed(real interval, real timerDuration, Cal
 	The callback object is destroyed afterwards.
 
 	Example use:
-	| doPeriodicallyCounted(0.5, 10.) ->
+	| doPeriodicallyTimed(0.5, 10.) (_) ->
 	|	 doSomething()
 
 */

@@ -1,0 +1,187 @@
+package StdlibIngameRuntimeTests
+import ClosureEvents
+import ClosureTimers
+import DamageEvent
+import DummyRecycler
+import ErrorHandling
+import Execute
+import Fx
+import StdlibIngameChecks
+import UnitIds
+import UnitIndexer
+
+/*	In-game checks of the runtime systems which grill test can not reach: error() as it behaves on the target (on
+	Lua it returns instead of ending the thread), timer dialogs, damage events, and dummies. They are run by
+	StdlibIngameTests, which reports them. */
+
+/* Reporting, which the runner provides */
+
+IngameChecks reporter = null
+
+public function setRuntimeChecksReporter(IngameChecks whichReporter)
+	reporter = whichReporter
+
+function check(bool passed, string label)
+	reporter.check(passed, label)
+
+function section(string label)
+	reporter.section(label)
+
+// ============================================================================
+// 27. try() sees an error() on both targets
+// ============================================================================
+
+/*	On Lua error() reports and returns, so a callback which calls it runs on to its end; try() has to report the
+	failure anyway. On Jass the thread ends and try() reports it as before. */
+
+var innerFailed = false
+var afterErrorRan = false
+var tryRuns = 0
+
+function ignoreEvent()
+	skip
+
+function countRun()
+	tryRuns++
+
+function failInTry()
+	error("stdlib in-game try probe")
+
+function failThenGoOn()
+	error("stdlib in-game try probe")
+	afterErrorRan = true
+
+function nestedTry()
+	innerFailed = not try(() -> failInTry())
+
+public function testTryReportsError()
+	section("--- 27. try() and error() ---")
+	tryRuns = 0
+	check(try(() -> countRun()) and tryRuns == 1, "try returns true for a callback which does not fail and runs it once")
+	check(not try(() -> failInTry()), "try returns false after error()")
+	check(lastError == "stdlib in-game try probe", "and leaves the message in lastError (" + lastError + ")")
+	afterErrorRan = false
+	check(not try(() -> failThenGoOn()), "try returns false for a callback which carries on past error()"
+		+ (afterErrorRan ? " (it did carry on)" : " (it did not)"))
+	innerFailed = false
+	check(try(() -> nestedTry()) and innerFailed, "a try which caught an error is not a failure of the try around it")
+	check(try(() -> countRun()) and tryRuns == 2, "and a later callback succeeds again")
+
+// ============================================================================
+// 28. A timer dialog callback which is destroyed early
+// ============================================================================
+
+class DialogueProbe implements Callback
+	static int called = 0
+	static int destroyed = 0
+
+	override function call()
+		called++
+
+	ondestroy
+		destroyed++
+
+public function testDialogueCallbackDestroyedEarly()
+	section("--- 28. doAfterWithDialogue destroyed before it fires ---")
+	DialogueProbe.called = 0
+	DialogueProbe.destroyed = 0
+	let early = doAfterWithDialogue(5., "stdlib in-game check", new DialogueProbe())
+	destroy early
+	check(DialogueProbe.destroyed == 1 and DialogueProbe.called == 0,
+		"destroying it early destroys the closure without calling it (" + DialogueProbe.destroyed + ", " + DialogueProbe.called + ")")
+	doAfterWithDialogue(0.1, "stdlib in-game check", new DialogueProbe())
+	doAfter(0.5) ->
+		check(DialogueProbe.destroyed == 2 and DialogueProbe.called == 1,
+			"and one which runs out calls the closure once and destroys it (" + DialogueProbe.destroyed + ", " + DialogueProbe.called + ")")
+
+// ============================================================================
+// 29. abortCurrent() with damage dealt from the aborting listener
+// ============================================================================
+
+/*	The first unreduced listener aborts its hit and then deals code damage to another unit. That is a hit of its
+	own: it must not inherit the abort and must not clear the outer one. So the reduced listener hears the inner
+	hit once, with its damage, and never the aborted outer hit. */
+
+unit abortSource
+unit abortOuter
+unit abortInner
+var abortDealt = false
+var abortReducedHeard = 0
+var abortReducedAmount = 0.
+
+function abortAndDealNested()
+	if not abortDealt
+		abortDealt = true
+		DamageEvent.abortCurrent()
+		DamageEvent.setNextDamageFromCode()
+		UnitDamageTarget(abortSource, abortInner, 10., false, false, ATTACK_TYPE_CHAOS, DAMAGE_TYPE_UNIVERSAL, WEAPON_TYPE_WHOKNOWS)
+
+function hearReduced()
+	abortReducedHeard++
+	abortReducedAmount = DamageEvent.getAmount()
+
+public function testAbortIsPerInstance()
+	section("--- 29. abortCurrent() and damage dealt by the aborting listener ---")
+	abortSource = createUnit(players[0], UnitIds.footman, vec2(-3300., -2000.), angle(0))
+	abortOuter = createUnit(players[1], UnitIds.footman, vec2(-3400., -2000.), angle(0))
+	abortInner = createUnit(players[1], UnitIds.footman, vec2(-3500., -2000.), angle(0))
+	abortOuter..setMaxHP(1000000)..setHP(1000000.)
+	abortInner..setMaxHP(1000000)..setHP(1000000.)
+	abortDealt = false
+	abortReducedHeard = 0
+	abortReducedAmount = 0.
+	let ul = DamageEvent.addUnreducedListener(() -> abortAndDealNested())
+	let rl = DamageEvent.addListener(() -> hearReduced())
+	UnitDamageTarget(abortSource, abortOuter, 50., false, false, ATTACK_TYPE_CHAOS, DAMAGE_TYPE_UNIVERSAL, WEAPON_TYPE_WHOKNOWS)
+	check(abortReducedHeard == 1, "the reduced listener hears one hit, the inner one (" + abortReducedHeard + ")")
+	check(abortReducedAmount > 0., "with its damage, not zero (" + abortReducedAmount.toString(1) + ")")
+	check(not DamageEvent.isFiring(), "no damage instance is left on the stack")
+	destroy ul
+	destroy rl
+	abortSource.remove()
+	abortOuter.remove()
+	abortInner.remove()
+
+// ============================================================================
+// 30. Dummies
+// ============================================================================
+
+function queuedDummies() returns int
+	var total = 0
+	for i = 0 to 7
+		total += DummyRecycler.angleQueues[i].size()
+	return total
+
+public function testDummies()
+	section("--- 30. Fx and the dummy recycler ---")
+	let before = queuedDummies()
+	let dummy = DummyRecycler.get(vec2(-3300., -1800.), angle(0))
+	check(queuedDummies() == before - 1, "get takes a dummy from the queues (" + before + " -> " + queuedDummies() + ")")
+	DummyRecycler.recycle(dummy)
+	DummyRecycler.recycle(dummy)
+	check(queuedDummies() == before, "recycling it twice queues it once (" + queuedDummies() + ", was " + before + ")")
+
+	let f = new Fx(vec2(-3300., -1700.), angle(0))
+	f.setZ(80.)
+	f.setScale(2.)
+	f.setXYAngleInstant(angle(PI / 2))
+	check(f.getPos2().distanceTo(vec2(-3300., -1700.)) < 1., "setXYAngleInstant keeps the position (" + f.getPos2().x.toString(0) + ", " + f.getPos2().y.toString(0) + ")")
+	check(f.getZ() > 79. and f.getZ() < 81., "and the height (" + f.getZ().toString(0) + ")")
+	destroy f
+
+// ============================================================================
+// 31. Listeners of a unit go with its index
+// ============================================================================
+
+public function testUnitListenersGoWithTheIndex()
+	section("--- 31. listeners of a unit are destroyed when it is deindexed ---")
+	let u = createUnit(players[0], UnitIds.footman, vec2(-3300., -1600.), angle(0))
+	let index = u.getIndex()
+	EventListener.add(u, EVENT_PLAYER_UNIT_DEATH, () -> ignoreEvent())
+	EventListener.onCast(u, 'A000', (caster) -> ignoreEvent())
+	check(EventListener.unitListenersFirsts[index] != null and EventListener.castMapCasters[index] != null,
+		"the unit has an event listener and a cast listener")
+	u.deindex()
+	check(EventListener.unitListenersFirsts[index] == null and EventListener.castMapCasters[index] == null,
+		"neither is left once it is deindexed")
+	u.remove()

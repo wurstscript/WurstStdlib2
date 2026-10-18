@@ -44,7 +44,22 @@ public class DummyRecycler
 		else
 			return createDummy(pos, a)
 
+	/** Whether the unit waits in one of the queues, that is whether it was recycled and not handed out since. */
+	static function isRecycled(unit u) returns bool
+		for i = 0 to DIFFERENT_ANGLES - 1
+			if angleQueues[i].has(u)
+				return true
+		return false
+
+	/** Returns a dummy to the queues, or removes it when they are full.
+		A dummy which is recycled again before it was handed out is ignored: it would be handed out twice. */
 	static function recycle(unit u)
+		if u == null or u.getTypeId() == 0
+			// Removed already, for example by a first recycle which found the queues full.
+			return
+		if isRecycled(u)
+			Log.warn("DummyRecycler: ignoring an attempt to recycle a dummy which is already recycled")
+			return
 		var smallestQueue = 0
 		for i = 1 to DIFFERENT_ANGLES - 1
 			if angleQueues[smallestQueue].size() > angleQueues[i].size()

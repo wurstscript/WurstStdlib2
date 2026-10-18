@@ -1,0 +1,68 @@
+package UnitIndexerTests
+import UnitIndexer
+
+unit array seenIndexed
+unit array seenDeindexed
+var indexedCount = 0
+var deindexedCount = 0
+var deindexSawIndex = 0
+
+function onIndexedTest()
+	seenIndexed[indexedCount] = getIndexingUnit()
+	indexedCount++
+
+function onDeindexedTest()
+	seenDeindexed[deindexedCount] = getIndexingUnit()
+	deindexSawIndex = getIndexingUnit().getIndex()
+	deindexedCount++
+
+function newTestUnit() returns unit
+	return createUnit(players[0], 'hfoo', ZERO2, angle(0))
+
+@Test function toUnitIndexIsStableAndDistinct()
+	let a = newTestUnit()
+	let b = newTestUnit()
+	a.getIndex().assertEquals(0)
+	let ia = a.toUnitIndex().getIndex()
+	let ib = b.toUnitIndex().getIndex()
+	ia.assertGreaterThan(0)
+	ib.assertGreaterThan(0)
+	(ia != ib).assertTrue()
+	a.toUnitIndex().getIndex().assertEquals(ia)
+	a.getIndex().assertEquals(ia)
+	(a.toUnitIndex().getUnit() == a).assertTrue()
+	a.deindex()
+	b.deindex()
+
+@Test function deindexReportsOnceAndClearsTheIndex()
+	let u = newTestUnit()
+	u.deindex().assertFalse()
+	u.toUnitIndex()
+	u.deindex().assertTrue()
+	u.getIndex().assertEquals(0)
+	u.deindex().assertFalse()
+
+@Test function reindexingGivesALiveIndex()
+	let u = newTestUnit()
+	u.toUnitIndex()
+	u.deindex()
+	u.toUnitIndex()
+	u.getIndex().assertGreaterThan(0)
+	u.deindex()
+
+@Test function listenersSeeTheIndexingUnit()
+	onUnitIndex(function onIndexedTest)
+	onUnitDeindex(function onDeindexedTest)
+	let before = indexedCount
+	let beforeDe = deindexedCount
+	let u = newTestUnit()
+	u.toUnitIndex()
+	indexedCount.assertEquals(before + 1)
+	(seenIndexed[before] == u).assertTrue()
+	u.deindex()
+	deindexedCount.assertEquals(beforeDe + 1)
+	(seenDeindexed[beforeDe] == u).assertTrue()
+	// The index is still set while the deindex listeners run, and gone afterwards.
+	deindexSawIndex.assertGreaterThan(0)
+	u.getIndex().assertEquals(0)
+	(getIndexingUnit() == null).assertTrue()

@@ -3,9 +3,10 @@ import NoWurst
 import Annotations
 import Trigger
 import KeyedMap
-import Table
+import HashMap
 import Unit
 import Framehandle
+import Wurstunit
 
 /*
     Example usage:
@@ -37,6 +38,13 @@ constant FRAMEHANDLE_TRIGGER = CreateTrigger()..addAction(function onEvent)
     (map castTo Table).removeInt(key)
 
 constant FRAME_MAP = keyedMapCreate()
+
+// Frame handle id -> event type handle id -> true once the pair is registered on FRAMEHANDLE_TRIGGER.
+constant FRAME_REGISTERED = new HashMap<int, HashMap<int, bool>>
+
+// The listener each dispatch in progress steps to next, one slot per nesting level.
+FrameHandleListener array frameCursor
+var frameCursorDepth = 0
 
 
 /* CLOSURES */
@@ -96,39 +104,58 @@ public function framehandle.onSpriteAnimUpdate(FrameHandleListener listener) ret
 
 function addListenerForFrame(FrameHandleListener listener, framehandle frame, frameeventtype eventType) returns FrameHandleListener
     listener.frame = frame
-    listener.eventType = eventType
-    let id = frame.getHandleId()
-    let first = keyedMapGet(FRAME_MAP, id)
-    // Register (frame, eventType) on the shared trigger only ONCE. onEvent() already fans a single
-    // trigger fire out to every listener in the list, so re-registering on each added listener makes
-    // the trigger fire once PER registration: a frame with two CONTROL_CLICK listeners then runs its
-    // click handler twice (which silently toggled controls back, e.g. a checkbox that never unchecks).
-    // Skip re-registration when this frame already has a listener for the same event type.
-    var alreadyRegistered = false
-    var cursor = first
-    while cursor != null
-        if cursor.eventType == eventType
-            alreadyRegistered = true
-        cursor = cursor.next
-    if not alreadyRegistered
+    if linkListener(listener, frame.getHandleId(), eventType)
         FRAMEHANDLE_TRIGGER.registerFrameEvent(frame, eventType)
+    return listener
+
+/** Puts the listener at the head of the frame's list. Returns whether (frame, eventType) still has to be registered
+    on the shared trigger.
+
+    It is registered only ONCE. onEvent() already fans a single trigger fire out to every listener in the list, so
+    re-registering on each added listener makes the trigger fire once PER registration: a frame with two
+    CONTROL_CLICK listeners then runs its click handler twice (which silently toggled controls back, e.g. a
+    checkbox that never unchecks).
+
+    Whether it was registered is remembered in FRAME_REGISTERED and never cleared: WC3 has no per-event
+    unregister, so a listener list which ran empty and filled again still has the event on the trigger. */
+function linkListener(FrameHandleListener listener, int id, frameeventtype eventType) returns bool
+    listener.frameId = id
+    listener.eventType = eventType
+    let first = keyedMapGet(FRAME_MAP, id)
+    var events = FRAME_REGISTERED.get(id)
+    if events == null
+        events = new HashMap<int, bool>
+        FRAME_REGISTERED.put(id, events)
+    let eventId = eventType.getHandleId()
+    let needsRegistration = not events.has(eventId)
+    if needsRegistration
+        events.put(eventId, true)
     if first != null
         first.prev = listener
         listener.next = first
     keyedMapPut(FRAME_MAP, id, listener)
-    return listener
+    return needsRegistration
 
 
 /* ON EVENT */
 
 function onEvent()
-    var listener = keyedMapGet(FRAME_MAP, BlzGetTriggerFrame().getHandleId())
-    let eventType = BlzGetTriggerFrameEvent()
+    dispatchFrameEvent(BlzGetTriggerFrame().getHandleId(), BlzGetTriggerFrameEvent())
+
+/** Runs the listeners of the frame for the event, newest first. A listener may destroy itself or any other listener:
+    the successor is published in frameCursor before each call, and the destructor advances it when it is the one
+    destroyed. There is one cursor per nesting level, as a listener may raise frame events itself. */
+function dispatchFrameEvent(int id, frameeventtype eventType)
+    let depth = frameCursorDepth
+    frameCursorDepth++
+    var listener = keyedMapGet(FRAME_MAP, id)
     while listener != null
-        let nextListener = listener.next
+        frameCursor[depth] = listener.next
         if listener.eventType == eventType
             listener.onEvent()
-        listener = nextListener
+        listener = frameCursor[depth]
+    frameCursor[depth] = null
+    frameCursorDepth--
 
 
 /* FRAME HANDLE LISTENER */
@@ -136,13 +163,19 @@ function onEvent()
 public abstract class FrameHandleListener
     framehandle frame
     frameeventtype eventType
+    /** The handle id of the frame, which the map is keyed by. Kept apart from `frame`, which may be gone by the
+        time the listener is destroyed. */
+    int frameId = 0
     thistype next = null
     thistype prev = null
 
     abstract function onEvent()
 
     ondestroy
-        let id = frame.getHandleId()
+        for d = 0 to frameCursorDepth - 1
+            if frameCursor[d] == this
+                frameCursor[d] = next
+        let id = frameId
         let first = keyedMapGet(FRAME_MAP, id)
         if first == this
             if next == null
@@ -160,3 +193,71 @@ class ReleaseKeyboardFocusFrameListener extends FrameHandleListener
 
     override function onEvent()
         frame.releaseKeyboardFocus(GetTriggerPlayer())
+
+
+/* TESTS */
+
+class TestFrameListener extends FrameHandleListener
+    static int array order
+    static int runs = 0
+    static TestFrameListener array made
+    int which
+    int destroyWhich
+
+    construct(int which, int destroyWhich)
+        this.which = which
+        this.destroyWhich = destroyWhich
+
+    override function onEvent()
+        order[runs] = which
+        runs++
+        if destroyWhich >= 0
+            destroy made[destroyWhich]
+
+function newTestListener(int which, int destroyWhich, int frameId) returns TestFrameListener
+    let l = new TestFrameListener(which, destroyWhich)
+    TestFrameListener.made[which] = l
+    linkListener(l, frameId, FRAMEEVENT_CONTROL_CLICK)
+    return l
+
+@Test function aFrameEventIsRegisteredOnceEvenWhenTheListenersCameAndWent()
+    let first = new TestFrameListener(0, -1)
+    linkListener(first, 910001, FRAMEEVENT_CONTROL_CLICK).assertTrue()
+    let second = new TestFrameListener(1, -1)
+    linkListener(second, 910001, FRAMEEVENT_CONTROL_CLICK).assertFalse()
+    destroy first
+    destroy second
+    // Nothing is left on the frame, but the trigger still holds the event: it must not be registered again.
+    let third = new TestFrameListener(2, -1)
+    linkListener(third, 910001, FRAMEEVENT_CONTROL_CLICK).assertFalse()
+    // Another event of the same frame, and the same event of another frame, are new.
+    let other = new TestFrameListener(3, -1)
+    linkListener(other, 910001, FRAMEEVENT_MOUSE_ENTER).assertTrue()
+    let otherFrame = new TestFrameListener(4, -1)
+    linkListener(otherFrame, 910002, FRAMEEVENT_CONTROL_CLICK).assertTrue()
+    destroy third
+    destroy other
+    destroy otherFrame
+
+@Test function frameDispatchSurvivesAListenerDestroyingItsNextSibling()
+    TestFrameListener.runs = 0
+    // linked 0, 1, 2: the list is 2 -> 1 -> 0, and 2 destroys 1 before its turn
+    newTestListener(0, -1, 910003)
+    newTestListener(1, -1, 910003)
+    newTestListener(2, 1, 910003)
+    dispatchFrameEvent(910003, FRAMEEVENT_CONTROL_CLICK)
+    TestFrameListener.runs.assertEquals(2)
+    TestFrameListener.order[0].assertEquals(2)
+    TestFrameListener.order[1].assertEquals(0)
+    destroy TestFrameListener.made[2]
+    destroy TestFrameListener.made[0]
+
+@Test function frameDispatchSurvivesAListenerDestroyingItself()
+    TestFrameListener.runs = 0
+    newTestListener(0, -1, 910004)
+    newTestListener(1, -1, 910004)
+    newTestListener(2, 2, 910004)
+    dispatchFrameEvent(910004, FRAMEEVENT_CONTROL_CLICK)
+    TestFrameListener.runs.assertEquals(3)
+    destroy TestFrameListener.made[1]
+    destroy TestFrameListener.made[0]

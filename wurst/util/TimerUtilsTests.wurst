@@ -1,0 +1,43 @@
+package TimerUtilsTests
+import TimerUtils
+
+function noop()
+	skip
+
+// The interpreter refuses to pause a timer which was never started, which release() does.
+function timer.arm()
+	this.start(1000., () -> noop())
+
+@Test function releasedTimerIsReused()
+	let t = getTimer()
+	t.arm()
+	t.release()
+	let again = getTimer()
+	(again == t).assertTrue()
+	again.arm()
+	again.release()
+
+@Test function reacquiredTimerHasNoData()
+	let t = getTimer()
+	t.setData(1234)
+	t.getData().assertEquals(1234)
+	t.arm()
+	t.release()
+	let again = getTimer()
+	(again == t).assertTrue()
+	again.getData().assertEquals(0)
+	again.arm()
+	again.release()
+
+@Test function dataRoundTripsPerTimer()
+	let a = getTimer()
+	let b = getTimer()
+	(a != b).assertTrue()
+	a.setData(7)
+	b.setData(-9)
+	a.getData().assertEquals(7)
+	b.getData().assertEquals(-9)
+	a.arm()
+	a.release()
+	b.arm()
+	b.release()

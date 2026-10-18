@@ -24,6 +24,10 @@ public class Fx
 	private string 	sfxPath = ""
 
 	private colorA col = colorA(255,255,255,255)
+	private real scale = 1.
+	/** The owner set through setOwner, or null while the dummy keeps the owner it was recycled with */
+	private player owner = null
+	private playercolor pcolor = null
 
 	construct(real x, real y, angle facing)
 		dummy = DummyRecycler.get(vec2(x, y), facing)
@@ -64,10 +68,12 @@ public class Fx
 		return dummy.getOwner()
 
 	function setPlayerColor(playercolor pc)
+		pcolor = pc
 		getDummy().setColor(pc)
 
 	/** Set the owner of this Fx Object */
 	function setOwner(player p, boolean changeColor)
+		owner = p
 		fx?.destr()
 		fx = null
 		setFx(sfxPath)
@@ -75,10 +81,12 @@ public class Fx
 
 	/** Set the playercolor of this Fx Object */
 	function setPlayercolor(playercolor c)
+		pcolor = c
 		SetUnitColor(dummy, c)
 
 	/** Set the scale of this Fx Object */
 	function setScale(real value)
+		scale = value
 		dummy.setScale(value)
 
 	/** Get the color (rgba) */
@@ -111,9 +119,22 @@ public class Fx
 
 	/** Creates a new dummy with the given facing in order to achieve instant turning. */
 	function setXYAngleInstant(angle value)
-		fx.destr()
+		// A recycled dummy is parked at the map corner and reset, so everything the new one needs is read first.
+		let pos = getPos2()
+		let height = getZ()
+		fx?.destr()
+		fx = null
 		DummyRecycler.recycle(dummy)
-		dummy = DummyRecycler.get(vec2(dummy.getX(), dummy.getY()), value)
+		dummy = DummyRecycler.get(pos, value)
+		if owner != null
+			dummy.setOwner(owner, false)
+		if pcolor != null
+			SetUnitColor(dummy, pcolor)
+		dummy.setScale(scale)
+		dummy.setVertexColor(col)
+		dummy.setFlyHeight(height, 0.)
+		if zAngle.radians() != 0.
+			setZAngle(zAngle)
 		setFx(sfxPath)
 
 	/** Get the z angle */

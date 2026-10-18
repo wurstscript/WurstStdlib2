@@ -162,6 +162,10 @@ public class SoundDefinition
 
 	private function recycle(SoundInstance instance)
 		instance.p = null
+		// A recycled instance is played again by play(), playForPlayer() or playOnPoint(), which set only what
+		// they are given: whatever the last play attached or placed would be kept.
+		instance.pos = ZERO3
+		instance.onUnit = null
 		if instance.s3s != null
 			destroy instance.s3s
 		if instance.soundDef.soundStack.size() < 4

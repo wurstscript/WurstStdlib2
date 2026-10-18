@@ -1,0 +1,43 @@
+package DummyTests
+import DummyRecycler
+import Fx
+import LinkedList
+
+/*	The init of DummyRecycler does not run under the test runner, so every test starts from empty queues of its own.
+	The queues are LinkedList<unit>, whose elements the interpreter does not give back as the unit which went in:
+	a dequeued unit has lost its position. So nothing here dequeues; the tests count what is queued, and an Fx finds
+	its queue empty and gets a dummy created for it. */
+function freshQueues()
+	for i = 0 to 7
+		DummyRecycler.angleQueues[i] = new LinkedList<unit>()
+
+function queuedDummies() returns int
+	var total = 0
+	for i = 0 to 7
+		total += DummyRecycler.angleQueues[i].size()
+	return total
+
+@Test function recyclingTheSameDummyTwiceQueuesItOnce()
+	freshQueues()
+	let dummy = DummyRecycler.get(vec2(10, 10), angle(0))
+	DummyRecycler.recycle(dummy)
+	queuedDummies().assertEquals(1)
+	DummyRecycler.recycle(dummy)
+	queuedDummies().assertEquals(1)
+	dummy.isAlive().assertTrue()
+
+@Test function instantTurnKeepsPositionAndHeight()
+	freshQueues()
+	let f = new Fx(vec2(100, 100), angle(0))
+	f.setZ(50)
+	f.setXYAngleInstant(angle(PI / 2))
+	f.getPos2().x.assertEquals(100., 0.01)
+	f.getPos2().y.assertEquals(100., 0.01)
+	f.getZ().assertEquals(50., 0.01)
+
+@Test function instantTurnKeepsTheOwner()
+	freshQueues()
+	let f = new Fx(vec2(100, 100), angle(0))
+	f.setOwner(players[3], false)
+	f.setXYAngleInstant(angle(PI))
+	(f.getOwner() == players[3]).assertTrue()
