@@ -55,3 +55,22 @@ import BitSet
 			bitset.get(i).assertTrue()
 		else
 			bitset.get(i).assertFalse()
+
+@Test function testEveryBitIsIndependent()
+	var set = emptyBitset()
+	for i = 0 to BITSET_SIZE - 1
+		set = set.set(i)
+	for i = 0 to BITSET_SIZE - 1
+		set.get(i).assertTrue()
+	set = set.reset(31)
+	for i = 0 to BITSET_SIZE - 2
+		set.get(i).assertTrue()
+	set.get(31).assertFalse()
+	set = set.reset(0)
+	set.get(0).assertFalse()
+	set.get(1).assertTrue()
+	set.get(31).assertFalse()
+
+@Test function testSetWithValue()
+	emptyBitset().set(4, true).get(4).assertTrue()
+	emptyBitset().set(4).set(4, false).isEmpty().assertTrue()

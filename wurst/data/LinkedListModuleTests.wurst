@@ -105,3 +105,71 @@ function testRemoveHeadRepairsLinks()
 
 	destroy b
 	destroy c
+
+/** A second remove (including the one in ondestroy) must not touch the size or
+	relink neighbours that have since moved on. */
+@Test
+function testRemoveThenDestroyMiddle()
+	let a = new TestClass("a")
+	let b = new TestClass("b")
+	let c = new TestClass("c")
+
+	b.remove()
+	TestClass.size.assertEquals(2)
+	allToString().assertEquals("ac")
+	destroy b
+	TestClass.size.assertEquals(2)
+	allToString().assertEquals("ac")
+	allToStringReversed().assertEquals("ca")
+
+	destroy a
+	destroy c
+	TestClass.size.assertEquals(0)
+
+@Test
+function testRemoveThenDestroyHead()
+	let a = new TestClass("a")
+	let b = new TestClass("b")
+	let c = new TestClass("c")
+
+	a.remove()
+	destroy a
+	TestClass.size.assertEquals(2)
+	allToString().assertEquals("bc")
+	allToStringReversed().assertEquals("cb")
+
+	destroy b
+	destroy c
+	TestClass.size.assertEquals(0)
+
+@Test
+function testRemoveTwiceIsNoOp()
+	let a = new TestClass("a")
+	let b = new TestClass("b")
+	a.remove()
+	a.remove()
+	TestClass.size.assertEquals(1)
+	allToString().assertEquals("b")
+	destroy a
+	destroy b
+
+/** An iterator parked on an instance that gets removed still walks on. */
+@Test
+function testIteratorParkedOnRemovedInstanceWalksOn()
+	new TestClass("a")
+	let b = new TestClass("b")
+	new TestClass("c")
+	new TestClass("d")
+
+	let itr = TestClass.iterator()
+	itr.next().str.assertEquals("a")
+	b.remove()
+	var rest = ""
+	while itr.hasNext()
+		rest += itr.next().str
+	itr.close()
+	rest.assertEquals("bcd")
+
+	destroy b
+	for x in TestClass
+		destroy x

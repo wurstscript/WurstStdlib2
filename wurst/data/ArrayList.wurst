@@ -80,7 +80,7 @@ constant int INSERTION_SORT_CUTOFF = 12
  * add(elem)          | O(1)*     | O(1)       | *O(n) on resize!
  * addtoStart(elem)   | O(n)      | O(1)       | Shifts all elements
  * get(index)         | O(1)      | O(n)       | Major ArrayList advantage
- * removeAt(index)    | O(n)      | O(1)       | Shifts remaining elements
+ * removeAt(index)    | O(n)      | O(n)       | ArrayList shifts elements, LinkedList walks to the index
  * removeAtUnordered  | O(1)      | N/A        | Doesn't preserve order
  * Iterate all        | Faster    | Fast       | LinkedList does double the work, but is still fast
  * Memory per element | 1 slot    | 3 slots    | Element + 2 pointers
@@ -207,8 +207,21 @@ public class ArrayList<T:>
         regrow(capacity * 2)
 
     /** Moves this list into a freshly allocated section of newCapacity slots
-        and releases the old one - EXPENSIVE OPERATION! */
+        and releases the old one - EXPENSIVE OPERATION!
+
+        A list whose section is the last one in the store is extended in place instead: no copy,
+        and no second section needed, so a list holding more than a third of the store can still
+        grow into the free space after it. */
     private function regrow(int newCapacity)
+        if startIndex + capacity == nextFreeIndex
+            let extra = newCapacity - capacity
+            if not isLua and extra > JASS_MAX_ARRAY_SIZE - nextFreeIndex
+                error("ArrayList: Storage limit exceeded for type")
+            // Slots past the logical size keep whatever reset() retained, which stays accounted for.
+            nextFreeIndex += extra
+            capacity = newCapacity
+            return
+
         let oldStart = startIndex
         let oldCapacity = capacity
 
@@ -407,13 +420,15 @@ public class ArrayList<T:>
     function isEmpty() returns boolean
         return size == 0
 
-    /** Returns the first element in the list, or null if empty (O(1)) */
+    /** Returns the first element in the list (O(1)). If the list is empty this is the type's
+        null/zero value - check isEmpty() first when that is a valid element. */
     function getFirst() returns T
         if size == 0
             return null
         return store[startIndex]
 
-    /** Returns the last element in the list, or null if empty (O(1)) */
+    /** Returns the last element in the list (O(1)). If the list is empty this is the type's
+        null/zero value - check isEmpty() first when that is a valid element. */
     function getLast() returns T
         if size == 0
             return null
@@ -467,7 +482,7 @@ public class ArrayList<T:>
             return true
         return false
 
-    /** Returns a random element from this list or null if empty */
+    /** Returns a random element from this list, or the type's null/zero value if it is empty */
     function getRandomElement() returns T
         if size == 0
             return null
@@ -481,7 +496,9 @@ public class ArrayList<T:>
     function push(T elem)
         add(elem)
 
-    /** Returns and removes the last added element (LIFO) */
+    /** Returns and removes the last added element (LIFO).
+        If the list is empty nothing is removed and the type's null/zero value is returned -
+        check isEmpty() first when that is a valid element. */
     function pop() returns T
         if size == 0
             return null
@@ -492,7 +509,8 @@ public class ArrayList<T:>
             store[startIndex + size] = null
         return elem
 
-    /** Returns the lastly added element without removing it, or null if empty */
+    /** Returns the lastly added element without removing it. If the list is empty this is the
+        type's null/zero value - check isEmpty() first when that is a valid element. */
     function peek() returns T
         return getLast()
 
@@ -504,7 +522,9 @@ public class ArrayList<T:>
     function enqueue(T elem)
         add(elem)
 
-    /** Returns and removes the first element (FIFO) - WARNING: O(n) operation! */
+    /** Returns and removes the first element (FIFO) - WARNING: O(n) operation!
+        If the list is empty nothing is removed and the type's null/zero value is returned -
+        check isEmpty() first when that is a valid element. */
     function dequeue() returns T
         if size == 0
             return null
@@ -620,7 +640,8 @@ public class ArrayList<T:>
         destroy predicate
         return result
 
-    /** Returns the first element that satisfies the predicate, or null if none present */
+    /** Returns the first element that satisfies the predicate, or the type's null/zero value if
+        none does - use an index search if that value is a valid element. */
     function find(ArrayListPredicate<T> predicate) returns T
         T result = null
         for i = 0 to size - 1
