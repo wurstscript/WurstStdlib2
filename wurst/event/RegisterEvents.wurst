@@ -6,11 +6,16 @@ import ArrayList
 import CodeList
 import KeyedMap
 import MagicFunctions
+import Printing
 import Table
 
 /*****PlayerUnitEvent*****/
 
 trigger array t
+/** Whether the event of `t` was registered with a filter, and whether a call which disagreed was warned about.
+	Code can not be kept in an array nor compared, so which filter it was is not known. */
+bool array tFiltered
+bool array tFilterWarned
 
 /** Listeners in the order they were added, which run one after the other. A listener added while they run does not
 	run in that run but from the next, as a condition added to a trigger during its evaluation does not: it goes into
@@ -131,12 +136,22 @@ public function registerPlayerUnitEvent(playerunitevent p, code c)
 public function registerPlayerUnitEvent(playerunitevent p, code filter, code c)
 	registerPlayerUnitEvent(p, filter, c, null)
 
+/** Registers a listener for the event of all players. The filter belongs to the event, not to the listener: the
+	first call for an event creates its trigger and registers the event on it with that filter, and every later
+	call shares that trigger and so that filter, whatever filter it passes itself. A later call which passes a
+	filter to an event registered without one, or none to an event registered with one, gets a warning, once per
+	event. Two different filters can not be told apart. Do such a check in the condition instead. */
 public function registerPlayerUnitEvent(playerunitevent p, code filter, code condition, code action)
 	let hid = p.getHandleId()
 	if t[hid] == null
 		t[hid] = CreateTrigger()
+		tFiltered[hid] = filter != null
 		for k = bj_MAX_PLAYER_SLOTS - 1 downto 0
 			t[hid].registerPlayerUnitEvent(players[k], p, filter != null ? Filter(filter) : null)
+	else if (filter != null) != tFiltered[hid] and not tFilterWarned[hid]
+		tFilterWarned[hid] = true
+		Log.warn("registerPlayerUnitEvent: the event is already registered " + (tFiltered[hid] ? "with" : "without") +
+			" a filter, which applies to every listener of it. The filter passed now is not used; check it in the condition instead.")
 	if action != null
 		t[hid].seal()
 		if condition != null

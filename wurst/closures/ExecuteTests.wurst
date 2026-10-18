@@ -1,0 +1,103 @@
+package ExecuteTests
+import Execute
+import ErrorHandling
+
+class Recorder
+	static int runs = 0
+	static int innerRuns = 0
+	static bool innerResult = true
+	static int whileCalls = 0
+
+class RunOnce implements ForForceCallback
+	override function run()
+		Recorder.runs++
+
+class RunNested implements ForForceCallback
+	override function run()
+		Recorder.innerResult = try(new ReportError())
+		Recorder.innerRuns++
+
+/** Reports an error, then runs a nested try which succeeds and one which fails. */
+class ReportThenNestedTries implements ForForceCallback
+	override function run()
+		notifyErrorListeners("outer")
+		try(new RunOnce())
+		try(new ReportError())
+
+/** Reports an error, runs a nested try which succeeds, then reports another error. */
+class ReportAroundANestedTry implements ForForceCallback
+	override function run()
+		notifyErrorListeners("first")
+		try(new RunOnce())
+		notifyErrorListeners("second")
+
+/** Reports an error the way error() does on a target where it does not end the thread. */
+class ReportError implements ForForceCallback
+	override function run()
+		notifyErrorListeners("reported")
+
+class CountingErrorListener implements ErrorListener
+	static int heard = 0
+	static string last = ""
+
+	override function onError(string msg)
+		heard++
+		last = msg
+
+class IterCondition implements LimitedExecuteCondition
+	int limit
+
+	construct(int limit)
+		this.limit = limit
+
+	override function check() returns boolean
+		return Recorder.whileCalls < limit
+
+class IterAction implements LimitedExecuteAction
+	override function run()
+		Recorder.whileCalls++
+
+@Test function notifyErrorListenersRunsAListenerOnce()
+	let before = CountingErrorListener.heard
+	addErrorListener(new CountingErrorListener())
+	notifyErrorListeners("direct")
+	CountingErrorListener.heard.assertEquals(before + 1)
+	CountingErrorListener.last.assertEquals("direct")
+	lastError.assertEquals("direct")
+
+@Test function trySuccessRunsOnceAndReturnsTrue()
+	Recorder.runs = 0
+	try(new RunOnce()).assertTrue()
+	Recorder.runs.assertEquals(1)
+
+@Test function tryReportsAnErrorThatDidNotEndTheThread()
+	// On Lua error() reports and returns, so the callback ends normally; try has to see the report.
+	try(new ReportError()).assertFalse()
+	lastError.assertEquals("reported")
+
+@Test function nestedTryKeepsItsOwnResult()
+	Recorder.innerRuns = 0
+	Recorder.innerResult = true
+	try(new RunNested()).assertTrue()
+	Recorder.innerRuns.assertEquals(1)
+	Recorder.innerResult.assertFalse()
+
+@Test function aFailedTryKeepsItsOwnMessageAcrossNestedTries()
+	// The nested tries clear lastError and the failing one sets its own message, which it handles itself.
+	try(new ReportThenNestedTries()).assertFalse()
+	lastError.assertEquals("outer")
+
+@Test function aFailedTryReportsItsLatestOwnMessage()
+	try(new ReportAroundANestedTry()).assertFalse()
+	lastError.assertEquals("second")
+
+function checkExecuteWhile(int n)
+	Recorder.whileCalls = 0
+	executeWhile(3, new IterCondition(n), new IterAction())
+	Recorder.whileCalls.assertEquals(n)
+
+@Test function executeWhileRunsTheActionUntilTheConditionFails()
+	checkExecuteWhile(0)
+	checkExecuteWhile(1)
+	checkExecuteWhile(5)
+	checkExecuteWhile(12)

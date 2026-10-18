@@ -4,7 +4,11 @@ import HashList
 import public TypeCasting
 import public Table
 
-/** Generic Table Wrapper */
+/** Generic Table Wrapper.
+	Keys and values are stored as ints. Handle keys are keyed by their handle id,
+	so remove the entry before destroying the handle: ids are reused and a stale
+	entry would be found under an unrelated new handle. Real keys and values
+	are quantised to 3 decimals (R2I_PRECISION), so 0.0004 is stored as 0. */
 public class HashMap<K,V> extends Table
 
 	protected int size = 0
@@ -73,15 +77,11 @@ public class IterableMap<K,V> extends HashMap<K, V>
 			keys.clear()
 		super.flush()
 
-	/** Retrieves the value saved under the given key and removes it.
-		super.getAndRemove dispatches back into this class's remove(), which
-		already drops the key, so no second keys.remove() is needed here. */
-	override function getAndRemove(K key) returns V
-		return super.getAndRemove(key)
-
-	/** Returns an iterator that iterates over the map's keys */
+	/** Returns an iterator that iterates over the map's keys.
+		Calling remove() on it removes the whole entry (key, value and size),
+		not just the key. */
 	function iterator() returns HLIterator<K>
-		return keys.iterator()
+		return new IterableMapIterator<K, V>(this)
 
 	/** Returns whether this map uses the given key */
 	function hasKey(K key) returns bool
@@ -90,26 +90,15 @@ public class IterableMap<K,V> extends HashMap<K, V>
 
 	/** Removes either a single occurence or all occurences from of the value from the map */
 	function removeValue(V val, bool all)
-		K array toRemove
-		var num = 0
-		K firstMatch = null
-		// a separate flag rather than "firstMatch != null", so a key whose
-		// underlying int is 0 is still removed
-		var foundFirst = false
-		for elem in this
-			if get(elem) == val
-				if all
-					toRemove[num] = elem
-					num++
-				else if not foundFirst
-					firstMatch = elem
-					foundFirst = true
-
-		if all
-			for i = 0 to num - 1
-				remove(toRemove[i])
-		else if foundFirst
-			remove(firstMatch)
+		// removing through the iterator steps back after each removal, so no
+		// temporary key storage (and no array size cap) is needed
+		let itr = iterator()
+		while itr.hasNext()
+			if get(itr.next()) == val
+				itr.remove()
+				if not all
+					break
+		itr.close()
 
 	/** Copies all elements from another map into this one
 		Use with caution, since it will replace elements that were under the same key! */
@@ -128,7 +117,9 @@ public class IterableMap<K,V> extends HashMap<K, V>
 	override function size() returns int
 		return keys.size()
 
-	/** Executes the closure for each key-value pair */
+	/** Executes the closure for each key-value pair.
+		The loop bound is fixed on entry, so the callback must not add or remove
+		entries of this map; use iterator() with remove() for that. */
 	function forEach(IMItrClosure<K, V> itr) returns IterableMap<K, V>
 		for i = 0 to size() - 1
 			let key = keys.get(i)
@@ -142,6 +133,20 @@ public class IterableMap<K,V> extends HashMap<K, V>
 		// Makes sure that no attempts to .clear() a destroyed group are made
 		// since .flush() is called after this destructor
 		_destroyed = true
+
+/** Key iterator of an IterableMap whose remove() drops the whole entry */
+class IterableMapIterator<K, V> extends HLIterator<K>
+	private IterableMap<K, V> map
+
+	construct(IterableMap<K, V> map)
+		super(map.keys)
+		this.map = map
+
+	override function remove()
+		if canRemove
+			canRemove = false
+			map.remove(list.get(i - 1))
+			i--
 
 public interface IMItrClosure<K, V>
 	function run(K key, V value)

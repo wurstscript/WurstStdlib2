@@ -211,7 +211,11 @@ public module TimedLoop
 	function stopTimedLoop()
 		timedLoopState = STOPPED
 
-	/** Stops the periodic update and destroys the object. */
+	/** Stops the periodic update and destroys the object.
+		This is the way to destroy an instance which is running: the object is destroyed on the next tick, once its
+		slot has been swept out. Destroying a running instance directly with `destroy` is unsafe: its slot stays
+		until the next tick, and an object created meanwhile may be given the same id and so inherit that slot.
+		Destroying an instance which was never started, or which has been stopped and swept, is safe. */
 	function stopTimedLoopAndDestroy()
 		timedLoopState = STOPPED_FOR_GOOD
 

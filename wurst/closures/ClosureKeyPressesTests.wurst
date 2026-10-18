@@ -1,0 +1,74 @@
+package ClosureKeyPressesTests
+import ClosureKeyPresses
+
+class TestKeyListener extends KeyPressListener
+    static int array order
+    static int runs = 0
+    static TestKeyListener array made
+    int which
+    int destroyWhich
+
+    construct(int which, int destroyWhich)
+        this.which = which
+        this.destroyWhich = destroyWhich
+
+    override function onEvent()
+        order[runs] = which
+        runs++
+        if destroyWhich >= 0
+            destroy made[destroyWhich]
+
+    static function link(TestKeyListener listener, oskeytype key, player whichPlayer)
+        linkForTest(listener, key, whichPlayer)
+
+    static function press(player triggerPlayer, oskeytype key)
+        pressForTest(triggerPlayer, key)
+
+function newTestKeyListener(int which, int destroyWhich, oskeytype key, player whichPlayer)
+    let l = new TestKeyListener(which, destroyWhich)
+    TestKeyListener.made[which] = l
+    TestKeyListener.link(l, key, whichPlayer)
+
+@Test function aListenerOfOnePlayerIgnoresTheKeysOfAnother()
+    TestKeyListener.runs = 0
+    newTestKeyListener(0, -1, OSKEY_Q, players[0])
+    newTestKeyListener(1, -1, OSKEY_Q, players[1])
+    TestKeyListener.press(players[0], OSKEY_Q)
+    TestKeyListener.runs.assertEquals(1)
+    TestKeyListener.order[0].assertEquals(0)
+    TestKeyListener.press(players[1], OSKEY_Q)
+    TestKeyListener.runs.assertEquals(2)
+    TestKeyListener.order[1].assertEquals(1)
+    destroy TestKeyListener.made[0]
+    destroy TestKeyListener.made[1]
+
+@Test function aListenerWithoutAPlayerHearsEveryPlayer()
+    TestKeyListener.runs = 0
+    newTestKeyListener(0, -1, OSKEY_W, null)
+    TestKeyListener.press(players[0], OSKEY_W)
+    TestKeyListener.press(players[5], OSKEY_W)
+    TestKeyListener.runs.assertEquals(2)
+    destroy TestKeyListener.made[0]
+
+@Test function keyDispatchSurvivesAListenerDestroyingItsNextSibling()
+    TestKeyListener.runs = 0
+    // registered 0, 1, 2: the list is 2 -> 1 -> 0, and 2 destroys 1 before its turn
+    newTestKeyListener(0, -1, OSKEY_E, null)
+    newTestKeyListener(1, -1, OSKEY_E, null)
+    newTestKeyListener(2, 1, OSKEY_E, null)
+    TestKeyListener.press(players[0], OSKEY_E)
+    TestKeyListener.runs.assertEquals(2)
+    TestKeyListener.order[0].assertEquals(2)
+    TestKeyListener.order[1].assertEquals(0)
+    destroy TestKeyListener.made[2]
+    destroy TestKeyListener.made[0]
+
+@Test function keyDispatchSurvivesAListenerDestroyingItself()
+    TestKeyListener.runs = 0
+    newTestKeyListener(0, -1, OSKEY_R, null)
+    newTestKeyListener(1, -1, OSKEY_R, null)
+    newTestKeyListener(2, 2, OSKEY_R, null)
+    TestKeyListener.press(players[0], OSKEY_R)
+    TestKeyListener.runs.assertEquals(3)
+    destroy TestKeyListener.made[1]
+    destroy TestKeyListener.made[0]

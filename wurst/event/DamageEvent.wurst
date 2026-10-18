@@ -123,6 +123,9 @@ class DamageInstance
     protected real unreducedAmount
     protected readonly real unreducedOriginalAmount
     protected bool unreduced
+    /** Set by abortCurrent. A flag of the instance and not a global one, so damage dealt from inside a listener
+        neither inherits the abort nor clears it. */
+    protected bool aborted = false
     protected attacktype nativeAttackType
     protected damagetype nativeDamageType
     protected weapontype nativeWeaponType
@@ -176,7 +179,7 @@ public class DamageEvent
     protected static DamageType     nextDamageType    = UNKNOWN
     protected static DamageElement  nextDamageElement = null
     // Mid damage instance
-    protected static bool abort = false
+    // Whether a listener aborted the instance is kept on the instance, see DamageInstance.aborted
     // Damage listeners. Each priority holds a doubly linked list; the tail
     // pointer keeps same-priority registration order (FIFO) an O(1) append.
     protected static DamageListener array firstListeners
@@ -249,12 +252,12 @@ public class DamageEvent
                 // callback destroys that listener (or this one).
                 iterNext[depth] = listener.next
                 listener.onEvent()
-                if abort
+                if dmg.aborted
                     dmg.amount = 0
                     break
                 else
                     listener = iterNext[depth]
-            if abort
+            if dmg.aborted
                 break
         iterDepth--
         iterNext[depth] = null
@@ -283,10 +286,9 @@ public class DamageEvent
         // A null here would mean an unpaired DAMAGED; bail rather than
         // dereference it.
         if dmg == null
-            abort = false
             return
 
-        if not abort
+        if not dmg.aborted
             // The event holds what the unreduced pass wrote back, which is this instance's state.
             let attackType = dmg.nativeAttackType
             let nativeDamageType = dmg.nativeDamageType
@@ -300,12 +302,12 @@ public class DamageEvent
                 while listener != null
                     iterNext[depth] = listener.next
                     listener.onEvent()
-                    if abort
+                    if dmg.aborted
                         dmg.amount = 0
                         break
                     else
                         listener = iterNext[depth]
-                if abort
+                if dmg.aborted
                     break
             iterDepth--
             iterNext[depth] = null
@@ -313,10 +315,16 @@ public class DamageEvent
             writeBack(dmg, attackType, nativeDamageType, weaponType, reducedAmount)
 
         destroy dmg
-        abort = false
 
 
     /* LISTENERS */
+    /** The priorities index the listener lists, so they have to lie within the bounds of an array. */
+    protected static function clampPriority(int priority) returns int
+        if priority < 0 or priority >= JASS_MAX_ARRAY_SIZE
+            Log.warn("DamageEvent: priority " + priority + " is outside of 0 to " + (JASS_MAX_ARRAY_SIZE - 1) + ", it is clamped")
+            return priority < 0 ? 0 : JASS_MAX_ARRAY_SIZE - 1
+        return priority
+
     /** Adds a damage event listener at priority 0.
         If the order of firing is important, use addListener(priority, listener) */
     static function addListener(DamageListener listener) returns DamageListener
@@ -324,8 +332,15 @@ public class DamageEvent
 
     /** Adds a damage event listener with a given priority.
         Listeners of different priorities fire from the lowest priority to the highest priority added.
-        Listeners of the same priority fire by order of addition (FIFO) */
-    static function addListener(int priority, DamageListener listener) returns DamageListener
+        Listeners of the same priority fire by order of addition (FIFO).
+        A priority outside of the array bounds is clamped with a warning, and adding a listener which is
+        already registered does nothing but warn. */
+    static function addListener(int requestedPriority, DamageListener listener) returns DamageListener
+        if listener.registered
+            // Linking it a second time would make it its own successor and cut the listeners behind it off.
+            Log.warn("DamageEvent: this listener is already registered, it is not added again")
+            return listener
+        let priority = clampPriority(requestedPriority)
         listener.priority = priority
         listener.unreduced = false
         listener.registered = true
@@ -380,7 +395,11 @@ public class DamageEvent
     /** Adds a damage event listener with a given priority that fires before any damage reduction is applied (such as armor).
         Listeners of different priorities fire from the lowest priority to the highest priority added.
         Listeners of the same priority fire by order of addition (FIFO) */
-    static function addUnreducedListener(int priority, DamageListener listener) returns DamageListener
+    static function addUnreducedListener(int requestedPriority, DamageListener listener) returns DamageListener
+        if listener.registered
+            Log.warn("DamageEvent: this listener is already registered, it is not added again")
+            return listener
+        let priority = clampPriority(requestedPriority)
         listener.priority = priority
         listener.unreduced = true
         listener.registered = true
@@ -453,11 +472,27 @@ public class DamageEvent
         return DamageInstance.current.unreducedOriginalAmount
 
     /** Returns the percent of damage reduced from the *original unreduced amount* by damage reducing effects.
-        If the damage instance is still unreduced, returns zero */
+        If the damage instance is still unreduced, or was dealt with an amount of zero, returns zero */
     static function getNativeDamageReductionPercent() returns real
-        if DamageInstance.current.unreduced
+        if DamageInstance.current.unreduced or DamageInstance.current.unreducedOriginalAmount == 0.
             return 0.
         return 1. - DamageInstance.current.originalAmount / DamageInstance.current.unreducedOriginalAmount
+
+    /** Opens a damage instance of code damage, as a DAMAGING event does: it becomes the current one. For tests. */
+    protected static function openInstanceForTest(unit u, real amount)
+        new DamageInstance(0, u, u, amount, ATTACK_TYPE_NORMAL, DAMAGE_TYPE_NORMAL, WEAPON_TYPE_WHOKNOWS, DamageType.CODE, null)
+
+    /** Closes the current damage instance, as its DAMAGED event does. For tests. */
+    protected static function closeInstanceForTest()
+        destroy DamageInstance.current
+
+    /** Moves the current damage instance to its reduced phase. For tests. */
+    protected static function reduceInstanceForTest(real amount)
+        DamageInstance.current.setReducedAmount(amount)
+
+    /** Whether the current damage instance was aborted. For tests. */
+    protected static function isAbortedForTest() returns bool
+        return DamageInstance.current.aborted
 
     /** Returns the attacktype of the damage instance being currently fired */
     static function getAttackType() returns attacktype
@@ -525,9 +560,12 @@ public class DamageEvent
         nextDamageElement = damageElement
 
     /* UTILS */
-    /** Nulls the damage amount and skip all remaining listeners for the damage instance being currently fired */
+    /** Nulls the damage amount and skip all remaining listeners for the damage instance being currently fired.
+        Only that instance is aborted: damage a listener deals afterwards from code is an instance of its own, and
+        aborting does not end the abort of the instance which dealt it. Does nothing outside of a listener. */
     static function abortCurrent()
-        abort = true
+        if DamageInstance.current != null
+            DamageInstance.current.aborted = true
 
 
 /* LISTENER */

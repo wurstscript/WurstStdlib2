@@ -41,7 +41,7 @@ Avoid full noisy reruns unless there is no target. Done means relevant errors/wa
 
 ## Wurst Essentials
 
-Every `.wurst` file starts with a package; blocks are indentation-based (tabs or 4 spaces, never mixed):
+Every `.wurst` file starts with a package; blocks are indentation-based (tabs or 4 spaces, never mixed; most packages use tabs, so match the file you edit):
 
 ```wurst
 package MyPackage
@@ -115,6 +115,12 @@ import Wurstunit
 
 Tests should be small, deterministic, self-contained, and assertion-driven. If quiet output lists a failed package/test, rerun that target before expanding scope.
 
+- Tests live in a dedicated `FooTests` package beside `Foo`. Exception: an `isLua`-gated package keeps its `@Test`s inside the implementation, where they can drive private registration; never weaken the gate to make code testable, since it is folded and removes the package on the Jass target.
+- `grill test` runs the compiletime interpreter: `isLua` is false, units are modelled (position, owner, visibility, abilities), `error()` aborts the run, so assert the positive rule instead of a rejection.
+- Each `ArrayList<T>` type shares one static store for the whole run; a test that fills one near `JASS_MAX_ARRAY_SIZE` starves every other test of that type. Use a dedicated element type.
+- Performance gates assert work counters (e.g. `spatialPartitionLastQueryVisits()`), not wall time.
+- Engine behaviour the interpreter cannot reach (real damage, key/frame/sync events, enumeration; timer callbacks do run) belongs in the in-game suite: `StdlibIngameTests` and its `StdlibIngame*Tests` packages, run by importing `StdlibIngameTests` into a map.
+
 ## Formatting
 
 - spaces around binary operators (`a + b`); no space before call parentheses (`foo(1)`); no spaces around `.`/`..`/`?.`; no spaces inside `(` `)` / `[` `]`.
@@ -123,10 +129,7 @@ Tests should be small, deterministic, self-contained, and assertion-driven. If q
 
 ## Pitfalls
 
-- Wurst code must be inside `package`; indentation defines blocks.
 - `array.length` is only the initial length.
-- `new` objects and stored closure objects often need `destroy`.
-- Lambdas need a known target type; lambdas used as `code` cannot capture locals.
 - Varargs are limited by Jass's 31-argument limit.
 
 ## Guideline Priority

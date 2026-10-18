@@ -68,3 +68,55 @@ function storesSpecializedTupleValues()
     loaded.number.assertEquals(42)
     loaded.label.assertEquals("answer")
     destroy map
+
+function assertConsistent(IntMap<int> map)
+    // every dense slot must map back to its own key and value (value = key * 2)
+    for i = 0 to map.size() - 1
+        map.has(map.keyAt(i)).assertTrue()
+        map.get(map.keyAt(i)).assertEquals(map.keyAt(i) * 2)
+        map.valueAt(i).assertEquals(map.keyAt(i) * 2)
+
+@Test
+function removingFirstMiddleAndLastKeepsDenseSlotsConsistent()
+    let map = new IntMap<int>()
+    for k = 1 to 5
+        map.put(k, k * 2)
+
+    map.remove(1).assertTrue()
+    map.size().assertEquals(4)
+    assertConsistent(map)
+    map.has(1).assertFalse()
+
+    map.remove(3).assertTrue()
+    map.size().assertEquals(3)
+    assertConsistent(map)
+
+    // 5 was moved into slot 0 and 4 into slot 1 by the unordered removals
+    map.remove(map.keyAt(map.size() - 1)).assertTrue()
+    map.size().assertEquals(2)
+    assertConsistent(map)
+
+    map.remove(map.keyAt(0)).assertTrue()
+    map.remove(map.keyAt(0)).assertTrue()
+    map.isEmpty().assertTrue()
+    destroy map
+
+@Test
+function extremeKeysAreStoredIndependently()
+    let map = new IntMap<int>()
+    map.put(INT_MIN, INT_MIN * 2)
+    map.put(INT_MAX, INT_MAX * 2)
+    map.put(0, 0)
+    map.put(-1, -2)
+    map.size().assertEquals(4)
+    map.get(INT_MIN).assertEquals(INT_MIN * 2)
+    map.get(INT_MAX).assertEquals(INT_MAX * 2)
+    map.has(0).assertTrue()
+    map.get(-1).assertEquals(-2)
+    assertConsistent(map)
+
+    map.remove(INT_MIN).assertTrue()
+    map.has(INT_MIN).assertFalse()
+    map.has(INT_MAX).assertTrue()
+    assertConsistent(map)
+    destroy map

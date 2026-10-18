@@ -28,6 +28,10 @@ public var lastError = ""
 **/
 public var suppressErrorMessages = false
 
+/** How many errors error() has reported so far. try() in package Execute reads it before and after its
+	callback, to see an error that did not end the thread: on Lua, error() reports and returns. */
+public var errorCount = 0
+
 /** Told about every error() after it is reported, so a test runner or a map can record errors
 	that do not stop the game: on Lua, error() returns instead of ending the thread. That includes
 	errors inside try(), which run with suppressErrorMessages set; a listener that only wants
@@ -72,6 +76,9 @@ public function addErrorListener(ErrorListener listener)
 	a configured error() calls it too, before it ends the thread. */
 public function notifyErrorListeners(string msg)
 	lastError = msg
+	// An error raised by a listener is not counted, so it can not fail the callback which only reported one.
+	if not notifyingErrorListeners
+		errorCount++
 	if errorListenerCount > 0 and not notifyingErrorListeners
 		notifyingErrorListeners = true
 		notifiedMessage = msg

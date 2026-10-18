@@ -1,0 +1,106 @@
+package DamageEventTests
+import DamageEvent
+
+/** Reaches the protected lists of DamageEvent. */
+class DamageProbe extends DamageEvent
+	/** How many listeners the reduced list of the priority holds, counting at most `limit` so a cycle ends. */
+	static function reducedLength(int priority, int limit) returns int
+		var n = 0
+		var l = firstListeners[priority]
+		while l != null and n < limit
+			n++
+			l = l.next
+		return n
+
+	static function unreducedLength(int priority, int limit) returns int
+		var n = 0
+		var l = firstUnreducedListeners[priority]
+		while l != null and n < limit
+			n++
+			l = l.next
+		return n
+
+	static function highestPriority() returns int
+		return maxPriority
+
+	/** Opens a code damage instance from and to a new footman, which becomes the current one. */
+	static function open(real amount)
+		openInstanceForTest(createUnit(players[0], 'hfoo', ZERO2, angle(0)), amount)
+
+	static function close()
+		closeInstanceForTest()
+
+	static function reduce(real amount)
+		reduceInstanceForTest(amount)
+
+	static function isAborted() returns bool
+		return isAbortedForTest()
+
+class Counter
+	static int heard = 0
+
+function heardOne()
+	Counter.heard++
+
+@Test function addingAListenerTwiceKeepsItOnceInTheList()
+	let listener = DamageEvent.addListener(5, () -> heardOne())
+	DamageEvent.addListener(5, listener)
+	DamageProbe.reducedLength(5, 10).assertEquals(1)
+	destroy listener
+	DamageProbe.reducedLength(5, 10).assertEquals(0)
+
+@Test function addingAnUnreducedListenerTwiceKeepsItOnceInTheList()
+	let listener = DamageEvent.addUnreducedListener(6, () -> heardOne())
+	DamageEvent.addUnreducedListener(6, listener)
+	DamageProbe.unreducedLength(6, 10).assertEquals(1)
+	destroy listener
+	DamageProbe.unreducedLength(6, 10).assertEquals(0)
+
+@Test function aListenerKeepsItsPlaceWhenAddedAgain()
+	let a = DamageEvent.addListener(7, () -> heardOne())
+	let b = DamageEvent.addListener(7, () -> heardOne())
+	DamageEvent.addListener(7, a)
+	DamageProbe.reducedLength(7, 10).assertEquals(2)
+	// a is still first and b follows it, and b is still the tail.
+	let c = DamageEvent.addListener(7, () -> heardOne())
+	DamageProbe.reducedLength(7, 10).assertEquals(3)
+	destroy a
+	destroy b
+	destroy c
+	DamageProbe.reducedLength(7, 10).assertEquals(0)
+
+@Test function priorityOutsideTheRangeIsClampedIntoIt()
+	let low = DamageEvent.addListener(-3, () -> heardOne())
+	low.priority.assertEquals(0)
+	DamageProbe.reducedLength(0, 10).assertEquals(1)
+	destroy low
+	DamageProbe.reducedLength(0, 10).assertEquals(0)
+
+@Test function aHitOfZeroDamageReportsNoReduction()
+	DamageProbe.open(0.)
+	DamageProbe.reduce(0.)
+	DamageEvent.getNativeDamageReductionPercent().assertEquals(0., 0.0001)
+	DamageProbe.close()
+
+@Test function theReductionIsReportedFromTheUnreducedAmount()
+	DamageProbe.open(100.)
+	DamageEvent.getNativeDamageReductionPercent().assertEquals(0., 0.0001)
+	DamageProbe.reduce(75.)
+	DamageEvent.getNativeDamageReductionPercent().assertEquals(0.25, 0.0001)
+	DamageProbe.close()
+
+@Test function abortingOutsideOfAListenerDoesNothing()
+	DamageEvent.abortCurrent()
+	DamageProbe.open(10.)
+	DamageProbe.isAborted().assertFalse()
+	DamageProbe.close()
+
+@Test function anInstanceAbortIsNotUndoneByTheInstanceDealtInsideIt()
+	DamageProbe.open(10.)
+	DamageEvent.abortCurrent()
+	// A listener of the outer instance deals damage from code: the inner instance is a hit of its own.
+	DamageProbe.open(5.)
+	DamageProbe.isAborted().assertFalse()
+	DamageProbe.close()
+	DamageProbe.isAborted().assertTrue()
+	DamageProbe.close()

@@ -8,6 +8,7 @@ public module LinkedListModule
 	static int size = 0
 	thistype prev
 	thistype next
+	private bool linked = true
 
 	construct()
 		size++
@@ -35,7 +36,12 @@ public module LinkedListModule
 			return last
 		return prev
 
+	/** Unlinks this instance from the list. Removing an instance which is no longer
+		linked does nothing, so `remove()` followed by `destroy` is safe. */
 	function remove()
+		if not linked
+			return
+		linked = false
 		size--
 		if this != first
 			prev.next = next

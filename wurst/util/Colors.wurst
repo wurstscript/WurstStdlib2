@@ -1,17 +1,15 @@
 package Colors
 import NoWurst
-import Table
 import String
 import Integer
 import Playercolor
-import Annotations
 import Maths
 import Real
 import Player
 
 /** Hexadecimal numbers */
 public constant hexs = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F"]
-constant decs = new Table()
+constant HEX_DIGITS = "0123456789ABCDEF"
 
 public constant COLOR_WHITE = colorA(255,255,255,255)
 /** Black with alpha 0, i.e. fully transparent. COLOR_BLACK_STR therefore
@@ -131,10 +129,13 @@ public function colorHSV.toRGB() returns color
 		r = max
 		g = min
 		b = (1 - this.h) * mix + min
-	return color(r.toInt(), g.toInt(), b.toInt())
+	return color((r + 0.5).toInt(), (g + 0.5).toInt(), (b + 0.5).toInt())
 
-/** Get a colorA tuple from a hexstring */
+/** Get a colorA tuple from a hexstring.
+	Accepts "RRGGBB" (alpha 255) and "AARRGGBB". Invalid digits yield -1 in their component. */
 public function fromHexString(string number) returns colorA
+	if number.length() == 6
+		return colorA(toDec(number.substring(0,2)), toDec(number.substring(2,4)), toDec(number.substring(4,6)), 255)
 	let alpha = number.substring(0,2)
 	let red = number.substring(2,4)
 	let green = number.substring(4,6)
@@ -210,21 +211,27 @@ public function colorA.toString() returns string
 public function colorHSV.toString() returns string
 	return "colorHSV(" + (this.h) + ", " + (this.s) + ", " + (this.v) + ")"
 
-/** Converts and int to a hexnumber */
+/** Converts an int to a two digit hexnumber. Values outside 0 to 255 are clamped. */
 public function toHex(int number) returns string
-	let firstpart = number div 16
-	let secondpart = number - firstpart * 16
+	let clamped = number.clamp(0, 255)
+	let firstpart = clamped div 16
+	let secondpart = clamped - firstpart * 16
 	return hexs[firstpart] + hexs[secondpart]
 
-/** Converts a twochar string to an int */
+/** Converts a one or two char hex string to an int, ignoring case: "F" is 15, "ff" is 255.
+	Returns -1 for empty strings, strings longer than two chars and non hex digits. */
 public function toDec(string twochar) returns int
-	if twochar.length() > 2
+	let len = twochar.length()
+	if len < 1 or len > 2
 		return -1
 
-	let first = twochar.substring(0,1).toUpperCase()
-	let second = twochar.substring(1,2).toUpperCase()
-
-	return decs.loadInt(StringHash(first)) * 16 + decs.loadInt(StringHash(second))
+	var result = 0
+	for i = 0 to len - 1
+		let digit = HEX_DIGITS.indexOf(twochar.substring(i, i + 1).toUpperCase())
+		if digit < 0
+			return -1
+		result = result * 16 + digit
+	return result
 
 /** Gets the name of the color. Only works on player colors. See PLAYER_COLORS. */
 public function color.getName() returns string
@@ -266,14 +273,3 @@ public function string.color(color which) returns string
 
 public function string.color(colorA which) returns string
 	return which.toColorString() + this + "|r"
-
-
-@compiletime function initializeTable()
-	for i = 0 to 15
-		decs.saveInt(hexs[i].getHash(), i)
-
-init
-	initializeTable()
-
-
-

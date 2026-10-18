@@ -14,14 +14,30 @@ let executeForce = CreateForce()
 init
 	executeForce.addPlayer(localPlayer)
 
-function executeCurrentCallback()
-	lastError = ""
-	getCurrentCallback().run()
-	setCurrentCallbackSuccess(true)
-
 boolean array tempCallbacksSuccess
 ForForceCallback array tempCallbacks
+int array tempCallbacksErrorsBefore
+/** The error count when the callback's last nested try() ended, or when the callback started */
+int array tempCallbacksErrorsMark
+/** The latest error message of a callback which it reported before starting a nested try() */
+string array tempCallbacksError
 int tempCallbacksCount = 0
+
+function executeCurrentCallback()
+	lastError = ""
+	let frame = tempCallbacksCount - 1
+	tempCallbacksErrorsBefore[frame] = errorCount
+	tempCallbacksErrorsMark[frame] = errorCount
+	tempCallbacksError[frame] = ""
+	getCurrentCallback().run()
+	// On Lua error() returns instead of ending the thread, so reaching this line proves nothing: the callback
+	// failed if it reported an error on the way. A nested try() counts its errors as its own, not as this one's.
+	let failed = errorCount != tempCallbacksErrorsBefore[frame]
+	// A nested try() cleared lastError or left its own message there. Unless this callback reported another
+	// error after it, its latest own message is restored.
+	if failed and errorCount == tempCallbacksErrorsMark[frame]
+		lastError = tempCallbacksError[frame]
+	setCurrentCallbackSuccess(not failed)
 
 function pushCallback(ForForceCallback c)
 	tempCallbacks[tempCallbacksCount] = c
@@ -83,7 +99,8 @@ public function execute(ForForceCallback c)
 	the only difference that it will allow you to inspect
 	an error if one occured.
 
-	If an error occured, the return value will be false.
+	If an error occured, the return value will be false. This holds on Lua as well, where error()
+	does not end the thread: the callback runs on to its end, and try() still reports the failure.
 
 	If the error is caused by error(), then you can inspect
 	the error message using lastError from ErrorHandling.
@@ -93,18 +110,28 @@ public function execute(ForForceCallback c)
 	The error will also be suppressed from being printed.
 **/
 public function try(ForForceCallback c) returns boolean
+	// This try clears lastError: an enclosing callback which reported an error since its last nested try keeps
+	// that message
+	let enclosing = tempCallbacksCount - 1
+	if enclosing >= 0 and errorCount != tempCallbacksErrorsMark[enclosing]
+		tempCallbacksError[enclosing] = lastError
 	pushCallback(c)
 	let suppressErrors = suppressErrorMessages
 	suppressErrorMessages = true
+	let errorsBefore = errorCount
 	executeForce.forEach(function executeCurrentCallback)
+	// The errors of this callback are handled here: an enclosing try() must not count them as its own.
+	errorCount = errorsBefore
+	if enclosing >= 0
+		tempCallbacksErrorsMark[enclosing] = errorCount
 	suppressErrorMessages = suppressErrors
 	popCallback()
 	return isLastCallbackSuccessful()
 
-interface LimitedExecuteCondition
+public interface LimitedExecuteCondition
 	function check() returns boolean
 
-interface LimitedExecuteAction
+public interface LimitedExecuteAction
 	function run()
 
 function executeWhileInternal(int resetCount, LimitedExecuteCondition condition, LimitedExecuteAction action)

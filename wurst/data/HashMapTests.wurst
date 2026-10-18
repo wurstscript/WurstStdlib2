@@ -270,3 +270,152 @@ function testIMForEach()
 
 
 	destroy map
+
+
+/* Regression and coverage tests */
+
+/** The iterator used to be keys.iterator(), so remove() dropped only the key
+	and left the Table entry and size behind. */
+@Test
+function testIterableMapIteratorRemoveDropsEntry()
+	let map = new IterableMap<int, int>
+		..put(1, 10)
+	let itr = map.iterator()
+	itr.hasNext().assertTrue()
+	itr.next().assertEquals(1)
+	itr.remove()
+	itr.hasNext().assertFalse()
+	itr.close()
+
+	map.has(1).assertFalse()
+	map.hasKey(1).assertFalse()
+	map.get(1).assertEquals(0)
+	map.size().assertEquals(0)
+
+@Test
+function testIterableMapIteratorRemoveOncePerNext()
+	let map = new IterableMap<int, int>
+		..put(1, 10)
+		..put(2, 20)
+		..put(3, 30)
+	let itr = map.iterator()
+	itr.remove()
+	map.size().assertEquals(3)
+	itr.next().assertEquals(1)
+	itr.next().assertEquals(2)
+	itr.remove()
+	itr.remove()
+	itr.close()
+
+	map.size().assertEquals(2)
+	map.has(1).assertTrue()
+	map.has(2).assertFalse()
+	map.has(3).assertTrue()
+
+@Test
+function testIterableMapIteratorRemoveSome()
+	let map = new IterableMap<int, int>
+		..put(1, 10)
+		..put(2, 20)
+		..put(3, 30)
+		..put(4, 40)
+	let itr = map.iterator()
+	while itr.hasNext()
+		let key = itr.next()
+		if key mod 2 == 0
+			itr.remove()
+	itr.close()
+
+	map.size().assertEquals(2)
+	map.has(2).assertFalse()
+	map.has(4).assertFalse()
+	map.get(1).assertEquals(10)
+	map.get(3).assertEquals(30)
+	var sum = 0
+	for key in map
+		sum += key
+	sum.assertEquals(4)
+
+@Test
+function testIterableMapRemoveValueManyKeys()
+	let map = new IterableMap<int, int>
+	for i = 1 to 300
+		map.put(i, 5)
+	map.size().assertEquals(300)
+	map.removeValue(5, true)
+	map.size().assertEquals(0)
+	map.has(150).assertFalse()
+	map.hasKey(300).assertFalse()
+
+@Test
+function testIterableMapRemoveThenReinsertAppearsAtEnd()
+	let map = new IterableMap<int, int>
+		..put(1, 10)
+		..put(2, 20)
+		..put(3, 30)
+	map.remove(1)
+	map.put(1, 11)
+	var order = ""
+	for key in map
+		order += key + ","
+	order.assertEquals("2,3,1,")
+	map.get(1).assertEquals(11)
+	map.size().assertEquals(3)
+
+@Test
+function testHashMapZeroValueIsPresent()
+	let map = new HashMap<int, int>
+	map.put(7, 0)
+	map.has(7).assertTrue()
+	map.size().assertEquals(1)
+	map.get(7).assertEquals(0)
+
+@Test
+function testHashMapRemoveThenReinsert()
+	let map = new HashMap<int, int>
+	map.put(1, 10)
+	map.remove(1)
+	map.has(1).assertFalse()
+	map.size().assertEquals(0)
+	map.put(1, 20)
+	map.has(1).assertTrue()
+	map.get(1).assertEquals(20)
+	map.size().assertEquals(1)
+
+@Test
+function testHashMapExtremeKeys()
+	let map = new HashMap<int, int>
+	map.put(INT_MIN, 1)
+	map.put(INT_MAX, 2)
+	map.put(0, 3)
+	map.put(-1, 4)
+	map.size().assertEquals(4)
+	map.get(INT_MIN).assertEquals(1)
+	map.get(INT_MAX).assertEquals(2)
+	map.get(0).assertEquals(3)
+	map.get(-1).assertEquals(4)
+	map.remove(INT_MIN)
+	map.has(INT_MIN).assertFalse()
+	map.has(INT_MAX).assertTrue()
+	map.size().assertEquals(3)
+
+@Test
+function testHashMapStringKeysAreCaseSensitive()
+	let map = new HashMap<string, int>
+	map.put("Alpha", 1)
+	map.put("alpha", 2)
+	map.size().assertEquals(2)
+	map.get("Alpha").assertEquals(1)
+	map.get("alpha").assertEquals(2)
+	map.has("ALPHA").assertFalse()
+
+/** Real keys and values are stored through R2I_PRECISION (3 decimals). */
+@Test
+function testHashMapRealQuantisation()
+	let map = new HashMap<real, real>
+	map.put(0.0004, 0.0004)
+	map.get(0.).assertEquals(0.)
+	map.has(0.).assertTrue()
+	map.put(1.2344, 2.5006)
+	map.has(1.234).assertTrue()
+	map.get(1.234).assertEquals(2.5)

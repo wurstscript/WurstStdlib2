@@ -62,3 +62,93 @@ function testXor()
 	xor(false, true).assertEquals(true)
 	xor(false, false).assertEquals(false)
 
+
+@Test
+function testApproachNearIntLimits()
+	(INT_MAX - 5).approach(INT_MAX, 10).assertEquals(INT_MAX)
+	(INT_MIN + 5).approach(INT_MIN, 10).assertEquals(INT_MIN)
+	INT_MIN.approach(INT_MAX, 10).assertEquals(INT_MIN + 10)
+	INT_MAX.approach(INT_MIN, 10).assertEquals(INT_MAX - 10)
+	INT_MAX.approach(INT_MAX, 10).assertEquals(INT_MAX)
+
+@Test
+function testApproach()
+	0 .approach(10, 3).assertEquals(3)
+	9 .approach(10, 3).assertEquals(10)
+	10 .approach(0, 4).assertEquals(6)
+	2 .approach(0, 4).assertEquals(0)
+	7 .approach(7, 4).assertEquals(7)
+
+@Test
+function testRealRounding()
+	(1.5).floor().assertEquals(1)
+	(-1.5).floor().assertEquals(-2)
+	(-2.).floor().assertEquals(-2)
+	(1.5).ceil().assertEquals(2)
+	(-1.5).ceil().assertEquals(-1)
+	(-0.5).ceil().assertEquals(0)
+	(2.).ceil().assertEquals(2)
+	(1.9).trunc().assertEquals(1)
+	(-1.9).trunc().assertEquals(-1)
+	(2.5).round().assertEquals(3)
+	(-2.5).round().assertEquals(-3)
+	(2.4).round().assertEquals(2)
+	(-2.4).round().assertEquals(-2)
+	(0.).round().assertEquals(0)
+
+@Test
+function testInverseLerp()
+	(5.).inverseLerp(0, 10).assertEquals(0.5)
+	(-5.).inverseLerp(0, 10).assertEquals(0)
+	(15.).inverseLerp(0, 10).assertEquals(1)
+	(5.).inverseLerp(3, 3).assertEquals(0)
+	(5.).inverseLerp(10, 0).assertEquals(0.5)
+
+@Test
+function testAtan2ReceiverIsX()
+	// x.atan2(y) is the angle of the point (x, y)
+	(1.).atan2(0).assertEquals(0, 0.001)
+	(0.).atan2(1).assertEquals(bj_PI / 2, 0.001)
+	(-1.).atan2(0).assertEquals(bj_PI, 0.001)
+
+@Test
+function testIntPow()
+	let two = 2
+	let negThree = -3
+	let five = 5
+	let zero = 0
+	two.pow(10).assertEquals(1024)
+	negThree.pow(3).assertEquals(-27)
+	five.pow(0).assertEquals(1)
+	five.pow(-2).assertEquals(1)
+	zero.pow(0).assertEquals(1)
+
+@Test
+function testWrapIndex()
+	(-1).wrapIndex(5).assertEquals(4)
+	5 .wrapIndex(5).assertEquals(0)
+	7 .wrapIndex(5).assertEquals(2)
+	(-5).wrapIndex(5).assertEquals(0)
+	3 .wrapIndex(0).assertEquals(0)
+	3 .wrapIndex(-2).assertEquals(0)
+
+@Test
+function testOrdinals()
+	1 .toStringOrdinal().assertEquals("1st")
+	2 .toStringOrdinal().assertEquals("2nd")
+	3 .toStringOrdinal().assertEquals("3rd")
+	4 .toStringOrdinal().assertEquals("4th")
+	11 .toStringOrdinal().assertEquals("11th")
+	12 .toStringOrdinal().assertEquals("12th")
+	13 .toStringOrdinal().assertEquals("13th")
+	21 .toStringOrdinal().assertEquals("21st")
+	101 .toStringOrdinal().assertEquals("101st")
+	111 .toStringOrdinal().assertEquals("111th")
+	112 .toStringOrdinal().assertEquals("112th")
+	(-1).toStringOrdinal().assertEquals("-1st")
+
+@Test
+function testOddNegative()
+	(-3).isOdd().assertEquals(true)
+	(-4).isOdd().assertEquals(false)
+	(-4).isEven().assertEquals(true)

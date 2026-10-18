@@ -1,7 +1,7 @@
 package HashList
 import NoWurst
-import MagicFunctions
 import Hashtable
+import ErrorHandling
 
 /**
  * HashLists are used if you require quick contains operations
@@ -46,8 +46,12 @@ public class HashList<T>
 	/** Set an element at the given index.
 		If the index is higher than the list's size,
 		the list will be resized with null elements added between
-		the index and the previous size. */
+		the index and the previous size.
+		Errors if the index is negative. */
 	function set(int index, T elem)
+		if index < 0
+			error("HashList: Index out of bounds: " + index)
+			return
 		if index < size
 			decrOccurences(get(index))
 		else
@@ -56,10 +60,12 @@ public class HashList<T>
 		ht.saveInt(this castTo int, index, elem castTo int)
 		incrOccurences(elem)
 
-	/** Add all elements from elems to this list */
+	/** Add all elements from elems to this list.
+		Adding a list to itself duplicates its current contents. */
 	function addAll(HashList<T> elems)
-		for T elem in elems
-			add(elem)
+		let count = elems.size
+		for i = 0 to count - 1
+			add(elems.get(i))
 
 	/** Remove all elements from this list without destroying it */
 	function clear()
@@ -67,8 +73,12 @@ public class HashList<T>
 		occurences.flushChild(this castTo int)
 		size = 0
 
-	/** Removes and returns the element at the given index */
+	/** Removes and returns the element at the given index.
+		Errors if the index is outside [0, size). */
 	function removeAt(int index) returns T
+		if index < 0 or index >= size
+			error("HashList: Index out of bounds: " + index)
+			return null
 		let tmp = ht.loadInt(this castTo int, index) castTo T
 		decrOccurences(tmp)
 		// shift the tail left; the last valid destination is size - 2, going
@@ -107,7 +117,7 @@ public class HashList<T>
 	function has(T elem) returns bool
 		return count(elem) > 0
 
-	/** Return whether the element exists in the list */
+	/** Return whether the given index is valid, i.e. inside [0, size) */
 	function hasAt(int index) returns bool
 		return index > -1 and index < size
 
@@ -174,6 +184,8 @@ public class HLIterator<Q>
 	protected int i = 0
 	protected HashList<Q> list
 	protected bool destroyOnClose = true
+	// whether next() has returned an element which has not been removed yet
+	protected bool canRemove = false
 
 	construct(HashList<Q> list)
 		this.list = list
@@ -185,16 +197,23 @@ public class HLIterator<Q>
 	function hasNext() returns boolean
 		return i < list.size()
 
+	/** Removes the element last returned by next().
+		Does nothing if next() has not been called yet or the element was already removed. */
 	function remove()
+		if not canRemove
+			return
+		canRemove = false
 		list.removeAt(i - 1)
 		i--
 
 	function next() returns Q
 		i++
+		canRemove = true
 		return list.get(i - 1)
 
 	function reset()
 		i = 0
+		canRemove = false
 
 	function close()
 		if destroyOnClose

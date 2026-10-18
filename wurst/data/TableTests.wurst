@@ -1,0 +1,76 @@
+package TableTests
+import Table
+
+@Test function testIntRoundTrip()
+	let t = new Table()
+	t.hasInt(3).assertFalse()
+	t.saveInt(3, 42)
+	t.hasInt(3).assertTrue()
+	t.loadInt(3).assertEquals(42)
+	t.removeInt(3)
+	t.hasInt(3).assertFalse()
+	t.loadInt(3).assertEquals(0)
+	destroy t
+
+@Test function testRealRoundTrip()
+	let t = new Table()
+	t.hasReal(1).assertFalse()
+	t.saveReal(1, 2.5)
+	t.hasReal(1).assertTrue()
+	t.loadReal(1).assertEquals(2.5)
+	t.removeReal(1)
+	t.hasReal(1).assertFalse()
+	destroy t
+
+@Test function testBooleanRoundTrip()
+	let t = new Table()
+	t.hasBoolean(7).assertFalse()
+	t.saveBoolean(7, true)
+	t.hasBoolean(7).assertTrue()
+	t.loadBoolean(7).assertTrue()
+	t.removeBoolean(7)
+	t.hasBoolean(7).assertFalse()
+	t.loadBoolean(7).assertFalse()
+	destroy t
+
+@Test function testStringRoundTrip()
+	let t = new Table()
+	t.hasString(5).assertFalse()
+	t.saveString(5, "hello")
+	t.hasString(5).assertTrue()
+	t.loadString(5).assertEquals("hello")
+	t.removeString(5)
+	t.hasString(5).assertFalse()
+	destroy t
+
+@Test function testKindsDoNotShareSlots()
+	let t = new Table()
+	t.saveInt(1, 9)
+	t.hasReal(1).assertFalse()
+	t.hasString(1).assertFalse()
+	t.hasBoolean(1).assertFalse()
+	t.saveString(1, "x")
+	t.loadInt(1).assertEquals(9)
+	destroy t
+
+@Test function testInstancesAreIsolated()
+	let a = new Table()
+	let b = new Table()
+	a.saveInt(1, 10)
+	b.saveInt(1, 20)
+	a.loadInt(1).assertEquals(10)
+	b.loadInt(1).assertEquals(20)
+	a.removeInt(1)
+	b.loadInt(1).assertEquals(20)
+	destroy a
+	b.loadInt(1).assertEquals(20)
+	destroy b
+
+@Test function testFlushClearsEverything()
+	let t = new Table()
+	t.saveInt(1, 1)
+	t.saveString(2, "s")
+	t.flush()
+	t.hasInt(1).assertFalse()
+	t.hasString(2).assertFalse()
+	destroy t

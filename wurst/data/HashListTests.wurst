@@ -259,3 +259,122 @@ function testIteratorRemove()
 	list.get(2).assertEquals(2)
 	list.get(3).assertEquals(34)
 
+
+@Test
+function testRemoveAtBookkeeping()
+	let list = new HashList<int>
+	list.add(10, 20, 30, 20, 40)
+
+	list.removeAt(0).assertEquals(10)
+	list.size().assertEquals(4)
+	list.has(10).assertFalse()
+	list.get(0).assertEquals(20)
+
+	list.removeAt(1).assertEquals(30)
+	list.size().assertEquals(3)
+	list.has(30).assertFalse()
+	list.count(20).assertEquals(2)
+
+	list.removeAt(list.size() - 1).assertEquals(40)
+	list.size().assertEquals(2)
+	list.has(40).assertFalse()
+
+	list.removeAt(0).assertEquals(20)
+	list.count(20).assertEquals(1)
+	list.has(20).assertTrue()
+	list.get(0).assertEquals(20)
+	destroy list
+
+@Test
+function testIteratorRemoveBeforeNextIsIgnored()
+	let list = new HashList<int>
+	list.add(1, 2, 3)
+	let itr = list.iterator()
+	itr.remove()
+	list.size().assertEquals(3)
+	list.count(1).assertEquals(1)
+	list.count(0).assertEquals(0)
+	itr.next().assertEquals(1)
+	itr.close()
+	list.get(0).assertEquals(1)
+	list.get(2).assertEquals(3)
+	destroy list
+
+@Test
+function testIteratorRemoveTwiceRemovesOnlyOne()
+	let list = new HashList<int>
+	list.add(1, 2, 3)
+	let itr = list.iterator()
+	itr.next().assertEquals(1)
+	itr.remove()
+	itr.remove()
+	itr.close()
+	list.size().assertEquals(2)
+	list.get(0).assertEquals(2)
+	list.get(1).assertEquals(3)
+	list.has(1).assertFalse()
+	list.has(2).assertTrue()
+	destroy list
+
+@Test
+function testIteratorRemoveWhileWalking()
+	let list = new HashList<int>
+	list.add(1, 2, 3, 4, 5, 6)
+	let itr = list.iterator()
+	while itr.hasNext()
+		if itr.next() mod 2 == 0
+			itr.remove()
+	itr.close()
+	list.size().assertEquals(3)
+	list.get(0).assertEquals(1)
+	list.get(1).assertEquals(3)
+	list.get(2).assertEquals(5)
+	list.has(4).assertFalse()
+	destroy list
+
+@Test
+function testClearResetsCounts()
+	let list = new HashList<int>
+	list.add(1, 1, 2)
+	list.clear()
+	list.size().assertEquals(0)
+	list.count(1).assertEquals(0)
+	list.has(2).assertFalse()
+	list.add(2)
+	list.count(2).assertEquals(1)
+	destroy list
+
+@Test
+function testSetOverwriteAdjustsCounts()
+	let list = new HashList<int>
+	list.add(5, 5, 7)
+	list.set(0, 7)
+	list.count(5).assertEquals(1)
+	list.count(7).assertEquals(2)
+	list.set(1, 9)
+	list.has(5).assertFalse()
+	list.count(9).assertEquals(1)
+	list.size().assertEquals(3)
+	destroy list
+
+@Test
+function testRemoveAbsentReturnsFalse()
+	let list = new HashList<int>
+	list.add(1, 2)
+	list.remove(3).assertFalse()
+	list.size().assertEquals(2)
+	list.remove(2).assertTrue()
+	list.size().assertEquals(1)
+	list.has(2).assertFalse()
+	destroy list
+
+@Test
+function testAddAllSelf()
+	let list = new HashList<int>
+	list.add(1, 2, 3)
+	list.addAll(list)
+	list.size().assertEquals(6)
+	list.get(3).assertEquals(1)
+	list.get(5).assertEquals(3)
+	list.count(2).assertEquals(2)
+	destroy list

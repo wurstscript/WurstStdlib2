@@ -280,12 +280,17 @@ function parserRejectsTruncationAndDuplicateFieldIds()
 	let truncatedReader = new FieldSerializationReader(truncated)
 	truncatedReader.isValid().assertFalse()
 
+	// The writer refuses duplicate ids, so build the duplicate envelope by hand:
+	// header + the field body repeated twice. The hash is not valid, but the
+	// reader rejects the repeated id before it gets that far.
 	let writer = new FieldSerializationWriter(1)
 	let first = 1
-	let second = 2
 	writer.write("same", first)
-	writer.write("same", second)
-	let duplicate = writer.finish()
+	let singleData = writer.finish()
+	let single = singleData.getUnsafeString()
+	destroy singleData
+	let body = single.substring(4, single.length() - 7)
+	let duplicate = new ChunkedString()..append(single.substring(0, 4) + body + body + "0000000")
 	let duplicateReader = new FieldSerializationReader(duplicate)
 	duplicateReader.isValid().assertFalse()
 
@@ -448,3 +453,95 @@ function legacySerializableStillRoundTripsItsOriginalFormat()
 	destroy loaded
 	destroy data
 	destroy original
+
+@Test
+function distinctFieldsRoundTripAndOrderDoesNotMatter()
+	let writer = new FieldSerializationWriter(3)
+	let a = 11
+	let b = 22
+	writer.write("alpha", a)
+	writer.write("beta", b)
+	let c = 33
+	writer.write("Alpha", c)
+	let data = writer.finish()
+	let reader = new FieldSerializationReader(data)
+	reader.isValid().assertTrue()
+	reader.getSchemaVersion().assertEquals(3)
+	let none = 0
+	reader.read("alpha", none).assertEquals(11)
+	reader.read("beta", none).assertEquals(22)
+	reader.read("Alpha", none).assertEquals(33)
+	destroy reader
+	destroy data
+	destroy writer
+
+@Test
+function builtInTupleCodecsRoundTrip()
+	let writer = new FieldSerializationWriter(1)
+	writer.write("v2", vec2(1.5, -2.25))
+	writer.write("v3", vec3(-1., 0., 4096.5))
+	writer.write("ang", angle(0.5))
+	writer.write("col", color(255, 0, 17))
+	writer.write("colA", colorA(1, 2, 3, 4))
+	writer.write("hsv", colorHSV(0.25, 0.5, 0.75))
+	let data = writer.finish()
+	let reader = new FieldSerializationReader(data)
+	reader.isValid().assertTrue()
+
+	let v2 = reader.read("v2", vec2(0., 0.))
+	v2.x.assertEquals(1.5)
+	v2.y.assertEquals(-2.25)
+	let v3 = reader.read("v3", vec3(9., 9., 9.))
+	v3.x.assertEquals(-1.)
+	v3.y.assertEquals(0.)
+	v3.z.assertEquals(4096.5)
+	reader.read("ang", angle(0.)).radians.assertEquals(0.5)
+	let c = reader.read("col", color(0, 0, 0))
+	c.red.assertEquals(255)
+	c.green.assertEquals(0)
+	c.blue.assertEquals(17)
+	let ca = reader.read("colA", colorA(0, 0, 0, 0))
+	ca.red.assertEquals(1)
+	ca.green.assertEquals(2)
+	ca.blue.assertEquals(3)
+	ca.alpha.assertEquals(4)
+	let hsv = reader.read("hsv", colorHSV(0., 0., 0.))
+	hsv.h.assertEquals(0.25)
+	hsv.s.assertEquals(0.5)
+	hsv.v.assertEquals(0.75)
+
+	destroy reader
+	destroy data
+	destroy writer
+
+@Test
+function booleanStringAndRealCodecsRoundTrip()
+	let long128 = repeated("a", 128)
+	let long129 = repeated("b", 129)
+	let writer = new FieldSerializationWriter(1)
+	writer.write("yes", true)
+	writer.write("no", false)
+	writer.write("empty", "")
+	writer.write("s128", long128)
+	writer.write("s129", long129)
+	writer.write("neg", -2.5)
+	writer.write("big", 65536.25)
+	writer.write("small", 0.015625)
+	writer.write("zero", 0.)
+	let data = writer.finish()
+	let reader = new FieldSerializationReader(data)
+	reader.isValid().assertTrue()
+
+	reader.read("yes", false).assertTrue()
+	reader.read("no", true).assertFalse()
+	reader.read("empty", "default").assertEquals("")
+	reader.read("s128", "").assertEquals(long128)
+	reader.read("s129", "").assertEquals(long129)
+	reader.read("neg", 0.).assertEquals(-2.5)
+	reader.read("big", 0.).assertEquals(65536.25)
+	reader.read("small", 1.).assertEquals(0.015625)
+	reader.read("zero", 1.).assertEquals(0.)
+
+	destroy reader
+	destroy data
+	destroy writer

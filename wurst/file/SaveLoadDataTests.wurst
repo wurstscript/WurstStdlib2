@@ -1,0 +1,16 @@
+package SaveLoadDataTests
+import SaveLoadData
+
+@Test
+function loadStatusToStringTest()
+	LoadStatus.SUCCESS.toString().assertEquals("Success")
+	LoadStatus.FAIL_PLAYER_OFFLINE.toString().assertEquals("Failed! Player is offline.")
+	LoadStatus.FAIL_FILE_EMPTY.toString().assertEquals("Failed! The file is empty.")
+	LoadStatus.FAIL_CANT_READ.toString().assertEquals("Failed! The player can't read files.")
+
+@Test
+function loadStatusIsFailTest()
+	LoadStatus.SUCCESS.isFail().assertFalse()
+	LoadStatus.FAIL_PLAYER_OFFLINE.isFail().assertTrue()
+	LoadStatus.FAIL_FILE_EMPTY.isFail().assertTrue()
+	LoadStatus.FAIL_CANT_READ.isFail().assertTrue()

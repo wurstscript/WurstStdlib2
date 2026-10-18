@@ -110,3 +110,72 @@ function byteBufferEndiannessTest()
 	byteBuffer.readByte().assertEquals(0x01)
 	destroy byteBuffer
 
+
+/** truncate lowered bufferLength without clearing the dropped bytes, and
+	writeByteUnsafe adds into the buffer, so the next write was corrupted. */
+@Test
+function byteBufferTruncateThenWriteTest()
+	let byteBuffer = new ByteBuffer()
+	byteBuffer.writeByte(1)
+	byteBuffer.writeByte(2)
+	byteBuffer.writeByte(3)
+	byteBuffer.truncate(1)
+	byteBuffer.size().assertEquals(1)
+	byteBuffer.writeByte(9)
+	byteBuffer.size().assertEquals(2)
+	byteBuffer.getByte(0).assertEquals(1)
+	byteBuffer.getByte(1).assertEquals(9)
+	destroy byteBuffer
+
+@Test
+function byteBufferTruncateAcrossIntBoundaryTest()
+	let byteBuffer = new ByteBuffer()
+	byteBuffer.writeInt(0x04030201)
+	byteBuffer.truncate(2)
+	byteBuffer.size().assertEquals(2)
+	byteBuffer.writeShort(0xBEEF)
+	byteBuffer.size().assertEquals(4)
+	byteBuffer.getInt(0).assertEquals(0xBEEF0201)
+	destroy byteBuffer
+
+@Test
+function byteBufferTruncateToIntBoundaryTest()
+	let byteBuffer = new ByteBuffer()
+	byteBuffer.writeInt(0x04030201)
+	byteBuffer.writeInt(0x08070605)
+	byteBuffer.writeByte(0x09)
+	byteBuffer.truncate(4)
+	byteBuffer.size().assertEquals(4)
+	byteBuffer.writeByte(0x11)
+	byteBuffer.size().assertEquals(5)
+	byteBuffer.getInt(0).assertEquals(0x04030201)
+	byteBuffer.getByte(4).assertEquals(0x11)
+	byteBuffer.truncate(0)
+	byteBuffer.size().assertEquals(0)
+	byteBuffer.writeByte(7)
+	byteBuffer.getByte(0).assertEquals(7)
+	byteBuffer.size().assertEquals(1)
+	destroy byteBuffer
+
+@Test
+function byteBufferTruncateBeyondSizeIsNoopTest()
+	let byteBuffer = new ByteBuffer()
+	byteBuffer.writeByte(5)
+	byteBuffer.truncate(100)
+	byteBuffer.size().assertEquals(1)
+	byteBuffer.getByte(0).assertEquals(5)
+	destroy byteBuffer
+
+@Test
+function byteBufferIntExtremesRoundTripTest()
+	let byteBuffer = new ByteBuffer()
+	byteBuffer.writeInt(INT_MIN)
+	byteBuffer.writeInt(INT_MAX)
+	byteBuffer.writeInt(-1)
+	byteBuffer.writeInt(0)
+	byteBuffer.readInt().assertEquals(INT_MIN)
+	byteBuffer.readInt().assertEquals(INT_MAX)
+	byteBuffer.readInt().assertEquals(-1)
+	byteBuffer.readInt().assertEquals(0)
+	byteBuffer.hasByte().assertFalse()
+	destroy byteBuffer

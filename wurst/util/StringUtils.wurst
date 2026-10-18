@@ -93,10 +93,14 @@ public function charFromIndex(int index) returns char
 	return char(index)
 
 /** Splits the string by another string
-	"this..is..an..example" split by the string ".." splits into a list containing four strings ["this", "is", "an", "example"] */
+	"this..is..an..example" split by the string ".." splits into a list containing four strings ["this", "is", "an", "example"]
+	An empty delimiter returns the original string as one field. */
 public function string.split(string splitBy) returns LinkedList<string>
 	let list = new LinkedList<string>
 	let offset = splitBy.length()
+	if offset == 0
+		list.add(this)
+		return list
 	var str = this
 	while true
 		let splitIndex = str.indexOf(splitBy)
@@ -156,20 +160,19 @@ public interface ForStringSplitCallback
 	"H001,H002".forEachIn(",") ->
 		doSomething()  */
 public function string.forEachIn(string delim, ForStringSplitCallback cb)
-	if this.length() > 0
-		int i = 0
-		int pos = this.indexOf(delim, i)
-
-		if pos == -1
-			cb.callback(this.substring(i, this.length()))
-
+	let len = this.length()
+	if len > 0
+		let offset = delim.length()
+		if offset == 0
+			cb.callback(this)
+			return
+		var start = 0
+		var pos = this.indexOf(delim, start)
 		while pos != -1
-			cb.callback(this.substring(i, pos))
-			pos += 1
-			i = pos
-			pos = this.indexOf(delim, pos)
-			if pos == -1
-				cb.callback(this.substring(i, this.length()))
+			cb.callback(start == pos ? "" : this.substring(start, pos))
+			start = pos + offset
+			pos = this.indexOf(delim, start)
+		cb.callback(start == len ? "" : this.substring(start, len))
 
 /** Checks whether a string is a decimal number: an optional leading "-",
 	at least one digit, and at most one decimal point.
@@ -199,13 +202,17 @@ public function string.isValidDescription() returns bool
 		error("String <"+this+"> is too long. Length: "+this.length())
 	return isValid
 
-/** Replaces all occurences of any character from given charlist by a given replacement string.*/
+/** Replaces all occurences of any character from given charlist by a given replacement string.
+	Single pass: replacement text is never scanned again, so "ab".replaceChars("ab", "ba") is "baba". */
 public function string.replaceChars(string charset, string replacementChar) returns string
-	var newString = this
-	for replaceChar in charset
-		// replace() is already a no-op when the needle is absent, so the extra
-		// contains() scan only doubled the work
-		newString = newString.replace(replaceChar, replacementChar)
+	var newString = ""
+	for c in this
+		var replaced = false
+		for replaceChar in charset
+			if c == replaceChar
+				replaced = true
+				break
+		newString += replaced ? replacementChar : c
 	return newString
 
 

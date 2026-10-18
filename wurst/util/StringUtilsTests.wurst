@@ -100,3 +100,55 @@ import ObjectIds
 	
 @Test function testReplaceChars()
 	"abca".replaceChars("ca", "d").assertEquals("dbdd")
+
+function collectForEachIn(string s, string delim) returns string
+	let fields = new LinkedList<string>()
+	s.forEachIn(delim) (string field) ->
+		fields.add(field)
+	var joined = ""
+	for field in fields
+		joined += "[" + field + "]"
+	destroy fields
+	return joined
+
+function joinedSplit(string s, string delim) returns string
+	let fields = s.split(delim)
+	var joined = ""
+	for field in fields
+		joined += "[" + field + "]"
+	destroy fields
+	return joined
+
+@Test function forEachInAdvancesByDelimiterLength()
+	collectForEachIn("a::b", "::").assertEquals("[a][b]")
+	collectForEachIn("a::b::c", "::").assertEquals(joinedSplit("a::b::c", "::"))
+	collectForEachIn("a,b,", ",").assertEquals(joinedSplit("a,b,", ","))
+	collectForEachIn("a,,b", ",").assertEquals("[a][][b]")
+	collectForEachIn("abc", ",").assertEquals("[abc]")
+	collectForEachIn("", ",").assertEquals("")
+
+@Test function forEachInEmptyDelimiterYieldsWholeString()
+	collectForEachIn("abc", "").assertEquals("[abc]")
+
+@Test function splitEmptyDelimiterReturnsWholeString()
+	let fields = "abc".split("")
+	fields.size().assertEquals(1)
+	fields.get(0).assertEquals("abc")
+	destroy fields
+
+@Test function splitEdgeCases()
+	joinedSplit("a,,b", ",").assertEquals("[a][][b]")
+	joinedSplit("a,", ",").assertEquals("[a][]")
+	joinedSplit("", ",").assertEquals("[]")
+	joinedSplit("a::b", "::").assertEquals("[a][b]")
+
+@Test function replaceCharsIsSinglePass()
+	"ab".replaceChars("ab", "ba").assertEquals("baba")
+	"a-b_c".replaceChars("-_", " ").assertEquals("a b c")
+	"abc".replaceChars("", "x").assertEquals("abc")
+	"abc".replaceChars("xyz", "q").assertEquals("abc")
+
+@Test function charRoundTrip()
+	for i = 32 to 126
+		char(i).toString().toChar().toInt().assertEquals(i)
+		i.toChar().toInt().assertEquals(i)

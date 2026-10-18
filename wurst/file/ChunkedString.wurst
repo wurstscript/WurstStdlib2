@@ -1,11 +1,12 @@
 package ChunkedString
 import Table
+import ErrorHandling
 
 /*	A chunked string splits up big strings into chunks,
 	which is used to circumvent the maximum string length limit
 	and to prepare data for chunked storage, e.g. for FileIO.
-	Make sure to flush the chunked string when done writing to it,
-	so the unfilled buffer gets written as well.
+	The unfilled buffer is kept as the last chunk, so nothing needs flushing:
+	getChunkCount() counts it and getChunk() returns it.
 	Chunks are measured in bytes, and with ENABLE_MULTIBYTE_SUPPORT they are cut
 	at character boundaries so every chunk on its own stays valid text.
 
@@ -13,7 +14,6 @@ import Table
 	>	let cstring = new ChunkedString()
 	>	cstring.append("someString")
 	>	cstring.append("someOtherString")
-	>	cstring.flush()
 
 	Read Data Sequentially:
 	>	while cstring.hasChunk()
@@ -38,8 +38,12 @@ public class ChunkedString
 
 	construct()
 
+	/** Creates a chunked string with the given chunk size in bytes, which must be at least 1. */
 	construct(int chunkSize)
-		this.chunkSize = chunkSize
+		if chunkSize < 1
+			error("ChunkedString: chunk size must be at least 1, got " + chunkSize)
+		// a non-positive size would make append() loop forever
+		this.chunkSize = max(chunkSize, 1)
 
 	function append(string pdata)
 		var data = pdata

@@ -159,7 +159,9 @@ public class Base64Encoder
         writeShortUnsafe(n.bitAnd(compiletime("11111111 11111111".fromBitString())))
         writeShortUnsafe(n.shiftr(16))
 
-    /** Writes all bytes from the buffer to be serialized into Base64. */
+    /** Writes the bytes of the buffer to be serialized into Base64, starting at the buffer's current
+        read cursor (bytes already read are skipped). The buffer's read cursor is reset afterwards
+        and the buffer is not destroyed. */
     function write(ByteBuffer data)
         writeData(data)
         data.resetRead()
@@ -263,11 +265,13 @@ public class Base64Decoder
 
         return tmp
 
-/** Encodes the bytes in this buffer to a string according to the Base64 format. */
+/** Encodes the bytes in this buffer to a string according to the Base64 format.
+    The buffer is consumed (destroyed); do not use it afterwards. */
 public function ByteBuffer.encodeBase64() returns ChunkedString
     return new Base64Encoder()..consume(this).intoData()
 
-/** Decodes the bytes encoded into this string according to the Base64 format. */
+/** Decodes the bytes encoded into this string according to the Base64 format.
+    The chunked string is consumed (destroyed); do not use it afterwards. */
 public function ChunkedString.decodeBase64() returns ByteBuffer
     return new Base64Decoder()..consume(this).intoData()
 

@@ -33,7 +33,7 @@ public class LinkedList<T>
 		dummy.next = dummy
 		dummy.prev = dummy
 
-	/** Adds one or more elements to the end of the list (top of stack, beginning of queue) */
+	/** Adds one or more elements to the end of the list (top of stack, back of queue) */
 	function add(vararg T elems)
 		for elem in elems
 			let entry = new LLEntry<T>(elem, dummy.prev, dummy)
@@ -41,16 +41,22 @@ public class LinkedList<T>
 			dummy.prev = entry
 			size++
 
-	/** Adds all elements from elems to the end of this list */
+	/** Adds all elements from elems to the end of this list.
+		Adding a list to itself duplicates its current contents. */
 	function addAll(LinkedList<T> elems)
-		for elem in elems
-			add(elem)
+		var entry = elems.dummy.next
+		for i = 1 to elems.size
+			add(entry.elem)
+			entry = entry.next
 
 	/** Adds all elements from the other list to the end of this list and removes them from the provided list.
 
 		It does not add/remove elements internally, only the internal pointers of the list nodes are re-pointed.
-		The other list will be empty, but not destroyed. */
+		The other list will be empty, but not destroyed.
+		Splicing a list into itself, or splicing an empty list, does nothing. */
 	function splice(LinkedList<T> other)
+		if other == this or other.size == 0
+			return
 		dummy.prev.next = other.dummy.next
 		dummy.prev.next.prev = dummy.prev
 		dummy.prev = other.dummy.prev
@@ -85,15 +91,19 @@ public class LinkedList<T>
 	function push(T elem)
 		add(elem)
 
-	/** Returns the first element in the list, or null if it is empty */
+	/** Returns the first element in the list. If the list is empty this is the type's
+		null/zero value - check isEmpty() first when that is a valid element. */
 	function getFirst() returns T
 		return dummy.next.elem
 
-	/** Returns the last element in the list, or null if it is empty */
+	/** Returns the last element in the list. If the list is empty this is the type's
+		null/zero value - check isEmpty() first when that is a valid element. */
 	function getLast() returns T
 		return dummy.prev.elem
 
-	/** Returns and removes the first added Element (FIFO) */
+	/** Returns and removes the first added Element (FIFO).
+		If the list is empty nothing is removed and the type's null/zero value is returned -
+		check isEmpty() first when that is a valid element. */
 	function dequeue() returns T
 		let top = dummy.next
 		T result = null
@@ -102,7 +112,9 @@ public class LinkedList<T>
 			removeEntry(top)
 		return result
 
-	/** Returns and removes the last added Element (LIFO) */
+	/** Returns and removes the last added Element (LIFO).
+		If the list is empty nothing is removed and the type's null/zero value is returned -
+		check isEmpty() first when that is a valid element. */
 	function pop() returns T
 		let top = dummy.prev
 		T result = null
@@ -111,7 +123,8 @@ public class LinkedList<T>
 			removeEntry(top)
 		return result
 
-	/** Returns the lastly added Element */
+	/** Returns the lastly added Element without removing it.
+		If the list is empty this is the type's null/zero value - check isEmpty() first. */
 	function peek() returns T
 		return getLast()
 
@@ -124,7 +137,8 @@ public class LinkedList<T>
 			entry = entry.next
 		return false
 
-	/** Removes the element and it's entry at the given index */
+	/** Removes the element and its entry at the given index (O(n), the entry has to be walked to).
+		Errors if the index is outside [0, size). */
 	function removeAt(int index) returns T
 		let entry = getEntry(index)
 		entry.prev.next = entry.next
@@ -184,7 +198,7 @@ public class LinkedList<T>
 	function backiterator() returns LLBackIterator<T>
 		return new LLBackIterator(this)
 
-	/** adds an element to the beginning of the list */
+	/** Adds an element to the end of the list (back of the queue), same as add */
 	function enqueue(T elem)
 		add(elem)
 
@@ -218,7 +232,8 @@ public class LinkedList<T>
 
 		destroy predicate
 
-	/** Executes the closure for each element */
+	/** Executes the closure for each element.
+		The closure must not structurally modify this list (add or remove elements). */
 	function forEach(LLItrClosure<T> itr) returns LinkedList<T>
 		var r = dummy.next
 		while r != dummy
@@ -227,7 +242,8 @@ public class LinkedList<T>
 		destroy itr
 		return this
 
-	/** Updates all elements */
+	/** Updates all elements.
+		The updater must not structurally modify this list (add or remove elements). */
 	function updateAll(LinkedListUpdater<T> f)
 		var r = dummy.next
 		while r != dummy
@@ -235,27 +251,38 @@ public class LinkedList<T>
 			r = r.next
 		destroy f
 
-	/** Performs a Fisher-Yates shuffle on this list.
-		Permutes the elements in place - no nodes are destroyed or reallocated. */
+	/** Shuffles this list uniformly at random in O(n log n) time, for any size.
+		Nodes are relinked, never copied or destroyed, so no node is allocated or
+		destroyed: each round deals the nodes randomly into two halves, shuffles
+		the halves recursively and joins them again. */
 	function shuffle()
 		if size < 2
 			return
 
-		LLEntry<T> array entries
-		var count = 0
+		let left = new LinkedList<T>()
+		let right = new LinkedList<T>()
 		var entry = dummy.next
 		while entry != dummy
-			entries[count] = entry
-			count++
-			entry = entry.next
+			let nextEntry = entry.next
+			let target = GetRandomInt(0, 1) == 0 ? left : right
+			entry.prev = target.dummy.prev
+			entry.next = target.dummy
+			target.dummy.prev.next = entry
+			target.dummy.prev = entry
+			target.size++
+			entry = nextEntry
+		dummy.next = dummy
+		dummy.prev = dummy
+		size = 0
 
-		for i = count - 1 downto 1
-			let j = GetRandomInt(0, i)
-			let tmp = entries[i].elem
-			entries[i].elem = entries[j].elem
-			entries[j].elem = tmp
+		left.shuffle()
+		right.shuffle()
+		splice(left)
+		splice(right)
+		destroy left
+		destroy right
 
-	/** Returns a random element from this list, or null if it is empty */
+	/** Returns a random element from this list, or the type's null/zero value if it is empty */
 	function getRandomElement() returns T
 		if size == 0
 			return null
@@ -273,7 +300,8 @@ public class LinkedList<T>
 		entryAtIndex.prev = entry
 		size++
 
-	/** Sorts the list according the the comparator using merge sort */
+	/** Sorts the list according the the comparator using merge sort.
+		The sort is stable: elements the comparator considers equal keep their relative order. */
 	function sortWith(Comparator<T> comparator)
 		if comparator != null and size() > 1
 			dummy.next = sort(comparator, dummy.next)
@@ -283,7 +311,8 @@ public class LinkedList<T>
 				last = last.next
 			dummy.prev = last
 
-	/** Returns the list obtained by applying the given closure to each element of the original list */
+	/** Returns the list obtained by applying the given closure to each element of the original list.
+		The closure must not structurally modify this list (add or remove elements). */
 	function map<Q>(MapClosure<T, Q> itr) returns LinkedList<Q>
 		let output = new LinkedList<Q>()
 		forEach(t -> output.add(itr.run(t)))
@@ -304,7 +333,8 @@ public class LinkedList<T>
 		return result
 
 	/** 'Folds' this list into a single value of type Q
-		Example int-list sum: `list.foldl<int>(0, (i, q) -> q + i)` */
+		Example int-list sum: `list.foldl<int>(0, (i, q) -> q + i)`
+		The closure must not structurally modify this list (add or remove elements). */
 	function foldl<Q>(Q startValue, FoldClosure<T, Q> predicate) returns Q
 		var result = startValue
 		var r = dummy.next
@@ -314,7 +344,8 @@ public class LinkedList<T>
 		destroy predicate
 		return result
 
-	/** Returns the first element that satisfies the predicate, or null if none present */
+	/** Returns the first element that satisfies the predicate, or the type's null/zero value
+		if none does - use an explicit search if that value is a valid element. */
 	function find(LinkedListPredicate<T> predicate) returns T
 		T result = null
 		let iter = this.iterator()
@@ -346,7 +377,7 @@ public class LinkedList<T>
 			return a
 		LLEntry<T> head
 		LLEntry<T> tail
-		if comparator.compare(a.elem, b.elem) < 0
+		if comparator.compare(a.elem, b.elem) <= 0
 			head = a
 			tail = a
 			a = a.next
@@ -364,7 +395,7 @@ public class LinkedList<T>
 				tail.next = a
 				a.prev = tail
 				break
-			if comparator.compare(a.elem, b.elem) < 0
+			if comparator.compare(a.elem, b.elem) <= 0
 				tail.next = a
 				a.prev = tail
 				tail = a
@@ -463,6 +494,8 @@ public class LLIterator<T>
 	LLEntry<T>	current
 	LinkedList<T> parent
 	protected var destroyOnClose = true
+	// whether next() has returned an element which has not been removed yet
+	private var canRemove = false
 
 	construct(LinkedList<T> parent)
 		assertTrue(parent != null)
@@ -478,11 +511,13 @@ public class LLIterator<T>
 	function reset()
 		this.dummy   = parent.getDummy()
 		this.current = dummy
+		this.canRemove = false
 
 	/** Removes from the list the last element that was returned by next() (optional operation).
-	 	This call can only be made once per call to next */
+	 	This call can only be made once per call to next, further calls do nothing and return null. */
 	function remove() returns T
-		if current != dummy
+		if canRemove and current != dummy
+			canRemove = false
 			// Read both fields before removeEntry destroys the node.
 			let removed = current.elem
 			let previous = current.prev
@@ -501,6 +536,7 @@ public class LLIterator<T>
 
 	function next() returns T
 		current = current.next
+		canRemove = true
 		return current.elem
 
 	function lookahead() returns T

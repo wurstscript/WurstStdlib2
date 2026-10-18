@@ -396,3 +396,251 @@ function testGenerics()
 	while bi.hasNext() and i.hasNext()
 		bi.next().assertEquals(i.next())
 
+
+function forwardString(LinkedList<int> list) returns string
+	var s = ""
+	for i in list
+		s += i + ","
+	return s
+
+function backwardString(LinkedList<int> list) returns string
+	var s = ""
+	let itr = list.backiterator()
+	for i from itr
+		s += i + ","
+	itr.close()
+	return s
+
+@Test
+function testSpliceSelfIsNoOp()
+	let list = new LinkedList<int>
+	list.add(1, 2, 3)
+	list.splice(list)
+	list.size().assertEquals(3)
+	forwardString(list).assertEquals("1,2,3,")
+	backwardString(list).assertEquals("3,2,1,")
+	destroy list
+
+@Test
+function testSpliceEmptyIsNoOp()
+	let list = new LinkedList<int>
+	let empty = new LinkedList<int>
+	list.add(1, 2)
+	list.splice(empty)
+	list.size().assertEquals(2)
+	forwardString(list).assertEquals("1,2,")
+	backwardString(list).assertEquals("2,1,")
+	empty.splice(list)
+	empty.size().assertEquals(2)
+	list.size().assertEquals(0)
+	forwardString(empty).assertEquals("1,2,")
+	destroy list
+	destroy empty
+
+@Test
+function testSpliceMovesElements()
+	let a = new LinkedList<int>
+	let b = new LinkedList<int>
+	a.add(1, 2)
+	b.add(3, 4)
+	a.splice(b)
+	a.size().assertEquals(4)
+	b.size().assertEquals(0)
+	forwardString(a).assertEquals("1,2,3,4,")
+	backwardString(a).assertEquals("4,3,2,1,")
+	b.add(9)
+	forwardString(b).assertEquals("9,")
+	destroy a
+	destroy b
+
+@Test
+function testIteratorRemoveTwiceRemovesOnlyOne()
+	let list = new LinkedList<int>
+	list.add(1, 2, 3)
+	let itr = list.iterator()
+	itr.next().assertEquals(1)
+	itr.next().assertEquals(2)
+	itr.remove().assertEquals(2)
+	itr.remove()
+	itr.close()
+	list.size().assertEquals(2)
+	forwardString(list).assertEquals("1,3,")
+	backwardString(list).assertEquals("3,1,")
+	destroy list
+
+@Test
+function testIteratorRemoveBeforeNextIsIgnored()
+	let list = new LinkedList<int>
+	list.add(1, 2)
+	let itr = list.iterator()
+	itr.remove()
+	itr.close()
+	list.size().assertEquals(2)
+	destroy list
+
+@Test
+function testIteratorRemoveWhileWalking()
+	let list = new LinkedList<int>
+	list.add(1, 2, 3, 4, 5, 6)
+	let itr = list.iterator()
+	while itr.hasNext()
+		if itr.next() mod 2 == 0
+			itr.remove()
+	itr.close()
+	forwardString(list).assertEquals("1,3,5,")
+	backwardString(list).assertEquals("5,3,1,")
+	list.size().assertEquals(3)
+	destroy list
+
+@Test
+function testShuffleLargeListKeepsSizeAndSum()
+	let list = new LinkedList<int>
+	var expected = 0
+	for i = 1 to 10000
+		list.add(i)
+		expected += i
+	list.shuffle()
+	list.size().assertEquals(10000)
+	var sum = 0
+	var count = 0
+	for i in list
+		sum += i
+		count++
+	sum.assertEquals(expected)
+	count.assertEquals(10000)
+	var backCount = 0
+	let itr = list.backiterator()
+	for _i from itr
+		backCount++
+	itr.close()
+	backCount.assertEquals(10000)
+	// vanishingly unlikely to remain sorted
+	var inOrder = true
+	var prev = 0
+	for i in list
+		if i < prev
+			inOrder = false
+		prev = i
+	inOrder.assertFalse()
+	list.clear()
+	destroy list
+
+@Test
+function testShuffleTinyLists()
+	let list = new LinkedList<int>
+	list.shuffle()
+	list.size().assertEquals(0)
+	list.add(5)
+	list.shuffle()
+	forwardString(list).assertEquals("5,")
+	list.add(6)
+	list.shuffle()
+	list.size().assertEquals(2)
+	(list.has(5) and list.has(6)).assertTrue()
+	destroy list
+
+class SortRec
+	int key
+	int id
+	construct(int key, int id)
+		this.key = key
+		this.id = id
+
+@Test
+function testSortWithIsStable()
+	let list = new LinkedList<SortRec>
+	for i = 0 to 19
+		list.add(new SortRec(i mod 3, i))
+	list.sortWith((a, b) -> a.key - b.key)
+	list.size().assertEquals(20)
+	var prev = list.getFirst()
+	var first = true
+	for rec in list
+		if first
+			first = false
+		else
+			(rec.key >= prev.key).assertTrue()
+			if rec.key == prev.key
+				(rec.id > prev.id).assertTrue()
+		prev = rec
+	while list.size() > 0
+		destroy list.dequeue()
+	destroy list
+
+@Test
+function testRemoveAtFirstMiddleLast()
+	let list = new LinkedList<int>
+	list.add(1, 2, 3, 4, 5)
+	list.removeAt(0).assertEquals(1)
+	forwardString(list).assertEquals("2,3,4,5,")
+	backwardString(list).assertEquals("5,4,3,2,")
+	list.removeAt(1).assertEquals(3)
+	forwardString(list).assertEquals("2,4,5,")
+	backwardString(list).assertEquals("5,4,2,")
+	list.removeAt(2).assertEquals(5)
+	forwardString(list).assertEquals("2,4,")
+	backwardString(list).assertEquals("4,2,")
+	list.size().assertEquals(2)
+	list.removeAt(0).assertEquals(2)
+	list.removeAt(0).assertEquals(4)
+	list.isEmpty().assertTrue()
+	destroy list
+
+@Test
+function testRemoveElementReturnValue()
+	let list = new LinkedList<int>
+	list.add(1, 2, 2, 3)
+	list.remove(2).assertTrue()
+	forwardString(list).assertEquals("1,2,3,")
+	list.remove(7).assertFalse()
+	list.size().assertEquals(3)
+	destroy list
+
+@Test
+function testIndexOfSetReplaceFind()
+	let list = new LinkedList<int>
+	list.add(10, 20, 30)
+	list.indexOf(20).assertEquals(1)
+	list.indexOf(99).assertEquals(-1)
+	list.set(1, 25)
+	list.get(1).assertEquals(25)
+	list.replace(30, 35).assertTrue()
+	list.replace(99, 1).assertFalse()
+	list.get(2).assertEquals(35)
+	list.find(i -> i > 20).assertEquals(25)
+	list.find(i -> i > 100).assertEquals(0)
+	destroy list
+
+@Test
+function testCopyIsIndependent()
+	let list = new LinkedList<int>
+	list.add(1, 2, 3)
+	let c = list.copy()
+	c.add(4)
+	list.set(0, 9)
+	forwardString(list).assertEquals("9,2,3,")
+	forwardString(c).assertEquals("1,2,3,4,")
+	destroy list
+	destroy c
+
+@Test
+function testClearThenReuse()
+	let list = new LinkedList<int>
+	list.add(1, 2, 3)
+	list.clear()
+	list.size().assertEquals(0)
+	list.isEmpty().assertTrue()
+	list.add(7, 8)
+	forwardString(list).assertEquals("7,8,")
+	backwardString(list).assertEquals("8,7,")
+	destroy list
+@Test
+function testAddAllSelf()
+	let list = new LinkedList<int>
+	list.add(1, 2, 3)
+	list.addAll(list)
+	list.size().assertEquals(6)
+	forwardString(list).assertEquals("1,2,3,1,2,3,")
+	backwardString(list).assertEquals("3,2,1,3,2,1,")
+	destroy list
+
