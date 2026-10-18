@@ -121,17 +121,27 @@ public class ByteBuffer
 			return selectByte(buffer, i - intCount * 4)
 		return selectByte(storage.loadInt(intI), i - intI * 4)
 
-	/** Assures that the number of bytes is not bigger than the provided one. 
-		If it is, throws bytes from the end of the buffer away 
-		so that the number of bytes in the buffer will be exactly the provided one. 
+	/** Assures that the number of bytes is not bigger than the provided one.
+		If it is, throws bytes from the end of the buffer away
+		so that the number of bytes in the buffer will be exactly the provided one.
+		Negative sizes are treated as 0.
 	
 		Should not be used when reading from the buffer. */
 	function truncate(int size)
-		let ints = size div 4
-		let newIntCount = min(intCount, ints)
+		let newSize = max(size, 0)
+		if newSize >= intCount * 4 + bufferLength
+			return
+		let newIntCount = newSize div 4
+		let keptBytes = newSize - newIntCount * 4
 		if newIntCount < intCount
+			// the new partial int is the stored one that is cut into
 			buffer = storage.loadInt(newIntCount)
-			bufferLength = 4
-		intCount = newIntCount
-		bufferLength = min(size - newIntCount * 4, bufferLength)
+			for i = newIntCount to intCount - 1
+				storage.removeInt(i)
+			intCount = newIntCount
+		// keep only the surviving low bytes: writes add into the buffer
+		let one = 1
+		let keepMask = one.shiftl(8 * keptBytes) - 1
+		buffer = buffer.bitAnd(keepMask)
+		bufferLength = keptBytes
 

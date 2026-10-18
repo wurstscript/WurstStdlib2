@@ -41,3 +41,50 @@ function chunkedStringIteration()
 
 	result.assertEquals("abcdef")
 
+
+
+/** A chunk size below 1 used to make append loop forever; the constructor now
+	rejects it, so the smallest valid size is pinned instead. */
+@Test
+function chunkedStringMinimumChunkSizeTest()
+	let cstring = new ChunkedString(1)
+	cstring.append("abc")
+	cstring.chunkCount.assertEquals(3)
+	cstring.getUnsafeString().assertEquals("abc")
+	cstring.getChunkSize().assertEquals(1)
+	destroy cstring
+
+@Test
+function chunkedStringExactMultipleTest()
+	let cstring = new ChunkedString(5)
+	cstring.append("abcde")
+	cstring.chunkCount.assertEquals(1)
+	cstring.buffer.assertEquals("")
+	cstring.append("fghij")
+	cstring.chunkCount.assertEquals(2)
+	cstring.getChunkCount().assertEquals(3)
+	cstring.length().assertEquals(10)
+	cstring.getUnsafeString().assertEquals("abcdefghij")
+	destroy cstring
+
+@Test
+function chunkedStringEmptyAppendTest()
+	let cstring = new ChunkedString(5)
+	cstring.append("")
+	cstring.chunkCount.assertEquals(0)
+	cstring.length().assertEquals(0)
+	cstring.append("ab")
+	cstring.append("")
+	cstring.getUnsafeString().assertEquals("ab")
+	destroy cstring
+
+@Test
+function chunkedStringSubstringAcrossBoundariesTest()
+	let cstring = new ChunkedString(4)
+	cstring.append("0123456789ABCDEF")
+	cstring.getUnsafeSubString(3, 5).assertEquals("34")
+	cstring.getUnsafeSubString(2, 10).assertEquals("23456789")
+	cstring.getUnsafeSubString(4, 8).assertEquals("4567")
+	cstring.getUnsafeSubString(0, 16).assertEquals("0123456789ABCDEF")
+	cstring.getUnsafeSubString(13, 16).assertEquals("DEF")
+	destroy cstring

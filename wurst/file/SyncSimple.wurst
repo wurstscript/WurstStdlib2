@@ -72,14 +72,18 @@ public function player.sync<T>(T data, AnySyncListener<T> listener)
 		listener.onDataSynced(syncedData.toInt() castTo T)
 		destroy listener
 
-/** Syncs a single string from the given player. */
+/** Syncs a single string from the given player.
+	A null string is synced as the empty string.
+	Like chunked syncs, nothing is sent in replays unless SYNC_IN_REPLAYS is set. */
 public function string.sync(player p, StringSyncListener listener)
-	syncQueue.enqueue(new SyncData(p, listener, this))
+	syncQueue.enqueue(new SyncData(p, listener, this != null ? this : ""))
 
-	if syncQueue.size() == 1
+	if syncQueue.size() == 1 and shouldSync()
 		checkQueue()
 
-/** Syncs a chunked string from the given player. */
+/** Syncs a chunked string from the given player.
+	The chunked string is consumed: it is read while syncing and destroyed
+	afterwards, so do not use it again after calling this. */
 public function ChunkedString.sync(player p, BufferSyncListener listener)
 	syncQueue.enqueue(new SyncData(p, listener, this))
 
@@ -132,6 +136,27 @@ function checkQueue()
 function shouldSync() returns boolean
 	return SYNC_IN_REPLAYS or gameStatus != REPLAY
 
+/** Applies one sync event to the head of the queue. */
+function handleSyncEvent(SyncData syncData, string eventData, string eventPrefix)
+	if syncData.data != null
+		syncData.slistener.onDataSynced(eventData)
+		syncQueue.dequeue()
+		destroy syncData
+	else
+		// Defensive: syncBuffer can be null on the buffered path in rare
+		// cases (observed under Campaign Edition / replay). Recreate it so a
+		// late/duplicate sync event cannot null-crash the whole sync queue.
+		if syncData.syncBuffer == null
+			syncData.syncBuffer = new ChunkedString()
+		syncData.syncBuffer.append(eventData)
+		if eventPrefix == LAST_CHUNK_PREFIX
+			syncData.blistener.onDataSynced(syncData.syncBuffer)
+			syncQueue.dequeue()
+			destroy syncData
+
+	if shouldSync()
+		checkQueue()
+
 init
 	let trig = CreateTrigger()
 	for i = 0 to bj_MAX_PLAYER_SLOTS - 1
@@ -139,24 +164,10 @@ init
 		BlzTriggerRegisterPlayerSyncEvent(trig, players[i], LAST_CHUNK_PREFIX, false)
 
 	trig.addAction() ->
-		let eventData = BlzGetTriggerSyncData()
-		let eventPrefix = BlzGetTriggerSyncPrefix()
-		let syncData = syncQueue.getFirst()
-		if syncData.data != null
-			syncData.slistener.onDataSynced(eventData)
-			syncQueue.dequeue()
-			destroy syncData
-		else
-			// Defensive: syncBuffer can be null on the buffered path in rare
-			// cases (observed under Campaign Edition / replay). Recreate it so a
-			// late/duplicate sync event cannot null-crash the whole sync queue.
-			if syncData.syncBuffer == null
-				syncData.syncBuffer = new ChunkedString()
-			syncData.syncBuffer.append(eventData)
-			if eventPrefix == LAST_CHUNK_PREFIX
-				syncData.blistener.onDataSynced(syncData.syncBuffer)
-				syncQueue.dequeue()
-				destroy syncData
-
-		if shouldSync()
-			checkQueue()
+		// Ignore events with nothing queued, and events not sent by the player
+		// the head of the queue is waiting for, so a foreign or forged sync
+		// cannot complete somebody else's sync
+		if not syncQueue.isEmpty()
+			let syncData = syncQueue.getFirst()
+			if GetTriggerPlayer() == syncData.syncer
+				handleSyncEvent(syncData, BlzGetTriggerSyncData(), BlzGetTriggerSyncPrefix())

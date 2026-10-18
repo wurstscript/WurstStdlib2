@@ -61,3 +61,71 @@ function priorityQueueHandlesEmptyAndGrowth()
         queue.poll().assertEquals(expected)
     queue.isEmpty().assertTrue()
     destroy queue
+
+@Test
+function priorityQueueInterleavedMatchesSortedReference()
+    let queue = new PriorityQueue<int>(intComparator)
+    // reference model: an unsorted list from which the minimum is removed on poll
+    let reference = new ArrayList<int>()
+    for i = 0 to 199
+        let value = (i * 37 + 11) mod 101
+        queue.add(value)
+        reference.add(value)
+        if i mod 3 == 2
+            var minIndex = 0
+            for j = 1 to reference.size() - 1
+                if reference.get(j) < reference.get(minIndex)
+                    minIndex = j
+            let minimum = reference.get(minIndex)
+            reference.removeAtUnordered(minIndex)
+            queue.poll().assertEquals(minimum)
+            queue.size().assertEquals(reference.size())
+
+    reference.sort()
+    for i = 0 to reference.size() - 1
+        queue.poll().assertEquals(reference.get(i))
+    queue.isEmpty().assertTrue()
+    destroy reference
+    destroy queue
+
+class PriorityQueueEntry
+    int priority
+    int id
+
+    construct(int priority, int id)
+        this.priority = priority
+        this.id = id
+
+@Test
+function priorityQueueEqualPrioritiesAreEachReturnedOnce()
+    let queue = new PriorityQueue<PriorityQueueEntry>((a, b) -> a.priority < b.priority ? -1 : (a.priority > b.priority ? 1 : 0))
+    let seen = new ArrayList<int>()
+    for id = 0 to 9
+        queue.add(new PriorityQueueEntry(id mod 2, id))
+
+    var lastPriority = -1
+    while not queue.isEmpty()
+        let entry = queue.poll()
+        (entry.priority >= lastPriority).assertTrue()
+        lastPriority = entry.priority
+        seen.has(entry.id).assertFalse()
+        seen.add(entry.id)
+        destroy entry
+
+    seen.size().assertEquals(10)
+    destroy seen
+    destroy queue
+
+@Test
+function priorityQueueHandlesIntExtremes()
+    let queue = new PriorityQueue<int>(intComparator)
+    queue.add(INT_MAX)
+    queue.add(0)
+    queue.add(INT_MIN)
+    queue.add(-1)
+    queue.poll().assertEquals(INT_MIN)
+    queue.poll().assertEquals(-1)
+    queue.poll().assertEquals(0)
+    queue.poll().assertEquals(INT_MAX)
+    queue.isEmpty().assertTrue()
+    destroy queue
