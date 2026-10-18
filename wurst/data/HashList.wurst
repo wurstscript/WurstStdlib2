@@ -51,6 +51,7 @@ public class HashList<T>
 	function set(int index, T elem)
 		if index < 0
 			error("HashList: Index out of bounds: " + index)
+			return
 		if index < size
 			decrOccurences(get(index))
 		else
@@ -77,6 +78,7 @@ public class HashList<T>
 	function removeAt(int index) returns T
 		if index < 0 or index >= size
 			error("HashList: Index out of bounds: " + index)
+			return null
 		let tmp = ht.loadInt(this castTo int, index) castTo T
 		decrOccurences(tmp)
 		// shift the tail left; the last valid destination is size - 2, going

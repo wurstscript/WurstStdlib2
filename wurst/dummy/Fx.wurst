@@ -78,6 +78,9 @@ public class Fx
 		fx = null
 		setFx(sfxPath)
 		dummy.setOwner(p, changeColor)
+		// The colour the owner gave is kept like an explicit one, so setXYAngleInstant can restore it
+		if changeColor
+			pcolor = GetPlayerColor(p)
 
 	/** Set the playercolor of this Fx Object */
 	function setPlayercolor(playercolor c)
