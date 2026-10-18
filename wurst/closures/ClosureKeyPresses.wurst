@@ -43,9 +43,14 @@ constant KEY_TRIGGER = CreateTrigger()..addAction(function onEvent)
 
 constant KEY_MAP = keyedMapCreate()
 
-// The listener each dispatch in progress steps to next, one slot per nesting level.
+// The listener each dispatch in progress steps to next, in a slot the dispatch owns until it ends. Slots are not
+// tied to a nesting depth: a listener may wait, and dispatches paused that way resume in any order.
 KeyPressListener array keyCursor
-var keyCursorDepth = 0
+bool array keyCursorUsed
+int array freeKeyCursors
+var freeKeyCursorCount = 0
+// How many slots were ever handed out; the ones not in use are on freeKeyCursors.
+var keyCursorSlots = 0
 
 // Tracks which (player, key, metaKey, onKeyDown) combos are already registered on KEY_TRIGGER, so a
 // second listener for the same combo does NOT register the event twice on one trigger (which fires the
@@ -118,18 +123,25 @@ function onEvent()
 
 /** Runs the listeners of the key which match, newest first. A listener may destroy itself or any other listener: the
     successor is published in keyCursor before each call, and the destructor advances it when it is the one
-    destroyed. There is one cursor per nesting level, as a listener may raise key events itself. */
+    destroyed. There is one cursor per dispatch, as a listener may raise key events itself or wait. */
 function dispatchKey(player triggerPlayer, int keyId, int metaKey, bool onKeyDown)
-    let depth = keyCursorDepth
-    keyCursorDepth++
+    var slot = keyCursorSlots
+    if freeKeyCursorCount > 0
+        freeKeyCursorCount--
+        slot = freeKeyCursors[freeKeyCursorCount]
+    else
+        keyCursorSlots++
+    keyCursorUsed[slot] = true
     var listener = keyedMapGet(KEY_MAP, keyId)
     while listener != null
-        keyCursor[depth] = listener.next
+        keyCursor[slot] = listener.next
         if listener.metaKey == metaKey and listener.onKeyDown == onKeyDown and (listener.whichPlayer == null or listener.whichPlayer == triggerPlayer)
             listener.onEvent()
-        listener = keyCursor[depth]
-    keyCursor[depth] = null
-    keyCursorDepth--
+        listener = keyCursor[slot]
+    keyCursor[slot] = null
+    keyCursorUsed[slot] = false
+    freeKeyCursors[freeKeyCursorCount] = slot
+    freeKeyCursorCount++
 
 
 /* KEY PRESSES LISTENER */
@@ -146,9 +158,9 @@ public abstract class KeyPressListener
     abstract function onEvent()
 
     ondestroy
-        for d = 0 to keyCursorDepth - 1
-            if keyCursor[d] == this
-                keyCursor[d] = next
+        for slot = 0 to keyCursorSlots - 1
+            if keyCursorUsed[slot] and keyCursor[slot] == this
+                keyCursor[slot] = next
         let id = key.getHandleId()
         let first = keyedMapGet(KEY_MAP, id)
         if first == this 

@@ -162,11 +162,16 @@ public abstract class EventListener
 	/** Whether a cast listener was ever added. Never reset, so it can not fall out of step with the chains. */
 	static var hasCastListeners = false
 	static OnCastListener array castMapCasters
-	/** The listener each walk in progress steps to next, one slot per nesting level; see dispatchTo. */
+	/** The listener each walk in progress steps to next, in a slot the walk owns until it ends; see dispatchTo.
+		Slots are not tied to a nesting depth: a listener may wait in an action trigger, and walks paused that way
+		resume in any order. dispatchNext holds the cursors of event walks, castNext those of cast walks. */
 	static EventListener array dispatchNext
-	static int dispatchDepth = 0
 	static OnCastListener array castNext
-	static int castDepth = 0
+	static bool array walkSlotUsed
+	static int array freeWalkSlots
+	static int freeWalkSlotCount = 0
+	/** How many slots were ever handed out; the ones not in use are on freeWalkSlots. */
+	static int walkSlots = 0
 	static EventListener array generalListenersFirsts
 	static EventListener array unitListenersFirsts
 	static var useMouseEvents = false
@@ -292,8 +297,7 @@ public abstract class EventListener
 		chain is walked: the successor is published in dispatchNext before each call and ondestroy advances it if
 		that successor is the one destroyed, so no later listener is skipped and no destroyed one is read. */
 	protected static function dispatchTo(unit trigUnit, int id)
-		let depth = dispatchDepth
-		dispatchDepth++
+		let depth = takeWalkSlot()
 		// Unit Listeners
 		if hasUnitListeners
 			if trigUnit != null
@@ -312,8 +316,7 @@ public abstract class EventListener
 			dispatchNext[depth] = globalListener.next
 			globalListener.onEvent()
 			globalListener = dispatchNext[depth]
-		dispatchNext[depth] = null
-		dispatchDepth--
+		releaseWalkSlot(depth)
 
 	static function onSpellEffect()
 		// Registered for every project which imports this package, used by few: most casts end here.
@@ -326,8 +329,7 @@ public abstract class EventListener
 		The chains are walked as described at dispatchTo, with castNext as the cursor. */
 	protected static function dispatchSpell(unit trigUnit, int abilId, unit caster)
 		let index = trigUnit.getIndex()
-		let depth = castDepth
-		castDepth++
+		let depth = takeWalkSlot()
 		var listener = castMapCasters[index]
 		while listener != null
 			castNext[depth] = listener.next
@@ -341,21 +343,38 @@ public abstract class EventListener
 			if listener.eventUnit == null or listener.eventUnit == trigUnit
 				listener.fire(caster)
 			listener = castNext[depth]
-		castNext[depth] = null
-		castDepth--
+		releaseWalkSlot(depth)
+
+	/** Hands a walk a cursor slot of its own, reusing a free one first. */
+	static function takeWalkSlot() returns int
+		var slot = walkSlots
+		if freeWalkSlotCount > 0
+			freeWalkSlotCount--
+			slot = freeWalkSlots[freeWalkSlotCount]
+		else
+			walkSlots++
+		walkSlotUsed[slot] = true
+		return slot
+
+	static function releaseWalkSlot(int slot)
+		dispatchNext[slot] = null
+		castNext[slot] = null
+		walkSlotUsed[slot] = false
+		freeWalkSlots[freeWalkSlotCount] = slot
+		freeWalkSlotCount++
 
 	/** Advances the cursor of every walk in progress which is about to step onto the destroyed listener.
-		The cursors of the walks are one per nesting level, as a listener may raise events itself. */
+		There is one cursor per walk, as a listener may raise events itself or wait while its walk is paused. */
 	static function repairDispatchCursors(EventListener removed)
-		for d = 0 to dispatchDepth - 1
-			if dispatchNext[d] == removed
-				dispatchNext[d] = removed.next
+		for slot = 0 to walkSlots - 1
+			if walkSlotUsed[slot] and dispatchNext[slot] == removed
+				dispatchNext[slot] = removed.next
 
 	/** The same for the walks over cast listeners. */
 	static function repairCastCursors(OnCastListener removed)
-		for d = 0 to castDepth - 1
-			if castNext[d] == removed
-				castNext[d] = removed.next
+		for slot = 0 to walkSlots - 1
+			if walkSlotUsed[slot] and castNext[slot] == removed
+				castNext[slot] = removed.next
 
 	ondestroy
 		repairDispatchCursors(this)

@@ -49,9 +49,16 @@ constant FRAME_EVENT_LISTENERS = InitHashtable()
 trigger array retiredTriggers
 var retiredTriggerCount = 0
 
-// The listener each dispatch in progress steps to next, one slot per nesting level.
+// The listener each dispatch in progress steps to next, in a slot the dispatch owns until it ends. Slots are not
+// tied to a nesting depth: a listener may wait, and dispatches paused that way resume in any order.
 FrameHandleListener array frameCursor
-var frameCursorDepth = 0
+bool array frameCursorUsed
+int array freeFrameCursors
+var freeFrameCursorCount = 0
+// How many slots were ever handed out; the ones not in use are on freeFrameCursors.
+var frameCursorSlots = 0
+// How many dispatches are in progress, paused ones included
+var frameDispatches = 0
 
 
 /* CLOSURES */
@@ -124,7 +131,7 @@ function addListenerForFrame(FrameHandleListener listener, framehandle frame, fr
     CONTROL_CLICK listeners then runs its click handler twice (which silently toggled controls back, e.g. a
     checkbox that never unchecks). */
 function linkListener(FrameHandleListener listener, int id, frameeventtype eventType) returns trigger
-    if frameCursorDepth == 0
+    if frameDispatches == 0
         destroyRetiredTriggers()
     listener.frameId = id
     listener.eventType = eventType
@@ -158,7 +165,7 @@ function unlinkEvent(int id, frameeventtype eventType)
     if t != null
         retiredTriggers[retiredTriggerCount] = t
         retiredTriggerCount++
-    if frameCursorDepth == 0
+    if frameDispatches == 0
         destroyRetiredTriggers()
 
 function destroyRetiredTriggers()
@@ -179,18 +186,27 @@ function onEvent()
 
 /** Runs the listeners of the frame for the event, newest first. A listener may destroy itself or any other listener:
     the successor is published in frameCursor before each call, and the destructor advances it when it is the one
-    destroyed. There is one cursor per nesting level, as a listener may raise frame events itself. */
+    destroyed. There is one cursor per dispatch, as a listener may raise frame events itself or wait. */
 function dispatchFrameEvent(int id, frameeventtype eventType)
-    let depth = frameCursorDepth
-    frameCursorDepth++
+    var slot = frameCursorSlots
+    if freeFrameCursorCount > 0
+        freeFrameCursorCount--
+        slot = freeFrameCursors[freeFrameCursorCount]
+    else
+        frameCursorSlots++
+    frameCursorUsed[slot] = true
+    frameDispatches++
     var listener = keyedMapGet(FRAME_MAP, id)
     while listener != null
-        frameCursor[depth] = listener.next
+        frameCursor[slot] = listener.next
         if listener.eventType == eventType
             listener.onEvent()
-        listener = frameCursor[depth]
-    frameCursor[depth] = null
-    frameCursorDepth--
+        listener = frameCursor[slot]
+    frameCursor[slot] = null
+    frameCursorUsed[slot] = false
+    freeFrameCursors[freeFrameCursorCount] = slot
+    freeFrameCursorCount++
+    frameDispatches--
 
 
 /* FRAME HANDLE LISTENER */
@@ -207,9 +223,9 @@ public abstract class FrameHandleListener
     abstract function onEvent()
 
     ondestroy
-        for d = 0 to frameCursorDepth - 1
-            if frameCursor[d] == this
-                frameCursor[d] = next
+        for slot = 0 to frameCursorSlots - 1
+            if frameCursorUsed[slot] and frameCursor[slot] == this
+                frameCursor[slot] = next
         let id = frameId
         let first = keyedMapGet(FRAME_MAP, id)
         if first == this
