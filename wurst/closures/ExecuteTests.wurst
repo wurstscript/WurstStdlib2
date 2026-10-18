@@ -24,6 +24,13 @@ class ReportThenNestedTries implements ForForceCallback
 		try(new RunOnce())
 		try(new ReportError())
 
+/** Reports an error, runs a nested try which succeeds, then reports another error. */
+class ReportAroundANestedTry implements ForForceCallback
+	override function run()
+		notifyErrorListeners("first")
+		try(new RunOnce())
+		notifyErrorListeners("second")
+
 /** Reports an error the way error() does on a target where it does not end the thread. */
 class ReportError implements ForForceCallback
 	override function run()
@@ -79,6 +86,10 @@ class IterAction implements LimitedExecuteAction
 	// The nested tries clear lastError and the failing one sets its own message, which it handles itself.
 	try(new ReportThenNestedTries()).assertFalse()
 	lastError.assertEquals("outer")
+
+@Test function aFailedTryReportsItsLatestOwnMessage()
+	try(new ReportAroundANestedTry()).assertFalse()
+	lastError.assertEquals("second")
 
 function checkExecuteWhile(int n)
 	Recorder.whileCalls = 0
