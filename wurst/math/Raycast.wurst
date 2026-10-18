@@ -163,20 +163,7 @@ public function ray2d.castToCircle(vec2 center, real radius) returns doubleresul
 		let tangent = this.origin + dir * dot
 		let dd = center.distanceToSq(tangent)
 		let rr = radius.squared()
-		if dd.isBetween(rr - EPSILON, rr + EPSILON)
-			// The tangent point only counts when it lies in front of the ray
-			if dot >= 0
-				result.first.intersects = true
-				result.first.point = tangent
-				result.first.distance = dot
-			else
-				// A ray starting just inside the circle still leaves it ahead, though barely
-				let exit = dot + SquareRoot(rr > dd ? rr - dd : 0.)
-				if exit >= 0
-					result.first.intersects = true
-					result.first.point = this.origin + dir * exit
-					result.first.distance = exit
-		else if dd < rr
+		if dd < rr
 			let t = SquareRoot(rr - dd)
 			let first = dot - t
 			let second = dot + t
@@ -191,6 +178,12 @@ public function ray2d.castToCircle(vec2 center, real radius) returns doubleresul
 				result.first.intersects = true
 				result.first.point = this.origin + dir * second
 				result.first.distance = second
+		else if dd <= rr + EPSILON and dot >= 0
+			// Grazing from just outside: the tangent point, when it lies in front of the ray. A ray passing just
+			// inside is a secant above and gets its real roots.
+			result.first.intersects = true
+			result.first.point = tangent
+			result.first.distance = dot
 	return result
 
 /* =============== 3D =============== */
@@ -255,21 +248,7 @@ public function ray3d.castToSphere(vec3 center, real radius) returns doubleresul
 		let tangent = this.origin + dir * dot
 		let dd = center.distanceToSq(tangent)
 		let rr = radius.squared()
-		if dd.isBetween(rr - EPSILON, rr + EPSILON)
-			// The tangent point only counts when it lies in front of the ray
-			if dot >= 0
-				result.first.intersects = true
-				result.first.point = tangent
-				result.first.distance = dot
-			else
-				// A ray starting just inside the sphere still leaves it ahead, though barely
-				let exit = dot + SquareRoot(rr > dd ? rr - dd : 0.)
-				if exit >= 0
-					result.first.intersects = true
-					result.first.point = this.origin + dir * exit
-					result.first.distance = exit
-					result.first.backface = true
-		else if dd < rr
+		if dd < rr
 			let t = SquareRoot(rr - dd)
 			let first = dot - t
 			let second = dot + t
@@ -286,6 +265,12 @@ public function ray3d.castToSphere(vec3 center, real radius) returns doubleresul
 				result.first.point = this.origin + dir * second
 				result.first.distance = second
 				result.first.backface = true
+		else if dd <= rr + EPSILON and dot >= 0
+			// Grazing from just outside: the tangent point, when it lies in front of the ray. A ray passing just
+			// inside is a secant above and gets its real roots.
+			result.first.intersects = true
+			result.first.point = tangent
+			result.first.distance = dot
 	return result
 
 /** Finds the intersection point of the ray and a triangle in 3D space defined by 3 points.

@@ -224,3 +224,22 @@ constant EPSILON = 0.0001
 	hit.first.distance.assertEquals(0.0039, 0.001)
 	hit.first.backface.assertTrue()
 	hit.second.intersects.assertFalse()
+
+@Test function testCircleNearTangentSecantAheadGetsBothRoots()
+	// The ray passes just inside the circle, ahead of its origin: rr - dd is within EPSILON, but it still enters
+	// and leaves at two distinct points rather than at the projected centre.
+	let ray = ray2d(vec2(0, 0), vec2(1, 0))
+	let hit = ray.castToCircle(vec2(0.01, 0.99996), 1.)
+	hit.first.intersects.assertTrue()
+	hit.first.distance.assertEquals(0.0011, 0.001)
+	hit.second.intersects.assertTrue()
+	hit.second.distance.assertEquals(0.0189, 0.001)
+
+@Test function testSphereNearTangentSecantAheadGetsBothRoots()
+	let ray = ray3d(vec3(0, 0, 0), vec3(1, 0, 0))
+	let hit = ray.castToSphere(vec3(0.01, 0.99996, 0), 1.)
+	hit.first.intersects.assertTrue()
+	hit.first.distance.assertEquals(0.0011, 0.001)
+	hit.second.intersects.assertTrue()
+	hit.second.distance.assertEquals(0.0189, 0.001)
+	hit.second.backface.assertTrue()
