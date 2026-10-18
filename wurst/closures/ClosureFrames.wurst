@@ -44,8 +44,9 @@ constant FRAME_EVENT_TRIGGERS = InitHashtable()
 constant FRAME_EVENT_LISTENERS = InitHashtable()
 
 // Triggers whose last listener went away. They are destroyed only while no frame event is being dispatched, since
-// one of them may be the trigger whose action is running (possibly suspended in a wait). Until then onEvent
-// ignores their fires, as they are no longer the pair's trigger.
+// one of them may be the trigger whose action is running (possibly suspended in a wait): by the next listener
+// change or the next frame event after the dispatches end. Until then onEvent ignores their fires, as they are no
+// longer the pair's trigger.
 trigger array retiredTriggers
 var retiredTriggerCount = 0
 
@@ -188,6 +189,10 @@ function onEvent()
     the successor is published in frameCursor before each call, and the destructor advances it when it is the one
     destroyed. There is one cursor per dispatch, as a listener may raise frame events itself or wait. */
 function dispatchFrameEvent(int id, frameeventtype eventType)
+    // Triggers retired by an earlier dispatch go now, unless a dispatch is still in progress. The trigger which
+    // runs this one is not among them: onEvent dispatches only for a pair's current trigger.
+    if frameDispatches == 0
+        destroyRetiredTriggers()
     var slot = frameCursorSlots
     if freeFrameCursorCount > 0
         freeFrameCursorCount--

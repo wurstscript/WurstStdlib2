@@ -70,6 +70,18 @@ function newTestListener(int which, int destroyWhich, int frameId) returns TestF
     TestFrameListener.retired().assertEquals(0)
     destroy next
 
+@Test function aRetiredTriggerIsDestroyedByTheNextFrameEventWithoutAnyListenerChange()
+    TestFrameListener.runs = 0
+    newTestListener(0, 0, 910007)
+    newTestListener(1, -1, 910008)
+    TestFrameListener.dispatch(910007, FRAMEEVENT_CONTROL_CLICK)
+    TestFrameListener.retired().assertEquals(1)
+    // Any later frame event, with no listener added or removed, drains it.
+    TestFrameListener.dispatch(910008, FRAMEEVENT_CONTROL_CLICK)
+    TestFrameListener.retired().assertEquals(0)
+    TestFrameListener.runs.assertEquals(2)
+    destroy TestFrameListener.made[1]
+
 @Test function frameDispatchSurvivesAListenerDestroyingItsNextSibling()
     TestFrameListener.runs = 0
     // linked 0, 1, 2: the list is 2 -> 1 -> 0, and 2 destroys 1 before its turn
