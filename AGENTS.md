@@ -119,7 +119,7 @@ Tests should be small, deterministic, self-contained, and assertion-driven. If q
 - `grill test` runs the compiletime interpreter: `isLua` is false, units are modelled (position, owner, visibility, abilities), `error()` aborts the run, so assert the positive rule instead of a rejection.
 - Each `ArrayList<T>` type shares one static store for the whole run; a test that fills one near `JASS_MAX_ARRAY_SIZE` starves every other test of that type. Use a dedicated element type.
 - Performance gates assert work counters (e.g. `spatialPartitionLastQueryVisits()`), not wall time.
-- Engine behaviour the interpreter cannot reach (real damage, timers, enumeration) belongs in the in-game suite: `StdlibIngameTests` and its `StdlibIngame*Tests` packages, run by importing `StdlibIngameTests` into a map.
+- Engine behaviour the interpreter cannot reach (real damage, key/frame/sync events, enumeration; timer callbacks do run) belongs in the in-game suite: `StdlibIngameTests` and its `StdlibIngame*Tests` packages, run by importing `StdlibIngameTests` into a map.
 
 ## Formatting
 
