@@ -15,6 +15,7 @@ import StdlibIngameChecks
 import StdlibIngameDamageTests
 import StdlibIngameEventTests
 import StdlibIngameTimedLoopTests
+import StdlibIngameRuntimeTests
 
 /*	Manual, in-game checks for behaviour the compiletime interpreter cannot
 	reach: real damage events, real timers and real unit enumeration.
@@ -1021,6 +1022,7 @@ public function runStdlibIngameTests()
 	setEventChecksReporter(ingameReporter)
 	setDamageChecksReporter(ingameReporter)
 	setTimedLoopChecksReporter(ingameReporter)
+	setRuntimeChecksReporter(ingameReporter)
 	checksRun = 0
 	checksFailed = 0
 	checksSkipped = 0
@@ -1083,6 +1085,16 @@ public function runStdlibIngameTests()
 		testTimedLoopStartedByLoop()
 	runGuarded("26. a spell effect listener registered while running") ->
 		testSpellEffectRegisteredWhileRunning()
+	runGuarded("27. try() and error()") ->
+		testTryReportsError()
+	runGuarded("28. doAfterWithDialogue destroyed early") ->
+		testDialogueCallbackDestroyedEarly()
+	runGuarded("29. abortCurrent() per instance") ->
+		testAbortIsPerInstance()
+	runGuarded("30. Fx and the dummy recycler") ->
+		testDummies()
+	runGuarded("31. unit listeners go with the index") ->
+		testUnitListenersGoWithTheIndex()
 
 	// these finish asynchronously, so the summary waits for them
 	runGuarded("8. TimedLoop stop before start") ->

@@ -1,11 +1,26 @@
 package ClosureEventsTests
 import ClosureEvents
-
-@Test function testEvents()
-	createUnit(players[0], 'hfoo' , ZERO2, 0 .fromDeg())
+import UnitIndexer
 
 function ignoreCast()
 	skip
+
+/** Reaches the dispatch functions, which read the event from the engine and are protected. */
+class Dispatcher extends EventListener
+	override function onEvent()
+		skip
+
+	static function spell(unit trigUnit, int abilId)
+		dispatchSpell(trigUnit, abilId, trigUnit)
+
+	static function general(unit trigUnit, int id)
+		dispatchTo(trigUnit, id)
+
+function newTestUnit() returns unit
+	return createUnit(players[0], 'hfoo', ZERO2, angle(0))
+
+@Test function testEvents()
+	createUnit(players[0], 'hfoo' , ZERO2, 0 .fromDeg())
 
 @Test function castListenerMapIsAHashMapAndSurvivesFlushAndDestroy()
 	let map = new CastListenerMap()
@@ -26,3 +41,107 @@ function ignoreCast()
 	(map.get(7) == first).assertTrue()
 	// The destructor flushes the map, which destroyed the native table a second time.
 	destroy map
+
+/*	The listeners of one ability run newest first: the chain is read from the last registered. Each listener
+	here records its place in the order. */
+int array order
+var runs = 0
+OnCastListener array castListeners
+EventListener array eventListeners
+
+function record(int which)
+	order[runs] = which
+	runs++
+
+function destroyCastMiddle()
+	record(2)
+	destroy castListeners[1]
+
+function destroyEventMiddle()
+	record(2)
+	destroy eventListeners[1]
+
+function destroyEventItself()
+	record(2)
+	destroy eventListeners[2]
+
+@Test function castListenersRunNewestFirst()
+	runs = 0
+	castListeners[0] = EventListener.onCast('A100', (caster) -> record(0))
+	castListeners[1] = EventListener.onCast('A100', (caster) -> record(1))
+	castListeners[2] = EventListener.onCast('A100', (caster) -> record(2))
+	Dispatcher.spell(newTestUnit(), 'A100')
+	runs.assertEquals(3)
+	order[0].assertEquals(2)
+	order[1].assertEquals(1)
+	order[2].assertEquals(0)
+	destroy castListeners[0]
+	destroy castListeners[1]
+	destroy castListeners[2]
+
+@Test function castDispatchSurvivesAListenerDestroyingItsNextSibling()
+	runs = 0
+	// registered 0, 1, 2: the chain is 2 -> 1 -> 0
+	castListeners[0] = EventListener.onCast('A101', (caster) -> record(0))
+	castListeners[1] = EventListener.onCast('A101', (caster) -> record(1))
+	castListeners[2] = EventListener.onCast('A101', (caster) -> destroyCastMiddle())
+	Dispatcher.spell(newTestUnit(), 'A101')
+	// 1 was destroyed by 2 before its turn, and 0 still gets the cast.
+	runs.assertEquals(2)
+	order[0].assertEquals(2)
+	order[1].assertEquals(0)
+	destroy castListeners[2]
+	destroy castListeners[0]
+
+@Test function eventDispatchSurvivesAListenerDestroyingItsNextSibling()
+	runs = 0
+	let id = EVENT_PLAYER_LEAVE.toIntId()
+	eventListeners[0] = EventListener.add(EVENT_PLAYER_LEAVE, () -> record(0))
+	eventListeners[1] = EventListener.add(EVENT_PLAYER_LEAVE, () -> record(1))
+	eventListeners[2] = EventListener.add(EVENT_PLAYER_LEAVE, () -> destroyEventMiddle())
+	Dispatcher.general(null, id)
+	runs.assertEquals(2)
+	order[0].assertEquals(2)
+	order[1].assertEquals(0)
+	destroy eventListeners[2]
+	destroy eventListeners[0]
+
+@Test function eventDispatchSurvivesAListenerDestroyingItself()
+	runs = 0
+	let id = EVENT_PLAYER_LEAVE.toIntId()
+	eventListeners[0] = EventListener.add(EVENT_PLAYER_LEAVE, () -> record(0))
+	eventListeners[1] = EventListener.add(EVENT_PLAYER_LEAVE, () -> record(1))
+	eventListeners[2] = EventListener.add(EVENT_PLAYER_LEAVE, () -> destroyEventItself())
+	Dispatcher.general(null, id)
+	runs.assertEquals(3)
+	order[0].assertEquals(2)
+	order[1].assertEquals(1)
+	order[2].assertEquals(0)
+	destroy eventListeners[0]
+	destroy eventListeners[1]
+
+@Test function castListenerOfAnUnindexedUnitIsNotSharedWithOtherUnindexedUnits()
+	runs = 0
+	let owner = newTestUnit()
+	let other = newTestUnit()
+	owner.getIndex().assertEquals(0)
+	// Neither unit is indexed, so both would share slot 0 if the listener were registered there.
+	EventListener.onCast(owner, 'A102', (caster) -> record(0))
+	Dispatcher.spell(other, 'A102')
+	runs.assertEquals(0)
+
+@Test function unitListenersAreGoneOnceTheUnitsEventsAreUnregistered()
+	runs = 0
+	let id = EVENT_PLAYER_LEAVE.toIntId()
+	let u = newTestUnit()
+	u.toUnitIndex()
+	EventListener.add(u, EVENT_PLAYER_LEAVE, () -> record(0))
+	EventListener.onCast(u, 'A103', (caster) -> record(1))
+	Dispatcher.general(u, id)
+	Dispatcher.spell(u, 'A103')
+	runs.assertEquals(2)
+	unregisterEventsForUnit(u)
+	Dispatcher.general(u, id)
+	Dispatcher.spell(u, 'A103')
+	runs.assertEquals(2)
+	u.deindex()

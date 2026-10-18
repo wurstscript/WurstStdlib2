@@ -1,0 +1,37 @@
+package LastOrderTests
+import LastOrder
+import UnitIndexer
+
+function newTestUnit() returns unit
+	return createUnit(players[0], 'hfoo', ZERO2, angle(0))
+
+@Test function unindexedUnitsDoNotShareAnOrderSlot()
+	let a = newTestUnit()
+	let b = newTestUnit()
+	a.getIndex().assertEquals(0)
+	new Order(a, 851986, OrderType.POINT, null, vec2(1, 2))
+	(a.getLastOrder() == null).assertTrue()
+	(b.getLastOrder() == null).assertTrue()
+
+@Test function anIndexedUnitKeepsItsOrdersNewestFirst()
+	let u = newTestUnit()
+	u.toUnitIndex()
+	let first = new Order(u, 851986, OrderType.POINT, null, vec2(1, 2))
+	(u.getLastOrder() == first).assertTrue()
+	let second = new Order(u, 851971, OrderType.POINT, null, vec2(3, 4))
+	(u.getLastOrder() == second).assertTrue()
+	(second.prev == first).assertTrue()
+	u.clearLastOrders()
+	(u.getLastOrder() == null).assertTrue()
+	u.deindex()
+
+@Test function ordersOfOneUnitDoNotReachAnother()
+	let u = newTestUnit()
+	let v = newTestUnit()
+	u.toUnitIndex()
+	v.toUnitIndex()
+	new Order(u, 851986, OrderType.POINT, null, vec2(1, 2))
+	(v.getLastOrder() == null).assertTrue()
+	u.clearLastOrders()
+	u.deindex()
+	v.deindex()

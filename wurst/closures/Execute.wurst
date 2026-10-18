@@ -16,8 +16,11 @@ init
 
 function executeCurrentCallback()
 	lastError = ""
+	let errorsBefore = errorCount
 	getCurrentCallback().run()
-	setCurrentCallbackSuccess(true)
+	// On Lua error() returns instead of ending the thread, so reaching this line proves nothing: the callback
+	// failed if it reported an error on the way.
+	setCurrentCallbackSuccess(errorCount == errorsBefore)
 
 boolean array tempCallbacksSuccess
 ForForceCallback array tempCallbacks
@@ -83,7 +86,8 @@ public function execute(ForForceCallback c)
 	the only difference that it will allow you to inspect
 	an error if one occured.
 
-	If an error occured, the return value will be false.
+	If an error occured, the return value will be false. This holds on Lua as well, where error()
+	does not end the thread: the callback runs on to its end, and try() still reports the failure.
 
 	If the error is caused by error(), then you can inspect
 	the error message using lastError from ErrorHandling.
@@ -96,15 +100,18 @@ public function try(ForForceCallback c) returns boolean
 	pushCallback(c)
 	let suppressErrors = suppressErrorMessages
 	suppressErrorMessages = true
+	let errorsBefore = errorCount
 	executeForce.forEach(function executeCurrentCallback)
+	// The errors of this callback are handled here: an enclosing try() must not count them as its own.
+	errorCount = errorsBefore
 	suppressErrorMessages = suppressErrors
 	popCallback()
 	return isLastCallbackSuccessful()
 
-interface LimitedExecuteCondition
+public interface LimitedExecuteCondition
 	function check() returns boolean
 
-interface LimitedExecuteAction
+public interface LimitedExecuteAction
 	function run()
 
 function executeWhileInternal(int resetCount, LimitedExecuteCondition condition, LimitedExecuteAction action)

@@ -21,12 +21,14 @@ unit dum
 
 /** Preloads the given abilitytype */
 public function preloadAbility(vararg int abilIds) returns boolean
+	if dum == null
+		// The preload is finished: the dummy is gone.
+		error("Do not load abilities after map init when autoFinish = true")
+		return false
 	var result = true
 	for abilId in abilIds
 		dum.addAbility(abilId)
-		if dum == null
-			error("Do not load abilities after map init when autoFinish = true")
-		else if not dum.hasAbility(abilId)
+		if not dum.hasAbility(abilId)
 			Log.trace("PreloadAbility: Ability " + abilId.toRawCode() + " does not exist.")
 			result = false
 	return result
@@ -35,6 +37,7 @@ public function preloadAbility(vararg int abilIds) returns boolean
 public function preloadUnit(vararg int unitIds) returns boolean
 	if dumg == null
 		error("PreloadUnit: Group dumg does not exist")
+		return false
 	var valid = true
 	for unitId in unitIds
 		let u = createUnit(DUMMY_PLAYER, unitId, vec2(0,0), angle(0))
@@ -42,9 +45,13 @@ public function preloadUnit(vararg int unitIds) returns boolean
 		valid = valid and u.isAlive()
 	return valid
 
-/** If autoFinish is false you need to call this function manually */
+/** If autoFinish is false you need to call this function manually.
+	Calling it again does nothing. */
 public function finishPreload()
+	if dumg == null
+		return
 	dum.remove()
+	dum = null
 	dumg.forEachFrom((unit u) -> u.remove())
 	dumg.destr()
 	dumg = null

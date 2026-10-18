@@ -1,0 +1,25 @@
+package GroupUtilsTests
+import GroupUtils
+
+@Test function releasedGroupIsReused()
+	let g = getGroup()
+	g.release()
+	let again = getGroup()
+	(again == g).assertTrue()
+	again.release()
+
+@Test function distinctGroupsWhileHeld()
+	let a = getGroup()
+	let b = getGroup()
+	(a != b).assertTrue()
+	a.release()
+	b.release()
+
+@Test function reacquiredGroupIsEmpty()
+	let g = getGroup()
+	g.add(createUnit(players[0], 'hfoo', ZERO2, angle(0)))
+	g.size().assertEquals(1)
+	g.release()
+	let again = getGroup()
+	again.size().assertEquals(0)
+	again.release()

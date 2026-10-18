@@ -43,6 +43,10 @@ constant KEY_TRIGGER = CreateTrigger()..addAction(function onEvent)
 
 constant KEY_MAP = keyedMapCreate()
 
+// The listener each dispatch in progress steps to next, one slot per nesting level.
+KeyPressListener array keyCursor
+var keyCursorDepth = 0
+
 // Tracks which (player, key, metaKey, onKeyDown) combos are already registered on KEY_TRIGGER, so a
 // second listener for the same combo does NOT register the event twice on one trigger (which fires the
 // trigger, and therefore every matching listener, twice per key press). Keyed by key handle id, then by
@@ -77,7 +81,7 @@ public function onKeyPress(oskeytype key, OSKEY_META metaKey, bool onKeyDown, Ke
     for i = 0 to bj_MAX_PLAYERS - 1
         if players[i].isIngame()
             registerKeyOnce(players[i], key, metaKey, onKeyDown)
-    return registerListener(listener, key, metaKey, onKeyDown)
+    return registerListener(listener, key, metaKey, onKeyDown, null)
 
 public function onKeyPress(player whichPlayer, oskeytype key, KeyPressListener listener) returns KeyPressListener
     return onKeyPress(whichPlayer, key, OSKEY_META.NONE, true, listener)
@@ -90,12 +94,14 @@ public function onKeyRelease(player whichPlayer, oskeytype key, KeyPressListener
 
 public function onKeyPress(player whichPlayer, oskeytype key, OSKEY_META metaKey, bool onKeyDown, KeyPressListener listener) returns KeyPressListener
     registerKeyOnce(whichPlayer, key, metaKey, onKeyDown)
-    return registerListener(listener, key, metaKey, onKeyDown)
+    return registerListener(listener, key, metaKey, onKeyDown, whichPlayer)
 
-function registerListener(KeyPressListener listener, oskeytype key, OSKEY_META metaKey, bool onKeyDown) returns KeyPressListener
+/** Puts the listener at the head of the key's list. A null player listens for every player. */
+function registerListener(KeyPressListener listener, oskeytype key, OSKEY_META metaKey, bool onKeyDown, player whichPlayer) returns KeyPressListener
     listener.key = key
     listener.metaKey = metaKey.toInt()
     listener.onKeyDown = onKeyDown
+    listener.whichPlayer = whichPlayer
     let id = key.getHandleId()
     let first = keyedMapGet(KEY_MAP, id)
     if first != null 
@@ -107,14 +113,23 @@ function registerListener(KeyPressListener listener, oskeytype key, OSKEY_META m
 
 /* ON EVENT */
 
-function onEvent() 
-    var listener = keyedMapGet(KEY_MAP, BlzGetTriggerPlayerKey().getHandleId())
-    let metaKey = BlzGetTriggerPlayerMetaKey()
-    let onKeyDown = BlzGetTriggerPlayerIsKeyDown()
-    while listener != null 
-        if listener.metaKey == metaKey and listener.onKeyDown == onKeyDown
+function onEvent()
+    dispatchKey(GetTriggerPlayer(), BlzGetTriggerPlayerKey().getHandleId(), BlzGetTriggerPlayerMetaKey(), BlzGetTriggerPlayerIsKeyDown())
+
+/** Runs the listeners of the key which match, newest first. A listener may destroy itself or any other listener: the
+    successor is published in keyCursor before each call, and the destructor advances it when it is the one
+    destroyed. There is one cursor per nesting level, as a listener may raise key events itself. */
+function dispatchKey(player triggerPlayer, int keyId, int metaKey, bool onKeyDown)
+    let depth = keyCursorDepth
+    keyCursorDepth++
+    var listener = keyedMapGet(KEY_MAP, keyId)
+    while listener != null
+        keyCursor[depth] = listener.next
+        if listener.metaKey == metaKey and listener.onKeyDown == onKeyDown and (listener.whichPlayer == null or listener.whichPlayer == triggerPlayer)
             listener.onEvent()
-        listener = listener.next 
+        listener = keyCursor[depth]
+    keyCursor[depth] = null
+    keyCursorDepth--
 
 
 /* KEY PRESSES LISTENER */
@@ -123,13 +138,18 @@ abstract class KeyPressListener
     oskeytype key 
     int metaKey
     bool onKeyDown
-    thistype next = null 
-    thistype prev = null 
+    /** The player this listens for, or null for every player */
+    player whichPlayer = null
+    thistype next = null
+    thistype prev = null
 
     abstract function onEvent()
 
     ondestroy
-        let id = key.getHandleId() 
+        for d = 0 to keyCursorDepth - 1
+            if keyCursor[d] == this
+                keyCursor[d] = next
+        let id = key.getHandleId()
         let first = keyedMapGet(KEY_MAP, id)
         if first == this 
             if next == null 
@@ -140,3 +160,74 @@ abstract class KeyPressListener
             prev.next = next
         if next != null
             next.prev = prev
+        next = null
+        prev = null
+
+
+/* TESTS */
+
+class TestKeyListener extends KeyPressListener
+    static int array order
+    static int runs = 0
+    static TestKeyListener array made
+    int which
+    int destroyWhich
+
+    construct(int which, int destroyWhich)
+        this.which = which
+        this.destroyWhich = destroyWhich
+
+    override function onEvent()
+        order[runs] = which
+        runs++
+        if destroyWhich >= 0
+            destroy made[destroyWhich]
+
+function newTestKeyListener(int which, int destroyWhich, oskeytype key, player whichPlayer)
+    let l = new TestKeyListener(which, destroyWhich)
+    TestKeyListener.made[which] = l
+    registerListener(l, key, OSKEY_META.NONE, true, whichPlayer)
+
+@Test function aListenerOfOnePlayerIgnoresTheKeysOfAnother()
+    TestKeyListener.runs = 0
+    newTestKeyListener(0, -1, OSKEY_Q, players[0])
+    newTestKeyListener(1, -1, OSKEY_Q, players[1])
+    dispatchKey(players[0], OSKEY_Q.getHandleId(), 0, true)
+    TestKeyListener.runs.assertEquals(1)
+    TestKeyListener.order[0].assertEquals(0)
+    dispatchKey(players[1], OSKEY_Q.getHandleId(), 0, true)
+    TestKeyListener.runs.assertEquals(2)
+    TestKeyListener.order[1].assertEquals(1)
+    destroy TestKeyListener.made[0]
+    destroy TestKeyListener.made[1]
+
+@Test function aListenerWithoutAPlayerHearsEveryPlayer()
+    TestKeyListener.runs = 0
+    newTestKeyListener(0, -1, OSKEY_W, null)
+    dispatchKey(players[0], OSKEY_W.getHandleId(), 0, true)
+    dispatchKey(players[5], OSKEY_W.getHandleId(), 0, true)
+    TestKeyListener.runs.assertEquals(2)
+    destroy TestKeyListener.made[0]
+
+@Test function keyDispatchSurvivesAListenerDestroyingItsNextSibling()
+    TestKeyListener.runs = 0
+    // registered 0, 1, 2: the list is 2 -> 1 -> 0, and 2 destroys 1 before its turn
+    newTestKeyListener(0, -1, OSKEY_E, null)
+    newTestKeyListener(1, -1, OSKEY_E, null)
+    newTestKeyListener(2, 1, OSKEY_E, null)
+    dispatchKey(players[0], OSKEY_E.getHandleId(), 0, true)
+    TestKeyListener.runs.assertEquals(2)
+    TestKeyListener.order[0].assertEquals(2)
+    TestKeyListener.order[1].assertEquals(0)
+    destroy TestKeyListener.made[2]
+    destroy TestKeyListener.made[0]
+
+@Test function keyDispatchSurvivesAListenerDestroyingItself()
+    TestKeyListener.runs = 0
+    newTestKeyListener(0, -1, OSKEY_R, null)
+    newTestKeyListener(1, -1, OSKEY_R, null)
+    newTestKeyListener(2, 2, OSKEY_R, null)
+    dispatchKey(players[0], OSKEY_R.getHandleId(), 0, true)
+    TestKeyListener.runs.assertEquals(3)
+    destroy TestKeyListener.made[1]
+    destroy TestKeyListener.made[0]
