@@ -143,8 +143,10 @@ class IterableMapIterator<K, V> extends HLIterator<K>
 		this.map = map
 
 	override function remove()
-		map.remove(list.get(i - 1))
-		i--
+		// nothing to remove before the first next()
+		if i > 0
+			map.remove(list.get(i - 1))
+			i--
 
 public interface IMItrClosure<K, V>
 	function run(K key, V value)

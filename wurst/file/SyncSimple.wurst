@@ -73,12 +73,11 @@ public function player.sync<T>(T data, AnySyncListener<T> listener)
 		destroy listener
 
 /** Syncs a single string from the given player.
-	A null string is synced as the empty string.
-	Like chunked syncs, nothing is sent in replays unless SYNC_IN_REPLAYS is set. */
+	A null string is synced as the empty string. */
 public function string.sync(player p, StringSyncListener listener)
 	syncQueue.enqueue(new SyncData(p, listener, this != null ? this : ""))
 
-	if syncQueue.size() == 1 and shouldSync()
+	if syncQueue.size() == 1
 		checkQueue()
 
 /** Syncs a chunked string from the given player.
