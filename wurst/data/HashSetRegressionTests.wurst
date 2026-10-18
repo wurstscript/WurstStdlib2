@@ -52,3 +52,39 @@ import HashSet
 	set.remove(0).assertTrue()
 	set.isEmpty().assertTrue()
 	destroy set
+
+@Test public function removeAtKeepsPositionsAndCounts()
+	let set = new HashSet<int>()
+	set.add(10, 20, 30, 40)
+	set.removeAt(1).assertEquals(20)
+	set.size().assertEquals(3)
+	set.has(20).assertFalse()
+	set.count(20).assertEquals(0)
+	set.get(0).assertEquals(10)
+	set.get(1).assertEquals(30)
+	set.get(2).assertEquals(40)
+	// positions of the shifted tail must follow
+	set.remove(40).assertTrue()
+	set.remove(30).assertTrue()
+	set.size().assertEquals(1)
+	set.get(0).assertEquals(10)
+	set.removeAt(0).assertEquals(10)
+	set.size().assertEquals(0)
+	destroy set
+
+@Test public function iteratorRemovalKeepsPositions()
+	let set = new HashSet<int>()
+	set.add(1, 2, 3, 4, 5)
+	let itr = set.iterator()
+	while itr.hasNext()
+		if itr.next() mod 2 == 0
+			itr.remove()
+	itr.close()
+	set.size().assertEquals(3)
+	set.has(2).assertFalse()
+	set.has(4).assertFalse()
+	set.remove(5).assertTrue()
+	set.remove(1).assertTrue()
+	set.get(0).assertEquals(3)
+	set.size().assertEquals(1)
+	destroy set

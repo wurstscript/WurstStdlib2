@@ -36,8 +36,12 @@ public class HashSet<T> extends HashList<T>
 			result = true
 		return result
 
-	/** Remove the element at the given index */
+	/** Remove the element at the given index.
+		Indices outside [0, size) are an error. */
 	override function removeAt(int index) returns T
+		if index < 0 or index >= size()
+			error("HashSet: Index out of bounds: " + index)
+			return null
 		position.removeInt(this castTo int, get(index) castTo int)
 		for i = index + 1 to size() - 1
 			position.saveInt(this castTo int, get(i) castTo int, i - 1)

@@ -181,6 +181,7 @@ public class FieldSerializationWriter
 	private let output = new ChunkedString()
 	private int integrityKey
 	private SerializationHasher hasher
+	private let usedFieldIds = new IntMap<boolean>()
 	private boolean finished = false
 
 	construct(int schemaVersion)
@@ -208,7 +209,15 @@ public class FieldSerializationWriter
 			error("Serialization wire tokens must be exactly one byte.")
 			return false
 
-		appendHashed(encodeFixedInt(serializationFieldId(name)))
+		// The reader rejects an envelope that repeats a field id, so refuse to
+		// write one: either the same name twice or two names whose 32-bit ids collide.
+		let fieldId = serializationFieldId(name)
+		if usedFieldIds.has(fieldId)
+			error("Duplicate serialization field id for field \"" + name + "\"; field names must be unique within one object.")
+			return false
+		usedFieldIds.put(fieldId, true)
+
+		appendHashed(encodeFixedInt(fieldId))
 		appendHashed(token)
 		appendHashed(encodeVarUInt(payloadLength))
 		return true
@@ -260,6 +269,7 @@ public class FieldSerializationWriter
 
 	ondestroy
 		destroy hasher
+		destroy usedFieldIds
 		if not finished
 			destroy output
 
