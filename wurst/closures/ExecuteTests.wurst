@@ -17,6 +17,13 @@ class RunNested implements ForForceCallback
 		Recorder.innerResult = try(new ReportError())
 		Recorder.innerRuns++
 
+/** Reports an error, then runs a nested try which succeeds and one which fails. */
+class ReportThenNestedTries implements ForForceCallback
+	override function run()
+		notifyErrorListeners("outer")
+		try(new RunOnce())
+		try(new ReportError())
+
 /** Reports an error the way error() does on a target where it does not end the thread. */
 class ReportError implements ForForceCallback
 	override function run()
@@ -67,6 +74,11 @@ class IterAction implements LimitedExecuteAction
 	try(new RunNested()).assertTrue()
 	Recorder.innerRuns.assertEquals(1)
 	Recorder.innerResult.assertFalse()
+
+@Test function aFailedTryKeepsItsOwnMessageAcrossNestedTries()
+	// The nested tries clear lastError and the failing one sets its own message, which it handles itself.
+	try(new ReportThenNestedTries()).assertFalse()
+	lastError.assertEquals("outer")
 
 function checkExecuteWhile(int n)
 	Recorder.whileCalls = 0

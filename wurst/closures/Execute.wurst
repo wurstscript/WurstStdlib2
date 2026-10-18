@@ -14,17 +14,26 @@ let executeForce = CreateForce()
 init
 	executeForce.addPlayer(localPlayer)
 
-function executeCurrentCallback()
-	lastError = ""
-	let errorsBefore = errorCount
-	getCurrentCallback().run()
-	// On Lua error() returns instead of ending the thread, so reaching this line proves nothing: the callback
-	// failed if it reported an error on the way.
-	setCurrentCallbackSuccess(errorCount == errorsBefore)
-
 boolean array tempCallbacksSuccess
 ForForceCallback array tempCallbacks
+int array tempCallbacksErrorsBefore
+/** The first error message of a callback which went on to start a nested try() after reporting it */
+string array tempCallbacksError
 int tempCallbacksCount = 0
+
+function executeCurrentCallback()
+	lastError = ""
+	let frame = tempCallbacksCount - 1
+	tempCallbacksErrorsBefore[frame] = errorCount
+	tempCallbacksError[frame] = ""
+	getCurrentCallback().run()
+	// On Lua error() returns instead of ending the thread, so reaching this line proves nothing: the callback
+	// failed if it reported an error on the way. A nested try() counts its errors as its own, not as this one's.
+	let failed = errorCount != tempCallbacksErrorsBefore[frame]
+	// A nested try() run after this callback's first error cleared lastError: its message is restored
+	if failed and tempCallbacksError[frame] != ""
+		lastError = tempCallbacksError[frame]
+	setCurrentCallbackSuccess(not failed)
 
 function pushCallback(ForForceCallback c)
 	tempCallbacks[tempCallbacksCount] = c
@@ -97,6 +106,10 @@ public function execute(ForForceCallback c)
 	The error will also be suppressed from being printed.
 **/
 public function try(ForForceCallback c) returns boolean
+	// This try clears lastError: an enclosing callback which already reported an error keeps that message
+	let enclosing = tempCallbacksCount - 1
+	if enclosing >= 0 and tempCallbacksError[enclosing] == "" and errorCount != tempCallbacksErrorsBefore[enclosing]
+		tempCallbacksError[enclosing] = lastError
 	pushCallback(c)
 	let suppressErrors = suppressErrorMessages
 	suppressErrorMessages = true
