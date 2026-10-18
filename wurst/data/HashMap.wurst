@@ -143,8 +143,8 @@ class IterableMapIterator<K, V> extends HLIterator<K>
 		this.map = map
 
 	override function remove()
-		// nothing to remove before the first next()
-		if i > 0
+		if canRemove
+			canRemove = false
 			map.remove(list.get(i - 1))
 			i--
 

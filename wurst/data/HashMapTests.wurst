@@ -293,6 +293,26 @@ function testIterableMapIteratorRemoveDropsEntry()
 	map.size().assertEquals(0)
 
 @Test
+function testIterableMapIteratorRemoveOncePerNext()
+	let map = new IterableMap<int, int>
+		..put(1, 10)
+		..put(2, 20)
+		..put(3, 30)
+	let itr = map.iterator()
+	itr.remove()
+	map.size().assertEquals(3)
+	itr.next().assertEquals(1)
+	itr.next().assertEquals(2)
+	itr.remove()
+	itr.remove()
+	itr.close()
+
+	map.size().assertEquals(2)
+	map.has(1).assertTrue()
+	map.has(2).assertFalse()
+	map.has(3).assertTrue()
+
+@Test
 function testIterableMapIteratorRemoveSome()
 	let map = new IterableMap<int, int>
 		..put(1, 10)

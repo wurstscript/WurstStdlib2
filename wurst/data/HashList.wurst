@@ -183,7 +183,7 @@ public class HLIterator<Q>
 	protected HashList<Q> list
 	protected bool destroyOnClose = true
 	// whether next() has returned an element which has not been removed yet
-	private bool canRemove = false
+	protected bool canRemove = false
 
 	construct(HashList<Q> list)
 		this.list = list
