@@ -1,0 +1,8 @@
+package UnitIndexer_config
+import NoWurst
+
+// Installed only into disposable regression maps, never into library sources.
+public unit regressionExcludedUnit = null
+
+@config public function shouldIndex(unit u) returns boolean
+	return u != regressionExcludedUnit

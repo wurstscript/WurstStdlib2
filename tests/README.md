@@ -17,6 +17,9 @@ From the repository root, prepare separate copies for both backends:
 
 The tracked `tests/fixtures/RegressionBase.w3x` supplies the base map, so these
 commands work in a fresh checkout without an ignored root `ExampleMap.w3x`.
+The preparer also installs the indexing-policy fixture and its test-only
+`UnitIndexer_config` from `tests/fixtures/`; these stay outside library sources so
+they cannot replace a consuming map's indexing policy.
 
 ```powershell
 rtk proxy python tests/prepare_regressions.py --backend jass --name after
@@ -64,6 +67,7 @@ Missing input is a failure at finalization; an automatic summary still says
 | Frame registration lifetime | Remove/re-add the last click listener three times, then keep two listeners; independent native trigger counts real clicks | Live listeners run multiple times per click |
 | Shared frame bridge (#514) | Real click creates two new buttons; real clicks on each new button | Guards the reported failure path; the generic fixture also passes the old per-pair implementation, so Castle Fight's specific regression remains unreproduced |
 | Spell registration before indexing | Create and register caster during init, then issue a real Berserk order after init | Listener left at index zero misses the spell effect |
+| Indexing-policy compatibility | Exclude an init caster via `shouldIndex`; explicitly deindex a runtime caster; issue real casts from both | Registration force-indexes excluded/recycled units, fires index hooks and receives their casts |
 | Terrain Y normal | Temporary asymmetric terrain sample; compare public normal with cross product of actual X/Y surface tangents | Y uses the X slope; a flat/non-distinguishing fixture also fails |
 
 Invalid ArrayList operations run inside `try`: Jass ends the child thread, while Lua

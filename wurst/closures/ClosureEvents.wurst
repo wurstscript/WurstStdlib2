@@ -7,6 +7,9 @@ import HashMap
 import KeyedMap
 import ErrorHandling
 
+// Only bridge indexing deferred until the first startup timer; runtime exclusions stay unindexed.
+var castRegistrationDuringInit = true
+
 /** Use this chat event if you want to access the entered message */
 public constant EVENT_PLAYER_CHAT_FILTER = ConvertPlayerEvent(96)
 
@@ -238,8 +241,8 @@ public abstract class EventListener
 
 	static private function addSpellInternal(unit u, int abilId, OnCastListener listener) returns OnCastListener
 		if u != null
-			// Index init-created units before attaching a listener; preserve the rejection for custom indexers.
-			if u.getIndex() <= 0
+			// Honor indexing policy and never reindex a deliberately deindexed runtime unit.
+			if castRegistrationDuringInit and u.getIndex() <= 0 and shouldIndex(u)
 				u.toUnitIndex()
 			let index = u.getIndex()
 			if index <= 0
@@ -471,6 +474,7 @@ init
 	onUnitDeindex(() -> unregisterEventsForUnit(getIndexingUnit()))
 
 	nullTimer() ->
+		castRegistrationDuringInit = false
 		leaveTrig.addAction(() -> EventListener.generalEventCallback())
 		keyTrig.addAction(() -> EventListener.generalEventCallback())
 

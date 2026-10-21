@@ -16,7 +16,10 @@ class PrepareRegressionsTests(unittest.TestCase):
         self.root = Path(self.temporary.name)
         source = Path(__file__).resolve().parents[1]
         for name in ('tests/prepare_regressions.py', 'tests/fixtures/RegressionBase.w3x',
-                     'wurst.build', 'wurst_run.args', 'wurst/tests/RegressionChecks.wurst'):
+                     'tests/fixtures/UnitIndexer_config.wurst',
+                     'tests/fixtures/RegressionIndexerPolicy.wurst',
+                     'wurst.build', 'wurst_run.args', 'wurst/tests/RegressionChecks.wurst',
+                     'wurst/tests/StdlibRegressionTests.wurst'):
             target = self.root / name
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(source / name, target)
@@ -43,6 +46,10 @@ class PrepareRegressionsTests(unittest.TestCase):
                 self.assertEqual('-lua' in options, backend == 'lua')
                 self.assertIn('"' + manifest['build'] + '"',
                               (project / 'wurst/tests/RegressionChecks.wurst').read_text())
+                entry = (project / 'wurst/tests/StdlibRegressionTests.wurst').read_text()
+                self.assertIn('runIndexerPolicyRegressions()', entry)
+                self.assertIn('finishIndexerPolicyRegressions()', entry)
+                self.assertTrue((project / 'wurst/tests/UnitIndexer_config.wurst').is_file())
 
     def test_missing_fixture_fails_before_creating_a_project(self):
         (self.root / 'tests/fixtures/RegressionBase.w3x').unlink()

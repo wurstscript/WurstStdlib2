@@ -405,6 +405,87 @@
         },
         "events": {}
       }
+    },
+    {
+      "variant": "policy-before",
+      "backend": "lua",
+      "source": "ClosureEvents from 507df7b; policy compatibility regression",
+      "runId": "automatic-2026-10-21T17-35-55-950Z",
+      "buildId": "5f8f431984",
+      "mapSha256": "69c05aa6451aed505f8344504ec8a01eab526cef7c0b64bb0a569b71d304838e",
+      "productionSha256": {
+        "wurst/closures/ClosureEvents.wurst": "2121797f1decca47f085c97c9c4c4c2b535e9ec9dd4aec21f7cef3023a497680"
+      },
+      "verdict": "FAIL",
+      "payload": {
+        "suite": "automatic",
+        "verdict": "FAIL",
+        "asserts": 82,
+        "failed": 6,
+        "failedIds": "init cast registration honors shouldIndex exclusion,excluded init caster fires no index hooks,runtime cast registration preserves explicit deindexing,rejected runtime cast registration fires no index hooks,excluded init caster has no spell listener,explicitly deindexed runtime caster has no spell listener",
+        "verdictProblems": "asserts-failed",
+        "eventKindsDropped": 0,
+        "metricsDropped": 0,
+        "errors": 0,
+        "caughtErrors": 16,
+        "errorMessages": [],
+        "metrics": {},
+        "events": {}
+      }
+    },
+    {
+      "variant": "policy-after",
+      "backend": "lua",
+      "source": "fixed; startup-only indexing respects shouldIndex",
+      "runId": "automatic-2026-10-21T17-36-18-541Z",
+      "buildId": "723b143280",
+      "mapSha256": "6c856f379557cb5ff75a1d9d5e8391ab36b86a9f2b7cb62008620b421cff7b59",
+      "productionSha256": {
+        "wurst/closures/ClosureEvents.wurst": "fd0baf585fa464e30479caf86356c712115b59e86d92547cb3e5699c687de749"
+      },
+      "verdict": "PASS",
+      "payload": {
+        "suite": "automatic",
+        "verdict": "PASS",
+        "asserts": 82,
+        "failed": 0,
+        "failedIds": "",
+        "verdictProblems": "",
+        "eventKindsDropped": 0,
+        "metricsDropped": 0,
+        "errors": 0,
+        "caughtErrors": 16,
+        "errorMessages": [],
+        "metrics": {},
+        "events": {}
+      }
+    },
+    {
+      "variant": "policy-after",
+      "backend": "jass",
+      "source": "fixed; startup-only indexing respects shouldIndex",
+      "runId": "automatic-2026-10-21T17-36-40-828Z",
+      "buildId": "0e531fbdb5",
+      "mapSha256": "abc667beafd2ea78ce496b96d0392aae3cf94179644e6a2ee16eaf7ddd579c64",
+      "productionSha256": {
+        "wurst/closures/ClosureEvents.wurst": "fd0baf585fa464e30479caf86356c712115b59e86d92547cb3e5699c687de749"
+      },
+      "verdict": "PASS",
+      "payload": {
+        "suite": "automatic",
+        "verdict": "PASS",
+        "asserts": 73,
+        "failed": 0,
+        "failedIds": "",
+        "verdictProblems": "",
+        "eventKindsDropped": 0,
+        "metricsDropped": 0,
+        "errors": 0,
+        "caughtErrors": 16,
+        "errorMessages": [],
+        "metrics": {},
+        "events": {}
+      }
     }
   ]
 }

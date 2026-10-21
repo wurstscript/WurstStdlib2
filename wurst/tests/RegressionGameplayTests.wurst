@@ -153,10 +153,12 @@ public function runGameplayRegressions()
 	let unitVictim = EventListener.onCast(initCaster, AbilityIds.berserkerRage1) (_) ->
 		removedSpellCalls++
 	EventListener.onCast(initCaster, AbilityIds.berserkerRage1, new RemovingSpell(unitVictim))
-	let globalTail = EventListener.onCast(AbilityIds.berserkerRage1) (_) ->
-		spellTailCalls++
-	let globalVictim = EventListener.onCast(AbilityIds.berserkerRage1) (_) ->
-		removedSpellCalls++
+	let globalTail = EventListener.onCast(AbilityIds.berserkerRage1) (caster) ->
+		if caster == initCaster
+			spellTailCalls++
+	let globalVictim = EventListener.onCast(AbilityIds.berserkerRage1) (caster) ->
+		if caster == initCaster
+			removedSpellCalls++
 	EventListener.onCast(AbilityIds.berserkerRage1, new RemovingSpell(globalVictim))
 	initCaster..addAbility(AbilityIds.berserkerRage1)..setMana(1000.)
 	regressionCheck(initCaster.issueImmediateOrderById(Orders.berserk), "spell fixture accepted actual cast order")

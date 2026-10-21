@@ -20,6 +20,8 @@ REPAIRED = (
     'wurst/util/TerrainUtils.wurst',
 )
 
+MAP_FIXTURES = ('UnitIndexer_config.wurst', 'RegressionIndexerPolicy.wurst')
+
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
@@ -32,13 +34,23 @@ def main():
     root = Path(__file__).resolve().parents[1]
     base_map = root / 'tests/fixtures/RegressionBase.w3x'
     for required in (base_map, root / 'wurst.build', root / 'wurst_run.args',
-                     root / 'wurst/tests/RegressionChecks.wurst'):
+                     root / 'wurst/tests/RegressionChecks.wurst',
+                     root / 'wurst/tests/StdlibRegressionTests.wurst',
+                     *(root / 'tests/fixtures' / name for name in MAP_FIXTURES)):
         if not required.is_file():
             parser.error('Required regression input is missing: ' + str(required))
     destination = root / '_build' / (args.name + '-' + args.backend)
     # Never overwrite another prepared run or its evidence.
     destination.mkdir(parents=True, exist_ok=False)
     shutil.copytree(root / 'wurst', destination / 'wurst')
+    for name in MAP_FIXTURES:
+        shutil.copy2(root / 'tests/fixtures' / name, destination / 'wurst/tests' / name)
+    entry = destination / 'wurst/tests/StdlibRegressionTests.wurst'
+    entry.write_text(entry.read_text().replace(
+        'import RegressionChecks', 'import RegressionChecks\nimport RegressionIndexerPolicy').replace(
+        '\t\tregressionGuard("terrain normal"',
+        '\t\tregressionGuard("index policy", () -> runIndexerPolicyRegressions())\n\t\tregressionGuard("terrain normal"').replace(
+        'checkRegressionAsyncCompletion()', 'checkRegressionAsyncCompletion()\n\t\t\tfinishIndexerPolicyRegressions()'))
     shutil.copy2(root / 'wurst.build', destination / 'wurst.build')
     shutil.copy2(base_map, destination / 'ExampleMap.w3x')
     options = [line for line in (root / 'wurst_run.args').read_text().splitlines() if line.strip() != '-lua']

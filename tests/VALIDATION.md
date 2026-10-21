@@ -25,12 +25,13 @@ them. Final acceptance still has the explicit gaps below.
 
 | Scenario | Before | Fixed source |
 | --- | --- | --- |
-| Automatic suite, Lua | See isolated cases below | **72/72 pass**, zero uncaught errors, 16 expected caught bounds errors |
-| Automatic suite, Jass | Isolated before cases tested on Lua | **63/63 pass**, zero uncaught errors, 16 expected caught bounds errors |
+| Automatic suite, Lua (including index policy) | See isolated cases below | **82/82 pass**, zero uncaught errors, 16 expected caught bounds errors |
+| Automatic suite, Jass (including index policy) | Isolated before cases tested on Lua | **73/73 pass**, zero uncaught errors, 16 expected caught bounds errors |
 | ArrayList invalid bounds / adjacent storage | master package: **51/72**, invalid results and storage corruption | Lua and Jass automatic suites pass |
 | TimedLoop destroyed object ID reuse | master package: **71/72**, replacement ticks too often | Lua and Jass automatic suites pass |
 | Terrain normal axis sampling | master package: **71/72**, independent tangent comparison fails | Lua and Jass automatic suites pass |
 | Init spell registration | master package: **71/72**, real spell effect misses unit listener | Lua and Jass automatic suites pass |
+| Init exclusions and explicit runtime deindexing | `507df7b` ClosureEvents: **76/82**, six policy/real-cast checks fail | Lua **82/82**, Jass **73/73**; rejected units stay unindexed, fire no index hooks, and receive no unit-specific cast callback |
 | Frame registration and mutation | `4727413` package: **13/19**, duplicate callbacks and mutation failures; one uncaught E66 in `ClosureFrames.onEvent` | Lua real-input suite **19/19**, zero errors |
 | Player-specific key filtering | `4727413` package: **17/19**, other player's listener fires | Lua real-input suite **19/19**, zero errors |
 | Unit/global/nested listener mutation | `4727413` package: **67/76**, removed successors execute and callback errors occur | Lua and Jass automatic suites pass |
@@ -40,6 +41,13 @@ the return-value assertion; Lua continues and verifies the default result too.
 The Lua input run delivered two independently counted native inputs to each
 tested button/key, including both buttons created inside a click callback.
 Player 0's F6 listener matched the raw oracle; player 1's listener remained silent.
+
+The policy follow-up narrows automatic cast-registration indexing to the startup
+window before ClosureEvents' existing zero-delay timer, and only when `shouldIndex`
+permits the unit. After startup, an unindexed unit remains rejected. The exclusion
+configuration is installed only into disposable maps from `tests/fixtures/`.
+The original spell-mutation fixture now filters its global counters to its own
+caster, so the policy fixture's real casts cannot interfere with it.
 
 ## Remaining verification and limits
 

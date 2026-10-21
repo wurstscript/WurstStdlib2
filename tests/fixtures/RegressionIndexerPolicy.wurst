@@ -1,0 +1,59 @@
+package RegressionIndexerPolicy
+import ClosureEvents
+import ClosureTimers
+import UnitIndexer
+import UnitIndexer_config
+import UnitIds
+import AbilityIds
+import Orders
+import RegressionChecks
+
+unit excludedCaster = null
+OnCastListener excludedListener = null
+var excludedCalls = 0
+var excludedIndexHooks = 0
+var indexHooks = 0
+unit recycledCaster = null
+OnCastListener recycledListener = null
+var recycledCalls = 0
+var castsCompleted = false
+
+function countPolicyIndexes()
+	indexHooks++
+	if getIndexingUnit() == regressionExcludedUnit
+		excludedIndexHooks++
+
+public function runIndexerPolicyRegressions()
+	regressionCheck(excludedCaster.getIndex() == 0, "init cast registration honors shouldIndex exclusion")
+	regressionCheck(excludedIndexHooks == 0, "excluded init caster fires no index hooks")
+	excludedCaster..addAbility(AbilityIds.berserkerRage1)..setMana(1000.)
+	regressionCheck(excludedCaster.issueImmediateOrderById(Orders.berserk), "excluded caster accepted real spell order")
+	recycledCaster = createUnit(players[0], UnitIds.footman, vec2(256., 0.), angle(0.))
+	regressionCheck(recycledCaster.getIndex() > 0, "runtime recycling fixture was automatically indexed")
+	recycledCaster.deindex()
+	let before = indexHooks
+	recycledListener = EventListener.onCast(recycledCaster, AbilityIds.berserkerRage1) (_) ->
+		recycledCalls++
+	regressionCheck(recycledCaster.getIndex() == 0, "runtime cast registration preserves explicit deindexing")
+	regressionCheck(indexHooks == before, "rejected runtime cast registration fires no index hooks")
+	recycledCaster..addAbility(AbilityIds.berserkerRage1)..setMana(1000.)
+	regressionCheck(recycledCaster.issueImmediateOrderById(Orders.berserk), "deindexed caster accepted real spell order")
+	doAfter(0.75) ->
+		castsCompleted = true
+
+public function finishIndexerPolicyRegressions()
+	regressionCheck(castsCompleted, "index policy real-cast observation completed")
+	regressionCheck(excludedCalls == 0, "excluded init caster has no spell listener")
+	regressionCheck(recycledCalls == 0, "explicitly deindexed runtime caster has no spell listener")
+	destroy excludedListener
+	destroy recycledListener
+	excludedCaster.remove()
+	recycledCaster.remove()
+	regressionExcludedUnit = null
+
+init
+	onUnitIndex(function countPolicyIndexes)
+	excludedCaster = createUnit(players[0], UnitIds.footman, vec2(128., 0.), angle(0.))
+	regressionExcludedUnit = excludedCaster
+	excludedListener = EventListener.onCast(excludedCaster, AbilityIds.berserkerRage1) (_) ->
+		excludedCalls++

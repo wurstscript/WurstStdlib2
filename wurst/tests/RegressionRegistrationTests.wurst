@@ -4,9 +4,9 @@ import UnitIndexer
 import UnitIds
 import AbilityIds
 
-@Test function spellRegistrationIndexesAnUnindexedUnit()
+// Interpreter startup timers do not advance here; the native policy fixture checks runtime rejection.
+@Test function spellRegistrationIndexesAnEligibleUnitBeforeStartupTimer()
 	let u = createUnit(players[0], UnitIds.footman, ZERO2, angle(0.))
-	u.deindex()
 	u.getIndex().assertEquals(0)
 	let listener = EventListener.onCast(u, AbilityIds.berserkerRage1) (_) ->
 		skip
