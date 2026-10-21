@@ -38,19 +38,22 @@ Player 0's F6 listener matched the raw oracle; player 1's listener remained sile
 
 ## Remaining verification and limits
 
-- **Jass UI is incomplete:** the input oracle observed only one of two initial
-  button clicks. Received events matched their listeners, but completion failed
-  (16/17). This is not a full pass.
-- **Two-client multiplayer input remains unverified.** Single-client filtering
-  does not prove both players' input or synchronization.
+- **Jass UI now passes 19/19**, with zero runtime errors. The completion run used
+  1x game speed and 850 ms between clicks. The earlier 16/17 attempt missed one
+  input according to its independent oracle; it remains recorded as an incomplete
+  attempt, not a pass.
+- **Two-client multiplayer input remains unverified and unavailable in the
+  maintainer's 3.0.1 setup.** The maintainer confirmed that a second connected
+  client is not available. Two disconnected local games would not establish
+  multiplayer behavior. Single-client filtering does not prove synchronization.
 - **Castle Fight's PR #514 failure is not reproduced by this generic fixture.**
   The per-pair implementation from `cce7909` also passed 19/19 real-input checks,
   including callback-created buttons. The structural guard rejects that design,
   but this is not behavioral proof of the specific Castle Fight regression.
 - Earlier input attempts failed because no key input arrived or foreground
   acquisition failed. Those attempts are not counted as passes. Foreground input
-  automation was subsequently disabled at the user's request; further execution
-  must remain in the background.
+  automation was disabled at the user's request. The maintainer subsequently
+  reauthorized foreground input for the completion runs.
 
 ## PR #514 analysis
 

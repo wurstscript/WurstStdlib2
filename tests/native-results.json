@@ -1,6 +1,6 @@
 {
   "warcraftVersion": "3.0.1.24371",
-  "note": "Native terminal reports; UI used real OS input. Further foreground input disabled. See VALIDATION.md for limitations.",
+  "note": "Native terminal reports; UI used real OS input. Foreground input was reauthorized for the completion run. See VALIDATION.md for limitations.",
   "runs": [
     {
       "variant": "after",
@@ -364,6 +364,45 @@
         "caughtErrors": 20,
         "errorMessages": [],
         "metrics": {},
+        "events": {}
+      }
+    },
+    {
+      "variant": "ui-after",
+      "backend": "jass",
+      "source": "fixed; completed real-input rerun at 1x",
+      "runId": "mouse-key-2026-10-21T15-37-40-674Z",
+      "buildId": "778c20c73c",
+      "mapSha256": "b9dfb4349e7415009db894e7ecd99ce315ca7ed71bf4cb1c038fb3d7ee6fbdf3",
+      "verdict": "PASS",
+      "payload": {
+        "suite": "mouse-key",
+        "verdict": "PASS",
+        "asserts": 19,
+        "failed": 0,
+        "failedIds": "",
+        "verdictProblems": "",
+        "eventKindsDropped": 0,
+        "metricsDropped": 0,
+        "errors": 0,
+        "caughtErrors": 0,
+        "errorMessages": [],
+        "metrics": {
+          "frameInputs": 2,
+          "frameListener1": 2,
+          "frameListener2": 2,
+          "mutationInputs": 2,
+          "mutationTail": 2,
+          "firstChildInputs": 2,
+          "firstChildCalls": 2,
+          "secondChildInputs": 2,
+          "secondChildCalls": 2,
+          "player0Inputs": 2,
+          "player0Calls": 2,
+          "player1Calls": 0,
+          "keyMutationInputs": 2,
+          "keyMutationTail": 2
+        },
         "events": {}
       }
     }
