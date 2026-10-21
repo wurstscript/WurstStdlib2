@@ -68,6 +68,7 @@ Missing input is a failure at finalization; an automatic summary still says
 | Shared frame bridge (#514) | Real click creates two new buttons; real clicks on each new button | Guards the reported failure path; the generic fixture also passes the old per-pair implementation, so Castle Fight's specific regression remains unreproduced |
 | Spell registration before indexing | Create and register caster during init, then issue a real Berserk order after init | Listener left at index zero misses the spell effect |
 | Indexing-policy compatibility | Exclude an init caster via `shouldIndex`; explicitly deindex a runtime caster; issue real casts from both | Registration force-indexes excluded/recycled units, fires index hooks and receives their casts |
+| Deferred startup registration | Install a later package's index hook; cancel queued listeners and deindex queued units with forced object-id reuse; mix registration and manual indexing | Eager indexing bypasses the late hook; queue mistakes resurrect cancelled listeners or reverse dispatch order |
 | Terrain Y normal | Temporary asymmetric terrain sample; compare public normal with cross product of actual X/Y surface tangents | Y uses the X slope; a flat/non-distinguishing fixture also fails |
 
 Invalid ArrayList operations run inside `try`: Jass ends the child thread, while Lua
@@ -91,6 +92,7 @@ The interpreter supplement can also run in either project:
 rtk proxy grill test RegressionRegistrationTests --quiet
 ```
 
-It proves that public spell registration indexes and attaches to an unindexed unit;
-the actual spell effect is asserted separately in the game. Interpreter tests do not
-stand in for native event/input or timer execution.
+It checks that registration does not force indexing or write a listener into index
+zero. Deferred binding, late index hooks, cancellation, and real spell effects are
+asserted separately in the game. Interpreter tests do not stand in for native
+event/input or timer execution.

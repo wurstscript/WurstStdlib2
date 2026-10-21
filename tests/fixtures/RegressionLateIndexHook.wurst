@@ -1,0 +1,17 @@
+package RegressionLateIndexHook
+import RegressionIndexerPolicy
+import RegressionChecks
+import UnitIndexer
+
+var lateIndexCalls = 0
+
+function countLateIndex()
+	if getIndexingUnit() == regressionLateCaster
+		lateIndexCalls++
+
+public function finishLateIndexHookRegression()
+	regressionCheck(lateIndexCalls == 1, "index hook installed by a later package sees the init caster exactly once")
+
+// Importing RegressionIndexerPolicy guarantees its caster/listeners were created before this hook.
+init
+	onUnitIndex(function countLateIndex)

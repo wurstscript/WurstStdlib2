@@ -10,7 +10,11 @@ The preparer copies it to `ExampleMap.w3x` inside each disposable project and
 records its SHA-256 in `source-manifest.json`. Keep this fixture independent of
 generated test-map outputs and local root map files.
 
-`RegressionIndexerPolicy.wurst` and `UnitIndexer_config.wurst` are installed only
+`RegressionIndexerPolicy.wurst`, `RegressionLateIndexHook.wurst`, and
+`UnitIndexer_config.wurst` are installed only
 in prepared test maps. They prove that cast registration respects an exclusion
 predicate during initialization and explicit deindexing after startup. Keeping
 the configuration here prevents it from changing the library or consuming maps.
+The importing late-hook package proves that registration cannot index a caster
+before later importers install their hooks. The policy fixture also checks queued
+listener cancellation, deindex cancellation, forced ID reuse and dispatch order.

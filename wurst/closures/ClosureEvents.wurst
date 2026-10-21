@@ -6,8 +6,9 @@ import UnitIndexer
 import HashMap
 import KeyedMap
 import ErrorHandling
+import ArrayList
 
-// Only bridge indexing deferred until the first startup timer; runtime exclusions stay unindexed.
+// Init-time cast registrations wait for the normal deferred UnitIndexer pass.
 var castRegistrationDuringInit = true
 
 /** Use this chat event if you want to access the entered message */
@@ -49,7 +50,8 @@ public constant EVENT_PLAYER_CHAT_FILTER = ConvertPlayerEvent(96)
 
 	Listeners of a unit are registered for its UnitIndexer index. A unit which is not indexed
 	can not take listeners: adding one logs a warning and the listener is not registered.
-	They are destroyed when the unit is deindexed.
+	Init-time cast registrations wait until the deferred indexing pass has completed; units still
+	unindexed then remain rejected. Listeners are destroyed when the unit is deindexed.
 
 	**IMPORTANT**:
 		Make sure to always use the "EVENT_PLAYER_UNIT_*" variants of the eventids.
@@ -61,16 +63,60 @@ public constant EVENT_PLAYER_CHAT_FILTER = ConvertPlayerEvent(96)
 */
 
 public abstract class OnCastListener
- 	OnCastListener next = null
+	static private ArrayList<OnCastListener> pendingRegistrations = new ArrayList<OnCastListener>()
+	private int pendingSlot = -1
+	OnCastListener next = null
 	OnCastListener prev = null
 	int abilId
 	unit eventUnit = null
 
 	abstract function fire(unit caster)
 
+	/** Internal startup queue. Cancelled slots are cleared before an object id can be reused. */
+	static function deferRegistration(unit u, int abilId, OnCastListener listener) returns OnCastListener
+		listener.eventUnit = u
+		listener.abilId = abilId
+		listener.pendingSlot = pendingRegistrations.size()
+		pendingRegistrations.add(listener)
+		return listener
+
+	/** Internal: keep later registrations queued when their unit was manually indexed meanwhile. */
+	static function hasPendingForUnit(unit u) returns bool
+		for i = 0 to pendingRegistrations.size() - 1
+			let listener = pendingRegistrations.get(i)
+			if listener != null and listener.eventUnit == u
+				return true
+		return false
+
+	/** Internal: pending registrations obey the same deindex lifetime as active ones. */
+	static function cancelPendingForUnit(unit u)
+		var i = 0
+		while i < pendingRegistrations.size()
+			let listener = pendingRegistrations.get(i)
+			if listener != null and listener.eventUnit == u
+				destroy listener
+			i++
+
+	/** Internal: bind surviving requests after normal startup indexing. Oldest first preserves LIFO dispatch. */
+	static function registerPendingCasts()
+		castRegistrationDuringInit = false
+		for i = 0 to pendingRegistrations.size() - 1
+			let listener = pendingRegistrations.get(i)
+			if listener != null
+				pendingRegistrations.set(i, null)
+				listener.pendingSlot = -1
+				if listener.eventUnit.getIndex() > 0
+					EventListener.onCast(listener.eventUnit, listener.abilId, listener)
+				else
+					Log.warn("Init-time cast listener rejected: the unit remains unindexed after startup.")
+		pendingRegistrations.clear()
+
 	ondestroy
 		EventListener.repairCastCursors(this)
-		if eventUnit != null
+		if pendingSlot >= 0
+			pendingRegistrations.set(pendingSlot, null)
+			pendingSlot = -1
+		else if eventUnit != null
 			let index = eventUnit.getIndex()
 			let listener = EventListener.castMapCasters[index]
 			if listener == this
@@ -241,10 +287,9 @@ public abstract class EventListener
 
 	static private function addSpellInternal(unit u, int abilId, OnCastListener listener) returns OnCastListener
 		if u != null
-			// Honor indexing policy and never reindex a deliberately deindexed runtime unit.
-			if castRegistrationDuringInit and u.getIndex() <= 0 and shouldIndex(u)
-				u.toUnitIndex()
 			let index = u.getIndex()
+			if castRegistrationDuringInit and (index <= 0 or OnCastListener.hasPendingForUnit(u))
+				return OnCastListener.deferRegistration(u, abilId, listener)
 			if index <= 0
 				// Every unit without an index would share slot 0, so the listener would answer the casts of all of them.
 				Log.warn("Attempting to register a cast listener for a unit that is not indexed by UnitIndexer. " +
@@ -448,6 +493,7 @@ function registerEventId(eventid evnt) returns int
 	not fired still holds listeners, which would answer to whichever unit is given its index next. */
 public function unregisterEventsForUnit(unit u)
 	let index = u.getIndex()
+	OnCastListener.cancelPendingForUnit(u)
 	unregisterEvents(index)
 	if index > 0 and EventListener.castMapCasters[index] != null
 		var listener = EventListener.castMapCasters[index]
@@ -474,7 +520,7 @@ init
 	onUnitDeindex(() -> unregisterEventsForUnit(getIndexingUnit()))
 
 	nullTimer() ->
-		castRegistrationDuringInit = false
+		OnCastListener.registerPendingCasts()
 		leaveTrig.addAction(() -> EventListener.generalEventCallback())
 		keyTrig.addAction(() -> EventListener.generalEventCallback())
 

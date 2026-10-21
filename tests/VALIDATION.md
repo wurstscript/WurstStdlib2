@@ -25,13 +25,14 @@ them. Final acceptance still has the explicit gaps below.
 
 | Scenario | Before | Fixed source |
 | --- | --- | --- |
-| Automatic suite, Lua (including index policy) | See isolated cases below | **82/82 pass**, zero uncaught errors, 16 expected caught bounds errors |
-| Automatic suite, Jass (including index policy) | Isolated before cases tested on Lua | **73/73 pass**, zero uncaught errors, 16 expected caught bounds errors |
+| Automatic suite, Lua (including startup lifecycle) | See isolated cases below | **99/99 pass**, zero uncaught errors, 16 expected caught bounds errors |
+| Automatic suite, Jass (including startup lifecycle) | Isolated before cases tested on Lua | **90/90 pass**, zero uncaught errors, 16 expected caught bounds errors |
 | ArrayList invalid bounds / adjacent storage | master package: **51/72**, invalid results and storage corruption | Lua and Jass automatic suites pass |
 | TimedLoop destroyed object ID reuse | master package: **71/72**, replacement ticks too often | Lua and Jass automatic suites pass |
 | Terrain normal axis sampling | master package: **71/72**, independent tangent comparison fails | Lua and Jass automatic suites pass |
 | Init spell registration | master package: **71/72**, real spell effect misses unit listener | Lua and Jass automatic suites pass |
 | Init exclusions and explicit runtime deindexing | `507df7b` ClosureEvents: **76/82**, six policy/real-cast checks fail | Lua **82/82**, Jass **73/73**; rejected units stay unindexed, fire no index hooks, and receive no unit-specific cast callback |
+| Deferred indexing and pending-listener lifetime | `f8c673f` ClosureEvents: **97/99**, eager indexing misses the later package's hook | Lua **99/99**, Jass **90/90**; late hook sees the caster once, cancellation/deindexing survive forced listener-ID reuse, and mixed registrations retain newest-first dispatch |
 | Frame registration and mutation | `4727413` package: **13/19**, duplicate callbacks and mutation failures; one uncaught E66 in `ClosureFrames.onEvent` | Lua real-input suite **19/19**, zero errors |
 | Player-specific key filtering | `4727413` package: **17/19**, other player's listener fires | Lua real-input suite **19/19**, zero errors |
 | Unit/global/nested listener mutation | `4727413` package: **67/76**, removed successors execute and callback errors occur | Lua and Jass automatic suites pass |
@@ -42,12 +43,20 @@ The Lua input run delivered two independently counted native inputs to each
 tested button/key, including both buttons created inside a click callback.
 Player 0's F6 listener matched the raw oracle; player 1's listener remained silent.
 
-The policy follow-up narrows automatic cast-registration indexing to the startup
-window before ClosureEvents' existing zero-delay timer, and only when `shouldIndex`
-permits the unit. After startup, an unindexed unit remains rejected. The exclusion
-configuration is installed only into disposable maps from `tests/fixtures/`.
+The final implementation does not force indexing. Init-time requests for unindexed
+units wait until the normal deferred indexing pass completes; units left unindexed
+remain rejected. Later init-time requests for a unit already awaiting binding join
+the same queue, preserving order even if the map manually indexes it meanwhile.
+Destroying a listener clears its queued slot before ID reuse; deindexing a unit
+cancels its queued registrations. After startup, an unindexed unit remains rejected.
+The exclusion configuration is installed only into disposable maps from
+`tests/fixtures/`; a separate importing package installs the late index hook.
+Historical subset results remain recorded above and in `native-results.json`.
 The original spell-mutation fixture now filters its global counters to its own
 caster, so the policy fixture's real casts cannot interfere with it.
+The deindex-ID fixture retains intervening allocations until the listener ID is
+reused (bounded to eight); Lua also frees the UnitIndex object, so assuming the
+listener ID is the very next allocation gave an inconclusive earlier attempt.
 
 ## Remaining verification and limits
 

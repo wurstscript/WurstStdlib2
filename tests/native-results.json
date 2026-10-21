@@ -486,6 +486,87 @@
         "metrics": {},
         "events": {}
       }
+    },
+    {
+      "variant": "deferred-before",
+      "backend": "lua",
+      "source": "ClosureEvents from f8c673f; deferred indexing regression",
+      "runId": "automatic-2026-10-21T18-08-12-628Z",
+      "buildId": "c263a88104",
+      "mapSha256": "3620ba058fc3b62a4d7e2ed2acc2d2f73346f0cfc8b9e312eca6bb8729211287",
+      "productionSha256": {
+        "wurst/closures/ClosureEvents.wurst": "685759fe23a15db4c09030ebc0bc0392846d66b3c876f13ee4a81944ee2129b1"
+      },
+      "verdict": "FAIL",
+      "payload": {
+        "suite": "automatic",
+        "verdict": "FAIL",
+        "asserts": 99,
+        "failed": 2,
+        "failedIds": "cast registration leaves indexing deferred during init,index hook installed by a later package sees the init caster exactly once",
+        "verdictProblems": "asserts-failed",
+        "eventKindsDropped": 0,
+        "metricsDropped": 0,
+        "errors": 0,
+        "caughtErrors": 16,
+        "errorMessages": [],
+        "metrics": {},
+        "events": {}
+      }
+    },
+    {
+      "variant": "deferred-after",
+      "backend": "lua",
+      "source": "fixed; deferred startup binding preserves index hooks, cancellation and ordering",
+      "runId": "automatic-2026-10-21T18-08-39-160Z",
+      "buildId": "8a1fe5fcc2",
+      "mapSha256": "b62c4016c13c9b3d9739679fea7ba0891de6ecd0327df2ef229497edd67455c7",
+      "productionSha256": {
+        "wurst/closures/ClosureEvents.wurst": "0958f37f97801564194b98b39dda491d55fd49d6bfe3dc064f09821b0cd9a62b"
+      },
+      "verdict": "PASS",
+      "payload": {
+        "suite": "automatic",
+        "verdict": "PASS",
+        "asserts": 99,
+        "failed": 0,
+        "failedIds": "",
+        "verdictProblems": "",
+        "eventKindsDropped": 0,
+        "metricsDropped": 0,
+        "errors": 0,
+        "caughtErrors": 16,
+        "errorMessages": [],
+        "metrics": {},
+        "events": {}
+      }
+    },
+    {
+      "variant": "deferred-after",
+      "backend": "jass",
+      "source": "fixed; deferred startup binding preserves index hooks, cancellation and ordering",
+      "runId": "automatic-2026-10-21T18-09-06-319Z",
+      "buildId": "247d355cee",
+      "mapSha256": "6fb8321e1f7742bc5f4cfaa444d47f59f0d415bac4b0b61b0955199b6f6aef74",
+      "productionSha256": {
+        "wurst/closures/ClosureEvents.wurst": "0958f37f97801564194b98b39dda491d55fd49d6bfe3dc064f09821b0cd9a62b"
+      },
+      "verdict": "PASS",
+      "payload": {
+        "suite": "automatic",
+        "verdict": "PASS",
+        "asserts": 90,
+        "failed": 0,
+        "failedIds": "",
+        "verdictProblems": "",
+        "eventKindsDropped": 0,
+        "metricsDropped": 0,
+        "errors": 0,
+        "caughtErrors": 16,
+        "errorMessages": [],
+        "metrics": {},
+        "events": {}
+      }
     }
   ]
 }

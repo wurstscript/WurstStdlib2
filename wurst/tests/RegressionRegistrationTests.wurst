@@ -4,14 +4,15 @@ import UnitIndexer
 import UnitIds
 import AbilityIds
 
-// Interpreter startup timers do not advance here; the native policy fixture checks runtime rejection.
-@Test function spellRegistrationIndexesAnEligibleUnitBeforeStartupTimer()
+// The native fixture proves deferred binding, late index hooks and cancellation with object-id reuse.
+@Test function initCastRegistrationDoesNotIndexTheUnit()
 	let u = createUnit(players[0], UnitIds.footman, ZERO2, angle(0.))
 	u.getIndex().assertEquals(0)
 	let listener = EventListener.onCast(u, AbilityIds.berserkerRage1) (_) ->
 		skip
-	u.getIndex().assertGreaterThan(0)
-	(EventListener.castMapCasters[u.getIndex()] == listener).assertTrue()
+	u.getIndex().assertEquals(0)
+	(EventListener.castMapCasters[0] == null).assertTrue()
 	destroy listener
+	u.toUnitIndex()
 	(EventListener.castMapCasters[u.getIndex()] == null).assertTrue()
 	u.remove()

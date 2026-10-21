@@ -20,7 +20,7 @@ REPAIRED = (
     'wurst/util/TerrainUtils.wurst',
 )
 
-MAP_FIXTURES = ('UnitIndexer_config.wurst', 'RegressionIndexerPolicy.wurst')
+MAP_FIXTURES = ('UnitIndexer_config.wurst', 'RegressionIndexerPolicy.wurst', 'RegressionLateIndexHook.wurst')
 
 
 def main():
@@ -47,10 +47,10 @@ def main():
         shutil.copy2(root / 'tests/fixtures' / name, destination / 'wurst/tests' / name)
     entry = destination / 'wurst/tests/StdlibRegressionTests.wurst'
     entry.write_text(entry.read_text().replace(
-        'import RegressionChecks', 'import RegressionChecks\nimport RegressionIndexerPolicy').replace(
+        'import RegressionChecks', 'import RegressionChecks\nimport RegressionIndexerPolicy\nimport RegressionLateIndexHook').replace(
         '\t\tregressionGuard("terrain normal"',
         '\t\tregressionGuard("index policy", () -> runIndexerPolicyRegressions())\n\t\tregressionGuard("terrain normal"').replace(
-        'checkRegressionAsyncCompletion()', 'checkRegressionAsyncCompletion()\n\t\t\tfinishIndexerPolicyRegressions()'))
+        'checkRegressionAsyncCompletion()', 'checkRegressionAsyncCompletion()\n\t\t\tfinishIndexerPolicyRegressions()\n\t\t\tfinishLateIndexHookRegression()'))
     shutil.copy2(root / 'wurst.build', destination / 'wurst.build')
     shutil.copy2(base_map, destination / 'ExampleMap.w3x')
     options = [line for line in (root / 'wurst_run.args').read_text().splitlines() if line.strip() != '-lua']
