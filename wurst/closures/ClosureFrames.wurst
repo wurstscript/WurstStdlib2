@@ -36,19 +36,16 @@ import Framehandle
 
 constant FRAME_MAP = keyedMapCreate()
 
-// Frame handle id -> event type handle id -> the trigger which holds that event of that frame, and how many
-// listeners use it. Each pair has a trigger of its own, so that the last listener going away can retire it: WC3 has
-// no per-event unregister. A pair which gets listeners again, or a new frame with the reused handle id of a
-// destroyed one, is then registered on a fresh trigger, and never twice on a live one.
-constant FRAME_EVENT_TRIGGERS = InitHashtable()
-constant FRAME_EVENT_LISTENERS = InitHashtable()
+// Every frame event is registered on this ONE trigger, once per (frame, event) pair. A trigger per pair, created on
+// demand, lost real mouse clicks: in Castle Fight a button made inside another button's click handler (a dialog
+// opening the next one) never received its clicks, while BlzFrameClick on the same button still reached it. Going
+// back to the shared trigger fixed it.
+constant FRAMEHANDLE_TRIGGER = CreateTrigger()..addAction(function onEvent)
 
-// Triggers whose last listener went away. They are destroyed only while no frame event is being dispatched, since
-// one of them may be the trigger whose action is running (possibly suspended in a wait): by the next listener
-// change or the next frame event after the dispatches end. Until then onEvent ignores their fires, as they are no
-// longer the pair's trigger.
-trigger array retiredTriggers
-var retiredTriggerCount = 0
+// Frame handle id -> event type handle id -> true once the pair is registered on FRAMEHANDLE_TRIGGER. WC3 has no
+// per-event unregister, so a pair stays registered after its last listener goes away; registering it again would
+// make every click fire twice.
+constant FRAME_EVENT_REGISTERED = InitHashtable()
 
 // The listener each dispatch in progress steps to next, in a slot the dispatch owns until it ends. Slots are not
 // tied to a nesting depth: a listener may wait, and dispatches paused that way resume in any order.
@@ -58,8 +55,6 @@ int array freeFrameCursors
 var freeFrameCursorCount = 0
 // How many slots were ever handed out; the ones not in use are on freeFrameCursors.
 var frameCursorSlots = 0
-// How many dispatches are in progress, paused ones included
-var frameDispatches = 0
 
 
 /* CLOSURES */
@@ -119,21 +114,15 @@ public function framehandle.onSpriteAnimUpdate(FrameHandleListener listener) ret
 
 function addListenerForFrame(FrameHandleListener listener, framehandle frame, frameeventtype eventType) returns FrameHandleListener
     listener.frame = frame
-    let t = linkListener(listener, frame.getHandleId(), eventType)
-    if t != null
-        t.registerFrameEvent(frame, eventType)
+    if linkListener(listener, frame.getHandleId(), eventType)
+        FRAMEHANDLE_TRIGGER.registerFrameEvent(frame, eventType)
     return listener
 
-/** Puts the listener at the head of the frame's list. Returns the new trigger to register (frame, eventType) on when
-    the pair had no listener yet, or null when its trigger already holds the event.
-
-    A pair is registered only ONCE per trigger. onEvent() already fans a single trigger fire out to every listener in
-    the list, so re-registering on each added listener makes the trigger fire once PER registration: a frame with two
-    CONTROL_CLICK listeners then runs its click handler twice (which silently toggled controls back, e.g. a
-    checkbox that never unchecks). */
-function linkListener(FrameHandleListener listener, int id, frameeventtype eventType) returns trigger
-    if frameDispatches == 0
-        destroyRetiredTriggers()
+/** Puts the listener at the head of the frame's list. Returns whether (frame, eventType) still has to be registered
+    on FRAMEHANDLE_TRIGGER: only the first listener the pair ever gets. onEvent() fans a single fire out to every
+    listener in the list, so a pair registered twice would run each of its handlers twice per click (which silently
+    toggled controls back, e.g. a checkbox that never unchecks). */
+function linkListener(FrameHandleListener listener, int id, frameeventtype eventType) returns bool
     listener.frameId = id
     listener.eventType = eventType
     let first = keyedMapGet(FRAME_MAP, id)
@@ -143,56 +132,21 @@ function linkListener(FrameHandleListener listener, int id, frameeventtype event
     keyedMapPut(FRAME_MAP, id, listener)
 
     let eventId = eventType.getHandleId()
-    let listeners = LoadInteger(FRAME_EVENT_LISTENERS, id, eventId)
-    SaveInteger(FRAME_EVENT_LISTENERS, id, eventId, listeners + 1)
-    if listeners > 0
-        return null
-    let t = CreateTrigger()..addAction(function onEvent)
-    SaveTriggerHandle(FRAME_EVENT_TRIGGERS, id, eventId, t)
-    return t
-
-/** Called when a listener of the pair goes away: the last one retires the pair's trigger. */
-function unlinkEvent(int id, frameeventtype eventType)
-    if eventType == null
-        return
-    let eventId = eventType.getHandleId()
-    let listeners = LoadInteger(FRAME_EVENT_LISTENERS, id, eventId) - 1
-    if listeners > 0
-        SaveInteger(FRAME_EVENT_LISTENERS, id, eventId, listeners)
-        return
-    RemoveSavedInteger(FRAME_EVENT_LISTENERS, id, eventId)
-    let t = LoadTriggerHandle(FRAME_EVENT_TRIGGERS, id, eventId)
-    RemoveSavedHandle(FRAME_EVENT_TRIGGERS, id, eventId)
-    if t != null
-        retiredTriggers[retiredTriggerCount] = t
-        retiredTriggerCount++
-    if frameDispatches == 0
-        destroyRetiredTriggers()
-
-function destroyRetiredTriggers()
-    for i = 0 to retiredTriggerCount - 1
-        DestroyTrigger(retiredTriggers[i])
-        retiredTriggers[i] = null
-    retiredTriggerCount = 0
+    if LoadBoolean(FRAME_EVENT_REGISTERED, id, eventId)
+        return false
+    SaveBoolean(FRAME_EVENT_REGISTERED, id, eventId, true)
+    return true
 
 
 /* ON EVENT */
 
 function onEvent()
-    let id = BlzGetTriggerFrame().getHandleId()
-    let eventType = BlzGetTriggerFrameEvent()
-    // A retired trigger may still fire until it is destroyed; only the pair's current trigger dispatches.
-    if GetTriggeringTrigger() == LoadTriggerHandle(FRAME_EVENT_TRIGGERS, id, eventType.getHandleId())
-        dispatchFrameEvent(id, eventType)
+    dispatchFrameEvent(BlzGetTriggerFrame().getHandleId(), BlzGetTriggerFrameEvent())
 
 /** Runs the listeners of the frame for the event, newest first. A listener may destroy itself or any other listener:
     the successor is published in frameCursor before each call, and the destructor advances it when it is the one
     destroyed. There is one cursor per dispatch, as a listener may raise frame events itself or wait. */
 function dispatchFrameEvent(int id, frameeventtype eventType)
-    // Triggers retired by an earlier dispatch go now, unless a dispatch is still in progress. The trigger which
-    // runs this one is not among them: onEvent dispatches only for a pair's current trigger.
-    if frameDispatches == 0
-        destroyRetiredTriggers()
     var slot = frameCursorSlots
     if freeFrameCursorCount > 0
         freeFrameCursorCount--
@@ -200,7 +154,6 @@ function dispatchFrameEvent(int id, frameeventtype eventType)
     else
         frameCursorSlots++
     frameCursorUsed[slot] = true
-    frameDispatches++
     var listener = keyedMapGet(FRAME_MAP, id)
     while listener != null
         frameCursor[slot] = listener.next
@@ -211,7 +164,6 @@ function dispatchFrameEvent(int id, frameeventtype eventType)
     frameCursorUsed[slot] = false
     freeFrameCursors[freeFrameCursorCount] = slot
     freeFrameCursorCount++
-    frameDispatches--
 
 
 /* FRAME HANDLE LISTENER */
@@ -244,20 +196,15 @@ public abstract class FrameHandleListener
             next.prev = prev
         next = null
         prev = null
-        unlinkEvent(id, eventType)
 
     /** Links a listener to a frame id and event without a frame, for tests: the frame event itself is not
-        registered. Returns whether the pair needed a new trigger. */
+        registered. Returns whether the pair still had to be registered. */
     protected static function linkForTest(thistype listener, int frameId, frameeventtype eventType) returns bool
-        return linkListener(listener, frameId, eventType) != null
+        return linkListener(listener, frameId, eventType)
 
     /** Runs the listeners of a frame id for an event, as a fire of its trigger does. For tests. */
     protected static function dispatchForTest(int frameId, frameeventtype eventType)
         dispatchFrameEvent(frameId, eventType)
-
-    /** How many retired triggers wait for no frame event to be running. For tests. */
-    protected static function retiredTriggersForTest() returns int
-        return retiredTriggerCount
 
 class ReleaseKeyboardFocusFrameListener extends FrameHandleListener
 

@@ -24,16 +24,13 @@ class TestFrameListener extends FrameHandleListener
     static function dispatch(int frameId, frameeventtype eventType)
         dispatchForTest(frameId, eventType)
 
-    static function retired() returns int
-        return retiredTriggersForTest()
-
 function newTestListener(int which, int destroyWhich, int frameId) returns TestFrameListener
     let l = new TestFrameListener(which, destroyWhich)
     TestFrameListener.made[which] = l
     TestFrameListener.link(l, frameId, FRAMEEVENT_CONTROL_CLICK)
     return l
 
-@Test function aFrameEventIsRegisteredOncePerTrigger()
+@Test function aFrameEventIsRegisteredOnceOnTheSharedTrigger()
     let first = new TestFrameListener(0, -1)
     TestFrameListener.link(first, 910001, FRAMEEVENT_CONTROL_CLICK).assertTrue()
     let second = new TestFrameListener(1, -1)
@@ -48,39 +45,43 @@ function newTestListener(int which, int destroyWhich, int frameId) returns TestF
     destroy other
     destroy otherFrame
 
-@Test function aPairWhoseListenersWentAwayIsRegisteredAgainOnAFreshTrigger()
+@Test function aPairWhoseListenersWentAwayStaysRegistered()
     let first = new TestFrameListener(0, -1)
     TestFrameListener.link(first, 910005, FRAMEEVENT_CONTROL_CLICK).assertTrue()
     destroy first
-    // The old trigger is retired and destroyed, so a new frame reusing the handle id gets its event registered.
-    TestFrameListener.retired().assertEquals(0)
-    let reused = new TestFrameListener(1, -1)
-    TestFrameListener.link(reused, 910005, FRAMEEVENT_CONTROL_CLICK).assertTrue()
-    destroy reused
-
-@Test function aTriggerRetiredDuringItsDispatchIsDestroyedAfterwards()
+    // WC3 has no per-event unregister: the pair is still on the shared trigger, and registering it again would run
+    // every handler of the frame twice per click.
+    let again = new TestFrameListener(1, -1)
+    TestFrameListener.link(again, 910005, FRAMEEVENT_CONTROL_CLICK).assertFalse()
     TestFrameListener.runs = 0
-    // The only listener of the pair destroys itself while its trigger runs.
-    newTestListener(0, 0, 910006)
-    TestFrameListener.dispatch(910006, FRAMEEVENT_CONTROL_CLICK)
+    TestFrameListener.dispatch(910005, FRAMEEVENT_CONTROL_CLICK)
     TestFrameListener.runs.assertEquals(1)
-    TestFrameListener.retired().assertEquals(1)
-    let next = new TestFrameListener(1, -1)
-    TestFrameListener.link(next, 910006, FRAMEEVENT_CONTROL_CLICK).assertTrue()
-    TestFrameListener.retired().assertEquals(0)
-    destroy next
+    destroy again
 
-@Test function aRetiredTriggerIsDestroyedByTheNextFrameEventWithoutAnyListenerChange()
+class OpensNextFrameListener extends FrameHandleListener
+    static TestFrameListener opened = null
+
+    override function onEvent()
+        opened = new TestFrameListener(7, -1)
+        TestFrameListener.link(opened, 910010, FRAMEEVENT_CONTROL_CLICK)
+
+    static function link(OpensNextFrameListener listener, int frameId, frameeventtype eventType) returns bool
+        return linkForTest(listener, frameId, eventType)
+
+/** A dialog's button opening the next dialog: the new button's listener is linked while the first click is still
+    being dispatched, and its own click must reach it. Before the shared trigger, such a button never got its real
+    clicks. */
+@Test function aListenerLinkedDuringADispatchGetsItsOwnFrameEvents()
     TestFrameListener.runs = 0
-    newTestListener(0, 0, 910007)
-    newTestListener(1, -1, 910008)
-    TestFrameListener.dispatch(910007, FRAMEEVENT_CONTROL_CLICK)
-    TestFrameListener.retired().assertEquals(1)
-    // Any later frame event, with no listener added or removed, drains it.
-    TestFrameListener.dispatch(910008, FRAMEEVENT_CONTROL_CLICK)
-    TestFrameListener.retired().assertEquals(0)
-    TestFrameListener.runs.assertEquals(2)
-    destroy TestFrameListener.made[1]
+    let opener = new OpensNextFrameListener()
+    OpensNextFrameListener.link(opener, 910009, FRAMEEVENT_CONTROL_CLICK).assertTrue()
+    TestFrameListener.dispatch(910009, FRAMEEVENT_CONTROL_CLICK)
+    (OpensNextFrameListener.opened != null).assertTrue()
+    TestFrameListener.dispatch(910010, FRAMEEVENT_CONTROL_CLICK)
+    TestFrameListener.runs.assertEquals(1)
+    TestFrameListener.order[0].assertEquals(7)
+    destroy OpensNextFrameListener.opened
+    destroy opener
 
 @Test function frameDispatchSurvivesAListenerDestroyingItsNextSibling()
     TestFrameListener.runs = 0
