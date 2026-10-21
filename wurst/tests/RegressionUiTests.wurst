@@ -1,0 +1,159 @@
+package RegressionUiTests
+import ClosureFrames
+import ClosureKeyPresses
+import ClosureTimers
+import Framehandle
+import RegressionChecks
+
+var frameInputs = 0
+var firstFrameCalls = 0
+var secondFrameCalls = 0
+var removedFrameCalls = 0
+var mutationInputs = 0
+var mutationTailCalls = 0
+var wrongFrameEvents = 0
+int array keyInputs
+int array playerKeyCalls
+var globalKeyCalls = 0
+var mutationKeyInputs = 0
+var mutationKeyTailCalls = 0
+var removedKeyCalls = 0
+var keyVictimRemoved = false
+var childrenOpened = false
+var firstChildInputs = 0
+var secondChildInputs = 0
+var firstChildCalls = 0
+var secondChildCalls = 0
+
+class RemovingFrame extends FrameHandleListener
+	FrameHandleListener victim
+	construct(FrameHandleListener victim)
+		this.victim = victim
+	override function onEvent()
+		destroy victim
+		destroy this
+
+function testButton(string name, string text, real y) returns framehandle
+	return createGlueTextButton(name, GAME_UI, "ScriptDialogButton", 0)
+		..setAbsPoint(FRAMEPOINT_CENTER, vec2(0.4, y))
+		..setSize(0.28, 0.04)
+		..setText(text)
+
+// PR #514's actual failure shape: children must be CREATED inside a real parent click callback.
+// BlzFrameClick passed on the broken implementation and cannot substitute for these user clicks.
+function openChildButtons()
+	if childrenOpened
+		return
+	childrenOpened = true
+	let first = testButton("StdlibFirstChildRegression", "4. Click first new button twice", 0.24)
+	let second = testButton("StdlibSecondChildRegression", "5. Click second new button twice", 0.18)
+	first.onClick() ->
+		firstChildCalls++
+	second.onClick() ->
+		secondChildCalls++
+	let firstOracle = CreateTrigger()
+	firstOracle.registerFrameEvent(first, FRAMEEVENT_CONTROL_CLICK)
+	firstOracle.addAction() ->
+		firstChildInputs++
+		doAfter(0.) ->
+			regressionCheck(firstChildCalls == firstChildInputs, "first button created during a click receives its real clicks")
+			writeRegressionReport()
+	let secondOracle = CreateTrigger()
+	secondOracle.registerFrameEvent(second, FRAMEEVENT_CONTROL_CLICK)
+	secondOracle.addAction() ->
+		secondChildInputs++
+		doAfter(0.) ->
+			regressionCheck(secondChildCalls == secondChildInputs, "second button created during a click receives its real clicks")
+			writeRegressionReport()
+
+/** Installs persistent interactive fixtures. All construction and registration is synchronized.
+	Separate native triggers count real input events as an oracle, including if the library's shared
+	trigger is accidentally registered more than once. They never invoke a library dispatcher. */
+public function startUiRegressions()
+	testButton("StdlibOpenerRegression", "3. Click to create next dialog", 0.30).onClick(() -> openChildButtons())
+	let dedup = testButton("StdlibDedupRegression", "1. Click: re-added listeners", 0.42)
+	for i = 0 to 2
+		let removed = dedup.onClick() ->
+			removedFrameCalls++
+		destroy removed
+	dedup.onClick() ->
+		firstFrameCalls++
+	dedup.onClick() ->
+		secondFrameCalls++
+	dedup.onMouseEnter() ->
+		if BlzGetTriggerFrameEvent() != FRAMEEVENT_MOUSE_ENTER
+			wrongFrameEvents++
+	let dedupOracle = CreateTrigger()
+	dedupOracle.registerFrameEvent(dedup, FRAMEEVENT_CONTROL_CLICK)
+	dedupOracle.addAction() ->
+		frameInputs++
+		doAfter(0.) ->
+			regressionCheck(firstFrameCalls == frameInputs and secondFrameCalls == frameInputs,
+				"frame re-add and multiple listeners: once each per real click")
+			regressionCheck(removedFrameCalls == 0 and wrongFrameEvents == 0,
+				"frame destroyed listeners and unrelated event types stay silent")
+			writeRegressionReport()
+
+	let mutation = testButton("StdlibMutationRegression", "2. Click: destroy next + self", 0.36)
+	mutation.onClick() ->
+		mutationTailCalls++
+	let victim = mutation.onClick() ->
+		removedFrameCalls++
+	mutation.onClick(new RemovingFrame(victim))
+	let mutationOracle = CreateTrigger()
+	mutationOracle.registerFrameEvent(mutation, FRAMEEVENT_CONTROL_CLICK)
+	mutationOracle.addAction() ->
+		mutationInputs++
+		doAfter(0.) ->
+			regressionCheck(mutationTailCalls == mutationInputs and removedFrameCalls == 0,
+				"frame dispatch skips destroyed successor and reaches tail")
+			regressionCheck(firstFrameCalls == frameInputs and secondFrameCalls == frameInputs,
+				"frame clicks remain isolated between frames")
+			writeRegressionReport()
+
+	for i = 0 to 1
+		onKeyPress(players[i], OSKEY_F6) ->
+			playerKeyCalls[i]++
+	onKeyPress(OSKEY_F6) ->
+		globalKeyCalls++
+	let keyOracle = CreateTrigger()
+	for i = 0 to 1
+		keyOracle.registerPlayerKeyPress(players[i], OSKEY_F6, OSKEY_META.NONE, true)
+	keyOracle.addAction() ->
+		keyInputs[GetTriggerPlayer().getId()]++
+		doAfter(0.) ->
+			regressionCheck(playerKeyCalls[0] == keyInputs[0] and playerKeyCalls[1] == keyInputs[1],
+				"F6 player-specific listeners fire only for their player")
+			regressionCheck(globalKeyCalls == keyInputs[0] + keyInputs[1],
+				"F6 global listener fires once for either player")
+			writeRegressionReport()
+
+	onKeyPress(OSKEY_F7) ->
+		mutationKeyTailCalls++
+	let keyVictim = onKeyPress(OSKEY_F7) ->
+		removedKeyCalls++
+	onKeyPress(OSKEY_F7) ->
+		if not keyVictimRemoved
+			keyVictimRemoved = true
+			destroy keyVictim
+	let mutationKeyOracle = CreateTrigger()
+	for i = 0 to 1
+		mutationKeyOracle.registerPlayerKeyPress(players[i], OSKEY_F7, OSKEY_META.NONE, true)
+	mutationKeyOracle.addAction() ->
+		mutationKeyInputs++
+		doAfter(0.) ->
+			regressionCheck(mutationKeyTailCalls == mutationKeyInputs and removedKeyCalls == 0,
+				"F7 dispatch skips destroyed successor and reaches tail")
+			writeRegressionReport()
+	regressionNote("PENDING UI: click buttons 1 and 2 twice, click 3, then click newly created buttons 4 and 5 twice.")
+	regressionNote("PENDING KEYS: players 0 and 1 each press F6 twice; press F7 twice.")
+	regressionNote("Use two human clients. Then type -stdlibregressionfinish on either client.")
+
+public function finishUiRegressions()
+	regressionCheck(frameInputs >= 2 and mutationInputs >= 2, "both real frame click scenarios completed twice")
+	regressionCheck(childrenOpened and firstChildInputs >= 2 and secondChildInputs >= 2
+		and firstChildCalls == firstChildInputs and secondChildCalls == secondChildInputs,
+		"dialog opens dialog: both new buttons received multiple real clicks")
+	regressionCheck(keyInputs[0] >= 2 and keyInputs[1] >= 2, "two-player F6 isolation exercised in both directions")
+	regressionCheck(mutationKeyInputs >= 2, "key destruction exercised across multiple inputs")
+	regressionSummary("INTERACTIVE COMPLETE; compare reports from both clients")

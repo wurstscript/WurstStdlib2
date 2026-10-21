@@ -10,6 +10,7 @@ backwards compatibility matter more than in app code.
 - Prefer simple, maintainable code. Fix root causes; avoid brittle workarounds, duplicated branches, and special-case patches.
 - Keep packages focused and below ~500 lines; split by feature, responsibility, or data type.
 - Treat the public API as a contract. Avoid breaking signatures, names, or behavior of exported members without good reason.
+- Every behavior change, including bug fixes, optimizations, and refactors that affect runtime behavior, must satisfy the [behavior-change test gate](CONTRIBUTING.md#behavior-change-test-gate). Add and run an end-to-end regression test before shipping; if the required runtime is unavailable, report the change as unverified and do not mark it ready to merge.
 - When unsure about Wurst syntax or local APIs, inspect nearby working code before guessing; for language details read https://wurstlang.org/manual.html on demand.
 - Keep tests narrow. Add/update tests for behavior, parsing, compiletime generation, or shared utilities.
 - Avoid broad refactors unless they directly reduce risk or complexity for the requested change.

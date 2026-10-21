@@ -1,0 +1,25 @@
+package StdlibRegressionTests
+import RegressionChecks
+import RegressionArrayListTests
+import RegressionGameplayTests
+import RegressionTerrainTests
+import RegressionUiTests
+import ClosureTimers
+
+/* Import into a disposable test map. Automatic checks start after init. Interactive checks
+	remain PENDING until real two-player key input and frame clicks are supplied. See
+	tests/README.md for setup, before/after procedure and the report location. */
+init
+	doAfter(1.) ->
+		regressionNote("Stdlib regressions; build=" + REGRESSION_BUILD + "; backend=" + (isLua ? "Lua" : "Jass"))
+		regressionGuard("ArrayList bounds", () -> runArrayListRegressions())
+		regressionGuard("gameplay regressions", () -> runGameplayRegressions())
+		regressionGuard("terrain normal", () -> runTerrainNormalRegression())
+		regressionGuard("UI fixtures", () -> startUiRegressions())
+		doAfter(1.5) ->
+			checkRegressionAsyncCompletion()
+			regressionSummary("AUTOMATIC COMPLETE; INTERACTIVE PENDING")
+	let command = CreateTrigger()
+	for i = 0 to bj_MAX_PLAYERS - 1
+		command.registerPlayerChatEvent(players[i], "-stdlibregressionfinish", true)
+	command.addAction(() -> finishUiRegressions())

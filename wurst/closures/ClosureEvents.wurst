@@ -238,6 +238,9 @@ public abstract class EventListener
 
 	static private function addSpellInternal(unit u, int abilId, OnCastListener listener) returns OnCastListener
 		if u != null
+			// Index init-created units before attaching a listener; preserve the rejection for custom indexers.
+			if u.getIndex() <= 0
+				u.toUnitIndex()
 			let index = u.getIndex()
 			if index <= 0
 				// Every unit without an index would share slot 0, so the listener would answer the casts of all of them.

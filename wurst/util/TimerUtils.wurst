@@ -175,6 +175,7 @@ public module TimedLoop
 		registered until the next tick sweeps it out, while an instance that was
 		stopped before it ever started was never registered at all. */
 	private bool timedLoopRegistered = false
+	private int timedLoopSlot = -1
 
 	abstract function onTimedLoop()
 
@@ -189,15 +190,20 @@ public module TimedLoop
 		while i >= 0
 			let t = instances[i]
 
-			if t.timedLoopState != RUNNING
+			if t == null or t.timedLoopState != RUNNING
 				instanceCount--
-				instances[i] = instances[instanceCount]
-				t.timedLoopRegistered = false
-				if t.timedLoopState == STOPPED_FOR_GOOD
+				let moved = instances[instanceCount]
+				instances[i] = moved
+				if moved != null
+					moved.timedLoopSlot = i
+				instances[instanceCount] = null
+				if t != null
+					t.timedLoopRegistered = false
+					t.timedLoopSlot = -1
+					let destroyStopped = t.timedLoopState == STOPPED_FOR_GOOD
 					t.timedLoopState = PAUSED
-					destroy t
-				else
-					t.timedLoopState = PAUSED
+					if destroyStopped
+						destroy t
 			else
 				t.onTimedLoop()
 			i--
@@ -212,10 +218,8 @@ public module TimedLoop
 		timedLoopState = STOPPED
 
 	/** Stops the periodic update and destroys the object.
-		This is the way to destroy an instance which is running: the object is destroyed on the next tick, once its
-		slot has been swept out. Destroying a running instance directly with `destroy` is unsafe: its slot stays
-		until the next tick, and an object created meanwhile may be given the same id and so inherit that slot.
-		Destroying an instance which was never started, or which has been stopped and swept, is safe. */
+		The object is destroyed on the next tick, once its slot has been swept out.
+		Direct destruction is also safe: it clears the registered slot before the object id can be reused. */
 	function stopTimedLoopAndDestroy()
 		timedLoopState = STOPPED_FOR_GOOD
 
@@ -230,6 +234,7 @@ public module TimedLoop
 			// stale slot behind once the object is stopped or destroyed.
 			return
 		timedLoopRegistered = true
+		timedLoopSlot = instanceCount
 		instances[instanceCount] = this
 		instanceCount++
 		if instanceCount == 1
@@ -241,5 +246,10 @@ public module TimedLoop
 				timedLoopActive = true
 
 	ondestroy
-		if timedLoopState != PAUSED
-			stopTimedLoop()
+		// Leave a tombstone for the sweep, never a reference to a released object id.
+		// Compacting inside a callback could move an already visited object ahead of the cursor.
+		if timedLoopRegistered
+			instances[timedLoopSlot] = null
+			timedLoopRegistered = false
+			timedLoopSlot = -1
+		timedLoopState = PAUSED

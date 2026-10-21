@@ -1,0 +1,45 @@
+package RegressionChecks
+import ArrayList
+import Execute
+import ErrorHandling
+
+// The preparation script stamps this in disposable copies and records the full source manifest.
+public constant REGRESSION_BUILD = "working-tree"
+
+let lines = new ArrayList<string>()
+var passed = 0
+var failed = 0
+var asyncCompleted = 0
+
+public function regressionAsyncComplete()
+	asyncCompleted++
+
+public function checkRegressionAsyncCompletion()
+	regressionCheck(asyncCompleted == 3, "all three asynchronous test bodies completed")
+
+public function regressionNote(string message)
+	print(message)
+	lines.add(message)
+
+public function regressionCheck(bool condition, string label)
+	if condition
+		passed++
+		regressionNote("PASS " + label)
+	else
+		failed++
+		regressionNote("FAIL " + label)
+
+public function regressionGuard(string label, ForForceCallback action)
+	if not try(action)
+		regressionCheck(false, label + " crashed: " + lastError)
+
+public function writeRegressionReport()
+	PreloadGenClear()
+	PreloadGenStart()
+	for i = 0 to lines.size() - 1
+		Preload(lines.get(i))
+	PreloadGenEnd("WurstStdlibRegressions.txt")
+
+public function regressionSummary(string phase)
+	regressionNote(phase + ": " + passed + " passed, " + failed + " failed")
+	writeRegressionReport()
