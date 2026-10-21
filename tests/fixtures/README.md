@@ -1,0 +1,11 @@
+# Regression base map
+
+`RegressionBase.w3x` is the 2018 Wurst Team example map (16,582 bytes), retained as
+a tracked input for the disposable regression projects. It contains the base
+terrain, player setup, and a sample hero; the build injects the current library and
+opt-in regression entry point. The Jass and Lua native results in this PR used
+this same base map.
+
+The preparer copies it to `ExampleMap.w3x` inside each disposable project and
+records its SHA-256 in `source-manifest.json`. Keep this fixture independent of
+generated test-map outputs and local root map files.

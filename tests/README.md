@@ -15,6 +15,9 @@ already includes the entry point. Existing consuming maps do not import it impli
 
 From the repository root, prepare separate copies for both backends:
 
+The tracked `tests/fixtures/RegressionBase.w3x` supplies the base map, so these
+commands work in a fresh checkout without an ignored root `ExampleMap.w3x`.
+
 ```powershell
 rtk proxy python tests/prepare_regressions.py --backend jass --name after
 rtk proxy python tests/prepare_regressions.py --backend lua --name after
@@ -31,6 +34,9 @@ Keep the generated map, compiler version, Warcraft III build, backend, source re
 and run log together. The `backend=` line in the runtime report must match the build
 being tested. The report's `build=` must match `source-manifest.json` in that project.
 A launcher message or successful compilation does not prove a game run.
+
+Run `python -m unittest discover -s tests -p "test_prepare_regressions.py"` to check
+preparation from a clean input tree, backend selection, and missing-input handling.
 
 Automatic checks start one second into the game and finish approximately 1.5 seconds
 later. The report is printed and written to

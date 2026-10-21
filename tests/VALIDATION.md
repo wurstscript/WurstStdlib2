@@ -9,6 +9,11 @@ them. Final acceptance still has the explicit gaps below.
 - Repository typecheck succeeds; full interpreter suite: **748/748 passed**.
 - Disposable Jass and Lua maps compile, including native event, timer, terrain,
   bounds and interactive fixtures.
+- Review follow-up: the base map is now tracked at
+  `tests/fixtures/RegressionBase.w3x`. Preparation succeeds for both backends from
+  a tracked-files-only export with no root `ExampleMap.w3x`. All three preparer CLI
+  tests pass; the same tests fail against the old preparer (four assertion
+  failures), reproducing the fresh-checkout issue.
 - Shared frame/key bridge guard and its seven self-tests pass. It rejects
   per-registration trigger creation, extra bridges/actions and native-condition
   dispatch. Input-counting oracle triggers exist only in the opt-in test fixture.
