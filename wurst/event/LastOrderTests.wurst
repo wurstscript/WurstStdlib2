@@ -5,6 +5,32 @@ import UnitIndexer
 function newTestUnit() returns unit
 	return createUnit(players[0], 'hfoo', ZERO2, angle(0))
 
+// Importing LastOrder must leave the canonical Unit extension unambiguous.
+@Test function abortOrderRemainsAvailableWithLastOrder()
+	let u = newTestUnit()
+	u.abortOrder().assertTrue()
+	u.isPaused().assertFalse()
+	u.pause()
+	u.abortOrder().assertFalse()
+	u.isPaused().assertTrue()
+	u.remove()
+
+@Test function recordedHistoryIncludesAtMostThreeOrders()
+	let u = newTestUnit()
+	u.toUnitIndex()
+	for i = 1 to 10
+		new Order(u, 851986, OrderType.POINT, null, vec2(i.toReal(), 0.))
+	var entry = u.getLastOrder()
+	var count = 0
+	while entry != null
+		entry.targetPosition.x.assertEquals((10 - count).toReal())
+		count++
+		entry = entry.prev
+	count.assertEquals(3)
+	u.clearLastOrders()
+	u.deindex()
+	u.remove()
+
 @Test function unindexedUnitsDoNotShareAnOrderSlot()
 	let a = newTestUnit()
 	let b = newTestUnit()

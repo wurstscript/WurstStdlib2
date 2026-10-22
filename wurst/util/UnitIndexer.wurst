@@ -180,16 +180,23 @@ public function onUnitIndex(code func)
 	onIndexList.add(func)
 
 /**  Deindexes a unit.
-	Returns whether the unit was originally indexed. */
+	Returns false if the unit is unindexed or a deindex hook is already releasing it. */
 public function unit.deindex() returns bool
 	if this.getStoredIndex() == 0
 		return false
 	else
-		destroy this.toUnitIndex()
-		return true
+		return this.toUnitIndex().deindex()
 
 public class UnitIndex
 	protected unit _unit
+	private bool deindexing = false
+
+	/** Deindexes the unit, returning false if a deindex hook is already releasing it. */
+	function deindex() returns bool
+		if deindexing
+			return false
+		destroy this
+		return true
 
 	function getUnit() returns unit
 		return this._unit
@@ -205,6 +212,7 @@ public class UnitIndex
 		popUnit()
 
 	ondestroy
+		deindexing = true
 		pushUnit(this._unit)
 		onDeindexList.run()
 		popUnit()

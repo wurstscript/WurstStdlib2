@@ -1,0 +1,169 @@
+{
+  "warcraftVersion": "3.0.1.24371",
+  "gameSpeed": 1,
+  "clients": 1,
+  "baseline": "fd6dcff3ac7f6a5cf57fa0a255718b4dae142642",
+  "note": "Fresh background native runs. Each before case replaces exactly one production package; consumer tests are identical. Fixed runs have no uncaught errors and exactly eleven expected caught bounds errors. Process cleanup after the authenticated terminal verdict used the runner fallback.",
+  "runs": [
+    {
+      "variant": "list",
+      "backend": "lua",
+      "baseline_ref": "fd6dcff",
+      "baseline_file": "list",
+      "sourceBuild": "d45dd7f764777b27",
+      "mapSha256": "d149b52311d60c435846458ba576fa26fd95e894f6e1e740d1511e83169b580d",
+      "runId": "audit-2026-10-22T16-52-08-188Z",
+      "verdict": "FAIL",
+      "failure": null,
+      "payload": {
+        "suite": "audit",
+        "verdict": "FAIL",
+        "asserts": 59,
+        "failed": 9,
+        "failedIds": "LinkedList operation 0 index 3 preserves elements,LinkedList operation 0 index 3 preserves links and valid append,LinkedList operation 1 index 3 returns default,LinkedList operation 2 index -1 preserves size,LinkedList operation 2 index 3 returns default,LinkedList operation 2 index 3 preserves size,LinkedList operation 2 index 2 preserves size,LinkedList operation 3 index -1 preserves size",
+        "verdictProblems": "asserts-failed",
+        "eventKindsDropped": 0,
+        "metricsDropped": 0,
+        "errors": 0,
+        "caughtErrors": 11,
+        "errorMessages": [],
+        "metrics": {},
+        "events": {}
+      },
+      "runtimeErrors": {
+        "count": 0,
+        "caught": 11,
+        "messages": []
+      },
+      "shutdown": "forced"
+    },
+    {
+      "variant": "index",
+      "backend": "lua",
+      "baseline_ref": "fd6dcff",
+      "baseline_file": "index",
+      "sourceBuild": "2a0d60c295fa0460",
+      "mapSha256": "19b6bb477323115cb6564916b13aeae7f0161328a468d026bbed737ac378b74d",
+      "runId": "audit-2026-10-22T16-52-59-975Z",
+      "verdict": "FAIL",
+      "failure": null,
+      "payload": {
+        "suite": "audit",
+        "verdict": "FAIL",
+        "asserts": 70,
+        "failed": 3,
+        "failedIds": "recursive deindex is rejected,reentrant deindex crashed: E46,each unit deindex hook runs once",
+        "verdictProblems": "asserts-failed,caught-errors-12-expected-11",
+        "eventKindsDropped": 0,
+        "metricsDropped": 0,
+        "errors": 0,
+        "caughtErrors": 12,
+        "errorMessages": [],
+        "metrics": {},
+        "events": {}
+      },
+      "runtimeErrors": {
+        "count": 0,
+        "caught": 12,
+        "messages": []
+      },
+      "shutdown": "forced"
+    },
+    {
+      "variant": "history",
+      "backend": "lua",
+      "baseline_ref": "fd6dcff",
+      "baseline_file": "history",
+      "sourceBuild": "7a0dd4ab5a520911",
+      "mapSha256": "5404c1da29de0ca5552b7b900cc4672903569eeee46f5dcf2055b6704ef604f6",
+      "runId": "audit-2026-10-22T16-53-32-878Z",
+      "verdict": "FAIL",
+      "failure": null,
+      "payload": {
+        "suite": "audit",
+        "verdict": "FAIL",
+        "asserts": 69,
+        "failed": 2,
+        "failedIds": "real order history retains exactly three,abort leaves unpaused unit unpaused",
+        "verdictProblems": "asserts-failed",
+        "eventKindsDropped": 0,
+        "metricsDropped": 0,
+        "errors": 0,
+        "caughtErrors": 11,
+        "errorMessages": [],
+        "metrics": {},
+        "events": {}
+      },
+      "runtimeErrors": {
+        "count": 0,
+        "caught": 11,
+        "messages": []
+      },
+      "shutdown": "forced"
+    },
+    {
+      "variant": "fixed",
+      "backend": "lua",
+      "baseline_ref": null,
+      "baseline_file": null,
+      "sourceBuild": "2f8da48011d9042c",
+      "mapSha256": "4ee65703c687da1f7c3700be307614cd2f53c5d43b10291944dc7a383ff21351",
+      "runId": "audit-2026-10-22T16-54-07-755Z",
+      "verdict": "PASS",
+      "failure": null,
+      "payload": {
+        "suite": "audit",
+        "verdict": "PASS",
+        "asserts": 69,
+        "failed": 0,
+        "failedIds": "",
+        "verdictProblems": "",
+        "eventKindsDropped": 0,
+        "metricsDropped": 0,
+        "errors": 0,
+        "caughtErrors": 11,
+        "errorMessages": [],
+        "metrics": {},
+        "events": {}
+      },
+      "runtimeErrors": {
+        "count": 0,
+        "caught": 11,
+        "messages": []
+      },
+      "shutdown": "forced"
+    },
+    {
+      "variant": "fixed",
+      "backend": "jass",
+      "baseline_ref": null,
+      "baseline_file": null,
+      "sourceBuild": "19883326fe435202",
+      "mapSha256": "abcbfa9c4da91ea70f45b03d1576094916c8f9fe86617cc9ee6cdd63f402e316",
+      "runId": "audit-2026-10-22T16-54-41-366Z",
+      "verdict": "PASS",
+      "failure": null,
+      "payload": {
+        "suite": "audit",
+        "verdict": "PASS",
+        "asserts": 63,
+        "failed": 0,
+        "failedIds": "",
+        "verdictProblems": "",
+        "eventKindsDropped": 0,
+        "metricsDropped": 0,
+        "errors": 0,
+        "caughtErrors": 11,
+        "errorMessages": [],
+        "metrics": {},
+        "events": {}
+      },
+      "runtimeErrors": {
+        "count": 0,
+        "caught": 11,
+        "messages": []
+      },
+      "shutdown": "forced"
+    }
+  ]
+}

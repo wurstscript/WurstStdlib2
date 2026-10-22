@@ -69,7 +69,8 @@ public class LinkedList<T>
 	/** Returns the element at the specified index.
 		Errors if the index is outside [0, size). */
 	function get(int index) returns T
-		return getEntry(index).elem
+		let entry = getEntry(index)
+		return entry == null ? null : entry.elem
 
 	/** Returns the index of the specified element or -1 is it doesn't exist */
 	function indexOf(T t) returns int
@@ -85,7 +86,9 @@ public class LinkedList<T>
 	/** Sets the element at the specified index.
 		Errors if the index is outside [0, size). */
 	function set(int index, T elem)
-		getEntry(index).elem = elem
+		let entry = getEntry(index)
+		if entry != null
+			entry.elem = elem
 
 	/** Adds an element to the end of the list (top of stack, beginning of queue) */
 	function push(T elem)
@@ -141,6 +144,8 @@ public class LinkedList<T>
 		Errors if the index is outside [0, size). */
 	function removeAt(int index) returns T
 		let entry = getEntry(index)
+		if entry == null
+			return null
 		entry.prev.next = entry.next
 		entry.next.prev = entry.prev
 		let res = entry.elem
@@ -294,6 +299,7 @@ public class LinkedList<T>
 	function addAt(T elem, int index)
 		if index < 0 or index > size
 			error("LinkedList: Index out of bounds: " + index)
+			return
 		let entryAtIndex = getEntryUnchecked(index)
 		let entry = new LLEntry<T>(elem, entryAtIndex.prev, entryAtIndex)
 		entryAtIndex.prev.next = entry
@@ -444,6 +450,7 @@ public class LinkedList<T>
 	private function getEntry(int index) returns LLEntry<T>
 		if index < 0 or index >= size
 			error("LinkedList: Index out of bounds: " + index)
+			return null
 		return getEntryUnchecked(index)
 
 	/** Walks to the entry at the given index without validating it.
