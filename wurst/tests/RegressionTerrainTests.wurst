@@ -1,0 +1,24 @@
+package RegressionTerrainTests
+import TerrainUtils
+import ClosureTimers
+import MapBounds
+import RegressionChecks
+
+/** Run only in a disposable map: the fixture temporarily deforms terrain.
+	Heights are used for diagnostics only, never to drive synchronized gameplay. */
+public function runTerrainNormalRegression()
+	let center = boundMin + (boundMax - boundMin) * 0.5
+	let sample = center.add(0., 128.)
+	let deformation = TerrainDeformCrater(center.x, center.y, 256., 128., 10000, false)
+	doAfter(0.5) ->
+		let radius = 32.
+		let dx = vec3(2. * radius, 0., sample.add(radius, 0.).getTerrainZ() - sample.add(-radius, 0.).getTerrainZ())
+		let dy = vec3(0., 2. * radius, sample.add(0., radius).getTerrainZ() - sample.add(0., -radius).getTerrainZ())
+		let expected = dx.cross(dy)
+		let actual = sample.getTerrainNormal(radius)
+		regressionCheck((expected.y - expected.x).abs() > 1., "terrain fixture distinguishes X and Y slopes")
+		regressionCheck((actual.x - expected.x).abs() < 0.01
+			and (actual.y - expected.y).abs() < 0.01 and (actual.z - expected.z).abs() < 0.01,
+			"terrain normal agrees with cross product of real X/Y terrain tangents")
+		TerrainDeformStop(deformation, 0)
+		regressionAsyncComplete()

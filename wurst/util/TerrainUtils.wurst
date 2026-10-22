@@ -39,7 +39,9 @@ public function vec2.toTileCenter() returns vec2
 
 /** Returns the (not normalised) terrain-normal at the given point */
 public function vec2.getTerrainNormal(real sampleRadius) returns vec3
-	return 2 * sampleRadius * vec3((this.add(-sampleRadius, 0).getTerrainZ() - this.add(sampleRadius, 0).getTerrainZ()), (this.add(-sampleRadius, 0).getTerrainZ() - this.add(sampleRadius, 0).getTerrainZ()), 2 * sampleRadius)
+	let xSlope = this.add(-sampleRadius, 0).getTerrainZ() - this.add(sampleRadius, 0).getTerrainZ()
+	let ySlope = this.add(0, -sampleRadius).getTerrainZ() - this.add(0, sampleRadius).getTerrainZ()
+	return 2 * sampleRadius * vec3(xSlope, ySlope, 2 * sampleRadius)
 
 public function vec2.isTerrainDeepWater() returns boolean
 	return not this.isTerrainPathable(PATHING_TYPE_FLOATABILITY) and this.isTerrainPathable(PATHING_TYPE_WALKABILITY)

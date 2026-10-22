@@ -1,0 +1,53 @@
+package RegressionArrayListTests
+import ArrayList
+import Execute
+import ErrorHandling
+import RegressionChecks
+
+// A dedicated specialization makes these two fresh lists adjacent in their shared store.
+class BoundsValue
+	int value
+	construct(int value)
+		this.value = value
+
+function checkOperation(int operation, int index)
+	let first = new ArrayList<BoundsValue>(1)
+	let second = new ArrayList<BoundsValue>(1)
+	let a = new BoundsValue(11)
+	let b = new BoundsValue(22)
+	first.add(a)
+	second.add(b)
+	let label = "ArrayList operation " + operation + " index " + index
+	// Jass ends the child thread; Lua error() returns. Both must leave both lists intact.
+	try() ->
+		switch operation
+			case 0
+				first.set(index, a)
+			case 1
+				let result = first.get(index)
+				regressionCheck(result == null, label + " returns default")
+			case 2
+				let result = first.removeAtOrdered(index)
+				regressionCheck(result == null, label + " returns default")
+			case 3
+				let result = first.removeAtUnordered(index)
+				regressionCheck(result == null, label + " returns default")
+			case 4
+				first.addAt(a, index)
+			case 5
+				first.truncate(index)
+	regressionCheck(lastError != "", label + " reports an error")
+	regressionCheck(first.size() == 1 and first.get(0) == a, label + " preserves source")
+	regressionCheck(second.size() == 1 and second.get(0) == b, label + " preserves neighbour")
+	destroy second
+	destroy first
+	destroy b
+	destroy a
+
+public function runArrayListRegressions()
+	for operation = 0 to 5
+		checkOperation(operation, -1)
+		checkOperation(operation, 2)
+	// index == size is invalid for set/get/removal, but valid for addAt/truncate.
+	for operation = 0 to 3
+		checkOperation(operation, 1)

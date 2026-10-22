@@ -1,0 +1,156 @@
+package RegressionIndexerPolicy
+import ClosureEvents
+import ClosureTimers
+import UnitIndexer
+import UnitIndexer_config
+import UnitIds
+import AbilityIds
+import Orders
+import RegressionChecks
+import ArrayList
+
+unit excludedCaster = null
+OnCastListener excludedListener = null
+var excludedCalls = 0
+var excludedIndexHooks = 0
+var indexHooks = 0
+unit recycledCaster = null
+OnCastListener recycledListener = null
+var recycledCalls = 0
+var castsCompleted = false
+public unit regressionLateCaster = null
+OnCastListener lateListener = null
+OnCastListener lateTail = null
+var lateCalls = 0
+var lateOrder = 0
+var lateIndexAtRegistration = 0
+unit cancelledCaster = null
+var cancelledIdReused = false
+StartupCastProbe replacement = null
+unit mixedCaster = null
+OnCastListener mixedTail = null
+OnCastListener mixedHead = null
+var mixedOrder = 0
+unit deindexedInitCaster = null
+StartupCastProbe deindexReplacement = null
+var deindexFixtureValid = false
+var deindexIdReused = false
+let deindexFillers = new ArrayList<StartupCastProbe>()
+
+class StartupCastProbe extends OnCastListener
+	int calls = 0
+	override function fire(unit caster)
+		calls++
+
+function countPolicyIndexes()
+	indexHooks++
+	if getIndexingUnit() == regressionExcludedUnit
+		excludedIndexHooks++
+
+public function runIndexerPolicyRegressions()
+	regressionCheck(lateIndexAtRegistration == 0, "cast registration leaves indexing deferred during init")
+	regressionCheck(cancelledIdReused, "cancelled pending listener id was reused by live replacement")
+	regressionCheck(replacement.eventUnit == null, "cancelled pending listener never rebinds reused object id")
+	regressionCheck(EventListener.castMapCasters[cancelledCaster.getIndex()] == null,
+		"cancelled startup registration stays absent after indexing")
+	regressionCheck(deindexFixtureValid, "init deindex cancellation fixture had a live index")
+	regressionCheck(deindexIdReused, "init deindex destroys pending listener before object-id reuse")
+	regressionCheck(deindexReplacement.eventUnit == null, "init deindex never rebinds replacement global listener")
+	regressionCheck(EventListener.castMapCasters[deindexedInitCaster.getIndex()] == null,
+		"deindexed startup registration is not resurrected by the startup pass")
+	regressionCheck(excludedCaster.getIndex() == 0, "init cast registration honors shouldIndex exclusion")
+	regressionCheck(excludedIndexHooks == 0, "excluded init caster fires no index hooks")
+	excludedCaster..addAbility(AbilityIds.berserkerRage1)..setMana(1000.)
+	regressionCheck(excludedCaster.issueImmediateOrderById(Orders.berserk), "excluded caster accepted real spell order")
+	recycledCaster = createUnit(players[0], UnitIds.footman, vec2(256., 0.), angle(0.))
+	regressionCheck(recycledCaster.getIndex() > 0, "runtime recycling fixture was automatically indexed")
+	recycledCaster.deindex()
+	let before = indexHooks
+	recycledListener = EventListener.onCast(recycledCaster, AbilityIds.berserkerRage1) (_) ->
+		recycledCalls++
+	regressionCheck(recycledCaster.getIndex() == 0, "runtime cast registration preserves explicit deindexing")
+	regressionCheck(indexHooks == before, "rejected runtime cast registration fires no index hooks")
+	recycledCaster..addAbility(AbilityIds.berserkerRage1)..setMana(1000.)
+	regressionCheck(recycledCaster.issueImmediateOrderById(Orders.berserk), "deindexed caster accepted real spell order")
+	regressionLateCaster..addAbility(AbilityIds.berserkerRage1)..setMana(1000.)
+	regressionCheck(regressionLateCaster.issueImmediateOrderById(Orders.berserk), "late-hook caster accepted real spell order")
+	cancelledCaster..addAbility(AbilityIds.berserkerRage1)..setMana(1000.)
+	regressionCheck(cancelledCaster.issueImmediateOrderById(Orders.berserk), "cancelled-listener caster accepted real spell order")
+	mixedCaster..addAbility(AbilityIds.berserkerRage1)..setMana(1000.)
+	regressionCheck(mixedCaster.issueImmediateOrderById(Orders.berserk), "mixed-registration caster accepted real spell order")
+	deindexedInitCaster..addAbility(AbilityIds.berserkerRage1)..setMana(1000.)
+	regressionCheck(deindexedInitCaster.issueImmediateOrderById(Orders.berserk), "init-deindexed caster accepted real spell order")
+	doAfter(0.75) ->
+		castsCompleted = true
+
+public function finishIndexerPolicyRegressions()
+	regressionCheck(castsCompleted, "index policy real-cast observation completed")
+	regressionCheck(excludedCalls == 0, "excluded init caster has no spell listener")
+	regressionCheck(recycledCalls == 0, "explicitly deindexed runtime caster has no spell listener")
+	regressionCheck(lateCalls == 2 and lateOrder == 21, "deferred cast listeners retain newest-first real spell dispatch")
+	regressionCheck(mixedOrder == 21, "manual indexing between queued registrations preserves newest-first dispatch")
+	regressionCheck(replacement.calls == 7, "pending-listener cancellation preserves replacement global spell dispatch")
+	regressionCheck(deindexReplacement.calls == 7, "pending deindex cancellation preserves replacement global spell dispatch")
+	destroy excludedListener
+	destroy recycledListener
+	destroy lateListener
+	destroy lateTail
+	destroy replacement
+	destroy mixedHead
+	destroy mixedTail
+	destroy deindexReplacement
+	for i = 0 to deindexFillers.size() - 1
+		destroy deindexFillers.get(i)
+	destroy deindexFillers
+	excludedCaster.remove()
+	recycledCaster.remove()
+	regressionLateCaster.remove()
+	cancelledCaster.remove()
+	mixedCaster.remove()
+	deindexedInitCaster.remove()
+	regressionExcludedUnit = null
+
+init
+	onUnitIndex(function countPolicyIndexes)
+	excludedCaster = createUnit(players[0], UnitIds.footman, vec2(128., 0.), angle(0.))
+	regressionExcludedUnit = excludedCaster
+	excludedListener = EventListener.onCast(excludedCaster, AbilityIds.berserkerRage1) (_) ->
+		excludedCalls++
+	regressionLateCaster = createUnit(players[0], UnitIds.footman, vec2(384., 0.), angle(0.))
+	lateTail = EventListener.onCast(regressionLateCaster, AbilityIds.berserkerRage1) (_) ->
+		lateCalls++
+		lateOrder = lateOrder * 10 + 1
+	lateListener = EventListener.onCast(regressionLateCaster, AbilityIds.berserkerRage1) (_) ->
+		lateCalls++
+		lateOrder = lateOrder * 10 + 2
+	lateIndexAtRegistration = regressionLateCaster.getIndex()
+	cancelledCaster = createUnit(players[0], UnitIds.footman, vec2(512., 0.), angle(0.))
+	let cancelled = EventListener.onCast(cancelledCaster, AbilityIds.berserkerRage1, new StartupCastProbe())
+	let cancelledId = cancelled castTo int
+	destroy cancelled
+	replacement = new StartupCastProbe()
+	cancelledIdReused = replacement castTo int == cancelledId
+	EventListener.onCast(AbilityIds.berserkerRage1, replacement)
+	mixedCaster = createUnit(players[0], UnitIds.footman, vec2(640., 0.), angle(0.))
+	mixedTail = EventListener.onCast(mixedCaster, AbilityIds.berserkerRage1) (_) ->
+		mixedOrder = mixedOrder * 10 + 1
+	mixedCaster.toUnitIndex()
+	mixedHead = EventListener.onCast(mixedCaster, AbilityIds.berserkerRage1) (_) ->
+		mixedOrder = mixedOrder * 10 + 2
+	deindexedInitCaster = createUnit(players[0], UnitIds.footman, vec2(768., 0.), angle(0.))
+	let pendingDeindex = EventListener.onCast(deindexedInitCaster, AbilityIds.berserkerRage1, new StartupCastProbe())
+	let pendingDeindexId = pendingDeindex castTo int
+	deindexedInitCaster.toUnitIndex()
+	deindexFixtureValid = deindexedInitCaster.deindex()
+	// Deindexing also releases the UnitIndex object on Lua. Retain intervening allocations
+	// until the listener id is reused; do not assume it is the very next free id.
+	while deindexReplacement == null and deindexFillers.size() < 8
+		let candidate = new StartupCastProbe()
+		if candidate castTo int == pendingDeindexId
+			deindexReplacement = candidate
+		else
+			deindexFillers.add(candidate)
+	if deindexReplacement == null
+		deindexReplacement = new StartupCastProbe()
+	deindexIdReused = deindexReplacement castTo int == pendingDeindexId
+	EventListener.onCast(AbilityIds.berserkerRage1, deindexReplacement)

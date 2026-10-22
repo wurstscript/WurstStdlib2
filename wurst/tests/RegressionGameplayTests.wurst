@@ -1,0 +1,181 @@
+package RegressionGameplayTests
+import ClosureEvents
+import ClosureTimers
+import TimerUtils
+import UnitIndexer
+import RegressionChecks
+import UnitIds
+import AbilityIds
+import Orders
+
+var eventTailCalls = 0
+var removedEventCalls = 0
+var spellTailCalls = 0
+var removedSpellCalls = 0
+
+class RemovingEvent extends EventListener
+	EventListener victim
+	unit target
+	construct(unit target, EventListener victim)
+		this.target = target
+		this.victim = victim
+	override function onEvent()
+		if GetTriggerUnit() == target
+			destroy victim
+			destroy this
+
+class RemovingSpell extends OnCastListener
+	OnCastListener victim
+	construct(OnCastListener victim)
+		this.victim = victim
+	override function fire(unit caster)
+		destroy victim
+		destroy this
+
+function testEventRemoval(bool perUnit)
+	let u = createUnit(players[0], UnitIds.footman, vec2(0., 0.), angle(0.))
+	u.toUnitIndex()
+	eventTailCalls = 0
+	removedEventCalls = 0
+	EventListener tail
+	EventListener victim
+	EventListener _remover
+	if perUnit
+		tail = EventListener.add(u, EVENT_PLAYER_UNIT_ISSUED_ORDER) ->
+			eventTailCalls++
+		victim = EventListener.add(u, EVENT_PLAYER_UNIT_ISSUED_ORDER) ->
+			removedEventCalls++
+		_remover = EventListener.add(u, EVENT_PLAYER_UNIT_ISSUED_ORDER, new RemovingEvent(u, victim))
+	else
+		tail = EventListener.add(EVENT_PLAYER_UNIT_ISSUED_ORDER) ->
+			if GetTriggerUnit() == u
+				eventTailCalls++
+		victim = EventListener.add(EVENT_PLAYER_UNIT_ISSUED_ORDER) ->
+			if GetTriggerUnit() == u
+				removedEventCalls++
+		_remover = EventListener.add(EVENT_PLAYER_UNIT_ISSUED_ORDER, new RemovingEvent(u, victim))
+	// Real native event delivery, never a direct call to the library dispatcher.
+	u.issueImmediateOrderById(Orders.stop)
+	regressionCheck(eventTailCalls == 1 and removedEventCalls == 0,
+		(perUnit ? "unit" : "global") + " order dispatch skips destroyed successor and reaches tail")
+	// remover and victim were destroyed by the event; don't dereference them again.
+	destroy tail
+	u.remove()
+
+class NestedOrder extends EventListener
+	unit nestedUnit
+	construct(unit nestedUnit)
+		this.nestedUnit = nestedUnit
+	override function onEvent()
+		nestedUnit.issueImmediateOrderById(Orders.stop)
+
+function testNestedEventRemoval()
+	let outer = createUnit(players[0], UnitIds.footman, ZERO2, angle(0.))
+	let inner = createUnit(players[0], UnitIds.footman, vec2(128., 0.), angle(0.))
+	outer.toUnitIndex()
+	inner.toUnitIndex()
+	eventTailCalls = 0
+	removedEventCalls = 0
+	let tail = EventListener.add(outer, EVENT_PLAYER_UNIT_ISSUED_ORDER) ->
+		eventTailCalls++
+	let victim = EventListener.add(outer, EVENT_PLAYER_UNIT_ISSUED_ORDER) ->
+		removedEventCalls++
+	let nested = EventListener.add(inner, EVENT_PLAYER_UNIT_ISSUED_ORDER) ->
+		destroy victim
+	let remover = EventListener.add(outer, EVENT_PLAYER_UNIT_ISSUED_ORDER, new NestedOrder(inner))
+	outer.issueImmediateOrderById(Orders.stop)
+	regressionCheck(eventTailCalls == 1 and removedEventCalls == 0,
+		"nested native order repairs the suspended outer dispatch cursor")
+	destroy remover
+	destroy nested
+	destroy tail
+	outer.remove()
+	inner.remove()
+
+class LoopLifetimeProbe
+	use TimedLoop
+	int ticks = 0
+	LoopLifetimeProbe victim = null
+	bool removeSelf = false
+	override function onTimedLoop()
+		ticks++
+		if victim != null
+			let removed = victim
+			victim = null
+			destroy removed
+		if removeSelf
+			destroy this
+
+function testLoopLifetime()
+	let old = new LoopLifetimeProbe()
+	old.startTimedLoop()
+	let oldId = old castTo int
+	destroy old
+	let replacement = new LoopLifetimeProbe()
+	let control = new LoopLifetimeProbe()
+	regressionCheck(replacement castTo int == oldId, "TimedLoop fixture reuses the destroyed id")
+	replacement.startTimedLoop()
+	control.startTimedLoop()
+	let victim = new LoopLifetimeProbe()
+	victim.startTimedLoop()
+	let killer = new LoopLifetimeProbe()
+	killer.victim = victim
+	killer.startTimedLoop()
+	let selfRemoving = new LoopLifetimeProbe()
+	selfRemoving.removeSelf = true
+	selfRemoving.startTimedLoop()
+	doAfter(0.5) ->
+		regressionCheck(control.ticks > 0, "TimedLoop real timer delivered ticks")
+		regressionCheck(replacement.ticks == control.ticks, "TimedLoop reused id ticks exactly once per period")
+		regressionCheck(killer.ticks == control.ticks, "TimedLoop destruction during dispatch preserves surviving ticks")
+		destroy killer
+		destroy replacement
+		destroy control
+		regressionAsyncComplete()
+
+// Constructed and registered during init, before OnUnitEnterLeave's deferred pass.
+unit initCaster = null
+var initCasterWasUnindexed = false
+var initSpellCalls = 0
+OnCastListener initSpellListener = null
+
+public function runGameplayRegressions()
+	regressionGuard("global event removal", () -> testEventRemoval(false))
+	regressionGuard("unit event removal", () -> testEventRemoval(true))
+	regressionGuard("nested event removal", () -> testNestedEventRemoval())
+	regressionGuard("TimedLoop lifetime", () -> testLoopLifetime())
+	regressionCheck(initCasterWasUnindexed, "spell fixture was unindexed at init registration")
+	regressionCheck(initCaster.getIndex() > 0, "spell registration indexes init-created caster")
+	spellTailCalls = 0
+	removedSpellCalls = 0
+	let unitTail = EventListener.onCast(initCaster, AbilityIds.berserkerRage1) (_) ->
+		spellTailCalls++
+	let unitVictim = EventListener.onCast(initCaster, AbilityIds.berserkerRage1) (_) ->
+		removedSpellCalls++
+	EventListener.onCast(initCaster, AbilityIds.berserkerRage1, new RemovingSpell(unitVictim))
+	let globalTail = EventListener.onCast(AbilityIds.berserkerRage1) (caster) ->
+		if caster == initCaster
+			spellTailCalls++
+	let globalVictim = EventListener.onCast(AbilityIds.berserkerRage1) (caster) ->
+		if caster == initCaster
+			removedSpellCalls++
+	EventListener.onCast(AbilityIds.berserkerRage1, new RemovingSpell(globalVictim))
+	initCaster..addAbility(AbilityIds.berserkerRage1)..setMana(1000.)
+	regressionCheck(initCaster.issueImmediateOrderById(Orders.berserk), "spell fixture accepted actual cast order")
+	doAfter(0.75) ->
+		regressionCheck(initSpellCalls == 1, "init-registered spell listener receives real spell effect exactly once")
+		regressionCheck(spellTailCalls == 2 and removedSpellCalls == 0,
+			"unit and global spell dispatch skip destroyed successors and reach both tails")
+		destroy unitTail
+		destroy globalTail
+		destroy initSpellListener
+		initSpellListener = null
+		initCaster.remove()
+		initCaster = null
+		regressionAsyncComplete()
+
+init
+	initCaster = createUnit(players[0], UnitIds.footman, vec2(0., 128.), angle(0.))
+	initCasterWasUnindexed = initCaster.getIndex() == 0
+	initSpellListener = EventListener.onCast(initCaster, AbilityIds.berserkerRage1) (_) ->
+		initSpellCalls++
