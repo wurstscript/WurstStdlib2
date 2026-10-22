@@ -1,0 +1,77 @@
+package KeyedSet
+import KeyedTable
+
+/**
+A set with O(1) membership, for replacing a `group` used purely to answer "is this unit in here?".
+
+On Lua the elements are the keys of a native Lua table, so `contains` is one hashed index and Lua
+does the hashing. That is why this uses new generics (`T:`): they are erased on Lua, so the
+element arrives as itself. The old `<T>` containers - `HashSet`, `HashList`, `HashMap` - erase to
+`int` instead, so every element round-trips through `castTo int` and back, and an integer index
+cannot be a native Lua key at all. Those types also reach the Jass hashtable natives, which the
+Jass-Lua shim emulates, paying for a hashtable on a runtime that already is one.
+
+On Jass it falls back to a `Table` keyed by an integer projection of the element. That is a
+hashtable native per operation and much slower than the Lua path, but the semantics are the same,
+so a package using this works on both backends. Element types with no stable integer key - real,
+boolean, string, code, tuples - are a compile error on Jass rather than a lossy key.
+
+**There is no iteration.** Enumerating a Lua table needs `pairs()`, whose order follows internal
+hash layout and so differs between clients, which desyncs a lockstep game. `ipairs()` is safe but
+only walks consecutive integer keys from 1, so it sees nothing in a table keyed by elements. If
+you need to iterate, keep an `ArrayList` alongside and walk that, or use `SparseSet`, whose dense
+half exists for exactly this.
+
+**Null is not a valid element**, and **an element must be removed before it is destroyed** - see
+`KeyedTable` for why the Jass fallback cannot detect a handle id which has been reused since. This
+is the same discipline a `group` needs.
+*/
+public class KeyedSet<T:>
+	/** The keyed table whose keys are the elements. */
+	private int keyTable = 0
+	/** Tracked rather than measured - counting a Lua table would mean iterating it. */
+	private int count = 0
+
+	construct()
+		keyTable = keyedTableCreate()
+
+	ondestroy
+		keyedTableDestroy(keyTable)
+
+	/** Adds `value`. Returns whether it was newly inserted. */
+	function add(T value) returns boolean
+		if keyedTableContains(keyTable, value)
+			return false
+		keyedTableAdd(keyTable, value)
+		count += 1
+		return true
+
+	/** Whether `value` is present. */
+	function contains(T value) returns boolean
+		return keyedTableContains(keyTable, value)
+
+	/** Removes `value`. Returns whether it was present. */
+	function remove(T value) returns boolean
+		if not keyedTableContains(keyTable, value)
+			return false
+		keyedTableRemove(keyTable, value)
+		count -= 1
+		return true
+
+	function size() returns int
+		return count
+
+	function isEmpty() returns boolean
+		return count == 0
+
+	/**
+	 * Empties the set.
+	 *
+	 * Replaces the table rather than clearing it in place: emptying a Lua table means visiting
+	 * its keys, and that needs `pairs()`. The old table is destroyed, which on Jass returns its
+	 * `Table` to the pool and on Lua leaves it to the collector.
+	 */
+	function clear()
+		keyedTableDestroy(keyTable)
+		keyTable = keyedTableCreate()
+		count = 0
