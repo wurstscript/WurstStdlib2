@@ -1,0 +1,73 @@
+package ArrayListNativeStorageTests
+import ArrayList
+
+int destroyedElements = 0
+class OwnedElement
+    int value
+    construct(int value)
+        this.value = value
+    ondestroy
+        destroyedElements++
+
+tuple Payload(int count, string text, OwnedElement reference)
+
+@Test public function explicitElementLifetimeAndRecycledListId()
+    let before = destroyedElements
+    let element = new OwnedElement(42)
+    let list = new ArrayList<OwnedElement>(1)
+    let id = list castTo int
+    list.add(element, null, element)
+    list.size().assertEquals(3)
+    (list.get(1) == null).assertTrue()
+    list.truncate(1)
+    list.reset()
+    list.add(element)
+    destroy list
+    destroyedElements.assertEquals(before)
+    element.value.assertEquals(42)
+    let replacement = new ArrayList<OwnedElement>(1)
+    (replacement castTo int).assertEquals(id)
+    replacement.size().assertEquals(0)
+    replacement.add(null)
+    (replacement.get(0) == null).assertTrue()
+    destroy replacement
+    destroy element
+    destroyedElements.assertEquals(before + 1)
+
+@Test public function defaultsHolesAndTupleCopies()
+    let ints = new ArrayList<int>(1)
+    let bools = new ArrayList<boolean>(1)
+    let texts = new ArrayList<string>(1)
+    let handles = new ArrayList<unit>(1)
+    for i = 0 to 63
+        ints.add(0)
+        bools.add(false)
+        texts.add("")
+        handles.add(null)
+    ints.get(63).assertEquals(0)
+    bools.get(63).assertFalse()
+    texts.get(63).assertEquals("")
+    handles.size().assertEquals(64)
+    (handles.get(63) == null).assertTrue()
+    let element = new OwnedElement(7)
+    let tuples = new ArrayList<Payload>(1)
+    for i = 0 to 63
+        tuples.add(Payload(i, "payload", element))
+    tuples.addAll(tuples)
+    tuples.get(127).count.assertEquals(63)
+    tuples.get(64).count.assertEquals(0)
+    tuples.get(63).text.assertEquals("payload")
+    (tuples.get(127).reference == element).assertTrue()
+    tuples.removeAtOrdered(0).count.assertEquals(0)
+    tuples.removeAtUnordered(0).count.assertEquals(1)
+    tuples.get(0).count.assertEquals(63)
+    tuples.clear()
+    tuples.size().assertEquals(0)
+    tuples.add(Payload(99, "new", null))
+    (tuples.get(0).reference == null).assertTrue()
+    destroy tuples
+    destroy element
+    destroy handles
+    destroy texts
+    destroy bools
+    destroy ints

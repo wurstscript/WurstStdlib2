@@ -13,101 +13,27 @@ constant int INSERTION_SORT_CUTOFF = 12
 @noinline function indexOutOfBounds(int index)
     error("ArrayList: Index out of bounds: " + index)
 
-/**
- * High-performance array-based list using static shared storage per type.
- * In most cases, a LinkedList is a better choice due to its flexibility.
- * This data structure is only recommended for performance-critical code
- * and requires careful use to avoid fragmentation.
+/** A typed, zero-based list with amortised O(1) append and O(1) indexed access.
+ * Ordered insertion/removal shifts elements; unordered removal swaps in the last element.
  *
- * WHEN TO USE:
- * ===========
- * ArrayList is faster than LinkedList for:
- * - Iterating large lists (1000+ elements) - no node indirection
- * - Index based operations - O(1) vs O(n)
- * - When only appending elements to the end
+ * Jass uses a shared arena per concrete element type, limited to JASS_MAX_ARRAY_SIZE total
+ * slots. Free ranges are kept in address order, split on allocation and coalesced on release.
+ * Presizing and reusing lists avoids copies and fragmentation on that target.
  *
- * LinkedList is better for:
- * - Insertion anywhere except the end of the list
- * - Deletions while retaining order
- * - Unknown size requirements
- * - No resize performance risk
+ * Lua uses an independent native array table per list, with automatic physical growth and no
+ * arena, section allocator or element copying on growth. The compiler reuses array-field
+ * buffers when Wurst IDs are recycled; destroy explicitly clears all live/retained references.
+ * Logical size is explicit, so null elements and holes never change the list's length.
  *
- * TYPE SYSTEM IMPLICATIONS:
- * ========================
- * Each ArrayList<T> type gets its own static storage array.
- * - ArrayList<int>, ArrayList<unit>, ArrayList<string> = 3 separate arrays
- * - On the Jass target each type holds up to JASS_MAX_ARRAY_SIZE elements total across all
- *   instances (the Lua target grows dynamically and is not bounded by this)
- *
- * Choose wisely based on how many types you have.
- *
- * PERFORMANCE RULES:
- * ==================
- *
- * 1. PRESIZE, DON'T RESIZE
- *    Bad:  new ArrayList<int>()           // Might resize multiple times
- *    Good: new ArrayList<int>(maxSize)    // One allocation
- *
- *    Why: Resize operations copy ALL elements to new memory. Expensive!
- *
- * 2. REUSE, DON'T RECREATE
- *    Bad:  In loop `let temp = new ArrayList<int>() ... destroy temp`
- *    Good: `let temp = new ArrayList<int>() ... temp.clear()` in loop
- *
- *    Why: Allocation/Deallocation is moderately expensive and causes fragmentation
- *
- * 3. ORDERED REMOVAL IS SLOW
- *    Bad:  list.removeAt(i)              // O(n) - shifts all elements
- *    Good: list.removeAtUnordered(i)     // O(1) - swaps with last element
- *
- *    Only use removeAtUnordered() if order doesn't matter
- *
- * 4. ITERATE BY INDEX
- *    Good: for i = 0 to list.size()-1                // Zero allocation
- *    Good: list[i]                                   // Indexing operator
- *
- *    ArrayList has no iterator by design - index loops keep hot paths
- *    allocation-free.
- *
- * 5. AVOID FREQUENT INSERTS AT START
- *    Bad:  list.addtoStart(x)         // O(n) every time
- *    Good: Use LinkedList or add in reverse order
- *
- * PERFORMANCE TABLE:
- * ==================
- * Operation          | ArrayList | LinkedList | Notes
- * -------------------|-----------|------------|---------------------------
- * add(elem)          | O(1)*     | O(1)       | *O(n) on resize!
- * addtoStart(elem)   | O(n)      | O(1)       | Shifts all elements
- * get(index)         | O(1)      | O(n)       | Major ArrayList advantage
- * removeAt(index)    | O(n)      | O(n)       | ArrayList shifts elements, LinkedList walks to the index
- * removeAtUnordered  | O(1)      | N/A        | Doesn't preserve order
- * Iterate all        | Faster    | Fast       | LinkedList does double the work, but is still fast
- * Memory per element | 1 slot    | 3 slots    | Element + 2 pointers
- * Create/destroy     | Varies    | High       | AL might need memory management, LL needs to process Nodes
- *
- * MEMORY MANAGEMENT:
- * ==================
- * ArrayList uses section allocation in a shared static array per type.
- * Destroyed lists return sections to a free pool for reuse.
- * Reuse is first-fit and splits larger free sections, retaining their unused remainder.
- * Free sections stay sorted by address and adjacent sections merge on release.
- * Free space at the end of the store is reclaimed immediately. The metadata uses
- * native arrays, with no separate 256-section limit and no dropped free ranges.
- * Allocation and release take O(f) time for f nonadjacent free sections.
- *
- * Fragmentation occurs when lists grow - the old section becomes a gap.
- * Presizing avoids those copies; nonadjacent gaps remain reusable for smaller lists.
- *
- * Hard limit (wc3 / Jass native target): the shared store is a fixed-size array, so it is
- * bounded by JASS_MAX_ARRAY_SIZE total slots per type across all live instances; exceeding
- * it raises an error. On the Lua target the store is a dynamically growing table, so the
- * cap does not apply - allocateStorage branches on the magic isLua constant and skips the
- * error. ArrayList's added value on Lua is keeping element types static instead of relying
- * on typecasting.
- **/
+ * Lists and their Wurst elements retain manual lifetimes on both targets: destroying a list
+ * releases its references, not the elements themselves. Prefer clear()/reset() for scratch reuse.
+ */
 public class ArrayList<T:>
     private static T array store
+    // Only indexed on Lua, whose array fields are independently growing native tables.
+    // The fixed initial length is required by the Jass type checker; that target drops this
+    // unused field. Recycled Wurst IDs reuse the buffer; destroy clears its references.
+    private T array[1] elements
     private static int nextFreeIndex = 0
 
     // Memory management structures
@@ -135,8 +61,28 @@ public class ArrayList<T:>
         addAll(base)
 
 
+    /** Unchecked typed storage access; the compiler removes the other backend's branch. */
+    private function read(int index) returns T
+        if isLua
+            return elements[index]
+        return store[startIndex + index]
+
+    private function write(int index, T value)
+        if isLua
+            elements[index] = value
+        else
+            store[startIndex + index] = value
+
+    private function erase(int index)
+        if isLua
+            elements[index] = null
+        else
+            store[startIndex + index] = null
+
     /** Allocates storage section - tries to reuse freed sections first */
     private function allocateStorage(int cap)
+        if isLua
+            return
         if cap <= 0
             error("ArrayList: allocateStorage capacity must be > 0")
         // Try to find a freed section that fits
@@ -174,6 +120,8 @@ public class ArrayList<T:>
 
     /** Frees this list's storage section for reuse */
     private function freeStorage()
+        if isLua
+            return
         if capacity <= 0
             return
 
@@ -213,6 +161,8 @@ public class ArrayList<T:>
         and no second section needed, so a list holding more than a third of the store can still
         grow into the free space after it. */
     private function regrow(int newCapacity)
+        if isLua
+            return
         if startIndex + capacity == nextFreeIndex
             let extra = newCapacity - capacity
             if not isLua and extra > JASS_MAX_ARRAY_SIZE - nextFreeIndex
@@ -230,17 +180,7 @@ public class ArrayList<T:>
 
         // Copy elements to new location
         for i = 0 to size - 1
-            store[startIndex + i] = store[oldStart + i]
-
-        // The old section now holds duplicate references plus any stale references retained by
-        // reset(). It no longer belongs to a live list once freed, so clear the full high-water
-        // range before returning it to the pool (no-op on Jass).
-        if isLua
-            var slotsToClear = size
-            if retainedSize > slotsToClear
-                slotsToClear = retainedSize
-            for i = 0 to slotsToClear - 1
-                store[oldStart + i] = null
+            write(i, store[oldStart + i])
 
         // The new section contains only the current logical elements.
         retainedSize = 0
@@ -260,7 +200,7 @@ public class ArrayList<T:>
         if retainedSize > slotsToClear
             slotsToClear = retainedSize
         for i = 0 to slotsToClear - 1
-            store[startIndex + i] = null
+            erase(i)
 
         // Return storage to free pool
         freeStorage()
@@ -272,18 +212,17 @@ public class ArrayList<T:>
     /** Adds one or more elements to the end of the list (amortized O(1)) */
     function add(vararg T elems)
         for elem in elems
-            if size >= capacity
+            if not isLua and size >= capacity
                 grow()
-            store[startIndex + size] = elem
+            write(size, elem)
             size++
 
     /** Appends without checking capacity. **Reserve first.**
 
-        It saves only the capacity check. With inlining on, `add` inlines as well, keeping just
-        the `grow()` call on its rare full path: in the 3.0.0 client an appending loop costs about
-        78 ns per element with `add` and 70 ns with this, without stack traces.
+        On Jass this saves the capacity check. With inlining on, `add` inlines as well, keeping
+        just the `grow()` call on its rare full path. On Lua both append directly to the native table.
 
-        The precondition is not a formality. The backing store is one array shared by every list,
+        The precondition is not a formality. On Jass the backing store is one array shared by every list,
         each holding a section of it, so writing past this list's capacity does not overflow into
         nothing - it silently overwrites whatever another list is keeping there. Call
         `reserve(size + count)` first, and only append that many.
@@ -291,7 +230,7 @@ public class ArrayList<T:>
         Intended for a caller which already knows how many elements it is about to add, such as a
         query copying out a result whose size it was told up front. Prefer `add` everywhere else. */
     function unsafeAdd(T elem)
-        store[startIndex + size] = elem
+        write(size, elem)
         size++
 
     /** Adds all elements from another list */
@@ -301,17 +240,19 @@ public class ArrayList<T:>
         // again on each doubling.
         reserve(size + otherSize)
 
-        let otherStart = other.startIndex
         for i = 0 to otherSize - 1
-            store[startIndex + size] = store[otherStart + i]
+            write(size, other.read(i))
             size++
 
     /** Ensures capacity for at least the given number of elements, moving the
         section at most once instead of once per doubling.
 
         Public so a caller which knows its final size can pay one capacity check for a whole batch
-        rather than one per element, which is also the precondition `unsafeAdd` needs. */
+        rather than one per element, which is also the precondition `unsafeAdd` needs on Jass.
+        On Lua physical capacity grows automatically, so reserve performs no work. */
     function reserve(int needed)
+        if isLua
+            return
         if needed <= capacity
             return
         var newCapacity = capacity
@@ -325,14 +266,14 @@ public class ArrayList<T:>
             indexOutOfBounds(index)
             return null
 
-        return store[startIndex + index]
+        return read(index)
 
     /** Sets the element at the specified index (O(1)) */
     function set(int index, T elem)
         if index < 0 or index >= size
             indexOutOfBounds(index)
             return
-        store[startIndex + index] = elem
+        write(index, elem)
 
     /** Reads the element at the given index via the [] operator (O(1)).
         Note: for tuple element types use get()/set() instead - the [] operator on
@@ -348,7 +289,7 @@ public class ArrayList<T:>
     /** Returns the index of the specified element or -1 if it doesn't exist (O(n)) */
     function indexOf(T elem) returns int
         for i = 0 to size - 1
-            if store[startIndex + i] == elem
+            if read(i) == elem
                 return i
         return -1
 
@@ -363,16 +304,16 @@ public class ArrayList<T:>
             indexOutOfBounds(index)
             return null
 
-        let elem = store[startIndex + index]
+        let elem = read(index)
 
         // Shift elements left
         for i = index to size - 2
-            store[startIndex + i] = store[startIndex + i + 1]
+            write(i, read(i + 1))
 
         size--
         // The last slot now holds a stale duplicate - release it for the Lua GC
         if isLua
-            store[startIndex + size] = null
+            erase(size)
         return elem
 
     /** Removes the element at the given index and returns it (O(n) - shifts elements) */
@@ -386,16 +327,16 @@ public class ArrayList<T:>
             indexOutOfBounds(index)
             return null
 
-        let elem = store[startIndex + index]
+        let elem = read(index)
 
         // Replace with last element
         size--
         if index < size
-            store[startIndex + index] = store[startIndex + size]
+            write(index, read(size))
 
         // The old last slot is now vacated (or held the removed element) - release it
         if isLua
-            store[startIndex + size] = null
+            erase(size)
 
         return elem
 
@@ -429,14 +370,14 @@ public class ArrayList<T:>
     function getFirst() returns T
         if size == 0
             return null
-        return store[startIndex]
+        return read(0)
 
     /** Returns the last element in the list (O(1)). If the list is empty this is the type's
         null/zero value - check isEmpty() first when that is a valid element. */
     function getLast() returns T
         if size == 0
             return null
-        return store[startIndex + size - 1]
+        return read(size - 1)
 
     /** Clears all elements from the list (reuse this list instead of creating new ones!).
         O(1) on Jass; O(n) on Lua, where the slots are nulled so the GC can reclaim them. */
@@ -446,7 +387,7 @@ public class ArrayList<T:>
             if retainedSize > slotsToClear
                 slotsToClear = retainedSize
             for i = 0 to slotsToClear - 1
-                store[startIndex + i] = null
+                erase(i)
         size = 0
         retainedSize = 0
 
@@ -476,7 +417,7 @@ public class ArrayList<T:>
     function copy() returns ArrayList<T>
         let list = new ArrayList<T>(size)
         for i = 0 to size - 1
-            list.add(store[startIndex + i])
+            list.add(read(i))
         return list
 
     /** Replaces the first occurrence of 'whichElement' with 'newElement' */
@@ -508,10 +449,10 @@ public class ArrayList<T:>
         if size == 0
             return null
         size--
-        let elem = store[startIndex + size]
+        let elem = read(size)
         // Release the popped slot so the Lua GC can reclaim the reference
         if isLua
-            store[startIndex + size] = null
+            erase(size)
         return elem
 
     /** Returns the lastly added element without removing it. If the list is empty this is the
@@ -541,14 +482,14 @@ public class ArrayList<T:>
 
     /** Adds element at the beginning of the list - WARNING: O(n) operation! */
     function addtoStart(T elem)
-        if size >= capacity
+        if not isLua and size >= capacity
             grow()
 
         // Shift all elements right
         for i = size - 1 downto 0
-            store[startIndex + i + 1] = store[startIndex + i]
+            write(i + 1, read(i))
 
-        store[startIndex] = elem
+        write(0, elem)
         size++
 
     /** Adds the given element at the given index - WARNING: O(n) operation! */
@@ -557,14 +498,14 @@ public class ArrayList<T:>
             indexOutOfBounds(index)
             return
 
-        if size >= capacity
+        if not isLua and size >= capacity
             grow()
 
         // Shift elements right
         for i = size - 1 downto index
-            store[startIndex + i + 1] = store[startIndex + i]
+            write(i + 1, read(i))
 
-        store[startIndex + index] = elem
+        write(index, elem)
         size++
 
     // ============================================================================
@@ -577,14 +518,14 @@ public class ArrayList<T:>
         // Single pass compaction: keep elements that fail the predicate
         var writeIndex = 0
         for readIndex = 0 to size - 1
-            let elem = store[startIndex + readIndex]
+            let elem = read(readIndex)
             if not predicate.isTrueFor(elem)
-                store[startIndex + writeIndex] = elem
+                write(writeIndex, elem)
                 writeIndex++
         // Release the compacted-away tail (still the old size here) for the Lua GC
         if isLua
             for i = writeIndex to size - 1
-                store[startIndex + i] = null
+                erase(i)
         size = writeIndex
         destroy predicate
 
@@ -592,7 +533,7 @@ public class ArrayList<T:>
     function removeUnorderedIf(ArrayListPredicate<T> predicate)
         var i = 0
         while i < size
-            if predicate.isTrueFor(store[startIndex + i])
+            if predicate.isTrueFor(read(i))
                 // swaps the last element into i and shrinks - don't advance i
                 removeAtUnordered(i)
             else
@@ -602,14 +543,14 @@ public class ArrayList<T:>
     /** Executes the closure for each element */
     function forEach(ALItrClosure<T> itr) returns ArrayList<T>
         for i = 0 to size - 1
-            itr.run(store[startIndex + i])
+            itr.run(read(i))
         destroy itr
         return this
 
     /** Updates all elements */
     function updateAll(ArrayListUpdater<T> f)
         for i = 0 to size - 1
-            store[startIndex + i] = f.update(store[startIndex + i])
+            write(i, f.update(read(i)))
         destroy f
 
     /** Returns the list obtained by applying the given closure to each element */
@@ -621,7 +562,7 @@ public class ArrayList<T:>
 
     /** Returns a new list of elements that satisfy the predicate.
 
-        Deliberately NOT presized to this list's size. The result shares the
+        Deliberately NOT presized to this list's size. On Jass the result shares the
         per-type store with the source, so reserving `size` up front would need
         2 * size slots at once and hit JASS_MAX_ARRAY_SIZE for any source
         holding more than half the store - even when a selective predicate
@@ -632,7 +573,7 @@ public class ArrayList<T:>
     function filter(ArrayListPredicate<T> predicate) returns ArrayList<T>
         let result = new ArrayList<T>()
         for i = 0 to size - 1
-            let elem = store[startIndex + i]
+            let elem = read(i)
             if predicate.isTrueFor(elem)
                 result.add(elem)
         destroy predicate
@@ -642,7 +583,7 @@ public class ArrayList<T:>
     function foldl<Q:>(Q startValue, FoldClosure<T, Q> predicate) returns Q
         var result = startValue
         for i = 0 to size - 1
-            result = predicate.run(store[startIndex + i], result)
+            result = predicate.run(read(i), result)
         destroy predicate
         return result
 
@@ -651,7 +592,7 @@ public class ArrayList<T:>
     function find(ArrayListPredicate<T> predicate) returns T
         T result = null
         for i = 0 to size - 1
-            let elem = store[startIndex + i]
+            let elem = read(i)
             if predicate.isTrueFor(elem)
                 result = elem
                 break
@@ -666,9 +607,9 @@ public class ArrayList<T:>
     function shuffle()
         for i = size - 1 downto 1
             let j = GetRandomInt(0, i)
-            let tmp = store[startIndex + i]
-            store[startIndex + i] = store[startIndex + j]
-            store[startIndex + j] = tmp
+            let tmp = read(i)
+            write(i, read(j))
+            write(j, tmp)
 
     /** Sorts the list using optimized quicksort with median-of-three pivot.
         Unlike the other higher-order methods, the comparator is NOT destroyed so it
@@ -702,18 +643,18 @@ public class ArrayList<T:>
     /** Insertion sort for small partitions, where it beats quicksort's overhead */
     private function insertionSort(Comparator<T> comparator, int low, int high)
         for i = low + 1 to high
-            let value = store[startIndex + i]
+            let value = read(i)
             var j = i - 1
-            while j >= low and comparator.compare(store[startIndex + j], value) > 0
-                store[startIndex + j + 1] = store[startIndex + j]
+            while j >= low and comparator.compare(read(j), value) > 0
+                write(j + 1, read(j))
                 j--
-            store[startIndex + j + 1] = value
+            write(j + 1, value)
 
     /** Median-of-three pivot selection */
     private function medianOfThree(Comparator<T> comparator, int a, int b, int c) returns int
-        let va = store[startIndex + a]
-        let vb = store[startIndex + b]
-        let vc = store[startIndex + c]
+        let va = read(a)
+        let vb = read(b)
+        let vc = read(c)
 
         if comparator.compare(va, vb) < 0
             if comparator.compare(vb, vc) < 0
@@ -732,22 +673,22 @@ public class ArrayList<T:>
 
     /** Partitions into less-than, equal-to and greater-than regions. */
     private function partition(Comparator<T> comparator, int low, int high, int pivotIndex) returns SortPartition
-        let pivotValue = store[startIndex + pivotIndex]
+        let pivotValue = read(pivotIndex)
         var lower = low
         var upper = high
         var current = low
         while current <= upper
-            let comparison = comparator.compare(store[startIndex + current], pivotValue)
+            let comparison = comparator.compare(read(current), pivotValue)
             if comparison < 0
-                let temp = store[startIndex + lower]
-                store[startIndex + lower] = store[startIndex + current]
-                store[startIndex + current] = temp
+                let temp = read(lower)
+                write(lower, read(current))
+                write(current, temp)
                 lower++
                 current++
             else if comparison > 0
-                let temp = store[startIndex + upper]
-                store[startIndex + upper] = store[startIndex + current]
-                store[startIndex + current] = temp
+                let temp = read(upper)
+                write(upper, read(current))
+                write(current, temp)
                 upper--
             else
                 current++
