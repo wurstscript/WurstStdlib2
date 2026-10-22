@@ -67,11 +67,18 @@ public class ArrayList<T:>
             return elements[index]
         return store[startIndex + index]
 
+    // Capture the Jass address before evaluating a store's value. An updater callback may
+    // grow/move the list while computing that value; assignment still targets the old address.
+    private function address(int index) returns int
+        if isLua
+            return index
+        return startIndex + index
+
     private function write(int index, T value)
         if isLua
             elements[index] = value
         else
-            store[startIndex + index] = value
+            store[index] = value
 
     private function erase(int index)
         if isLua
@@ -180,7 +187,7 @@ public class ArrayList<T:>
 
         // Copy elements to new location
         for i = 0 to size - 1
-            write(i, store[oldStart + i])
+            write(address(i), store[oldStart + i])
 
         // The new section contains only the current logical elements.
         retainedSize = 0
@@ -214,7 +221,7 @@ public class ArrayList<T:>
         for elem in elems
             if not isLua and size >= capacity
                 grow()
-            write(size, elem)
+            write(address(size), elem)
             size++
 
     /** Appends without checking capacity. **Reserve first.**
@@ -230,7 +237,7 @@ public class ArrayList<T:>
         Intended for a caller which already knows how many elements it is about to add, such as a
         query copying out a result whose size it was told up front. Prefer `add` everywhere else. */
     function unsafeAdd(T elem)
-        write(size, elem)
+        write(address(size), elem)
         size++
 
     /** Adds all elements from another list */
@@ -241,7 +248,7 @@ public class ArrayList<T:>
         reserve(size + otherSize)
 
         for i = 0 to otherSize - 1
-            write(size, other.read(i))
+            write(address(size), other.read(i))
             size++
 
     /** Ensures capacity for at least the given number of elements, moving the
@@ -273,7 +280,7 @@ public class ArrayList<T:>
         if index < 0 or index >= size
             indexOutOfBounds(index)
             return
-        write(index, elem)
+        write(address(index), elem)
 
     /** Reads the element at the given index via the [] operator (O(1)).
         Note: for tuple element types use get()/set() instead - the [] operator on
@@ -308,7 +315,7 @@ public class ArrayList<T:>
 
         // Shift elements left
         for i = index to size - 2
-            write(i, read(i + 1))
+            write(address(i), read(i + 1))
 
         size--
         // The last slot now holds a stale duplicate - release it for the Lua GC
@@ -332,7 +339,7 @@ public class ArrayList<T:>
         // Replace with last element
         size--
         if index < size
-            write(index, read(size))
+            write(address(index), read(size))
 
         // The old last slot is now vacated (or held the removed element) - release it
         if isLua
@@ -487,9 +494,9 @@ public class ArrayList<T:>
 
         // Shift all elements right
         for i = size - 1 downto 0
-            write(i + 1, read(i))
+            write(address(i + 1), read(i))
 
-        write(0, elem)
+        write(address(0), elem)
         size++
 
     /** Adds the given element at the given index - WARNING: O(n) operation! */
@@ -503,9 +510,9 @@ public class ArrayList<T:>
 
         // Shift elements right
         for i = size - 1 downto index
-            write(i + 1, read(i))
+            write(address(i + 1), read(i))
 
-        write(index, elem)
+        write(address(index), elem)
         size++
 
     // ============================================================================
@@ -520,7 +527,7 @@ public class ArrayList<T:>
         for readIndex = 0 to size - 1
             let elem = read(readIndex)
             if not predicate.isTrueFor(elem)
-                write(writeIndex, elem)
+                write(address(writeIndex), elem)
                 writeIndex++
         // Release the compacted-away tail (still the old size here) for the Lua GC
         if isLua
@@ -550,7 +557,7 @@ public class ArrayList<T:>
     /** Updates all elements */
     function updateAll(ArrayListUpdater<T> f)
         for i = 0 to size - 1
-            write(i, f.update(read(i)))
+            write(address(i), f.update(read(i)))
         destroy f
 
     /** Returns the list obtained by applying the given closure to each element */
@@ -608,8 +615,8 @@ public class ArrayList<T:>
         for i = size - 1 downto 1
             let j = GetRandomInt(0, i)
             let tmp = read(i)
-            write(i, read(j))
-            write(j, tmp)
+            write(address(i), read(j))
+            write(address(j), tmp)
 
     /** Sorts the list using optimized quicksort with median-of-three pivot.
         Unlike the other higher-order methods, the comparator is NOT destroyed so it
@@ -646,9 +653,9 @@ public class ArrayList<T:>
             let value = read(i)
             var j = i - 1
             while j >= low and comparator.compare(read(j), value) > 0
-                write(j + 1, read(j))
+                write(address(j + 1), read(j))
                 j--
-            write(j + 1, value)
+            write(address(j + 1), value)
 
     /** Median-of-three pivot selection */
     private function medianOfThree(Comparator<T> comparator, int a, int b, int c) returns int
@@ -681,14 +688,14 @@ public class ArrayList<T:>
             let comparison = comparator.compare(read(current), pivotValue)
             if comparison < 0
                 let temp = read(lower)
-                write(lower, read(current))
-                write(current, temp)
+                write(address(lower), read(current))
+                write(address(current), temp)
                 lower++
                 current++
             else if comparison > 0
                 let temp = read(upper)
-                write(upper, read(current))
-                write(current, temp)
+                write(address(upper), read(current))
+                write(address(current), temp)
                 upper--
             else
                 current++

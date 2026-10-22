@@ -71,3 +71,20 @@ tuple Payload(int count, string text, OwnedElement reference)
     destroy texts
     destroy bools
     destroy ints
+
+@Test public function updateAllPreservesJassWriteAddress()
+    let list = new ArrayList<int>(1)
+    let neighbour = new ArrayList<int>(1)
+    list.add(7)
+    neighbour.add(99)
+    list.updateAll((int value) -> begin
+        list.add(8)
+        return value + 10
+    end)
+    // Jass captures the old arena address before invoking the updater, even when it moves
+    // the list. Lua's per-list buffer never moves, so its write still reaches the same list.
+    list.get(0).assertEquals(isLua ? 17 : 7)
+    list.get(1).assertEquals(8)
+    neighbour.get(0).assertEquals(99)
+    destroy neighbour
+    destroy list
