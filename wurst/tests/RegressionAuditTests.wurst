@@ -1,0 +1,126 @@
+package RegressionAuditTests
+import LinkedList
+import LastOrder
+import UnitIndexer
+import ClosureTimers
+import Execute
+import ErrorHandling
+import RegressionChecks
+import UnitIds
+import Orders
+import RegressionAbortOrderConsumer
+
+function checkLinkedListOperation(int operation, int index)
+	let list = asList(11, 22)
+	let label = "LinkedList operation " + operation + " index " + index
+	let succeeded = try() ->
+		switch operation
+			case 0
+				list.set(index, 99)
+			case 1
+				regressionCheck(list.get(index) == 0, label + " returns default")
+			case 2
+				regressionCheck(list.removeAt(index) == 0, label + " returns default")
+			case 3
+				list.addAt(99, index)
+	regressionCheck(not succeeded and lastError != "", label + " reports bounds error")
+	regressionCheck(list.size() == 2, label + " preserves size")
+	if list.size() != 2
+		// Preserve before-fix evidence without traversing a destroyed sentinel.
+		return
+	// Guard traversal too: a broken removeAt(size) destroys the sentinel.
+	regressionGuard(label + " sentinel") ->
+		regressionCheck(list.get(0) == 11 and list.get(1) == 22, label + " preserves elements")
+		list.addAt(33, list.size())
+		regressionCheck(list.dequeue() == 11 and list.dequeue() == 22 and list.dequeue() == 33,
+			label + " preserves links and valid append")
+		destroy list
+
+public function runLinkedListAuditRegressions()
+	for operation = 0 to 3
+		checkLinkedListOperation(operation, -1)
+		checkLinkedListOperation(operation, 3)
+		if operation != 3
+			checkLinkedListOperation(operation, 2)
+
+unit reentrantUnit = null
+unit otherUnit = null
+var primaryCalls = 0
+var otherCalls = 0
+var attempted = false
+
+function deindexAuditHook()
+	let u = getIndexingUnit()
+	if u == reentrantUnit
+		primaryCalls++
+		regressionCheck(u.getIndex() > 0, "deindex hook retains old index")
+		if not attempted
+			attempted = true
+			regressionCheck(not u.deindex(), "recursive deindex is rejected")
+			regressionCheck(otherUnit.deindex(), "nested other-unit deindex succeeds")
+			regressionCheck(getIndexingUnit() == u, "nested deindex restores outer unit")
+	else if u == otherUnit
+		otherCalls++
+
+public function runDeindexAuditRegressions()
+	onUnitDeindex(function deindexAuditHook)
+	reentrantUnit = createUnit(players[0], UnitIds.footman, ZERO2, angle(0.))
+	otherUnit = createUnit(players[0], UnitIds.footman, vec2(128., 0.), angle(0.))
+	reentrantUnit.toUnitIndex()
+	otherUnit.toUnitIndex()
+	primaryCalls = 0
+	otherCalls = 0
+	attempted = false
+	regressionGuard("reentrant deindex") ->
+		regressionCheck(reentrantUnit.deindex(), "outer deindex succeeds")
+	regressionCheck(primaryCalls == 1 and otherCalls == 1, "each unit deindex hook runs once")
+	regressionCheck(reentrantUnit.getIndex() == 0 and otherUnit.getIndex() == 0, "both indices clear")
+	regressionCheck(getIndexingUnit() == null, "deindex stack restores null")
+	let a = createUnit(players[0], UnitIds.footman, ZERO2, angle(0.))
+	let b = createUnit(players[0], UnitIds.footman, ZERO2, angle(0.))
+	regressionCheck(a.toUnitIndex() != b.toUnitIndex(), "reused indices remain distinct")
+	a.remove()
+	b.remove()
+	reentrantUnit.remove()
+	otherUnit.remove()
+	reentrantUnit = null
+	otherUnit = null
+
+public function runOrderHistoryAuditRegressions()
+	let u = createUnit(players[0], UnitIds.footman, ZERO2, angle(0.))
+	u.toUnitIndex()
+	for i = 1 to 10
+		u.issuePointOrderById(Orders.move, vec2(256. + i.toReal(), 0.))
+	var entry = u.getLastOrder()
+	var count = 0
+	var ordered = true
+	while entry != null and count < 20
+		ordered = ordered and entry.orderedUnit == u and entry.orderId == Orders.move
+		ordered = ordered and entry.targetPosition.x == 266. - count.toReal()
+		count++
+		entry = entry.prev
+	regressionCheck(count == 3 and entry == null, "real order history retains exactly three")
+	regressionCheck(ordered, "real order history stays newest first")
+	u.clearLastOrders()
+	regressionCheck(u.getLastOrder() == null, "order history clears")
+	u.remove()
+
+public bool abortAuditCompleted = false
+
+public function runAbortOrderAuditRegressions()
+	abortAuditCompleted = false
+	let u = createUnit(players[0], UnitIds.footman, ZERO2, angle(0.))
+	u.issuePointOrderById(Orders.move, vec2(1024., 0.))
+	regressionCheck(u.getCurrentOrder() == Orders.move, "abort fixture starts moving")
+	regressionCheck(abortAuditOrder(u), "abort is callable through LastOrder consumer")
+	regressionCheck(not u.isPaused(), "abort leaves unpaused unit unpaused")
+	regressionCheck(u.getCurrentOrder() != Orders.move, "abort cancels native move order")
+	u.pause()
+	regressionCheck(not abortAuditOrder(u) and u.isPaused(), "abort preserves already paused unit")
+	u.unpause()
+	let pos = u.getPos()
+	doAfter(0.2) ->
+		regressionCheck(u.getPos().distanceTo(pos) < 1., "aborted unit stays stopped across native ticks")
+		u.remove()
+		abortAuditCompleted = true
+

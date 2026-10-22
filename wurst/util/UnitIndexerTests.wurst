@@ -6,6 +6,52 @@ unit array seenDeindexed
 var indexedCount = 0
 var deindexedCount = 0
 var deindexSawIndex = 0
+unit recursiveUnit = null
+unit nestedUnit = null
+var recursiveCalls = 0
+var nestedCalls = 0
+var attemptedRecursion = false
+
+function reentrantDeindexTest()
+	let u = getIndexingUnit()
+	if u == recursiveUnit
+		recursiveCalls++
+		u.getIndex().assertGreaterThan(0)
+		if not attemptedRecursion
+			attemptedRecursion = true
+			u.deindex().assertFalse()
+			nestedUnit.deindex().assertTrue()
+			(getIndexingUnit() == u).assertTrue()
+	else if u == nestedUnit
+		nestedCalls++
+
+@Test function reentrantDeindexPreservesHooksAndOtherUnits()
+	onUnitDeindex(function reentrantDeindexTest)
+	recursiveUnit = newTestUnit()
+	nestedUnit = newTestUnit()
+	recursiveUnit.toUnitIndex()
+	nestedUnit.toUnitIndex()
+	recursiveCalls = 0
+	nestedCalls = 0
+	attemptedRecursion = false
+	recursiveUnit.deindex().assertTrue()
+	recursiveCalls.assertEquals(1)
+	nestedCalls.assertEquals(1)
+	recursiveUnit.getIndex().assertEquals(0)
+	nestedUnit.getIndex().assertEquals(0)
+	(getIndexingUnit() == null).assertTrue()
+	// The allocator must still issue distinct live ids after nested cleanup.
+	let a = newTestUnit()
+	let b = newTestUnit()
+	(a.toUnitIndex() != b.toUnitIndex()).assertTrue()
+	a.deindex()
+	b.deindex()
+	recursiveUnit.remove()
+	nestedUnit.remove()
+	recursiveUnit = null
+	nestedUnit = null
+	a.remove()
+	b.remove()
 
 function onIndexedTest()
 	seenIndexed[indexedCount] = getIndexingUnit()

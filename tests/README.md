@@ -1,5 +1,9 @@
 # Runtime regression suite
 
+For the LinkedList, UnitIndexer and LastOrder audit regressions, see
+[AUDIT_VALIDATION.md](AUDIT_VALIDATION.md). That focused map uses real orders and
+timers and requires no mouse/key interaction.
+
 Run `rtk proxy python tests/check_native_bridges.py` to guard the single native
 frame/key bridge. `--self-test` checks that the guard rejects per-pair triggers,
 extra native actions and native-condition dispatch. This is a structural check,

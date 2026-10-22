@@ -1,0 +1,10 @@
+package LastOrderConsumerTests
+import NoWurst
+import LastOrder
+import Wurstunit
+
+@Test function abortOrderIsReexportedForNoWurstConsumers()
+	let u = CreateUnit(Player(0), 'hfoo', 0., 0., 0.)
+	u.abortOrder().assertTrue()
+	IsUnitPaused(u).assertFalse()
+	RemoveUnit(u)
