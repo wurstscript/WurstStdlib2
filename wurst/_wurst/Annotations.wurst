@@ -46,3 +46,12 @@ exists so intrinsic APIs remain visible to completion, navigation, and documenta
 
 /** Functions annotated with @ifNotDefined are only output into the mapscript if they don't already exist. */
 @annotation public function ifnotdefined()
+
+/**
+Functions annotated with @onHotReload run again after a Lua hot reload: each payload of a map started with hot run
+(-luaHotReload) calls them, with the code the payload has, once it installed everything else. A package init does not
+run again on a reload, so put setup a reload should redo (UI layout, registered events, values copied from constants)
+in a function, call it from init, and undo and redo it here. The function must be static and take no parameters. In
+any other build the annotation does nothing.
+*/
+@annotation public function onHotReload()
