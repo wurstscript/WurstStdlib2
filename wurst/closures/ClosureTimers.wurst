@@ -166,10 +166,13 @@ public abstract class CallbackSingle
 public abstract class CallbackPeriodic
 	private timer t
 	private bool enabled = true
+	private real interval = 0.
+	private real remaining = 0.
 
 	abstract function call(thistype cb)
 
 	protected function start(timer whichTimer, real time)
+		interval = time
 		t = whichTimer
 			..setData(this castTo int)
 			..startPeriodic(time, function staticCallback)
@@ -180,14 +183,27 @@ public abstract class CallbackPeriodic
 
 	/** Pauses this periodic callback without destroying it. Safe to call when already disabled. */
 	function disable()
-		this.enabled = false
-		this.t.pause()
+		if enabled
+			remaining = t.getRemaining()
+			// While the callback runs, the current expiry has no time left; resume at the next period.
+			if remaining <= 0.
+				remaining = interval
+			enabled = false
+			t.pause()
 
 	/** Resumes a previously disabled periodic callback. Safe to call when already enabled. */
 	function enable()
-		if not this.enabled
-			this.t.resume()
-		this.enabled = true
+		if not enabled
+			enabled = true
+			// ResumeTimer can lose periodic execution. Resume the remaining delay with a fresh registration.
+			t.start(remaining, function resumeCallback)
+
+	private static function resumeCallback()
+		let t = GetExpiredTimer()
+		let cb = t.getData() castTo thistype
+		// Restore the cadence before calling user code, which may disable or destroy cb.
+		t.startPeriodic(cb.interval, function staticCallback)
+		cb.call(cb)
 
 	ondestroy
 		t.release()
