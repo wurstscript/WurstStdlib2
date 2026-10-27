@@ -1,0 +1,60 @@
+package StdlibIngameTimerTests
+import ClosureTimers
+import TimerUtils
+import StdlibIngameChecks
+
+int array resumeCalls
+int array resumeDestroyed
+real firstPartialExpiry = 0.
+
+class PeriodicResumeCheck extends CallbackPeriodic
+	int slot
+	timer clock
+	construct(int slot, timer clock)
+		this.slot = slot
+		this.clock = clock
+
+	override function call(CallbackPeriodic cb)
+		resumeCalls[slot]++
+		if slot == 1 and resumeCalls[slot] == 1
+			firstPartialExpiry = clock.getElapsed()
+		if slot == 0 and (resumeCalls[slot] == 1 or resumeCalls[slot] == 3)
+			cb.disable()
+			cb.disable()
+			doAfter(.1) ->
+				cb.enable()
+				cb.enable()
+		else if resumeCalls[slot] == (slot == 0 ? 6 : 4)
+			destroy cb
+
+	ondestroy
+		resumeDestroyed[slot]++
+		resumeChecks[slot] = null
+
+PeriodicResumeCheck array resumeChecks
+
+/** Native timer regression: resumed callbacks must keep their cadence and eventually release ownership. */
+public function testPeriodicTimerResume(IngameChecks reporter)
+	reporter.section("--- 32. periodic timer pause and resume ---")
+	firstPartialExpiry = 0.
+	let clock = getTimer()
+	clock.start(3600., () -> skip)
+	for slot = 0 to 1
+		resumeCalls[slot] = 0
+		resumeDestroyed[slot] = 0
+		let cb = new PeriodicResumeCheck(slot, clock)
+		resumeChecks[slot] = cb
+		doPeriodically(slot == 0 ? .05 : .5, cb)
+	// Stop a timer part way through its first period, then resume after another 0.125 seconds.
+	doAfter(.125) ->
+		resumeChecks[1].disable()
+	doAfter(.25) ->
+		resumeChecks[1].enable()
+	doAfter(2.3) ->
+		for slot = 0 to 1
+			reporter.check(resumeCalls[slot] == (slot == 0 ? 6 : 4), "periodic resume keeps ticking " + slot)
+			reporter.check(resumeDestroyed[slot] == 1, "periodic resume releases callback " + slot)
+			if resumeChecks[slot] != null
+				destroy resumeChecks[slot]
+		reporter.check(firstPartialExpiry >= .55 and firstPartialExpiry <= .7, "periodic resume preserves remaining delay")
+		clock.release()
