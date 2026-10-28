@@ -169,6 +169,19 @@ public function testDummies()
 	check(f.getZ() > 79. and f.getZ() < 81., "and the height (" + f.getZ().toString(0) + ")")
 	destroy f
 
+	let killed = DummyRecycler.angleQueues[0].getFirst()
+	killed.kill()
+	let live = DummyRecycler.get(vec2(-3300., -1700.), angle(0))
+	check(live != killed and live.isAliveTrick(), "checkout skips a killed queued dummy")
+	DummyRecycler.recycle(live)
+	let removed = DummyRecycler.angleQueues[0].getFirst()
+	removed.remove()
+	// The native removal getters keep their old values during the removal callback itself.
+	doAfter(0.3) ->
+		let replacement = DummyRecycler.get(vec2(-3300., -1700.), angle(0))
+		check(replacement != removed and replacement.isAliveTrick(), "checkout skips a removed queued dummy")
+		DummyRecycler.recycle(replacement)
+
 // ============================================================================
 // 31. Listeners of a unit go with its index
 // ============================================================================

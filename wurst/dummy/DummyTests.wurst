@@ -26,6 +26,13 @@ function queuedDummies() returns int
 	queuedDummies().assertEquals(1)
 	dummy.isAlive().assertTrue()
 
+@Test function killedDummyIsNotEnqueued()
+	freshQueues()
+	let dummy = DummyRecycler.get(vec2(10, 10), angle(0))
+	dummy.kill()
+	DummyRecycler.recycle(dummy)
+	queuedDummies().assertEquals(0)
+
 @Test function instantTurnKeepsPositionAndHeight()
 	freshQueues()
 	let f = new Fx(vec2(100, 100), angle(0))

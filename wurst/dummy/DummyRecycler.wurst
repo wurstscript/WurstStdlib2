@@ -14,6 +14,8 @@ import Icons
 import ObjectIdGenerator
 import LinkedList
 import ClosureTimers
+import Widget
+import Execute
 
 /** Id of the dummy unit */
 public constant DUMMY_UNIT_ID = compiletime(UNIT_ID_GEN.next())
@@ -33,16 +35,34 @@ constant DIFFERENT_ANGLES		= 8
 constant ANGLE_DEGREE			= 360 / DIFFERENT_ANGLES
 constant SAVED_UNITS_PER_ANGLE	= 6
 
+/** Called only when a damaged pool entry is discarded. Consumers may add replay diagnostics here.
+	`checkout` distinguishes an invalid queued entry from a dead unit returned by its borrower. */
+@configurable public function onDummyRecyclerDiscard(unit _discarded, boolean checkout)
+	Log.warn("DummyRecycler: discarded an invalid dummy during " + (checkout ? "checkout" : "recycle"))
+
+function isUsableDummy(unit u) returns boolean
+	return u != null and u.getTypeId() == DUMMY_UNIT_ID and u.isAliveTrick()
+
+function discardInvalidDummy(unit u, boolean checkout)
+	let reported = try() ->
+		onDummyRecyclerDiscard(u, checkout)
+	if not reported
+		Log.warn("DummyRecycler: discard diagnostic failed; continuing recovery")
+	// A foreign unit was never ours to remove. Removed handles and null entries need no cleanup.
+	if u != null and u.getTypeId() == DUMMY_UNIT_ID
+		u.remove()
 
 public class DummyRecycler
 	static LinkedList<unit> array angleQueues
 
 	static function get(vec2 pos, angle a) returns unit
 		let angleIndex = (a.degrees() % 360 / ANGLE_DEGREE).round() mod DIFFERENT_ANGLES
-		if angleQueues[angleIndex].size() > 0
-			return angleQueues[angleIndex].dequeue()..setXY(pos)..unpause()
-		else
-			return createDummy(pos, a)
+		while not angleQueues[angleIndex].isEmpty()
+			let dummy = angleQueues[angleIndex].dequeue()
+			if isUsableDummy(dummy)
+				return dummy..setXY(pos)..unpause()
+			discardInvalidDummy(dummy, true)
+		return createDummy(pos, a)
 
 	/** Whether the unit waits in one of the queues, that is whether it was recycled and not handed out since. */
 	static function isRecycled(unit u) returns bool
@@ -56,6 +76,9 @@ public class DummyRecycler
 	static function recycle(unit u)
 		if u == null or u.getTypeId() == 0
 			// Removed already, for example by a first recycle which found the queues full.
+			return
+		if not isUsableDummy(u)
+			discardInvalidDummy(u, false)
 			return
 		if isRecycled(u)
 			Log.warn("DummyRecycler: ignoring an attempt to recycle a dummy which is already recycled")
