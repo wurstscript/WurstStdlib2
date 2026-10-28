@@ -37,7 +37,7 @@ constant SAVED_UNITS_PER_ANGLE	= 6
 
 /** Called only when a damaged pool entry is discarded. Consumers may add replay diagnostics here.
 	`checkout` distinguishes an invalid queued entry from a dead unit returned by its borrower. */
-@configurable public function onDummyRecyclerDiscard(unit discarded, boolean checkout)
+@configurable public function onDummyRecyclerDiscard(unit _discarded, boolean checkout)
 	Log.warn("DummyRecycler: discarded an invalid dummy during " + (checkout ? "checkout" : "recycle"))
 
 function isUsableDummy(unit u) returns boolean
