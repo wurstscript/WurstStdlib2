@@ -24,3 +24,16 @@ function testForForce()
 		testInt = 10
 
 	testInt.assertEquals(10)
+
+@Test
+function forceIteratesInPlayerIdOrder()
+	let f = CreateForce()
+	f.addPlayer(Player(5))
+	f.addPlayer(Player(1))
+	f.addPlayer(Player(3))
+	var visited = ""
+	for p in f
+		visited += I2S(GetPlayerId(p)) + ","
+	visited.assertEquals("1,3,5,")
+	f.containsPlayer(Player(1)).assertTrue()
+	DestroyForce(f)

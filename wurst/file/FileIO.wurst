@@ -35,6 +35,7 @@ import ObjectIds
 @configurable public constant CHUNKS_PER_FILE = 64
 @configurable public constant FILE_IO_ABIL_ID = '$wsl'
 
+/** Whether this client can read back the files it writes. Differs per client: never branch synced code on it. */
 public var CAN_READ_FILES = true
 
 public constant FILE_IO_ABIL_ID_STR = FILE_IO_ABIL_ID.toRawCode()
@@ -84,8 +85,10 @@ public class File
 			PreloadGenClear()
 			PreloadGenStart()
 
-			if buffer.getChunkCount() >= CHUNKS_PER_FILE
+			// tooltip levels 0 to CHUNKS_PER_FILE - 1 each hold one chunk
+			if buffer.getChunkCount() > CHUNKS_PER_FILE
 				error("FileIO(" + filename + ") ERROR: String's chunk count exceeds the limit (" + CHUNKS_PER_FILE + ").|r")
+				return
 
 			for i = 0 to buffer.getChunkCount() - 1
 				let chunk = buffer.getChunk(i)

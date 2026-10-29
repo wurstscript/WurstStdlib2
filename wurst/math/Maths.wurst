@@ -18,20 +18,22 @@ public constant real PIHALF		=  1.570796326
  * SquareRoot(x^2 + y^2) does.
  */
 public function hypot(real dx, real dy) returns real
-	real x = dx.abs()
-	let y = dy.abs()
-	real t = 0
-	if x > y
-		t = y / x
-	else if x < y
-		t = x / y
+	var x = dx.abs()
+	var y = dy.abs()
+	if x < y
+		let swap = x
 		x = y
+		y = swap
+	if x == 0
+		return 0
+	let t = y / x
 	return x * SquareRoot(1 + t * t)
 
 /** Returns the angle of a height-slope */
 public function getSlopeAngle(real z1, real z2, real dist) returns angle
 	return angle(Atan2(z2 - z1, dist))
 
+/** Truncated remainder: the result has the sign of the dividend, e.g. (-7).moduloInt(3) == -1 */
 public function int.moduloInt(int divisor) returns int
 	return this - (this div divisor) * divisor
 

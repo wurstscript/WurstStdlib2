@@ -27,17 +27,17 @@ public function flashEffect(string path, vec3 pos, real scale, angle yaw)
 public function flashEffect(string path, widget target, string attachPointName)
 	addEffect(path, target, attachPointName).destr()
 
-/** Creates and immediatly destroys an effect from the data defined in the ability's field "Art - Caster/Target/Missile/Ligtning/etc." (full list in common.j).
+/** Creates and immediately destroys an effect from the data defined in the ability's field "Art - Caster/Target/Missile/Lightning/etc." (full list in common.j).
 	Works for custom abilities. */
 public function flashEffect(int abilityId, effecttype effType, vec3 pos)
 	addEffect(abilityId, effType, pos).destr()
 
-/** Creates and immediatly destroys an effect from the data defined in the ability's field "Art - Caster/Target/Missile/Ligtning/etc." (full list in common.j)
+/** Creates and immediately destroys an effect from the data defined in the ability's field "Art - Caster/Target/Missile/Lightning/etc." (full list in common.j)
 	Works for custom abilities. */
 public function flashEffect(int abilityId, effecttype effType, vec2 pos)
 	addEffect(abilityId, effType, pos).destr()
 
-/** Creates and immediatly destroys an effect from the data defined in the ability's field "Art - Caster/Target/Missile/Ligtning/etc." (full list in common.j).
+/** Creates and immediately destroys an effect from the data defined in the ability's field "Art - Caster/Target/Missile/Lightning/etc." (full list in common.j).
 	Works for custom abilities. */
 public function flashEffect(int abilityId, effecttype effType, widget target, string attachPointName)
 	addEffect(abilityId, effType, target, attachPointName).destr()
@@ -51,17 +51,17 @@ public function addEffect(string path, vec3 pos) returns effect
 public function addEffect(string path, widget target, string attachPointName) returns effect
 	return AddSpecialEffectTarget(path, target, attachPointName)
 
-/** Creates an effect from the data defined in the ability's field "Art - Caster/Target/Missile/Ligtning/etc." (full list in common.j).
+/** Creates an effect from the data defined in the ability's field "Art - Caster/Target/Missile/Lightning/etc." (full list in common.j).
 	Works for custom abilities. */
 public function addEffect(int abilityId, effecttype effType, vec2 pos) returns effect
 	return AddSpellEffectById(abilityId, effType, pos.x, pos.y)
 
-/** Creates an effect from the data defined in the ability's field "Art - Caster/Target/Missile/Ligtning/etc." (full list in common.j).
+/** Creates an effect from the data defined in the ability's field "Art - Caster/Target/Missile/Lightning/etc." (full list in common.j).
 	Works for custom abilities. */
 public function addEffect(int abilityId, effecttype effType, vec3 pos) returns effect
 	return AddSpellEffectById(abilityId, effType, pos.x, pos.y)..setPos(pos)
 
-/** Creates an effect from the data defined in the ability's field "Art - Caster/Target/Missile/Ligtning/etc." (full list in common.j).
+/** Creates an effect from the data defined in the ability's field "Art - Caster/Target/Missile/Lightning/etc." (full list in common.j).
 	Works for custom abilities. */
 public function addEffect(int abilityId, effecttype effType, widget target, string attachPointName) returns effect
 	return AddSpellEffectTargetById(abilityId, effType, target, attachPointName)
@@ -122,7 +122,7 @@ public function effect.setZ(real z)
 public function effect.setPositionLoc(location loc)
 	BlzSetSpecialEffectPositionLoc(this, loc)
 
-/** Returns the data defined in the ability's field  "Art - Caster/Target/Missile/Ligtning/etc." (full list in common.j).
+/** Returns the data defined in the ability's field  "Art - Caster/Target/Missile/Lightning/etc." (full list in common.j).
 	Works for custom abilities. */
 public function getAbilityEffect(int abilityId, effecttype effType, int index) returns string
 	return GetAbilityEffectById(abilityId, effType, index)
@@ -170,7 +170,7 @@ public function effect.setYaw(angle yaw)
 	BlzSetSpecialEffectYaw(this, yaw.radians())
 
 /**
-	Change the  of the special effect around the y-axis.
+	Change the angle of the special effect around the y-axis.
 	Warning: As of 1.29.2, setPitch has issues for values between 1.57-4.7 radians or 90-270 degrees. It is recommended to use setOrientation.
 */
 public function effect.setPitch(angle pitch)

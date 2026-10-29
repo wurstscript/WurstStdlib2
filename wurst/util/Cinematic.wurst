@@ -34,7 +34,7 @@ let cine = new Cinematic(
     () -> begin
         FogEnable(true)
         SelectUnit(u, true)
-        reurn 0..seconds()
+        return 0..seconds()
     end,
 )
 
@@ -60,9 +60,10 @@ public class Cinematic
     */
     construct(LinkedList<CineSeq> sequence, CineSeq ending)
         running = true
-        controller(sequence, ending)
+        // before controller, which restores the interface at once for an empty sequence
         ShowInterface(false, 0.)
         EnableUserControl(false)
+        controller(sequence, ending)
 
     private function endCinematic()
         running = false

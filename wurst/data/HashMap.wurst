@@ -88,7 +88,7 @@ public class IterableMap<K,V> extends HashMap<K, V>
 		return keys.has(key)
 
 
-	/** Removes either a single occurence or all occurences from of the value from the map */
+	/** Removes either a single occurrence or all occurrences of the value from the map */
 	function removeValue(V val, bool all)
 		// removing through the iterator steps back after each removal, so no
 		// temporary key storage (and no array size cap) is needed

@@ -1,4 +1,4 @@
-# Fresh-master audit fixes — 2026-10-22
+# Fresh-master audit fixes, 2026-10-22
 
 Baseline: `fd6dcff3ac7f6a5cf57fa0a255718b4dae142642` (master after #515).
 

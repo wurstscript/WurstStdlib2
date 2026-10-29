@@ -147,13 +147,14 @@ public tuple gate(destructable killable)
 
 /** Opens a destructable gate */
 public function gate.open()
-	if (GetDestructableLife(this.killable) > 0)
+	if GetDestructableLife(this.killable) > 0
 		KillDestructable(this.killable)
+	SetDestructableAnimation(this.killable, "death alternate")
 
-/** Closes a destructable gate */
+/** Closes a destructable gate. A closed gate is not killed and restored, so no death event fires. */
 public function gate.close()
-	this.open()
-	DestructableRestoreLife(this.killable, GetDestructableMaxLife(this.killable), true)
+	if GetDestructableLife(this.killable) <= 0
+		DestructableRestoreLife(this.killable, GetDestructableMaxLife(this.killable), true)
 	SetDestructableAnimation(this.killable, "stand")
 
 /** Destroys a destructable gate */
@@ -191,10 +192,10 @@ public function elevator.getHeight() returns int
 	let height = ELEVATOR_HEIGHT_MIN + (this.elevatable.getOccluderHeight() / bj_CLIFFHEIGHT).toInt()
 	return height < ELEVATOR_HEIGHT_MIN or height > ELEVATOR_HEIGHT_MAX ? ELEVATOR_HEIGHT_MIN : height
 
-/** Returns elevator adjusted height based on given bounds */
+/** Returns whether the given height is within [ELEVATOR_HEIGHT_MIN, ELEVATOR_HEIGHT_MAX] */
 public function isElevatorHeightInBounds(int height) returns bool
 	return height >= ELEVATOR_HEIGHT_MIN and height <= ELEVATOR_HEIGHT_MAX
-	
+
 /** Returns elevator adjusted height based on given bounds */
 public function getElevatorHeightBound(int height) returns int
 	return height < ELEVATOR_HEIGHT_MIN ? ELEVATOR_HEIGHT_MIN : (height > ELEVATOR_HEIGHT_MAX ? ELEVATOR_HEIGHT_MAX : height)

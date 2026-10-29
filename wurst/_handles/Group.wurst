@@ -32,11 +32,14 @@ public function group.enumUnitsOfType(string unitname, boolexpr filter)
 public function group.enumUnitsOfType(int id, boolexpr filter)
 	GroupEnumUnitsOfType(this, UnitId2String(id), filter)
 
+// enumUnitsAll's own scratch group, so it can fill ENUM_GROUP as well
+constant ENUM_ALL_GROUP = CreateGroup()
+
 public function group.enumUnitsAll(boolexpr filter)
 	for i = 0 to bj_MAX_PLAYER_SLOTS - 1
-		ENUM_GROUP.enumUnitsOfPlayer(players[i], filter)
-		this.add(ENUM_GROUP)
-	ENUM_GROUP.clear()
+		ENUM_ALL_GROUP.enumUnitsOfPlayer(players[i], filter)
+		this.add(ENUM_ALL_GROUP)
+	ENUM_ALL_GROUP.clear()
 
 public function group.clear()
 	GroupClear(this)
@@ -49,7 +52,7 @@ public function group.add(vararg unit units) returns int
 			i += 1
 	return i
 
-/** Retruns the number of removed units. */
+/** Returns the number of removed units. */
 public function group.remove(vararg unit units) returns int
 	var i = 0
 	for u in units
@@ -165,7 +168,7 @@ public function group.next() returns unit
 	GroupRemoveUnit(this, iterUnit)
 	return iterUnit
 
-/** Closes the iterator, releaseing the group */
+/** Closes the iterator, releasing the group */
 public function group.close()
 	this.clear()
 	this.destr()

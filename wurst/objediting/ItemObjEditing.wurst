@@ -1,6 +1,7 @@
 package ItemObjEditing
 import ObjEditingNatives
 import UnitObjEditing
+import Annotations
 import NoWurst
 
 /** Create and configure item object data at compile time. */
@@ -62,8 +63,13 @@ public class ItemDefinition extends W3TDefinition
 	function setAbilities(string data)
 		def.setString("iabi", data)
 
+	@Deprecated("iarm is the armor sound type; use setArmorType(ArmorSoundType). This wrote defense types such as fort, which are not valid there.")
 	function setArmorType(ArmorType data)
 		def.setString("iarm", data.toObjectString())
+
+	/** Sets the sound the item makes when hit (iarm), like UnitDefinition.setArmorSoundType */
+	function setArmorType(ArmorSoundType data)
+		def.setString("iarm", data.toString())
 
 	function setClassification(string data)
 		def.setString("icla", data)

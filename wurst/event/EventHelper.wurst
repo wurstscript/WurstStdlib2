@@ -53,6 +53,8 @@ public function region.removeRegionData()
 	used to carry two different id lists. */
 function isPlayerunitEventId(int eventId) returns boolean
 	return (eventId >= 18 and eventId <= 51) or (eventId >= 269 and eventId <= 277) or eventId == 315 or eventId == 308
+		// stack, equip and unequip item
+		or eventId == 319 or eventId == 321 or eventId == 323
 
 function isKeyboardEventId(int eventId) returns boolean
 	return (eventId >= 261 and eventId <= 268) or (eventId == 17)

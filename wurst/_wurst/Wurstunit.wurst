@@ -29,21 +29,21 @@ public function int.assertGreaterThan(int less)
 		testFail("Expected <" + this + "> to be greater than <" + less + ">")
 
 /**
- * Asserts that the passed int is greater than the parameter. If they are not, an error is thrown with a message.
+ * Asserts that the passed int is greater than or equal to the parameter. If it is not, an error is thrown with a message.
  */
 public function int.assertGreaterThanOrEqual(int less)
 	if this < less
 		testFail("Expected <" + this + "> to be greater than or equal to <" + less + ">")
 
 /**
- * Asserts that the passed int is greater than the parameter. If they are not, an error is thrown with a message.
+ * Asserts that the passed int is less than the parameter. If it is not, an error is thrown with a message.
  */
 public function int.assertLessThan(int greater)
 	if this >= greater
 		testFail("Expected <" + this + "> to be less than <" + greater + ">")
 
 /**
- * Asserts that the passed int is greater than the parameter. If they are not, an error is thrown with a message.
+ * Asserts that the passed int is less than or equal to the parameter. If it is not, an error is thrown with a message.
  */
 public function int.assertLessThanOrEqual(int greater)
 	if this > greater
@@ -71,21 +71,21 @@ public function real.assertGreaterThan(real less)
 		testFail("Expected <" + this + "> to be greater than <" + less + ">")
 
 /**
- * Asserts that the passed real is greater than the parameter. If they are not, an error is thrown with a message.
+ * Asserts that the passed real is greater than or equal to the parameter. If it is not, an error is thrown with a message.
  */
 public function real.assertGreaterThanOrEqual(real less)
 	if this < less
 		testFail("Expected <" + this + "> to be greater than or equal to <" + less + ">")
 
 /**
- * Asserts that the passed real is greater than the parameter. If they are not, an error is thrown with a message.
+ * Asserts that the passed real is less than the parameter. If it is not, an error is thrown with a message.
  */
 public function real.assertLessThan(real greater)
 	if this >= greater
 		testFail("Expected <" + this + "> to be less than <" + greater + ">")
 
 /**
- * Asserts that the passed real is greater than the parameter. If they are not, an error is thrown with a message.
+ * Asserts that the passed real is less than or equal to the parameter. If it is not, an error is thrown with a message.
  */
 public function real.assertLessThanOrEqual(real greater)
 	if this > greater

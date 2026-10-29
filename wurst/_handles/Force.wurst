@@ -62,26 +62,33 @@ public function force.containsUnit(unit whichUnit) returns boolean
 public function force.containsPlayer(player whichPlayer) returns boolean
 	return IsPlayerInForce(whichPlayer, this)
 
-/* Force iterator */
-force iterForce
-
-/** Creates a new unordered iterator for this group. */
+/** Creates an iterator over this force's players, in player id order. */
 public function force.iterator() returns force
-	iterForce = CreateForce()
-	ForForce(this, () -> iterForce.addPlayer(GetEnumPlayer()))
+	let iterForce = CreateForce()
+	for i = 0 to bj_MAX_PLAYER_SLOTS - 1
+		if IsPlayerInForce(Player(i), this)
+			iterForce.addPlayer(Player(i))
 	return iterForce
+
+/** The member with the lowest player id, or null. Iterating in id order needs no random
+	picks, which cost a ForForce each and advance the synced random number generator. */
+function force.firstPlayer() returns player
+	for i = 0 to bj_MAX_PLAYER_SLOTS - 1
+		if IsPlayerInForce(Player(i), this)
+			return Player(i)
+	return null
 
 /** Returns whether the iterator has the next item */
 public function force.hasNext() returns boolean
-	return this.getRandomPlayer() != null
+	return this.firstPlayer() != null
 
-/** Returns the next item from the iterator */
+/** Returns the next item from the iterator, in player id order */
 public function force.next() returns player
-	let iterPlayer = this.getRandomPlayer()
+	let iterPlayer = this.firstPlayer()
 	this.removePlayer(iterPlayer)
 	return iterPlayer
 
-/** Closes the iterator, releaseing the group */
+/** Closes the iterator, releasing the force */
 public function force.close()
 	this.clear()
 	this.destr()

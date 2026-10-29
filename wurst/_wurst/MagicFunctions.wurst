@@ -47,7 +47,7 @@ Use it to write backend-specific code paths.
 public constant isLua = false
 
 /** This is a builtin magic function.
- * It evaluates it's argument at compiletime and replaces the call with the result.
+ * It evaluates its argument at compiletime and replaces the call with the result.
  */
  public function compiletime<T:>(T expr) returns T
 	 return expr

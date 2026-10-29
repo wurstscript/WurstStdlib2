@@ -57,16 +57,14 @@ import Player
 *
 *   Functions
 *
-*	   function BindSoundToUnit takes sound s, unit u, real minD, real maxD, real distCut returns Sim3DSound
+*	   bindSoundToUnit(sound s, unit u, real minD, real maxD, real distCut) returns Sim3DSound
 *		   - Attaches a regular sound to a unit.
-*	   function BindSoundToPoint takes sound s, real x, real y, real minD, real maxD, real distCut returns Sim3DSound
+*	   bindSoundToPoint(sound s, real x, real y, real minD, real maxD, real distCut) returns Sim3DSound
 *		   - Attaches a regular sound to a point.
-*	   function SetSoundUnit takes Sim3DSound s, unit u returns nothing
-*		   - Allows you to switch the unit the sound is projecting from.
-*	   function SetSoundCoordinates takes Sim3DSound s, real x, real y returns nothing
-*		   - Allows you to move the sound to another point.
-*	   function BindSoundToUnitForPlayer takes player p, sound s, unit u, real minD, real maxD, real distCut returns Sim3DSound
-*	   function BindSoundToPointForPlayer takes player p, sound s, real x, real y, real minD, real maxD, real distCut returns Sim3DSound
+*	   bindSoundToUnitForPlayer(player p, ...) / bindSoundToPointForPlayer(player p, ...)
+*		   - Same as above, but the sound is only started for player p.
+*	   Sim3DSound.setSoundPosition(unit u) / Sim3DSound.setSoundPosition(vec2 pos)
+*		   - Switches the unit or point the sound is projecting from.
 *
 ********************************************************************
 *
@@ -81,7 +79,7 @@ import Player
 ********************************************************************/
 
 
-		// Determines how often the volume is updated
+// Determines how often the volume is updated
 constant PERIOD = 0.2
 
 public class Sim3DSound
@@ -95,6 +93,7 @@ public class Sim3DSound
 	private real dur
 	private real maxD
 	private real distCut
+	private timer t = null
 
 	private static function expire()
 		let data = GetExpiredTimer().getData() castTo Sim3DSound
@@ -120,7 +119,8 @@ public class Sim3DSound
 				else
 					SetSoundVolume(data.snd, volume)
 		if data.dur <= 0
-			GetExpiredTimer().release()
+			data.t.release()
+			data.t = null
 		data.dur -= PERIOD
 
 	function setSoundPosition(vec2 pos)
@@ -148,7 +148,7 @@ public class Sim3DSound
 		if not this.adjust
 			SetSoundVolume(s, 1)
 
-		getTimer()..setData(this castTo int)..startPeriodic(PERIOD, function Sim3DSound.expire)
+		t = getTimer()..setData(this castTo int)..startPeriodic(PERIOD, function Sim3DSound.expire)
 
 	construct(sound s, unit u, real minDist, real maxDist, real distCutoff)
 		let dx = GetUnitX(u) - GetCameraTargetPositionX()
@@ -166,7 +166,12 @@ public class Sim3DSound
 		if not this.adjust
 			SetSoundVolume(s, 1)
 
-		getTimer()..setData(this castTo int)..startPeriodic(PERIOD, function Sim3DSound.expire)
+		t = getTimer()..setData(this castTo int)..startPeriodic(PERIOD, function Sim3DSound.expire)
+
+	ondestroy
+		// stops the volume updates, which would otherwise run on with a freed instance
+		if t != null
+			t.release()
 
 public function bindSoundToUnit(sound s, unit u, real minD, real maxD, real distCut) returns Sim3DSound
 	if not GetSoundIsPlaying(s)

@@ -22,9 +22,6 @@ function check(bool passed, string label)
 function section(string label)
 	reporter.section(label)
 
-function note(string label)
-	reporter.note(label)
-
 function skipped(int checks, string why)
 	reporter.skipped(checks, why)
 
@@ -174,9 +171,12 @@ public function testEventBridge()
 
 int array gateHits
 var gateRegistered = false
+// only this unit's orders count: a host map's own units issue point orders too
+unit gateSubject = null
 
 function gateListener() returns boolean
-	gateHits[0] = gateHits[0] + 1
+	if GetTriggerUnit() == gateSubject
+		gateHits[0] = gateHits[0] + 1
 	return true
 
 function gateConditionTrue() returns boolean
@@ -186,10 +186,12 @@ function gateConditionFalse() returns boolean
 	return false
 
 function gateActionAllowed()
-	gateHits[1] = gateHits[1] + 1
+	if GetTriggerUnit() == gateSubject
+		gateHits[1] = gateHits[1] + 1
 
 function gateActionDenied()
-	gateHits[2] = gateHits[2] + 1
+	if GetTriggerUnit() == gateSubject
+		gateHits[2] = gateHits[2] + 1
 
 public function testConditionGatesAction()
 	section("--- 20. a condition gates the action registered with it ---")
@@ -205,6 +207,7 @@ public function testConditionGatesAction()
 			function gateActionDenied)
 	let gateUnit = createUnit(players[0], UnitIds.footman, vec2(-2500., -2900.), angle(0))
 	let gateTarget = createUnit(players[0], UnitIds.footman, vec2(-2400., -2900.), angle(0))
+	gateSubject = gateUnit
 	doAfter(0.1) ->
 		gateUnit.issuePointOrder("move", vec2(-2500., -2800.))
 		gateUnit.issueTargetOrder("smart", gateTarget)

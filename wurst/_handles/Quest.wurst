@@ -47,6 +47,7 @@ public class Quest
 	construct(boolean required)
 		q = CreateQuest()
 		q.setRequired(required)
+		qState = IsQuestDiscovered(q) ? QuestState.DISCOVERED : QuestState.UNDISCOVERED
 
 	function setTitle(string title)
 		q.setTitle(title)
@@ -70,8 +71,10 @@ public class Quest
 		qState = state
 		switch state
 			case state.COMPLETED
+				q.failed(false)
 				q.completed(true)
 			case state.FAILED
+				q.completed(false)
 				q.failed(true)
 			case state.UNDISCOVERED
 				q.discovered(false)

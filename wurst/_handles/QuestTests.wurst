@@ -20,9 +20,14 @@ function QuestState.assertEquals(QuestState want)
     if this != want
         testFail("Expected <" + want + ">, Actual <" + this + ">")
 
+@Test function aNewQuestIsNotFailed()
+    let q = new Quest(false /* required */)
+    // the state used to default to the first enum value, FAILED
+    (q.getState() == QuestState.FAILED).assertFalse()
+
 @Test function testSetState()
     let q = new Quest(false /* required */)
-    
+
     q.setState(QuestState.COMPLETED)
     q.getState().assertEquals(QuestState.COMPLETED)
 
@@ -40,7 +45,7 @@ function QuestState.assertEquals(QuestState want)
     // There's currently no way to validate the behavior of these natives,
     // but this will detect a regression in mocked native presence.
     let q = CreateQuest()
-    
+
     q.setDescription("")
     q.setIcon("")
     q.setTitle("")

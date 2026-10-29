@@ -186,15 +186,15 @@ function item.updateDetails(player p, string itemName, string itemTooltip, strin
 				this.setIconPath(itemIcon)
 	return valid
 
-/** Updates the item's name, tooltip, extendedtooltip, description or icon for the specific player.
-	If p == null, the item is updated for all players
-	Returns false if no player is given. */
+/** Updates the item's name, tooltip, extendedtooltip, description or icon for the given player only.
+	Empty strings leave the corresponding detail unchanged.
+	Returns false if p is null, the item is null or all strings are empty. */
 public function item.updateDetailsForPlayer(player p, string itemName, string itemTooltip, string itemExtendedTooltip, string itemDesc, string itemIcon) returns bool
 	return p != null ? this.updateDetails(p, itemName, itemTooltip, itemExtendedTooltip, itemDesc, itemIcon) : false
 
-/** Updates the item's name, tooltip, extendedtooltip, description or icon for the specific player.
-	If p == null, the item is updated for all players
-	Returns false if no player is given. */
+/** Updates the item's name, tooltip, extendedtooltip, description or icon for all players.
+	Empty strings leave the corresponding detail unchanged.
+	Returns false if the item is null or all strings are empty. */
 public function item.updateDetailsForAll(string itemName, string itemTooltip, string itemExtendedTooltip, string itemDesc, string itemIcon) returns bool
 	return this.updateDetails(null, itemName, itemTooltip, itemExtendedTooltip, itemDesc, itemIcon)
 

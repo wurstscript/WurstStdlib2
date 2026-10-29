@@ -67,7 +67,7 @@ function getCurrentCallback() returns ForForceCallback
 	error out as well.
 
 	Note: Unlike timers and doAfter(), this method is synchronous, meaning
-	that it will wait for the called method to finish before continuing the in the current thread.
+	that it will wait for the called method to finish before continuing in the current thread.
 
 	Note: We use ForForce because it does not require a Trigger to be called, only an empty
 	force which is reusable, unlike TriggerEvaluate.
@@ -135,15 +135,18 @@ public interface LimitedExecuteAction
 	function run()
 
 function executeWhileInternal(int resetCount, LimitedExecuteCondition condition, LimitedExecuteAction action)
-	execute() ->
-		var i = 0
-		while condition.check() and i < resetCount
-			action.run()
-			i++
+	// One fresh thread per batch, run one after another. Starting each batch from inside the
+	// previous one nested a thread per batch, which overflows the Lua C stack at ~200 batches.
+	while condition.check()
+		if not try(() -> runBatch(resetCount, condition, action))
+			error("executeWhile: thread has crashed. caused by:\n| - " + lastError)
+			return
 
-		// restart the execute if necessary
-		if condition.check()
-			executeWhileInternal(resetCount, condition, action)
+function runBatch(int resetCount, LimitedExecuteCondition condition, LimitedExecuteAction action)
+	var i = 0
+	while i < resetCount and condition.check()
+		action.run()
+		i++
 
 /**
 	This is a utility function which you can use to process arbitrarily large loops.

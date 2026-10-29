@@ -117,7 +117,7 @@ public class SoundDefinition
 		this.duration = duration
 		let snd = getSound(volume)
 		nullTimer() ->
-			playSound(snd)
+			playSound(snd, duration)
 		return snd
 
 	/** Plays this sound for the given Player with a default duration.
@@ -132,7 +132,7 @@ public class SoundDefinition
 		let snd = getSound()
 		snd.p = p
 		nullTimer() ->
-			playSound(snd)
+			playSound(snd, duration)
 		return snd
 
 	function playOnPoint(vec3 target)  returns SoundInstance
@@ -143,10 +143,11 @@ public class SoundDefinition
 		let snd = getSound()
 		snd.pos = target
 		nullTimer() ->
-			playSound(snd)
+			playSound(snd, duration)
 		return snd
 
-	private function playSound(SoundInstance instance)
+	/** duration belongs to this play: the definition's field is overwritten by the next play. */
+	private function playSound(SoundInstance instance, int duration)
 		if instance.onUnit != null
 			AttachSoundToUnit(instance.snd, instance.onUnit)
 		if instance.pos.x != 0 or instance.pos.y != 0
@@ -157,7 +158,7 @@ public class SoundDefinition
 		else
 			instance.snd.play()
 
-		doAfter(instance.soundDef.duration * 0.001) ->
+		doAfter(duration * 0.001) ->
 			recycle(instance)
 
 	private function recycle(SoundInstance instance)

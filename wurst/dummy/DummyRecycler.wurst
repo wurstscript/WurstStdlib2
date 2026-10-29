@@ -60,7 +60,8 @@ public class DummyRecycler
 		while not angleQueues[angleIndex].isEmpty()
 			let dummy = angleQueues[angleIndex].dequeue()
 			if isUsableDummy(dummy)
-				return dummy..setXY(pos)..unpause()
+				// the queue only matches the facing to within half an angle step
+				return dummy..setXY(pos)..setFacing(a)..unpause()
 			discardInvalidDummy(dummy, true)
 		return createDummy(pos, a)
 
@@ -94,6 +95,7 @@ public class DummyRecycler
 			u..setXY(boundMax - vec2(16, 16))
 			..pause()
 			..setFacing((smallestQueue * ANGLE_DEGREE).asAngleDegrees())
+			..setFlyHeight(u.getDefaultFlyHeight(), 0)
 			..setScale(1)
 			..setVertexColor(COLOR_WHITE)
 			..setOwner(DUMMY_PLAYER, true)

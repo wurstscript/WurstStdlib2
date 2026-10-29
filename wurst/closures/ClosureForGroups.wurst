@@ -284,7 +284,7 @@ function currentCallbackD() returns ForGroupCallbackD
 	return tempCallbacksD[tempCallbacksDCount - 1]
 // ====Stack end====
 
-// Scratch rects, pooled for the same reason as the scratch groups above: a
+// Scratch rects, pooled instead of shared so nested enumerations are safe: a
 // single shared rect would be moved out from under an outer enumeration.
 rect array scratchRects
 var scratchRectCount = 0

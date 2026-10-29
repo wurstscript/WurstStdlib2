@@ -2,6 +2,7 @@ package StdlibIngameTests
 import DamageEvent
 import ClosureTimers
 import StdlibIngameTimerTests
+import StdlibIngameArithmeticTests
 import ClosureForGroups
 import TimerUtils
 import UnitIds
@@ -1098,6 +1099,8 @@ public function runStdlibIngameTests()
 		testUnitListenersGoWithTheIndex()
 	runGuarded("32. periodic timer pause and resume") ->
 		testPeriodicTimerResume(ingameReporter)
+	runGuarded("33. 32-bit integer arithmetic") ->
+		testThirtyTwoBitArithmetic(ingameReporter)
 
 	// these finish asynchronously, so the summary waits for them
 	runGuarded("8. TimedLoop stop before start") ->

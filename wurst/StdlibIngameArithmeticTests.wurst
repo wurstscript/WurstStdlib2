@@ -1,0 +1,57 @@
+package StdlibIngameArithmeticTests
+import Bitwise
+import ByteBuffer
+import StructuredSerialization
+import StdlibIngameChecks
+
+/*	32-bit integer arithmetic on the target backend. Shifts, byte packing and the serialization hashes rely on
+	integers wrapping at 32 bits. Jass does; so does the Lua of Warcraft III, whose integers are 32-bit too
+	(measured on the 3.0.1 client). grill test runs with Jass semantics, so only a Lua build of this check pins
+	that the backends agree. Expected values are the Jass results. */
+
+// read at runtime so that no expression below is folded at compile time
+var one = 1
+var minusOne = -1
+var intMax = INT_MAX
+
+/** The field id the compiletime interpreter (Jass semantics) computes; the runtime value must match it. */
+constant SCORE_FIELD_ID = compiletime(serializationFieldId("score"))
+
+public function testThirtyTwoBitArithmetic(IngameChecks reporter)
+	reporter.section("--- 33. 32-bit integer arithmetic ---")
+	reporter.check(intMax + one == INT_MIN, "INT_MAX + 1 wraps to INT_MIN")
+	reporter.check(one.shiftl(31) == INT_MIN, "1 << 31 is INT_MIN (" + one.shiftl(31) + ")")
+	reporter.check(one.shiftl(32) == 0, "1 << 32 is 0 (" + one.shiftl(32) + ")")
+	reporter.check((one * 3).shiftl(31) == INT_MIN, "3 << 31 is INT_MIN (" + (one * 3).shiftl(31) + ")")
+	reporter.check(minusOne.shiftr(0) == -1, "-1 >>> 0 is -1 (" + minusOne.shiftr(0) + ")")
+	reporter.check(minusOne.shiftr(1) == INT_MAX, "-1 >>> 1 is INT_MAX (" + minusOne.shiftr(1) + ")")
+	reporter.check("11111111111111111111111111111111".fromBitString() == -1, "32 one bits read as -1")
+	reporter.check(minusOne.and32(minusOne) == -1, "and32 of -1 and -1 is -1 (" + minusOne.and32(minusOne) + ")")
+	reporter.check((one * 2).pow(31) == INT_MIN, "2 to the power of 31 is INT_MIN")
+
+	let buffer = new ByteBuffer()
+	buffer.writeInt(-1000)
+	buffer.writeInt(minusOne)
+	let first = buffer.readInt()
+	let second = buffer.readInt()
+	destroy buffer
+	reporter.check(first == -1000 and second == -1, "ByteBuffer reads back negative ints (" + first + ", " + second + ")")
+
+	let fieldId = serializationFieldId("score")
+	reporter.check(fieldId == SCORE_FIELD_ID, "a field id matches the Jass value (" + fieldId + ", " + SCORE_FIELD_ID + ")")
+
+	let score = 5
+	let x = -7
+	let missing = 0
+	let writer = new FieldSerializationWriter(1)
+	writer.write("score", score)
+	writer.write("x", x)
+	let data = writer.finish()
+	destroy writer
+	let reader = new FieldSerializationReader(data)
+	reporter.check(reader.isValid(), "a structured save reads back as valid")
+	let readScore = reader.read("score", missing)
+	let readX = reader.read("x", missing)
+	reporter.check(readScore == score and readX == x, "and returns its fields (" + readScore + ", " + readX + ")")
+	destroy reader
+	destroy data

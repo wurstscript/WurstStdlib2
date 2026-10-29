@@ -104,6 +104,9 @@ init
 /** Sort key of a single byte: its index in `charset` for alphanumerics, a
 	value after those for other printable ascii, or UNKNOWN_CHAR_ORDER. */
 function charOrder(string c) returns int
+	// StringHash folds '/' into '\', so the table only holds the backslash's key
+	if c == "/"
+		return NON_CHARSET_ORDER_BASE + 47
 	let stored = LoadInteger(CHAR_ORDER_MAP, 0, c.getHash())
 	if stored == 0
 		return UNKNOWN_CHAR_ORDER
