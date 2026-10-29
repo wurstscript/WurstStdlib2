@@ -119,17 +119,13 @@ class SyncData
 function checkQueue()
 	if not syncQueue.isEmpty()
 		let syncData = syncQueue.getFirst()
+		// sendSyncData sends from the syncer's client only
 		if syncData.data != null
-			if localPlayer == syncData.syncer
-				BlzSendSyncData(DEFAULT_PREFIX, syncData.data)
+			syncData.syncer.sendSyncData(DEFAULT_PREFIX, syncData.data)
 		else
+			// read on every client, so the buffers stay alike
 			let data = syncData.buffer.readChunk()
-			let hasChunk = syncData.buffer.hasChunk()
-			if localPlayer == syncData.syncer
-				if hasChunk
-					BlzSendSyncData(DEFAULT_PREFIX, data)
-				else
-					BlzSendSyncData(LAST_CHUNK_PREFIX, data)
+			syncData.syncer.sendSyncData(syncData.buffer.hasChunk() ? DEFAULT_PREFIX : LAST_CHUNK_PREFIX, data)
 
 
 function shouldSync() returns boolean

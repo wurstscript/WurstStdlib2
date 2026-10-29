@@ -13,3 +13,13 @@ public interface IngameChecks
 		keeps compiling. */
 	function skipped(int checks, string why)
 		note("skipped " + checks + " checks: " + why)
+
+/** Whether `actual` is `expected` as error() reports it. An optimised build replaces each error() message with a
+	code E<n> and lists the messages in the build's errors.json, so there a code stands for the message. */
+public function isErrorMessage(string actual, string expected) returns bool
+	if actual == expected
+		return true
+	if actual.length() < 2 or actual.substring(0, 1) != "E"
+		return false
+	let num = actual.substring(1)
+	return S2I(num) > 0 and I2S(S2I(num)) == num
