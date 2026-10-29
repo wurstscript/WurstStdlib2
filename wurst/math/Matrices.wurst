@@ -117,7 +117,7 @@ public function mat2.op_mult(mat2 m) returns mat2
 	return mat2(this.m00 * m.m00 + this.m01 * m.m10,	this.m00 * m.m01 + this.m01 * m.m11,
 				this.m10 * m.m00 + this.m11 * m.m10,	this.m10 * m.m01 + this.m11 * m.m11)
 
-/** Returns matrix' column by index as a vector or rises an error if doesn't exist. */
+/** Returns matrix' column by index as a vector or raises an error if it doesn't exist. */
 public function mat2.col(int index) returns vec2
 	vec2 result = ZERO2
 	switch index
@@ -129,7 +129,7 @@ public function mat2.col(int index) returns vec2
 			error("Invalid call mat2.col. Index out of range.")
 	return result
 
-/** Returns matrix' row by index as a vector or rises an error if doesn't exist. */
+/** Returns matrix' row by index as a vector or raises an error if it doesn't exist. */
 public function mat2.row(int index) returns vec2
 	vec2 result = ZERO2
 	switch index
@@ -144,7 +144,7 @@ public function mat2.row(int index) returns vec2
 public function mat2.determinant() returns real
 	return this.m00 * this.m11 - this.m01 * this.m10
 
-/** Flips the matrix over its main diagonale.
+/** Flips the matrix over its main diagonal.
 Result of transposing for rotation matrix is its inverse matrix. */
 public function mat2.transpose() returns mat2
 	return mat2(this.m00, this.m10,
@@ -254,7 +254,7 @@ public function mult(mat4 m) returns mat4
 				tmp_mat.m30 * m.m02 + tmp_mat.m31 * m.m12 + tmp_mat.m32 * m.m22 + tmp_mat.m33 * m.m32,
 				tmp_mat.m30 * m.m03 + tmp_mat.m31 * m.m13 + tmp_mat.m32 * m.m23 + tmp_mat.m33 * m.m33)
 
-/** Returns matrix' column by index as a vector or rises an error if doesn't exist. */
+/** Returns matrix' column by index as a vector or raises an error if it doesn't exist. */
 public function mat3.col(int index) returns vec3
 	vec3 result = ZERO3
 	switch index
@@ -268,7 +268,7 @@ public function mat3.col(int index) returns vec3
 			error("Invalid call mat3.col. Index out of range.")
 	return result
 
-/** Returns matrix' row by index as a vector or rises an error if doesn't exist. */
+/** Returns matrix' row by index as a vector or raises an error if it doesn't exist. */
 public function mat3.row(int index) returns vec3
 	vec3 result = ZERO3
 	switch index
@@ -291,7 +291,7 @@ public function mat3.determinant() returns real
 		 - this.m01 * (this.m10 * this.m22 - this.m12 * this.m20)
 		 + this.m02 * (this.m10 * this.m21 - this.m11 * this.m20)
 
-/** Flips the matrix over its main diagonale.
+/** Flips the matrix over its main diagonal.
 Result of transposing for rotation matrix is its inverse matrix. */
 public function mat3.transpose() returns mat3
 	return mat3(this.m00,   this.m10,   this.m20,
@@ -497,7 +497,7 @@ function determinant3x3(real t00, real t01, real t02,
 			+ t02 * (t10 * t21 - t11 * t20)
 
 /** Finds inverse matrix.
-Returns tuple inverseresult44(bool success, mat3 matrix) where 'success' is true if the inverse matrix exists and 'matrix' is the inverse matrix.
+Returns tuple inverseresult44(bool success, mat4 matrix) where 'success' is true if the inverse matrix exists and 'matrix' is the inverse matrix.
 If there's no inverse matrix 'success' is false and 'matrix' is zero matrix. */
 public function mat4.inverse() returns inverseresult44
 	let d = this.determinant()

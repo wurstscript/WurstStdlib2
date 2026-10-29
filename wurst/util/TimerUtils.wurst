@@ -90,6 +90,10 @@ class TimedLoopTimer
 	int running = -1
 	/** Lua: how many of the loops the tick under way calls. The ones added meanwhile come after it. */
 	int boundary = 0
+	/** Jass: whether the trigger is being evaluated. A condition added then would still be reached by that
+		evaluation, so it waits in `pending` until the evaluation returns. */
+	bool evaluating = false
+	ArrayList<TimedLoopEntry> pending = null
 	int conditionsCount = 0
 
 	real period
@@ -109,6 +113,10 @@ class TimedLoopTimer
 	function add(TimedLoopEntry entry)
 		if isLua
 			loops.add(entry.list)
+		else if evaluating
+			if pending == null
+				pending = new ArrayList<TimedLoopEntry>()
+			pending.add(entry)
 		else
 			entry.condition = loopTrigger.addCondition(entry.filter)
 		conditionsCount++
@@ -120,7 +128,10 @@ class TimedLoopTimer
 		if isLua
 			instance.runLoops()
 		else
+			instance.evaluating = true
 			instance.loopTrigger.evaluate()
+			instance.evaluating = false
+			instance.addPending()
 		if instance.conditionsCount == 0
 			instance.loopTimer.pause()
 
@@ -135,6 +146,14 @@ class TimedLoopTimer
 		running = -1
 		boundary = 0
 
+	/** Jass: registers the loops which became active during the evaluation, for the next tick. */
+	function addPending()
+		if pending != null
+			for i = 0 to pending.size() - 1
+				let entry = pending.get(i)
+				entry.condition = loopTrigger.addCondition(entry.filter)
+			pending.clear()
+
 	function release(TimedLoopEntry entry)
 		if isLua
 			let index = loops.indexOf(entry.list)
@@ -147,9 +166,16 @@ class TimedLoopTimer
 				// The loop which is running or one before it left, so the next has moved down to the index
 				// which is running now.
 				running--
-		else
+		else if entry.condition != null
 			loopTrigger.removeCondition(entry.condition)
 			entry.condition = null
+		else
+			let index = pending != null ? pending.indexOf(entry) : -1
+			if index < 0
+				// neither registered nor waiting: nothing to release
+				return
+			// ordered, as the loops run in the order they became active
+			pending.removeAtOrdered(index)
 		conditionsCount--
 
 

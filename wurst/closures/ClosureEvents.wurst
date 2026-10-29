@@ -57,9 +57,12 @@ public constant EVENT_PLAYER_CHAT_FILTER = ConvertPlayerEvent(96)
 		Make sure to always use the "EVENT_PLAYER_UNIT_*" variants of the eventids.
 		Other supported events:
 			- EVENT_PLAYER_LEAVE
-			- EVENT_UNIT_DAMAGED
+			- EVENT_UNIT_DAMAGED (handled as EVENT_PLAYER_UNIT_DAMAGED)
 			- EVENT_PLAYER_CHAT_FILTER
 			- EVENT_PLAYER_ARROW_*
+			- EVENT_PLAYER_END_CINEMATIC
+			- EVENT_PLAYER_MOUSE_UP, EVENT_PLAYER_MOUSE_DOWN, EVENT_PLAYER_MOUSE_MOVE
+		Any other eventid raises an error when a listener is registered for it.
 */
 
 public abstract class OnCastListener
@@ -480,7 +483,7 @@ function registerEventId(eventid evnt) returns int
 	else if evnt.isPlayerunitEvent()
 		registerPlayerUnitEvent(ConvertPlayerUnitEvent(eventId), function EventListener.generalEventCallback)
 	else if evnt != EVENT_PLAYER_LEAVE and evnt != EVENT_PLAYER_CHAT_FILTER and not evnt.isKeyboardEvent() and not evnt.isMouseEvent()
-		error("registering handleid: " + eventId + " non-playerunitevent. Except EVENT_PLAYER_LEAVE these are not supported right now.")
+		error("registering handleid: " + eventId + " is not supported. Supported are playerunitevents, EVENT_UNIT_DAMAGED, EVENT_PLAYER_LEAVE, EVENT_PLAYER_CHAT_FILTER, arrow key, end cinematic and mouse events.")
 	if evnt.isMouseEvent() and not EventListener.useMouseEvents
 		EventListener.useMouseEvents = true
 		for i = 0 to bj_MAX_PLAYERS - 1

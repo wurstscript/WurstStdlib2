@@ -639,14 +639,18 @@ function getMouseCage() returns framehandle
 		mouseCage.setSize(0.0001, 0.0001)
 	return mouseCage
 
-/** Places the mouse cursor at the given point of the screen. Uses the same coodinate system as framehandles */
+/** Places the mouse cursor at the given point of the screen. Uses the same coordinate system as framehandles.
+
+	The first call (of this or framehandle.setMousePos) creates a helper frame, and frames must not be
+	created locally. Make that first call in synced code, or the handle ids of the clients diverge. */
 public function setMousePos(vec2 pos)
 	getMouseCage()..clearAllPoints()
 	..setPoint(FRAMEPOINT_BOTTOMLEFT, GAME_UI, FRAMEPOINT_BOTTOMLEFT, pos)
 	..cageMouse(true)
 	..cageMouse(false)
 
-/** Places the mouse cursor in the center of the frame */
+/** Places the mouse cursor in the center of the frame.
+	Like setMousePos(vec2), the first call must not be made in local code. */
 public function framehandle.setMousePos()
 	getMouseCage()..clearAllPoints()
 	..setPoint(FRAMEPOINT_CENTER, this, FRAMEPOINT_CENTER)

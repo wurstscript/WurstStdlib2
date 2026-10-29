@@ -28,13 +28,18 @@ public class HashList<T>
 		return occurences.loadInt(this castTo int, elem castTo int)
 
 	private function addOccurences(T elem, int delta)
-		occurences.saveInt(this castTo int, elem castTo int, count(elem) + delta)
+		let newCount = count(elem) + delta
+		if newCount > 0
+			occurences.saveInt(this castTo int, elem castTo int, newCount)
+		else
+			// keep the table bounded by the live elements, not every value ever added
+			occurences.removeInt(this castTo int, elem castTo int)
 
 	private function incrOccurences(T elem)
-		occurences.saveInt(this castTo int, elem castTo int, count(elem) + 1)
+		addOccurences(elem, 1)
 
 	private function decrOccurences(T elem)
-		occurences.saveInt(this castTo int, elem castTo int, count(elem) - 1)
+		addOccurences(elem, -1)
 
 	/** Add an element to the end of the list */
 	function add(vararg T elems)

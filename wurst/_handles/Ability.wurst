@@ -140,17 +140,11 @@ public function getAbilityActivatedPosX(int abilCode) returns int
 public function getAbilityActivatedPosY(int abilCode) returns int
 	return BlzGetAbilityActivatedPosY(abilCode)
 
-function getAbilityManaCost(int abilId, int level) returns integer
-	return BlzGetAbilityManaCost(abilId, level)
-
-function getAbilityCooldown(int abilId, int level) returns real
-	return BlzGetAbilityCooldown(abilId, level)
-
 // Ability Field Getters
 public function ability.getField(abilitybooleanfield field) returns bool
 	return BlzGetAbilityBooleanField(this, field)
-	
-public function ability.getField(abilityintegerfield field) returns int 
+
+public function ability.getField(abilityintegerfield field) returns int
 	return BlzGetAbilityIntegerField(this, field)
 
 public function ability.getField(abilityrealfield field) returns real
@@ -189,7 +183,7 @@ public function ability.getField(abilitystringlevelarrayfield field, int level, 
 public function ability.setField(abilitybooleanfield field, bool value) returns bool
 	return BlzSetAbilityBooleanField(this, field, value)
 
-public function ability.setField(abilityintegerfield field, int value) returns bool 
+public function ability.setField(abilityintegerfield field, int value) returns bool
 	return BlzSetAbilityIntegerField(this, field, value)
 
 public function ability.setField(abilityrealfield field, real value) returns bool

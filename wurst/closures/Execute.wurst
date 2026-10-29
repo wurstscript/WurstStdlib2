@@ -67,7 +67,7 @@ function getCurrentCallback() returns ForForceCallback
 	error out as well.
 
 	Note: Unlike timers and doAfter(), this method is synchronous, meaning
-	that it will wait for the called method to finish before continuing the in the current thread.
+	that it will wait for the called method to finish before continuing in the current thread.
 
 	Note: We use ForForce because it does not require a Trigger to be called, only an empty
 	force which is reusable, unlike TriggerEvaluate.
@@ -134,16 +134,31 @@ public interface LimitedExecuteCondition
 public interface LimitedExecuteAction
 	function run()
 
-function executeWhileInternal(int resetCount, LimitedExecuteCondition condition, LimitedExecuteAction action)
-	execute() ->
-		var i = 0
-		while condition.check() and i < resetCount
-			action.run()
-			i++
+/*	Batches one driver thread runs. The caller's thread pays a little per driver and each driver a little per
+	batch, so neither reaches the Jass operation limit, and threads nest only three deep. Starting each batch
+	from inside the previous one nested a thread per batch, which overflows the Lua C stack at ~200 batches. */
+constant BATCHES_PER_DRIVER = 500
 
-		// restart the execute if necessary
-		if condition.check()
-			executeWhileInternal(resetCount, condition, action)
+function executeWhileInternal(int resetCount, LimitedExecuteCondition condition, LimitedExecuteAction action)
+	while condition.check()
+		if not try(() -> runBatches(resetCount, condition, action))
+			error("executeWhile: thread has crashed. caused by:\n| - " + lastError)
+			return
+
+function runBatches(int resetCount, LimitedExecuteCondition condition, LimitedExecuteAction action)
+	var batches = 0
+	while batches < BATCHES_PER_DRIVER and condition.check()
+		if not try(() -> runBatch(resetCount, condition, action))
+			// fails this driver, so the caller stops too
+			error(lastError)
+			return
+		batches++
+
+function runBatch(int resetCount, LimitedExecuteCondition condition, LimitedExecuteAction action)
+	var i = 0
+	while i < resetCount and condition.check()
+		action.run()
+		i++
 
 /**
 	This is a utility function which you can use to process arbitrarily large loops.

@@ -10,7 +10,7 @@ class TestClass
 
 function allToString() returns string
 	var res = ""
- 	for x in TestClass
+	for x in TestClass
 		res += x.str
 	return res
 
@@ -21,24 +21,24 @@ function test()
 	let c = new TestClass("c")
 	let d = new TestClass("d")
 
- 	allToString().assertEquals("abcd")
- 	destroy c
- 	allToString().assertEquals("abd")
- 	destroy d
- 	allToString().assertEquals("ab")
- 	destroy a
- 	allToString().assertEquals("b")
- 	destroy b
- 	allToString().assertEquals("")
+	allToString().assertEquals("abcd")
+	destroy c
+	allToString().assertEquals("abd")
+	destroy d
+	allToString().assertEquals("ab")
+	destroy a
+	allToString().assertEquals("b")
+	destroy b
+	allToString().assertEquals("")
 
- @Test
- function testDestroy()
- 	new TestClass("a")
+@Test
+function testDestroy()
+	new TestClass("a")
 	let b = new TestClass("b")
 	new TestClass("c")
 	new TestClass("d")
- 	var s = ""
- 	for x in TestClass
+	var s = ""
+	for x in TestClass
 		s += x.str
 		if x == b
 			destroy x

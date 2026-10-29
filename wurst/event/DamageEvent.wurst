@@ -6,8 +6,6 @@
         Damage from code **must** be declared by the user using DamageEvent.setNextDamageFromCode() before dealing damage.
         Setting the damage amount to zero or less in the unreduced listeners does **not** skip the reduced
         listeners: EVENT_PLAYER_UNIT_DAMAGED still fires and they run with an amount of zero.
-        (This corrects an older note here which claimed the opposite. Verified in game by check 10 of
-        package StdlibIngameTests.)
 
         if DETECT_NATIVE_ABILITIES is true:
             > Any damage instance of attacktype ATTACK_TYPE_NORMAL is passed with DamageType SPELL
@@ -266,11 +264,9 @@ public class DamageEvent
 
         /*  Do NOT close the instance out here when the damage ended at <= 0.
 
-            The package header claims that "if you set damage amount to zero or
-            less in the unreduced listeners, reduced listeners will not fire".
-            That claim is wrong on current game versions: EVENT_PLAYER_UNIT_DAMAGED
-            fires for a zeroed DAMAGING just like any other, and onDamage()
-            below releases the instance normally.
+            EVENT_PLAYER_UNIT_DAMAGED fires for a zeroed DAMAGING just like any
+            other (see the package header), and onDamage() below releases the
+            instance normally.
 
             Verified in game by check 10 of package StdlibIngameTests. Closing
             the instance out here made a zeroed *nested* hit pop its own entry,

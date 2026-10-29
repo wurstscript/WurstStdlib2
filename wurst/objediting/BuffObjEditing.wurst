@@ -34,7 +34,6 @@ public function createDummyBuffObject(string name, string tooltip, string iconpa
 			..setMovementSpeedFactor(1, 0)
 			..setBuffs(1, buffId.toRawCode())
 			..presetIcon(iconpath)
-			..setArtTarget("")
 			..setTargetsAllowed(1, "self")
 			..setArtTarget(effectPath)
 			..setTargetAttachmentPoint(attachmentPoint)
@@ -81,8 +80,11 @@ public class BuffDefinition
 	/** Sets the icon's path for the buff obj, add "@!!" as prefix of the icon name to overide the default path by a custom path */
 	function setIcon(string name)
 		string s = name
-		if (name.length() < 20 or not name.startsWith("ReplaceableTextures")) and not name.startsWith("@!!")
-			 s = "ReplaceableTextures\\CommandButtons\\" + s
+		if name.startsWith("@!!")
+			// the prefix only marks a custom path, it is not part of it
+			s = name.substring(3)
+		else if name.length() < 20 or not name.startsWith("ReplaceableTextures")
+			s = "ReplaceableTextures\\CommandButtons\\" + s
 		if not name.endsWith(".blp")
 			s += ".blp"
 
@@ -110,7 +112,7 @@ public class BuffDefinition
 		def.setLvlDataInt("fmsp",  level, 0,  value)
 
 	function setMissileArc(int level, real value)
-		def.setLvlDataReal("fmac",  level, 0,  value)
+		def.setLvlDataUnreal("fmac",  level, 0,  value)
 
 	function setMissileHomingEnabled(int level, boolean value)
 		def.setLvlDataBoolean("fmho",  level, 0,  value)

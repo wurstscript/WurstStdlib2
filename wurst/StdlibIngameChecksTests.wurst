@@ -24,3 +24,12 @@ class ReporterFromBefore implements IngameChecks
 	reporter.count.assertEquals(1)
 	reporter.last.assertEquals("skipped 4 checks: it can not be repeated")
 	destroy reporter
+
+@Test function anErrorCodeStandsForItsMessage()
+	isErrorMessage("probe", "probe").assertTrue()
+	isErrorMessage("E17", "probe").assertTrue()
+	isErrorMessage("other", "probe").assertFalse()
+	isErrorMessage("E", "probe").assertFalse()
+	isErrorMessage("E0", "probe").assertFalse()
+	isErrorMessage("E1x", "probe").assertFalse()
+	isErrorMessage("", "probe").assertFalse()

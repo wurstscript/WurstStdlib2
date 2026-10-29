@@ -4,7 +4,8 @@ import Unit
 import Annotations
 import String
 
-/** Use this array instead of Player() to avoid leaks */
+/** The player handles indexed by player id, filled once at init.
+	Use this array instead of Player() so lookups are an array read instead of a native call. */
 public player array players
 public constant localPlayer = GetLocalPlayer()
 init
@@ -211,8 +212,10 @@ public function player.getCursorFocus() returns unit
 public function player.setMinimapTerrainTex(string texFile) returns bool
 	return localPlayer == this ? BlzChangeMinimapTerrainTex(texFile) : false
 
+/** Sends the data from this player's client only; other clients send nothing and return false.
+	The sync event then fires once on every client. */
 public function player.sendSyncData(string prefix, string data) returns bool
-	return BlzSendSyncData(prefix, data)
+	return localPlayer == this ? BlzSendSyncData(prefix, data) : false
 
 public function player.showChatMessage(int recipient, string message)
 	BlzDisplayChatMessage(this, recipient, message)

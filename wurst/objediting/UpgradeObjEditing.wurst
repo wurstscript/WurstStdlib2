@@ -180,10 +180,6 @@ public class W3QDefinition
 	function setButtonPositionY(int value)
 		def.setLvlDataInt("gbpy", 0, 0, value)
 
-	// This is disabled because it's really buggy. No real defined usage.
-	// function setAppliesToAllUnits(bool value)
-	// 	def.setLvlDataInt("glob", 0, 0, value.toInt())
-
 	function setClass(UpgradeClass value)
 		def.setLvlDataString("gcls", 0, 0, value.toObjectString())
 

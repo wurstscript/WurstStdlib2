@@ -2,6 +2,7 @@ package StdlibIngameTests
 import DamageEvent
 import ClosureTimers
 import StdlibIngameTimerTests
+import StdlibIngameArithmeticTests
 import ClosureForGroups
 import TimerUtils
 import UnitIds
@@ -910,6 +911,7 @@ var errorsHeard = 0
 var lastErrorHeard = ""
 var errorHeardSuppressed = false
 var errorListenersInstalled = false
+var failNextError = false
 
 /*	On Lua, error() returns instead of ending the thread, so an error in a callback leaves nothing
 	behind unless something listens. grill test cannot check this: at compile time error() is a
@@ -919,22 +921,24 @@ function testErrorListeners()
 	if not errorListenersInstalled
 		errorListenersInstalled = true
 		// Fails on the probe on purpose: its own error must not recurse into the listeners, and the
-		// listener after it must still run.
+		// listener after it must still run. A flag picks the probe, as an optimised build codes messages.
 		addErrorListener() msg ->
-			if msg == ERROR_PROBE
+			if failNextError
+				failNextError = false
 				error("a listener failed on " + msg)
 		addErrorListener() msg ->
 			errorsHeard++
 			lastErrorHeard = msg
 			errorHeardSuppressed = suppressErrorMessages
 	let before = errorsHeard
+	failNextError = true
 	// try() also ends the thread on Jass, where error() crashes it.
 	try(() -> error(ERROR_PROBE))
-	check(errorsHeard - before == 1, "an error reaches the listeners once, past a failing listener ("
+	check(not failNextError and errorsHeard - before == 1, "an error reaches the listeners once, past a failing listener ("
 		+ (errorsHeard - before) + ")")
-	check(lastErrorHeard == ERROR_PROBE, "the listener gets the message")
+	check(isErrorMessage(lastErrorHeard, ERROR_PROBE), "the listener gets the message (" + lastErrorHeard + ")")
 	check(errorHeardSuppressed, "a listener can tell an error try() caught")
-	check(lastError == ERROR_PROBE, "lastError keeps the error, not the failing listener's (" + lastError + ")")
+	check(lastError == lastErrorHeard, "lastError keeps the error, not the failing listener's (" + lastError + ")")
 
 // ============================================================================
 // 16. UnitIndexer storage
@@ -1098,6 +1102,12 @@ public function runStdlibIngameTests()
 		testUnitListenersGoWithTheIndex()
 	runGuarded("32. periodic timer pause and resume") ->
 		testPeriodicTimerResume(ingameReporter)
+	runGuarded("33. 32-bit integer arithmetic") ->
+		testThirtyTwoBitArithmetic(ingameReporter)
+	runGuarded("34. executeWhile over many batches") ->
+		testExecuteWhileManyBatches()
+	runGuarded("35. sendSyncData from its player") ->
+		testSendSyncDataFromItsPlayer()
 
 	// these finish asynchronously, so the summary waits for them
 	runGuarded("8. TimedLoop stop before start") ->

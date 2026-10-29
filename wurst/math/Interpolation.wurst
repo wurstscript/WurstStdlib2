@@ -76,9 +76,6 @@ public function vec3.derivBezier4(vec3 mid1, vec3 mid2, vec3 stop, real p) retur
 public function vec2.derivBezier4(vec2 mid1, vec2 mid2, vec2 stop, real p) returns vec2
 	return vec2(derivBezier4(this.x, mid1.x, mid2.x, stop.x, p), derivBezier4(this.y, mid1.y, mid2.y, stop.y, p))
 
-// You can use Bezier 3 to graphic perfect parabolas
-// bezier4(<Start Point>, <OutTan_of_StartPoint>, <InTan_of_EndPoint>, <EndPoint>)
-
 /** Cubic Hermite interpolation between `start` and `stop` for s in [0, 1],
 	with `tangent1` and `tangent2` as the derivatives at s = 0 and s = 1.
 	The basis is h00 = 2s^3-3s^2+1, h10 = s^3-2s^2+s, h01 = -2s^3+3s^2, h11 = s^3-s^2. */

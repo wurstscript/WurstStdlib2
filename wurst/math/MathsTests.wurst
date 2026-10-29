@@ -21,6 +21,10 @@ package MathsTests
 	testHypotHelp(543532403425324., 123456789.)
 	testHypotHelp(0.0000001, 0.0000000000023)
 	testHypotHelp(0, 0)
+	// equal sides used to return the side length itself
+	testHypotHelp(3, 3)
+	testHypotHelp(1, -1)
+	testHypotHelp(-4, 4)
 
 function testHypotHelp(real x, real y)
 	hypot(x, y).assertEquals(SquareRoot(x * x + y * y), 0.0001)

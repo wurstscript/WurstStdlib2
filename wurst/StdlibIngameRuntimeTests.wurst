@@ -59,7 +59,7 @@ public function testTryReportsError()
 	tryRuns = 0
 	check(try(() -> countRun()) and tryRuns == 1, "try returns true for a callback which does not fail and runs it once")
 	check(not try(() -> failInTry()), "try returns false after error()")
-	check(lastError == "stdlib in-game try probe", "and leaves the message in lastError (" + lastError + ")")
+	check(isErrorMessage(lastError, "stdlib in-game try probe"), "and leaves the message in lastError (" + lastError + ")")
 	afterErrorRan = false
 	check(not try(() -> failThenGoOn()), "try returns false for a callback which carries on past error()"
 		+ (afterErrorRan ? " (it did carry on)" : " (it did not)"))
@@ -198,3 +198,53 @@ public function testUnitListenersGoWithTheIndex()
 	check(EventListener.unitListenersFirsts[index] == null and EventListener.castMapCasters[index] == null,
 		"neither is left once it is deindexed")
 	u.remove()
+
+// ============================================================================
+// 34. executeWhile over many batches
+// ============================================================================
+
+/*	20000 batches of one iteration. Run one after another from the caller's thread, the per-batch overhead
+	exhausts that thread's Jass operation limit; nested one in the next, they overflow the Lua C stack. */
+
+constant WHILE_RUNS = 20000
+var whileRuns = 0
+
+public function testExecuteWhileManyBatches()
+	section("--- 34. executeWhile over many batches ---")
+	whileRuns = 0
+	executeWhile(1, () -> whileRuns < WHILE_RUNS) ->
+		whileRuns++
+	check(whileRuns == WHILE_RUNS, "every iteration ran and the caller went on (" + whileRuns + ")")
+
+// ============================================================================
+// 35. player.sendSyncData sends only from that player
+// ============================================================================
+
+/*	Synced code asks players 0 and 1 to send their own id. Each event must carry its sender's id: a client
+	which sends for another player shows up as a mismatch, even on a single client. */
+
+constant SYNC_PREFIX = "stdlibsend"
+var syncEvents = 0
+var syncMismatches = 0
+var syncRegistered = false
+
+function onSyncEvent()
+	syncEvents++
+	if BlzGetTriggerSyncData() != I2S(GetPlayerId(GetTriggerPlayer()))
+		syncMismatches++
+
+public function testSendSyncDataFromItsPlayer()
+	section("--- 35. player.sendSyncData sends only from that player ---")
+	syncEvents = 0
+	syncMismatches = 0
+	if not syncRegistered
+		syncRegistered = true
+		let trig = CreateTrigger()
+		for i = 0 to bj_MAX_PLAYERS - 1
+			BlzTriggerRegisterPlayerSyncEvent(trig, players[i], SYNC_PREFIX, false)
+		trig.addAction(function onSyncEvent)
+	for i = 0 to 1
+		players[i].sendSyncData(SYNC_PREFIX, I2S(i))
+	doAfter(1.5) ->
+		check(syncMismatches == 0, "no client sent for another player (" + syncMismatches + " of " + syncEvents + " mismatched)")
+		check(syncEvents >= 1, "the data of a playing player arrived (" + syncEvents + ")")

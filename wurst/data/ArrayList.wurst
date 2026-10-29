@@ -118,7 +118,9 @@ public class ArrayList<T:>
     private int startIndex
     private int capacity
     private int size = 0
-    // Number of slots intentionally retained by reset(). They are released by clear()/destroy.
+    // High-water mark of slots past the logical size that may still hold references: those
+    // retained by reset()/truncate(), and on Jass those vacated by removals and clear(). Nulling
+    // them in ondestroy keeps freed handles from staying referenced by the shared store.
     private int retainedSize = 0
 
     /** Creates a new empty list with default capacity (16) */
@@ -232,15 +234,14 @@ public class ArrayList<T:>
         for i = 0 to size - 1
             store[startIndex + i] = store[oldStart + i]
 
-        // The old section now holds duplicate references plus any stale references retained by
-        // reset(). It no longer belongs to a live list once freed, so clear the full high-water
-        // range before returning it to the pool (no-op on Jass).
-        if isLua
-            var slotsToClear = size
-            if retainedSize > slotsToClear
-                slotsToClear = retainedSize
-            for i = 0 to slotsToClear - 1
-                store[oldStart + i] = null
+        // The old section now holds duplicate references plus any stale ones past the size.
+        // It no longer belongs to a live list once freed, so clear the full high-water range
+        // before returning it to the pool; the copy above is already O(n).
+        var slotsToClear = size
+        if retainedSize > slotsToClear
+            slotsToClear = retainedSize
+        for i = 0 to slotsToClear - 1
+            store[oldStart + i] = null
 
         // The new section contains only the current logical elements.
         retainedSize = 0
@@ -253,6 +254,14 @@ public class ArrayList<T:>
         freeStorage()
         startIndex = tempStart
         capacity = tempCap
+
+    /** Releases the slot at the new size, which a removal just vacated. Lua nulls it for the GC;
+        Jass extends the range ondestroy nulls, keeping removals O(1). */
+    private function releaseVacatedSlot()
+        if isLua
+            store[startIndex + size] = null
+        else if size >= retainedSize
+            retainedSize = size + 1
 
     ondestroy
         // Clear references
@@ -370,9 +379,7 @@ public class ArrayList<T:>
             store[startIndex + i] = store[startIndex + i + 1]
 
         size--
-        // The last slot now holds a stale duplicate - release it for the Lua GC
-        if isLua
-            store[startIndex + size] = null
+        releaseVacatedSlot()
         return elem
 
     /** Removes the element at the given index and returns it (O(n) - shifts elements) */
@@ -393,10 +400,8 @@ public class ArrayList<T:>
         if index < size
             store[startIndex + index] = store[startIndex + size]
 
-        // The old last slot is now vacated (or held the removed element) - release it
-        if isLua
-            store[startIndex + size] = null
-
+        // The old last slot is now vacated (or held the removed element)
+        releaseVacatedSlot()
         return elem
 
     /** Removes the first occurrence of the element from the list (O(n)) */
@@ -439,7 +444,8 @@ public class ArrayList<T:>
         return store[startIndex + size - 1]
 
     /** Clears all elements from the list (reuse this list instead of creating new ones!).
-        O(1) on Jass; O(n) on Lua, where the slots are nulled so the GC can reclaim them. */
+        O(1) on Jass, where destroying the list nulls the slots; O(n) on Lua, where the slots are
+        nulled so the GC can reclaim them. */
     function clear()
         if isLua
             var slotsToClear = size
@@ -447,8 +453,11 @@ public class ArrayList<T:>
                 slotsToClear = retainedSize
             for i = 0 to slotsToClear - 1
                 store[startIndex + i] = null
+            retainedSize = 0
+        else if size > retainedSize
+            // stays O(1): ondestroy nulls the range
+            retainedSize = size
         size = 0
-        retainedSize = 0
 
     /** Resets the logical size while retaining both capacity and old slot references (O(1)).
 
@@ -509,9 +518,7 @@ public class ArrayList<T:>
             return null
         size--
         let elem = store[startIndex + size]
-        // Release the popped slot so the Lua GC can reclaim the reference
-        if isLua
-            store[startIndex + size] = null
+        releaseVacatedSlot()
         return elem
 
     /** Returns the lastly added element without removing it. If the list is empty this is the
@@ -585,6 +592,8 @@ public class ArrayList<T:>
         if isLua
             for i = writeIndex to size - 1
                 store[startIndex + i] = null
+        else if size > retainedSize
+            retainedSize = size
         size = writeIndex
         destroy predicate
 

@@ -261,3 +261,11 @@ package StringTests
 	"abc".replace("c", "").assertEquals("ab")
 	"aaa".replace("aa", "b").assertEquals("ba")
 	"".replace("a", "b").assertEquals("")
+
+@Test function stringCompareTellsSlashFromBackslash()
+	// StringHash folds '/' into '\\', which made the two compare equal and gave '/' the backslash's order
+	stringCompare("/", "\\").assertLessThan(0)
+	stringCompare("\\", "/").assertGreaterThan(0)
+	stringCompare("a/b", "a\\b").assertLessThan(0)
+	stringCompare("/", ":").assertLessThan(0)
+	stringCompare(".", "/").assertLessThan(0)

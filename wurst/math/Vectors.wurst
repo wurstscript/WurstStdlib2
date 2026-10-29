@@ -52,7 +52,7 @@ public function vec2.op_mult(vec2 v) returns vec2
 public function vec2.op_divReal(real factor) returns vec2
 	return vec2(this.x / factor, this.y / factor)
 
-/** Add two reals to the coordiantes of this vector */
+/** Add two reals to the coordinates of this vector */
 public function vec2.add(real x, real y)	returns vec2
 	return vec2(this.x + x, this.y + y)
 
@@ -122,7 +122,7 @@ public function vec2.inRange(vec2 v2, real radius) returns boolean
 public function vec2.toString() returns string
 	return "Vector2 [" + this.x + ", " + this.y + "]"
 
-/** Get this vetor's angle to another one */
+/** Get this vector's angle to another one */
 public function vec2.angleTo(vec2 v) returns angle
 	return Atan2(v.y - this.y, v.x - this.x).asAngleRadians()
 
@@ -363,7 +363,7 @@ public function vec3.distanceTo2dSq(vec2 v) returns real
 public function vec3.distanceToSq(vec3 v) returns real
 	return (v.x - this.x).squared() + (v.y - this.y).squared() + (v.z - this.z).squared()
 
-/** Get a String-represantation of the vector (for debugging) */
+/** Get a String-representation of the vector (for debugging) */
 public function vec3.toString() returns string
 	return "Vector3 [ " + this.x + ", " + this.y + ", " + this.z + " ]"
 
