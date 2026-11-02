@@ -352,7 +352,9 @@ public abstract class EventListener
 		// Unit Listeners
 		if hasUnitListeners
 			if trigUnit != null
-				let index = trigUnit.getIndex()
+				// Native initialization orders can precede entry. No unit listener exists
+				// for that lifetime yet; routing only observes an existing association.
+				let index = trigUnit.peekIndex()
 				if index > 0
 					var listener = unitListenersFirsts[index]
 					if listener != null and fireEvents(trigUnit)
