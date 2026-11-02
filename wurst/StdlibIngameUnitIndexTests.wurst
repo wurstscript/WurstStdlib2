@@ -1,0 +1,212 @@
+package StdlibIngameUnitIndexTests
+import StdlibIngameChecks
+import UnitIndexer
+import OnUnitEnterLeave
+import ClosureTimers
+import ArrayList
+
+constant LIFECYCLE_SEED = 1753
+constant LIFECYCLE_WAVES = 16
+constant LIFECYCLE_WAVE_SIZE = 12
+IngameChecks reporter = null
+int nativeOnlyType = 0
+int buildingType = 0
+int troopType = 0
+vec2 origin = ZERO2
+
+constant LIFECYCLE_PIDS = [0, 1, 2, 6, 7, 8]
+
+class ObservedIdentity
+    unit u
+    int index
+    boolean left = false
+    boolean removalRequested = false
+
+    construct(unit u, int index)
+        this.u = u
+        this.index = index
+
+constant identities = new ArrayList<ObservedIdentity>()
+boolean lifecycleArmed = false
+boolean lifecycleNested = false
+int lifecycleSeed = LIFECYCLE_SEED
+int lifecycleWave = 0
+int lifecycleBad = 0
+int lifecycleFirstBadWave = -1
+int lifecycleFirstBadPhase = 0
+int lifecycleCreated = 0
+int lifecycleEntered = 0
+int lifecycleLeft = 0
+int lifecycleReused = 0
+int lifecycleDeathsRetained = 0
+int lifecycleUntrackedLeaves = 0
+Callback lifecycleDone = null
+
+function metric(string name, int value)
+    reporter.note(name + "=" + value)
+
+function check(string label, boolean passed)
+    reporter.check(passed, label)
+
+function failLifecycle(int phase)
+    lifecycleBad++
+    if lifecycleFirstBadWave < 0
+        lifecycleFirstBadWave = lifecycleWave
+        lifecycleFirstBadPhase = phase
+
+function nextChoice() returns int
+    // Bounded test PRNG, independent of gameplay RNG; product stays below 2^31.
+    lifecycleSeed = (lifecycleSeed * 251 + 17) mod 65521
+    return lifecycleSeed
+
+function findIdentity(unit u) returns ObservedIdentity
+    for i = 0 to identities.size() - 1
+        let record = identities.get(i)
+        if record.u == u and not record.left
+            return record
+    return null
+
+function checkReturnedUnit(unit u)
+    let record = findIdentity(u)
+    if record == null or u.getIndex() != record.index or (record.index castTo UnitIndex).getUnit() != u
+        failLifecycle(1)
+    lifecycleCreated++
+
+function finishLifecycle()
+    lifecycleArmed = false
+    for i = 0 to identities.size() - 1
+        if not identities.get(i).left
+            failLifecycle(2)
+            identities.get(i).u.remove()
+    metric("native-index-seed", LIFECYCLE_SEED)
+    metric("native-index-created", lifecycleCreated)
+    metric("native-index-entered", lifecycleEntered)
+    metric("native-index-left", lifecycleLeft)
+    metric("native-index-reused", lifecycleReused)
+    metric("native-index-deaths-retained", lifecycleDeathsRetained)
+    metric("native-index-untracked-leaves", lifecycleUntrackedLeaves)
+    metric("native-index-first-bad-wave", lifecycleFirstBadWave)
+    metric("native-index-first-bad-phase", lifecycleFirstBadPhase)
+    check("native-index-immediate-identity-and-order", lifecycleBad == 0)
+    check("native-index-native-leave-for-every-entry", lifecycleLeft == lifecycleEntered)
+    check("native-index-reuse-observed-after-leave", lifecycleReused > 0)
+    check("native-index-death-retains-identity", lifecycleDeathsRetained > 0)
+    for i = 0 to identities.size() - 1
+        let record = identities.get(i)
+        record.u = null
+        destroy record
+    identities.clear()
+    let done = lifecycleDone
+    lifecycleDone = null
+    done.call()
+    destroy done
+
+function runLifecycleWave()
+    for i = 0 to LIFECYCLE_WAVE_SIZE - 1
+        let owner = players[LIFECYCLE_PIDS[nextChoice() mod 6]]
+        let typeId = i mod 5 == 0 ? nativeOnlyType : (i mod 2 == 0 ? buildingType : troopType)
+        let pos = origin.add((i mod 4).toReal() * 96., (i div 4).toReal() * 96.)
+        let u = createUnit(owner, typeId, pos, angle(0.))
+        checkReturnedUnit(u)
+        u.pause()
+        if typeId == troopType and i mod 3 == 0
+            let idx = u.getIndex()
+            u.kill()
+            if u.getTypeId() != 0
+                if u.getIndex() != idx
+                    failLifecycle(3)
+                else
+                    lifecycleDeathsRetained++
+    // Yield to native death/leave delivery before removing the remaining units.
+    doAfter(.1) ->
+        var i = 0
+        while i < identities.size()
+            let record = identities.get(i)
+            if not record.left and not record.removalRequested
+                record.removalRequested = true
+                record.u.remove()
+            i++
+        doAfter(.1) ->
+            lifecycleWave++
+            if lifecycleWave < LIFECYCLE_WAVES
+                runLifecycleWave()
+            else
+                finishLifecycle()
+
+public function runUnitIndexLifecycleChecks(IngameChecks checks, int nativeOnlyId, int structureId, int troopId, vec2 position, Callback done)
+    reporter = checks
+    nativeOnlyType = nativeOnlyId
+    buildingType = structureId
+    troopType = troopId
+    origin = position
+    lifecycleDone = done
+    lifecycleSeed = LIFECYCLE_SEED
+    lifecycleWave = 0
+    lifecycleBad = 0
+    lifecycleFirstBadWave = -1
+    lifecycleCreated = 0
+    lifecycleEntered = 0
+    lifecycleLeft = 0
+    lifecycleReused = 0
+    lifecycleDeathsRetained = 0
+    lifecycleUntrackedLeaves = 0
+    lifecycleArmed = true
+    runLifecycleWave()
+
+init
+    onUnitIndex() ->
+        if lifecycleArmed
+            let u = getIndexingUnit()
+            let idx = u.peekIndex()
+            if idx <= 0 or (idx castTo UnitIndex).getUnit() != u
+                failLifecycle(4)
+            var reused = false
+            for i = 0 to identities.size() - 1
+                let prior = identities.get(i)
+                if prior.index == idx
+                    if prior.left
+                        reused = true
+                    else
+                        failLifecycle(5)
+            if reused
+                lifecycleReused++
+            identities.add(new ObservedIdentity(u, idx))
+            lifecycleEntered++
+            if not lifecycleNested and lifecycleEntered mod 7 == 0
+                lifecycleNested = true
+                let nested = createUnit(players[0], buildingType, origin.add(0., 200.), angle(0.))
+                checkReturnedUnit(nested)
+                nested.pause()
+                if getIndexingUnit() != u or getEnterLeaveUnit() != u
+                    failLifecycle(6)
+                lifecycleNested = false
+            if not lifecycleNested and lifecycleEntered mod 11 == 0 and identities.size() > 1
+                let prior = identities.get(nextChoice() mod (identities.size() - 1))
+                if prior.u != u and not prior.left and not prior.removalRequested
+                    prior.removalRequested = true
+                    prior.u.remove()
+    onEnter() ->
+        if lifecycleArmed
+            let u = getEnterLeaveUnit()
+            let record = findIdentity(u)
+            if record == null or u.peekIndex() != record.index
+                failLifecycle(7)
+    onUnitDeindex() ->
+        if lifecycleArmed
+            let u = getIndexingUnit()
+            let record = findIdentity(u)
+            if record != null and u.peekIndex() != record.index
+                failLifecycle(8)
+    onLeave() ->
+        if lifecycleArmed
+            let u = getEnterLeaveUnit()
+            let record = findIdentity(u)
+            if record == null
+                lifecycleUntrackedLeaves++
+            else if u.peekIndex() != 0
+                failLifecycle(9)
+            else
+                record.left = true
+                // Do not retain removed native handles and prevent their reuse/collection.
+                record.u = null
+                lifecycleLeft++
