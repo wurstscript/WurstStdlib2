@@ -142,6 +142,7 @@ public class UnitIndex
 		popUnit()
 		this._unit.setStoredIndex(0)
 		traceUnitLifecycle(UnitLifecyclePhase.DEINDEX_END, this._unit, tempUnitsCount)
+		this._unit = null
 
 function indexEnteringUnit()
 	let u = getEnterLeaveUnit()
