@@ -70,7 +70,7 @@ function unit.setStoredIndex(int value)
 @configurable public function unit.getIndex() returns int
 	let index = this.getStoredIndex()
 	if index == 0
-		error("UnitIndexer: missing unit index; native entry did not establish identity")
+		error("UnitIndexer: missing index for unit type " + this.getTypeId() + getStackTraceString())
 	else if (index castTo UnitIndex).getUnit() != this
 		error("UnitIndexer: stale unit index; identity does not match")
 		return 0
