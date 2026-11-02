@@ -551,7 +551,7 @@ public function spatialIndexBeginPlayerQuery(player owner) returns int
 	queryDepth++
 	for i = 0 to registryCount - 1
 		let u = indexedUnit[registry[i]]
-		if u != null and u.getOwner() == owner
+		if u != null and u.getOwner() == owner and u.isSpatialQueryCandidate()
 			pushMatch(u)
 	return snapshotTop - queryBase[queryDepth - 1]
 
