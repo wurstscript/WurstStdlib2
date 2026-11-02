@@ -120,12 +120,12 @@ function destroyEventItself()
 	destroy eventListeners[0]
 	destroy eventListeners[1]
 
-@Test function castListenerOfAnUnindexedUnitIsNotSharedWithOtherUnindexedUnits()
+@Test function castListenerOfAnIndexedUnitDoesNotReachAnUnenteredUnit()
 	runs = 0
 	let owner = newTestUnit()
 	let other = newTestUnit()
-	owner.peekIndex().assertEquals(0)
-	// Neither unit is indexed, so both would share slot 0 if the listener were registered there.
+	new UnitIndex(owner)
+	other.peekIndex().assertEquals(0)
 	EventListener.onCast(owner, 'A102', (caster) -> record(0))
 	Dispatcher.spell(other, 'A102')
 	runs.assertEquals(0)

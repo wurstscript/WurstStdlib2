@@ -287,9 +287,11 @@ public abstract class EventListener
 
 	static private function addSpellInternal(unit u, int abilId, OnCastListener listener) returns OnCastListener
 		if u != null
-			let index = u.getIndex()
-			if castRegistrationDuringInit and (index <= 0 or OnCastListener.hasPendingForUnit(u))
+			// Startup queues binding, never identity allocation. Only require a live
+			// index when actually attaching the listener after native initialization.
+			if castRegistrationDuringInit and (u.peekIndex() <= 0 or OnCastListener.hasPendingForUnit(u))
 				return OnCastListener.deferRegistration(u, abilId, listener)
+			let index = u.getIndex()
 			if index <= 0
 				// Every unit without an index would share slot 0, so the listener would answer the casts of all of them.
 				Log.warn("Attempting to register a cast listener for a unit that is not indexed by UnitIndexer. " +
@@ -381,7 +383,7 @@ public abstract class EventListener
 		Apart from its arguments it reads nothing from the engine, which lets a test drive it.
 		The chains are walked as described at dispatchTo, with castNext as the cursor. */
 	protected static function dispatchSpell(unit trigUnit, int abilId, unit caster)
-		let index = trigUnit.getIndex()
+		let index = trigUnit.peekIndex()
 		let depth = takeWalkSlot()
 		var listener = castMapCasters[index]
 		while listener != null

@@ -66,8 +66,10 @@ function unit.setStoredIndex(int value)
 /** Validates deferred work captured while indexed. Absence means the old lifetime ended,
     rather than requesting a replacement identity for the unit. Never allocates. */
 public function unit.isIndexCurrent(int expectedIndex) returns boolean
-	return expectedIndex > 0 and this.getStoredIndex() == expectedIndex
-		and (expectedIndex castTo UnitIndex).getUnit() == this
+	if expectedIndex <= 0 or (expectedIndex castTo UnitIndex).getUnit() != this
+		return false
+	// A retained lifetime must still have its association. Do not hide corruption.
+	return this.getIndex() == expectedIndex
 
 /**  Returns the int index of this unit. A missing or stale association is a critical error.
 	Can be configured by the user to supply a custom unit indexer which won't break
