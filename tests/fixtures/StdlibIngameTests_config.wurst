@@ -1,0 +1,6 @@
+package StdlibIngameTests_config
+import NoWurst
+
+// The prepared map runs StdlibRegressionTests. Do not start a second suite
+// concurrently: it owns different terrain fixtures and deliberate error probes.
+@config public constant STDLIB_INGAME_TESTS_AUTORUN = false

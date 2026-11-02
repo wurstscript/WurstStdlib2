@@ -1,0 +1,54 @@
+package RegressionSpatialEligibility
+import RegressionChecks
+import UnitSpatialIndex
+import UnitSpatialIndex_config
+import UnitIndexer
+import UnitIds
+
+class SelectedMember implements UnitSpatialPredicate
+	unit selected
+	construct(unit selected)
+		this.selected = selected
+	override function matches(unit u) returns boolean
+		return u == selected
+
+class AcceptMember implements UnitSpatialPredicate
+	override function matches(unit u) returns boolean
+		return true
+
+function snapshotContains(unit expected, int count) returns boolean
+	var found = false
+	for i = 0 to count - 1
+		if spatialIndexQueryUnit(i) == expected
+			found = true
+	spatialIndexEndQuery()
+	return found
+
+public function runSpatialEligibilityRegressions()
+	// Automatic spatial registration is a Lua backend feature.
+	if isLua
+		let u = createUnit(players[0], UnitIds.footman, vec2(1024., 1024.), angle(0.))
+		let center = u.getPos()
+		let membership = new SelectedMember(u)
+		let filter = new AcceptMember()
+		let subset = new UnitSpatialGroup(membership)
+		subset.refreshMembership(u)
+		let identity = u.getIndex()
+		regressionSpatialExcludedUnit = u
+		regressionCheck(subset.beginQuery(center, 128.) == 0, "excluded subset snapshot is empty")
+		spatialIndexEndQuery()
+		regressionCheck(not subset.anyInRange(center, 128., filter), "excluded subset existence is false")
+		regressionCheck(not snapshotContains(u, spatialIndexBeginQuery(center, 128., false)), "range honors eligibility")
+		regressionCheck(not snapshotContains(u, spatialIndexBeginBoxQuery(center - vec2(128., 128.), center + vec2(128., 128.))),
+			"box honors eligibility")
+		regressionCheck(not snapshotContains(u, spatialIndexBeginPlayerQuery(players[0])), "player query honors eligibility")
+		regressionCheck(u.getIndex() == identity, "visibility exclusion retains fundamental identity")
+		regressionSpatialExcludedUnit = null
+		regressionCheck(subset.beginQuery(center, 128.) == 1, "eligible subset snapshot contains member")
+		regressionCheck(subset.anyInRange(center, 128., filter), "eligible subset existence is true")
+		regressionCheck(spatialIndexQueryUnit(0) == u, "existence query preserves outer snapshot")
+		spatialIndexEndQuery()
+		destroy subset
+		destroy filter
+		destroy membership
+		u.remove()

@@ -251,11 +251,11 @@ public abstract class EventListener
 		return listener
 
 	static function add(unit u, eventid eventId, EventListener listener) returns EventListener
-		let uid = u.getIndex()
-		if uid <= 0
+		if u.peekIndex() <= 0
 			Log.warn("Attempting to register event listener for a unit that is not indexed by UnitIndexer. " +
 				"If this happens during initialization, consider registering the EventListener in a callback to nullTimer() instead.")
 			return listener
+		let uid = u.getIndex()
 		hasUnitListeners = true
 		listener.eventId = eventId.toIntId()
 		listener.uid = uid
@@ -292,7 +292,7 @@ public abstract class EventListener
 			// index when actually attaching the listener after native initialization.
 			if castRegistrationDuringInit and (u.peekIndex() <= 0 or OnCastListener.hasPendingForUnit(u))
 				return OnCastListener.deferRegistration(u, abilId, listener)
-			let index = u.getIndex()
+			let index = u.peekIndex()
 			if index <= 0
 				// Every unit without an index would share slot 0, so the listener would answer the casts of all of them.
 				Log.warn("Attempting to register a cast listener for a unit that is not indexed by UnitIndexer. " +
@@ -497,7 +497,7 @@ function registerEventId(eventid evnt) returns int
 /** Destroys every listener registered for the unit. This does not depend on fireEvents: a unit whose events are
 	not fired still holds listeners, which would answer to whichever unit is given its index next. */
 public function unregisterEventsForUnit(unit u)
-	let index = u.getIndex()
+	let index = u.peekIndex() > 0 ? u.getIndex() : 0
 	OnCastListener.cancelPendingForUnit(u)
 	unregisterEvents(index)
 	if index > 0 and EventListener.castMapCasters[index] != null

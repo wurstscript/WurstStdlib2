@@ -164,7 +164,7 @@ class UnitSpatialExistenceFilter implements SpatialPartitionPredicate
 
 	override function matches(int idx, boolean uncertain) returns boolean
 		let u = indexedUnit[idx]
-		if u == null
+		if u == null or not u.isSpatialQueryCandidate()
 			return false
 		var inside = not uncertain
 		if not inside
@@ -185,8 +185,8 @@ class UnitSpatialExistenceFilter implements SpatialPartitionPredicate
 	Membership is event-owned: call refreshMembership after registration and changes to predicate inputs.
 	A query also rechecks the predicate, so a stale member can never be returned; newly eligible units
 	require a membership notification to join. Position sweeps never evaluate caller predicates.
-	Explicit subsets use their predicate as the visibility policy, including hidden/Locust units
-	when the predicate allows them. The ordinary queries retain Warcraft enumeration semantics.
+	All queries honor isSpatialQueryCandidate. Within that policy, explicit subsets use their predicate
+	as visibility policy, including hidden/Locust units when allowed. Ordinary queries retain Warcraft enumeration semantics.
 	The caller owns the predicate and must keep it alive until the subset is destroyed. */
 public class UnitSpatialGroup
 	private int groupId

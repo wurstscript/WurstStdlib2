@@ -1,0 +1,7 @@
+package UnitSpatialIndex_config
+import NoWurst
+
+public unit regressionSpatialExcludedUnit = null
+
+@config public function unit.isSpatialQueryCandidate() returns boolean
+	return this != regressionSpatialExcludedUnit

@@ -21,14 +21,20 @@ From the repository root, prepare separate copies for both backends:
 
 The tracked `tests/fixtures/RegressionBase.w3x` supplies the base map, so these
 commands work in a fresh checkout without an ignored root `ExampleMap.w3x`.
-The preparer also installs the indexing-policy fixture and its test-only
-`UnitIndexer_config` from `tests/fixtures/`; these stay outside library sources so
-they cannot replace a consuming map's indexing policy.
+The preparer installs indexing/spatial-policy fixtures and test-only configs from
+`tests/fixtures/`; these stay outside library sources so they cannot replace a
+consuming map's policies. It disables `StdlibIngameTests` autorun so two suites do
+not deform terrain and run error probes concurrently.
 
 ```powershell
 rtk proxy python tests/prepare_regressions.py --backend jass --name after
 rtk proxy python tests/prepare_regressions.py --backend lua --name after
 ```
+
+For listener/indexing changes, `--focus indexing` runs the gameplay, startup-policy,
+and spatial-eligibility checks without the independent terrain and interactive UI
+fixtures. The default remains the full suite; a focused pass does not clear unrelated
+failures in that full suite.
 
 In each printed project directory run:
 
@@ -72,7 +78,8 @@ Missing input is a failure at finalization; an automatic summary still says
 | Shared frame bridge (#514) | Real click creates two new buttons; real clicks on each new button | Guards the reported failure path; the generic fixture also passes the old per-pair implementation, so Castle Fight's specific regression remains unreproduced |
 | Spell registration before indexing | Create and register caster during init, then issue a real Berserk order after init | Listener left at index zero misses the spell effect |
 | Indexing-policy compatibility | Exclude an init caster via `shouldIndex`; explicitly deindex a runtime caster; issue real casts from both | Registration force-indexes excluded/recycled units, fires index hooks and receives their casts |
-| Deferred startup registration | Install a later package's index hook; cancel queued listeners and deindex queued units with forced object-id reuse; mix registration and manual indexing | Eager indexing bypasses the late hook; queue mistakes resurrect cancelled listeners or reverse dispatch order |
+| Deferred startup registration | Install a later package's index hook; cancel queued listeners; deindex during native indexing with forced object-id reuse; register a second listener during real entry | Eager indexing bypasses the late hook; queue mistakes resurrect cancelled listeners or reverse dispatch order |
+| Spatial eligibility | Exclude an indexed member and compare subset snapshots/existence plus ordinary range, box and player queries; restore eligibility | Existence disagrees with snapshots, visibility leaks excluded units, or exclusion suppresses fundamental identity |
 | Terrain Y normal | Temporary asymmetric terrain sample; compare public normal with cross product of actual X/Y surface tangents | Y uses the X slope; a flat/non-distinguishing fixture also fails |
 
 Invalid ArrayList operations run inside `try`: Jass ends the child thread, while Lua
@@ -86,14 +93,14 @@ lifetime; the suite does not destroy UI frames.
 
 Run exactly the same tests against the old implementation. For a clean historical
 baseline, prepare copies with `--baseline-ref <commit>` and a different `--name`.
-This changes only the six repaired production files; it keeps the tests identical.
-For a baseline containing local edits, preserve those six files before applying fixes
+This changes only the production files listed in `REPAIRED`; it keeps the tests identical.
+For a baseline containing local edits, preserve those files before applying fixes
 and restore them only inside a disposable prepared project.
 
 The interpreter supplement can also run in either project:
 
 ```powershell
-rtk proxy grill test RegressionRegistrationTests --quiet
+rtk proxy grill test RegressionRegistrationTests.pendingCastRegistrationDoesNotIndexTheUnit --quiet
 ```
 
 It checks that registration does not force indexing or write a listener into index

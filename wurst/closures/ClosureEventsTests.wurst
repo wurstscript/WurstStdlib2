@@ -166,3 +166,19 @@ function destroyEventItself()
 	excluded.remove()
 	entered.remove()
 
+@Test function runtimeRegistrationRejectsUnenteredUnitsWithoutAllocating()
+	OnCastListener.registerPendingCasts()
+	let u = newTestUnit()
+	runs = 0
+	let cast = EventListener.onCast(u, 'A9RT', (caster) -> record(0))
+	let orderListener = EventListener.add(u, EVENT_PLAYER_UNIT_DEATH, () -> record(1))
+	Dispatcher.spell(u, 'A9RT')
+	orderListener.uid.assertEquals(-1)
+	(cast.eventUnit == null).assertTrue()
+	runs.assertEquals(0)
+	u.peekIndex().assertEquals(0)
+	unregisterEventsForUnit(u)
+	destroy cast
+	destroy orderListener
+	u.remove()
+
