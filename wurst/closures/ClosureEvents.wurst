@@ -256,6 +256,8 @@ public abstract class EventListener
 				"If this happens during initialization, consider registering the EventListener in a callback to nullTimer() instead.")
 			return listener
 		let uid = u.getIndex()
+		if uid <= 0
+			return listener
 		hasUnitListeners = true
 		listener.eventId = eventId.toIntId()
 		listener.uid = uid
@@ -301,8 +303,10 @@ public abstract class EventListener
 		hasCastListeners = true
 		listener.abilId = abilId
 		if u != null
-			listener.eventUnit = u
 			let index = u.getIndex()
+			if index <= 0
+				return listener
+			listener.eventUnit = u
 			if castMapCasters[index] != null
 				castMapCasters[index].prev = listener
 				listener.next = castMapCasters[index]
