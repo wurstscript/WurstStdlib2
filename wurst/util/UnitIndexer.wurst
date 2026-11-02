@@ -2,6 +2,7 @@ package UnitIndexer
 import OnUnitEnterLeave
 import KeyedMap
 import CodeList
+import UnitLifecycleTrace
 
 /*  UnitIndexer
 
@@ -207,20 +208,30 @@ public class UnitIndex
 	construct(unit whichUnit)
 		this._unit = whichUnit
 		this._unit.setStoredIndex(this castTo int)
+		traceUnitLifecycle(UnitLifecyclePhase.INDEX_STORED, whichUnit, tempUnitsCount)
 		pushUnit(whichUnit)
 		onIndexList.run()
+		traceUnitLifecycle(UnitLifecyclePhase.INDEX_DISPATCH_END, whichUnit, tempUnitsCount)
 		popUnit()
 
 	ondestroy
 		deindexing = true
+		traceUnitLifecycle(UnitLifecyclePhase.DEINDEX_BEGIN, this._unit, tempUnitsCount)
 		pushUnit(this._unit)
 		onDeindexList.run()
 		popUnit()
 		this._unit.setStoredIndex(0)
+		traceUnitLifecycle(UnitLifecyclePhase.DEINDEX_END, this._unit, tempUnitsCount)
+
+function indexEnteringUnit()
+	let u = getEnterLeaveUnit()
+	traceUnitLifecycle(UnitLifecyclePhase.INDEX_LISTENER, u, tempUnitsCount)
+	if shouldIndex(u)
+		u.toUnitIndex()
 
 // Auto instanciation/destruction
 init
-	onEnter(() -> shouldIndex(getEnterLeaveUnit()) ? getEnterLeaveUnit().toUnitIndex() : 0)
+	onEnter(function indexEnteringUnit)
 	// A unit that leaves loses its index even when shouldIndex would not index it now: it may have been
 	// indexed through toUnitIndex(), or the predicate may have changed since it entered, and an index
 	// that outlives its unit leaks, along with everything keyed by it.

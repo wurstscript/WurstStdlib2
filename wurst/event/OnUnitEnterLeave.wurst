@@ -13,6 +13,7 @@ import ClosureTimers
 import Annotations
 import Orders
 import CodeList
+import UnitLifecycleTrace
 
 /* 	Provides event API for units entering and leaving the map.
 	The event will also fire for preplaced units on the map, hidden and Locust ones included.
@@ -58,20 +59,32 @@ public function onLeave(code c)
 constant ABILITY_ID = compiletime(ABIL_ID_GEN.next())
 
 function prepareUnit(unit u)
+	traceUnitLifecycle(UnitLifecyclePhase.PREPARE_BEGIN, u, tempUnitsCount)
 	u..addAbility(ABILITY_ID)..makeAbilityPermanent(ABILITY_ID, true)
+	traceUnitLifecycle(UnitLifecyclePhase.PREPARE_ABILITY, u, tempUnitsCount)
 	pushUnit(u)
+	traceUnitLifecycle(UnitLifecyclePhase.ENTER_DISPATCH_BEGIN, u, tempUnitsCount)
 	enterList.run()
+	traceUnitLifecycle(UnitLifecyclePhase.ENTER_DISPATCH_END, u, tempUnitsCount)
 	popUnit()
 
+function prepareNativeUnit()
+	let u = GetFilterUnit()
+	traceUnitLifecycle(UnitLifecyclePhase.NATIVE_FILTER, u, tempUnitsCount)
+	prepareUnit(u)
+
 init
+	traceUnitLifecycle(UnitLifecyclePhase.ENTER_INIT, null, 0)
 	// Make the ability invisible to the player
 	for i = 0 to bj_MAX_PLAYER_SLOTS - 1
 		players[i].setAbilityAvailable(ABILITY_ID, false)
 
 	nullTimer() ->
+		traceUnitLifecycle(UnitLifecyclePhase.INSTALL_BEGIN, null, boundRegion == null ? 0 : 1)
 		// Install the public events after init, preserving the package's existing delivery contract:
 		// every importer can register before preplaced and init-created units are dispatched once.
-		CreateTrigger()..registerEnterRegion(boundRegion, Filter(() -> prepareUnit(GetFilterUnit())))
+		CreateTrigger()..registerEnterRegion(boundRegion, Filter(function prepareNativeUnit))
+		traceUnitLifecycle(UnitLifecyclePhase.INSTALL_END, null, boundRegion == null ? 0 : 1)
 
 		registerPlayerUnitEvent(EVENT_PLAYER_UNIT_ISSUED_ORDER) ->
 			let leavingUnit = GetTriggerUnit()
@@ -83,9 +96,11 @@ init
 		// Process preplaced units. Per-player enumeration, unlike a rect, includes hidden and Locust units.
 		preplacedUnits.enumUnitsAll(null)
 		let count = preplacedUnits.size()
+		traceUnitLifecycle(UnitLifecyclePhase.PREPLACED_BEGIN, null, count)
 		for i = 0 to count - 1
 			prepareUnit(preplacedUnits.get(i))
 		preplacedUnits..clear()..destr()
+		traceUnitLifecycle(UnitLifecyclePhase.PREPLACED_END, null, count)
 
 @compiletime function generateAbility()
 	new AbilityDefinitionDefend(ABILITY_ID)
