@@ -104,6 +104,17 @@ let value = compiletime(fac(5))
 		..setName("Wurst Bolt")
 ```
 
+## Unit Lifecycle and Identity
+
+The invariant: **every unit that enters the map receives a unit index unless `shouldIndex` excludes it.** There is no lazy or dynamic indexing. The contract and its reasons are at the code site (`UnitIndexer` header); the rules for working with it:
+
+- Native entry assigns identity and fires `onUnitIndex` before any ordinary `onEnter` consumer and before `CreateUnit` returns. The index is kept through death and released when the unit leaves the map.
+- `getIndex()` and `toUnitIndex()` only read. A unit without an index there is a **bug or a misuse** (an excluded unit, or a read before entry) and a critical error. Never make a lookup allocate, repair or default it. `peekIndex()` is for lifecycle infrastructure and diagnostics that must observe absence; deferred work keeps the index it captured and checks `isIndexCurrent`.
+- Some native events run before entry, so before the index exists: Tornado Slow Aura deals zero self-damage inside `CreateUnit`, even with no allowed targets (`DamageEvent` header, `StdlibIngameBirthDamageTests`). A listener handles that case before it touches indexed state. Do not move indexing into the event.
+- Never work around a missing index where it shows up (an allocating lookup, a retry, restoring state afterwards). Find what broke the invariant. A failure that appeared in only some games came from a stale `destroy` that freed a live listener `CodeList`, not from the indexer; the compiler now refuses such a destroy on Lua.
+- Wurst has no garbage collector, and Lua hands a freed id to the next object of any class. A reference kept past `destroy` acts on that object, so never retain one: capture the unit or index and validate it. `StdlibIngameAllocatorTests` guards the `CodeList` case.
+- The compiletime interpreter does not model entry order. Prove changes here in game: `StdlibIngameUnitIndexTests`, `StdlibIngameBirthDamageTests`, `StdlibIngameAllocatorTests`.
+
 ## Tests
 
 ```wurst
