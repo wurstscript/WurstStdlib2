@@ -46,7 +46,8 @@ asynchronous checks. An automated consumer can also assert
 
 `--focus custom-index` is a separate Lua integration check: the configured
 `getIndex()` returns a different ID namespace from the backing indexer. Native entry,
-movement and deindex must address the same configured spatial row. It ends with
+movement and deindex must address the same configured spatial row; native point orders,
+spell effects and recorded order completion must use that namespace too. It ends with
 `CUSTOM INDEX COMPLETE`; Jass does not activate the spatial index.
 
 In each printed project directory run:

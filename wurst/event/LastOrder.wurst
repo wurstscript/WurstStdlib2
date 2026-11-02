@@ -23,9 +23,9 @@ public function unit.clearLastOrders()
 /** Returns the last recorded order for this unit, or null if it has none or is not indexed by UnitIndexer.
 	To access further back orders, use .prev */
 public function unit.getLastOrder() returns Order
-	let index = this.peekIndex()
-	if index <= 0
+	if this.peekIndex() <= 0
 		return null
+	let index = this.getIndex()
 	return lastOrder[index]
 
 public enum OrderType
@@ -152,7 +152,8 @@ function actions()
 			new Order(u, oid, OrderType.IMMEDIATE, null, u.getPos())
 
 function spellActions()
-	let index = GetTriggerUnit().peekIndex()
+	let u = GetTriggerUnit()
+	let index = u.peekIndex() > 0 ? u.getIndex() : 0
 	if index > 0 and lastOrder[index] != null
 		// Only do this if the last order actually exists
 		lastOrder[index].finished = true

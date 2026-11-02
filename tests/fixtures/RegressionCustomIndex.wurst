@@ -2,6 +2,21 @@ package RegressionCustomIndex
 import RegressionChecks
 import UnitIndexer
 import UnitSpatialIndex
+import ClosureEvents
+import ClosureTimers
+import LastOrder
+import Orders
+
+var pointCalls = 0
+var castCalls = 0
+
+class PointProbe extends EventListener
+    override function onEvent()
+        pointCalls++
+
+class CastProbe extends OnCastListener
+    override function fire(unit caster)
+        castCalls++
 
 function contains(unit expected) returns boolean
     let count = spatialIndexBeginQuery(expected.getPos(), 128., false)
@@ -20,7 +35,26 @@ public function runCustomIndexRegressions()
         u.setXY(vec2(1400., 1400.))
         u.updateSpatialIndex()
         regressionCheck(contains(u), "movement refreshes the same configured row")
-        u.deindex()
-        regressionCheck(not contains(u), "deindex removes the configured row")
-        u.remove()
-    regressionSummary("CUSTOM INDEX COMPLETE")
+        pointCalls = 0
+        castCalls = 0
+        EventListener.add(u, EVENT_PLAYER_UNIT_ISSUED_POINT_ORDER, new PointProbe())
+        EventListener.onCast(u, 'Absk', new CastProbe())
+        u.addAbility('Absk')
+        u.issuePointOrderById(Orders.move, vec2(1500., 1400.))
+        regressionCheck(pointCalls == 1, "unit listener routes through configured provider")
+        let recorded = u.getLastOrder()
+        regressionCheck(recorded != null and recorded.orderId == Orders.move,
+            "order history reads the configured row")
+        u.issueImmediateOrderById(Orders.berserk)
+        doAfter(.25) ->
+            regressionCheck(castCalls == 1, "cast listener routes through configured provider")
+            let castOrder = u.getLastOrder()
+            regressionCheck(castOrder != null and castOrder.finished,
+                "spell effect finishes the configured order row")
+            u.deindex()
+            regressionCheck(not contains(u), "deindex removes the configured row")
+            regressionCheck(u.getLastOrder() == null, "deindex clears configured order history")
+            u.remove()
+            regressionSummary("CUSTOM INDEX COMPLETE")
+    else
+        regressionSummary("CUSTOM INDEX COMPLETE; SPATIAL LUA ONLY")

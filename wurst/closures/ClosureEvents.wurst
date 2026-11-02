@@ -361,8 +361,8 @@ public abstract class EventListener
 			if trigUnit != null
 				// Native initialization orders can precede entry. No unit listener exists
 				// for that lifetime yet; routing only observes an existing association.
-				let index = trigUnit.peekIndex()
-				if index > 0
+				if trigUnit.peekIndex() > 0
+					let index = trigUnit.getIndex()
 					var listener = unitListenersFirsts[index]
 					if listener != null and fireEvents(trigUnit)
 						while listener != null
@@ -388,7 +388,7 @@ public abstract class EventListener
 		Apart from its arguments it reads nothing from the engine, which lets a test drive it.
 		The chains are walked as described at dispatchTo, with castNext as the cursor. */
 	protected static function dispatchSpell(unit trigUnit, int abilId, unit caster)
-		let index = trigUnit.peekIndex()
+		let index = trigUnit.peekIndex() > 0 ? trigUnit.getIndex() : 0
 		let depth = takeWalkSlot()
 		var listener = castMapCasters[index]
 		while listener != null
