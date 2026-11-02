@@ -3,110 +3,21 @@ import OnUnitEnterLeave
 import KeyedMap
 import CodeList
 import UnitLifecycleTrace
+import ErrorHandling
 
-/*  UnitIndexer
-
-	The goal of this system is to give every unit an array-indexable unique ID
-	as well as to standardize handling of class instances when units are created
-	and destroyed.
-
-	WARNING: On the Jass target, this system stores the index in the unit's
-	native user-data slot, so other systems that use SetUnitUserData are going
-	to BREAK THIS SYSTEM since it depends on being the only system to use it,
-	and conversely, it is very likely that this system is going to break them,
-	too. Always make sure you only have one system using SetUnitUserData.
-	The maximum number of indexed units at any time is 32760, so if you have more
-	units than that at any time, the system will not be able to index them.
-	On the Lua target the index is kept in a KeyedMap instead (see
-	getStoredIndex/setStoredIndex below), so this conflict and the 32760 cap
-	both only apply to the Jass target.
-
-	----------------------------------------------------------------------------
-
-	1) System initialization
-		In order to initialize the system, import UnitIndexer into one of your
-		scripts.
-
-			import UnitIndexer
-
-	2) Getting the index of a unit and getting the unit with an index
-		To get a unit's unique index as an int:
-
-			unit.getIndex()
-
-		To get a unit's unique index as an UnitIndex object (this will also
-		give the unit an index if the unit doesn't already have it):
-
-			unit.toUnitIndex()
-
-		Remember, it is possible to cast between their return types:
-
-			unit.toUnitIndex() castTo int
-			unit.getIndex() castTo UnitIndex
-
-		However, if you save a UnitIndex to a variable, it's possible to get
-		a unit with that object directly, whereas it is necessary to cast into
-		UnitIndex if we're using the int:
-
-			let id = someunit.getIndex()
-
-			var u = id.getUnit() // Doesn't work!
-			var u = (id castTo UnitIndex).getUnit() // Works!
-
-			var unitIndex = someunit.toUnitIndex()
-			var u = unitIndex.getUnit() // Works
-
-	3) Handlers for indexing and deindexing events
-		Handlers are useful because they let you quickly write code that
-		destroys instances of classes that refer to some unit.
-
-			onUnitDeindex(() -> destroy Class.getInstanceThatBelongsTo(getIndexingUnit()))
-
-		Conversely, if we want to create a class instance that belongs to
-		a unit that had just been indexed, we can do the same:
-
-			onUnitIndex(() -> new Class(getIndexingUnit()))
-
-		If you have never worked with lambda functions, the above code might
-		look like black magic, but it essentially translates to this:
-
-			function someFunction()
-				new Class(getIndexingUnit())
-
-			...in code somewhere...
-				onUnitIndex(function someFunction)
-
-		You can call onUnitDeindex and onUnitIndex as many times as you want,
-		across your code, and every time a unit gets indexed/deindexed the
-		function will be run.
-
-		Inside both handlers the unit being indexed or deindexed is available as
-
-			getIndexingUnit()
-
-		It should also be noted that this is not the only use for handlers, but
-		merely the most often utilized one.
-
-	4) Control over indexing/deindexing
-		For safety and consistency reasons, the system will always attempt to:
-			a) Index the unit when it enters the map (is created)
-			b) Deindex the unit when it leaves the map (is removed or decays)
-
-		However, that doesn't stop the user from (de)indexing the unit at any
-		time. For example, if you are using a general unit recycling system,
-		the units will never decay, so they will remain indexed. However, this
-		is also going to cause bugs with systems that keep data that refers to
-		the unit, since they are never going to die and/or be removed.
-
-		For this reason, it's possible to index/deindex units at your leisure.
-		You can use
-			a) unit.toUnitIndex() to index the unit whenever you want
-			b) unit.deindex() to deindex it whenever you want
-
-		The system prevents you from indexing/deindexing the unit if it already
-		has/doesn't have the index, so no double indexing or double deindexing
-		of the same unit is possible.
-*/
+/* Unit identity is assigned by native entry, before ordinary onEnter consumers.
+ * The constructor stores the association before firing onUnitIndex. Death keeps
+ * the identity; OnUnitEnterLeave owns release when the unit leaves the map.
+ *
+ * getIndex() and toUnitIndex() only read existing identity. Missing/stale identity
+ * is a critical error; neither lookup allocates or repairs it. peekIndex() is
+ * reserved for lifecycle infrastructure and diagnostics that must observe absence.
+ * Manual deindex/destruction is not a gameplay operation.
+ *
+ * Lua stores the unit itself as a KeyedMap key and its Wurst allocation id as
+ * value. Jass uses the native user-data slot, which no other system may write.
+ * The Jass array limit does not apply to Lua's unit-keyed table.
+ */
 
 // Listeners run as a CodeList: a call each on Lua, a trigger condition each on Jass.
 let onIndexList = new CodeList()

@@ -10,7 +10,7 @@ package UnitSpatialIndex
 	when it is indexed and leaves when it is deindexed, and its index is its partition entry id. By
 	default that is every unit on the map, as OnUnitEnterLeave reports them. A unit excluded through
 	`shouldIndex`, or deindexed by hand, is not in it. Units created during init join when
-	OnUnitEnterLeave dispatches them, after the last init block, or earlier through `toUnitIndex()`.
+	OnUnitEnterLeave dispatches them, after the last init block, without any lookup allocating identity.
 	A map that configures `unit.getIndex()` with an indexer of its own has to keep firing
 	`onUnitIndex` and `onUnitDeindex`, which is all this index listens to.
 
@@ -299,7 +299,7 @@ function unregisterUnit(unit u)
 /**	Re-buckets one unit immediately, and registers an indexed unit the index does not hold yet.
 	Ordinary movement does not need this - the sweep covers it - but an engine-side teleport or a raw
 	`SetUnitX` call does, because neither is observable. A unit UnitIndexer has not indexed is not in
-	the index; `toUnitIndex()` indexes it. */
+	the index; identity is assigned only by the entry lifecycle. */
 public function unit.updateSpatialIndex()
 	if not isLua or not USE_UNIT_SPATIAL_INDEX or this == null
 		return
@@ -572,7 +572,7 @@ public function spatialIndexEndQuery()
 // Init
 
 /**	Registers the units UnitIndexer indexed before the listeners below were installed, for example
-	through toUnitIndex() in a package whose init ran earlier. Their one onUnitIndex event has passed,
+	through native entry before a later consumer initialized. Their one onUnitIndex event has passed,
 	and OnUnitEnterLeave's later dispatch finds them indexed and sends none. registerUnit skips any
 	unit without an index, so this adds nothing UnitIndexer does not hold. */
 function registerIndexedUnits()
@@ -639,8 +639,7 @@ function testArena()
 	rebuildSpatialIndexGrid(vec2(-4096., -4096.), vec2(4096., 4096.))
 
 /**	Indexes a new unit and registers it, as the onUnitIndex listener does on Lua. The UnitIndex is made
-	directly, as toUnitIndex() does for a unit without one: toUnitIndex() itself stops in the
-	interpreter with "Local variable UnitIndex instance is null" on the index it reads back. */
+	directly to model native entry in the interpreter; normal lookups never allocate. */
 function addUnitFor(player owner, vec2 pos) returns unit
 	let u = createUnit(owner, 'hfoo', pos, 0 .fromDeg())
 	new UnitIndex(u)
