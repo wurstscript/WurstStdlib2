@@ -5,7 +5,8 @@ import OnUnitEnterLeave
 import ClosureTimers
 import ArrayList
 
-constant LIFECYCLE_SEED = 1753
+int initialSeed = 1753
+boolean observersInstalled = false
 constant LIFECYCLE_WAVES = 16
 constant LIFECYCLE_WAVE_SIZE = 12
 IngameChecks reporter = null
@@ -29,7 +30,7 @@ class ObservedIdentity
 constant identities = new ArrayList<ObservedIdentity>()
 boolean lifecycleArmed = false
 boolean lifecycleNested = false
-int lifecycleSeed = LIFECYCLE_SEED
+int lifecycleSeed = 1753
 int lifecycleWave = 0
 int lifecycleBad = 0
 int lifecycleFirstBadWave = -1
@@ -46,7 +47,7 @@ function metric(string name, int value)
     reporter.note(name + "=" + value)
 
 function check(string label, boolean passed)
-    reporter.check(passed, label)
+    reporter.check(passed, label + "-seed-" + initialSeed)
 
 function failLifecycle(int phase)
     lifecycleBad++
@@ -78,7 +79,7 @@ function finishLifecycle()
         if not identities.get(i).left
             failLifecycle(2)
             identities.get(i).u.remove()
-    metric("native-index-seed", LIFECYCLE_SEED)
+    metric("native-index-seed", initialSeed)
     metric("native-index-created", lifecycleCreated)
     metric("native-index-entered", lifecycleEntered)
     metric("native-index-left", lifecycleLeft)
@@ -133,14 +134,16 @@ function runLifecycleWave()
             else
                 finishLifecycle()
 
-public function runUnitIndexLifecycleChecks(IngameChecks checks, int nativeOnlyId, int structureId, int troopId, vec2 position, Callback done)
+public function runUnitIndexLifecycleChecks(IngameChecks checks, int nativeOnlyId, int structureId, int troopId, vec2 position, int seed, Callback done)
+    installLifecycleObservers()
+    initialSeed = seed
     reporter = checks
     nativeOnlyType = nativeOnlyId
     buildingType = structureId
     troopType = troopId
     origin = position
     lifecycleDone = done
-    lifecycleSeed = LIFECYCLE_SEED
+    lifecycleSeed = initialSeed
     lifecycleWave = 0
     lifecycleBad = 0
     lifecycleFirstBadWave = -1
@@ -153,7 +156,10 @@ public function runUnitIndexLifecycleChecks(IngameChecks checks, int nativeOnlyI
     lifecycleArmed = true
     runLifecycleWave()
 
-init
+function installLifecycleObservers()
+    if observersInstalled
+        return
+    observersInstalled = true
     onUnitIndex() ->
         if lifecycleArmed
             let u = getIndexingUnit()
