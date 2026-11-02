@@ -83,8 +83,9 @@ init
 		traceUnitLifecycle(UnitLifecyclePhase.INSTALL_BEGIN, null, boundRegion == null ? 0 : 1)
 		// Install the public events after init, preserving the package's existing delivery contract:
 		// every importer can register before preplaced and init-created units are dispatched once.
-		CreateTrigger()..registerEnterRegion(boundRegion, Filter(function prepareNativeUnit))
-		traceUnitLifecycle(UnitLifecyclePhase.INSTALL_END, null, boundRegion == null ? 0 : 1)
+		let enterTrigger = CreateTrigger()
+		let registration = enterTrigger.registerEnterRegion(boundRegion, Filter(function prepareNativeUnit))
+		traceUnitLifecycle(UnitLifecyclePhase.INSTALL_END, null, registration == null ? 0 : 1)
 
 		registerPlayerUnitEvent(EVENT_PLAYER_UNIT_ISSUED_ORDER) ->
 			let leavingUnit = GetTriggerUnit()
