@@ -6,6 +6,8 @@ import DamageEvent
 import UnitObjEditing
 import AbilityObjEditing
 import ObjectIds
+import ArrayList
+import ClosureTimers
 
 /** Call at compile time in a test map. These units differ only in their aura. */
 public function defineBirthDamageTestObjects(int plainId, int selfId, int emptyId, int selfAura, int emptyAura)
@@ -68,8 +70,9 @@ function installObservers()
 /** Native engine ordering cannot be modeled by the interpreter. Cover raw and
     wrapped creation, six owners, both aura target policies, runtime ability
     changes, real damage, nested creation, death retention and removal. */
-public function runBirthDamageChecks(IngameChecks checks, int plainId, int selfId, int emptyId, int selfAura, vec2 position)
+public function runBirthDamageChecks(IngameChecks checks, int plainId, int selfId, int emptyId, int selfAura, vec2 position, Callback done)
     installObservers()
+    let removed = new ArrayList<unit>()
     let unreduced = DamageEvent.addUnreducedListener(0) ->
         let target = DamageEvent.getTarget()
         if armed and target.getTypeId() == watchedType
@@ -114,16 +117,15 @@ public function runBirthDamageChecks(IngameChecks checks, int plainId, int selfI
                 checks.check((beforeReduced > 0) == (variant > 0), label + "aura-causes-native-damaged")
                 armed = false
                 u.remove()
-                checks.check(u.peekIndex() == 0, label + "identity-released")
+                removed.add(u)
         reset(plainId)
         let live = createUnit(owner, plainId, position, angle(0.))
         let identity = live.getIndex()
         live.addAbility(selfAura)
         checks.check(indexedZero > 0 and beforeReduced == 0, "runtime-aura-indexed-" + ownerSlot)
-        let previous = indexedZero
         live.removeAbility(selfAura)
         live.addAbility(selfAura)
-        checks.check(indexedZero > previous and live.getIndex() == identity, "runtime-aura-readd-" + ownerSlot)
+        checks.check(live.getIndex() == identity and indexed == 1 and entered == 1, "runtime-aura-readd-keeps-lifetime-" + ownerSlot)
         let source = createUnit(owner, plainId, position + vec2(128., 0.), angle(0.))
         let life = live.getLife()
         DamageEvent.setNextDamageFromCode()
@@ -137,6 +139,8 @@ public function runBirthDamageChecks(IngameChecks checks, int plainId, int selfI
         armed = false
         live.remove()
         source.remove()
+        removed.add(live)
+        removed.add(source)
         reset(selfId)
         nestNext = true
         let outer = CreateUnit(owner, selfId, position.x, position.y, 0.)
@@ -148,7 +152,17 @@ public function runBirthDamageChecks(IngameChecks checks, int plainId, int selfI
             checks.check(outer.getIndex() != nestedUnit.getIndex(), "nested-live-identities-distinct-" + ownerSlot)
         armed = false
         nestedUnit?.remove()
+        removed.add(nestedUnit)
         nestedUnit = null
         outer.remove()
+        removed.add(outer)
     destroy unreduced
     destroy reduced
+    // Native leave can follow RemoveUnit on the next engine turn.
+    doAfter(.1) ->
+        for i = 0 to removed.size() - 1
+            let u = removed.get(i)
+            checks.check(u == null or u.peekIndex() == 0, "birth-removed-identity-released-" + i)
+        destroy removed
+        done.call()
+        destroy done
