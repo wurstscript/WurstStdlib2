@@ -24,6 +24,11 @@ public enum UnitLifecyclePhase
 	DEINDEX_LISTENER_REGISTERED
 	INSTALL_SCHEDULED
 	NATIVE_LEAVE
+	WITNESS_INSTALLED
+	NATIVE_WITNESS
+
+/** Independent, unfiltered region-action witness. Disabled unless a map opts into diagnosis. */
+@configurable public constant UNIT_ENTRY_WITNESS = false
 
 @configurable public function traceUnitLifecycle(UnitLifecyclePhase phase, unit u, int detail)
 	skip

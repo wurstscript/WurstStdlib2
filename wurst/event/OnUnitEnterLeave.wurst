@@ -96,6 +96,11 @@ init
 		let enterTrigger = CreateTrigger()
 		let registration = enterTrigger.registerEnterRegion(boundRegion, Filter(function prepareNativeUnit))
 		traceUnitLifecycle(UnitLifecyclePhase.INSTALL_END, null, registration == null ? 0 : 1)
+		if UNIT_ENTRY_WITNESS
+			let witness = CreateTrigger()
+			let witnessEvent = witness.registerEnterRegion(boundRegion, null)
+			traceUnitLifecycle(UnitLifecyclePhase.WITNESS_INSTALLED, null, witnessEvent == null ? 0 : 1)
+			witness.addAction(() -> traceUnitLifecycle(UnitLifecyclePhase.NATIVE_WITNESS, GetEnteringUnit(), 0))
 
 		registerPlayerUnitEvent(EVENT_PLAYER_UNIT_ISSUED_ORDER) ->
 			let leavingUnit = GetTriggerUnit()
