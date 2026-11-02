@@ -23,7 +23,7 @@ REPAIRED = (
 
 MAP_FIXTURES = ('UnitIndexer_config.wurst', 'RegressionIndexerPolicy.wurst', 'RegressionLateIndexHook.wurst',
                 'UnitSpatialIndex_config.wurst', 'RegressionSpatialEligibility.wurst',
-                'StdlibIngameTests_config.wurst')
+                'StdlibIngameTests_config.wurst', 'RegressionNativeLifecycle.wurst')
 
 
 def main():
@@ -31,8 +31,8 @@ def main():
     parser.add_argument('--backend', choices=('jass', 'lua'), required=True)
     parser.add_argument('--baseline-ref', help='Git revision for the repaired files only')
     parser.add_argument('--name', default='regression-map')
-    parser.add_argument('--focus', choices=('all', 'indexing'), default='all',
-                        help='Run the full automatic/interactive suite or only indexing-related automatic checks')
+    parser.add_argument('--focus', choices=('all', 'indexing', 'custom-index'), default='all',
+                        help='Run all checks, indexing checks, or the configured-provider integration fixture')
     args = parser.parse_args()
     if not args.name or any(c not in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_' for c in args.name):
         parser.error('--name must contain only letters, digits, hyphens and underscores')
@@ -41,7 +41,9 @@ def main():
     for required in (base_map, root / 'wurst.build', root / 'wurst_run.args',
                      root / 'wurst/tests/RegressionChecks.wurst',
                      root / 'wurst/tests/StdlibRegressionTests.wurst',
-                     *(root / 'tests/fixtures' / name for name in MAP_FIXTURES)):
+                     *(root / 'tests/fixtures' / name for name in MAP_FIXTURES),
+                     *(root / 'tests/fixtures' / name for name in
+                        ('CustomUnitIndexer_config.wurst', 'RegressionCustomIndex.wurst') if args.focus == 'custom-index')):
         if not required.is_file():
             parser.error('Required regression input is missing: ' + str(required))
     destination = root / '_build' / (args.name + '-' + args.backend)
@@ -52,10 +54,12 @@ def main():
         shutil.copy2(root / 'tests/fixtures' / name, destination / 'wurst/tests' / name)
     entry = destination / 'wurst/tests/StdlibRegressionTests.wurst'
     entry.write_text(entry.read_text().replace(
-        'import RegressionChecks', 'import RegressionChecks\nimport RegressionIndexerPolicy\nimport RegressionLateIndexHook\nimport RegressionSpatialEligibility').replace(
+        'import RegressionChecks', 'import RegressionChecks\nimport RegressionIndexerPolicy\nimport RegressionLateIndexHook\nimport RegressionSpatialEligibility\nimport RegressionNativeLifecycle').replace(
         '\t\tregressionGuard("terrain normal"',
         '\t\tregressionGuard("index policy", () -> runIndexerPolicyRegressions())\n\t\tregressionGuard("spatial eligibility", () -> runSpatialEligibilityRegressions())\n\t\tregressionGuard("terrain normal"').replace(
-        'checkRegressionAsyncCompletion()', 'checkRegressionAsyncCompletion()\n\t\t\tfinishIndexerPolicyRegressions()\n\t\t\tfinishLateIndexHookRegression()'))
+        'checkRegressionAsyncCompletion()', 'checkRegressionAsyncCompletion()\n\t\t\tfinishIndexerPolicyRegressions()\n\t\t\tfinishLateIndexHookRegression()').replace(
+        'regressionSummary("AUTOMATIC COMPLETE; INTERACTIVE PENDING")',
+        'regressionSummary("AUTOMATIC COMPLETE; INTERACTIVE PENDING")\n\t\t\trunNativeLifecycleRegressions()'))
     if args.focus == 'indexing':
         entry.write_text('''package StdlibRegressionTests
 import RegressionChecks
@@ -63,6 +67,7 @@ import RegressionGameplayTests
 import RegressionIndexerPolicy
 import RegressionLateIndexHook
 import RegressionSpatialEligibility
+import RegressionNativeLifecycle
 import ClosureTimers
 
 init
@@ -75,6 +80,18 @@ init
             finishIndexerPolicyRegressions()
             finishLateIndexHookRegression()
             regressionSummary("INDEXING AUTOMATIC COMPLETE")
+            runNativeLifecycleRegressions()
+''')
+    if args.focus == 'custom-index':
+        for source, target in (('CustomUnitIndexer_config.wurst', 'UnitIndexer_config.wurst'),
+                               ('RegressionCustomIndex.wurst', 'RegressionCustomIndex.wurst')):
+            shutil.copy2(root / 'tests/fixtures' / source, destination / 'wurst/tests' / target)
+        entry.write_text('''package StdlibRegressionTests
+import RegressionCustomIndex
+import ClosureTimers
+init
+    doAfter(1.) ->
+        runCustomIndexRegressions()
 ''')
     shutil.copy2(root / 'wurst.build', destination / 'wurst.build')
     shutil.copy2(base_map, destination / 'ExampleMap.w3x')

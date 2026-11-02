@@ -239,7 +239,11 @@ function registerUnit(unit u)
 	// registering would only build a registry that answers nothing.
 	if u == null or unitGroup < 0
 		return
-	let idx = u.peekIndex()
+	// A previous onUnitIndex listener may already have ended this identity.
+	if u.peekIndex() == 0
+		return
+	// Registration is called after identity is assigned. Respect the configured provider.
+	let idx = u.getIndex()
 	if idx == 0 or registrySlot[idx] != 0
 		return
 	if idx >= spatialPartitionAllocatorBase()

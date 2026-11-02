@@ -32,9 +32,22 @@ rtk proxy python tests/prepare_regressions.py --backend lua --name after
 ```
 
 For listener/indexing changes, `--focus indexing` runs the gameplay, startup-policy,
-and spatial-eligibility checks without the independent terrain and interactive UI
+spatial-eligibility, native lifecycle, and birth-damage checks without the independent terrain and interactive UI
 fixtures. The default remains the full suite; a focused pass does not clear unrelated
 failures in that full suite.
+
+Both profiles run `RegressionNativeLifecycle` after the shorter automatic checks.
+It defines three otherwise identical footmen (plain, self-target Tornado Slow Aura,
+and no-target Tornado Slow Aura), compares raw/wrapped creation across six owners,
+then stresses entry/removal with seeds 1753, 17 and 65520. Wait for
+`NATIVE LIFECYCLE COMPLETE`; the earlier automatic summary does not include these
+asynchronous checks. An automated consumer can also assert
+`nativeLifecycleRegressionsComplete` before accepting the totals.
+
+`--focus custom-index` is a separate Lua integration check: the configured
+`getIndex()` returns a different ID namespace from the backing indexer. Native entry,
+movement and deindex must address the same configured spatial row. It ends with
+`CUSTOM INDEX COMPLETE`; Jass does not activate the spatial index.
 
 In each printed project directory run:
 

@@ -1,0 +1,39 @@
+package RegressionNativeLifecycle
+import RegressionChecks
+import StdlibIngameChecks
+import StdlibIngameUnitIndexTests
+import StdlibIngameBirthDamageTests
+
+@compiletime function defineNativeLifecycleObjects()
+    defineBirthDamageTestObjects('zbu0', 'zbu1', 'zbu2', 'ZBA1', 'ZBA2')
+
+class NativeLifecycleReporter implements IngameChecks
+    override function check(bool passed, string label)
+        regressionCheck(passed, label)
+
+    override function section(string label)
+        regressionNote(label)
+
+    override function note(string label)
+        regressionNote(label)
+
+    override function skipped(int checks, string why)
+        regressionCheck(false, "unexpected native lifecycle skip: " + why)
+
+let reporter = new NativeLifecycleReporter()
+constant seeds = [1753, 17, 65520]
+public boolean nativeLifecycleRegressionsComplete = false
+
+function runSeed(int next)
+    if next == seeds.length
+        nativeLifecycleRegressionsComplete = true
+        regressionSummary("NATIVE LIFECYCLE COMPLETE")
+    else
+        runUnitIndexLifecycleChecks(reporter, 'zbu0', 'hbar', 'hfoo', vec2(-2048., 1024.), seeds[next]) ->
+            runSeed(next + 1)
+
+/** Run after the shorter automatic fixtures so no other test owns these observers. */
+public function runNativeLifecycleRegressions()
+    nativeLifecycleRegressionsComplete = false
+    runBirthDamageChecks(reporter, 'zbu0', 'zbu1', 'zbu2', 'ZBA1', vec2(-1024., -1024.)) ->
+        runSeed(0)

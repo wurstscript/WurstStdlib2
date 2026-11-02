@@ -1,0 +1,26 @@
+package RegressionCustomIndex
+import RegressionChecks
+import UnitIndexer
+import UnitSpatialIndex
+
+function contains(unit expected) returns boolean
+    let count = spatialIndexBeginQuery(expected.getPos(), 128., false)
+    var found = false
+    for i = 0 to count - 1
+        if spatialIndexQueryUnit(i) == expected
+            found = true
+    spatialIndexEndQuery()
+    return found
+
+public function runCustomIndexRegressions()
+    if isLua
+        let u = createUnit(players[0], 'hfoo', vec2(1024., 1024.), angle(0.))
+        regressionCheck(u.getIndex() != u.peekIndex(), "custom provider differs from backing storage")
+        regressionCheck(contains(u), "native entry registers configured spatial row")
+        u.setXY(vec2(1400., 1400.))
+        u.updateSpatialIndex()
+        regressionCheck(contains(u), "movement refreshes the same configured row")
+        u.deindex()
+        regressionCheck(not contains(u), "deindex removes the configured row")
+        u.remove()
+    regressionSummary("CUSTOM INDEX COMPLETE")

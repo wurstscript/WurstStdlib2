@@ -19,16 +19,22 @@ class PrepareRegressionsTests(unittest.TestCase):
                      'tests/fixtures/UnitIndexer_config.wurst',
                      'tests/fixtures/RegressionIndexerPolicy.wurst',
                      'tests/fixtures/RegressionLateIndexHook.wurst',
+                     'tests/fixtures/UnitSpatialIndex_config.wurst',
+                     'tests/fixtures/RegressionSpatialEligibility.wurst',
+                     'tests/fixtures/StdlibIngameTests_config.wurst',
+                     'tests/fixtures/RegressionNativeLifecycle.wurst',
+                     'tests/fixtures/CustomUnitIndexer_config.wurst',
+                     'tests/fixtures/RegressionCustomIndex.wurst',
                      'wurst.build', 'wurst_run.args', 'wurst/tests/RegressionChecks.wurst',
                      'wurst/tests/StdlibRegressionTests.wurst'):
             target = self.root / name
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(source / name, target)
 
-    def prepare(self, backend):
+    def prepare(self, backend, focus='all'):
         return subprocess.run(
             [sys.executable, str(self.root / 'tests/prepare_regressions.py'),
-             '--backend', backend], cwd=self.root.parent,
+             '--backend', backend, '--focus', focus], cwd=self.root.parent,
             text=True, capture_output=True)
 
     def test_both_backends_prepare_without_an_ignored_root_map(self):
@@ -51,6 +57,7 @@ class PrepareRegressionsTests(unittest.TestCase):
                 self.assertIn('runIndexerPolicyRegressions()', entry)
                 self.assertIn('finishIndexerPolicyRegressions()', entry)
                 self.assertIn('finishLateIndexHookRegression()', entry)
+                self.assertIn('runNativeLifecycleRegressions()', entry)
                 self.assertTrue((project / 'wurst/tests/UnitIndexer_config.wurst').is_file())
 
     def test_missing_fixture_fails_before_creating_a_project(self):
@@ -59,6 +66,24 @@ class PrepareRegressionsTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn('Required regression input is missing', result.stderr)
         self.assertFalse((self.root / '_build').exists())
+
+    def test_indexing_focus_runs_native_ordering_checks(self):
+        self.assertEqual(self.prepare('lua', 'indexing').returncode, 0)
+        project = self.root / '_build/regression-map-lua'
+        entry = (project / 'wurst/tests/StdlibRegressionTests.wurst').read_text()
+        self.assertIn('runNativeLifecycleRegressions()', entry)
+        fixture = (project / 'wurst/tests/RegressionNativeLifecycle.wurst').read_text()
+        self.assertIn('runBirthDamageChecks(', fixture)
+        self.assertIn('runUnitIndexLifecycleChecks(', fixture)
+        self.assertIn('nativeLifecycleRegressionsComplete = true', fixture)
+
+    def test_custom_index_focus_installs_configured_provider(self):
+        self.assertEqual(self.prepare('lua', 'custom-index').returncode, 0)
+        project = self.root / '_build/regression-map-lua'
+        self.assertIn('runCustomIndexRegressions()',
+                      (project / 'wurst/tests/StdlibRegressionTests.wurst').read_text())
+        self.assertIn('backing + 1024',
+                      (project / 'wurst/tests/UnitIndexer_config.wurst').read_text())
 
     def test_repeated_preparation_preserves_existing_evidence(self):
         self.assertEqual(self.prepare('lua').returncode, 0)
