@@ -37,7 +37,13 @@ public function testStaleDestroyPreservesCodeList(IngameChecks reporter)
         destroy owner.value
     let replacement = new CodeList()
     replacement.add(function replacementCallback)
+    // try owns a callback whose release can sit above the corrupted id in the free stack.
+    // Allocate several permanent lists so that temporary allocation cannot hide that reuse.
+    for i = 0 to 7
+        let churn = new CodeList()
+        churn.add(function replacementCallback)
     original.run()
+    reporter.note("after stale destroy: original=" + originalCalls + "; replacement=" + replacementCalls)
     reporter.check(rejected, "stale typed destroy is rejected")
     reporter.check(originalCalls == 2 and replacementCalls == 0,
         "stale destroy cannot replace a live CodeList")
