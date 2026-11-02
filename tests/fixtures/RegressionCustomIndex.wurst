@@ -28,33 +28,47 @@ function contains(unit expected) returns boolean
     return found
 
 public function runCustomIndexRegressions()
+    let u = createUnit(players[0], 'hfoo', vec2(1024., 1024.), angle(0.))
+    regressionCheck(u.getIndex() != u.peekIndex(), "custom provider differs from backing storage")
+    let captured = u.getIndex()
+    regressionCheck(u.isIndexCurrent(captured), "configured capture authorizes its live owner")
+    regressionCheck(not u.isIndexCurrent(captured + 1), "foreign configured capture cannot authorize work")
+    regressionCheck(u.toUnitIndex().getIndex() == u.peekIndex() and u.toUnitIndex().getUnit() == u,
+        "default object lookup resolves backing ownership")
     if isLua
-        let u = createUnit(players[0], 'hfoo', vec2(1024., 1024.), angle(0.))
-        regressionCheck(u.getIndex() != u.peekIndex(), "custom provider differs from backing storage")
         regressionCheck(contains(u), "native entry registers configured spatial row")
-        u.setXY(vec2(1400., 1400.))
-        u.updateSpatialIndex()
+    u.setXY(vec2(1400., 1400.))
+    u.updateSpatialIndex()
+    if isLua
         regressionCheck(contains(u), "movement refreshes the same configured row")
-        pointCalls = 0
-        castCalls = 0
-        EventListener.add(u, EVENT_PLAYER_UNIT_ISSUED_POINT_ORDER, new PointProbe())
-        EventListener.onCast(u, 'Absk', new CastProbe())
-        u.addAbility('Absk')
-        u.issuePointOrderById(Orders.move, vec2(1500., 1400.))
-        regressionCheck(pointCalls == 1, "unit listener routes through configured provider")
-        let recorded = u.getLastOrder()
-        regressionCheck(recorded != null and recorded.orderId == Orders.move,
-            "order history reads the configured row")
-        u.issueImmediateOrderById(Orders.berserk)
-        doAfter(.25) ->
-            regressionCheck(castCalls == 1, "cast listener routes through configured provider")
-            let castOrder = u.getLastOrder()
-            regressionCheck(castOrder != null and castOrder.finished,
-                "spell effect finishes the configured order row")
-            u.deindex()
+    pointCalls = 0
+    castCalls = 0
+    EventListener.add(u, EVENT_PLAYER_UNIT_ISSUED_POINT_ORDER, new PointProbe())
+    EventListener.onCast(u, 'Absk', new CastProbe())
+    u.addAbility('Absk')
+    u.issuePointOrderById(Orders.move, vec2(1500., 1400.))
+    regressionCheck(pointCalls == 1, "unit listener routes through configured provider")
+    let recorded = u.getLastOrder()
+    regressionCheck(recorded != null and recorded.orderId == Orders.move,
+        "order history reads the configured row")
+    u.issueImmediateOrderById(Orders.berserk)
+    doAfter(.25) ->
+        regressionCheck(castCalls == 1, "cast listener routes through configured provider")
+        let castOrder = u.getLastOrder()
+        regressionCheck(castOrder != null and castOrder.finished,
+            "spell effect finishes the configured order row")
+        u.deindex()
+        regressionCheck(not u.isIndexCurrent(captured), "configured capture expires after deindex")
+        if isLua
             regressionCheck(not contains(u), "deindex removes the configured row")
-            regressionCheck(u.getLastOrder() == null, "deindex clears configured order history")
-            u.remove()
+        regressionCheck(u.getLastOrder() == null, "deindex clears configured order history")
+        u.remove()
+        let replacement = createUnit(players[0], 'hfoo', vec2(1600., 1400.), angle(0.))
+        regressionCheck(not u.isIndexCurrent(replacement.getIndex()), "expired owner cannot follow replacement")
+        regressionCheck(replacement.isIndexCurrent(replacement.getIndex()), "replacement configured capture is live")
+        let replacementCapture = replacement.getIndex()
+        replacement.remove()
+        doAfter(.2) ->
+            regressionCheck(replacement.peekIndex() == 0, "native removal releases backing association")
+            regressionCheck(not replacement.isIndexCurrent(replacementCapture), "native removal expires configured capture")
             regressionSummary("CUSTOM INDEX COMPLETE")
-    else
-        regressionSummary("CUSTOM INDEX COMPLETE; SPATIAL LUA ONLY")

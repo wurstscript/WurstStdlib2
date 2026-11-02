@@ -44,11 +44,13 @@ then stresses entry/removal with seeds 1753, 17 and 65520. Wait for
 asynchronous checks. An automated consumer can also assert
 `nativeLifecycleRegressionsComplete` before accepting the totals.
 
-`--focus custom-index` is a separate Lua integration check: the configured
+`--focus custom-index` is a separate integration check: the configured
 `getIndex()` returns a different ID namespace from the backing indexer. Native entry,
 movement and deindex must address the same configured spatial row; native point orders,
-spell effects and recorded order completion must use that namespace too. It ends with
-`CUSTOM INDEX COMPLETE`; Jass does not activate the spatial index.
+spell effects and recorded order completion must use that namespace too. Default object
+lookup must still address the backing allocator, captured lifetimes must expire, and native
+removal must release the backing identity without an object-lookup override. It ends with
+`CUSTOM INDEX COMPLETE`; Jass runs the common checks and omits only spatial assertions.
 
 In each printed project directory run:
 

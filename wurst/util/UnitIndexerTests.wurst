@@ -149,3 +149,8 @@ function newTestUnit() returns unit
 	b.deindex()
 	a.remove()
 	b.remove()
+
+@Test function aMissingEventOwnerCannotAuthorizeCapturedWork()
+	let absent = getIndexingUnit()
+	(absent == null).assertTrue()
+	absent.isIndexCurrent(1).assertFalse()

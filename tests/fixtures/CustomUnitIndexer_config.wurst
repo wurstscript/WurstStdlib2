@@ -7,6 +7,3 @@ public unit regressionExcludedUnit = null
     let backing = this.peekIndex()
     return backing == 0 ? 0 : backing + 1024
 
-// Preserve the backing allocator's lifetime operations for this integration fixture.
-@config public function unit.toUnitIndex() returns UnitIndex
-    return this.peekIndex() castTo UnitIndex
