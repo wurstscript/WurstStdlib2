@@ -146,21 +146,27 @@ function unit.setStoredIndex(int value)
 @configurable public function shouldIndex(unit _u) returns boolean
 	return true
 
-/**  Returns the int index of this unit.
+/** Read-only lifecycle/diagnostic observation. Zero means no association exists.
+    Never allocates or dispatches; normal consumers require getIndex instead. */
+@configurable public function unit.peekIndex() returns int
+	return this.getStoredIndex()
+
+/**  Returns the int index of this unit. A missing or stale association is a critical error.
 	Can be configured by the user to supply a custom unit indexer which won't break
 	other stdlib components, as long as it keeps firing onUnitIndex and onUnitDeindex:
 	UnitSpatialIndex, for one, registers units only through them. */
 @configurable public function unit.getIndex() returns int
-	return this.getStoredIndex()
+	let index = this.getStoredIndex()
+	if index == 0
+		error("UnitIndexer: missing unit index; native entry did not establish identity")
+	else if (index castTo UnitIndex).getUnit() != this
+		error("UnitIndexer: stale unit index; identity does not match")
+		return 0
+	return index
 
-/**  Returns the UnitIndex associated with this unit, creating a new one if necessary. */
+/** Returns the existing UnitIndex. Lookup never creates an index or fires onUnitIndex. */
 @configurable public function unit.toUnitIndex() returns UnitIndex
-	UnitIndex instance = this.getStoredIndex() castTo UnitIndex
-
-	if (instance == null)
-		instance = new UnitIndex(this)
-
-	return instance
+	return this.getIndex() castTo UnitIndex
 
 /**	Returns the currently indexing unit.
 	That's the last indexed unit or
@@ -229,11 +235,15 @@ function indexEnteringUnit()
 	let u = getEnterLeaveUnit()
 	traceUnitLifecycle(UnitLifecyclePhase.INDEX_LISTENER, u, tempUnitsCount)
 	if shouldIndex(u)
-		u.toUnitIndex()
+		let existing = u.getStoredIndex()
+		if existing == 0
+			let _index = new UnitIndex(u)
+		else if (existing castTo UnitIndex).getUnit() != u
+			error("UnitIndexer: entering unit has a stale index association")
 
 // Auto instanciation/destruction
 init
-	onEnter(function indexEnteringUnit)
+	onEnterIndex(function indexEnteringUnit)
 	// A unit that leaves loses its index even when shouldIndex would not index it now: it may have been
 	// indexed through toUnitIndex(), or the predicate may have changed since it entered, and an index
 	// that outlives its unit leaks, along with everything keyed by it.

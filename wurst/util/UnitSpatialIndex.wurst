@@ -239,7 +239,7 @@ function registerUnit(unit u)
 	// registering would only build a registry that answers nothing.
 	if u == null or unitGroup < 0
 		return
-	let idx = u.getIndex()
+	let idx = u.peekIndex()
 	if idx == 0 or registrySlot[idx] != 0
 		return
 	if idx >= spatialPartitionAllocatorBase()
@@ -440,9 +440,13 @@ public function spatialIndexGridHeight() returns int
 
 	One expression, for the same reason as the partition's result accessors: this is tested once per
 	match, and an inlined early return is carried through the rest of the caller's loop as a flag. */
+/** Consumer visibility policy; identity and spatial registration remain independent. */
+@configurable public function unit.isSpatialQueryCandidate() returns boolean
+	return true
+
 @inline function unit.passesEnumerationState() returns boolean
-	return BlzIsUnitSelectable(this)
-		or (not this.isAlive() and (not SPATIAL_INDEX_CHECK_HIDDEN or not this.isHidden()))
+	return this.isSpatialQueryCandidate() and (BlzIsUnitSelectable(this)
+		or (not this.isAlive() and (not SPATIAL_INDEX_CHECK_HIDDEN or not this.isHidden())))
 
 /**	Reads an entry's live position, caches it and stamps the tick, so a later query in the same frame
 	decides it from the cache instead of paying the two natives again.
@@ -496,7 +500,7 @@ function beginRangeQuery(vec2 center, real radius, boolean collisionSizeFilterin
 				inside = entryIn >= 0. and cachedDistSq <= entryIn * entryIn
 				if not inside and cachedDistSq <= entryOut * entryOut
 					inside = cacheLivePosition(idx, u).distanceToSq(center) <= memberRadius * memberRadius
-			if inside and ((predicate == null and u.passesEnumerationState())
+			if inside and u.isSpatialQueryCandidate() and ((predicate == null and u.passesEnumerationState())
 					or (predicate != null and predicate.matches(u)))
 				pushMatch(u)
 	spatialPartitionEndQuery()
