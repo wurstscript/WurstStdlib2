@@ -174,11 +174,13 @@ public function getIndexingUnit() returns unit
 	Use the getIndexingUnit() function to refer to the deindexing unit. */
 public function onUnitDeindex(code func)
 	onDeindexList.add(func)
+	traceUnitLifecycle(UnitLifecyclePhase.DEINDEX_LISTENER_REGISTERED, null, 0)
 
 /**  Adds a function to be called after a unit is indexed.
 	Use the getIndexingUnit() function to refer to the indexed unit. */
 public function onUnitIndex(code func)
 	onIndexList.add(func)
+	traceUnitLifecycle(UnitLifecyclePhase.INDEX_LISTENER_REGISTERED, null, 0)
 
 /**  Deindexes a unit.
 	Returns false if the unit is unindexed or a deindex hook is already releasing it. */

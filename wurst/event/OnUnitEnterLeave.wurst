@@ -50,6 +50,7 @@ public function getEnterLeaveUnit() returns unit
 /** Adds a callback that is run when a unit enters the map */
 public function onEnter(code c)
 	enterList.add(c)
+	traceUnitLifecycle(UnitLifecyclePhase.ENTER_LISTENER_REGISTERED, null, 0)
 
 /** Adds a callback that is run when a unit leaves the map */
 public function onLeave(code c)
@@ -90,6 +91,7 @@ init
 		registerPlayerUnitEvent(EVENT_PLAYER_UNIT_ISSUED_ORDER) ->
 			let leavingUnit = GetTriggerUnit()
 			if leavingUnit.getAbilityLevel(ABILITY_ID) == 0 and GetIssuedOrderId() == Orders.undefend
+				traceUnitLifecycle(UnitLifecyclePhase.NATIVE_LEAVE, leavingUnit, tempUnitsCount)
 				pushUnit(leavingUnit)
 				leaveTrigger.execute()
 				popUnit()
@@ -102,6 +104,7 @@ init
 			prepareUnit(preplacedUnits.get(i))
 		preplacedUnits..clear()..destr()
 		traceUnitLifecycle(UnitLifecyclePhase.PREPLACED_END, null, count)
+	traceUnitLifecycle(UnitLifecyclePhase.INSTALL_SCHEDULED, null, 0)
 
 @compiletime function generateAbility()
 	new AbilityDefinitionDefend(ABILITY_ID)

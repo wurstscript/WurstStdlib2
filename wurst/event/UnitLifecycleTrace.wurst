@@ -19,6 +19,11 @@ public enum UnitLifecyclePhase
 	INDEX_DISPATCH_END
 	DEINDEX_BEGIN
 	DEINDEX_END
+	ENTER_LISTENER_REGISTERED
+	INDEX_LISTENER_REGISTERED
+	DEINDEX_LISTENER_REGISTERED
+	INSTALL_SCHEDULED
+	NATIVE_LEAVE
 
 @configurable public function traceUnitLifecycle(UnitLifecyclePhase phase, unit u, int detail)
 	skip
