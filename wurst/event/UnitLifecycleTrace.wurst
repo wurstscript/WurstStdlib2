@@ -1,0 +1,24 @@
+package UnitLifecycleTrace
+
+/** Optional synchronous diagnostics. The default is empty and optimizes away.
+    Configurations must only record observations: never wait, throw, create/remove
+    handles, change units, or force indexing. detail is a count/depth, never an id. */
+public enum UnitLifecyclePhase
+	ENTER_INIT
+	INSTALL_BEGIN
+	INSTALL_END
+	PREPLACED_BEGIN
+	PREPLACED_END
+	NATIVE_FILTER
+	PREPARE_BEGIN
+	PREPARE_ABILITY
+	ENTER_DISPATCH_BEGIN
+	ENTER_DISPATCH_END
+	INDEX_LISTENER
+	INDEX_STORED
+	INDEX_DISPATCH_END
+	DEINDEX_BEGIN
+	DEINDEX_END
+
+@configurable public function traceUnitLifecycle(UnitLifecyclePhase phase, unit u, int detail)
+	skip
