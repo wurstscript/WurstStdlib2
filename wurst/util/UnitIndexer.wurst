@@ -33,6 +33,7 @@ function pushUnit(unit u)
 
 function popUnit()
 	tempUnitsCount--
+	tempUnits[tempUnitsCount] = null
 
 // On the Jass target the native per-unit user-data slot is the fastest option
 // available and is kept as-is. On Lua, use a KeyedMap: the compiler lowers it
