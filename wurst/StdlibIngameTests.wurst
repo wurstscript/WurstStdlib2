@@ -681,13 +681,13 @@ function testSpatialIndexParity()
 	check(not spatialResultScratch.has(foreign), "query filter excludes a spatial match in one pass")
 	foreign.remove()
 
-	// The index holds what UnitIndexer holds: a unit deindexed by hand leaves it, although the engine
-	// still enumerates it, and indexing it again brings it back.
+	// Explicit kernel fault control: deindex removes spatial state, and a new native entry restores membership.
 	probes[0].deindex()
 	unitsInRange(spatialResultScratch, SPATIAL_TEST_POS, 300.)
 	check(not spatialResultScratch.has(probes[0]), "a manually deindexed unit leaves the index")
-	probes[0].toUnitIndex()
-	checkRangeParity(SPATIAL_TEST_POS, 300., false, "indexing it again brings it back")
+	probes[0].remove()
+	probes[0] = createUnit(players[0], UnitIds.footman, SPATIAL_TEST_POS, angle(0))
+	checkRangeParity(SPATIAL_TEST_POS, 300., false, "a new native entry joins the spatial index")
 
 	// This unit was created directly in this package's init, before OnUnitEnterLeave dispatches the
 	// units init created. The dispatch has run by now, so the index holds it.
@@ -954,11 +954,13 @@ function testUnitIndexerStorage()
 	check((ia castTo UnitIndex).getUnit() == a, "an index resolves back to its unit")
 	check(a.toUnitIndex() castTo int == ia, "toUnitIndex is stable for an indexed unit")
 	a.deindex()
-	check(a.getIndex() == 0, "a deindexed unit reads index 0")
+	check(a.peekIndex() == 0, "a deindexed unit has no stored identity")
 	check(b.getIndex() == ib, "deindexing one unit leaves another intact")
-	let ia2 = a.toUnitIndex() castTo int
-	check(ia2 > 0 and a.getIndex() == ia2, "reindexing assigns a live index")
-	check((ia2 castTo UnitIndex).getUnit() == a, "the new index resolves back to the unit")
+	let c = createUnit(players[0], UnitIds.footman, SPATIAL_TEST_POS.add(300., 200.), angle(0))
+	let ic = c.getIndex()
+	check(ic > 0 and ic != ib, "a new native entry gets a unique live index")
+	check((ic castTo UnitIndex).getUnit() == c, "the new index resolves back to the new unit")
+	c.remove()
 	a.remove()
 	b.remove()
 

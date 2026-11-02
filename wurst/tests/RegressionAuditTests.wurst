@@ -74,7 +74,7 @@ public function runDeindexAuditRegressions()
 	regressionGuard("reentrant deindex") ->
 		regressionCheck(reentrantUnit.deindex(), "outer deindex succeeds")
 	regressionCheck(primaryCalls == 1 and otherCalls == 1, "each unit deindex hook runs once")
-	regressionCheck(reentrantUnit.getIndex() == 0 and otherUnit.getIndex() == 0, "both indices clear")
+	regressionCheck(reentrantUnit.peekIndex() == 0 and otherUnit.peekIndex() == 0, "both indices clear")
 	regressionCheck(getIndexingUnit() == null, "deindex stack restores null")
 	let a = createUnit(players[0], UnitIds.footman, ZERO2, angle(0.))
 	let b = createUnit(players[0], UnitIds.footman, ZERO2, angle(0.))

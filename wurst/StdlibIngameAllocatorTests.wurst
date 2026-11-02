@@ -9,6 +9,9 @@ import StdlibIngameChecks
 class DestroyProbe
     int marker = 1
 
+class ProbeOwner
+    DestroyProbe value = null
+
 int originalCalls = 0
 int replacementCalls = 0
 
@@ -21,7 +24,9 @@ function replacementCallback()
 public function testStaleDestroyPreservesCodeList(IngameChecks reporter)
     originalCalls = 0
     replacementCalls = 0
+    let owner = new ProbeOwner()
     let stale = new DestroyProbe()
+    owner.value = stale
     let staleId = stale castTo int
     destroy stale
     let original = new CodeList()
@@ -29,7 +34,7 @@ public function testStaleDestroyPreservesCodeList(IngameChecks reporter)
     original.run()
     reporter.note("stale-id=" + staleId + "; live-list-id=" + (original castTo int))
     let rejected = not try() ->
-        destroy stale
+        destroy owner.value
     let replacement = new CodeList()
     replacement.add(function replacementCallback)
     original.run()
@@ -39,3 +44,5 @@ public function testStaleDestroyPreservesCodeList(IngameChecks reporter)
     replacement.run()
     reporter.check(originalCalls == 2 and replacementCalls == 1,
         "independent CodeLists retain independent callbacks")
+    owner.value = null
+    destroy owner
