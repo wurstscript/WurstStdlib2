@@ -163,7 +163,5 @@ function indexEnteringUnit()
 // Auto instanciation/destruction
 init
 	onEnterIndex(function indexEnteringUnit)
-	// A unit that leaves loses its index even when shouldIndex would not index it now: it may have been
-	// indexed through toUnitIndex(), or the predicate may have changed since it entered, and an index
-	// that outlives its unit leaks, along with everything keyed by it.
+	// Release the stored identity on native leave, regardless of a later policy change.
 	onLeave(() -> getEnterLeaveUnit().deindex())

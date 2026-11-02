@@ -124,7 +124,7 @@ function destroyEventItself()
 	runs = 0
 	let owner = newTestUnit()
 	let other = newTestUnit()
-	owner.getIndex().assertEquals(0)
+	owner.peekIndex().assertEquals(0)
 	// Neither unit is indexed, so both would share slot 0 if the listener were registered there.
 	EventListener.onCast(owner, 'A102', (caster) -> record(0))
 	Dispatcher.spell(other, 'A102')
@@ -134,7 +134,7 @@ function destroyEventItself()
 	runs = 0
 	let id = EVENT_PLAYER_LEAVE.toIntId()
 	let u = newTestUnit()
-	u.toUnitIndex()
+	new UnitIndex(u)
 	EventListener.add(u, EVENT_PLAYER_LEAVE, () -> record(0))
 	EventListener.onCast(u, 'A103', (caster) -> record(1))
 	Dispatcher.general(u, id)

@@ -37,8 +37,8 @@ function reentrantDeindexTest()
 	recursiveUnit.deindex().assertTrue()
 	recursiveCalls.assertEquals(1)
 	nestedCalls.assertEquals(1)
-	recursiveUnit.getIndex().assertEquals(0)
-	nestedUnit.getIndex().assertEquals(0)
+	recursiveUnit.peekIndex().assertEquals(0)
+	nestedUnit.peekIndex().assertEquals(0)
 	(getIndexingUnit() == null).assertTrue()
 	// The allocator must still issue distinct live ids after nested cleanup.
 	let a = newTestUnit()
@@ -63,12 +63,15 @@ function onDeindexedTest()
 	deindexedCount++
 
 function newTestUnit() returns unit
-	return createUnit(players[0], 'hfoo', ZERO2, angle(0))
+	// The interpreter has no native region entry; explicitly model that event.
+	let u = createUnit(players[0], 'hfoo', ZERO2, angle(0))
+	new UnitIndex(u)
+	return u
 
 @Test function toUnitIndexIsStableAndDistinct()
 	let a = newTestUnit()
 	let b = newTestUnit()
-	a.getIndex().assertEquals(0)
+	a.getIndex().assertGreaterThan(0)
 	let ia = a.toUnitIndex().getIndex()
 	let ib = b.toUnitIndex().getIndex()
 	ia.assertGreaterThan(0)
@@ -82,19 +85,21 @@ function newTestUnit() returns unit
 
 @Test function deindexReportsOnceAndClearsTheIndex()
 	let u = newTestUnit()
-	u.deindex().assertFalse()
-	u.toUnitIndex()
+	u.getIndex().assertGreaterThan(0)
 	u.deindex().assertTrue()
-	u.getIndex().assertEquals(0)
+	u.peekIndex().assertEquals(0)
 	u.deindex().assertFalse()
 
-@Test function reindexingGivesALiveIndex()
-	let u = newTestUnit()
-	u.toUnitIndex()
-	u.deindex()
-	u.toUnitIndex()
-	u.getIndex().assertGreaterThan(0)
-	u.deindex()
+@Test function aNewEntryAfterReleaseGetsALiveIndex()
+	let old = newTestUnit()
+	old.deindex()
+	old.peekIndex().assertEquals(0)
+	let replacement = newTestUnit()
+	replacement.getIndex().assertGreaterThan(0)
+	(replacement.toUnitIndex().getUnit() == replacement).assertTrue()
+	replacement.deindex()
+	old.remove()
+	replacement.remove()
 
 @Test function listenersSeeTheIndexingUnit()
 	onUnitIndex(function onIndexedTest)
@@ -110,5 +115,5 @@ function newTestUnit() returns unit
 	(seenDeindexed[beforeDe] == u).assertTrue()
 	// The index is still set while the deindex listeners run, and gone afterwards.
 	deindexSawIndex.assertGreaterThan(0)
-	u.getIndex().assertEquals(0)
+	u.peekIndex().assertEquals(0)
 	(getIndexingUnit() == null).assertTrue()
