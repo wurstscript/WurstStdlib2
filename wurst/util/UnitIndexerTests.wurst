@@ -4,6 +4,7 @@ import UnitIndexer
 unit array seenIndexed
 unit array seenDeindexed
 var indexedCount = 0
+var indexSeenDuringIndex = 0
 var deindexedCount = 0
 var deindexSawIndex = 0
 unit recursiveUnit = null
@@ -55,6 +56,7 @@ function reentrantDeindexTest()
 
 function onIndexedTest()
 	seenIndexed[indexedCount] = getIndexingUnit()
+	indexSeenDuringIndex = getIndexingUnit().getIndex()
 	indexedCount++
 
 function onDeindexedTest()
@@ -110,6 +112,7 @@ function newTestUnit() returns unit
 	u.toUnitIndex()
 	indexedCount.assertEquals(before + 1)
 	(seenIndexed[before] == u).assertTrue()
+	indexSeenDuringIndex.assertEquals(u.getIndex())
 	u.deindex()
 	deindexedCount.assertEquals(beforeDe + 1)
 	(seenDeindexed[beforeDe] == u).assertTrue()
@@ -117,3 +120,32 @@ function newTestUnit() returns unit
 	deindexSawIndex.assertGreaterThan(0)
 	u.peekIndex().assertEquals(0)
 	(getIndexingUnit() == null).assertTrue()
+
+@Test function aCapturedLifetimeExpiresAndCannotFollowAReplacement()
+	let old = newTestUnit()
+	let captured = old.getIndex()
+	old.isIndexCurrent(captured).assertTrue()
+	old.deindex()
+	old.isIndexCurrent(captured).assertFalse()
+	let replacement = newTestUnit()
+	old.isIndexCurrent(captured).assertFalse()
+	old.isIndexCurrent(replacement.getIndex()).assertFalse()
+	replacement.isIndexCurrent(replacement.getIndex()).assertTrue()
+	old.peekIndex().assertEquals(0)
+	replacement.deindex()
+	old.remove()
+	replacement.remove()
+
+@Test function aForeignLifetimeCannotAuthorizeWorkOnAnotherLiveUnit()
+	let a = newTestUnit()
+	let b = newTestUnit()
+	a.isIndexCurrent(b.getIndex()).assertFalse()
+	b.isIndexCurrent(a.getIndex()).assertFalse()
+	a.isIndexCurrent(0).assertFalse()
+	a.isIndexCurrent(-1).assertFalse()
+	a.isIndexCurrent(a.getIndex()).assertTrue()
+	b.isIndexCurrent(b.getIndex()).assertTrue()
+	a.deindex()
+	b.deindex()
+	a.remove()
+	b.remove()

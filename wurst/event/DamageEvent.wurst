@@ -9,6 +9,11 @@
         (This corrects an older note here which claimed the opposite. Verified in game by check 10 of
         package StdlibIngameTests.)
 
+        Native abilities can emit zero self-damage during CreateUnit, before region entry and unit indexing.
+        Tornado Slow Aura does this even with no allowed targets. DamageEvent preserves these native events;
+        listeners must not assume every damage event follows onUnitIndex. Filter by the handler's damage
+        semantics before accessing indexed gameplay state. See StdlibIngameBirthDamageTests.
+
         if DETECT_NATIVE_ABILITIES is true:
             > Any damage instance of attacktype ATTACK_TYPE_NORMAL is passed with DamageType SPELL
 

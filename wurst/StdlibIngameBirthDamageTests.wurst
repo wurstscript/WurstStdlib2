@@ -73,6 +73,7 @@ function installObservers()
 public function runBirthDamageChecks(IngameChecks checks, int plainId, int selfId, int emptyId, int selfAura, vec2 position, Callback done)
     installObservers()
     let removed = new ArrayList<unit>()
+    let removedIdentities = new ArrayList<int>()
     let unreduced = DamageEvent.addUnreducedListener(0) ->
         let target = DamageEvent.getTarget()
         if armed and target.getTypeId() == watchedType
@@ -116,8 +117,9 @@ public function runBirthDamageChecks(IngameChecks checks, int plainId, int selfI
                 checks.check((beforeUnreduced > 0) == (variant > 0), label + "aura-causes-native-damaging")
                 checks.check((beforeReduced > 0) == (variant > 0), label + "aura-causes-native-damaged")
                 armed = false
-                u.remove()
                 removed.add(u)
+                removedIdentities.add(u.getIndex())
+                u.remove()
         reset(plainId)
         let live = createUnit(owner, plainId, position, angle(0.))
         let identity = live.getIndex()
@@ -137,10 +139,12 @@ public function runBirthDamageChecks(IngameChecks checks, int plainId, int selfI
         live.kill()
         checks.check(live.getIndex() == identity, "damage-death-retains-identity-" + ownerSlot)
         armed = false
-        live.remove()
-        source.remove()
         removed.add(live)
         removed.add(source)
+        removedIdentities.add(live.getIndex())
+        removedIdentities.add(source.getIndex())
+        live.remove()
+        source.remove()
         reset(selfId)
         nestNext = true
         let outer = CreateUnit(owner, selfId, position.x, position.y, 0.)
@@ -151,11 +155,13 @@ public function runBirthDamageChecks(IngameChecks checks, int plainId, int selfI
         if nestedUnit != null
             checks.check(outer.getIndex() != nestedUnit.getIndex(), "nested-live-identities-distinct-" + ownerSlot)
         armed = false
-        nestedUnit?.remove()
         removed.add(nestedUnit)
+        removedIdentities.add(nestedUnit == null ? 0 : nestedUnit.getIndex())
+        nestedUnit?.remove()
         nestedUnit = null
-        outer.remove()
         removed.add(outer)
+        removedIdentities.add(outer.getIndex())
+        outer.remove()
     destroy unreduced
     destroy reduced
     // Native leave can follow RemoveUnit on the next engine turn.
@@ -163,6 +169,8 @@ public function runBirthDamageChecks(IngameChecks checks, int plainId, int selfI
         for i = 0 to removed.size() - 1
             let u = removed.get(i)
             checks.check(u == null or u.peekIndex() == 0, "birth-removed-identity-released-" + i)
+            checks.check(u == null or not u.isIndexCurrent(removedIdentities.get(i)), "birth-captured-lifetime-ended-" + i)
         destroy removed
+        destroy removedIdentities
         done.call()
         destroy done

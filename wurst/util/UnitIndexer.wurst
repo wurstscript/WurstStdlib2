@@ -40,6 +40,9 @@ function popUnit()
 // to one native table keyed by the unit itself, so a lookup is a single index
 // with no handle-id round trip. Both paths default an unindexed unit to 0.
 let luaUnitIndices = keyedMapCreate()
+// Canonical reverse association. Numeric lifetime checks must not dereference
+// the UnitIndex object after it has been destroyed or its id has been recycled.
+unit array liveUnitByIndex
 
 function unit.getStoredIndex() returns int
 	if isLua
@@ -66,7 +69,7 @@ function unit.setStoredIndex(int value)
 /** Validates deferred work captured while indexed. Absence means the old lifetime ended,
     rather than requesting a replacement identity for the unit. Never allocates. */
 public function unit.isIndexCurrent(int expectedIndex) returns boolean
-	if expectedIndex <= 0 or (expectedIndex castTo UnitIndex).getUnit() != this
+	if expectedIndex <= 0 or liveUnitByIndex[expectedIndex] != this
 		return false
 	// A retained lifetime must still have its association. Do not hide corruption.
 	return this.getIndex() == expectedIndex
@@ -79,7 +82,7 @@ public function unit.isIndexCurrent(int expectedIndex) returns boolean
 	let index = this.getStoredIndex()
 	if index == 0
 		error("UnitIndexer: missing index for unit type " + this.getTypeId() + getStackTraceString())
-	else if (index castTo UnitIndex).getUnit() != this
+	else if liveUnitByIndex[index] != this
 		error("UnitIndexer: stale unit index; identity does not match")
 		return 0
 	return index
@@ -117,7 +120,6 @@ public function unit.deindex() returns bool
 		return this.toUnitIndex().deindex()
 
 public class UnitIndex
-	protected unit _unit
 	private bool deindexing = false
 
 	/** Deindexes the unit, returning false if a deindex hook is already releasing it. */
@@ -128,14 +130,14 @@ public class UnitIndex
 		return true
 
 	function getUnit() returns unit
-		return this._unit
+		return liveUnitByIndex[this castTo int]
 
 	function getIndex() returns int
 		return this castTo int
 
 	construct(unit whichUnit)
-		this._unit = whichUnit
-		this._unit.setStoredIndex(this castTo int)
+		liveUnitByIndex[this castTo int] = whichUnit
+		whichUnit.setStoredIndex(this castTo int)
 		traceUnitLifecycle(UnitLifecyclePhase.INDEX_STORED, whichUnit, tempUnitsCount)
 		pushUnit(whichUnit)
 		onIndexList.run()
@@ -144,13 +146,14 @@ public class UnitIndex
 
 	ondestroy
 		deindexing = true
-		traceUnitLifecycle(UnitLifecyclePhase.DEINDEX_BEGIN, this._unit, tempUnitsCount)
-		pushUnit(this._unit)
+		let u = liveUnitByIndex[this castTo int]
+		traceUnitLifecycle(UnitLifecyclePhase.DEINDEX_BEGIN, u, tempUnitsCount)
+		pushUnit(u)
 		onDeindexList.run()
 		popUnit()
-		this._unit.setStoredIndex(0)
-		traceUnitLifecycle(UnitLifecyclePhase.DEINDEX_END, this._unit, tempUnitsCount)
-		this._unit = null
+		u.setStoredIndex(0)
+		traceUnitLifecycle(UnitLifecyclePhase.DEINDEX_END, u, tempUnitsCount)
+		liveUnitByIndex[this castTo int] = null
 
 function indexEnteringUnit()
 	let u = getEnterLeaveUnit()
@@ -159,7 +162,7 @@ function indexEnteringUnit()
 		let existing = u.getStoredIndex()
 		if existing == 0
 			let _index = new UnitIndex(u)
-		else if (existing castTo UnitIndex).getUnit() != u
+		else if liveUnitByIndex[existing] != u
 			error("UnitIndexer: entering unit has a stale index association")
 
 // Auto instanciation/destruction
