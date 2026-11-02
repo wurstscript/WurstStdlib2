@@ -23,7 +23,7 @@ public function unit.clearLastOrders()
 /** Returns the last recorded order for this unit, or null if it has none or is not indexed by UnitIndexer.
 	To access further back orders, use .prev */
 public function unit.getLastOrder() returns Order
-	let index = this.getIndex()
+	let index = this.peekIndex()
 	if index <= 0
 		return null
 	return lastOrder[index]
@@ -139,7 +139,7 @@ function conditions() returns boolean
 
 function actions()
 	// An order of a unit which is not indexed is not recorded, so there is no object to create for it.
-	if conditions() and GetTriggerUnit().getIndex() > 0
+	if conditions() and GetTriggerUnit().peekIndex() > 0
 		let	u   = GetTriggerUnit()
 		let t   = GetOrderTarget()
 		let oid = GetIssuedOrderId()
@@ -152,7 +152,7 @@ function actions()
 			new Order(u, oid, OrderType.IMMEDIATE, null, u.getPos())
 
 function spellActions()
-	let index = GetTriggerUnit().getIndex()
+	let index = GetTriggerUnit().peekIndex()
 	if index > 0 and lastOrder[index] != null
 		// Only do this if the last order actually exists
 		lastOrder[index].finished = true

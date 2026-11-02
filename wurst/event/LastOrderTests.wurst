@@ -5,6 +5,12 @@ import UnitIndexer
 function newTestUnit() returns unit
 	return createUnit(players[0], 'hfoo', ZERO2, angle(0))
 
+@Test function unenteredUnitHasNoRecordedOrderAndStaysUnindexed()
+	let u = newTestUnit()
+	(u.getLastOrder() == null).assertTrue()
+	u.peekIndex().assertEquals(0)
+	u.remove()
+
 // Importing LastOrder must leave the canonical Unit extension unambiguous.
 @Test function abortOrderRemainsAvailableWithLastOrder()
 	let u = newTestUnit()

@@ -145,3 +145,24 @@ function destroyEventItself()
 	Dispatcher.spell(u, 'A103')
 	runs.assertEquals(2)
 	u.deindex()
+
+@Test function rejectedPendingCastDoesNotStopLaterRegistrations()
+	let excluded = newTestUnit()
+	let entered = newTestUnit()
+	new UnitIndex(entered)
+	runs = 0
+	OnCastListener rejected = caster -> ignoreCast()
+	OnCastListener accepted = caster -> record(0)
+	OnCastListener.deferRegistration(excluded, 7, rejected)
+	OnCastListener.deferRegistration(entered, 7, accepted)
+	OnCastListener.registerPendingCasts()
+	(rejected.eventUnit == null).assertTrue()
+	excluded.peekIndex().assertEquals(0)
+	Dispatcher.spell(entered, 7)
+	runs.assertEquals(1)
+	destroy rejected
+	destroy accepted
+	entered.deindex()
+	excluded.remove()
+	entered.remove()
+

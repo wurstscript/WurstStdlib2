@@ -1,0 +1,43 @@
+package StdlibIngameOptionalIndexTests
+import StdlibIngameChecks
+import UnitIndexer
+import ClosureEvents
+import LastOrder
+import Orders
+
+class CastProbe extends OnCastListener
+    int calls = 0
+
+    override function fire(unit caster)
+        calls++
+
+class CastDispatcher extends EventListener
+    override function onEvent()
+        skip
+
+    static function cast(unit caster)
+        dispatchSpell(caster, 'Absk', caster)
+
+/** Explicit negative control: end one identity before exercising optional native
+    event routing. No production caller may deindex a live unit this way. */
+public function testOptionalIndexConsumers(IngameChecks checks, int unitId, vec2 position)
+    let excluded = createUnit(players[0], unitId, position, angle(0.))
+    let entered = createUnit(players[0], unitId, position + vec2(128., 0.), angle(0.))
+    excluded.deindex()
+    let rejected = new CastProbe()
+    let accepted = new CastProbe()
+    OnCastListener.deferRegistration(excluded, 'Absk', rejected)
+    OnCastListener.deferRegistration(entered, 'Absk', accepted)
+    OnCastListener.registerPendingCasts()
+    checks.check(rejected.eventUnit == null, "rejected-pending-cast-detaches-unit")
+    CastDispatcher.cast(entered)
+    checks.check(accepted.calls == 1, "later-pending-cast-still-registers")
+    excluded.issuePointOrderById(OrderIds.move, position + vec2(0., 128.))
+    checks.check(excluded.getLastOrder() == null, "unindexed-order-is-not-recorded")
+    checks.check(excluded.peekIndex() == 0, "optional-consumers-never-allocate-identity")
+    entered.issuePointOrderById(OrderIds.move, position + vec2(128., 128.))
+    checks.check(entered.getLastOrder() != null, "later-indexed-order-still-records")
+    destroy rejected
+    destroy accepted
+    excluded.remove()
+    entered.remove()

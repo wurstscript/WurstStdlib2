@@ -105,9 +105,10 @@ public abstract class OnCastListener
 			if listener != null
 				pendingRegistrations.set(i, null)
 				listener.pendingSlot = -1
-				if listener.eventUnit.getIndex() > 0
+				if listener.eventUnit.peekIndex() > 0
 					EventListener.onCast(listener.eventUnit, listener.abilId, listener)
 				else
+					listener.eventUnit = null
 					Log.warn("Init-time cast listener rejected: the unit remains unindexed after startup.")
 		pendingRegistrations.clear()
 
