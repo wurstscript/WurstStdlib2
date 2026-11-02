@@ -15,6 +15,8 @@ import public Unit
 
 /** Clears all recorded orders for this unit */
 public function unit.clearLastOrders()
+	if this == null or this.peekIndex() == 0
+		return
 	let index = this.getIndex()
 	if index > 0 and lastOrder[index] != null
 		destroy lastOrder[index]
@@ -55,8 +57,8 @@ public class Order
 		this.targetPosition = targetPos
 
 		// A unit which is not indexed has no slot: all of them would share slot 0 and their orders would be mixed up.
-		if ordered != null and ordered.getIndex() > 0
-			let index = ordered.getIndex()
+		let index = ordered != null and ordered.peekIndex() > 0 ? ordered.getIndex() : 0
+		if index > 0
 			if lastOrder[index] != null
 				if lastOrder[index].orderedUnit == orderedUnit
 					prev = lastOrder[index]

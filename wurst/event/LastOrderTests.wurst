@@ -11,6 +11,21 @@ function newTestUnit() returns unit
 	u.peekIndex().assertEquals(0)
 	u.remove()
 
+@Test function unenteredUnitCleanupDoesNotIndex()
+	let u = newTestUnit()
+	u.clearLastOrders()
+	(u.getLastOrder() == null).assertTrue()
+	u.peekIndex().assertEquals(0)
+	u.remove()
+
+@Test function unenteredUnitOrderRemainsDetachedWithoutIndexing()
+	let u = newTestUnit()
+	let detached = new Order(u, 851986, OrderType.POINT, null, ZERO2)
+	(u.getLastOrder() == null).assertTrue()
+	u.peekIndex().assertEquals(0)
+	destroy detached
+	u.remove()
+
 // Importing LastOrder must leave the canonical Unit extension unambiguous.
 @Test function abortOrderRemainsAvailableWithLastOrder()
 	let u = newTestUnit()

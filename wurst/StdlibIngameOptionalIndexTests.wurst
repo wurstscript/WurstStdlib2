@@ -53,7 +53,10 @@ public function testOptionalIndexConsumers(IngameChecks checks, int unitId, vec2
     checks.check(acceptedRuntimeCast.calls == 1 and accepted.calls == 2,
         "later-indexed-cast-still-registers")
     excluded.issuePointOrderById(OrderIds.move, position + vec2(0., 128.))
+    excluded.clearLastOrders()
+    let detachedOrder = new Order(excluded, OrderIds.move, OrderType.POINT, null, position)
     checks.check(excluded.getLastOrder() == null, "unindexed-order-is-not-recorded")
+    destroy detachedOrder
     checks.check(excluded.peekIndex() == 0, "optional-consumers-never-allocate-identity")
     entered.issuePointOrderById(OrderIds.move, position + vec2(128., 128.))
     checks.check(entered.getLastOrder() != null, "later-indexed-order-still-records")

@@ -48,6 +48,13 @@ public function runSpatialEligibilityRegressions()
 		regressionCheck(subset.anyInRange(center, 128., filter), "eligible subset existence is true")
 		regressionCheck(spatialIndexQueryUnit(0) == u, "existence query preserves outer snapshot")
 		spatialIndexEndQuery()
+		// Explicit negative control for optional refresh APIs, using the default strict provider.
+		u.deindex()
+		u.updateSpatialIndex()
+		subset.refreshMembership(u)
+		regressionCheck(subset.beginQuery(center, 128.) == 0, "unindexed spatial updates add no membership")
+		spatialIndexEndQuery()
+		regressionCheck(u.peekIndex() == 0, "unindexed spatial updates never allocate identity")
 		destroy subset
 		destroy filter
 		destroy membership

@@ -203,6 +203,8 @@ public class UnitSpatialGroup
 
 	/** Re-evaluates membership without registering a unit; safe from a deindex listener. */
 	function refreshMembership(unit u)
+		if u == null or u.peekIndex() == 0
+			return
 		let idx = u.getIndex()
 		if groupId >= 0 and idx > 0 and indexedUnit[idx] == u
 			spatialPartitionSetGroup(idx, groupId, predicate.matches(u))
@@ -306,6 +308,8 @@ function unregisterUnit(unit u)
 	the index; identity is assigned only by the entry lifecycle. */
 public function unit.updateSpatialIndex()
 	if not isLua or not USE_UNIT_SPATIAL_INDEX or this == null
+		return
+	if this.peekIndex() == 0
 		return
 	let idx = this.getIndex()
 	if idx == 0
