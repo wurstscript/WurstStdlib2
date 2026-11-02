@@ -1,0 +1,54 @@
+package StdlibIngameAllocatorTests
+import CodeList
+import Execute
+import StdlibIngameChecks
+
+/** Deliberate invalid ownership, isolated from the real enter lists. This establishes
+    whether a stale typed destroy can invalidate an unrelated live CodeList. It does
+    not identify a production stale destroyer. */
+class DestroyProbe
+    int marker = 1
+
+class ProbeOwner
+    DestroyProbe value = null
+
+int originalCalls = 0
+int replacementCalls = 0
+
+function originalCallback()
+    originalCalls++
+
+function replacementCallback()
+    replacementCalls++
+
+public function testStaleDestroyPreservesCodeList(IngameChecks reporter)
+    originalCalls = 0
+    replacementCalls = 0
+    let owner = new ProbeOwner()
+    let stale = new DestroyProbe()
+    owner.value = stale
+    let staleId = stale castTo int
+    destroy stale
+    let original = new CodeList()
+    original.add(function originalCallback)
+    original.run()
+    reporter.note("stale-id=" + staleId + "; live-list-id=" + (original castTo int))
+    let rejected = not try() ->
+        destroy owner.value
+    let replacement = new CodeList()
+    replacement.add(function replacementCallback)
+    // try owns a callback whose release can sit above the corrupted id in the free stack.
+    // Allocate several permanent lists so that temporary allocation cannot hide that reuse.
+    for i = 0 to 7
+        let churn = new CodeList()
+        churn.add(function replacementCallback)
+    original.run()
+    reporter.note("after stale destroy: original=" + originalCalls + "; replacement=" + replacementCalls)
+    reporter.check(rejected, "stale typed destroy is rejected")
+    reporter.check(originalCalls == 2 and replacementCalls == 0,
+        "stale destroy cannot replace a live CodeList")
+    replacement.run()
+    reporter.check(originalCalls == 2 and replacementCalls == 1,
+        "independent CodeLists retain independent callbacks")
+    owner.value = null
+    destroy owner

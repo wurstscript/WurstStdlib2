@@ -7,6 +7,11 @@
         Setting the damage amount to zero or less in the unreduced listeners does **not** skip the reduced
         listeners: EVENT_PLAYER_UNIT_DAMAGED still fires and they run with an amount of zero.
 
+        Native abilities can emit zero self-damage during CreateUnit, before region entry and unit indexing.
+        Tornado Slow Aura does this even with no allowed targets. DamageEvent preserves these native events;
+        listeners must not assume every damage event follows onUnitIndex. Filter by the handler's damage
+        semantics before accessing indexed gameplay state. See StdlibIngameBirthDamageTests.
+
         if DETECT_NATIVE_ABILITIES is true:
             > Any damage instance of attacktype ATTACK_TYPE_NORMAL is passed with DamageType SPELL
 

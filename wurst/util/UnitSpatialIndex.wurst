@@ -10,7 +10,7 @@ package UnitSpatialIndex
 	when it is indexed and leaves when it is deindexed, and its index is its partition entry id. By
 	default that is every unit on the map, as OnUnitEnterLeave reports them. A unit excluded through
 	`shouldIndex`, or deindexed by hand, is not in it. Units created during init join when
-	OnUnitEnterLeave dispatches them, after the last init block, or earlier through `toUnitIndex()`.
+	OnUnitEnterLeave dispatches them, after the last init block, without any lookup allocating identity.
 	A map that configures `unit.getIndex()` with an indexer of its own has to keep firing
 	`onUnitIndex` and `onUnitDeindex`, which is all this index listens to.
 
@@ -164,7 +164,7 @@ class UnitSpatialExistenceFilter implements SpatialPartitionPredicate
 
 	override function matches(int idx, boolean uncertain) returns boolean
 		let u = indexedUnit[idx]
-		if u == null
+		if u == null or not u.isSpatialQueryCandidate()
 			return false
 		var inside = not uncertain
 		if not inside
@@ -185,8 +185,8 @@ class UnitSpatialExistenceFilter implements SpatialPartitionPredicate
 	Membership is event-owned: call refreshMembership after registration and changes to predicate inputs.
 	A query also rechecks the predicate, so a stale member can never be returned; newly eligible units
 	require a membership notification to join. Position sweeps never evaluate caller predicates.
-	Explicit subsets use their predicate as the visibility policy, including hidden/Locust units
-	when the predicate allows them. The ordinary queries retain Warcraft enumeration semantics.
+	All queries honor isSpatialQueryCandidate. Within that policy, explicit subsets use their predicate
+	as visibility policy, including hidden/Locust units when allowed. Ordinary queries retain Warcraft enumeration semantics.
 	The caller owns the predicate and must keep it alive until the subset is destroyed. */
 public class UnitSpatialGroup
 	private int groupId
@@ -203,6 +203,8 @@ public class UnitSpatialGroup
 
 	/** Re-evaluates membership without registering a unit; safe from a deindex listener. */
 	function refreshMembership(unit u)
+		if u == null or u.peekIndex() == 0
+			return
 		let idx = u.getIndex()
 		if groupId >= 0 and idx > 0 and indexedUnit[idx] == u
 			spatialPartitionSetGroup(idx, groupId, predicate.matches(u))
@@ -239,6 +241,10 @@ function registerUnit(unit u)
 	// registering would only build a registry that answers nothing.
 	if u == null or unitGroup < 0
 		return
+	// A previous onUnitIndex listener may already have ended this identity.
+	if u.peekIndex() == 0
+		return
+	// Registration is called after identity is assigned. Respect the configured provider.
 	let idx = u.getIndex()
 	if idx == 0 or registrySlot[idx] != 0
 		return
@@ -299,9 +305,11 @@ function unregisterUnit(unit u)
 /**	Re-buckets one unit immediately, and registers an indexed unit the index does not hold yet.
 	Ordinary movement does not need this - the sweep covers it - but an engine-side teleport or a raw
 	`SetUnitX` call does, because neither is observable. A unit UnitIndexer has not indexed is not in
-	the index; `toUnitIndex()` indexes it. */
+	the index; identity is assigned only by the entry lifecycle. */
 public function unit.updateSpatialIndex()
 	if not isLua or not USE_UNIT_SPATIAL_INDEX or this == null
+		return
+	if this.peekIndex() == 0
 		return
 	let idx = this.getIndex()
 	if idx == 0
@@ -440,9 +448,13 @@ public function spatialIndexGridHeight() returns int
 
 	One expression, for the same reason as the partition's result accessors: this is tested once per
 	match, and an inlined early return is carried through the rest of the caller's loop as a flag. */
+/** Consumer visibility policy; identity and spatial registration remain independent. */
+@configurable public function unit.isSpatialQueryCandidate() returns boolean
+	return true
+
 @inline function unit.passesEnumerationState() returns boolean
-	return BlzIsUnitSelectable(this)
-		or (not this.isAlive() and (not SPATIAL_INDEX_CHECK_HIDDEN or not this.isHidden()))
+	return this.isSpatialQueryCandidate() and (BlzIsUnitSelectable(this)
+		or (not this.isAlive() and (not SPATIAL_INDEX_CHECK_HIDDEN or not this.isHidden())))
 
 /**	Reads an entry's live position, caches it and stamps the tick, so a later query in the same frame
 	decides it from the cache instead of paying the two natives again.
@@ -496,7 +508,7 @@ function beginRangeQuery(vec2 center, real radius, boolean collisionSizeFilterin
 				inside = entryIn >= 0. and cachedDistSq <= entryIn * entryIn
 				if not inside and cachedDistSq <= entryOut * entryOut
 					inside = cacheLivePosition(idx, u).distanceToSq(center) <= memberRadius * memberRadius
-			if inside and ((predicate == null and u.passesEnumerationState())
+			if inside and u.isSpatialQueryCandidate() and ((predicate == null and u.passesEnumerationState())
 					or (predicate != null and predicate.matches(u)))
 				pushMatch(u)
 	spatialPartitionEndQuery()
@@ -547,7 +559,7 @@ public function spatialIndexBeginPlayerQuery(player owner) returns int
 	queryDepth++
 	for i = 0 to registryCount - 1
 		let u = indexedUnit[registry[i]]
-		if u != null and u.getOwner() == owner
+		if u != null and u.getOwner() == owner and u.isSpatialQueryCandidate()
 			pushMatch(u)
 	return snapshotTop - queryBase[queryDepth - 1]
 
@@ -568,7 +580,7 @@ public function spatialIndexEndQuery()
 // Init
 
 /**	Registers the units UnitIndexer indexed before the listeners below were installed, for example
-	through toUnitIndex() in a package whose init ran earlier. Their one onUnitIndex event has passed,
+	through native entry before a later consumer initialized. Their one onUnitIndex event has passed,
 	and OnUnitEnterLeave's later dispatch finds them indexed and sends none. registerUnit skips any
 	unit without an index, so this adds nothing UnitIndexer does not hold. */
 function registerIndexedUnits()
@@ -635,8 +647,7 @@ function testArena()
 	rebuildSpatialIndexGrid(vec2(-4096., -4096.), vec2(4096., 4096.))
 
 /**	Indexes a new unit and registers it, as the onUnitIndex listener does on Lua. The UnitIndex is made
-	directly, as toUnitIndex() does for a unit without one: toUnitIndex() itself stops in the
-	interpreter with "Local variable UnitIndex instance is null" on the index it reads back. */
+	directly to model native entry in the interpreter; normal lookups never allocate. */
 function addUnitFor(player owner, vec2 pos) returns unit
 	let u = createUnit(owner, 'hfoo', pos, 0 .fromDeg())
 	new UnitIndex(u)

@@ -1,0 +1,34 @@
+package UnitLifecycleTrace
+
+/** Optional synchronous diagnostics. The default is empty and optimizes away.
+    Configurations must only record observations: never wait, throw, create/remove
+    handles, change units, or force indexing. detail is a count/depth, never an id. */
+public enum UnitLifecyclePhase
+	ENTER_INIT
+	INSTALL_BEGIN
+	INSTALL_END
+	PREPLACED_BEGIN
+	PREPLACED_END
+	NATIVE_FILTER
+	PREPARE_BEGIN
+	PREPARE_ABILITY
+	ENTER_DISPATCH_BEGIN
+	ENTER_DISPATCH_END
+	INDEX_LISTENER
+	INDEX_STORED
+	INDEX_DISPATCH_END
+	DEINDEX_BEGIN
+	DEINDEX_END
+	ENTER_LISTENER_REGISTERED
+	INDEX_LISTENER_REGISTERED
+	DEINDEX_LISTENER_REGISTERED
+	INSTALL_SCHEDULED
+	NATIVE_LEAVE
+	WITNESS_INSTALLED
+	NATIVE_WITNESS
+
+/** Independent, unfiltered region-action witness. Disabled unless a map opts into diagnosis. */
+@configurable public constant UNIT_ENTRY_WITNESS = false
+
+@configurable public function traceUnitLifecycle(UnitLifecyclePhase _phase, unit _u, int _detail)
+	skip

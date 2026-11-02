@@ -5,6 +5,27 @@ import UnitIndexer
 function newTestUnit() returns unit
 	return createUnit(players[0], 'hfoo', ZERO2, angle(0))
 
+@Test function unenteredUnitHasNoRecordedOrderAndStaysUnindexed()
+	let u = newTestUnit()
+	(u.getLastOrder() == null).assertTrue()
+	u.peekIndex().assertEquals(0)
+	u.remove()
+
+@Test function unenteredUnitCleanupDoesNotIndex()
+	let u = newTestUnit()
+	u.clearLastOrders()
+	(u.getLastOrder() == null).assertTrue()
+	u.peekIndex().assertEquals(0)
+	u.remove()
+
+@Test function unenteredUnitOrderRemainsDetachedWithoutIndexing()
+	let u = newTestUnit()
+	let detached = new Order(u, 851986, OrderType.POINT, null, ZERO2)
+	(u.getLastOrder() == null).assertTrue()
+	u.peekIndex().assertEquals(0)
+	destroy detached
+	u.remove()
+
 // Importing LastOrder must leave the canonical Unit extension unambiguous.
 @Test function abortOrderRemainsAvailableWithLastOrder()
 	let u = newTestUnit()
@@ -17,7 +38,7 @@ function newTestUnit() returns unit
 
 @Test function recordedHistoryIncludesAtMostThreeOrders()
 	let u = newTestUnit()
-	u.toUnitIndex()
+	new UnitIndex(u)
 	for i = 1 to 10
 		new Order(u, 851986, OrderType.POINT, null, vec2(i.toReal(), 0.))
 	var entry = u.getLastOrder()
@@ -31,17 +52,24 @@ function newTestUnit() returns unit
 	u.deindex()
 	u.remove()
 
-@Test function unindexedUnitsDoNotShareAnOrderSlot()
+@Test function aLaterEntryDoesNotInheritReleasedOrderHistory()
+	// The interpreter does not run package init; install the production cleanup hook explicitly.
+	onUnitDeindex(() -> getIndexingUnit().clearLastOrders())
 	let a = newTestUnit()
-	let b = newTestUnit()
-	a.getIndex().assertEquals(0)
+	new UnitIndex(a)
 	new Order(a, 851986, OrderType.POINT, null, vec2(1, 2))
-	(a.getLastOrder() == null).assertTrue()
+	a.deindex()
+	a.peekIndex().assertEquals(0)
+	let b = newTestUnit()
+	new UnitIndex(b)
 	(b.getLastOrder() == null).assertTrue()
+	b.deindex()
+	a.remove()
+	b.remove()
 
 @Test function anIndexedUnitKeepsItsOrdersNewestFirst()
 	let u = newTestUnit()
-	u.toUnitIndex()
+	new UnitIndex(u)
 	let first = new Order(u, 851986, OrderType.POINT, null, vec2(1, 2))
 	(u.getLastOrder() == first).assertTrue()
 	let second = new Order(u, 851971, OrderType.POINT, null, vec2(3, 4))
@@ -54,8 +82,8 @@ function newTestUnit() returns unit
 @Test function ordersOfOneUnitDoNotReachAnother()
 	let u = newTestUnit()
 	let v = newTestUnit()
-	u.toUnitIndex()
-	v.toUnitIndex()
+	new UnitIndex(u)
+	new UnitIndex(v)
 	new Order(u, 851986, OrderType.POINT, null, vec2(1, 2))
 	(v.getLastOrder() == null).assertTrue()
 	u.clearLastOrders()

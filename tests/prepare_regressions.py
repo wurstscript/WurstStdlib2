@@ -1,7 +1,7 @@
 """Prepare an offline, disposable test project without modifying the source map.
 
 Run from any directory. Requires Python 3; the base map is a tracked test fixture.
-Use --baseline-ref to replace only the six repaired production files with an older revision;
+Use --baseline-ref to replace only the selected production files with an older revision;
 the current regression tests stay identical. No commands are executed in the prepared project.
 """
 import argparse
@@ -18,9 +18,12 @@ REPAIRED = (
     'wurst/data/ArrayList.wurst',
     'wurst/util/TimerUtils.wurst',
     'wurst/util/TerrainUtils.wurst',
+    'wurst/util/UnitSpatialIndex.wurst',
 )
 
-MAP_FIXTURES = ('UnitIndexer_config.wurst', 'RegressionIndexerPolicy.wurst', 'RegressionLateIndexHook.wurst')
+MAP_FIXTURES = ('UnitIndexer_config.wurst', 'RegressionIndexerPolicy.wurst', 'RegressionLateIndexHook.wurst',
+                'UnitSpatialIndex_config.wurst', 'RegressionSpatialEligibility.wurst',
+                'StdlibIngameTests_config.wurst', 'RegressionNativeLifecycle.wurst')
 
 
 def main():
@@ -28,6 +31,8 @@ def main():
     parser.add_argument('--backend', choices=('jass', 'lua'), required=True)
     parser.add_argument('--baseline-ref', help='Git revision for the repaired files only')
     parser.add_argument('--name', default='regression-map')
+    parser.add_argument('--focus', choices=('all', 'indexing', 'custom-index'), default='all',
+                        help='Run all checks, indexing checks, or the configured-provider integration fixture')
     args = parser.parse_args()
     if not args.name or any(c not in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_' for c in args.name):
         parser.error('--name must contain only letters, digits, hyphens and underscores')
@@ -36,7 +41,9 @@ def main():
     for required in (base_map, root / 'wurst.build', root / 'wurst_run.args',
                      root / 'wurst/tests/RegressionChecks.wurst',
                      root / 'wurst/tests/StdlibRegressionTests.wurst',
-                     *(root / 'tests/fixtures' / name for name in MAP_FIXTURES)):
+                     *(root / 'tests/fixtures' / name for name in MAP_FIXTURES),
+                     *(root / 'tests/fixtures' / name for name in
+                        ('CustomUnitIndexer_config.wurst', 'RegressionCustomIndex.wurst') if args.focus == 'custom-index')):
         if not required.is_file():
             parser.error('Required regression input is missing: ' + str(required))
     destination = root / '_build' / (args.name + '-' + args.backend)
@@ -47,10 +54,45 @@ def main():
         shutil.copy2(root / 'tests/fixtures' / name, destination / 'wurst/tests' / name)
     entry = destination / 'wurst/tests/StdlibRegressionTests.wurst'
     entry.write_text(entry.read_text().replace(
-        'import RegressionChecks', 'import RegressionChecks\nimport RegressionIndexerPolicy\nimport RegressionLateIndexHook').replace(
+        'import RegressionChecks', 'import RegressionChecks\nimport RegressionIndexerPolicy\nimport RegressionLateIndexHook\nimport RegressionSpatialEligibility\nimport RegressionNativeLifecycle').replace(
         '\t\tregressionGuard("terrain normal"',
-        '\t\tregressionGuard("index policy", () -> runIndexerPolicyRegressions())\n\t\tregressionGuard("terrain normal"').replace(
-        'checkRegressionAsyncCompletion()', 'checkRegressionAsyncCompletion()\n\t\t\tfinishIndexerPolicyRegressions()\n\t\t\tfinishLateIndexHookRegression()'))
+        '\t\tregressionGuard("index policy", () -> runIndexerPolicyRegressions())\n\t\tregressionGuard("spatial eligibility", () -> runSpatialEligibilityRegressions())\n\t\tregressionGuard("terrain normal"').replace(
+        'checkRegressionAsyncCompletion()', 'checkRegressionAsyncCompletion()\n\t\t\tfinishIndexerPolicyRegressions()\n\t\t\tfinishLateIndexHookRegression()').replace(
+        'regressionSummary("AUTOMATIC COMPLETE; INTERACTIVE PENDING")',
+        'regressionSummary("AUTOMATIC COMPLETE; INTERACTIVE PENDING")\n\t\t\trunNativeLifecycleRegressions()'))
+    if args.focus == 'indexing':
+        entry.write_text('''package StdlibRegressionTests
+import RegressionChecks
+import RegressionGameplayTests
+import RegressionIndexerPolicy
+import RegressionLateIndexHook
+import RegressionSpatialEligibility
+import RegressionNativeLifecycle
+import ClosureTimers
+
+init
+    doAfter(1.) ->
+        regressionGuard("gameplay regressions", () -> runGameplayRegressions())
+        regressionGuard("index policy", () -> runIndexerPolicyRegressions())
+        regressionGuard("spatial eligibility", () -> runSpatialEligibilityRegressions())
+        doAfter(1.5) ->
+            checkRegressionAsyncCompletion(2)
+            finishIndexerPolicyRegressions()
+            finishLateIndexHookRegression()
+            regressionSummary("INDEXING AUTOMATIC COMPLETE")
+            runNativeLifecycleRegressions()
+''')
+    if args.focus == 'custom-index':
+        for source, target in (('CustomUnitIndexer_config.wurst', 'UnitIndexer_config.wurst'),
+                               ('RegressionCustomIndex.wurst', 'RegressionCustomIndex.wurst')):
+            shutil.copy2(root / 'tests/fixtures' / source, destination / 'wurst/tests' / target)
+        entry.write_text('''package StdlibRegressionTests
+import RegressionCustomIndex
+import ClosureTimers
+init
+    doAfter(1.) ->
+        runCustomIndexRegressions()
+''')
     shutil.copy2(root / 'wurst.build', destination / 'wurst.build')
     shutil.copy2(base_map, destination / 'ExampleMap.w3x')
     options = [line for line in (root / 'wurst_run.args').read_text().splitlines() if line.strip() != '-lua']
@@ -70,6 +112,7 @@ def main():
         'build': fingerprint[:16], 'sha256': fingerprint, 'backend': args.backend,
         'base_map_sha256': hashlib.sha256(base_map.read_bytes()).hexdigest(),
         'baseline_ref': args.baseline_ref, 'files_before_stamp': files, 'options': options,
+        'focus': args.focus,
     }, indent=2) + '\n')
     print(destination)
     print('Build there: rtk proxy grill build ExampleMap.w3x --quiet')

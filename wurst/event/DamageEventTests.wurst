@@ -1,5 +1,6 @@
 package DamageEventTests
 import DamageEvent
+import ArrayList
 
 /** Reaches the protected lists of DamageEvent. */
 class DamageProbe extends DamageEvent
@@ -104,3 +105,57 @@ function heardOne()
 	DamageProbe.close()
 	DamageProbe.isAborted().assertTrue()
 	DamageProbe.close()
+
+@Test function aZeroInnerHitPreservesTheReducedOuterHit()
+	DamageProbe.open(100.)
+	DamageProbe.reduce(60.)
+	let outer = DamageEvent.getTarget()
+	DamageProbe.open(0.)
+	let inner = DamageEvent.getTarget()
+	DamageProbe.reduce(0.)
+	DamageEvent.getUnreducedOriginalAmount().assertEquals(0., 0.0001)
+	DamageProbe.close()
+	(DamageEvent.getTarget() == outer and DamageEvent.getSource() == outer).assertTrue()
+	DamageEvent.getAmount().assertEquals(60., 0.0001)
+	DamageEvent.getUnreducedOriginalAmount().assertEquals(100., 0.0001)
+	DamageEvent.getNativeDamageReductionPercent().assertEquals(0.4, 0.0001)
+	DamageProbe.close()
+	inner.remove()
+	outer.remove()
+
+@Test function anAbortedPositiveInnerHitPreservesTheZeroOuterHit()
+	DamageProbe.open(0.)
+	DamageProbe.reduce(0.)
+	let outer = DamageEvent.getTarget()
+	DamageProbe.open(25.)
+	let inner = DamageEvent.getTarget()
+	DamageEvent.abortCurrent()
+	DamageProbe.close()
+	(DamageEvent.getTarget() == outer).assertTrue()
+	DamageProbe.isAborted().assertFalse()
+	DamageEvent.getAmount().assertEquals(0., 0.0001)
+	DamageEvent.getUnreducedOriginalAmount().assertEquals(0., 0.0001)
+	DamageEvent.getNativeDamageReductionPercent().assertEquals(0., 0.0001)
+	DamageProbe.close()
+	inner.remove()
+	outer.remove()
+
+@Test function deeplyNestedZeroAndPositiveHitsRestoreEveryContext()
+	let targets = new ArrayList<unit>()
+	for depth = 0 to 31
+		let amount = depth mod 2 == 0 ? 0. : 100. + depth
+		DamageProbe.open(amount)
+		DamageProbe.reduce(amount / 2.)
+		targets.add(DamageEvent.getTarget())
+	var remaining = 32
+	while remaining > 0
+		remaining--
+		let amount = remaining mod 2 == 0 ? 0. : 100. + remaining
+		(DamageEvent.getTarget() == targets.get(remaining)).assertTrue()
+		(DamageEvent.getSource() == targets.get(remaining)).assertTrue()
+		DamageEvent.getUnreducedOriginalAmount().assertEquals(amount, 0.0001)
+		DamageEvent.getAmount().assertEquals(amount / 2., 0.0001)
+		DamageProbe.isAborted().assertFalse()
+		DamageProbe.close()
+		targets.get(remaining).remove()
+	destroy targets

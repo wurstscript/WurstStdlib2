@@ -1,0 +1,9 @@
+package UnitIndexer_config
+import UnitIndexer
+public unit regressionExcludedUnit = null
+
+// A distinct provider namespace: spatial rows must use this ID, never the backing ID.
+@config public function unit.getIndex() returns int
+    let backing = this.peekIndex()
+    return backing == 0 ? 0 : backing + 1024
+

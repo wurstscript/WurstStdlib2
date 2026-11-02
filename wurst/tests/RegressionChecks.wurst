@@ -11,11 +11,20 @@ var passed = 0
 var failed = 0
 var asyncCompleted = 0
 
+public function regressionFailureCount() returns int
+	return failed
+
+public function regressionPassCount() returns int
+	return passed
+
 public function regressionAsyncComplete()
 	asyncCompleted++
 
 public function checkRegressionAsyncCompletion()
-	regressionCheck(asyncCompleted == 3, "all three asynchronous test bodies completed")
+	checkRegressionAsyncCompletion(3)
+
+public function checkRegressionAsyncCompletion(int expected)
+	regressionCheck(asyncCompleted == expected, "all " + expected + " asynchronous test bodies completed")
 
 public function regressionNote(string message)
 	print(message)

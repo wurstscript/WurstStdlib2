@@ -1,0 +1,74 @@
+package StdlibIngameOptionalIndexTests
+import StdlibIngameChecks
+import UnitIndexer
+import ClosureEvents
+import LastOrder
+import Orders
+
+class CastProbe extends OnCastListener
+    int calls = 0
+
+    override function fire(unit caster)
+        calls++
+
+class CastDispatcher extends EventListener
+    override function onEvent()
+        skip
+
+    static function cast(unit caster)
+        dispatchSpell(caster, 'Absk', caster)
+
+class OrderProbe extends EventListener
+    int calls = 0
+
+    override function onEvent()
+        calls++
+
+/** Explicit negative control: end one identity before exercising optional native
+    event routing. No production caller may deindex a live unit this way. */
+public function testOptionalIndexConsumers(IngameChecks checks, int unitId, vec2 position)
+    let excluded = createUnit(players[0], unitId, position, angle(0.))
+    let entered = createUnit(players[0], unitId, position + vec2(128., 0.), angle(0.))
+    excluded.deindex()
+    let rejected = new CastProbe()
+    let accepted = new CastProbe()
+    OnCastListener.deferRegistration(excluded, 'Absk', rejected)
+    OnCastListener.deferRegistration(entered, 'Absk', accepted)
+    OnCastListener.registerPendingCasts()
+    checks.check(rejected.eventUnit == null, "rejected-pending-cast-detaches-unit")
+    CastDispatcher.cast(entered)
+    checks.check(accepted.calls == 1, "later-pending-cast-still-registers")
+    let rejectedRuntimeCast = new CastProbe()
+    let acceptedRuntimeCast = new CastProbe()
+    let rejectedOrder = new OrderProbe()
+    let acceptedOrder = new OrderProbe()
+    EventListener.onCast(excluded, 'Absk', rejectedRuntimeCast)
+    EventListener.onCast(entered, 'Absk', acceptedRuntimeCast)
+    EventListener.add(excluded, EVENT_PLAYER_UNIT_ISSUED_POINT_ORDER, rejectedOrder)
+    EventListener.add(entered, EVENT_PLAYER_UNIT_ISSUED_POINT_ORDER, acceptedOrder)
+    CastDispatcher.cast(excluded)
+    CastDispatcher.cast(entered)
+    checks.check(rejectedRuntimeCast.calls == 0 and rejectedRuntimeCast.eventUnit == null,
+        "runtime-unindexed-cast-rejected")
+    checks.check(acceptedRuntimeCast.calls == 1 and accepted.calls == 2,
+        "later-indexed-cast-still-registers")
+    excluded.issuePointOrderById(OrderIds.move, position + vec2(0., 128.))
+    excluded.clearLastOrders()
+    let detachedOrder = new Order(excluded, OrderIds.move, OrderType.POINT, null, position)
+    checks.check(excluded.getLastOrder() == null, "unindexed-order-is-not-recorded")
+    destroy detachedOrder
+    checks.check(excluded.peekIndex() == 0, "optional-consumers-never-allocate-identity")
+    entered.issuePointOrderById(OrderIds.move, position + vec2(128., 128.))
+    checks.check(entered.getLastOrder() != null, "later-indexed-order-still-records")
+    checks.check(rejectedOrder.calls == 0 and acceptedOrder.calls == 1,
+        "runtime-event-registration-keeps-unindexed-units-isolated")
+    unregisterEventsForUnit(excluded)
+    checks.check(excluded.peekIndex() == 0, "unindexed-listener-cleanup-does-not-allocate")
+    destroy rejected
+    destroy accepted
+    destroy rejectedRuntimeCast
+    destroy acceptedRuntimeCast
+    destroy rejectedOrder
+    destroy acceptedOrder
+    excluded.remove()
+    entered.remove()

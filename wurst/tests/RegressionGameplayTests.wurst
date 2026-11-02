@@ -145,7 +145,7 @@ public function runGameplayRegressions()
 	regressionGuard("nested event removal", () -> testNestedEventRemoval())
 	regressionGuard("TimedLoop lifetime", () -> testLoopLifetime())
 	regressionCheck(initCasterWasUnindexed, "spell fixture was unindexed at init registration")
-	regressionCheck(initCaster.getIndex() > 0, "spell registration indexes init-created caster")
+	regressionCheck(initCaster.getIndex() > 0, "native entry indexed init-created caster before spell dispatch")
 	spellTailCalls = 0
 	removedSpellCalls = 0
 	let unitTail = EventListener.onCast(initCaster, AbilityIds.berserkerRage1) (_) ->
@@ -176,6 +176,6 @@ public function runGameplayRegressions()
 
 init
 	initCaster = createUnit(players[0], UnitIds.footman, vec2(0., 128.), angle(0.))
-	initCasterWasUnindexed = initCaster.getIndex() == 0
+	initCasterWasUnindexed = initCaster.peekIndex() == 0
 	initSpellListener = EventListener.onCast(initCaster, AbilityIds.berserkerRage1) (_) ->
 		initSpellCalls++

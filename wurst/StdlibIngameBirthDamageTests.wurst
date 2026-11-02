@@ -1,0 +1,175 @@
+package StdlibIngameBirthDamageTests
+import StdlibIngameChecks
+import UnitIndexer
+import OnUnitEnterLeave
+import DamageEvent
+import AbilityObjEditing
+import ObjectIds
+import ArrayList
+import ClosureTimers
+
+/** Call at compile time in a test map. These units differ only in their aura. */
+public function defineBirthDamageTestObjects(int plainId, int selfId, int emptyId, int selfAura, int emptyAura)
+    new AbilityDefinitionAuraSlow(selfAura)
+        ..setAreaofEffect(1, 0.)..setMovementSpeedFactor(1, 0.)..setTargetsAllowed(1, "self")
+    new AbilityDefinitionAuraSlow(emptyAura)
+        ..setAreaofEffect(1, 0.)..setMovementSpeedFactor(1, 0.)..setTargetsAllowed(1, "_")
+    new UnitDefinition(plainId, 'hfoo')..setNormalAbilities("")
+    new UnitDefinition(selfId, 'hfoo')..setNormalAbilities(selfAura.toRawCode())
+    new UnitDefinition(emptyId, 'hfoo')..setNormalAbilities(emptyAura.toRawCode())
+
+boolean observersInstalled = false
+boolean armed = false
+int watchedType = 0
+int beforeUnreduced = 0
+int beforeReduced = 0
+int indexedZero = 0
+int positiveUnreduced = 0
+int positiveReduced = 0
+int badPositiveIdentity = 0
+int indexed = 0
+int entered = 0
+int badEntryIdentity = 0
+boolean nestNext = false
+boolean nestedRestored = false
+unit nestedUnit = null
+
+function reset(int unitId)
+    watchedType = unitId
+    beforeUnreduced = 0
+    beforeReduced = 0
+    indexedZero = 0
+    positiveUnreduced = 0
+    positiveReduced = 0
+    badPositiveIdentity = 0
+    indexed = 0
+    entered = 0
+    badEntryIdentity = 0
+    nestNext = false
+    nestedRestored = false
+    nestedUnit = null
+    armed = true
+
+function installObservers()
+    if not observersInstalled
+        observersInstalled = true
+        onUnitIndex() ->
+            let u = getIndexingUnit()
+            if armed and u.getTypeId() == watchedType
+                indexed++
+                if u.peekIndex() <= 0
+                    badEntryIdentity++
+        onEnter() ->
+            let u = getEnterLeaveUnit()
+            if armed and u.getTypeId() == watchedType
+                entered++
+                if u.peekIndex() <= 0
+                    badEntryIdentity++
+
+/** Native engine ordering cannot be modeled by the interpreter. Cover raw and
+    wrapped creation, six owners, both aura target policies, runtime ability
+    changes, real damage, nested creation, death retention and removal. */
+public function runBirthDamageChecks(IngameChecks checks, int plainId, int selfId, int emptyId, int selfAura, vec2 position, Callback done)
+    installObservers()
+    let removed = new ArrayList<unit>()
+    let removedIdentities = new ArrayList<int>()
+    let unreduced = DamageEvent.addUnreducedListener(0) ->
+        let target = DamageEvent.getTarget()
+        if armed and target.getTypeId() == watchedType
+            if DamageEvent.getSource() == target and DamageEvent.getUnreducedOriginalAmount() == 0.
+                if target.peekIndex() == 0
+                    beforeUnreduced++
+            if DamageEvent.getUnreducedOriginalAmount() > 0.
+                positiveUnreduced++
+                if target.peekIndex() <= 0 or DamageEvent.getSource().peekIndex() <= 0
+                    badPositiveIdentity++
+    let reduced = DamageEvent.addListener(0) ->
+        let target = DamageEvent.getTarget()
+        if armed and target.getTypeId() == watchedType
+            if DamageEvent.getSource() == target and DamageEvent.getUnreducedOriginalAmount() == 0.
+                if target.peekIndex() == 0
+                    beforeReduced++
+                    if nestNext
+                        nestNext = false
+                        nestedUnit = CreateUnit(target.getOwner(), watchedType, position.x + 256., position.y, 0.)
+                        nestedRestored = DamageEvent.getTarget() == target and DamageEvent.getSource() == target
+                            and DamageEvent.getUnreducedOriginalAmount() == 0.
+                else
+                    indexedZero++
+            if DamageEvent.getUnreducedOriginalAmount() > 0.
+                positiveReduced++
+                if target.peekIndex() <= 0 or DamageEvent.getSource().peekIndex() <= 0
+                    badPositiveIdentity++
+    let owners = [0, 1, 2, 6, 7, 8]
+    let types = [plainId, selfId, emptyId]
+    for ownerSlot = 0 to 5
+        let owner = players[owners[ownerSlot]]
+        for wrapper = 0 to 1
+            for variant = 0 to 2
+                reset(types[variant])
+                let label = "birth-" + ownerSlot + "-" + wrapper + "-" + variant + "-"
+                let u = wrapper == 0 ? CreateUnit(owner, types[variant], position.x, position.y, 0.)
+                    : createUnit(owner, types[variant], position, angle(0.))
+                checks.check(u.getIndex() > 0, label + "identity-at-return")
+                checks.check(indexed == 1 and entered == 1, label + "entry-exactly-once")
+                checks.check(badEntryIdentity == 0, label + "identity-before-enter-consumers")
+                checks.check((beforeUnreduced > 0) == (variant > 0), label + "aura-causes-native-damaging")
+                checks.check((beforeReduced > 0) == (variant > 0), label + "aura-causes-native-damaged")
+                armed = false
+                removed.add(u)
+                removedIdentities.add(u.getIndex())
+                u.remove()
+        reset(plainId)
+        let live = createUnit(owner, plainId, position, angle(0.))
+        let identity = live.getIndex()
+        live.addAbility(selfAura)
+        checks.check(indexedZero > 0 and beforeReduced == 0, "runtime-aura-indexed-" + ownerSlot)
+        live.removeAbility(selfAura)
+        live.addAbility(selfAura)
+        checks.check(live.getIndex() == identity and indexed == 1 and entered == 1, "runtime-aura-readd-keeps-lifetime-" + ownerSlot)
+        let source = createUnit(owner, plainId, position + vec2(128., 0.), angle(0.))
+        let life = live.getLife()
+        DamageEvent.setNextDamageFromCode()
+        live.damageTarget(live, 25.)
+        DamageEvent.setNextDamageFromCode()
+        source.damageTarget(live, 25.)
+        checks.check(positiveUnreduced == 2 and positiveReduced == 2, "normal-damage-delivered-" + ownerSlot)
+        checks.check(badPositiveIdentity == 0 and live.getLife() < life, "normal-damage-indexed-" + ownerSlot)
+        live.kill()
+        checks.check(live.getIndex() == identity, "damage-death-retains-identity-" + ownerSlot)
+        armed = false
+        removed.add(live)
+        removed.add(source)
+        removedIdentities.add(live.getIndex())
+        removedIdentities.add(source.getIndex())
+        live.remove()
+        source.remove()
+        reset(selfId)
+        nestNext = true
+        let outer = CreateUnit(owner, selfId, position.x, position.y, 0.)
+        checks.check(nestedUnit != null, "native-damage-nested-creation-" + ownerSlot)
+        checks.check(nestedRestored, "native-damage-context-restored-" + ownerSlot)
+        checks.check(beforeUnreduced >= 2 and beforeReduced >= 2, "nested-native-zero-pairs-" + ownerSlot)
+        checks.check(indexed == 2 and entered == 2 and badEntryIdentity == 0, "nested-entry-identity-" + ownerSlot)
+        if nestedUnit != null
+            checks.check(outer.getIndex() != nestedUnit.getIndex(), "nested-live-identities-distinct-" + ownerSlot)
+        armed = false
+        removed.add(nestedUnit)
+        removedIdentities.add(nestedUnit == null ? 0 : nestedUnit.getIndex())
+        nestedUnit?.remove()
+        nestedUnit = null
+        removed.add(outer)
+        removedIdentities.add(outer.getIndex())
+        outer.remove()
+    destroy unreduced
+    destroy reduced
+    // Native leave can follow RemoveUnit on the next engine turn.
+    doAfter(.1) ->
+        for i = 0 to removed.size() - 1
+            let u = removed.get(i)
+            checks.check(u == null or u.peekIndex() == 0, "birth-removed-identity-released-" + i)
+            checks.check(u == null or not u.isIndexCurrent(removedIdentities.get(i)), "birth-captured-lifetime-ended-" + i)
+        destroy removed
+        destroy removedIdentities
+        done.call()
+        destroy done

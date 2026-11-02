@@ -15,6 +15,8 @@ import public Unit
 
 /** Clears all recorded orders for this unit */
 public function unit.clearLastOrders()
+	if this == null or this.peekIndex() == 0
+		return
 	let index = this.getIndex()
 	if index > 0 and lastOrder[index] != null
 		destroy lastOrder[index]
@@ -23,9 +25,9 @@ public function unit.clearLastOrders()
 /** Returns the last recorded order for this unit, or null if it has none or is not indexed by UnitIndexer.
 	To access further back orders, use .prev */
 public function unit.getLastOrder() returns Order
-	let index = this.getIndex()
-	if index <= 0
+	if this.peekIndex() <= 0
 		return null
+	let index = this.getIndex()
 	return lastOrder[index]
 
 public enum OrderType
@@ -55,8 +57,8 @@ public class Order
 		this.targetPosition = targetPos
 
 		// A unit which is not indexed has no slot: all of them would share slot 0 and their orders would be mixed up.
-		if ordered != null and ordered.getIndex() > 0
-			let index = ordered.getIndex()
+		let index = ordered != null and ordered.peekIndex() > 0 ? ordered.getIndex() : 0
+		if index > 0
 			if lastOrder[index] != null
 				if lastOrder[index].orderedUnit == orderedUnit
 					prev = lastOrder[index]
@@ -139,7 +141,7 @@ function conditions() returns boolean
 
 function actions()
 	// An order of a unit which is not indexed is not recorded, so there is no object to create for it.
-	if conditions() and GetTriggerUnit().getIndex() > 0
+	if conditions() and GetTriggerUnit().peekIndex() > 0
 		let	u   = GetTriggerUnit()
 		let t   = GetOrderTarget()
 		let oid = GetIssuedOrderId()
@@ -152,7 +154,8 @@ function actions()
 			new Order(u, oid, OrderType.IMMEDIATE, null, u.getPos())
 
 function spellActions()
-	let index = GetTriggerUnit().getIndex()
+	let u = GetTriggerUnit()
+	let index = u.peekIndex() > 0 ? u.getIndex() : 0
 	if index > 0 and lastOrder[index] != null
 		// Only do this if the last order actually exists
 		lastOrder[index].finished = true

@@ -2,110 +2,22 @@ package UnitIndexer
 import OnUnitEnterLeave
 import KeyedMap
 import CodeList
+import UnitLifecycleTrace
+import ErrorHandling
 
-/*  UnitIndexer
-
-	The goal of this system is to give every unit an array-indexable unique ID
-	as well as to standardize handling of class instances when units are created
-	and destroyed.
-
-	WARNING: On the Jass target, this system stores the index in the unit's
-	native user-data slot, so other systems that use SetUnitUserData are going
-	to BREAK THIS SYSTEM since it depends on being the only system to use it,
-	and conversely, it is very likely that this system is going to break them,
-	too. Always make sure you only have one system using SetUnitUserData.
-	The maximum number of indexed units at any time is 32760, so if you have more
-	units than that at any time, the system will not be able to index them.
-	On the Lua target the index is kept in a KeyedMap instead (see
-	getStoredIndex/setStoredIndex below), so this conflict and the 32760 cap
-	both only apply to the Jass target.
-
-	----------------------------------------------------------------------------
-
-	1) System initialization
-		In order to initialize the system, import UnitIndexer into one of your
-		scripts.
-
-			import UnitIndexer
-
-	2) Getting the index of a unit and getting the unit with an index
-		To get a unit's unique index as an int:
-
-			unit.getIndex()
-
-		To get a unit's unique index as an UnitIndex object (this will also
-		give the unit an index if the unit doesn't already have it):
-
-			unit.toUnitIndex()
-
-		Remember, it is possible to cast between their return types:
-
-			unit.toUnitIndex() castTo int
-			unit.getIndex() castTo UnitIndex
-
-		However, if you save a UnitIndex to a variable, it's possible to get
-		a unit with that object directly, whereas it is necessary to cast into
-		UnitIndex if we're using the int:
-
-			let id = someunit.getIndex()
-
-			var u = id.getUnit() // Doesn't work!
-			var u = (id castTo UnitIndex).getUnit() // Works!
-
-			var unitIndex = someunit.toUnitIndex()
-			var u = unitIndex.getUnit() // Works
-
-	3) Handlers for indexing and deindexing events
-		Handlers are useful because they let you quickly write code that
-		destroys instances of classes that refer to some unit.
-
-			onUnitDeindex(() -> destroy Class.getInstanceThatBelongsTo(getIndexingUnit()))
-
-		Conversely, if we want to create a class instance that belongs to
-		a unit that had just been indexed, we can do the same:
-
-			onUnitIndex(() -> new Class(getIndexingUnit()))
-
-		If you have never worked with lambda functions, the above code might
-		look like black magic, but it essentially translates to this:
-
-			function someFunction()
-				new Class(getIndexingUnit())
-
-			...in code somewhere...
-				onUnitIndex(function someFunction)
-
-		You can call onUnitDeindex and onUnitIndex as many times as you want,
-		across your code, and every time a unit gets indexed/deindexed the
-		function will be run.
-
-		Inside both handlers the unit being indexed or deindexed is available as
-
-			getIndexingUnit()
-
-		It should also be noted that this is not the only use for handlers, but
-		merely the most often utilized one.
-
-	4) Control over indexing/deindexing
-		For safety and consistency reasons, the system will always attempt to:
-			a) Index the unit when it enters the map (is created)
-			b) Deindex the unit when it leaves the map (is removed or decays)
-
-		However, that doesn't stop the user from (de)indexing the unit at any
-		time. For example, if you are using a general unit recycling system,
-		the units will never decay, so they will remain indexed. However, this
-		is also going to cause bugs with systems that keep data that refers to
-		the unit, since they are never going to die and/or be removed.
-
-		For this reason, it's possible to index/deindex units at your leisure.
-		You can use
-			a) unit.toUnitIndex() to index the unit whenever you want
-			b) unit.deindex() to deindex it whenever you want
-
-		The system prevents you from indexing/deindexing the unit if it already
-		has/doesn't have the index, so no double indexing or double deindexing
-		of the same unit is possible.
-*/
+/* Unit identity is assigned by native entry, before ordinary onEnter consumers.
+ * The constructor stores the association before firing onUnitIndex. Death keeps
+ * the identity; OnUnitEnterLeave owns release when the unit leaves the map.
+ *
+ * getIndex() and toUnitIndex() only read existing identity. Missing/stale identity
+ * is a critical error; neither lookup allocates or repairs it. peekIndex() is
+ * reserved for lifecycle infrastructure and diagnostics that must observe absence.
+ * Manual deindex/destruction is not a gameplay operation.
+ *
+ * Lua stores the unit itself as a KeyedMap key and its Wurst allocation id as
+ * value. Jass uses the native user-data slot, which no other system may write.
+ * The Jass array limit does not apply to Lua's unit-keyed table.
+ */
 
 // Listeners run as a CodeList: a call each on Lua, a trigger condition each on Jass.
 let onIndexList = new CodeList()
@@ -121,12 +33,16 @@ function pushUnit(unit u)
 
 function popUnit()
 	tempUnitsCount--
+	tempUnits[tempUnitsCount] = null
 
 // On the Jass target the native per-unit user-data slot is the fastest option
 // available and is kept as-is. On Lua, use a KeyedMap: the compiler lowers it
 // to one native table keyed by the unit itself, so a lookup is a single index
 // with no handle-id round trip. Both paths default an unindexed unit to 0.
 let luaUnitIndices = keyedMapCreate()
+// Canonical reverse association. Numeric lifetime checks must not dereference
+// the UnitIndex object after it has been destroyed or its id has been recycled.
+unit array liveUnitByIndex
 
 function unit.getStoredIndex() returns int
 	if isLua
@@ -145,21 +61,43 @@ function unit.setStoredIndex(int value)
 @configurable public function shouldIndex(unit _u) returns boolean
 	return true
 
-/**  Returns the int index of this unit.
+/** Read-only lifecycle/diagnostic observation. Zero means no association exists.
+    Never allocates or dispatches; normal consumers require getIndex instead. */
+@configurable public function unit.peekIndex() returns int
+	return this.getStoredIndex()
+
+/** Validates deferred work captured while indexed. Absence means the old lifetime ended,
+    rather than requesting a replacement identity for the unit. Never allocates. */
+public function unit.isIndexCurrent(int expectedIndex) returns boolean
+	if this == null or expectedIndex <= 0
+		return false
+	// Resolve ownership in the backing allocator namespace, not the configured routing namespace.
+	// A default-provider capture can still witness corruption if its stored association disappeared.
+	if this.getStoredIndex() == 0 and liveUnitByIndex[expectedIndex] != this
+		return false
+	if this.requireStoredIndex() <= 0
+		return false
+	return this.getIndex() == expectedIndex
+
+/**  Returns the int index of this unit. A missing or stale association is a critical error.
 	Can be configured by the user to supply a custom unit indexer which won't break
 	other stdlib components, as long as it keeps firing onUnitIndex and onUnitDeindex:
 	UnitSpatialIndex, for one, registers units only through them. */
 @configurable public function unit.getIndex() returns int
-	return this.getStoredIndex()
+	return this.requireStoredIndex()
 
-/**  Returns the UnitIndex associated with this unit, creating a new one if necessary. */
+function unit.requireStoredIndex() returns int
+	let index = this.getStoredIndex()
+	if index == 0
+		error("UnitIndexer: missing index for unit type " + this.getTypeId() + getStackTraceString())
+	else if liveUnitByIndex[index] != this
+		error("UnitIndexer: stale unit index; identity does not match")
+		return 0
+	return index
+
+/** Returns the existing UnitIndex. Lookup never creates an index or fires onUnitIndex. */
 @configurable public function unit.toUnitIndex() returns UnitIndex
-	UnitIndex instance = this.getStoredIndex() castTo UnitIndex
-
-	if (instance == null)
-		instance = new UnitIndex(this)
-
-	return instance
+	return this.requireStoredIndex() castTo UnitIndex
 
 /**	Returns the currently indexing unit.
 	That's the last indexed unit or
@@ -173,11 +111,13 @@ public function getIndexingUnit() returns unit
 	Use the getIndexingUnit() function to refer to the deindexing unit. */
 public function onUnitDeindex(code func)
 	onDeindexList.add(func)
+	traceUnitLifecycle(UnitLifecyclePhase.DEINDEX_LISTENER_REGISTERED, null, 0)
 
 /**  Adds a function to be called after a unit is indexed.
 	Use the getIndexingUnit() function to refer to the indexed unit. */
 public function onUnitIndex(code func)
 	onIndexList.add(func)
+	traceUnitLifecycle(UnitLifecyclePhase.INDEX_LISTENER_REGISTERED, null, 0)
 
 /**  Deindexes a unit.
 	Returns false if the unit is unindexed or a deindex hook is already releasing it. */
@@ -188,7 +128,6 @@ public function unit.deindex() returns bool
 		return this.toUnitIndex().deindex()
 
 public class UnitIndex
-	protected unit _unit
 	private bool deindexing = false
 
 	/** Deindexes the unit, returning false if a deindex hook is already releasing it. */
@@ -199,29 +138,43 @@ public class UnitIndex
 		return true
 
 	function getUnit() returns unit
-		return this._unit
+		return liveUnitByIndex[this castTo int]
 
 	function getIndex() returns int
 		return this castTo int
 
 	construct(unit whichUnit)
-		this._unit = whichUnit
-		this._unit.setStoredIndex(this castTo int)
+		liveUnitByIndex[this castTo int] = whichUnit
+		whichUnit.setStoredIndex(this castTo int)
+		traceUnitLifecycle(UnitLifecyclePhase.INDEX_STORED, whichUnit, tempUnitsCount)
 		pushUnit(whichUnit)
 		onIndexList.run()
+		traceUnitLifecycle(UnitLifecyclePhase.INDEX_DISPATCH_END, whichUnit, tempUnitsCount)
 		popUnit()
 
 	ondestroy
 		deindexing = true
-		pushUnit(this._unit)
+		let u = liveUnitByIndex[this castTo int]
+		traceUnitLifecycle(UnitLifecyclePhase.DEINDEX_BEGIN, u, tempUnitsCount)
+		pushUnit(u)
 		onDeindexList.run()
 		popUnit()
-		this._unit.setStoredIndex(0)
+		u.setStoredIndex(0)
+		traceUnitLifecycle(UnitLifecyclePhase.DEINDEX_END, u, tempUnitsCount)
+		liveUnitByIndex[this castTo int] = null
+
+function indexEnteringUnit()
+	let u = getEnterLeaveUnit()
+	traceUnitLifecycle(UnitLifecyclePhase.INDEX_LISTENER, u, tempUnitsCount)
+	if shouldIndex(u)
+		let existing = u.getStoredIndex()
+		if existing == 0
+			let _index = new UnitIndex(u)
+		else if liveUnitByIndex[existing] != u
+			error("UnitIndexer: entering unit has a stale index association")
 
 // Auto instanciation/destruction
 init
-	onEnter(() -> shouldIndex(getEnterLeaveUnit()) ? getEnterLeaveUnit().toUnitIndex() : 0)
-	// A unit that leaves loses its index even when shouldIndex would not index it now: it may have been
-	// indexed through toUnitIndex(), or the predicate may have changed since it entered, and an index
-	// that outlives its unit leaks, along with everything keyed by it.
+	onEnterIndex(function indexEnteringUnit)
+	// Release the stored identity on native leave, regardless of a later policy change.
 	onLeave(() -> getEnterLeaveUnit().deindex())
