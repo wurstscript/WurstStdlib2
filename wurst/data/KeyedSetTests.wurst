@@ -1,0 +1,73 @@
+package KeyedSetTests
+
+import KeyedSet
+
+class Marker
+	int id
+
+	construct(int id)
+		this.id = id
+
+@Test
+function testAddAndMembership()
+	let set = new KeyedSet<int>()
+	set.contains(4).assertFalse()
+	set.add(4).assertTrue()
+	set.add(9).assertTrue()
+	set.contains(4).assertTrue()
+	set.contains(9).assertTrue()
+	set.contains(5).assertFalse()
+	set.size().assertEquals(2)
+	destroy set
+
+@Test
+function testAddIsIdempotent()
+	let set = new KeyedSet<int>()
+	set.add(7).assertTrue()
+	set.add(7).assertFalse()
+	set.size().assertEquals(1)
+	set.contains(7).assertTrue()
+	destroy set
+
+@Test
+function testRemoval()
+	let set = new KeyedSet<int>()
+	set.add(1)
+	set.add(2)
+	set.remove(1).assertTrue()
+	set.contains(1).assertFalse()
+	set.contains(2).assertTrue()
+	set.size().assertEquals(1)
+	// Removing something absent is not an error and does not move the count.
+	set.remove(1).assertFalse()
+	set.size().assertEquals(1)
+	destroy set
+
+@Test
+function testClear()
+	let set = new KeyedSet<int>()
+	set.add(1)
+	set.add(2)
+	set.clear()
+	set.isEmpty().assertTrue()
+	set.size().assertEquals(0)
+	set.contains(1).assertFalse()
+	set.add(1).assertTrue()
+	set.size().assertEquals(1)
+	destroy set
+
+/** Reference identity, which is what a group-style membership set wants. */
+@Test
+function testReferenceIdentity()
+	let set = new KeyedSet<Marker>()
+	let a = new Marker(1)
+	let b = new Marker(1)
+	set.add(a).assertTrue()
+	set.contains(a).assertTrue()
+	// Same contents, different object: a distinct member.
+	set.contains(b).assertFalse()
+	set.add(b).assertTrue()
+	set.size().assertEquals(2)
+	destroy set
+	destroy a
+	destroy b
