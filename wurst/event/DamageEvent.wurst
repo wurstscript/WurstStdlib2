@@ -67,6 +67,7 @@
 package DamageEvent
 
 import ClosureEvents
+import ErrorHandling
 
 /* CONFIGURATION */
 
@@ -169,6 +170,7 @@ class DamageInstance
         this.unreduced = false
 
     ondestroy
+        stack[count] = null
         count--
         current = stack[count]
 
@@ -316,6 +318,23 @@ public class DamageEvent
             writeBack(dmg, attackType, nativeDamageType, weaponType, reducedAmount)
 
         destroy dmg
+
+    /** Deals one synchronous native hit and owns its event scope. Some nested native hits
+        deliver DAMAGING but return without DAMAGED. In that case the unfinished frame
+        belongs to this call and must be released before the enclosing listener resumes. */
+    static function dealNativeDamage(unit source, unit target, real amount, bool attack, bool ranged,
+            attacktype attackType, damagetype damageType, weapontype weaponType)
+        let depth = DamageInstance.count
+        let enclosing = DamageInstance.current
+        UnitDamageTarget(source, target, amount, attack, ranged, attackType, damageType, weaponType)
+        if DamageInstance.count == depth and DamageInstance.current == enclosing
+            return
+        let pending = DamageInstance.current
+        if DamageInstance.count == depth + 1 and DamageInstance.stack[depth] == enclosing and pending != null
+                and pending.unreduced and pending.source == source and pending.target == target
+            destroy pending
+        else
+            error("Unexpected DamageEvent stack after synchronous native damage")
 
 
     /* LISTENERS */
