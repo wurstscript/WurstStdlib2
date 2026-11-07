@@ -41,7 +41,9 @@ It defines three otherwise identical footmen (plain, self-target Tornado Slow Au
 and no-target Tornado Slow Aura), compares raw/wrapped creation across six owners,
 then stresses entry/removal with seeds 1753, 17 and 65520. Wait for
 `NATIVE LIFECYCLE COMPLETE`; the earlier automatic summary does not include these
-asynchronous checks. An automated consumer can also assert
+asynchronous checks. The run also checks synchronous nested damage with normal
+listener delivery and with the nested DAMAGED bridge disabled for one call.
+An automated consumer can also assert
 `nativeLifecycleRegressionsComplete` before accepting the totals.
 
 `--focus custom-index` is a separate integration check: the configured
