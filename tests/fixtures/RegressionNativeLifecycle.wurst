@@ -1,5 +1,7 @@
 package RegressionNativeLifecycle
 import RegressionChecks
+import RegisterEvents
+import DamageEvent
 import StdlibIngameChecks
 import StdlibIngameUnitIndexTests
 import StdlibIngameBirthDamageTests
@@ -32,8 +34,81 @@ function runSeed(int next)
         runUnitIndexLifecycleChecks(reporter, 'zbu0', 'hbar', 'hfoo', vec2(-2048., 1024.), seeds[next]) ->
             runSeed(next + 1)
 
+class DamageScopeProbe
+    unit source
+    unit outer
+    unit paired
+    trigger damagedTrigger = getPlayerUnitEventTrigger(EVENT_PLAYER_UNIT_DAMAGED)
+    unit interrupted
+    int outerPre = 0
+    int outerPost = 0
+    int pairedPre = 0
+    int pairedPost = 0
+    int interruptedPre = 0
+    int interruptedPost = 0
+
+    construct()
+        source = createUnit(Player(0), 'hfoo', vec2(-1000., -1400.), angle(0))
+        outer = createUnit(Player(1), 'hfoo', vec2(-1200., -1400.), angle(0))
+        paired = createUnit(Player(1), 'hfoo', vec2(-1400., -1400.), angle(0))
+        interrupted = createUnit(Player(1), 'hfoo', vec2(-1600., -1400.), angle(0))
+
+    function damage(unit target)
+        DamageEvent.dealNativeDamage(source, target, 10., false, false, ATTACK_TYPE_CHAOS, DAMAGE_TYPE_UNIVERSAL, WEAPON_TYPE_WHOKNOWS)
+
+    function onPre()
+        let target = DamageEvent.getTarget()
+        if target == outer
+            outerPre++
+        else if target == paired
+            pairedPre++
+        else if target == interrupted
+            interruptedPre++
+
+    function onPost()
+        let target = DamageEvent.getTarget()
+        if target == outer
+            outerPost++
+            let amount = DamageEvent.getAmount()
+            damage(paired)
+            regressionCheck(DamageEvent.getTarget() == outer and DamageEvent.getAmount() == amount,
+                "paired nested hit restores the enclosing reduced event")
+            // Drop only the nested hit's DAMAGED delivery to reproduce the unfinished frame.
+            DisableTrigger(damagedTrigger)
+            damage(interrupted)
+            EnableTrigger(damagedTrigger)
+            regressionCheck(DamageEvent.getTarget() == outer and DamageEvent.getAmount() == amount,
+                "unfinished nested hit restores the enclosing reduced event")
+        else if target == paired
+            pairedPost++
+        else if target == interrupted
+            interruptedPost++
+
+    function run()
+        let pre = DamageEvent.addUnreducedListener(() -> onPre())
+        let post = DamageEvent.addListener(() -> onPost())
+        damage(outer)
+        regressionCheck(outerPre == 1 and outerPost == 1, "outer hit runs each listener pass once")
+        regressionCheck(pairedPre == 1 and pairedPost == 1, "paired nested hit runs each listener pass once")
+        regressionCheck(interruptedPre == 1 and interruptedPost == 0,
+            "interrupted nested hit ran only DAMAGING (" + interruptedPre + "/" + interruptedPost + ")")
+        regressionCheck(not DamageEvent.isFiring(), "the outer hit leaves no damage instance on the stack")
+        destroy pre
+        destroy post
+        source.remove()
+        outer.remove()
+        paired.remove()
+        interrupted.remove()
+
+function runDamageScopeRegression()
+    regressionNote("Damage scope; build=" + REGRESSION_BUILD + "; backend=" + (isLua ? "Lua" : "Jass"))
+    let probe = new DamageScopeProbe()
+    probe.run()
+    destroy probe
+
 /** Run after the shorter automatic fixtures so no other test owns these observers. */
 public function runNativeLifecycleRegressions()
     nativeLifecycleRegressionsComplete = false
+    runDamageScopeRegression()
     runBirthDamageChecks(reporter, 'zbu0', 'zbu1', 'zbu2', 'ZBA1', vec2(-1024., -1024.)) ->
         runSeed(0)
