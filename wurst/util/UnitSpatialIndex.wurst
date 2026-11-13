@@ -85,6 +85,8 @@ function ensureUnitGroup()
 // ids UnitIndexer never hands out.
 
 unit array indexedUnit
+boolean array sweepPositionObserved
+vec2 array lastObservedSweepPosition
 real array indexedCollision
 int array collisionTick
 /** The highest row a unit has taken, which is what sizes the arrays here. */
@@ -258,6 +260,7 @@ function registerUnit(unit u)
 		return
 	unitRow[idx] = true
 	indexedUnit[idx] = u
+	sweepPositionObserved[idx] = false
 	highestUnitRow = max(highestUnitRow, idx)
 	registry[registryCount] = idx
 	registrySlot[idx] = registryCount + 1
@@ -365,8 +368,21 @@ function sweepStep()
 			let age = sweepTick - lastSweepTick[idx]
 			if age > cycleWorstAge
 				cycleWorstAge = age
-			refreshUnit(idx, u)
+			let previous = lastObservedSweepPosition[idx]
+			let current = u.getPos()
+			spatialPartitionSetPos(idx, current.x, current.y)
+			lastSweepTick[idx] = sweepTick
+			if not sweepPositionObserved[idx] or current != previous
+				sweepPositionObserved[idx] = true
+				lastObservedSweepPosition[idx] = current
+				onSpatialUnitMoved(u, current)
 			sweepCursor++
+
+/** Called on the first periodic Lua sweep sample and whenever a later sample changes position.
+    Queries and explicit index updates do not consume this notification. The index has recorded the new
+    position. Implementations must not mutate unit position or lifetime. */
+@configurable public function onSpatialUnitMoved(unit _u, vec2 _current)
+	skip
 
 /** Whether the Lua spatial index is active and can serve indexed queries. */
 public function spatialIndexHealthy() returns boolean
