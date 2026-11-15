@@ -16,6 +16,8 @@ trigger array t
 	Code can not be kept in an array nor compared, so which filter it was is not known. */
 bool array tFiltered
 bool array tFilterWarned
+/** The filter the event of `t` was registered with, for the triggers of registrations with an action. */
+filterfunc array tFilter
 
 /** Listeners in the order they were added, which run one after the other. A listener added while they run does not
 	run in that run but from the next, as a condition added to a trigger during its evaluation does not: it goes into
@@ -58,9 +60,13 @@ class ListenerLists
 	a trigger is not reached by it: it goes into a list the delivery under way does not run.
 
 	What a condition returns decides whether the actions of its trigger run, and a list can not pass that on. So
-	a trigger goes back to what it always was, a condition per listener in the order they were added, as soon as
-	something is attached to it whose running depends on its conditions: a registration with an action, or a call
-	of getPlayerUnitEventTrigger. It is sealed then, and stays that way.
+	a trigger goes back to what it always was, a condition per listener in the order they were added, once
+	getPlayerUnitEventTrigger hands it out, as the caller may attach something whose running depends on its
+	conditions. It is sealed then, and stays that way.
+
+	A registration with an action gets a trigger of its own for the event, with only its condition on it. Every
+	condition of a trigger has to hold for its actions to run, and a listener which returns nothing counts as one
+	which does not hold, so on the shared trigger any such listener of the event would stop the action.
 
 	Only what goes through this package can be seen. The trigger handle which GetTriggeringTrigger gives a
 	listener is the same trigger, but taking it is a native call, so it does not seal. A condition added to a
@@ -146,17 +152,20 @@ public function registerPlayerUnitEvent(playerunitevent p, code filter, code con
 	if t[hid] == null
 		t[hid] = CreateTrigger()
 		tFiltered[hid] = filter != null
+		tFilter[hid] = filter != null ? Filter(filter) : null
 		for k = bj_MAX_PLAYER_SLOTS - 1 downto 0
-			t[hid].registerPlayerUnitEvent(players[k], p, filter != null ? Filter(filter) : null)
+			t[hid].registerPlayerUnitEvent(players[k], p, tFilter[hid])
 	else if (filter != null) != tFiltered[hid] and not tFilterWarned[hid]
 		tFilterWarned[hid] = true
 		Log.warn("registerPlayerUnitEvent: the event is already registered " + (tFiltered[hid] ? "with" : "without") +
 			" a filter, which applies to every listener of it. The filter passed now is not used; check it in the condition instead.")
 	if action != null
-		t[hid].seal()
+		let actionTrigger = CreateTrigger()
+		for k = bj_MAX_PLAYER_SLOTS - 1 downto 0
+			actionTrigger.registerPlayerUnitEvent(players[k], p, tFilter[hid])
 		if condition != null
-			t[hid].addCondition(Filter(condition))
-		t[hid].addAction(action)
+			actionTrigger.addCondition(Filter(condition))
+		actionTrigger.addAction(action)
 	else if condition != null
 		t[hid].addListener(condition)
 
@@ -195,10 +204,12 @@ public function registerPlayerEvent(playerevent p, code condition, code action)
 		for k = bj_MAX_PLAYER_SLOTS - 1 downto 0
 			t[hid].registerPlayerEvent(players[k], p)
 	if action != null
-		t[hid].seal()
+		let actionTrigger = CreateTrigger()
+		for k = bj_MAX_PLAYER_SLOTS - 1 downto 0
+			actionTrigger.registerPlayerEvent(players[k], p)
 		if condition != null
-			t[hid].addCondition(Filter(condition))
-		t[hid].addAction(action)
+			actionTrigger.addCondition(Filter(condition))
+		actionTrigger.addAction(action)
 	else if condition != null
 		t[hid].addListener(condition)
 

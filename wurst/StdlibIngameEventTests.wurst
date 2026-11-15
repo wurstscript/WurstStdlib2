@@ -165,9 +165,9 @@ public function testEventBridge()
 // 20. A condition gates the action registered with it
 // ============================================================================
 
-/*	A registration with an action keeps its condition as a condition of the event's trigger, so the action runs
-	if the condition holds and only then, whatever else listens to the event. Point and target orders are used,
-	as the library has no listeners of its own on them. */
+/*	The action of a registration runs if its condition holds and only then, whatever else listens to the event.
+	A listener which returns nothing listens to the point order first, as LastOrder's does: on a trigger shared
+	with it, its result would stop the action. */
 
 int array gateHits
 var gateRegistered = false
@@ -178,6 +178,10 @@ function gateListener() returns boolean
 	if GetTriggerUnit() == gateSubject
 		gateHits[0] = gateHits[0] + 1
 	return true
+
+function gateListenerReturningNothing()
+	if GetTriggerUnit() == gateSubject
+		gateHits[3] = gateHits[3] + 1
 
 function gateConditionTrue() returns boolean
 	return true
@@ -195,12 +199,13 @@ function gateActionDenied()
 
 public function testConditionGatesAction()
 	section("--- 20. a condition gates the action registered with it ---")
-	for i = 0 to 2
+	for i = 0 to 3
 		gateHits[i] = 0
 	// A listener comes first on the point order, so the action is registered on a trigger which has one.
 	if not gateRegistered
 		gateRegistered = true
 		registerPlayerUnitEvent(EVENT_PLAYER_UNIT_ISSUED_POINT_ORDER, function gateListener)
+		registerPlayerUnitEvent(EVENT_PLAYER_UNIT_ISSUED_POINT_ORDER, function gateListenerReturningNothing)
 		registerPlayerUnitEvent(EVENT_PLAYER_UNIT_ISSUED_POINT_ORDER, null, function gateConditionTrue,
 			function gateActionAllowed)
 		registerPlayerUnitEvent(EVENT_PLAYER_UNIT_ISSUED_TARGET_ORDER, null, function gateConditionFalse,
@@ -213,6 +218,7 @@ public function testConditionGatesAction()
 		gateUnit.issueTargetOrder("smart", gateTarget)
 	doAfter(0.6) ->
 		check(gateHits[0] == 1, "the listener of the point order ran once (" + gateHits[0] + ")")
+		check(gateHits[3] == 1, "and so did the one which returns nothing (" + gateHits[3] + ")")
 		check(gateHits[1] == 1, "the action ran, as its condition held (" + gateHits[1] + ")")
 		check(gateHits[2] == 0, "the action did not run, as its condition did not hold (" + gateHits[2] + ")")
 		gateUnit.remove()
