@@ -146,6 +146,23 @@ function destroyEventItself()
 	runs.assertEquals(2)
 	u.deindex()
 
+@Test function aUnitListenerOfOneEventLeavesTheOtherEventsUnflagged()
+	runs = 0
+	// Events the interpreter can register; no other test adds a unit listener of the chat filter.
+	let leave = EVENT_PLAYER_LEAVE.toIntId()
+	let chat = EVENT_PLAYER_CHAT_FILTER.toIntId()
+	let u = newTestUnit()
+	new UnitIndex(u)
+	let listener = EventListener.add(u, EVENT_PLAYER_LEAVE, () -> record(0))
+	EventListener.hasUnitListeners[leave].assertTrue()
+	EventListener.hasUnitListeners[chat].assertFalse()
+	Dispatcher.general(u, chat)
+	runs.assertEquals(0)
+	Dispatcher.general(u, leave)
+	runs.assertEquals(1)
+	destroy listener
+	u.deindex()
+
 @Test function rejectedPendingCastDoesNotStopLaterRegistrations()
 	let excluded = newTestUnit()
 	let entered = newTestUnit()
