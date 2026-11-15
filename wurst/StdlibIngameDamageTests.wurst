@@ -67,11 +67,22 @@ public function testEventListenerDamage()
 	check(damageHeard[0] == 3 and damageHeard[1] == 3 and damageHeard[2] == 1,
 		"but not the hit on another unit (" + damageHeard[0] + ", " + damageHeard[1] + ", " + damageHeard[2] + ")")
 
+	// Unit listeners are flagged per event: one on the order event is reached through its own native delivery.
+	let ofOrder = EventListener.add(hitA, EVENT_PLAYER_UNIT_ISSUED_ORDER, () -> damageHeardHit(3))
+	hitA.issueImmediateOrder("stop")
+	hitB.issueImmediateOrder("stop")
+	check(damageHeard[3] == 1, "a listener of one unit on another event hears only its own unit (" + damageHeard[3] + ")")
+	dealHit(hitter, hitA)
+	check(damageHeard[0] == 4 and damageHeard[1] == 4 and damageHeard[2] == 2 and damageHeard[3] == 1,
+		"and the damage listeners still hear their hit (" + damageHeard[0] + ", " + damageHeard[1] + ", "
+		+ damageHeard[2] + ", " + damageHeard[3] + ")")
+	destroy ofOrder
+
 	destroy ofA
 	destroy damaged
 	destroy damaging
 	dealHit(hitter, hitA)
-	check(damageHeard[0] == 3 and damageHeard[1] == 3 and damageHeard[2] == 1,
+	check(damageHeard[0] == 4 and damageHeard[1] == 4 and damageHeard[2] == 2,
 		"and none after they are destroyed (" + damageHeard[0] + ", " + damageHeard[1] + ", " + damageHeard[2] + ")")
 	hitter.remove()
 	hitA.remove()

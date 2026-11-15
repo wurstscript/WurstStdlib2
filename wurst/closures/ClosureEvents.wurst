@@ -228,8 +228,10 @@ public abstract class EventListener
 	static EventListener array generalListenersFirsts
 	static EventListener array unitListenersFirsts
 	static var useMouseEvents = false
-	/** Whether a listener of one unit was ever added. Until then a delivery needs not look at the unit. */
-	static var hasUnitListeners = false
+	/** Per event id, whether a listener of one unit was ever added for it. Until then a delivery of that event needs
+		not look at the unit, so a unit listener of one event costs nothing on the others. Never reset, so it can not
+		fall out of step with the chains. */
+	static bool array hasUnitListeners
 	/** The ids of the two damage events, whose deliveries are told the id and so need not ask the engine. */
 	static int damagedId = 0
 	static int damagingId = 0
@@ -261,8 +263,8 @@ public abstract class EventListener
 		let uid = u.getIndex()
 		if uid <= 0
 			return listener
-		hasUnitListeners = true
 		listener.eventId = eventId.toIntId()
+		hasUnitListeners[listener.eventId] = true
 		listener.uid = uid
 		if unitListenersFirsts[uid] != null
 			unitListenersFirsts[uid].prev = listener
@@ -346,7 +348,7 @@ public abstract class EventListener
 
 	/** Delivers the event of the given id to the listeners of the triggering unit and then to the global ones. */
 	static private function dispatch(int id)
-		if hasUnitListeners
+		if hasUnitListeners[id]
 			dispatchTo(GetTriggerUnit(), id)
 		else
 			dispatchTo(null, id)
@@ -360,7 +362,7 @@ public abstract class EventListener
 	protected static function dispatchTo(unit trigUnit, int id)
 		let depth = takeWalkSlot()
 		// Unit Listeners
-		if hasUnitListeners
+		if hasUnitListeners[id]
 			if trigUnit != null
 				// Native initialization orders can precede entry. No unit listener exists
 				// for that lifetime yet; routing only observes an existing association.
