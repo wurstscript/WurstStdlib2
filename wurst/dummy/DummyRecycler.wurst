@@ -13,7 +13,7 @@ import UnitIds
 import Icons
 import ObjectIdGenerator
 import LinkedList
-import HashSet
+import HashMap
 import ClosureTimers
 import Widget
 import Execute
@@ -60,7 +60,9 @@ function discardInvalidDummy(unit u, boolean checkout)
 	requested angle, which left the others idle and made every caller asking for the same angle create units. */
 public class DummyRecycler
 	static LinkedList<unit> pool
-	static HashSet<unit> parked
+	/** Membership of `pool` by unit, for constant-time `isRecycled`. A HashSet would cost a tail shift on every
+		checkout, since it is ordered like the queue and checkout takes its first element. */
+	static HashMap<unit, bool> parked
 
 	static function get(vec2 pos, angle a) returns unit
 		while not pool.isEmpty()
@@ -104,7 +106,7 @@ public class DummyRecycler
 
 	private static function park(unit u)
 		pool.enqueue(u)
-		parked.add(u)
+		parked.put(u, true)
 		u..setXY(boundMax - vec2(16, 16))
 		..pause()
 		..setFlyHeight(u.getDefaultFlyHeight(), 0)
@@ -115,7 +117,7 @@ public class DummyRecycler
 	/** Fresh, empty pool. Init calls it; the test runner, which skips init, calls it per test. */
 	static function reset()
 		pool = new LinkedList<unit>()
-		parked = new HashSet<unit>()
+		parked = new HashMap<unit, bool>()
 
 function createDummy(vec2 pos, angle facing) returns unit
 	let u = createUnit(DUMMY_PLAYER, DUMMY_UNIT_ID, pos, facing)
@@ -132,7 +134,7 @@ init
 	for i = 1 to (DUMMY_RECYCLER_PRELOAD < DUMMY_RECYCLER_CAPACITY ? DUMMY_RECYCLER_PRELOAD : DUMMY_RECYCLER_CAPACITY)
 		let dummy = createDummy(boundMax - vec2(16, 16), angle(0))
 		DummyRecycler.pool.enqueue(dummy)
-		DummyRecycler.parked.add(dummy)
+		DummyRecycler.parked.put(dummy, true)
 
 @compiletime function generateDummyUnit()
 	new AbilityDefinitionRootAncients(ROOT_ENABLER)
