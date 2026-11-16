@@ -13,7 +13,7 @@ import UnitIds
 import Icons
 import ObjectIdGenerator
 import LinkedList
-import HashMap
+import UnitIndexer
 import ClosureTimers
 import Widget
 import Execute
@@ -60,15 +60,17 @@ function discardInvalidDummy(unit u, boolean checkout)
 	requested angle, which left the others idle and made every caller asking for the same angle create units. */
 public class DummyRecycler
 	static LinkedList<unit> pool
-	/** Membership of `pool` by unit, for constant-time `isRecycled`. A HashSet would cost a tail shift on every
-		checkout, since it is ordered like the queue and checkout takes its first element. */
-	static HashMap<unit, bool> parked
+	/** Membership of `pool` by unit index, for an array read in `isRecycled`; `createDummy` makes sure every dummy
+		has an index. Deindexing clears the slot: a dummy removed while parked must not leave its flag to the next
+		unit on that index. */
+	static boolean array parkedByIndex
 
 	static function get(vec2 pos, angle a) returns unit
 		while not pool.isEmpty()
 			let dummy = pool.dequeue()
-			parked.remove(dummy)
 			if isUsableDummy(dummy)
+				// A removed dummy's slot was cleared by its deindex; a killed one is removed by the discard below.
+				parkedByIndex[dummy.getIndex()] = false
 				dummy..setXY(pos)..unpause()
 				dummy.setFacingEx(a.degrees())
 				return dummy
@@ -77,7 +79,7 @@ public class DummyRecycler
 
 	/** Whether the unit is parked, that is whether it was recycled and not handed out since. */
 	static function isRecycled(unit u) returns bool
-		return parked.has(u)
+		return u != null and u.getTypeId() == DUMMY_UNIT_ID and parkedByIndex[u.getIndex()]
 
 	/** Dummies parked now. */
 	static function parkedCount() returns int
@@ -106,7 +108,7 @@ public class DummyRecycler
 
 	private static function park(unit u)
 		pool.enqueue(u)
-		parked.put(u, true)
+		parkedByIndex[u.getIndex()] = true
 		u..setXY(boundMax - vec2(16, 16))
 		..pause()
 		..setFlyHeight(u.getDefaultFlyHeight(), 0)
@@ -117,7 +119,6 @@ public class DummyRecycler
 	/** Fresh, empty pool. Init calls it; the test runner, which skips init, calls it per test. */
 	static function reset()
 		pool = new LinkedList<unit>()
-		parked = new HashMap<unit, bool>()
 
 function createDummy(vec2 pos, angle facing) returns unit
 	let u = createUnit(DUMMY_PLAYER, DUMMY_UNIT_ID, pos, facing)
@@ -125,16 +126,22 @@ function createDummy(vec2 pos, angle facing) returns unit
 	..addAbility(ROOT_ENABLER)..removeAbility(ROOT_ENABLER)
 	..setXY(pos)
 	// createUnit already faced it; the snap in `get` is for parked dummies.
+	// The pool keys parked dummies by unit index. Entry has indexed it already, unless the map's `shouldIndex`
+	// refuses dummies or no enter event runs (the test runner): index it here, so the key always exists.
+	if u.peekIndex() == 0
+		new UnitIndex(u)
 	return u
 
 
 init
 	realToIndex(1)
+	onUnitDeindex() ->
+		DummyRecycler.parkedByIndex[getIndexingUnit().getIndex()] = false
 	DummyRecycler.reset()
 	for i = 1 to (DUMMY_RECYCLER_PRELOAD < DUMMY_RECYCLER_CAPACITY ? DUMMY_RECYCLER_PRELOAD : DUMMY_RECYCLER_CAPACITY)
 		let dummy = createDummy(boundMax - vec2(16, 16), angle(0))
 		DummyRecycler.pool.enqueue(dummy)
-		DummyRecycler.parked.put(dummy, true)
+		DummyRecycler.parkedByIndex[dummy.getIndex()] = true
 
 @compiletime function generateDummyUnit()
 	new AbilityDefinitionRootAncients(ROOT_ENABLER)
