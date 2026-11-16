@@ -1,21 +1,16 @@
 package DummyTests
 import DummyRecycler
 import Fx
-import LinkedList
 
-/*	The init of DummyRecycler does not run under the test runner, so every test starts from empty queues of its own.
-	The queues are LinkedList<unit>, whose elements the interpreter does not give back as the unit which went in:
+/*	The init of DummyRecycler does not run under the test runner, so every test starts from an empty pool of its own.
+	The pool is a LinkedList<unit>, whose elements the interpreter does not give back as the unit which went in:
 	a dequeued unit has lost its position. So nothing here dequeues; the tests count what is queued, and an Fx finds
-	its queue empty and gets a dummy created for it. */
+	the pool empty and gets a dummy created for it. */
 function freshQueues()
-	for i = 0 to 7
-		DummyRecycler.angleQueues[i] = new LinkedList<unit>()
+	DummyRecycler.reset()
 
 function queuedDummies() returns int
-	var total = 0
-	for i = 0 to 7
-		total += DummyRecycler.angleQueues[i].size()
-	return total
+	return DummyRecycler.parkedCount()
 
 @Test function recyclingTheSameDummyTwiceQueuesItOnce()
 	freshQueues()
@@ -48,3 +43,13 @@ function queuedDummies() returns int
 	f.setOwner(players[3], false)
 	f.setXYAngleInstant(angle(PI))
 	(f.getOwner() == players[3]).assertTrue()
+
+@Test function anyAngleIsServedFromOnePool()
+	freshQueues()
+	let a = DummyRecycler.get(vec2(10, 10), angle(0))
+	let b = DummyRecycler.get(vec2(10, 10), angle(PI))
+	DummyRecycler.recycle(a)
+	DummyRecycler.recycle(b)
+	queuedDummies().assertEquals(2)
+	DummyRecycler.isRecycled(a).assertTrue()
+	DummyRecycler.isRecycled(b).assertTrue()

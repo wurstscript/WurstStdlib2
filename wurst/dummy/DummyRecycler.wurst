@@ -13,6 +13,7 @@ import UnitIds
 import Icons
 import ObjectIdGenerator
 import LinkedList
+import HashSet
 import ClosureTimers
 import Widget
 import Execute
@@ -31,9 +32,11 @@ public constant ROOT_ENABLER = compiletime(ABIL_ID_GEN.next())
 
 public constant DISABLE_AUTO_ACQUIRE_ATTACK_TARGETS_ABILITY_ID = compiletime(ABIL_ID_GEN.next())
 
-constant DIFFERENT_ANGLES		= 8
-constant ANGLE_DEGREE			= 360 / DIFFERENT_ANGLES
-constant SAVED_UNITS_PER_ANGLE	= 6
+/** Most dummies the pool keeps parked. A recycle beyond it removes the dummy, and a `get` from an empty pool
+	creates one, so set it above the most dummies a map has out at once. */
+@configurable public constant DUMMY_RECYCLER_CAPACITY = 128
+/** Dummies created at init. The pool grows from there up to the capacity as dummies come back. */
+@configurable public constant DUMMY_RECYCLER_PRELOAD = 48
 
 /** Called only when a damaged pool entry is discarded. Consumers may add replay diagnostics here.
 	`checkout` distinguishes an invalid queued entry from a dead unit returned by its borrower. */
@@ -52,31 +55,37 @@ function discardInvalidDummy(unit u, boolean checkout)
 	if u != null and u.getTypeId() == DUMMY_UNIT_ID
 		u.remove()
 
+/** One pool of parked dummies. `get` snaps the facing with BlzSetUnitFacingEx, so any parked dummy serves any
+	angle: the pool used to keep one queue per eighth of a circle and hand out only from the queue nearest the
+	requested angle, which left the others idle and made every caller asking for the same angle create units. */
 public class DummyRecycler
-	static LinkedList<unit> array angleQueues
+	static LinkedList<unit> pool
+	static HashSet<unit> parked
 
 	static function get(vec2 pos, angle a) returns unit
-		let angleIndex = (a.degrees() % 360 / ANGLE_DEGREE).round() mod DIFFERENT_ANGLES
-		while not angleQueues[angleIndex].isEmpty()
-			let dummy = angleQueues[angleIndex].dequeue()
+		while not pool.isEmpty()
+			let dummy = pool.dequeue()
+			parked.remove(dummy)
 			if isUsableDummy(dummy)
-				// the queue only matches the facing to within half an angle step
-				return dummy..setXY(pos)..setFacing(a)..unpause()
+				dummy..setXY(pos)..unpause()
+				dummy.setFacingEx(a.degrees())
+				return dummy
 			discardInvalidDummy(dummy, true)
 		return createDummy(pos, a)
 
-	/** Whether the unit waits in one of the queues, that is whether it was recycled and not handed out since. */
+	/** Whether the unit is parked, that is whether it was recycled and not handed out since. */
 	static function isRecycled(unit u) returns bool
-		for i = 0 to DIFFERENT_ANGLES - 1
-			if angleQueues[i].has(u)
-				return true
-		return false
+		return parked.has(u)
 
-	/** Returns a dummy to the queues, or removes it when they are full.
+	/** Dummies parked now. */
+	static function parkedCount() returns int
+		return pool.size()
+
+	/** Returns a dummy to the pool, or removes it when the pool is full.
 		A dummy which is recycled again before it was handed out is ignored: it would be handed out twice. */
 	static function recycle(unit u)
 		if u == null or u.getTypeId() == 0
-			// Removed already, for example by a first recycle which found the queues full.
+			// Removed already, for example by a first recycle which found the pool full.
 			return
 		if not isUsableDummy(u)
 			discardInvalidDummy(u, false)
@@ -84,42 +93,46 @@ public class DummyRecycler
 		if isRecycled(u)
 			Log.warn("DummyRecycler: ignoring an attempt to recycle a dummy which is already recycled")
 			return
-		var smallestQueue = 0
-		for i = 1 to DIFFERENT_ANGLES - 1
-			if angleQueues[smallestQueue].size() > angleQueues[i].size()
-				smallestQueue = i
-		if angleQueues[smallestQueue].size() >= SAVED_UNITS_PER_ANGLE
+		if pool.size() >= DUMMY_RECYCLER_CAPACITY
 			u.remove()
 		else
-			angleQueues[smallestQueue].enqueue(u)
-			u..setXY(boundMax - vec2(16, 16))
-			..pause()
-			..setFacing((smallestQueue * ANGLE_DEGREE).asAngleDegrees())
-			..setFlyHeight(u.getDefaultFlyHeight(), 0)
-			..setScale(1)
-			..setVertexColor(COLOR_WHITE)
-			..setOwner(DUMMY_PLAYER, true)
+			park(u)
 
 	static function recycle(unit u, real delay)
 		doAfter(delay) ->
 			DummyRecycler.recycle(u)
 
+	private static function park(unit u)
+		pool.enqueue(u)
+		parked.add(u)
+		u..setXY(boundMax - vec2(16, 16))
+		..pause()
+		..setFlyHeight(u.getDefaultFlyHeight(), 0)
+		..setScale(1)
+		..setVertexColor(COLOR_WHITE)
+		..setOwner(DUMMY_PLAYER, true)
+
+	/** Fresh, empty pool. Init calls it; the test runner, which skips init, calls it per test. */
+	static function reset()
+		pool = new LinkedList<unit>()
+		parked = new HashSet<unit>()
+
 function createDummy(vec2 pos, angle facing) returns unit
 	let u = createUnit(DUMMY_PLAYER, DUMMY_UNIT_ID, pos, facing)
 	u..addAbility(HEIGHT_ENABLER)..removeAbility(HEIGHT_ENABLER)
 	..addAbility(ROOT_ENABLER)..removeAbility(ROOT_ENABLER)
-	..setXY(pos)..setFacing(facing)
+	..setXY(pos)
+	// createUnit already faced it; the snap in `get` is for parked dummies.
 	return u
 
 
 init
 	realToIndex(1)
-	for i = 0 to DIFFERENT_ANGLES - 1
-		DummyRecycler.angleQueues[i] = new LinkedList<unit>()
-		let facing = angle(i * ANGLE_DEGREE)
-		for j = 0 to SAVED_UNITS_PER_ANGLE - 1
-			let dummy = createDummy(boundMax - vec2(16, 16), facing)
-			DummyRecycler.angleQueues[i].enqueue(dummy)
+	DummyRecycler.reset()
+	for i = 1 to (DUMMY_RECYCLER_PRELOAD < DUMMY_RECYCLER_CAPACITY ? DUMMY_RECYCLER_PRELOAD : DUMMY_RECYCLER_CAPACITY)
+		let dummy = createDummy(boundMax - vec2(16, 16), angle(0))
+		DummyRecycler.pool.enqueue(dummy)
+		DummyRecycler.parked.add(dummy)
 
 @compiletime function generateDummyUnit()
 	new AbilityDefinitionRootAncients(ROOT_ENABLER)
