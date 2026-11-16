@@ -147,19 +147,23 @@ public function testAbortIsPerInstance()
 // ============================================================================
 
 function queuedDummies() returns int
-	var total = 0
-	for i = 0 to 7
-		total += DummyRecycler.angleQueues[i].size()
-	return total
+	return DummyRecycler.parkedCount()
 
 public function testDummies()
 	section("--- 30. Fx and the dummy recycler ---")
 	let before = queuedDummies()
 	let dummy = DummyRecycler.get(vec2(-3300., -1800.), angle(0))
-	check(queuedDummies() == before - 1, "get takes a dummy from the queues (" + before + " -> " + queuedDummies() + ")")
+	check(queuedDummies() == before - 1, "get takes a dummy from the pool (" + before + " -> " + queuedDummies() + ")")
 	DummyRecycler.recycle(dummy)
 	DummyRecycler.recycle(dummy)
 	check(queuedDummies() == before, "recycling it twice queues it once (" + queuedDummies() + ", was " + before + ")")
+	// Any parked dummy serves any angle: the pool used to hand out only from the queue nearest the angle asked
+	// for, so a map whose casts all faced one way created units while the other queues sat full.
+	let turned = DummyRecycler.get(vec2(-3300., -1800.), angle(PI))
+	check(queuedDummies() == before - 1, "get at 180 degrees takes a parked dummy (" + before + " -> " + queuedDummies() + ")")
+	let facing = turned.getFacingAngle().degrees()
+	check(facing > 179. and facing < 181., "and faces 180 degrees at once (" + facing.toString(1) + ")")
+	DummyRecycler.recycle(turned)
 
 	let f = new Fx(vec2(-3300., -1700.), angle(0))
 	f.setZ(80.)
@@ -169,12 +173,12 @@ public function testDummies()
 	check(f.getZ() > 79. and f.getZ() < 81., "and the height (" + f.getZ().toString(0) + ")")
 	destroy f
 
-	let killed = DummyRecycler.angleQueues[0].getFirst()
+	let killed = DummyRecycler.pool.getFirst()
 	killed.kill()
 	let live = DummyRecycler.get(vec2(-3300., -1700.), angle(0))
 	check(live != killed and live.isAliveTrick(), "checkout skips a killed queued dummy")
 	DummyRecycler.recycle(live)
-	let removed = DummyRecycler.angleQueues[0].getFirst()
+	let removed = DummyRecycler.pool.getFirst()
 	removed.remove()
 	// The native removal getters keep their old values during the removal callback itself.
 	doAfter(0.3) ->
